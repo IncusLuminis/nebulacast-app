@@ -1,0 +1,87 @@
+# nebulacast.app — top-level targets
+# make news       — backend + frontend (full)
+# make news-back  — only backend (RSS pipeline)
+# make news-front — only frontend (HTML/JS)
+# make server     — local HTTP server :8080
+
+.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front server deps-news deps-calendar deps-weather test-news help
+
+# Python: prefer venv if present
+PYTHON ?= python3
+VENV_PY := .venv/bin/python
+ifeq ($(wildcard .venv/bin/python),)
+  RUN := $(PYTHON)
+else
+  RUN := $(VENV_PY)
+endif
+
+SERVICE_NEWS := services/news
+SERVICE_CALENDAR := services/calendar
+SERVICE_WEATHER := services/weather
+PYTHONPATH_NEWS := $(SERVICE_NEWS)
+PYTHONPATH_CALENDAR := $(SERVICE_CALENDAR)
+PYTHONPATH_WEATHER := $(SERVICE_WEATHER)
+
+# Install news deps (run once)
+deps-news:
+	$(RUN) -m pip install -r $(SERVICE_NEWS)/requirements.txt
+
+# Full news: backend + frontend
+news: news-back news-front
+
+# Only backend: pipeline → sites/staging/news/rss.xml
+news-back:
+	PYTHONPATH=$(PYTHONPATH_NEWS) $(RUN) $(SERVICE_NEWS)/pipelines/run_news.py
+
+# Only frontend: sites/staging/index.html, news/index.html, news/widget.js, assets
+news-front:
+	$(RUN) frontend/build.py
+
+# Local HTTP server (root = sites/staging)
+server:
+	bash infra/scripts/serve_local.sh
+
+test-news:
+	PYTHONPATH=$(PYTHONPATH_NEWS) $(RUN) -m pytest $(SERVICE_NEWS)/tests/ -v
+
+# Calendar (alerts): backend + frontend
+deps-calendar:
+	$(RUN) -m pip install -r $(SERVICE_CALENDAR)/requirements.txt
+
+calendar-back:
+	PYTHONPATH=$(PYTHONPATH_CALENDAR) $(RUN) $(SERVICE_CALENDAR)/pipelines/run_calendar.py
+
+# Frontend for calendar (same build.py as news — generates index, news/, calendar/, assets/)
+calendar-front:
+	$(RUN) frontend/build.py
+
+calendar: calendar-back calendar-front
+
+# Weather: backend only (outputs + copy to sites/staging/weather/)
+deps-weather:
+	$(RUN) -m pip install -r $(SERVICE_WEATHER)/requirements.txt
+
+weather-back:
+	PYTHONPATH=$(PYTHONPATH_WEATHER) $(RUN) $(SERVICE_WEATHER)/pipelines/run_weather.py
+
+weather-front:
+	$(RUN) frontend/build.py
+
+weather: weather-back weather-front
+
+help:
+	@echo "Targets:"
+	@echo "  make news       — backend + frontend (full)"
+	@echo "  make news-back  — only backend (RSS pipeline)"
+	@echo "  make news-front — only frontend (HTML/JS)"
+	@echo "  make calendar   — calendar backend + frontend (alerts rss + calendar JSON + HTML/JS)"
+	@echo "  make calendar-back  — calendar pipeline only (outputs → alerts/rss.xml, calendar/*.json)"
+	@echo "  make calendar-front — frontend build only (index, calendar/index.html, calendar/widget.js, assets)"
+	@echo "  make weather   — weather backend + frontend (outputs + sites/staging/weather/daily_weather.json)"
+	@echo "  make weather-back  — weather pipeline only"
+	@echo "  make weather-front — frontend build only"
+	@echo "  make server     — start local HTTP server on :8080"
+	@echo "  make deps-news  — install news deps (run once)"
+	@echo "  make deps-calendar — install calendar deps (run once)"
+	@echo "  make deps-weather  — install weather deps (run once)"
+	@echo "  make test-news  — run news tests"

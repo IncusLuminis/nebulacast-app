@@ -2,6 +2,6 @@
 
 ## News service
 
-- **Input:** RSS feeds and options defined in `services/news/configs/sources.yaml`; rules in `services/news/configs/rules.yaml`.
-- **Output:** `services/news/public/rss.xml` — RSS 2.0 feed, compatible with `https://news.nebulacast.app/rss.xml`.
-- **Internal:** Pipeline writes intermediate data under `services/news/outputs/` (e.g. `daily_signal.json`, `archive.jsonl`). These are local only and not part of the public contract.
+- **Input:** RSS feeds and rules in `services/news/configs/sources.yaml` и `services/news/configs/rules.yaml`.
+- **Output:** все артефакты в **sites/staging/news/** (в т.ч. `rss.xml` — RSS 2.0, совместимый с `https://news.nebulacast.app/rss.xml`).
+- **Staging UI:** index.html в sites/staging берёт news по относительному пути `/news/rss.xml`.

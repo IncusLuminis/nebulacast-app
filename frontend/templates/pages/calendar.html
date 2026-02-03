@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{SITE_TITLE}} — Sky Alerts</title>
+  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/base.css">
+  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_calendar.css">
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <h1>{{SITE_TITLE}}</h1>
+      <p class="subtitle">{{SITE_SUBTITLE}} · Sky Alerts</p>
+    </header>
+    <main>
+      {{WIDGET_CALENDAR_HTML}}
+      <p class="rss-link"><a href="{{BASE_PATH}}/calendar/daily_signal.json">JSON</a> · <a href="{{BASE_PATH}}/alerts/rss.xml">RSS feed</a></p>
+    </main>
+  </div>
+  <script src="{{BASE_PATH}}/assets/js/widget_runtime.js"></script>
+  <script>
+    (function() {
+      var config = {{WIDGET_CALENDAR_CONFIG_JSON}};
+      if (window.runCalendarWidget) window.runCalendarWidget(config);
+    })();
+  </script>
+</body>
+</html>

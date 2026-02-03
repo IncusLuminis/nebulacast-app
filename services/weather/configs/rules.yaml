@@ -1,0 +1,14 @@
+# Weather service config (location, horizon, thresholds).
+# Naming: "weather" (astro-weather migrated here).
+weather:
+  enabled: true
+  location_name: "Warsaw"
+  latitude: 52.2297
+  longitude: 21.0122
+  timezone: "Europe/Warsaw"
+  horizon_hours: 72
+  thresholds:
+    max_cloud_total_pct: 40
+    max_precip_mm_h: 0.1
+    min_visibility_m: 8000
+    max_wind_m_s: 8

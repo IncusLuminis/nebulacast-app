@@ -1,0 +1,178 @@
+#{{ROOT_ID}} {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #0f1115;
+  color: #e6e6e6;
+}
+#{{ROOT_ID}} .nrc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  margin-bottom: 12px;
+}
+#{{ROOT_ID}} .nrc-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #e6f2ff;
+  margin: 0;
+}
+#{{ROOT_ID}} .nrc-meta {
+  font-size: 12px;
+  display: flex;
+  gap: 12px;
+}
+#{{ROOT_ID}} .nrc-link {
+  color: #8fb6ff;
+  text-decoration: none;
+}
+#{{ROOT_ID}} .nrc-link:hover {
+  text-decoration: underline;
+}
+#{{ROOT_ID}} .nrc-status {
+  padding: 8px 0;
+  font-size: 13px;
+  color: #9aa3b2;
+  text-align: center;
+}
+#{{ROOT_ID}} .nrc-error {
+  padding: 16px;
+  background: #1a1f2a;
+  border: 1px solid #3a4252;
+  border-radius: 8px;
+  color: #e6e6e6;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+#{{ROOT_ID}} .nrc-error-title {
+  font-weight: 700;
+  color: #ff6b6b;
+  margin-bottom: 8px;
+}
+#{{ROOT_ID}} .nrc-list {
+  margin: 0;
+  padding: 0;
+}
+#{{ROOT_ID}} .nrc-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  align-items: flex-start;
+}
+#{{ROOT_ID}} .nrc-card:last-child {
+  border-bottom: none;
+}
+#{{ROOT_ID}} .nrc-card-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+  /* Светлые иконки → акцентный синий #8fb6ff (SVG в img не наследует color) */
+  filter: invert(1) sepia(1) saturate(4) hue-rotate(200deg) brightness(0.95);
+}
+#{{ROOT_ID}} .nrc-card-icon.nrc-card-icon-placeholder {
+  display: block;
+  filter: none;
+  background: #2a2f3a;
+  border-radius: 8px;
+}
+#{{ROOT_ID}} .nrc-content {
+  flex: 1;
+  min-width: 0;
+}
+#{{ROOT_ID}} .nrc-titlelink {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #e6f2ff;
+  text-decoration: none;
+  margin-bottom: 6px;
+}
+#{{ROOT_ID}} .nrc-titlelink:hover {
+  color: #8fb6ff;
+  text-decoration: underline;
+}
+#{{ROOT_ID}} .nrc-metaRow {
+  font-size: 11px;
+  color: #9aa3b2;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#{{ROOT_ID}} .nrc-date {
+  color: #9aa3b2;
+}
+#{{ROOT_ID}} .nrc-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #2a2f3a;
+  color: #cfe2ff;
+  text-transform: uppercase;
+  font-weight: 600;
+  border: 1px solid #3a4252;
+}
+#{{ROOT_ID}} .nrc-snippet {
+  margin-top: 6px;
+  line-height: 1.35;
+  font-size: 12px;
+  color: #cfe2ff;
+  margin-bottom: 6px;
+}
+#{{ROOT_ID}} .nrc-more {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #8fb6ff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+#{{ROOT_ID}} .nrc-more:hover {
+  text-decoration: underline;
+}
+#{{ROOT_ID}} .nrc-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  margin-bottom: 12px;
+}
+#{{ROOT_ID}} .nrc-filter {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #2a2f3a;
+  background: #111623;
+  color: #cfe2ff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+  user-select: none;
+}
+#{{ROOT_ID}} .nrc-filter-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+#{{ROOT_ID}} .nrc-filter:hover {
+  border-color: #3a4252;
+  color: #e6f2ff;
+}
+#{{ROOT_ID}} .nrc-filter.is-active {
+  background: #2a2f3a;
+  border-color: #3a4252;
+  color: #e6f2ff;
+}

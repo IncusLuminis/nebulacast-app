@@ -1,0 +1,103 @@
+# Calendar/alerts rules. Weather (astro-weather) is a separate service.
+global:
+  freshness:
+    max_age_days: 365
+    require_published_date: false
+
+  hard_filters:
+    exclude_title_patterns: []
+
+  ui:
+    months_ahead: 3
+    lists:
+      months_ahead: 6
+    calendar:
+      months_ahead: 24
+      allow_all: true
+
+  ranking:
+    min_topic_match: 0.0
+    weights:
+      topic_match: 0.30
+      freshness: 0.30
+      source_priority: 0.30
+      signal_bonus: 0.10
+
+  sources_priority:
+    seed: 70
+    skytel_main: 80
+    skytel_observing: 75
+    skytel_astronomy_news: 80
+    earthsky_main: 70
+    earthsky_astronomy_essentials: 70
+
+  categorize:
+    enabled: true
+    by_feed_name:
+      skytel_main: OBSERVING
+      skytel_observing: OBSERVING
+      skytel_astronomy_news: NEWS
+      earthsky_main: NEWS
+      earthsky_astronomy_essentials: OBSERVING
+
+  signals:
+    bonus:
+      - contains_any: ["peak", "maximum", "best viewing", "visible", "naked eye"]
+        value: 15
+      - contains_any: ["rare", "unusual", "bright", "major"]
+        value: 10
+
+streams:
+  meteors:
+    ranking:
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.25
+        freshness: 0.35
+        source_priority: 0.30
+        signal_bonus: 0.10
+
+  eclipses:
+    ranking:
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.25
+        freshness: 0.35
+        source_priority: 0.30
+        signal_bonus: 0.10
+
+  conjunctions:
+    ranking:
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.25
+        freshness: 0.35
+        source_priority: 0.30
+        signal_bonus: 0.10
+
+  occultations:
+    ranking:
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.25
+        freshness: 0.35
+        source_priority: 0.30
+        signal_bonus: 0.10
+
+  comets:
+    ranking:
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.25
+        freshness: 0.35
+        source_priority: 0.30
+        signal_bonus: 0.10
+
+  observations:
+    ranking:
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.25
+        freshness: 0.35
+        source_priority: 0.30
+        signal_bonus: 0.10

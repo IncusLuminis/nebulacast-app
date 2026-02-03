@@ -1,0 +1,71 @@
+# Balanced profile: all factors weighted for general observing
+profile: default
+max_score: 100
+factors:
+  - key: cloud_total
+    label: Clouds
+    max: 35
+    field: cloud_total
+    enabled: true
+    transform: linear_inverse
+    max_raw: 100
+
+  - key: precip_mm
+    label: Precipitation amount
+    max: 10
+    field: precip_mm
+    enabled: true
+    transform: linear_inverse
+    max_raw: 0.5
+
+  - key: precip_prob
+    label: Precipitation probability
+    max: 5
+    field: precip_prob
+    enabled: true
+    transform: linear_inverse
+    max_raw: 100
+
+  - key: wind_m_s
+    label: Wind
+    max: 15
+    field: wind_m_s
+    enabled: true
+    transform: threshold
+    good_raw: 4
+    bad_raw: 12
+
+  - key: visibility_m
+    label: Visibility
+    max: 10
+    field: visibility_m
+    enabled: true
+    transform: linear
+    min_raw: 1000
+    max_raw: 30000
+
+  - key: seeing
+    label: Seeing
+    max: 15
+    field: seeing
+    enabled: true
+    transform: scale_discrete
+    best_raw: 1
+    worst_raw: 7
+
+  - key: transparency
+    label: Transparency
+    max: 10
+    field: transparency
+    enabled: true
+    transform: scale_discrete
+    best_raw: 1
+    worst_raw: 4
+
+  - key: moon
+    label: Moon
+    max: 0
+    field: moon_phase
+    enabled: false
+    transform: linear_inverse
+    max_raw: 1

@@ -39,7 +39,9 @@ def test_smoke_run_news_produces_rss():
     service_root = Path(__file__).resolve().parent.parent
     repo_root = service_root.parent.parent
     run_news = service_root / "pipelines" / "run_news.py"
-    public_rss = service_root / "public" / "rss.xml"
+    # Publish root = sites/staging/news
+    repo_root = service_root.parent.parent
+    public_rss = repo_root / "sites" / "staging" / "news" / "rss.xml"
 
     assert run_news.exists(), f"run_news.py not found: {run_news}"
     env = {"PYTHONPATH": str(service_root)}

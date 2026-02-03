@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nebulacast — Staging</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/widget_news.css">
+  <link rel="stylesheet" href="/assets/css/widget_calendar.css">
+  <link rel="stylesheet" href="/assets/css/widget_weather.css">
+  <link rel="stylesheet" href="/assets/css/index_tabs.css">
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <h1>Nebulacast</h1>
+      <p class="subtitle">Staging</p>
+    </header>
+    <nav class="index-tabs" role="tablist" aria-label="Sections">
+      <button type="button" id="tab-news" class="index-tab is-active" data-tab="news" role="tab" aria-selected="true" aria-controls="panel-news">News</button>
+      <button type="button" id="tab-calendar" class="index-tab" data-tab="calendar" role="tab" aria-selected="false" aria-controls="panel-calendar">Calendar</button>
+      <button type="button" id="tab-alerts" class="index-tab" data-tab="alerts" role="tab" aria-selected="false" aria-controls="panel-calendar">Alerts</button>
+      <button type="button" id="tab-weather" class="index-tab" data-tab="weather" role="tab" aria-selected="false" aria-controls="panel-weather">Weather</button>
+    </nav>
+    <main class="index-panels">
+      <div id="panel-news" class="index-panel" role="tabpanel" aria-labelledby="tab-news">
+        <section class="widget-section" id="widget-news"><div id="nrw-main" class="nrw-root">
+  <div class="nrw-header">
+    <div class="nrw-title">News Radar</div>
+    <div class="nrw-meta"><a class="nrw-rss" href="/news/rss.xml" target="_blank" rel="noopener">RSS</a></div>
+  </div>
+  <div class="nrw-filters" data-role="filters"></div>
+  <div class="nrw-status" data-role="status">Loading...</div>
+  <div class="nrw-list" data-role="list"></div>
+</div>
+</section>
+      </div>
+      <div id="panel-calendar" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-calendar">
+        <section class="widget-section" id="widget-calendar"><div id="nrc-main" class="nrc-root">
+  <div class="nrc-header">
+    <div class="nrc-title">Sky Alerts</div>
+    <div class="nrc-meta">
+      <a class="nrc-link" href="/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>
+      <a class="nrc-link" href="/alerts/rss.xml" target="_blank" rel="noopener">RSS</a>
+    </div>
+  </div>
+  <div class="nrc-filters" data-role="filters"></div>
+  <div class="nrc-status" data-role="status">Loading...</div>
+  <div class="nrc-list" data-role="list"></div>
+</div>
+</section>
+      </div>
+      <div id="panel-weather" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-weather">
+        <section class="widget-section weather-widget" id="widget-weather"><h2>Weather</h2><div id="weather-content">Loading...</div></section>
+      </div>
+    </main>
+  </div>
+  <script src="/assets/js/widget_runtime.js"></script>
+  <script>
+    (function() {
+      var base = '';
+      window.runNewsWidget({ rootId: 'nrw-main', rssUrl: base + '/news/rss.xml', maxItems: 12, parseMax: 300, filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] });
+      window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '/calendar/daily_signal.json', maxItems: 20, filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], iconBase: base + '/assets/icons/alerts' });
+      
+(function(){
+  var el = document.getElementById('weather-content');
+  if (!el) return;
+  function esc(s){ if (s == null) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  fetch(base + "/weather/daily_weather.json" + '?ts=' + Date.now())
+    .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(data){
+      if (!data || !data.hours || data.hours.length === 0) { el.innerHTML = '<div class="err">No weather data</div>'; return; }
+      var loc = data.location || {};
+      var name = loc.name || 'Unknown';
+      var hours = data.hours || [];
+      var summary = data.summary || {};
+      var best = summary.best_windows || [];
+      var now = new Date();
+      var currentScore = null;
+      for (var i = 0; i < hours.length; i++) {
+        var t = new Date(hours[i].time);
+        if (t <= now && t > new Date(now.getTime() - 3600000)) { currentScore = hours[i].score || 0; break; }
+      }
+      var nextHours = hours.filter(function(h){ return new Date(h.time) > now; });
+      var html = '<div class="astro-weather-header" style="margin-bottom:12px">Weather • ' + esc(name) + '</div>';
+      if (currentScore !== null) {
+        var scoreClass = currentScore >= 70 ? 'good' : currentScore >= 50 ? 'fair' : 'poor';
+        html += '<div style="margin-bottom:12px;font-size:13px;color:#cfe2ff">Now: <span class="astro-hour-score ' + scoreClass + '" style="display:inline-block;margin-left:4px">' + currentScore + '</span></div>';
+      }
+      if (best.length > 0) {
+        var w = best[0];
+        var start = new Date(w.start);
+        var end = new Date(w.end);
+        var startStr = start.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        var endStr = end.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        var dateStr = start.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        html += '<div style="margin-bottom:16px;font-size:12px;color:#cfe2ff">Best window: <strong>' + esc(dateStr + ' ' + startStr + '–' + endStr) + '</strong> (score ' + w.score_avg + ')</div>';
+      }
+      html += '<div class="astro-weather-hours" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px">';
+      nextHours.forEach(function(h){
+        var hourTime = new Date(h.time);
+        var score = h.score || 0;
+        var scoreClass = score >= 70 ? 'good' : score >= 50 ? 'fair' : 'poor';
+        html += '<div class="astro-hour"><div class="astro-hour-time">' + esc(hourTime.toLocaleDateString('en-US',{month:'short',day:'numeric'})) + '<br/>' + esc(hourTime.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})) + '</div><div class="astro-hour-score ' + scoreClass + '">' + score + '</div></div>';
+      });
+      html += '</div>';
+      el.innerHTML = html;
+    })
+    .catch(function(err){ el.innerHTML = '<div class="err">Failed to load weather: ' + esc(err.message || 'Unknown error') + '</div>'; });
+})();
+
+      (function() {
+        var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', alerts: 'panel-calendar', weather: 'panel-weather' };
+        var tabs = document.querySelectorAll('.index-tab');
+        var panels = document.querySelectorAll('.index-panel');
+        function switchTo(panelId, activeTab) {
+          panels.forEach(function(p) {
+            p.classList.toggle('index-panel--hidden', p.id !== panelId);
+          });
+          tabs.forEach(function(t) {
+            var isActive = t.getAttribute('data-tab') === activeTab;
+            t.classList.toggle('is-active', isActive);
+            t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          });
+        }
+        tabs.forEach(function(t) {
+          t.addEventListener('click', function() {
+            var tab = t.getAttribute('data-tab');
+            switchTo(tabToPanel[tab], tab);
+          });
+        });
+      })();
+    })();
+  </script>
+</body>
+</html>

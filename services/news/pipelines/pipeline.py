@@ -1,7 +1,8 @@
-# pipeline.py — news pipeline (paths relative to service root)
+# pipeline.py — news pipeline; JSON/CSV in services/news/outputs/, only rss.xml to site
 from __future__ import annotations
 
 import json
+import logging
 from copy import deepcopy
 from datetime import date as _date, datetime, timezone, timedelta
 from pathlib import Path
@@ -12,9 +13,11 @@ import yaml
 from pipelines.rss_adapter import RssAdapter, RssConfig, RssFeed
 from schema.models import NewsRecord, ScoreBreakdownNews
 
+log = logging.getLogger(__name__)
 
-def ensure_dirs(agent_root: Path) -> None:
-    (agent_root / "outputs").mkdir(parents=True, exist_ok=True)
+
+def ensure_dirs(agent_root: Path, out_dir: Path) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
     (agent_root / "data").mkdir(parents=True, exist_ok=True)
 
 
@@ -273,34 +276,6 @@ def score_record(r: NewsRecord, rules: dict) -> NewsRecord:
     return r
 
 
-def write_report_md(out_dir: Path, final: List[NewsRecord], meta: dict, filename: str = "daily_signal.md") -> None:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / filename
-    today = datetime.now(timezone.utc).date().isoformat()
-    lines: List[str] = []
-    lines.append(f"# News Radar — Daily Signal ({today})\n")
-    lines.append(f"Window: last {meta['freshness_days']} days | Source(s): {', '.join(meta['sources'])}\n")
-    lines.append(f"Raw: {meta['raw_count']} | Fresh: {meta['fresh_count']} | Final: {len(final)}\n")
-    for i, r in enumerate(final, start=1):
-        pb = r.published_at.isoformat() if r.published_at else "—"
-        lines.append(f"## {i}) {r.title}\n")
-        lines.append(f"Score: {r.score:.2f} | Published: {pb}\n")
-        lines.append(f"Source: {r.source}\n")
-        if getattr(r, "stream", ""):
-            lines.append(f"Stream: {r.stream}\n")
-        lines.append(f"Link: {r.url}\n")
-        if r.score_breakdown:
-            lines.append("Why:\n")
-            lines.append(f"- topic_match: {r.score_breakdown.topic_match:.1f}\n")
-            lines.append(f"- freshness: {r.score_breakdown.freshness:.1f}\n")
-            lines.append(f"- source_priority: {r.score_breakdown.source_priority:.1f}\n")
-            lines.append(f"- signal_bonus: {r.score_breakdown.signal_bonus:.1f}\n")
-        if r.summary:
-            lines.append(f"\n> {r.summary[:400].strip()}\n")
-        lines.append("\n")
-    out_path.write_text("\n".join(lines), encoding="utf-8")
-
-
 def write_report_json(out_dir: Path, records: List[NewsRecord], meta: dict, filename: str) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / filename
@@ -460,14 +435,15 @@ def write_raw_jsonl(out_dir: Path, records: List[NewsRecord], filename: str = "r
     out_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
 
 
-def run_agent(agent_root: Path) -> None:
-    ensure_dirs(agent_root)
+def run_agent(agent_root: Path, out_dir: Optional[Path] = None) -> None:
+    out_dir = out_dir if out_dir is not None else (agent_root / "outputs")
+    ensure_dirs(agent_root, out_dir)
     sources_cfg = load_yaml(agent_root / "configs" / "sources.yaml")
     rules_yaml = load_yaml(agent_root / "configs" / "rules.yaml")
 
     rss_root = (sources_cfg.get("sources", {}) or {}).get("rss", {}) or {}
     if not rss_root.get("enabled", True):
-        print("RSS source disabled.")
+        log.info("RSS source disabled.")
         return
 
     fp = rss_root.get("fetch_policy", {}) or {}
@@ -483,11 +459,10 @@ def run_agent(agent_root: Path) -> None:
                 "feeds": legacy_feeds,
                 "limits": rss_root.get("limits") or {},
                 "freshness": ((rules_yaml.get("global", {}) or {}).get("freshness") or {}),
-                "output": {"top_n": 15, "md_filename": "daily_signal.md"},
+                "output": {"top_n": 15},
             }
         }
 
-    out_dir = agent_root / "outputs"
     all_final: List[NewsRecord] = []
     used_streams: List[str] = []
 
@@ -522,7 +497,7 @@ def run_agent(agent_root: Path) -> None:
         )
         adapter = RssAdapter(cfg)
 
-        print(f"[{stream_name}] FEEDS: {len(feeds)}")
+        log.info("[%s] FEEDS: %s", stream_name, len(feeds))
         raw = adapter.fetch_raw(stream_name=stream_name)
         raw_count = len(raw)
         records = adapter.normalize(raw, stream_name=stream_name)
@@ -531,7 +506,7 @@ def run_agent(agent_root: Path) -> None:
         max_age_days, require_pub = resolve_freshness(scfg, stream_rules)
         records = filter_fresh(records, max_age_days=max_age_days, require_published_date=require_pub)
         fresh_count = len(records)
-        print(f"[{stream_name}] RAW={raw_count} FRESH={fresh_count} max_age_days={max_age_days}")
+        log.info("[%s] RAW=%s FRESH=%s max_age_days=%s", stream_name, raw_count, fresh_count, max_age_days)
 
         records = apply_hard_filters(records, stream_rules)
         scored: List[tuple] = []
@@ -551,7 +526,6 @@ def run_agent(agent_root: Path) -> None:
         records.sort(key=lambda x: x.score, reverse=True)
         out_cfg = scfg.get("output") or {}
         top_n = int(out_cfg.get("top_n", int((stream_rules.get("output", {}) or {}).get("top_n", 15))))
-        md_filename = str(out_cfg.get("md_filename", f"daily_{stream_name}.md"))
         final = records[:top_n]
         all_final.extend(final)
         meta = {
@@ -562,13 +536,12 @@ def run_agent(agent_root: Path) -> None:
             "stream": stream_name,
             "max_items_per_feed": max_items_per_feed,
         }
-        write_report_md(out_dir, final, meta, filename=md_filename)
         json_filename = (out_cfg.get("json_filename") or "").strip()
         if json_filename:
             write_report_json(out_dir, final, meta, filename=json_filename)
         else:
             write_daily_json(out_dir, final, meta, filename=f"daily_{stream_name}.json")
-        print(f"[{stream_name}] FINAL={len(final)}")
+        log.info("[%s] FINAL=%s", stream_name, len(final))
 
     all_final = dedupe(all_final)
     all_final.sort(key=lambda x: x.score, reverse=True)
@@ -580,5 +553,5 @@ def run_agent(agent_root: Path) -> None:
         {"stream": "ALL", "freshness_days": None, "sources": [], "raw_count": 0, "fresh_count": len(all_final)},
         filename="daily_signal.json",
     )
-    print(f"STREAMS: {', '.join(used_streams) if used_streams else '—'}")
-    print(f"UNIFIED FINAL: {len(all_final)}")
+    log.info("STREAMS: %s", ", ".join(used_streams) if used_streams else "—")
+    log.info("UNIFIED FINAL: %s", len(all_final))

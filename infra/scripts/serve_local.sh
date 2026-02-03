@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Serve repo root with Python HTTP server so that
-# http://localhost:8080/services/news/public/rss.xml is available.
+# Serve sites/staging/ as HTTP root (Cloudflare Pages deploy root).
+# http://localhost:8080/news/rss.xml, /alerts/rss.xml, /astro-weather/...
 
 set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$REPO_ROOT"
-echo "Serving from $REPO_ROOT on http://localhost:8080/"
-echo "RSS: http://localhost:8080/services/news/public/rss.xml"
+STAGING_DIR="$REPO_ROOT/sites/staging"
+cd "$STAGING_DIR"
+echo "Serving from $STAGING_DIR (sites/staging/) on http://localhost:8080/"
+echo "  News RSS:  http://localhost:8080/news/rss.xml"
+echo "  Index:     http://localhost:8080/"
 exec python3 -m http.server 8080

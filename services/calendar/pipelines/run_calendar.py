@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Entrypoint: run news pipeline. JSON/CSV/log → services/news/outputs/, only rss.xml → sites/staging/news/.
-Run from repo root or with PYTHONPATH including the service root (services/news).
+Entrypoint: run calendar pipeline.
+- JSON → services/calendar/outputs/; then copied to sites/staging/calendar/.
+- RSS → sites/staging/alerts/rss.xml.
+No weather (astro-weather is separate).
 
-  python services/news/pipelines/run_news.py
+  python services/calendar/pipelines/run_calendar.py
 """
 from __future__ import annotations
 
 import logging
+import shutil
 import sys
 from pathlib import Path
 
-# Service root = parent of pipelines/
 _service_root = Path(__file__).resolve().parent.parent
 if str(_service_root) not in sys.path:
     sys.path.insert(0, str(_service_root))
@@ -34,7 +36,7 @@ def main() -> int:
 
     outputs_dir = service_root / "outputs"
     outputs_dir.mkdir(parents=True, exist_ok=True)
-    log_path = outputs_dir / "run_news.log"
+    log_path = outputs_dir / "run_calendar.log"
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
@@ -49,14 +51,15 @@ def main() -> int:
     run_agent(service_root)
 
     repo_root = service_root.parent.parent
-    rss_path = repo_root / "sites" / "staging" / "news" / "rss.xml"
+    rss_path = repo_root / "sites" / "staging" / "alerts" / "rss.xml"
     try:
         render_from_outputs(
             outputs_dir,
             rss_path,
-            base_url="https://news.nebulacast.app/",
-            max_items=60,
-            sources_yaml_path=configs / "sources.yaml",
+            base_url="https://alerts.nebulacast.app/",
+            feed_title="Sky Alerts",
+            feed_description="Amateur astronomy alerts (meteors, eclipses, conjunctions, occultations, comets)",
+            max_items=50,
         )
     except FileNotFoundError as e:
         log.error("%s", e)
@@ -70,6 +73,16 @@ def main() -> int:
             feed_count = 1
         item_count = text.count("<item>")
     log.info("Feeds: %s | Items in RSS: %s | Output: %s", feed_count, item_count, rss_path)
+
+    # Copy calendar JSONs to sites/staging/calendar/ for frontend
+    calendar_site = repo_root / "sites" / "staging" / "calendar"
+    calendar_site.mkdir(parents=True, exist_ok=True)
+    for j in outputs_dir.glob("daily_*.json"):
+        if j.suffix == ".json" and not j.name.endswith(".jsonl"):
+            dest = calendar_site / j.name
+            shutil.copy2(j, dest)
+            log.info("Copied %s -> %s", j.name, dest)
+    log.info("Calendar JSONs published to %s", calendar_site)
     return 0
 
 

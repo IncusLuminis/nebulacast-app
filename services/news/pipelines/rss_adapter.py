@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import html as html_lib
 import urllib.error
@@ -13,6 +14,8 @@ from urllib.parse import urlparse, parse_qs
 import feedparser
 
 from schema.models import NewsRecord
+
+log = logging.getLogger(__name__)
 
 
 # -----------------------------
@@ -99,7 +102,7 @@ class RssAdapter:
             try:
                 entries = self._fetch_one(feed)
                 out.extend(entries)
-                print(f"[RSS] OK   name={feed.name} url={feed.url} items={len(entries)}")
+                log.info("[RSS] OK   name=%s url=%s items=%s", feed.name, feed.url, len(entries))
                 ok_count += 1
             except Exception as e:
                 if isinstance(e, urllib.error.HTTPError):
@@ -108,10 +111,10 @@ class RssAdapter:
                     err = f"URLError {e.reason}"
                 else:
                     err = str(e)
-                print(f"[RSS] FAIL name={feed.name} url={feed.url} err={err}")
+                log.info("[RSS] FAIL name=%s url=%s err=%s", feed.name, feed.url, err)
         if ok_count == 0:
             stream_label = stream_name or "unknown"
-            print(f"[RSS] STREAM {stream_label} FAILED: all feeds returned errors")
+            log.warning("[RSS] STREAM %s FAILED: all feeds returned errors", stream_label)
         return out
 
     def _fetch_one(self, feed: RssFeed) -> List[Dict[str, Any]]:
@@ -130,16 +133,16 @@ class RssAdapter:
         parsed = feedparser.parse(body)
         bozo = getattr(parsed, "bozo", False)
         if bozo:
-            print(f"RSS feed: {feed.name} bozo: {bozo} entries: {len(parsed.entries)}")
+            log.info("RSS feed: %s bozo: %s entries: %s", feed.name, bozo, len(parsed.entries))
             ex = getattr(parsed, "bozo_exception", None)
             if ex:
-                print("RSS bozo_exception:", ex)
+                log.debug("RSS bozo_exception: %s", ex)
 
         entries = parsed.entries or []
         if not entries:
             rdf_entries = self._parse_rdf_rss1(body)
             if rdf_entries:
-                print(f"[RSS] RDF fallback parsed items={len(rdf_entries)} url={feed.url}")
+                log.info("[RSS] RDF fallback parsed items=%s url=%s", len(rdf_entries), feed.url)
                 entries = rdf_entries
         if self.cfg.max_items_per_feed and len(entries) > self.cfg.max_items_per_feed:
             entries = entries[: self.cfg.max_items_per_feed]

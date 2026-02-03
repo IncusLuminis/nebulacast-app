@@ -1,0 +1,37 @@
+# Backend pipeline: calendar (alerts RSS + JSON). Runs on schedule and writes to sites/staging/alerts/, sites/staging/calendar/.
+name: Cron — Calendar backend
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  calendar-back:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install calendar deps
+        run: pip install -r services/calendar/requirements.txt
+
+      - name: Run calendar backend
+        run: PYTHONPATH=services/calendar python services/calendar/pipelines/run_calendar.py
+
+      - name: Commit and push outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add sites/staging/alerts/ sites/staging/calendar/ 2>/dev/null || true
+          git add services/calendar/outputs/ 2>/dev/null || true
+          git diff --staged --quiet && exit 0
+          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
+          git commit -m "chore(calendar): update backend outputs [skip ci]"
+          git push
