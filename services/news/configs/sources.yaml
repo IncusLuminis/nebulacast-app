@@ -1,0 +1,275 @@
+sources:
+  rss:
+    enabled: true
+    type: rss
+
+    # ----------------------------------
+    # Global fetch policy (applies to all streams)
+    # ----------------------------------
+    fetch_policy:
+      timeout_seconds: 20
+      user_agent: ai-agents/AG_news_radar
+
+    # ----------------------------------
+    # RSS rendering settings
+    # ----------------------------------
+    rss_rendering:
+      # Minimum number of nebulacast items to include in RSS (regardless of date)
+      nebulacast_min_items: 7
+
+    # ----------------------------------
+    # Streams
+    # ----------------------------------
+    streams:
+
+      # ===============================
+      # NEWS
+      # ===============================
+      news:
+        enabled: true
+
+        feeds:
+          # ===============================
+          # OFFICIAL ASTRONOMY & SPACE
+          # ===============================
+
+          # --- ESO / ESA ---
+          - name: eso
+            url: https://www.eso.org/public/news/feed/
+          # OK
+
+          - name: esa_science
+            url: https://www.esa.int/rssfeed/Our_Activities/Space_Science
+          # OK
+
+          - name: esa_technology
+            url: https://www.esa.int/rssfeed/Our_Activities/Technology
+          # OK
+
+          # ===============================
+          # NASA (stable RSS only)
+          # ===============================
+
+          - name: nasa_breaking
+            url: https://www.nasa.gov/rss/dyn/breaking_news.rss
+          # OK
+
+          # ===============================
+          # OFFICIAL / PRO ORGS (no noise)
+          # ===============================
+
+          - name: esa_hubble_news
+            url: https://esahubble.org/news/feed/
+          # ESA Hubble news: unique releases
+
+          - name: webb_news
+            url: https://esawebb.org/news/feed/
+          # ESA Webb news: unique releases
+
+
+          # ===============================
+          # POP SCI (controlled noise, 1 feed)
+          # ===============================
+
+          - name: phys_org_space
+            url: https://phys.org/rss-feed/space-news/
+          # Хороший агрегатор универ/обсерваторий; добавляем ровно один такой источник
+
+                    # --- EarthSky (главная лента работает) ---
+          - name: earthsky_main
+            url: https://earthsky.org/feed/
+
+          # (опционально) EarthSky наблюдательная/гайдовая лента.
+          # Если 404 — просто закомментируй.
+          - name: earthsky_astronomy_essentials
+            url: https://earthsky.org/astronomy-essentials/feed/
+
+
+          # ===============================
+          # RESEARCH & SOCIETIES
+          # ===============================
+
+          - name: noirlab
+            url: https://noirlab.edu/public/news/feed/
+          # OK
+
+          - name: jpl_news
+            url: https://www.jpl.nasa.gov/feeds/news/
+          # JPL news: unique releases
+
+          # ===============================
+          # POPULAR SCIENCE (controlled noise)
+          # ===============================
+
+          - name: nature_astronomy
+            url: https://www.nature.com/natastron/rss/current
+          # OK
+
+          - name: sciencedaily_space
+            url: https://www.sciencedaily.com/rss/space_time.xml
+          # OK
+
+          # ===============================
+          # POPULAR SPACE MEDIA
+          # ===============================
+
+          - name: space_com
+            url: https://www.space.com/feeds/all
+          # OK
+
+          - name: universe_today
+            url: https://www.universetoday.com/feed/
+          # OK
+
+          - name: sky_and_telescope
+            url: https://skyandtelescope.org/feed/
+          # OK
+
+        limits:
+          max_items_per_feed: 10
+
+        freshness:
+          max_age_days: 4
+          require_published_date: true
+
+        output:
+          top_n: 14
+          md_filename: daily_news.md
+
+      # ===============================
+      # IMAGES
+      # ===============================
+      images:
+        enabled: true
+
+        feeds:
+          - name: nasa_apod
+            url: https://apod.nasa.gov/apod.rss
+
+          - name: eso_images
+            url: https://www.eso.org/public/images/feed/
+
+          - name: hubble_images
+            url: https://esahubble.org/images/feed/
+
+          - name: webb_images
+            url: https://esawebb.org/images/feed/
+
+        limits:
+          max_items_per_feed: 10
+
+        freshness:
+          max_age_days: 4
+          require_published_date: true
+
+        output:
+          top_n: 20
+          md_filename: daily_images.md
+
+      # ===============================
+      # VIDEOS
+      # ===============================
+      videos:
+        enabled: true
+
+        feeds:
+          - name: eso_videos
+            url: https://www.eso.org/public/videos/feed/
+
+          - name: hubble_videos
+            url: https://esahubble.org/videos/feed/
+
+          - name: webb_videos
+            url: https://esawebb.org/videos/feed/
+
+          - name: chandra_youtube
+            url: https://www.youtube.com/feeds/videos.xml?channel_id=UCcvatGFnbYUCgXRapk1dMvw
+
+          - name: nasa_svs_youtube
+            url: https://www.youtube.com/feeds/videos.xml?channel_id=UC_LcMqceTilaR-EN1knTz-Q
+
+          - name: jpl_youtube
+            url: https://www.youtube.com/feeds/videos.xml?channel_id=UCryGec9PdUCLjpJW2mgCuLw
+
+        limits:
+          max_items_per_feed: 10
+
+        freshness:
+          max_age_days: 4
+          require_published_date: true
+
+        output:
+          top_n: 20
+          md_filename: daily_videos.md
+
+      # ===============================
+      # NEBULACAST
+      # ===============================
+      nebulacast:
+        enabled: true
+
+        feeds:
+          - name: nebulacast
+            url: https://feeds2.feedburner.com/nebulacast
+
+        selection:
+          sort_by: published_at
+          sort_order: desc
+          drop_items_without_date: true    
+
+        limits:
+          max_items_per_feed: 50
+
+        fetch_policy:
+          timeout_seconds: 30
+          user_agent: ai-agents/AG_news_radar (nebulacast)
+
+        freshness:
+          max_age_days: 30
+          require_published_date: true
+
+        output:
+          top_n: 7
+          md_filename: daily_nebulacast.md
+          json_filename: daily_nebulacast.json
+
+
+      # ===============================
+      # ARXIV / HIGH-VOLUME STREAM
+      # ===============================
+      science:
+        enabled: true
+
+        feeds:
+          - name: arxiv_astroph
+            url: https://export.arxiv.org/rss/astro-ph
+          - name: nature_astronomy
+            url: https://www.nature.com/natastron.rss
+          - name: nature_subject_astro
+            url: http://www.nature.com/subjects/astronomy-and-astrophysics.rss
+          - name: apj_iop
+            url: https://iopscience.iop.org/journal/rss/0004-637X
+          - name: aj_iop
+            url: https://iopscience.iop.org/journal/rss/1538-3881
+          - name: apjl_iop
+            url: https://iopscience.iop.org/journal/rss/2041-8205
+          - name: apjs_iop
+            url: https://iopscience.iop.org/journal/rss/0067-0049
+          - name: pasp_iop
+            url: https://iopscience.iop.org/journal/rss/1538-3873
+            
+
+        fetch_policy:
+          timeout_seconds: 60
+          user_agent: "Mozilla/5.0 (NewsRadar; arXiv fetch)"
+
+        limits:
+          max_items_per_feed: 30
+
+        freshness:
+          max_age_days: 3
+          require_published_date: true
+
+        output:
+          top_n: 20
+          md_filename: daily_science.md
