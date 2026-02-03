@@ -59,32 +59,257 @@
       font-size:13px;
       margin-top:8px;
     }
-    .loc-select-row{
+
+    /* Location bar */
+    .loc-bar{
       display:flex;
       align-items:center;
       gap:8px;
-      margin-bottom:10px;
-      font-size:13px;
+      margin-bottom:12px;
+      font-size:12px;
     }
-    select, input{
-      font-size:13px;
-      padding:4px 8px;
+    .loc-bar-label{
+      color:var(--muted);
+      font-size:11px;
+      flex-shrink:0;
+    }
+    .loc-pill{
+      flex:1;
+      min-width:0;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
       border-radius:999px;
       border:1px solid var(--line);
-      background:#05060a;
+      background:rgba(255,255,255,.02);
       color:var(--text);
+      cursor:pointer;
+      transition:background 0.2s;
     }
-    button{
-      font-size:12px;
-      padding:4px 10px;
+    .loc-pill:hover{
+      background:rgba(255,255,255,.05);
+    }
+    .loc-pill-name{
+      font-weight:600;
+      color:var(--title);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .loc-pill-coords{
+      color:var(--muted);
+      font-size:11px;
+      flex-shrink:0;
+    }
+    .loc-change-btn{
+      font-size:11px;
+      padding:6px 12px;
       border-radius:999px;
       border:1px solid var(--line);
       background:rgba(143,182,255,.1);
       color:var(--text);
       cursor:pointer;
+      flex-shrink:0;
+      transition:background 0.2s;
     }
-    button:hover{
+    .loc-change-btn:hover{
       background:rgba(143,182,255,.2);
+    }
+
+    /* Location panel */
+    .loc-panel{
+      display:none;
+      margin-top:8px;
+      padding:12px;
+      background:rgba(255,255,255,.02);
+      border:1px solid var(--line);
+      border-radius:10px;
+    }
+    .loc-panel.open{
+      display:block;
+    }
+    .loc-panel-error{
+      padding:8px 10px;
+      margin-bottom:10px;
+      background:rgba(255,107,107,.1);
+      border:1px solid var(--bad);
+      border-radius:6px;
+      color:var(--bad);
+      font-size:12px;
+    }
+    .loc-panel-section{
+      margin-bottom:12px;
+    }
+    .loc-panel-section:last-child{
+      margin-bottom:0;
+    }
+    .loc-panel-label{
+      display:block;
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:6px;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+    .loc-input-dark, .loc-select-dark{
+      width:100%;
+      font-size:13px;
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--text);
+      font-family:inherit;
+    }
+    .loc-input-dark:focus, .loc-select-dark:focus{
+      outline:2px solid rgba(143,182,255,.4);
+      outline-offset:1px;
+    }
+    .loc-input-dark::placeholder{
+      color:var(--muted);
+    }
+    .loc-search-suggestions{
+      position:absolute;
+      z-index:100;
+      width:100%;
+      max-width:calc(100% - 24px);
+      margin-top:4px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,.3);
+      max-height:200px;
+      overflow-y:auto;
+      display:none;
+    }
+    .loc-search-suggestions.show{
+      display:block;
+    }
+    .loc-search-suggestion{
+      padding:8px 12px;
+      cursor:pointer;
+      border-bottom:1px solid var(--line);
+      font-size:13px;
+    }
+    .loc-search-suggestion:last-child{
+      border-bottom:none;
+    }
+    .loc-search-suggestion:hover{
+      background:rgba(255,255,255,.05);
+    }
+    .loc-search-suggestion-name{
+      color:var(--title);
+      font-weight:500;
+    }
+    .loc-search-suggestion-details{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .loc-geo-btn{
+      width:100%;
+      padding:8px 12px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(143,182,255,.1);
+      color:var(--text);
+      cursor:pointer;
+      font-size:13px;
+      transition:background 0.2s;
+    }
+    .loc-geo-btn:hover{
+      background:rgba(143,182,255,.2);
+    }
+    .loc-geo-btn:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+    .loc-geo-error{
+      margin-top:6px;
+      font-size:11px;
+      color:var(--bad);
+    }
+    .loc-advanced-toggle{
+      font-size:11px;
+      color:var(--muted);
+      cursor:pointer;
+      margin-top:8px;
+      display:inline-block;
+    }
+    .loc-advanced-toggle:hover{
+      color:var(--text);
+    }
+    .loc-advanced{
+      display:none;
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid var(--line);
+    }
+    .loc-advanced.open{
+      display:block;
+    }
+    .loc-advanced-hint{
+      font-size:10px;
+      color:var(--muted);
+      margin-top:4px;
+      font-style:italic;
+    }
+    .loc-actions{
+      display:flex;
+      gap:8px;
+      margin-top:12px;
+    }
+    .loc-btn-primary{
+      flex:1;
+      padding:10px 16px;
+      border-radius:8px;
+      border:none;
+      background:rgba(143,182,255,.2);
+      color:var(--title);
+      font-weight:600;
+      cursor:pointer;
+      font-size:13px;
+      transition:background 0.2s;
+    }
+    .loc-btn-primary:hover:not(:disabled){
+      background:rgba(143,182,255,.3);
+    }
+    .loc-btn-primary:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+    .loc-btn-secondary{
+      padding:10px 16px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      color:var(--text);
+      cursor:pointer;
+      font-size:13px;
+      transition:background 0.2s;
+    }
+    .loc-btn-secondary:hover{
+      background:rgba(255,255,255,.05);
+    }
+    .loc-status{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .loc-status.fetching{
+      color:var(--mid);
+    }
+    .loc-status.error{
+      color:var(--bad);
+    }
+
+    @media(min-width:560px){
+      .loc-panel-section-row{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+      }
     }
   </style>
 </head>
@@ -96,16 +321,61 @@
         POC page testing <code>/api/astro-weather</code> Cloudflare Pages Function.
       </div>
 
-      <div class="loc-select-row">
-        <span>Location:</span>
-        <select id="locSelect"></select>
-        <span style="margin-left:12px;">or</span>
-        <input type="number" step="0.0001" placeholder="Lat" id="latInput" style="width:80px;">
-        <input type="number" step="0.0001" placeholder="Lon" id="lonInput" style="width:80px;">
-        <input type="text" placeholder="TZ" id="tzInput" style="width:120px;" value="Europe/Warsaw">
-        <button type="button" id="fetchBtn">Fetch</button>
+      <!-- Location bar -->
+      <div class="loc-bar">
+        <span class="loc-bar-label">Location</span>
+        <div class="loc-pill" id="locPill" role="button" tabindex="0">
+          <span class="loc-pill-name" id="locPillName">Warsaw</span>
+          <span class="loc-pill-coords" id="locPillCoords">52.23, 21.01</span>
+        </div>
+        <button type="button" class="loc-change-btn" id="locChangeBtn">Change</button>
       </div>
 
+      <!-- Location panel (collapsed) -->
+      <div class="loc-panel" id="locPanel">
+        <div class="loc-panel-error" id="locPanelError" style="display:none"></div>
+
+        <div class="loc-panel-section">
+          <label class="loc-panel-label">Presets</label>
+          <select class="loc-select-dark" id="locPresetSelect">
+            <option value="">Select preset…</option>
+          </select>
+        </div>
+
+        <div class="loc-panel-section">
+          <label class="loc-panel-label">Search</label>
+          <div style="position:relative;">
+            <input type="text" class="loc-input-dark" id="locSearchInput" placeholder="Type city name…" autocomplete="off">
+            <div class="loc-search-suggestions" id="locSearchSuggestions"></div>
+          </div>
+          <div id="locSearchError" class="loc-geo-error" style="display:none">Geocode service not available</div>
+        </div>
+
+        <div class="loc-panel-section">
+          <button type="button" class="loc-geo-btn" id="locGeoBtn">Use my location</button>
+          <div id="locGeoError" class="loc-geo-error" style="display:none"></div>
+        </div>
+
+        <div class="loc-panel-section">
+          <span class="loc-advanced-toggle" id="locAdvancedToggle">Advanced ▸</span>
+          <div class="loc-advanced" id="locAdvanced">
+            <label class="loc-panel-label">Latitude</label>
+            <input type="number" step="0.0001" class="loc-input-dark" id="locLatInput" placeholder="52.2297">
+            <label class="loc-panel-label" style="margin-top:8px;">Longitude</label>
+            <input type="number" step="0.0001" class="loc-input-dark" id="locLonInput" placeholder="21.0122">
+            <label class="loc-panel-label" style="margin-top:8px;">Timezone</label>
+            <input type="text" class="loc-input-dark" id="locTzInput" placeholder="Europe/Warsaw">
+            <div class="loc-advanced-hint">Tip: paste '52.23, 21.01'</div>
+          </div>
+        </div>
+
+        <div class="loc-actions">
+          <button type="button" class="loc-btn-primary" id="locApplyBtn">Apply</button>
+          <button type="button" class="loc-btn-secondary" id="locCancelBtn">Cancel</button>
+        </div>
+      </div>
+
+      <div id="locStatus" class="loc-status"></div>
       <div id="locHeader" class="loc-header">Loading…</div>
       <div id="jsonSnippet" class="json-snippet">Loading JSON…</div>
       <div id="errorBox" class="error" style="display:none"></div>
@@ -116,86 +386,318 @@
     (function(){
       "use strict";
 
-      const LS_KEY = "astro_poc_loc_id_v1";
-      const API_BASE = ""; // same origin
-      const API_URL = API_BASE + "/api/astro-weather";
-      const INDEX_URL = API_BASE + "/data/weather/locations.json";
+      const LS_KEY = "nebulacast_location";
+      const API_BASE = "";
+      const API_ASTRO_WEATHER = API_BASE + "/api/astro-weather";
+      const API_GEOCODE = API_BASE + "/api/geocode";
+      const API_REVGEO = API_BASE + "/api/revgeo";
+      // Fallback for local dev (static JSON)
+      const STATIC_LOCATIONS_INDEX = API_BASE + "/data/weather/locations.json";
+      const STATIC_LOC_BASE = API_BASE + "/data/weather/loc";
+      
+      console.log("API_BASE:", API_BASE);
+      console.log("STATIC_LOCATIONS_INDEX:", STATIC_LOCATIONS_INDEX);
+      console.log("STATIC_LOC_BASE:", STATIC_LOC_BASE);
 
-      const selectEl = document.getElementById("locSelect");
-      const latInput = document.getElementById("latInput");
-      const lonInput = document.getElementById("lonInput");
-      const tzInput = document.getElementById("tzInput");
-      const fetchBtn = document.getElementById("fetchBtn");
+      const DEFAULT_LOCATION = {
+        name: "Warsaw",
+        lat: 52.2297,
+        lon: 21.0122,
+        tz: "Europe/Warsaw"
+      };
+
+      const PRESETS = [
+        {name:"Warsaw", lat:52.2297, lon:21.0122, tz:"Europe/Warsaw"},
+        {name:"Berlin", lat:52.5200, lon:13.4050, tz:"Europe/Berlin"},
+        {name:"Prague", lat:50.0755, lon:14.4378, tz:"Europe/Prague"},
+      ];
+
+      let state = {
+        location: {...DEFAULT_LOCATION},
+        draftLocation: null,
+        locationPanelOpen: false,
+        fetching: false,
+        error: null
+      };
+
+      // Elements
+      const locPill = document.getElementById("locPill");
+      const locPillName = document.getElementById("locPillName");
+      const locPillCoords = document.getElementById("locPillCoords");
+      const locChangeBtn = document.getElementById("locChangeBtn");
+      const locPanel = document.getElementById("locPanel");
+      const locPanelError = document.getElementById("locPanelError");
+      const locPresetSelect = document.getElementById("locPresetSelect");
+      const locSearchInput = document.getElementById("locSearchInput");
+      const locSearchSuggestions = document.getElementById("locSearchSuggestions");
+      const locSearchError = document.getElementById("locSearchError");
+      const locGeoBtn = document.getElementById("locGeoBtn");
+      const locGeoError = document.getElementById("locGeoError");
+      const locAdvancedToggle = document.getElementById("locAdvancedToggle");
+      const locAdvanced = document.getElementById("locAdvanced");
+      const locLatInput = document.getElementById("locLatInput");
+      const locLonInput = document.getElementById("locLonInput");
+      const locTzInput = document.getElementById("locTzInput");
+      const locApplyBtn = document.getElementById("locApplyBtn");
+      const locCancelBtn = document.getElementById("locCancelBtn");
+      const locStatus = document.getElementById("locStatus");
       const headerEl = document.getElementById("locHeader");
       const jsonEl = document.getElementById("jsonSnippet");
       const errEl = document.getElementById("errorBox");
 
-      function showError(msg){
-        errEl.textContent = msg;
-        errEl.style.display = "block";
-      }
-      function clearError(){
-        errEl.textContent = "";
-        errEl.style.display = "none";
-      }
+      let searchDebounceTimer = null;
+      let geocodeAvailable = false;
 
-      function loadStoredId(){
+      // Load saved location
+      function loadSavedLocation(){
         try{
-          return localStorage.getItem(LS_KEY) || null;
-        }catch(e){ return null; }
-      }
-      function saveId(id){
-        try{ localStorage.setItem(LS_KEY, id); }catch(e){}
-      }
-
-      async function loadIndex(){
-        clearError();
-        jsonEl.textContent = "Loading locations index…";
-        try{
-          const res = await fetch(INDEX_URL + "?ts=" + Date.now());
-          if(!res.ok) throw new Error("HTTP " + res.status);
-          const idx = await res.json();
-          const locs = Array.isArray(idx.locations) ? idx.locations : [];
-          if(!locs.length){
-            throw new Error("No locations in index");
+          const raw = localStorage.getItem(LS_KEY);
+          if(!raw) return DEFAULT_LOCATION;
+          const parsed = JSON.parse(raw);
+          if(parsed && typeof parsed.lat === "number" && typeof parsed.lon === "number"){
+            return {
+              name: parsed.name || DEFAULT_LOCATION.name,
+              lat: parsed.lat,
+              lon: parsed.lon,
+              tz: parsed.tz || DEFAULT_LOCATION.tz
+            };
           }
-          while(selectEl.firstChild) selectEl.removeChild(selectEl.firstChild);
-          const storedId = loadStoredId();
-          let currentId = storedId || idx.default_id || locs[0].id;
-          locs.forEach(loc=>{
-            const opt = document.createElement("option");
-            opt.value = loc.id;
-            opt.textContent = loc.name || loc.id;
-            selectEl.appendChild(opt);
-          });
-          if(currentId) selectEl.value = currentId;
-          selectEl.addEventListener("change", ()=>{
-            const id = selectEl.value;
-            if(id){
-              saveId(id);
-              loadLoc(id, locs);
+        }catch(e){}
+        return DEFAULT_LOCATION;
+      }
+
+      function saveLocation(loc){
+        try{
+          localStorage.setItem(LS_KEY, JSON.stringify(loc));
+        }catch(e){}
+      }
+
+      function updateLocationPill(){
+        if(!locPillName || !locPillCoords) return;
+        const loc = state.location;
+        locPillName.textContent = loc.name;
+        locPillCoords.textContent = loc.lat.toFixed(2) + ", " + loc.lon.toFixed(2);
+      }
+
+      function updateDraftFromInputs(){
+        if(!locLatInput || !locLonInput || !locTzInput) return;
+        const lat = parseFloat(locLatInput.value);
+        const lon = parseFloat(locLonInput.value);
+        const tz = locTzInput.value.trim() || "Europe/Warsaw";
+        if(!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180){
+          state.draftLocation = {
+            name: state.draftLocation?.name || "Custom location",
+            lat: lat,
+            lon: lon,
+            tz: tz || "UTC"
+          };
+        }
+      }
+
+      function setDraftFromPreset(preset){
+        if(!preset) return;
+        state.draftLocation = {...preset};
+        if(locLatInput) locLatInput.value = preset.lat.toFixed(4);
+        if(locLonInput) locLonInput.value = preset.lon.toFixed(4);
+        if(locTzInput) locTzInput.value = preset.tz;
+        if(locSearchInput) locSearchInput.value = "";
+        hideSuggestions();
+      }
+
+      function setDraftFromCoords(lat, lon, name, tz){
+        state.draftLocation = {
+          name: name || "Custom location",
+          lat: lat,
+          lon: lon,
+          tz: tz || state.location.tz || "Europe/Warsaw"
+        };
+        if(locLatInput) locLatInput.value = lat.toFixed(4);
+        if(locLonInput) locLonInput.value = lon.toFixed(4);
+        if(locTzInput) locTzInput.value = state.draftLocation.tz;
+      }
+
+      function toggleLocationPanel(){
+        if(!locPanel) return;
+        state.locationPanelOpen = !state.locationPanelOpen;
+        locPanel.classList.toggle("open", state.locationPanelOpen);
+        if(state.locationPanelOpen){
+          state.draftLocation = {...state.location};
+          if(locLatInput) locLatInput.value = state.location.lat.toFixed(4);
+          if(locLonInput) locLonInput.value = state.location.lon.toFixed(4);
+          if(locTzInput) locTzInput.value = state.location.tz;
+          if(locSearchInput) locSearchInput.value = "";
+          hideSuggestions();
+          hidePanelError();
+        }
+      }
+
+      function hidePanelError(){
+        if(!locPanelError) return;
+        locPanelError.style.display = "none";
+        locPanelError.textContent = "";
+      }
+
+      function showPanelError(msg){
+        if(!locPanelError) return;
+        locPanelError.textContent = msg;
+        locPanelError.style.display = "block";
+      }
+
+      function hideSuggestions(){
+        if(!locSearchSuggestions) return;
+        locSearchSuggestions.classList.remove("show");
+        while(locSearchSuggestions.firstChild){
+          locSearchSuggestions.removeChild(locSearchSuggestions.firstChild);
+        }
+      }
+
+      function showSuggestions(items){
+        if(!locSearchSuggestions) return;
+        hideSuggestions();
+        if(!items || items.length === 0) return;
+        items.forEach(item => {
+          const div = document.createElement("div");
+          div.className = "loc-search-suggestion";
+          div.innerHTML = `
+            <div class="loc-search-suggestion-name">${escapeHtml(item.name)}</div>
+            <div class="loc-search-suggestion-details">${escapeHtml(item.country || "")} ${item.lat?.toFixed(2) || ""}, ${item.lon?.toFixed(2) || ""}</div>
+          `;
+          div.addEventListener("click", () => selectSuggestion(item));
+          locSearchSuggestions.appendChild(div);
+        });
+        locSearchSuggestions.classList.add("show");
+      }
+
+      function escapeHtml(s){
+        if(!s) return "";
+        const div = document.createElement("div");
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      async function searchGeocode(q){
+        // Try API first
+        try{
+          const res = await fetch(API_GEOCODE + "?q=" + encodeURIComponent(q));
+          if(res.ok){
+            const data = await res.json();
+            geocodeAvailable = true;
+            if(locSearchError) locSearchError.style.display = "none";
+            return Array.isArray(data) ? data.slice(0, 6) : [];
+          }
+          // If 404, API not available
+          if(res.status === 404){
+            geocodeAvailable = false;
+            if(locSearchError){
+              locSearchError.style.display = "block";
+              locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
             }
-          });
-          fetchBtn.addEventListener("click", ()=>{
-            const lat = parseFloat(latInput.value);
-            const lon = parseFloat(lonInput.value);
-            const tz = tzInput.value.trim() || "Europe/Warsaw";
-            if(isNaN(lat) || isNaN(lon)){
-              showError("Invalid lat/lon");
-              return;
-            }
-            fetchAstroWeather(lat, lon, tz);
-          });
-          if(currentId) loadLoc(currentId, locs);
+            return [];
+          }
+          throw new Error("HTTP " + res.status);
         }catch(e){
-          jsonEl.textContent = "—";
-          showError("Failed to load locations index: " + (e.message || e));
+          console.warn("Geocode failed:", e);
+          geocodeAvailable = false;
+          if(locSearchError){
+            locSearchError.style.display = "block";
+            locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
+          }
+          return [];
+        }
+      }
+
+      function selectSuggestion(item){
+        setDraftFromCoords(item.lat, item.lon, item.name, item.tz);
+        if(locSearchInput) locSearchInput.value = item.name;
+        hideSuggestions();
+      }
+
+      async function useMyLocation(){
+        if(!navigator.geolocation){
+          if(locGeoError){
+            locGeoError.textContent = "Geolocation not supported";
+            locGeoError.style.display = "block";
+          }
+          return;
+        }
+        if(locGeoBtn) locGeoBtn.disabled = true;
+        if(locGeoError) locGeoError.style.display = "none";
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            let name = "My location";
+            let tz = state.location.tz || "Europe/Warsaw";
+            try{
+              if(geocodeAvailable){
+                const res = await fetch(API_REVGEO + "?lat=" + lat + "&lon=" + lon);
+                if(res.ok){
+                  const data = await res.json();
+                  if(data.name) name = data.name;
+                  if(data.tz) tz = data.tz;
+                }
+              }
+            }catch(e){
+              console.warn("Reverse geocode failed:", e);
+            }
+            setDraftFromCoords(lat, lon, name, tz);
+            if(locGeoBtn) locGeoBtn.disabled = false;
+          },
+          (err) => {
+            if(locGeoError){
+              locGeoError.textContent = "Location permission denied. Use search or coordinates.";
+              locGeoError.style.display = "block";
+            }
+            if(locGeoBtn) locGeoBtn.disabled = false;
+          }
+        );
+      }
+
+      function toggleAdvanced(){
+        if(!locAdvanced || !locAdvancedToggle) return;
+        const isOpen = locAdvanced.classList.contains("open");
+        locAdvanced.classList.toggle("open", !isOpen);
+        locAdvancedToggle.textContent = isOpen ? "Advanced ▸" : "Advanced ▾";
+      }
+
+      async function applyLocation(){
+        updateDraftFromInputs();
+        if(!state.draftLocation){
+          showPanelError("Invalid location. Check coordinates.");
+          return;
+        }
+        state.fetching = true;
+        if(locApplyBtn){
+          locApplyBtn.disabled = true;
+          locApplyBtn.textContent = "Applying…";
+        }
+        hidePanelError();
+        try{
+          await fetchAstroWeather(state.draftLocation.lat, state.draftLocation.lon, state.draftLocation.tz);
+          state.location = {...state.draftLocation};
+          saveLocation(state.location);
+          updateLocationPill();
+          toggleLocationPanel();
+          if(locStatus){
+            locStatus.textContent = "Updated: " + new Date().toLocaleTimeString();
+            locStatus.className = "loc-status";
+          }
+        }catch(e){
+          showPanelError("Failed to fetch weather: " + (e.message || e));
+        }finally{
+          state.fetching = false;
+          if(locApplyBtn){
+            locApplyBtn.disabled = false;
+            locApplyBtn.textContent = "Apply";
+          }
         }
       }
 
       async function fetchAstroWeather(lat, lon, tz, profile = "default", hours = 72){
-        clearError();
-        jsonEl.textContent = "Fetching from /api/astro-weather…";
+        if(jsonEl) jsonEl.textContent = "Fetching weather data…";
+        if(errEl) errEl.style.display = "none";
+        
+        // Try API first
         try{
           const params = new URLSearchParams({
             lat: String(lat),
@@ -204,56 +706,326 @@
             hours: String(hours),
             profile: profile,
           });
-          const url = API_URL + "?" + params.toString();
+          const url = API_ASTRO_WEATHER + "?" + params.toString();
           const res = await fetch(url);
+          if(res.ok){
+            const data = await res.json();
+            renderWeatherData(data);
+            return;
+          }
+          // If 404 or other error, fallback to static JSON
+          if(res.status === 404){
+            console.warn("API not available (404), falling back to static JSON");
+            await fetchAstroWeatherStatic(lat, lon, tz);
+            return;
+          }
+          const text = await res.text();
+          throw new Error("HTTP " + res.status + ": " + text.substring(0, 100));
+        }catch(e){
+          // Network error or API unavailable - try static fallback
+          console.warn("API failed, trying static fallback:", e);
+          try{
+            await fetchAstroWeatherStatic(lat, lon, tz);
+          }catch(e2){
+            if(jsonEl) jsonEl.textContent = "—";
+            if(errEl){
+              errEl.textContent = "API error: " + (e.message || e) + ". Static fallback also failed: " + (e2.message || e2);
+              errEl.style.display = "block";
+            }
+            throw e2;
+          }
+        }
+      }
+
+      async function fetchAstroWeatherStatic(lat, lon, tz){
+        if(jsonEl) jsonEl.textContent = "Loading static location data…";
+        try{
+          // Try to find matching location from static index
+          const indexRes = await fetch(STATIC_LOCATIONS_INDEX + "?ts=" + Date.now());
+          if(!indexRes.ok) throw new Error("Static index not found");
+          const index = await indexRes.json();
+          const locations = Array.isArray(index.locations) ? index.locations : [];
+          
+          // Find closest location (simple distance)
+          let bestLoc = null;
+          let bestDist = Infinity;
+          for(const loc of locations){
+            const dist = Math.abs(loc.lat - lat) + Math.abs(loc.lon - lon);
+            if(dist < bestDist){
+              bestDist = dist;
+              bestLoc = loc;
+            }
+          }
+          
+          if(!bestLoc){
+            throw new Error("No matching static location found");
+          }
+          
+          // Allow matching within reasonable distance (0.5 degrees ≈ 50km)
+          if(bestDist > 0.5){
+            console.warn("Closest location is far:", bestLoc.name, "distance:", bestDist.toFixed(3));
+            // Still try to load it
+          }
+          
+          const locUrl = STATIC_LOC_BASE + "/" + bestLoc.id + ".json?ts=" + Date.now();
+          console.log("Fetching static JSON from:", locUrl);
+          const res = await fetch(locUrl);
           if(!res.ok){
-            const text = await res.text();
-            throw new Error("HTTP " + res.status + ": " + text.substring(0, 100));
+            throw new Error("Static location JSON not found: " + locUrl + " (HTTP " + res.status + ")");
           }
           const data = await res.json();
-          headerEl.innerHTML =
-            "📍 <strong>" + (data.location.name || "Location") + "</strong> " +
-            "(" + data.location.lat.toFixed(4) + ", " + data.location.lon.toFixed(4) + ") · " +
-            data.location.tz + " · Profile: " + data.profile;
-          const preview = {
-            generated_at: data.generated_at,
-            location: data.location,
-            horizon_hours: data.horizon_hours,
-            profile: data.profile,
-            derived: data.derived,
-            hours_preview: Array.isArray(data.hours) ? data.hours.slice(0, 3).map(h => ({
-              time: h.time,
-              cloud_total: h.cloud_total,
-              wind_m_s: h.wind_m_s,
-              temp_c: h.temp_c,
-              score: h.score,
-              score_breakdown: h.score_breakdown,
-            })) : []
+          if(!data || !data.location){
+            throw new Error("Invalid static JSON format");
+          }
+          
+          // Transform static JSON to match API format
+          const transformed = {
+            generated_at: data.generated_at || new Date().toISOString(),
+            location: {
+              name: data.location.name || bestLoc.name,
+              lat: data.location.lat || bestLoc.lat,
+              lon: data.location.lon || bestLoc.lon,
+              tz: data.location.tz || bestLoc.tz || tz || "Europe/Warsaw"
+            },
+            horizon_hours: data.horizon_hours || (Array.isArray(data.hours) ? data.hours.length : 0),
+            profile: "default",
+            derived: data.derived || data.trends || {},
+            hours: Array.isArray(data.hours) ? data.hours.map(h => {
+              // Handle different score_breakdown formats
+              let breakdown = h.score_breakdown;
+              const score = h.score || h.score_profiles?.balanced || 0;
+              
+              if(Array.isArray(breakdown)){
+                // Convert array format (from static JSON) to object format (API contract)
+                // Static JSON has: {key, label, max, raw, normalized, earned}
+                // API expects: {components: [{key, label, value, points}], total, clamped_total}
+                const components = breakdown.map(c => ({
+                  key: c.key || "",
+                  label: c.label || "",
+                  value: c.raw !== undefined ? c.raw : (c.value !== undefined ? c.value : 0),
+                  points: c.earned !== undefined ? c.earned : (c.points !== undefined ? c.points : 0)
+                }));
+                const total = components.reduce((sum, c) => sum + (c.points || 0), 0);
+                breakdown = {
+                  components: components,
+                  total: total,
+                  clamped_total: score
+                };
+              }else if(breakdown && typeof breakdown === "object" && breakdown.components){
+                // Already in API format, ensure total matches
+                if(breakdown.total === undefined){
+                  breakdown.total = breakdown.components.reduce((sum, c) => sum + (c.points || 0), 0);
+                }
+                if(breakdown.clamped_total === undefined){
+                  breakdown.clamped_total = score;
+                }
+              }else{
+                // No breakdown or invalid format
+                breakdown = {
+                  components: [],
+                  total: score,
+                  clamped_total: score
+                };
+              }
+              
+              return {
+                ...h,
+                score: score,
+                score_breakdown: breakdown
+              };
+            }) : []
           };
-          jsonEl.textContent = JSON.stringify(preview, null, 2);
+          
+          console.log("Static fallback successful, loaded:", bestLoc.name);
+          renderWeatherData(transformed);
         }catch(e){
-          jsonEl.textContent = "—";
-          showError("API error: " + (e.message || e));
+          console.error("Static fallback error:", e);
+          throw new Error("Static fallback failed: " + (e.message || e));
         }
       }
 
-      async function loadLoc(id, locs){
-        const loc = (locs || []).find(l=>l.id===id) || locs[0];
-        if(!loc){
-          headerEl.textContent = "No location";
-          jsonEl.textContent = "—";
+      function renderWeatherData(data){
+        if(!headerEl || !jsonEl) return;
+        if(!data || !data.location){
+          console.error("Invalid data:", data);
           return;
         }
-        await fetchAstroWeather(loc.lat, loc.lon, loc.tz || "Europe/Warsaw");
+        headerEl.innerHTML =
+          "📍 <strong>" + (data.location.name || "Location") + "</strong> " +
+          "(" + data.location.lat.toFixed(4) + ", " + data.location.lon.toFixed(4) + ") · " +
+          data.location.tz + " · Profile: " + (data.profile || "default");
+        const preview = {
+          generated_at: data.generated_at,
+          location: data.location,
+          horizon_hours: data.horizon_hours,
+          profile: data.profile || "default",
+          derived: data.derived || {},
+          hours_preview: Array.isArray(data.hours) ? data.hours.slice(0, 3).map(h => ({
+            time: h.time,
+            cloud_total: h.cloud_total,
+            wind_m_s: h.wind_m_s,
+            temp_c: h.temp_c,
+            score: h.score,
+            score_breakdown: h.score_breakdown,
+          })) : []
+        };
+        jsonEl.textContent = JSON.stringify(preview, null, 2);
       }
 
+      // Initialize presets
+      if(locPresetSelect){
+        PRESETS.forEach(preset => {
+          const opt = document.createElement("option");
+          opt.value = preset.name;
+          opt.textContent = preset.name;
+          opt.dataset.lat = preset.lat;
+          opt.dataset.lon = preset.lon;
+          opt.dataset.tz = preset.tz;
+          locPresetSelect.appendChild(opt);
+        });
+      }
+
+      // Event listeners
+      if(locPill){
+        locPill.addEventListener("click", toggleLocationPanel);
+        locPill.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            toggleLocationPanel();
+          }
+        });
+      }
+      if(locChangeBtn) locChangeBtn.addEventListener("click", toggleLocationPanel);
+      if(locCancelBtn) locCancelBtn.addEventListener("click", toggleLocationPanel);
+
+      if(locPresetSelect){
+        locPresetSelect.addEventListener("change", function(){
+          const opt = this.options[this.selectedIndex];
+          if(opt && opt.dataset.lat){
+            const preset = {
+              name: opt.value,
+              lat: parseFloat(opt.dataset.lat),
+              lon: parseFloat(opt.dataset.lon),
+              tz: opt.dataset.tz
+            };
+            setDraftFromPreset(preset);
+          }
+        });
+      }
+
+      if(locSearchInput){
+        locSearchInput.addEventListener("input", function(){
+          const q = this.value.trim();
+          if(searchDebounceTimer) clearTimeout(searchDebounceTimer);
+          if(locSearchError) locSearchError.style.display = "none";
+          if(q.length < 2){
+            hideSuggestions();
+            return;
+          }
+          searchDebounceTimer = setTimeout(async () => {
+            const items = await searchGeocode(q);
+            if(items.length > 0){
+              showSuggestions(items);
+            }else{
+              hideSuggestions();
+            }
+          }, 250);
+        });
+
+        locSearchInput.addEventListener("keydown", function(e){
+          if(e.key === "Enter"){
+            const firstSuggestion = locSearchSuggestions && locSearchSuggestions.querySelector(".loc-search-suggestion");
+            if(firstSuggestion){
+              firstSuggestion.click();
+            }
+          }else if(e.key === "Escape"){
+            hideSuggestions();
+          }
+        });
+      }
+
+      document.addEventListener("click", function(e){
+        if(locSearchInput && locSearchSuggestions && !locSearchInput.contains(e.target) && !locSearchSuggestions.contains(e.target)){
+          hideSuggestions();
+        }
+      });
+
+      if(locGeoBtn) locGeoBtn.addEventListener("click", useMyLocation);
+      if(locAdvancedToggle) locAdvancedToggle.addEventListener("click", toggleAdvanced);
+      if(locLatInput){
+        locLatInput.addEventListener("input", updateDraftFromInputs);
+        // Handle paste coordinates "lat, lon"
+        locLatInput.addEventListener("paste", function(e){
+          setTimeout(() => {
+            const val = this.value.trim();
+            const match = val.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+            if(match){
+              const lat = parseFloat(match[1]);
+              const lon = parseFloat(match[2]);
+              if(!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180){
+                locLatInput.value = lat.toFixed(4);
+                if(locLonInput) locLonInput.value = lon.toFixed(4);
+                updateDraftFromInputs();
+              }
+            }
+          }, 10);
+        });
+      }
+      if(locLonInput) locLonInput.addEventListener("input", updateDraftFromInputs);
+      if(locTzInput) locTzInput.addEventListener("input", updateDraftFromInputs);
+      if(locApplyBtn) locApplyBtn.addEventListener("click", applyLocation);
+
+      document.addEventListener("keydown", function(e){
+        if(e.key === "Escape" && state.locationPanelOpen){
+          toggleLocationPanel();
+        }
+      });
+
+      // Check geocode availability (non-blocking)
+      fetch(API_GEOCODE + "?q=test").then(res => {
+        geocodeAvailable = res.ok;
+        if(!geocodeAvailable && locSearchError){
+          locSearchError.style.display = "block";
+          locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
+        }
+      }).catch(() => {
+        geocodeAvailable = false;
+        if(locSearchError){
+          locSearchError.style.display = "block";
+          locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
+        }
+      });
+
+      // Initialize (wait for DOM)
+      function init(){
+        if(!locPill || !locPillName || !locPillCoords || !locChangeBtn || !locPanel){
+          console.error("Location UI elements not found");
+          if(errEl){
+            errEl.textContent = "UI initialization error: missing elements";
+            errEl.style.display = "block";
+          }
+          return;
+        }
+        
+        state.location = loadSavedLocation();
+        updateLocationPill();
+        
+        // Initial fetch (with error handling)
+        fetchAstroWeather(state.location.lat, state.location.lon, state.location.tz).catch(e => {
+          console.error("Initial fetch failed:", e);
+          if(errEl){
+            errEl.textContent = "Failed to load weather data: " + (e.message || e);
+            errEl.style.display = "block";
+          }
+        });
+      }
+      
       if(document.readyState === "loading"){
-        document.addEventListener("DOMContentLoaded", loadIndex);
+        document.addEventListener("DOMContentLoaded", init);
       }else{
-        loadIndex();
+        init();
       }
     })();
   </script>
 </body>
 </html>
-
