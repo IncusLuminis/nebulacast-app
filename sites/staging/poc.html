@@ -319,6 +319,7 @@
       <h1>Astro Weather • POC locations</h1>
       <div class="sub">
         POC page testing <code>/api/astro-weather</code> Cloudflare Pages Function.
+        <br><small style="opacity:0.7;">💡 For full functionality, run: <code>make server-api</code></small>
       </div>
 
       <!-- Location bar -->
@@ -330,6 +331,7 @@
         </div>
         <button type="button" class="loc-change-btn" id="locChangeBtn">Change</button>
       </div>
+      <div id="apiStatus" style="margin-top:8px;font-size:12px;opacity:0.7;display:none;"></div>
 
       <!-- Location panel (collapsed) -->
       <div class="loc-panel" id="locPanel">
@@ -444,6 +446,7 @@
       const headerEl = document.getElementById("locHeader");
       const jsonEl = document.getElementById("jsonSnippet");
       const errEl = document.getElementById("errorBox");
+      const apiStatusEl = document.getElementById("apiStatus");
 
       let searchDebounceTimer = null;
       let geocodeAvailable = false;
@@ -477,6 +480,14 @@
         const loc = state.location;
         locPillName.textContent = loc.name;
         locPillCoords.textContent = loc.lat.toFixed(2) + ", " + loc.lon.toFixed(2);
+      }
+
+      function updateLocationHeader(loc){
+        if(!headerEl) return;
+        headerEl.innerHTML =
+          "📍 <strong>" + (loc.name || "Location") + "</strong> " +
+          "(" + loc.lat.toFixed(4) + ", " + loc.lon.toFixed(4) + ") · " +
+          loc.tz;
       }
 
       function updateDraftFromInputs(){
@@ -585,22 +596,75 @@
             if(locSearchError) locSearchError.style.display = "none";
             return Array.isArray(data) ? data.slice(0, 6) : [];
           }
-          // If 404, API not available
+          // If 404, API not available - try direct Nominatim (CORS may block, but worth trying)
           if(res.status === 404){
+            console.warn("API geocode not available (404), trying direct Nominatim...");
+            try{
+              // Try direct Nominatim (may be blocked by CORS, but some browsers allow it)
+              const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`;
+              const directRes = await fetch(nominatimUrl, {
+                headers: {
+                  'Accept': 'application/json',
+                  'User-Agent': 'Nebulacast/1.0',
+                },
+              });
+              if(directRes.ok){
+                const data = await directRes.json();
+                const results = Array.isArray(data) ? data.map(item => ({
+                  name: item.display_name?.split(',')[0] || item.name || 'Unknown',
+                  country: item.address?.country || '',
+                  lat: parseFloat(item.lat) || 0,
+                  lon: parseFloat(item.lon) || 0,
+                })).filter(item => item.lat !== 0 && item.lon !== 0).slice(0, 6) : [];
+                if(results.length > 0){
+                  geocodeAvailable = true;
+                  if(locSearchError) locSearchError.style.display = "none";
+                  return results;
+                }
+              }
+            }catch(corsError){
+              console.warn("Direct Nominatim blocked by CORS:", corsError);
+            }
             geocodeAvailable = false;
             if(locSearchError){
               locSearchError.style.display = "block";
-              locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
+              locSearchError.textContent = "Geocode API not available. Run 'make server-api' for full functionality, or use presets/Advanced.";
             }
             return [];
           }
           throw new Error("HTTP " + res.status);
         }catch(e){
           console.warn("Geocode failed:", e);
+          // Try direct Nominatim as fallback
+          try{
+            const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`;
+            const directRes = await fetch(nominatimUrl, {
+              headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'Nebulacast/1.0',
+              },
+            });
+            if(directRes.ok){
+              const data = await directRes.json();
+              const results = Array.isArray(data) ? data.map(item => ({
+                name: item.display_name?.split(',')[0] || item.name || 'Unknown',
+                country: item.address?.country || '',
+                lat: parseFloat(item.lat) || 0,
+                lon: parseFloat(item.lon) || 0,
+              })).filter(item => item.lat !== 0 && item.lon !== 0).slice(0, 6) : [];
+              if(results.length > 0){
+                geocodeAvailable = true;
+                if(locSearchError) locSearchError.style.display = "none";
+                return results;
+              }
+            }
+          }catch(corsError){
+            console.warn("Direct Nominatim blocked by CORS:", corsError);
+          }
           geocodeAvailable = false;
           if(locSearchError){
             locSearchError.style.display = "block";
-            locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
+            locSearchError.textContent = "Geocode service not available. Run 'make server-api' for full functionality, or use presets/Advanced.";
           }
           return [];
         }
@@ -629,12 +693,36 @@
             let name = "My location";
             let tz = state.location.tz || "Europe/Warsaw";
             try{
-              if(geocodeAvailable){
+              // Try API first
+              try{
                 const res = await fetch(API_REVGEO + "?lat=" + lat + "&lon=" + lon);
                 if(res.ok){
                   const data = await res.json();
                   if(data.name) name = data.name;
                   if(data.tz) tz = data.tz;
+                }else if(res.status === 404){
+                  // API not available, try direct Nominatim
+                  throw new Error("API not available");
+                }
+              }catch(apiError){
+                // Try direct Nominatim as fallback
+                try{
+                  const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`;
+                  const directRes = await fetch(nominatimUrl, {
+                    headers: {
+                      'Accept': 'application/json',
+                      'User-Agent': 'Nebulacast/1.0',
+                    },
+                  });
+                  if(directRes.ok){
+                    const data = await directRes.json();
+                    const address = data.address || {};
+                    if(data.display_name) name = data.display_name.split(',')[0];
+                    else if(address.city) name = address.city;
+                    else if(address.town) name = address.town;
+                  }
+                }catch(corsError){
+                  console.warn("Direct Nominatim blocked by CORS:", corsError);
                 }
               }
             }catch(e){
@@ -666,6 +754,13 @@
           showPanelError("Invalid location. Check coordinates.");
           return;
         }
+        
+        // Update UI immediately with draft location (before fetch)
+        const draftLoc = {...state.draftLocation};
+        state.location = draftLoc;
+        updateLocationPill();
+        updateLocationHeader(draftLoc);
+        
         state.fetching = true;
         if(locApplyBtn){
           locApplyBtn.disabled = true;
@@ -674,7 +769,7 @@
         hidePanelError();
         try{
           await fetchAstroWeather(state.draftLocation.lat, state.draftLocation.lon, state.draftLocation.tz);
-          state.location = {...state.draftLocation};
+          // After successful fetch, location will be updated from API response in renderWeatherData
           saveLocation(state.location);
           updateLocationPill();
           toggleLocationPanel();
@@ -684,6 +779,7 @@
           }
         }catch(e){
           showPanelError("Failed to fetch weather: " + (e.message || e));
+          // Keep the draft location in UI even if fetch failed
         }finally{
           state.fetching = false;
           if(locApplyBtn){
@@ -715,7 +811,7 @@
           }
           // If 404 or other error, fallback to static JSON
           if(res.status === 404){
-            console.warn("API not available (404), falling back to static JSON");
+            console.warn("API not available (404). Run 'make server-api' for full functionality. Falling back to static JSON...");
             await fetchAstroWeatherStatic(lat, lon, tz);
             return;
           }
@@ -724,12 +820,13 @@
         }catch(e){
           // Network error or API unavailable - try static fallback
           console.warn("API failed, trying static fallback:", e);
+          console.warn("Note: Run 'make server-api' for full API functionality (astro-weather, geocode, revgeo)");
           try{
             await fetchAstroWeatherStatic(lat, lon, tz);
           }catch(e2){
             if(jsonEl) jsonEl.textContent = "—";
             if(errEl){
-              errEl.textContent = "API error: " + (e.message || e) + ". Static fallback also failed: " + (e2.message || e2);
+              errEl.textContent = "API error: " + (e.message || e) + ". Static fallback also failed: " + (e2.message || e2) + ". Run 'make server-api' for full functionality.";
               errEl.style.display = "block";
             }
             throw e2;
@@ -761,10 +858,16 @@
             throw new Error("No matching static location found");
           }
           
-          // Allow matching within reasonable distance (0.5 degrees ≈ 50km)
+          // Only use static fallback if location is close to one of the presets (within 0.5 degrees ≈ 50km)
+          // Otherwise, require API to be available
           if(bestDist > 0.5){
-            console.warn("Closest location is far:", bestLoc.name, "distance:", bestDist.toFixed(3));
-            // Still try to load it
+            const distKm = Math.round(bestDist * 111); // Rough conversion: 1 degree ≈ 111 km
+            throw new Error(
+              `Selected location "${state.location?.name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`}" is too far from available static data. ` +
+              `Closest preset is ${bestLoc.name} (~${distKm} km away). ` +
+              `\n\nTo use this location, run: make server-api\n` +
+              `Or choose one of the presets: Warsaw, Berlin, Prague`
+            );
           }
           
           const locUrl = STATIC_LOC_BASE + "/" + bestLoc.id + ".json?ts=" + Date.now();
@@ -850,10 +953,26 @@
           console.error("Invalid data:", data);
           return;
         }
+        
+        // Update location state from API response (may have better name/timezone)
+        if(data.location){
+          state.location = {
+            name: data.location.name || state.location.name,
+            lat: data.location.lat || state.location.lat,
+            lon: data.location.lon || state.location.lon,
+            tz: data.location.tz || state.location.tz
+          };
+          // Update UI with actual location from API
+          updateLocationPill();
+          updateLocationHeader(state.location);
+        }
+        
+        // Update header with full info including profile
         headerEl.innerHTML =
-          "📍 <strong>" + (data.location.name || "Location") + "</strong> " +
+          "📍 <strong>" + (data.location.name || state.location.name || "Location") + "</strong> " +
           "(" + data.location.lat.toFixed(4) + ", " + data.location.lon.toFixed(4) + ") · " +
           data.location.tz + " · Profile: " + (data.profile || "default");
+        
         const preview = {
           generated_at: data.generated_at,
           location: data.location,
@@ -997,6 +1116,29 @@
       });
 
       // Initialize (wait for DOM)
+      async function checkAPIStatus(){
+        if(!apiStatusEl) return;
+        try{
+          const res = await fetch(API_ASTRO_WEATHER + "?lat=52.2297&lon=21.0122&tz=Europe/Warsaw&hours=1&profile=default");
+          if(res.ok){
+            apiStatusEl.textContent = "✅ API available";
+            apiStatusEl.style.color = "var(--good)";
+            apiStatusEl.style.display = "block";
+            return true;
+          }else{
+            apiStatusEl.textContent = "⚠️ API not available (404). Run 'make server-api' for full functionality. Using static fallback for presets only.";
+            apiStatusEl.style.color = "var(--mid)";
+            apiStatusEl.style.display = "block";
+            return false;
+          }
+        }catch(e){
+          apiStatusEl.textContent = "⚠️ API not available. Run 'make server-api' for full functionality. Using static fallback for presets only.";
+          apiStatusEl.style.color = "var(--mid)";
+          apiStatusEl.style.display = "block";
+          return false;
+        }
+      }
+
       function init(){
         if(!locPill || !locPillName || !locPillCoords || !locChangeBtn || !locPanel){
           console.error("Location UI elements not found");
@@ -1009,6 +1151,10 @@
         
         state.location = loadSavedLocation();
         updateLocationPill();
+        updateLocationHeader(state.location);
+        
+        // Check API status
+        checkAPIStatus();
         
         // Initial fetch (with error handling)
         fetchAstroWeather(state.location.lat, state.location.lon, state.location.tz).catch(e => {

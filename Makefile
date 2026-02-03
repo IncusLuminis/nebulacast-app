@@ -41,6 +41,10 @@ news-front:
 server:
 	bash infra/scripts/serve_local.sh
 
+# Local dev server with API endpoints (astro-weather, geocode, revgeo)
+server-api:
+	python3 infra/scripts/dev_api_server.py 8080
+
 test-news:
 	PYTHONPATH=$(PYTHONPATH_NEWS) $(RUN) -m pytest $(SERVICE_NEWS)/tests/ -v
 
