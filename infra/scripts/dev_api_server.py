@@ -23,6 +23,15 @@ except ImportError:
     _WEATHER_AVAILABLE = False
     print("WARNING: weather service not available, /api/astro-weather will not work")
 
+try:
+    from timezonefinder import TimezoneFinder
+    _TF = TimezoneFinder()
+    _TZ_FINDER_AVAILABLE = True
+    print("TimezoneFinder loaded successfully", file=sys.stderr)
+except ImportError as e:
+    _TZ_FINDER_AVAILABLE = False
+    print(f"WARNING: timezonefinder not available ({e}), /api/timezone will return UTC", file=sys.stderr)
+
 
 class APIHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -57,6 +66,8 @@ class APIHandler(BaseHTTPRequestHandler):
                 self.handle_geocode(query, cors_headers)
             elif path == "/api/revgeo":
                 self.handle_revgeo(query, cors_headers)
+            elif path == "/api/timezone":
+                self.handle_timezone(query, cors_headers)
             else:
                 self.send_response(404)
                 self.send_header("Content-Type", "application/json")
@@ -87,16 +98,21 @@ class APIHandler(BaseHTTPRequestHandler):
             tz = query.get("tz", ["Europe/Warsaw"])[0]
             hours = int(query.get("hours", ["72"])[0])
             profile = query.get("profile", ["default"])[0]
+            location_name = query.get("name", [None])[0]  # Get location name from query if provided
 
             if lat < -90 or lat > 90 or lon < -180 or lon > 180:
                 raise ValueError("Invalid coordinates")
+
+            # Use location name if provided, otherwise use coordinates
+            if not location_name:
+                location_name = f"{lat:.4f},{lon:.4f}"
 
             # Use existing weather pipeline
             payload = build_weather_payload(
                 lat=lat,
                 lon=lon,
                 tz=tz,
-                location_name=f"{lat:.4f},{lon:.4f}",
+                location_name=location_name,
                 horizon_hours=hours,
                 thresholds={},
             )
@@ -260,6 +276,164 @@ class APIHandler(BaseHTTPRequestHandler):
                 self.send_header(k, v)
             self.end_headers()
             self.wfile.write(json.dumps({"error": str(e)}).encode())
+
+    def format_timezone_display(self, tz_name):
+        """Convert IANA timezone to readable format with abbreviation.
+        Returns: {'timezone': 'America/New_York', 'display': 'Eastern Time (ET)', 'abbrev': 'EST/EDT'}
+        """
+        if not tz_name:
+            return {"timezone": "UTC", "display": "UTC", "abbrev": "UTC"}
+        
+        try:
+            from datetime import datetime
+            try:
+                from zoneinfo import ZoneInfo
+            except ImportError:
+                try:
+                    import pytz
+                    ZoneInfo = None
+                except ImportError:
+                    ZoneInfo = None
+            
+            if ZoneInfo:
+                # Python 3.9+ with zoneinfo
+                tz = ZoneInfo(tz_name)
+                now = datetime.now(tz)
+                abbrev = now.strftime("%Z")  # Gets EST, EDT, PST, etc.
+            elif pytz:
+                # Fallback to pytz
+                tz = pytz.timezone(tz_name)
+                now = datetime.now(tz)
+                abbrev = now.strftime("%Z")
+            else:
+                # No timezone library, return as-is
+                abbrev = ""
+            
+            # Map common timezones to readable names
+            tz_display_map = {
+                "America/New_York": "Eastern Time",
+                "America/Chicago": "Central Time",
+                "America/Denver": "Mountain Time",
+                "America/Los_Angeles": "Pacific Time",
+                "America/Phoenix": "Mountain Time (no DST)",
+                "America/Anchorage": "Alaska Time",
+                "Pacific/Honolulu": "Hawaii Time",
+                "Europe/London": "Greenwich Mean Time",
+                "Europe/Paris": "Central European Time",
+                "Europe/Berlin": "Central European Time",
+                "Europe/Warsaw": "Central European Time",
+                "Europe/Brussels": "Central European Time",
+                "Europe/Prague": "Central European Time",
+                "Asia/Tokyo": "Japan Standard Time",
+                "Asia/Shanghai": "China Standard Time",
+                "Australia/Sydney": "Australian Eastern Time",
+            }
+            
+            display_name = tz_display_map.get(tz_name, tz_name.replace("_", " ").replace("/", " / "))
+            
+            if abbrev:
+                return {
+                    "timezone": tz_name,
+                    "display": f"{display_name} ({abbrev})",
+                    "abbrev": abbrev
+                }
+            else:
+                return {
+                    "timezone": tz_name,
+                    "display": display_name,
+                    "abbrev": ""
+                }
+        except Exception as e:
+            print(f"Error formatting timezone: {e}", file=sys.stderr)
+            return {"timezone": tz_name, "display": tz_name, "abbrev": ""}
+
+    def handle_timezone(self, query, cors_headers):
+        """Handle /api/timezone endpoint - get timezone for lat/lon."""
+        import urllib.request
+        
+        try:
+            lat = float(query.get("lat", [""])[0])
+            lon = float(query.get("lon", [""])[0])
+        except (ValueError, KeyError):
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            for k, v in cors_headers.items():
+                self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Invalid lat/lon"}).encode())
+            return
+
+        try:
+            # Try local timezonefinder first (fastest, no network)
+            if _TZ_FINDER_AVAILABLE:
+                try:
+                    # timezone_at expects (lng, lat) - note: longitude first!
+                    tz_name = _TF.timezone_at(lng=lon, lat=lat)
+                    if tz_name:
+                        print(f"[TIMEZONE] TimezoneFinder found: {tz_name} for ({lat}, {lon})", file=sys.stderr)
+                        tz_info = self.format_timezone_display(tz_name)
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json; charset=utf-8")
+                        self.send_header("Cache-Control", "public, max-age=86400")  # Cache 24h
+                        for k, v in cors_headers.items():
+                            self.send_header(k, v)
+                        self.end_headers()
+                        self.wfile.write(json.dumps(tz_info).encode())
+                        return
+                    else:
+                        print(f"[TIMEZONE] TimezoneFinder returned None for ({lat}, {lon})", file=sys.stderr)
+                except Exception as e:
+                    print(f"[TIMEZONE] TimezoneFinder error: {e}", file=sys.stderr)
+                    import traceback
+                    traceback.print_exc(file=sys.stderr)
+            else:
+                print(f"[TIMEZONE] TimezoneFinder not available (flag={_TZ_FINDER_AVAILABLE})", file=sys.stderr)
+            
+            # Fallback to TimeZoneDB API (free tier, no key required for basic usage)
+            # Or use GeoNames timezone API (free, no key)
+            try:
+                # Try GeoNames first (free, no key)
+                geonames_url = f"http://api.geonames.org/timezoneJSON?lat={lat}&lng={lon}&username=demo"
+                req = urllib.request.Request(geonames_url, headers={"User-Agent": "Nebulacast/1.0"})
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    data = json.loads(response.read().decode())
+                    tz_name = data.get("timezoneId")
+                    if tz_name:
+                        print(f"GeoNames found: {tz_name} for ({lat}, {lon})", file=sys.stderr)
+                        tz_info = self.format_timezone_display(tz_name)
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json; charset=utf-8")
+                        self.send_header("Cache-Control", "public, max-age=86400")
+                        for k, v in cors_headers.items():
+                            self.send_header(k, v)
+                        self.end_headers()
+                        self.wfile.write(json.dumps(tz_info).encode())
+                        return
+            except Exception as e:
+                print(f"GeoNames API error: {e}", file=sys.stderr)
+            
+            # Last resort: return UTC (but log warning)
+            print(f"[TIMEZONE] WARNING: All methods failed for ({lat}, {lon}), returning UTC", file=sys.stderr)
+            tz_info = self.format_timezone_display("UTC")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            for k, v in cors_headers.items():
+                self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(json.dumps(tz_info).encode())
+            
+        except Exception as e:
+            print(f"[TIMEZONE] Error in timezone lookup: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            # Return UTC as fallback
+            tz_info = self.format_timezone_display("UTC")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            for k, v in cors_headers.items():
+                self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(json.dumps(tz_info).encode())
 
     def serve_static_file(self, path):
         """Serve static files from sites/staging directory."""

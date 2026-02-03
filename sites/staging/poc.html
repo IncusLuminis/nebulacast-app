@@ -304,6 +304,166 @@
       color:var(--bad);
     }
 
+    /* Action bar: interactive controls only */
+    .loc-action-bar{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-top:16px;
+      margin-bottom:4px;
+      flex-wrap:wrap;
+    }
+    .loc-action-label{
+      font-size:14px;
+      font-weight:500;
+      color:var(--title);
+      white-space:nowrap;
+      flex-shrink:0;
+    }
+    .loc-input-wrapper{
+      flex:1;
+      position:relative;
+      min-width:200px;
+    }
+    .loc-input{
+      width:100%;
+      padding:8px 12px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      font-size:13px;
+      font-family:inherit;
+    }
+    .loc-input:focus{
+      outline:none;
+      border-color:rgba(143,182,255,.4);
+      background:rgba(255,255,255,.05);
+    }
+    .loc-btn-secondary{
+      padding:8px 12px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      cursor:pointer;
+      font-size:13px;
+      transition:background 0.2s;
+      flex-shrink:0;
+      white-space:nowrap;
+    }
+    .loc-btn-secondary:hover:not(:disabled){
+      background:rgba(255,255,255,.08);
+    }
+    .loc-btn-secondary:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+    .loc-btn-icon{
+      padding:8px 10px;
+      border-radius:8px;
+      border:none;
+      background:transparent;
+      color:var(--text);
+      cursor:pointer;
+      font-size:16px;
+      line-height:1;
+      transition:background 0.2s;
+      flex-shrink:0;
+      opacity:0.7;
+    }
+    .loc-btn-icon:hover{
+      background:rgba(255,255,255,.05);
+      opacity:1;
+    }
+    .loc-dd{
+      position:absolute;
+      top:100%;
+      left:0;
+      right:0;
+      margin-top:4px;
+      background:var(--bg);
+      border:1px solid var(--line);
+      border-radius:8px;
+      max-height:200px;
+      overflow-y:auto;
+      z-index:100;
+      display:none;
+      box-shadow:0 4px 12px rgba(0,0,0,.3);
+    }
+    .loc-dd.show{
+      display:block;
+    }
+    .loc-dd-item{
+      padding:10px 12px;
+      cursor:pointer;
+      border-bottom:1px solid var(--line);
+      font-size:13px;
+    }
+    .loc-dd-item:last-child{
+      border-bottom:none;
+    }
+    .loc-dd-item:hover{
+      background:rgba(255,255,255,.05);
+    }
+    .loc-dd-item-name{
+      font-weight:500;
+      color:var(--title);
+    }
+    .loc-dd-item-details{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    /* Status line: current context (non-interactive) */
+    .loc-status-line{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:6px;
+      margin-bottom:12px;
+      padding:6px 10px;
+      line-height:1.5;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:rgba(255,255,255,.02);
+    }
+    .loc-status-content{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .loc-status-content span{
+      white-space:nowrap;
+    }
+    .loc-status-api{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+    }
+    .loc-status-api.online::before{
+      content:"●";
+      color:var(--good);
+      font-size:10px;
+    }
+    .loc-status-api.offline::before{
+      content:"●";
+      color:var(--mid);
+      font-size:10px;
+    }
+    .loc-hint{
+      font-size:11px;
+      color:var(--mid);
+      margin-top:4px;
+      padding:6px 8px;
+      background:rgba(255,255,0,.1);
+      border-radius:4px;
+    }
+    .loc-hint.error{
+      color:var(--bad);
+      background:rgba(255,0,0,.1);
+    }
+
     @media(min-width:560px){
       .loc-panel-section-row{
         display:grid;
@@ -322,63 +482,22 @@
         <br><small style="opacity:0.7;">💡 For full functionality, run: <code>make server-api</code></small>
       </div>
 
-      <!-- Location bar -->
-      <div class="loc-bar">
-        <span class="loc-bar-label">Location</span>
-        <div class="loc-pill" id="locPill" role="button" tabindex="0">
-          <span class="loc-pill-name" id="locPillName">Warsaw</span>
-          <span class="loc-pill-coords" id="locPillCoords">52.23, 21.01</span>
+      <!-- Action bar: interactive controls only -->
+      <div class="loc-action-bar">
+        <span class="loc-action-label">Location</span>
+        <div class="loc-input-wrapper">
+          <input type="text" class="loc-input" id="locInput" placeholder='City or "lat, lon"' autocomplete="off">
+          <div class="loc-dd" id="locDropdown"></div>
         </div>
-        <button type="button" class="loc-change-btn" id="locChangeBtn">Change</button>
+        <button type="button" class="loc-btn-secondary" id="locGeoBtn" title="Use my location">📍 My location</button>
+        <button type="button" class="loc-btn-icon" id="locShareBtn" title="Share Location">🔗</button>
       </div>
-      <div id="apiStatus" style="margin-top:8px;font-size:12px;opacity:0.7;display:none;"></div>
-
-      <!-- Location panel (collapsed) -->
-      <div class="loc-panel" id="locPanel">
-        <div class="loc-panel-error" id="locPanelError" style="display:none"></div>
-
-        <div class="loc-panel-section">
-          <label class="loc-panel-label">Presets</label>
-          <select class="loc-select-dark" id="locPresetSelect">
-            <option value="">Select preset…</option>
-          </select>
-        </div>
-
-        <div class="loc-panel-section">
-          <label class="loc-panel-label">Search</label>
-          <div style="position:relative;">
-            <input type="text" class="loc-input-dark" id="locSearchInput" placeholder="Type city name…" autocomplete="off">
-            <div class="loc-search-suggestions" id="locSearchSuggestions"></div>
-          </div>
-          <div id="locSearchError" class="loc-geo-error" style="display:none">Geocode service not available</div>
-        </div>
-
-        <div class="loc-panel-section">
-          <button type="button" class="loc-geo-btn" id="locGeoBtn">Use my location</button>
-          <div id="locGeoError" class="loc-geo-error" style="display:none"></div>
-        </div>
-
-        <div class="loc-panel-section">
-          <span class="loc-advanced-toggle" id="locAdvancedToggle">Advanced ▸</span>
-          <div class="loc-advanced" id="locAdvanced">
-            <label class="loc-panel-label">Latitude</label>
-            <input type="number" step="0.0001" class="loc-input-dark" id="locLatInput" placeholder="52.2297">
-            <label class="loc-panel-label" style="margin-top:8px;">Longitude</label>
-            <input type="number" step="0.0001" class="loc-input-dark" id="locLonInput" placeholder="21.0122">
-            <label class="loc-panel-label" style="margin-top:8px;">Timezone</label>
-            <input type="text" class="loc-input-dark" id="locTzInput" placeholder="Europe/Warsaw">
-            <div class="loc-advanced-hint">Tip: paste '52.23, 21.01'</div>
-          </div>
-        </div>
-
-        <div class="loc-actions">
-          <button type="button" class="loc-btn-primary" id="locApplyBtn">Apply</button>
-          <button type="button" class="loc-btn-secondary" id="locCancelBtn">Cancel</button>
-        </div>
+      
+      <!-- Status line: current context (non-interactive) -->
+      <div class="loc-status-line" id="locStatusLine" style="display:none">
+        <span class="loc-status-content" id="locStatusContent"></span>
       </div>
-
-      <div id="locStatus" class="loc-status"></div>
-      <div id="locHeader" class="loc-header">Loading…</div>
+      <div id="locHint" class="loc-hint" style="display:none"></div>
       <div id="jsonSnippet" class="json-snippet">Loading JSON…</div>
       <div id="errorBox" class="error" style="display:none"></div>
     </div>
@@ -393,6 +512,7 @@
       const API_ASTRO_WEATHER = API_BASE + "/api/astro-weather";
       const API_GEOCODE = API_BASE + "/api/geocode";
       const API_REVGEO = API_BASE + "/api/revgeo";
+      const API_TIMEZONE = API_BASE + "/api/timezone";
       // Fallback for local dev (static JSON)
       const STATIC_LOCATIONS_INDEX = API_BASE + "/data/weather/locations.json";
       const STATIC_LOC_BASE = API_BASE + "/data/weather/loc";
@@ -408,45 +528,27 @@
         tz: "Europe/Warsaw"
       };
 
-      const PRESETS = [
-        {name:"Warsaw", lat:52.2297, lon:21.0122, tz:"Europe/Warsaw"},
-        {name:"Berlin", lat:52.5200, lon:13.4050, tz:"Europe/Berlin"},
-        {name:"Prague", lat:50.0755, lon:14.4378, tz:"Europe/Prague"},
-      ];
 
       let state = {
         location: {...DEFAULT_LOCATION},
-        draftLocation: null,
-        locationPanelOpen: false,
         fetching: false,
-        error: null
+        error: null,
+        apiAvailable: null,
+        profile: "default",
+        geoRequestId: null, // Track current geolocation request to prevent race conditions
+        locationSource: "default" // Track source: "default", "manual", "search", "geolocation"
       };
 
       // Elements
-      const locPill = document.getElementById("locPill");
-      const locPillName = document.getElementById("locPillName");
-      const locPillCoords = document.getElementById("locPillCoords");
-      const locChangeBtn = document.getElementById("locChangeBtn");
-      const locPanel = document.getElementById("locPanel");
-      const locPanelError = document.getElementById("locPanelError");
-      const locPresetSelect = document.getElementById("locPresetSelect");
-      const locSearchInput = document.getElementById("locSearchInput");
-      const locSearchSuggestions = document.getElementById("locSearchSuggestions");
-      const locSearchError = document.getElementById("locSearchError");
+      const locInput = document.getElementById("locInput");
       const locGeoBtn = document.getElementById("locGeoBtn");
-      const locGeoError = document.getElementById("locGeoError");
-      const locAdvancedToggle = document.getElementById("locAdvancedToggle");
-      const locAdvanced = document.getElementById("locAdvanced");
-      const locLatInput = document.getElementById("locLatInput");
-      const locLonInput = document.getElementById("locLonInput");
-      const locTzInput = document.getElementById("locTzInput");
-      const locApplyBtn = document.getElementById("locApplyBtn");
-      const locCancelBtn = document.getElementById("locCancelBtn");
-      const locStatus = document.getElementById("locStatus");
-      const headerEl = document.getElementById("locHeader");
+      const locShareBtn = document.getElementById("locShareBtn");
+      const locDropdown = document.getElementById("locDropdown");
+      const locHint = document.getElementById("locHint");
+      const locStatusLine = document.getElementById("locStatusLine");
+      const locStatusContent = document.getElementById("locStatusContent");
       const jsonEl = document.getElementById("jsonSnippet");
       const errEl = document.getElementById("errorBox");
-      const apiStatusEl = document.getElementById("apiStatus");
 
       let searchDebounceTimer = null;
       let geocodeAvailable = false;
@@ -475,108 +577,221 @@
         }catch(e){}
       }
 
-      function updateLocationPill(){
-        if(!locPillName || !locPillCoords) return;
-        const loc = state.location;
-        locPillName.textContent = loc.name;
-        locPillCoords.textContent = loc.lat.toFixed(2) + ", " + loc.lon.toFixed(2);
-      }
-
-      function updateLocationHeader(loc){
-        if(!headerEl) return;
-        headerEl.innerHTML =
-          "📍 <strong>" + (loc.name || "Location") + "</strong> " +
-          "(" + loc.lat.toFixed(4) + ", " + loc.lon.toFixed(4) + ") · " +
-          loc.tz;
-      }
-
-      function updateDraftFromInputs(){
-        if(!locLatInput || !locLonInput || !locTzInput) return;
-        const lat = parseFloat(locLatInput.value);
-        const lon = parseFloat(locLonInput.value);
-        const tz = locTzInput.value.trim() || "Europe/Warsaw";
-        if(!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180){
-          state.draftLocation = {
-            name: state.draftLocation?.name || "Custom location",
-            lat: lat,
-            lon: lon,
-            tz: tz || "UTC"
-          };
-        }
-      }
-
-      function setDraftFromPreset(preset){
-        if(!preset) return;
-        state.draftLocation = {...preset};
-        if(locLatInput) locLatInput.value = preset.lat.toFixed(4);
-        if(locLonInput) locLonInput.value = preset.lon.toFixed(4);
-        if(locTzInput) locTzInput.value = preset.tz;
-        if(locSearchInput) locSearchInput.value = "";
-        hideSuggestions();
-      }
-
-      function setDraftFromCoords(lat, lon, name, tz){
-        state.draftLocation = {
-          name: name || "Custom location",
-          lat: lat,
-          lon: lon,
-          tz: tz || state.location.tz || "Europe/Warsaw"
+      // Helper: debounce function
+      function debounce(fn, ms){
+        let timer = null;
+        return function(...args){
+          if(timer) clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(this, args), ms);
         };
-        if(locLatInput) locLatInput.value = lat.toFixed(4);
-        if(locLonInput) locLonInput.value = lon.toFixed(4);
-        if(locTzInput) locTzInput.value = state.draftLocation.tz;
       }
 
-      function toggleLocationPanel(){
-        if(!locPanel) return;
-        state.locationPanelOpen = !state.locationPanelOpen;
-        locPanel.classList.toggle("open", state.locationPanelOpen);
-        if(state.locationPanelOpen){
-          state.draftLocation = {...state.location};
-          if(locLatInput) locLatInput.value = state.location.lat.toFixed(4);
-          if(locLonInput) locLonInput.value = state.location.lon.toFixed(4);
-          if(locTzInput) locTzInput.value = state.location.tz;
-          if(locSearchInput) locSearchInput.value = "";
-          hideSuggestions();
-          hidePanelError();
+      // Helper: parse coordinates from text input
+      function parseCoords(text){
+        if(!text || typeof text !== "string") return null;
+        text = text.trim();
+        
+        // Try to extract two numbers (lat, lon)
+        // Patterns: "50.087, 14.421" or "50.087 14.421" or "50.087° N, 0.1278° W"
+        const patterns = [
+          /(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/,  // Basic: "50.087, 14.421" or "50.087 14.421"
+          /(-?\d+\.?\d*)\s*°\s*[NS]?\s*[,\s]\s*(-?\d+\.?\d*)\s*°\s*[EW]?/i,  // With degrees: "50.087° N, 0.1278° W"
+        ];
+        
+        for(const pattern of patterns){
+          const match = text.match(pattern);
+          if(match){
+            let lat = parseFloat(match[1]);
+            let lon = parseFloat(match[2]);
+            
+            // Handle N/S/E/W indicators
+            const textUpper = text.toUpperCase();
+            if(textUpper.includes("S") && lat > 0) lat = -lat;
+            if(textUpper.includes("W") && lon > 0) lon = -lon;
+            
+            // Validate ranges
+            if(!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180){
+              return {lat, lon};
+            }
+          }
+        }
+        return null;
+      }
+
+      // Helper: clamp coordinates
+      function clampLatLon(lat, lon){
+        return {
+          lat: Math.max(-90, Math.min(90, lat)),
+          lon: Math.max(-180, Math.min(180, lon))
+        };
+      }
+
+      // Helper: format coordinates for display
+      function formatCoord(lat, lon){
+        return lat.toFixed(4) + ", " + lon.toFixed(4);
+      }
+
+      // Helper: escape HTML
+      function escapeHtml(s){
+        if(!s) return "";
+        const div = document.createElement("div");
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      // Update status line: location, coords, timezone, profile, API status
+      async function updateStatusLine(){
+        if(!locStatusLine || !locStatusContent) return;
+        const loc = state.location;
+        
+        if(!loc || !loc.lat || !loc.lon){
+          locStatusLine.style.display = "none";
+          return;
+        }
+        
+        // Get timezone display name (non-blocking - show IANA first, update if API responds)
+        let tzDisplay = loc.tz || "UTC";
+        const tzPromise = (async () => {
+          try{
+            const res = await fetch(API_TIMEZONE + "?lat=" + loc.lat + "&lon=" + loc.lon);
+            if(res.ok){
+              const tzData = await res.json();
+              if(tzData.display){
+                return tzData.display;
+              }
+            }
+          }catch(e){
+            // Use IANA timezone as fallback
+          }
+          return tzDisplay;
+        })();
+        
+        // Get profile display name
+        const profileNames = {
+          "default": "Balanced",
+          "balanced": "Balanced",
+          "visual": "Visual",
+          "photography": "Photography",
+          "planetary": "Planetary"
+        };
+        const profileDisplay = profileNames[state.profile?.toLowerCase()] || "Balanced";
+        
+        // Format place name
+        const placeName = loc.name && loc.name !== formatCoord(loc.lat, loc.lon) 
+          ? loc.name 
+          : formatCoord(loc.lat, loc.lon);
+        
+        // API status
+        const apiStatusClass = state.apiAvailable === true ? "online" : (state.apiAvailable === false ? "offline" : "");
+        const apiStatusText = state.apiAvailable === true ? "API online" : (state.apiAvailable === false ? "API unavailable" : "");
+        
+        // Build status content (initial with IANA timezone)
+        locStatusContent.innerHTML = `
+          <span>📍 ${escapeHtml(placeName)} (${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)})</span>
+          <span>·</span>
+          <span>🕒 ${escapeHtml(tzDisplay)}</span>
+          <span>·</span>
+          <span>🎛 ${escapeHtml(profileDisplay)}</span>
+          <span>·</span>
+          <span class="loc-status-api ${apiStatusClass}">${apiStatusText}</span>
+        `;
+        
+        locStatusLine.style.display = "block";
+        
+        // Update timezone display if API responds (non-blocking)
+        tzPromise.then(displayTz => {
+          if(displayTz !== tzDisplay && locStatusContent && 
+             state.location.lat === loc.lat && state.location.lon === loc.lon){
+            // Rebuild status with updated timezone
+            const apiStatusClass = state.apiAvailable === true ? "online" : (state.apiAvailable === false ? "offline" : "");
+            const apiStatusText = state.apiAvailable === true ? "API online" : (state.apiAvailable === false ? "API unavailable" : "");
+            locStatusContent.innerHTML = `
+              <span>📍 ${escapeHtml(placeName)} (${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)})</span>
+              <span>·</span>
+              <span>🕒 ${escapeHtml(displayTz)}</span>
+              <span>·</span>
+              <span>🎛 ${escapeHtml(profileDisplay)}</span>
+              <span>·</span>
+              <span class="loc-status-api ${apiStatusClass}">${apiStatusText}</span>
+            `;
+          }
+        });
+      }
+      
+      // Copy permalink to clipboard
+      async function copyPermalink(){
+        const loc = state.location;
+        if(!loc || !loc.lat || !loc.lon) return;
+        
+        // Build permalink URL
+        const params = new URLSearchParams();
+        if(loc.name && loc.name !== formatCoord(loc.lat, loc.lon)){
+          params.append("q", loc.name);
+        }else{
+          params.append("lat", loc.lat.toFixed(4));
+          params.append("lon", loc.lon.toFixed(4));
+        }
+        if(loc.tz && loc.tz !== "UTC"){
+          params.append("tz", loc.tz);
+        }
+        
+        const url = window.location.origin + window.location.pathname + "?" + params.toString();
+        
+        try{
+          await navigator.clipboard.writeText(url);
+          // Visual feedback: briefly change icon
+          if(locShareBtn){
+            const original = locShareBtn.textContent;
+            locShareBtn.textContent = "✓";
+            setTimeout(() => {
+              if(locShareBtn) locShareBtn.textContent = original;
+            }, 1000);
+          }
+        }catch(e){
+          console.warn("Failed to copy:", e);
+          setHint("Failed to copy permalink", true);
         }
       }
 
-      function hidePanelError(){
-        if(!locPanelError) return;
-        locPanelError.style.display = "none";
-        locPanelError.textContent = "";
-      }
 
-      function showPanelError(msg){
-        if(!locPanelError) return;
-        locPanelError.textContent = msg;
-        locPanelError.style.display = "block";
-      }
-
-      function hideSuggestions(){
-        if(!locSearchSuggestions) return;
-        locSearchSuggestions.classList.remove("show");
-        while(locSearchSuggestions.firstChild){
-          locSearchSuggestions.removeChild(locSearchSuggestions.firstChild);
-        }
-      }
-
-      function showSuggestions(items){
-        if(!locSearchSuggestions) return;
-        hideSuggestions();
+      // Show/hide dropdown
+      function openDropdown(items){
+        if(!locDropdown) return;
+        closeDropdown();
         if(!items || items.length === 0) return;
+        
         items.forEach(item => {
           const div = document.createElement("div");
-          div.className = "loc-search-suggestion";
+          div.className = "loc-dd-item";
+          const label = item.name + (item.admin1 ? ", " + item.admin1 : "") + (item.country ? ", " + item.country : "");
           div.innerHTML = `
-            <div class="loc-search-suggestion-name">${escapeHtml(item.name)}</div>
-            <div class="loc-search-suggestion-details">${escapeHtml(item.country || "")} ${item.lat?.toFixed(2) || ""}, ${item.lon?.toFixed(2) || ""}</div>
+            <div class="loc-dd-item-name">${escapeHtml(item.name)}</div>
+            <div class="loc-dd-item-details">${escapeHtml(label)} · ${item.lat?.toFixed(2) || ""}, ${item.lon?.toFixed(2) || ""}</div>
           `;
-          div.addEventListener("click", () => selectSuggestion(item));
-          locSearchSuggestions.appendChild(div);
+          div.addEventListener("click", () => selectLocation(item));
+          locDropdown.appendChild(div);
         });
-        locSearchSuggestions.classList.add("show");
+        locDropdown.classList.add("show");
+      }
+
+      function closeDropdown(){
+        if(!locDropdown) return;
+        locDropdown.classList.remove("show");
+        while(locDropdown.firstChild){
+          locDropdown.removeChild(locDropdown.firstChild);
+        }
+      }
+
+      // Show/hide hint message
+      function setHint(message, isError = false){
+        if(!locHint) return;
+        if(message){
+          locHint.textContent = message;
+          locHint.className = "loc-hint" + (isError ? " error" : "");
+          locHint.style.display = "block";
+        }else{
+          locHint.style.display = "none";
+        }
       }
 
       function escapeHtml(s){
@@ -586,6 +801,7 @@
         return div.innerHTML;
       }
 
+      // Geocode: search for cities
       async function searchGeocode(q){
         // Try API first
         try{
@@ -593,208 +809,309 @@
           if(res.ok){
             const data = await res.json();
             geocodeAvailable = true;
-            if(locSearchError) locSearchError.style.display = "none";
-            return Array.isArray(data) ? data.slice(0, 6) : [];
+            setHint("");
+            // Handle different response formats
+            const results = Array.isArray(data.results || data) ? (data.results || data) : [];
+            return results.map(item => ({
+              name: item.name || item.display_name?.split(',')[0] || 'Unknown',
+              country: item.country || item.country_code || item.address?.country || '',
+              admin1: item.admin1 || item.address?.state || '',
+              lat: item.lat || item.latitude || parseFloat(item.lat) || 0,
+              lon: item.lon || item.longitude || parseFloat(item.lon) || 0,
+              tz: item.tz || item.timezone || ''
+            })).filter(item => item.lat !== 0 && item.lon !== 0).slice(0, 6);
           }
-          // If 404, API not available - try direct Nominatim (CORS may block, but worth trying)
+          // If 404, API not available
           if(res.status === 404){
-            console.warn("API geocode not available (404), trying direct Nominatim...");
-            try{
-              // Try direct Nominatim (may be blocked by CORS, but some browsers allow it)
-              const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`;
-              const directRes = await fetch(nominatimUrl, {
-                headers: {
-                  'Accept': 'application/json',
-                  'User-Agent': 'Nebulacast/1.0',
-                },
-              });
-              if(directRes.ok){
-                const data = await directRes.json();
-                const results = Array.isArray(data) ? data.map(item => ({
-                  name: item.display_name?.split(',')[0] || item.name || 'Unknown',
-                  country: item.address?.country || '',
-                  lat: parseFloat(item.lat) || 0,
-                  lon: parseFloat(item.lon) || 0,
-                })).filter(item => item.lat !== 0 && item.lon !== 0).slice(0, 6) : [];
-                if(results.length > 0){
-                  geocodeAvailable = true;
-                  if(locSearchError) locSearchError.style.display = "none";
-                  return results;
-                }
-              }
-            }catch(corsError){
-              console.warn("Direct Nominatim blocked by CORS:", corsError);
-            }
             geocodeAvailable = false;
-            if(locSearchError){
-              locSearchError.style.display = "block";
-              locSearchError.textContent = "Geocode API not available. Run 'make server-api' for full functionality, or use presets/Advanced.";
-            }
+            setHint("Geocode unavailable — paste coordinates instead.", true);
             return [];
           }
           throw new Error("HTTP " + res.status);
         }catch(e){
           console.warn("Geocode failed:", e);
-          // Try direct Nominatim as fallback
-          try{
-            const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6&addressdetails=1`;
-            const directRes = await fetch(nominatimUrl, {
-              headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'Nebulacast/1.0',
-              },
-            });
-            if(directRes.ok){
-              const data = await directRes.json();
-              const results = Array.isArray(data) ? data.map(item => ({
-                name: item.display_name?.split(',')[0] || item.name || 'Unknown',
-                country: item.address?.country || '',
-                lat: parseFloat(item.lat) || 0,
-                lon: parseFloat(item.lon) || 0,
-              })).filter(item => item.lat !== 0 && item.lon !== 0).slice(0, 6) : [];
-              if(results.length > 0){
-                geocodeAvailable = true;
-                if(locSearchError) locSearchError.style.display = "none";
-                return results;
-              }
-            }
-          }catch(corsError){
-            console.warn("Direct Nominatim blocked by CORS:", corsError);
-          }
           geocodeAvailable = false;
-          if(locSearchError){
-            locSearchError.style.display = "block";
-            locSearchError.textContent = "Geocode service not available. Run 'make server-api' for full functionality, or use presets/Advanced.";
-          }
+          setHint("Geocode unavailable — paste coordinates instead.", true);
           return [];
         }
       }
 
-      function selectSuggestion(item){
-        setDraftFromCoords(item.lat, item.lon, item.name, item.tz);
-        if(locSearchInput) locSearchInput.value = item.name;
-        hideSuggestions();
+      async function lookupTimezone(lat, lon, country){
+        // Try API first (most accurate)
+        try{
+          const url = API_TIMEZONE + "?lat=" + lat + "&lon=" + lon;
+          console.log("Looking up timezone for", lat, lon, "via", url);
+          const res = await fetch(url);
+          if(res.ok){
+            const data = await res.json();
+            console.log("Timezone API response:", data);
+            // API now returns: {timezone: "America/New_York", display: "Eastern Time (EST)", abbrev: "EST"}
+            if(data.timezone){
+              console.log("Using timezone:", data.timezone, "display:", data.display || data.timezone);
+              return data.timezone; // Return IANA timezone for API calls
+            }else{
+              console.warn("Timezone API returned no timezone field:", data);
+            }
+          }else{
+            console.warn("Timezone API returned status:", res.status);
+          }
+        }catch(e){
+          console.warn("Timezone API failed, using fallback:", e);
+        }
+        
+        // Fallback: simple guessing based on coordinates and country
+        // UK / London
+        if(country === "United Kingdom" || country === "UK" || 
+           (lat > 50.0 && lat < 56.0 && lon > -6.0 && lon < 2.0)){
+          return "Europe/London";
+        }
+        // Belgium
+        if(country === "Belgium" || (lat > 50.5 && lat < 51.5 && lon > 2.5 && lon < 6.5)){
+          return "Europe/Brussels";
+        }
+        // Germany
+        if(country === "Germany" || (lat > 47.0 && lat < 55.0 && lon > 5.0 && lon < 15.0)){
+          return "Europe/Berlin";
+        }
+        // Poland
+        if(country === "Poland" || (lat > 49.0 && lat < 55.0 && lon > 14.0 && lon < 25.0)){
+          return "Europe/Warsaw";
+        }
+        // Czech Republic
+        if(country === "Czech Republic" || (lat > 48.5 && lat < 51.0 && lon > 12.0 && lon < 19.0)){
+          return "Europe/Prague";
+        }
+        // France
+        if(country === "France" || (lat > 42.0 && lat < 51.0 && lon > -5.0 && lon < 10.0)){
+          return "Europe/Paris";
+        }
+        // Netherlands
+        if(country === "Netherlands" || (lat > 50.7 && lat < 53.7 && lon > 3.0 && lon < 7.5)){
+          return "Europe/Amsterdam";
+        }
+        // Default to browser timezone or UTC
+        try{
+          return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+        }catch(e){
+          return "UTC";
+        }
       }
 
+      // Select location from dropdown or coordinates
+      async function selectLocation(item){
+        closeDropdown();
+        if(!locInput) return;
+        
+        // Cancel any pending geolocation request
+        state.geoRequestId = null;
+        state.locationSource = "search";
+        
+        // Determine timezone (non-blocking - start fetch with UTC if slow)
+        const tzPromise = item.tz 
+          ? Promise.resolve(item.tz)
+          : lookupTimezone(item.lat, item.lon, item.country).catch(() => "UTC");
+        
+        // Update state immediately with UTC timezone (will update when lookup completes)
+        state.location = {
+          name: item.name,
+          lat: item.lat,
+          lon: item.lon,
+          tz: item.tz || "UTC" // Temporary, will update
+        };
+        
+        locInput.value = item.name;
+        updateStatusLine();
+        saveLocation(state.location);
+        
+        // Fetch weather immediately (timezone lookup can complete in background)
+        const tz = await Promise.race([
+          tzPromise,
+          new Promise(resolve => setTimeout(() => resolve("UTC"), 1000)) // 1s timeout
+        ]);
+        
+        // Update timezone if we got it quickly
+        if(tz && tz !== "UTC"){
+          state.location.tz = tz;
+          saveLocation(state.location);
+          updateStatusLine();
+        }
+        
+        // Fetch weather (works fine even with UTC timezone)
+        await fetchAstroWeather(state.location.lat, state.location.lon, state.location.tz, "default", 72, state.location.name);
+        
+        // Update timezone in background if we got it later
+        tzPromise.then(resolvedTz => {
+          if(resolvedTz && resolvedTz !== "UTC" && 
+             state.location.lat === item.lat && state.location.lon === item.lon){
+            state.location.tz = resolvedTz;
+            saveLocation(state.location);
+            updateStatusLine();
+          }
+        });
+      }
+
+      // Use browser geolocation
       async function useMyLocation(){
         if(!navigator.geolocation){
-          if(locGeoError){
-            locGeoError.textContent = "Geolocation not supported";
-            locGeoError.style.display = "block";
-          }
+          setHint("Geolocation not supported", true);
           return;
         }
-        if(locGeoBtn) locGeoBtn.disabled = true;
-        if(locGeoError) locGeoError.style.display = "none";
+        if(!locGeoBtn) return;
+        
+        locGeoBtn.disabled = true;
+        setHint("");
+        closeDropdown();
+        
+        // Mark that geolocation is in progress to prevent race conditions
+        const geoRequestId = Date.now();
+        state.geoRequestId = geoRequestId;
+        
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
+            // Check if this request is still current (user didn't start another action)
+            if(state.geoRequestId !== geoRequestId){
+              console.log("Geolocation result ignored - newer request in progress");
+              return;
+            }
+            
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
             let name = "My location";
-            let tz = state.location.tz || "Europe/Warsaw";
+            let tz = "UTC";
+            
             try{
-              // Try API first
-              try{
-                const res = await fetch(API_REVGEO + "?lat=" + lat + "&lon=" + lon);
-                if(res.ok){
-                  const data = await res.json();
-                  if(data.name) name = data.name;
-                  if(data.tz) tz = data.tz;
-                }else if(res.status === 404){
-                  // API not available, try direct Nominatim
-                  throw new Error("API not available");
-                }
-              }catch(apiError){
-                // Try direct Nominatim as fallback
-                try{
-                  const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`;
-                  const directRes = await fetch(nominatimUrl, {
-                    headers: {
-                      'Accept': 'application/json',
-                      'User-Agent': 'Nebulacast/1.0',
-                    },
-                  });
-                  if(directRes.ok){
-                    const data = await directRes.json();
-                    const address = data.address || {};
-                    if(data.display_name) name = data.display_name.split(',')[0];
-                    else if(address.city) name = address.city;
-                    else if(address.town) name = address.town;
-                  }
-                }catch(corsError){
-                  console.warn("Direct Nominatim blocked by CORS:", corsError);
-                }
-              }
+              // Try reverse geocode for name (non-blocking - fetch weather even if this fails)
+              const revGeoPromise = fetch(API_REVGEO + "?lat=" + lat + "&lon=" + lon)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => data?.name || null)
+                .catch(() => null);
+              
+              // Lookup timezone (can be done in parallel)
+              const tzPromise = lookupTimezone(lat, lon, "").catch(() => "UTC");
+              
+              // Wait for both, but don't block on reverse geocode
+              const [revGeoName, resolvedTz] = await Promise.all([
+                Promise.race([revGeoPromise, new Promise(resolve => setTimeout(() => resolve(null), 2000))]), // 2s timeout
+                tzPromise
+              ]);
+              
+              if(revGeoName) name = revGeoName; // Use full address if available
+              tz = resolvedTz;
             }catch(e){
-              console.warn("Reverse geocode failed:", e);
+              console.warn("Location lookup failed:", e);
             }
-            setDraftFromCoords(lat, lon, name, tz);
-            if(locGeoBtn) locGeoBtn.disabled = false;
+            
+            // Double-check this request is still current
+            if(state.geoRequestId !== geoRequestId){
+              console.log("Geolocation update ignored - newer request in progress");
+              locGeoBtn.disabled = false;
+              return;
+            }
+            
+            // Update state and fetch
+            state.location = {name, lat, lon, tz};
+            state.locationSource = "geolocation";
+            if(locInput) locInput.value = name;
+            updateStatusLine();
+            saveLocation(state.location);
+            
+            // Fetch weather (this will update UI even if reverse geocode was slow)
+            await fetchAstroWeather(lat, lon, tz, "default", 72, name);
+            
+            // Final check before enabling button
+            if(state.geoRequestId === geoRequestId){
+              locGeoBtn.disabled = false;
+            }
           },
           (err) => {
-            if(locGeoError){
-              locGeoError.textContent = "Location permission denied. Use search or coordinates.";
-              locGeoError.style.display = "block";
+            if(state.geoRequestId === geoRequestId){
+              setHint("Location permission denied", true);
+              locGeoBtn.disabled = false;
             }
-            if(locGeoBtn) locGeoBtn.disabled = false;
           }
         );
       }
 
-      function toggleAdvanced(){
-        if(!locAdvanced || !locAdvancedToggle) return;
-        const isOpen = locAdvanced.classList.contains("open");
-        locAdvanced.classList.toggle("open", !isOpen);
-        locAdvancedToggle.textContent = isOpen ? "Advanced ▸" : "Advanced ▾";
-      }
-
-      async function applyLocation(){
-        updateDraftFromInputs();
-        if(!state.draftLocation){
-          showPanelError("Invalid location. Check coordinates.");
+      // Handle input: parse coordinates or search cities
+      async function handleInput(){
+        if(!locInput) return;
+        const text = locInput.value.trim();
+        
+        // Cancel any pending geolocation request (user is typing manually)
+        state.geoRequestId = null;
+        
+        if(!text){
+          closeDropdown();
+          setHint("");
           return;
         }
         
-        // Update UI immediately with draft location (before fetch)
-        const draftLoc = {...state.draftLocation};
-        state.location = draftLoc;
-        updateLocationPill();
-        updateLocationHeader(draftLoc);
-        
-        state.fetching = true;
-        if(locApplyBtn){
-          locApplyBtn.disabled = true;
-          locApplyBtn.textContent = "Applying…";
-        }
-        hidePanelError();
-        try{
-          await fetchAstroWeather(state.draftLocation.lat, state.draftLocation.lon, state.draftLocation.tz);
-          // After successful fetch, location will be updated from API response in renderWeatherData
+        // Try to parse coordinates first
+        const coords = parseCoords(text);
+        if(coords){
+          // Coordinates detected - fetch immediately
+          closeDropdown();
+          setHint("");
+          const clamped = clampLatLon(coords.lat, coords.lon);
+          
+          // Lookup timezone (non-blocking - can be slow)
+          const tzPromise = lookupTimezone(clamped.lat, clamped.lon, "").catch(() => "UTC");
+          
+          // Use coordinates as name initially
+          const coordName = formatCoord(clamped.lat, clamped.lon);
+          state.location = {
+            name: coordName,
+            lat: clamped.lat,
+            lon: clamped.lon,
+            tz: "UTC" // Will update when timezone lookup completes
+          };
+          state.locationSource = "manual";
+          
+          updateStatusLine();
           saveLocation(state.location);
-          updateLocationPill();
-          toggleLocationPanel();
-          if(locStatus){
-            locStatus.textContent = "Updated: " + new Date().toLocaleTimeString();
-            locStatus.className = "loc-status";
-          }
-        }catch(e){
-          showPanelError("Failed to fetch weather: " + (e.message || e));
-          // Keep the draft location in UI even if fetch failed
-        }finally{
-          state.fetching = false;
-          if(locApplyBtn){
-            locApplyBtn.disabled = false;
-            locApplyBtn.textContent = "Apply";
-          }
+          
+          // Fetch weather immediately with UTC timezone (will work fine)
+          await fetchAstroWeather(clamped.lat, clamped.lon, "UTC", "default", 72, coordName);
+          
+          // Update timezone in background (non-blocking)
+          tzPromise.then(tz => {
+            if(state.location.lat === clamped.lat && state.location.lon === clamped.lon){
+              // Only update if location hasn't changed
+              state.location.tz = tz;
+              saveLocation(state.location);
+              updateStatusLine();
+            }
+          });
+          
+          return;
         }
+        
+        // Not coordinates - treat as city search
+        if(text.length < 2){
+          closeDropdown();
+          return;
+        }
+        
+        // Debounced city search
+        if(searchDebounceTimer) clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(async () => {
+          const results = await searchGeocode(text);
+          if(results.length > 0){
+            openDropdown(results);
+          }else{
+            closeDropdown();
+          }
+        }, 400);
       }
 
-      async function fetchAstroWeather(lat, lon, tz, profile = "default", hours = 72){
+      async function fetchAstroWeather(lat, lon, tz, profile = "default", hours = 72, locationName = null){
+        state.fetching = true;
+        setHint("");
         if(jsonEl) jsonEl.textContent = "Fetching weather data…";
         if(errEl) errEl.style.display = "none";
         
-        // Try API first
         try{
+          // Try API first
           const params = new URLSearchParams({
             lat: String(lat),
             lon: String(lon),
@@ -802,17 +1119,23 @@
             hours: String(hours),
             profile: profile,
           });
+          // Add location name if available
+          if(locationName){
+            params.append("name", locationName);
+          }
           const url = API_ASTRO_WEATHER + "?" + params.toString();
           const res = await fetch(url);
           if(res.ok){
             const data = await res.json();
             renderWeatherData(data);
+            state.fetching = false;
             return;
           }
           // If 404 or other error, fallback to static JSON
           if(res.status === 404){
             console.warn("API not available (404). Run 'make server-api' for full functionality. Falling back to static JSON...");
             await fetchAstroWeatherStatic(lat, lon, tz);
+            state.fetching = false;
             return;
           }
           const text = await res.text();
@@ -823,12 +1146,15 @@
           console.warn("Note: Run 'make server-api' for full API functionality (astro-weather, geocode, revgeo)");
           try{
             await fetchAstroWeatherStatic(lat, lon, tz);
+            state.fetching = false;
           }catch(e2){
+            state.fetching = false;
             if(jsonEl) jsonEl.textContent = "—";
             if(errEl){
               errEl.textContent = "API error: " + (e.message || e) + ". Static fallback also failed: " + (e2.message || e2) + ". Run 'make server-api' for full functionality.";
               errEl.style.display = "block";
             }
+            setHint("Failed to fetch weather data. " + (e2.message || e2), true);
             throw e2;
           }
         }
@@ -862,11 +1188,12 @@
           // Otherwise, require API to be available
           if(bestDist > 0.5){
             const distKm = Math.round(bestDist * 111); // Rough conversion: 1 degree ≈ 111 km
+            const locName = state.location?.name || formatCoord(lat, lon);
             throw new Error(
-              `Selected location "${state.location?.name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`}" is too far from available static data. ` +
+              `Selected location "${locName}" is too far from available static data. ` +
               `Closest preset is ${bestLoc.name} (~${distKm} km away). ` +
               `\n\nTo use this location, run: make server-api\n` +
-              `Or choose one of the presets: Warsaw, Berlin, Prague`
+              `Or paste coordinates directly (e.g., "50.087, 14.421")`
             );
           }
           
@@ -948,30 +1275,40 @@
       }
 
       function renderWeatherData(data){
-        if(!headerEl || !jsonEl) return;
+        if(!jsonEl) return;
         if(!data || !data.location){
           console.error("Invalid data:", data);
           return;
         }
         
         // Update location state from API response (may have better name/timezone)
+        // But preserve the user-selected name if API returned just coordinates
         if(data.location){
+          const apiName = data.location.name || "";
+          const userSelectedName = state.location?.name || "";
+          // If API returned coordinates as name, use user-selected name instead
+          const finalName = (apiName.match(/^-?\d+\.\d+,-?\d+\.\d+$/) && userSelectedName) 
+            ? userSelectedName 
+            : (apiName || userSelectedName);
+          
           state.location = {
-            name: data.location.name || state.location.name,
+            name: finalName,
             lat: data.location.lat || state.location.lat,
             lon: data.location.lon || state.location.lon,
             tz: data.location.tz || state.location.tz
           };
+          // Update profile from API response
+          if(data.profile){
+            state.profile = data.profile;
+          }
           // Update UI with actual location from API
-          updateLocationPill();
-          updateLocationHeader(state.location);
+          updateStatusLine();
+          
+          // Update input field
+          if(locInput && finalName && !finalName.match(/^-?\d+\.\d+,-?\d+\.\d+$/)){
+            locInput.value = finalName;
+          }
         }
-        
-        // Update header with full info including profile
-        headerEl.innerHTML =
-          "📍 <strong>" + (data.location.name || state.location.name || "Location") + "</strong> " +
-          "(" + data.location.lat.toFixed(4) + ", " + data.location.lon.toFixed(4) + ") · " +
-          data.location.tz + " · Profile: " + (data.profile || "default");
         
         const preview = {
           generated_at: data.generated_at,
@@ -991,156 +1328,83 @@
         jsonEl.textContent = JSON.stringify(preview, null, 2);
       }
 
-      // Initialize presets
-      if(locPresetSelect){
-        PRESETS.forEach(preset => {
-          const opt = document.createElement("option");
-          opt.value = preset.name;
-          opt.textContent = preset.name;
-          opt.dataset.lat = preset.lat;
-          opt.dataset.lon = preset.lon;
-          opt.dataset.tz = preset.tz;
-          locPresetSelect.appendChild(opt);
-        });
-      }
-
-      // Event listeners
-      if(locPill){
-        locPill.addEventListener("click", toggleLocationPanel);
-        locPill.addEventListener("keydown", (e) => {
-          if(e.key === "Enter" || e.key === " "){
-            e.preventDefault();
-            toggleLocationPanel();
-          }
-        });
-      }
-      if(locChangeBtn) locChangeBtn.addEventListener("click", toggleLocationPanel);
-      if(locCancelBtn) locCancelBtn.addEventListener("click", toggleLocationPanel);
-
-      if(locPresetSelect){
-        locPresetSelect.addEventListener("change", function(){
-          const opt = this.options[this.selectedIndex];
-          if(opt && opt.dataset.lat){
-            const preset = {
-              name: opt.value,
-              lat: parseFloat(opt.dataset.lat),
-              lon: parseFloat(opt.dataset.lon),
-              tz: opt.dataset.tz
-            };
-            setDraftFromPreset(preset);
-          }
-        });
-      }
-
-      if(locSearchInput){
-        locSearchInput.addEventListener("input", function(){
-          const q = this.value.trim();
-          if(searchDebounceTimer) clearTimeout(searchDebounceTimer);
-          if(locSearchError) locSearchError.style.display = "none";
-          if(q.length < 2){
-            hideSuggestions();
-            return;
-          }
-          searchDebounceTimer = setTimeout(async () => {
-            const items = await searchGeocode(q);
-            if(items.length > 0){
-              showSuggestions(items);
-            }else{
-              hideSuggestions();
-            }
-          }, 250);
-        });
-
-        locSearchInput.addEventListener("keydown", function(e){
+      // Event listeners for new compact UI
+      if(locInput){
+        // Input change handler (debounced)
+        const debouncedHandleInput = debounce(handleInput, 300);
+        locInput.addEventListener("input", debouncedHandleInput);
+        
+        // Enter key: parse coordinates or select first dropdown item
+        locInput.addEventListener("keydown", async function(e){
           if(e.key === "Enter"){
-            const firstSuggestion = locSearchSuggestions && locSearchSuggestions.querySelector(".loc-search-suggestion");
-            if(firstSuggestion){
-              firstSuggestion.click();
-            }
-          }else if(e.key === "Escape"){
-            hideSuggestions();
-          }
-        });
-      }
-
-      document.addEventListener("click", function(e){
-        if(locSearchInput && locSearchSuggestions && !locSearchInput.contains(e.target) && !locSearchSuggestions.contains(e.target)){
-          hideSuggestions();
-        }
-      });
-
-      if(locGeoBtn) locGeoBtn.addEventListener("click", useMyLocation);
-      if(locAdvancedToggle) locAdvancedToggle.addEventListener("click", toggleAdvanced);
-      if(locLatInput){
-        locLatInput.addEventListener("input", updateDraftFromInputs);
-        // Handle paste coordinates "lat, lon"
-        locLatInput.addEventListener("paste", function(e){
-          setTimeout(() => {
-            const val = this.value.trim();
-            const match = val.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
-            if(match){
-              const lat = parseFloat(match[1]);
-              const lon = parseFloat(match[2]);
-              if(!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180){
-                locLatInput.value = lat.toFixed(4);
-                if(locLonInput) locLonInput.value = lon.toFixed(4);
-                updateDraftFromInputs();
+            e.preventDefault();
+            const text = this.value.trim();
+            const coords = parseCoords(text);
+            if(coords){
+              // Coordinates - handle immediately
+              await handleInput();
+            }else{
+              // City - select first dropdown item if available
+              const firstItem = locDropdown?.querySelector(".loc-dd-item");
+              if(firstItem){
+                firstItem.click();
+              }else{
+                // No dropdown - try to search anyway
+                await handleInput();
               }
             }
+          }else if(e.key === "Escape"){
+            closeDropdown();
+            setHint("");
+          }
+        });
+        
+        // Paste handler
+        locInput.addEventListener("paste", function(e){
+          setTimeout(() => {
+            handleInput();
           }, 10);
         });
       }
-      if(locLonInput) locLonInput.addEventListener("input", updateDraftFromInputs);
-      if(locTzInput) locTzInput.addEventListener("input", updateDraftFromInputs);
-      if(locApplyBtn) locApplyBtn.addEventListener("click", applyLocation);
 
+      // Geolocation button
+      if(locGeoBtn){
+        locGeoBtn.addEventListener("click", useMyLocation);
+      }
+
+      // Share button
+      if(locShareBtn){
+        locShareBtn.addEventListener("click", copyPermalink);
+      }
+
+      // Close dropdown on outside click
+      document.addEventListener("click", function(e){
+        if(locDropdown && !locInput?.contains(e.target) && !locDropdown.contains(e.target)){
+          closeDropdown();
+        }
+      });
+
+      // Close dropdown on Escape
       document.addEventListener("keydown", function(e){
-        if(e.key === "Escape" && state.locationPanelOpen){
-          toggleLocationPanel();
+        if(e.key === "Escape"){
+          closeDropdown();
         }
       });
 
-      // Check geocode availability (non-blocking)
-      fetch(API_GEOCODE + "?q=test").then(res => {
-        geocodeAvailable = res.ok;
-        if(!geocodeAvailable && locSearchError){
-          locSearchError.style.display = "block";
-          locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
-        }
-      }).catch(() => {
-        geocodeAvailable = false;
-        if(locSearchError){
-          locSearchError.style.display = "block";
-          locSearchError.textContent = "Geocode service not available (use presets or Advanced)";
-        }
-      });
-
-      // Initialize (wait for DOM)
+      // Check API availability
       async function checkAPIStatus(){
-        if(!apiStatusEl) return;
         try{
           const res = await fetch(API_ASTRO_WEATHER + "?lat=52.2297&lon=21.0122&tz=Europe/Warsaw&hours=1&profile=default");
-          if(res.ok){
-            apiStatusEl.textContent = "✅ API available";
-            apiStatusEl.style.color = "var(--good)";
-            apiStatusEl.style.display = "block";
-            return true;
-          }else{
-            apiStatusEl.textContent = "⚠️ API not available (404). Run 'make server-api' for full functionality. Using static fallback for presets only.";
-            apiStatusEl.style.color = "var(--mid)";
-            apiStatusEl.style.display = "block";
-            return false;
-          }
+          state.apiAvailable = res.ok;
         }catch(e){
-          apiStatusEl.textContent = "⚠️ API not available. Run 'make server-api' for full functionality. Using static fallback for presets only.";
-          apiStatusEl.style.color = "var(--mid)";
-          apiStatusEl.style.display = "block";
-          return false;
+          state.apiAvailable = false;
         }
+        // Update status line to reflect API status
+        updateStatusLine();
       }
 
       function init(){
-        if(!locPill || !locPillName || !locPillCoords || !locChangeBtn || !locPanel){
+        if(!locInput || !locGeoBtn || !locDropdown){
           console.error("Location UI elements not found");
           if(errEl){
             errEl.textContent = "UI initialization error: missing elements";
@@ -1149,21 +1413,53 @@
           return;
         }
         
+        // Load saved location
         state.location = loadSavedLocation();
-        updateLocationPill();
-        updateLocationHeader(state.location);
+        state.locationSource = "saved";
+        if(locInput){
+          locInput.value = state.location.name || formatCoord(state.location.lat, state.location.lon);
+        }
+        updateStatusLine();
         
         // Check API status
         checkAPIStatus();
         
-        // Initial fetch (with error handling)
-        fetchAstroWeather(state.location.lat, state.location.lon, state.location.tz).catch(e => {
-          console.error("Initial fetch failed:", e);
-          if(errEl){
-            errEl.textContent = "Failed to load weather data: " + (e.message || e);
-            errEl.style.display = "block";
+        // Try to load location from URL params first
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get("q");
+        const lat = params.get("lat");
+        const lon = params.get("lon");
+        
+        if(q){
+          // City name query
+          if(locInput) locInput.value = q;
+          setTimeout(() => handleInput(), 100);
+        }else if(lat && lon){
+          // Coordinates
+          const coords = {lat: parseFloat(lat), lon: parseFloat(lon)};
+          if(!isNaN(coords.lat) && !isNaN(coords.lon)){
+            if(locInput) locInput.value = lat + ", " + lon;
+            setTimeout(() => handleInput(), 100);
+          }else{
+            // Fallback to saved/default location
+            fetchAstroWeather(state.location.lat, state.location.lon, state.location.tz, "default", 72, state.location.name).catch(e => {
+              console.error("Initial fetch failed:", e);
+              if(errEl){
+                errEl.textContent = "Failed to load weather data: " + (e.message || e);
+                errEl.style.display = "block";
+              }
+            });
           }
-        });
+        }else{
+          // No URL params - use saved/default location
+          fetchAstroWeather(state.location.lat, state.location.lon, state.location.tz, "default", 72, state.location.name).catch(e => {
+            console.error("Initial fetch failed:", e);
+            if(errEl){
+              errEl.textContent = "Failed to load weather data: " + (e.message || e);
+              errEl.style.display = "block";
+            }
+          });
+        }
       }
       
       if(document.readyState === "loading"){

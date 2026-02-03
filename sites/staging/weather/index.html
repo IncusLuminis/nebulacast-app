@@ -4,8 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Nebulacast — Weather</title>
-  <link rel="stylesheet" href="/assets/css/base.css">
-  <link rel="stylesheet" href="/assets/css/widget_weather_poc.css">
+  <link rel="stylesheet" href="./assets/weather.css">
+  <link rel="stylesheet" href="./widgets/location/location.css">
+  <link rel="stylesheet" href="./widgets/controls/controls.css">
+  <link rel="stylesheet" href="./widgets/weather/weather.css">
+  <link rel="stylesheet" href="./widgets/map/map.css">
+  <link rel="stylesheet" href="./widgets/astro/astro.css">
 </head>
 <body>
   <div class="page-wrap">
@@ -13,149 +17,29 @@
       <h1>Nebulacast</h1>
       <p class="subtitle">Staging · Weather</p>
     </header>
+    
     <main>
-        <div class="wrap">
-
-    <!-- Weather column (POC-style widget) -->
-    <section class="card" id="poc-weather">
-      <div class="hdr">
-        <div class="hdr-text">
-          <h2>Weather</h2>
-          <div class="sub">Near real-time JSON. Hourly quality + best windows.</div>
-          <div class="hdr-best-window" data-role="best-window" aria-live="polite"></div>
-        </div>
-        <div class="hdr-location">
-          <label class="hdr-location-label" for="weatherLocationSelect">Location:</label>
-          <select id="weatherLocationSelect" class="hdr-location-select" data-role="location-select">
-            <option value="">Loading…</option>
-          </select>
-          <span class="hdr-location-sep">or</span>
-          <input type="number" step="0.0001" placeholder="Lat" id="weatherLatInput" class="hdr-location-input" style="width:70px;">
-          <input type="number" step="0.0001" placeholder="Lon" id="weatherLonInput" class="hdr-location-input" style="width:70px;">
-          <input type="text" placeholder="TZ" id="weatherTzInput" class="hdr-location-input" style="width:100px;" value="Europe/Warsaw">
-          <button type="button" id="weatherFetchBtn" class="hdr-location-btn">Fetch</button>
-        </div>
-        <div class="seg" aria-label="weather view">
-          <button data-wv="today" data-active="true">Tonight</button>
-          <button data-wv="48h">48h</button>
-          <button data-wv="7d">7d</button>
-        </div>
-        <div class="seg seg-profile" aria-label="weather profile">
-          <span class="seg-label">WEATHER PROFILE:</span>
-          <button data-profile="default" data-active="true">Balanced</button>
-          <button data-profile="visual">Visual</button>
-          <button data-profile="broadband">Photography</button>
-          <button data-profile="planetary">Planetary</button>
-        </div>
-      </div>
-
-      <div class="kpi">
-        <div class="box wide">
-          <div class="overall-score-label">Overall score</div>
-          <div class="overall-top">
-            <div class="overall-left">
-              <div class="overall-score-block">
-                <div class="val" data-role="score-val">78</div>
-                <div class="score-rank" data-role="score-rank">—</div>
-              </div>
-            </div>
-            <div class="overall-right" data-role="heads-up" aria-live="polite">Heads-up: —</div>
-            <div class="overall-bar-row">
-              <div class="overall-bar-full">
-                <div class="score-bar" data-role="score-bar">
-                  <div class="score-bar-fill" style="width:0%"></div>
-                </div>
-              </div>
-              <span class="score-bar-suffix" data-role="score-label">0 / 100</span>
-            </div>
-          </div>
-          <div class="overall-explain-wrap">
-            <div class="disclosure-row chips-row">
-              <button type="button" class="explain-toggle-chip" data-role="explain-toggle" aria-expanded="false" aria-label="Expand score explanation">▶</button>
-              <div class="now-factors" data-role="now-factors"></div>
-            </div>
-            <div class="explain-panel score-breakdown" data-role="explain-panel" aria-hidden="true">
-              <div class="score-breakdown-panel">
-                <div class="explain-panel-grid">
-                  <div class="explain-column-left">
-                    <h4 class="explain-title" data-role="explain-score-title">How this score was calculated</h4>
-                    <div class="breakdown-lines" data-role="score-breakdown"></div>
-                    <div class="breakdown-sum-wrap">
-                      <div class="breakdown-sum" data-role="breakdown-total">Sum: —</div>
-                    </div>
-                  </div>
-                  <div class="explain-column-right current-details-block">
-                    <h4 class="explain-title">Current details</h4>
-                    <table class="current-details-table" data-role="current-details-table">
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-                <div class="expect-banner">
-                  <h4 class="expect-banner-title">What to expect the next few hours:</h4>
-                  <ul class="expect-banner-list" data-role="warnings-list"></ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Compact mini-charts: 5 items (3+2 on mobile) -->
-      <div class="miniCharts" aria-label="mini trends" id="miniChartsContainer">
-        <div class="mini" data-role="mini-score" data-chart="score" aria-label="Open chart: Score" tabindex="0">
-          <div class="t">Score</div>
-          <div class="bar" data-role="spark-score"></div>
-          <div class="now" data-role="now-score">Now 0</div>
-        </div>
-        <div class="mini" data-role="mini-cloud" data-chart="cloud" aria-label="Open chart: Cloud" tabindex="0">
-          <div class="t">Cloud</div>
-          <div class="bar" data-role="spark-cloud"></div>
-          <div class="now" data-role="now-cloud">Now 0%</div>
-        </div>
-        <div class="mini" data-role="mini-pressure" data-chart="pressure" aria-label="Open chart: Pressure" tabindex="0">
-          <div class="t">Pressure</div>
-          <div class="bar" data-role="spark-pressure"></div>
-          <div class="now" data-role="now-pressure">Now 0 hPa</div>
-        </div>
-        <div class="mini" data-role="mini-seeing" data-chart="seeing" aria-label="Open chart: Seeing" tabindex="0">
-          <div class="t">Seeing</div>
-          <div class="bar" data-role="spark-seeing"></div>
-          <div class="now" data-role="now-seeing">Now —</div>
-        </div>
-        <div class="mini" data-role="mini-transparency" data-chart="trans" aria-label="Open chart: Transparency" tabindex="0">
-          <div class="t">Trans</div>
-          <div class="bar" data-role="spark-transparency"></div>
-          <div class="now" data-role="now-transparency">Now —</div>
-        </div>
+      <!-- Location widget (always visible) -->
+      <div id="w-location" class="widget-container"></div>
+      
+      <!-- Controls: Profile + Time range (below Location) -->
+      <div id="w-controls" class="widget-container"></div>
+      
+      <!-- Tabs for Weather/Map/Astro -->
+      <div class="widget-tabs">
+        <button class="widget-tab active" data-tab="weather">Weather</button>
+        <button class="widget-tab" data-tab="map">Map</button>
+        <button class="widget-tab" data-tab="astro">Astro</button>
       </div>
       
-
-      <div class="sectionTitle">Hourly (score)</div>
-      <div class="hourly" aria-label="hourly scores">
-        <div class="hour"><div class="t">19:00</div><div class="s">64</div><div class="b">cloud 24%</div></div>
-        <div class="hour"><div class="t">20:00</div><div class="s">71</div><div class="b">cloud 18%</div></div>
-        <div class="hour"><div class="t">21:00</div><div class="s">79</div><div class="b">cloud 12%</div></div>
-        <div class="hour"><div class="t">22:00</div><div class="s">83</div><div class="b">cloud 9%</div></div>
-        <div class="hour"><div class="t">23:00</div><div class="s">77</div><div class="b">cloud 14%</div></div>
-        <div class="hour"><div class="t">00:00</div><div class="s">68</div><div class="b">cloud 22%</div></div>
-      </div>
-
-      <div class="legend">
-        <span><span class="dot" style="background:var(--good)"></span>good</span>
-        <span><span class="dot" style="background:var(--mid)"></span>fair</span>
-        <span><span class="dot" style="background:var(--bad)"></span>poor</span>
-      </div>
-
-    </section>
-
-  </div>
-
-      <p class="rss-link"><a href="/weather/daily_weather.json">JSON</a></p>
+      <!-- Tab content containers -->
+      <div id="w-weather" class="widget-container widget-tab-content active"></div>
+      <div id="w-map" class="widget-container widget-tab-content"></div>
+      <div id="w-astro" class="widget-container widget-tab-content"></div>
     </main>
   </div>
 
+  <!-- Weather widget modals (shared across all widgets) -->
   <!-- Bottom sheet modal (legacy parameter details) -->
   <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-sheet">
@@ -234,9 +118,75 @@
     </div>
   </div>
 
-  <script>
-    window.__WEATHER_POC_CONFIG = {"jsonUrl": "/weather/daily_weather.json", "iconBase": "/assets/icons/weather", "locationsIndexUrl": "/data/weather/locations.json", "locationDataBase": "/data/weather/loc", "apiAstroWeatherUrl": "/api/astro-weather"};
+  <script type="module">
+    import { initState, getState, setState, subscribe } from "./core/state.js";
+    import { mountLocation } from "./widgets/location/location.js";
+    import { mountControls } from "./widgets/controls/controls.js";
+    import { mountWeather } from "./widgets/weather/weather.js";
+    import { mountMap } from "./widgets/map/map.js";
+    import { mountAstro } from "./widgets/astro/astro.js";
+
+    // Create store API object
+    const storeApi = {
+      getState,
+      setState,
+      subscribe
+    };
+
+    // Initialize state from URL
+    initState();
+
+    // Mount location widget (always visible)
+    const locationEl = document.getElementById("w-location");
+    if (locationEl) {
+      mountLocation(locationEl, storeApi);
+    }
+
+    const controlsEl = document.getElementById("w-controls");
+    if (controlsEl) {
+      mountControls(controlsEl, storeApi);
+    }
+
+    // Mount tab widgets
+    const weatherEl = document.getElementById("w-weather");
+    const mapEl = document.getElementById("w-map");
+    const astroEl = document.getElementById("w-astro");
+
+    if (weatherEl) {
+      mountWeather(weatherEl, storeApi);
+    }
+
+    if (mapEl) {
+      mountMap(mapEl, storeApi);
+    }
+
+    if (astroEl) {
+      mountAstro(astroEl, storeApi);
+    }
+
+    // Tab switching logic
+    const tabs = document.querySelectorAll(".widget-tab");
+    const tabContents = document.querySelectorAll(".widget-tab-content");
+    
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        const targetTab = tab.dataset.tab;
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        
+        // Show/hide content
+        tabContents.forEach(content => {
+          const isTarget = content.id === `w-${targetTab}`;
+          content.classList.toggle("active", isTarget);
+        });
+      });
+    });
+
+    // Initial render for all widgets (they subscribe to state changes)
+    const initialState = getState();
+    // Widgets will render automatically via their subscriptions
   </script>
-  <script src="/assets/js/widget_weather_poc.js"></script>
 </body>
 </html>

@@ -1,0 +1,58 @@
+/* Controls row: Profile + Time range (one hierarchy level) */
+
+.controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+@media (max-width: 560px) {
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}
+
+.controls-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--line);
+  padding: 6px;
+  border-radius: 14px;
+}
+
+.controls-group:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.controls-btn {
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--chipLine);
+  background: var(--chip);
+  color: #cfe2ff;
+  text-transform: uppercase;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.controls-btn[data-active="true"] {
+  outline: 2px solid rgba(143, 182, 255, 0.35);
+  background: rgba(143, 182, 255, 0.16);
+  border-color: rgba(143, 182, 255, 0.25);
+}
+
+.controls-btn:hover:not([data-active="true"]) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}

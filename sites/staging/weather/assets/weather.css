@@ -1,0 +1,133 @@
+/**
+ * Common styles for weather page
+ */
+
+:root {
+  --bg: #0b0d12;
+  --panel: #0f1115;
+  --line: #2a2f3a;
+  --text: #e6e6e6;
+  --muted: #9aa3b2;
+  --title: #e6f2ff;
+  --good: #7dff9a;
+  --mid: #ffd36b;
+  --bad: #ff6b6b;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.page-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 12px 40px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  color: var(--title);
+}
+
+.page-header .subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.widget-container {
+  margin-bottom: 16px;
+}
+
+/* Tabs */
+.widget-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.widget-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: color 0.2s, background 0.2s;
+  position: relative;
+}
+
+.widget-tab:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.widget-tab.active {
+  color: var(--title);
+  background: rgba(143, 182, 255, 0.1);
+}
+
+.widget-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -9px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--title);
+}
+
+.widget-tab-content {
+  display: none;
+}
+
+.widget-tab-content.active {
+  display: block;
+}
+
+/* Toast notification */
+.nc-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 20px;
+  color: var(--text);
+  font-size: 13px;
+  z-index: 10000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.nc-toast.nc-toast-show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* Mobile-first responsive */
+@media (min-width: 560px) {
+  .page-wrap {
+    max-width: 800px;
+  }
+}

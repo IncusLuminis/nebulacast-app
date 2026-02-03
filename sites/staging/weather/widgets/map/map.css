@@ -1,0 +1,31 @@
+/* Map Widget Styles */
+
+.widget-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.widget-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: var(--title);
+}
+
+.widget-content {
+  color: var(--text);
+}
+
+.widget-stub {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+.widget-location-info {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
