@@ -7,7 +7,7 @@
 **Запускается только один скрипт — точка входа:**
 
 ```bash
-# из корня репо nebulacast.app
+# из корня репо nebulacast-app
 python services/news/pipelines/run_news.py
 ```
 

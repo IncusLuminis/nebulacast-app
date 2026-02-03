@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/base.css">
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_news.css">
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_calendar.css">
-  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_weather.css">
+  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_weather_poc.css">
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/index_tabs.css">
 </head>
 <body>
@@ -19,7 +19,6 @@
     <nav class="index-tabs" role="tablist" aria-label="Sections">
       <button type="button" id="tab-news" class="index-tab is-active" data-tab="news" role="tab" aria-selected="true" aria-controls="panel-news">News</button>
       <button type="button" id="tab-calendar" class="index-tab" data-tab="calendar" role="tab" aria-selected="false" aria-controls="panel-calendar">Calendar</button>
-      <button type="button" id="tab-alerts" class="index-tab" data-tab="alerts" role="tab" aria-selected="false" aria-controls="panel-calendar">Alerts</button>
       <button type="button" id="tab-weather" class="index-tab" data-tab="weather" role="tab" aria-selected="false" aria-controls="panel-weather">Weather</button>
     </nav>
     <main class="index-panels">
@@ -30,19 +29,20 @@
         {{WIDGET_ALERTS_SECTION}}
       </div>
       <div id="panel-weather" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-weather">
-        {{WIDGET_ASTRO_WEATHER_SECTION}}
+        {{WIDGET_WEATHER_POC_SECTION}}
       </div>
     </main>
   </div>
+  {{WEATHER_POC_OVERLAYS}}
   <script src="{{BASE_PATH}}/assets/js/widget_runtime.js"></script>
   <script>
     (function() {
       var base = '{{BASE_PATH}}';
       {{WIDGET_NEWS_INIT}}
       {{WIDGET_ALERTS_INIT}}
-      {{WIDGET_ASTRO_WEATHER_INIT}}
+      {{WIDGET_WEATHER_POC_INIT}}
       (function() {
-        var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', alerts: 'panel-calendar', weather: 'panel-weather' };
+        var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
         var tabs = document.querySelectorAll('.index-tab');
         var panels = document.querySelectorAll('.index-panel');
         function switchTo(panelId, activeTab) {
@@ -64,5 +64,6 @@
       })();
     })();
   </script>
+  <script src="{{BASE_PATH}}/assets/js/widget_weather_poc.js"></script>
 </body>
 </html>

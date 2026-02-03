@@ -1,6 +1,6 @@
-# nebulacast.app
+# nebulacast-app
 
-Repository for nebulacast.app services and sites. Independent services live under `services/`; deployable sites under `sites/`.
+Repository for nebulacast-app services and sites. Independent services live under `services/`; deployable sites under `sites/`.
 
 ## News service (RSS)
 

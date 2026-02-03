@@ -294,63 +294,38 @@ def main() -> int:
     (out_path / "weather" / "index.html").write_text(weather_index_content, encoding="utf-8")
     generated.append(str(out_path / "weather" / "index.html"))
 
+    # Full POC-style weather widget for index (same as weather/index.html content)
     weather_section_html = (
         '<section class="widget-section weather-widget" id="widget-weather">'
-        '<h2>' + weather_title + '</h2>'
-        '<div id="weather-content">Loading...</div>'
-        "</section>"
+        + weather_poc_partial
+        + "</section>"
     )
-    weather_init = ""
-    if weather_enabled:
-        weather_json_url_js = "base + " + json.dumps(weather_json)
-        weather_init = """
-(function(){
-  var el = document.getElementById('weather-content');
-  if (!el) return;
-  function esc(s){ if (s == null) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-  fetch(""" + weather_json_url_js + """ + '?ts=' + Date.now())
-    .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function(data){
-      if (!data || !data.hours || data.hours.length === 0) { el.innerHTML = '<div class="err">No weather data</div>'; return; }
-      var loc = data.location || {};
-      var name = loc.name || 'Unknown';
-      var hours = data.hours || [];
-      var summary = data.summary || {};
-      var best = summary.best_windows || [];
-      var now = new Date();
-      var currentScore = null;
-      for (var i = 0; i < hours.length; i++) {
-        var t = new Date(hours[i].time);
-        if (t <= now && t > new Date(now.getTime() - 3600000)) { currentScore = hours[i].score || 0; break; }
-      }
-      var nextHours = hours.filter(function(h){ return new Date(h.time) > now; });
-      var html = '<div class="astro-weather-header" style="margin-bottom:12px">Weather • ' + esc(name) + '</div>';
-      if (currentScore !== null) {
-        var scoreClass = currentScore >= 70 ? 'good' : currentScore >= 50 ? 'fair' : 'poor';
-        html += '<div style="margin-bottom:12px;font-size:13px;color:#cfe2ff">Now: <span class="astro-hour-score ' + scoreClass + '" style="display:inline-block;margin-left:4px">' + currentScore + '</span></div>';
-      }
-      if (best.length > 0) {
-        var w = best[0];
-        var start = new Date(w.start);
-        var end = new Date(w.end);
-        var startStr = start.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-        var endStr = end.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-        var dateStr = start.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-        html += '<div style="margin-bottom:16px;font-size:12px;color:#cfe2ff">Best window: <strong>' + esc(dateStr + ' ' + startStr + '\u2013' + endStr) + '</strong> (score ' + w.score_avg + ')</div>';
-      }
-      html += '<div class="astro-weather-hours" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px">';
-      nextHours.forEach(function(h){
-        var hourTime = new Date(h.time);
-        var score = h.score || 0;
-        var scoreClass = score >= 70 ? 'good' : score >= 50 ? 'fair' : 'poor';
-        html += '<div class="astro-hour"><div class="astro-hour-time">' + esc(hourTime.toLocaleDateString('en-US',{month:'short',day:'numeric'})) + '<br/>' + esc(hourTime.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})) + '</div><div class="astro-hour-score ' + scoreClass + '">' + score + '</div></div>';
-      });
-      html += '</div>';
-      el.innerHTML = html;
-    })
-    .catch(function(err){ el.innerHTML = '<div class="err">Failed to load weather: ' + esc(err.message || 'Unknown error') + '</div>'; });
-})();
-"""
+    weather_poc_overlays_html = """
+  <!-- Bottom sheet modal (legacy parameter details) -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 id="modal-title">Parameter Details</h3>
+        <button class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-content" id="modal-content"></div>
+    </div>
+  </div>
+  <!-- Factor tooltip (breakdown (i) icons) -->
+  <div class="factor-tooltip" id="factorTooltip" role="tooltip" aria-hidden="true">
+    <div class="factor-tooltip-title" id="factorTooltipTitle"></div>
+    <div class="factor-tooltip-body" id="factorTooltipBody"></div>
+  </div>
+  <!-- Chip popover (L1 details) -->
+  <div class="chip-overlay" id="chipOverlay" role="dialog" aria-modal="true" aria-labelledby="chipSheetTitle">
+    <div class="chip-sheet" id="chipSheet">
+      <div class="sheet-hdr">
+        <h3 id="chipSheetTitle"></h3>
+      </div>
+      <div class="chip-sheet-body" id="chipSheetBody"></div>
+    </div>
+  </div>"""
+    weather_poc_init = "window.__WEATHER_POC_CONFIG = " + json.dumps(weather_poc_config) + ";"
 
     index_tmpl = read_tmpl("index.html", "pages")
     index_html = (
@@ -359,10 +334,11 @@ def main() -> int:
         .replace("{{BASE_PATH}}", base_path)
         .replace("{{WIDGET_NEWS_SECTION}}", news_section_html if news_enabled else "")
         .replace("{{WIDGET_ALERTS_SECTION}}", calendar_section_wrapped if calendar_enabled else "")
-        .replace("{{WIDGET_ASTRO_WEATHER_SECTION}}", weather_section_html if weather_enabled else "<section class=\"widget-section\" id=\"widget-weather\"><h2>Weather</h2><div class=\"widget-placeholder\">Disabled</div></section>")
+        .replace("{{WIDGET_WEATHER_POC_SECTION}}", weather_section_html if weather_enabled else "<section class=\"widget-section\" id=\"widget-weather\"><h2>Weather</h2><div class=\"widget-placeholder\">Disabled</div></section>")
+        .replace("{{WEATHER_POC_OVERLAYS}}", weather_poc_overlays_html if weather_enabled else "")
         .replace("{{WIDGET_NEWS_INIT}}", news_init)
         .replace("{{WIDGET_ALERTS_INIT}}", calendar_init)
-        .replace("{{WIDGET_ASTRO_WEATHER_INIT}}", weather_init)
+        .replace("{{WIDGET_WEATHER_POC_INIT}}", weather_poc_init if weather_enabled else "")
     )
     # Ensure base.css is present
     base_css_dst = out_path / "assets" / "css" / "base.css"

@@ -1,4 +1,4 @@
-# nebulacast.app — top-level targets
+# nebulacast-app — top-level targets
 # make news       — backend + frontend (full)
 # make news-back  — only backend (RSS pipeline)
 # make news-front — only frontend (HTML/JS)
