@@ -280,8 +280,12 @@ def main() -> int:
     # --- Weather POC page: weather/index.html (full widget like poc.html) ---
     weather_poc_partial = read_tmpl("widget_weather_poc.html")
     weather_poc_config = {
+        # Legacy single-location JSON (used as fallback)
         "jsonUrl": (base_path or "") + weather_json,
         "iconBase": (base_path or "") + "/assets/icons/weather",
+        # Multi-location static data for dropdown
+        "locationsIndexUrl": (base_path or "") + "/data/weather/locations.json",
+        "locationDataBase": (base_path or "") + "/data/weather/loc",
     }
     weather_page_tmpl = read_tmpl("weather.html", "pages")
     weather_index_content = (
@@ -323,6 +327,55 @@ def main() -> int:
         <h3 id="chipSheetTitle"></h3>
       </div>
       <div class="chip-sheet-body" id="chipSheetBody"></div>
+    </div>
+  </div>
+  <!-- Chart overlay (mini-chart detail view) -->
+  <div class="chart-overlay" id="chartOverlay" role="dialog" aria-modal="true" aria-labelledby="chartOverlayTitle" aria-hidden="true">
+    <div class="chart-overlay-backdrop"></div>
+    <div class="chart-overlay-panel">
+      <div class="chart-overlay-header">
+        <h3 id="chartOverlayTitle">Score • Warsaw</h3>
+        <button class="chart-overlay-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="chart-overlay-subheader" id="chartOverlaySubheader">
+        Horizon: TONIGHT • Profile: Balanced • Updated: —
+      </div>
+      <div class="chart-overlay-canvas-wrapper">
+        <canvas id="chartCanvas" width="800" height="300"></canvas>
+        <div class="chart-tooltip" id="chartTooltip" aria-hidden="true"></div>
+      </div>
+      <div class="chart-overlay-footer">
+        <div class="chart-stat">
+          <span class="chart-stat-label">Now:</span>
+          <span class="chart-stat-value" id="chartStatNow">—</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Min:</span>
+          <span class="chart-stat-value" id="chartStatMin">—</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Max:</span>
+          <span class="chart-stat-value" id="chartStatMax">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Hour Inspector bottom sheet -->
+  <div class="hour-inspector-backdrop" id="hourInspectorBackdrop" aria-hidden="true"></div>
+  <div class="hour-inspector-sheet" id="hourInspectorSheet" role="dialog" aria-modal="true" aria-labelledby="hourInspectorTitle" aria-hidden="true">
+    <div class="hour-inspector-header" id="hourInspectorHeader">
+      <div class="hour-inspector-header-left">
+        <div class="hour-inspector-time" id="hourInspectorTime">—</div>
+        <div class="hour-inspector-score-block">
+          <div class="hour-inspector-score-val" id="hourInspectorScoreVal">—</div>
+          <div class="hour-inspector-score-label" id="hourInspectorScoreLabel">—</div>
+        </div>
+      </div>
+      <button class="hour-inspector-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="hour-inspector-summary" id="hourInspectorSummary">—</div>
+    <div class="hour-inspector-body" id="hourInspectorBody">
+      <!-- Content will be rendered by JavaScript -->
     </div>
   </div>"""
     weather_poc_init = "window.__WEATHER_POC_CONFIG = " + json.dumps(weather_poc_config) + ";"

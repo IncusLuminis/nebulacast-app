@@ -60,6 +60,12 @@
           <div class="sub">Near real-time JSON. Hourly quality + best windows.</div>
           <div class="hdr-best-window" data-role="best-window" aria-live="polite"></div>
         </div>
+        <div class="hdr-location">
+          <label class="hdr-location-label" for="weatherLocationSelect">Location:</label>
+          <select id="weatherLocationSelect" class="hdr-location-select" data-role="location-select">
+            <option value="">Loading…</option>
+          </select>
+        </div>
         <div class="seg" aria-label="weather view">
           <button data-wv="today" data-active="true">Tonight</button>
           <button data-wv="48h">48h</button>
@@ -128,28 +134,28 @@
       </div>
 
       <!-- Compact mini-charts: 5 items (3+2 on mobile) -->
-      <div class="miniCharts" aria-label="mini trends">
-        <div class="mini" data-role="mini-score">
+      <div class="miniCharts" aria-label="mini trends" id="miniChartsContainer">
+        <div class="mini" data-role="mini-score" data-chart="score" aria-label="Open chart: Score" tabindex="0">
           <div class="t">Score</div>
           <div class="bar" data-role="spark-score"></div>
           <div class="now" data-role="now-score">Now 0</div>
         </div>
-        <div class="mini" data-role="mini-cloud">
+        <div class="mini" data-role="mini-cloud" data-chart="cloud" aria-label="Open chart: Cloud" tabindex="0">
           <div class="t">Cloud</div>
           <div class="bar" data-role="spark-cloud"></div>
           <div class="now" data-role="now-cloud">Now 0%</div>
         </div>
-        <div class="mini" data-role="mini-pressure">
+        <div class="mini" data-role="mini-pressure" data-chart="pressure" aria-label="Open chart: Pressure" tabindex="0">
           <div class="t">Pressure</div>
           <div class="bar" data-role="spark-pressure"></div>
           <div class="now" data-role="now-pressure">Now 0 hPa</div>
         </div>
-        <div class="mini" data-role="mini-seeing">
+        <div class="mini" data-role="mini-seeing" data-chart="seeing" aria-label="Open chart: Seeing" tabindex="0">
           <div class="t">Seeing</div>
           <div class="bar" data-role="spark-seeing"></div>
           <div class="now" data-role="now-seeing">Now —</div>
         </div>
-        <div class="mini" data-role="mini-transparency">
+        <div class="mini" data-role="mini-transparency" data-chart="trans" aria-label="Open chart: Transparency" tabindex="0">
           <div class="t">Trans</div>
           <div class="bar" data-role="spark-transparency"></div>
           <div class="now" data-role="now-transparency">Now —</div>
@@ -205,13 +211,62 @@
       <div class="chip-sheet-body" id="chipSheetBody"></div>
     </div>
   </div>
+  <!-- Chart overlay (mini-chart detail view) -->
+  <div class="chart-overlay" id="chartOverlay" role="dialog" aria-modal="true" aria-labelledby="chartOverlayTitle" aria-hidden="true">
+    <div class="chart-overlay-backdrop"></div>
+    <div class="chart-overlay-panel">
+      <div class="chart-overlay-header">
+        <h3 id="chartOverlayTitle">Score • Warsaw</h3>
+        <button class="chart-overlay-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="chart-overlay-subheader" id="chartOverlaySubheader">
+        Horizon: TONIGHT • Profile: Balanced • Updated: —
+      </div>
+      <div class="chart-overlay-canvas-wrapper">
+        <canvas id="chartCanvas" width="800" height="300"></canvas>
+        <div class="chart-tooltip" id="chartTooltip" aria-hidden="true"></div>
+      </div>
+      <div class="chart-overlay-footer">
+        <div class="chart-stat">
+          <span class="chart-stat-label">Now:</span>
+          <span class="chart-stat-value" id="chartStatNow">—</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Min:</span>
+          <span class="chart-stat-value" id="chartStatMin">—</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Max:</span>
+          <span class="chart-stat-value" id="chartStatMax">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Hour Inspector bottom sheet -->
+  <div class="hour-inspector-backdrop" id="hourInspectorBackdrop" aria-hidden="true"></div>
+  <div class="hour-inspector-sheet" id="hourInspectorSheet" role="dialog" aria-modal="true" aria-labelledby="hourInspectorTitle" aria-hidden="true">
+    <div class="hour-inspector-header" id="hourInspectorHeader">
+      <div class="hour-inspector-header-left">
+        <div class="hour-inspector-time" id="hourInspectorTime">—</div>
+        <div class="hour-inspector-score-block">
+          <div class="hour-inspector-score-val" id="hourInspectorScoreVal">—</div>
+          <div class="hour-inspector-score-label" id="hourInspectorScoreLabel">—</div>
+        </div>
+      </div>
+      <button class="hour-inspector-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="hour-inspector-summary" id="hourInspectorSummary">—</div>
+    <div class="hour-inspector-body" id="hourInspectorBody">
+      <!-- Content will be rendered by JavaScript -->
+    </div>
+  </div>
   <script src="/assets/js/widget_runtime.js"></script>
   <script>
     (function() {
       var base = '';
       window.runNewsWidget({ rootId: 'nrw-main', rssUrl: base + '/news/rss.xml', maxItems: 12, parseMax: 300, filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] });
       window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '/calendar/daily_signal.json', maxItems: 20, filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], iconBase: base + '/assets/icons/alerts' });
-      window.__WEATHER_POC_CONFIG = {"jsonUrl": "/weather/daily_weather.json", "iconBase": "/assets/icons/weather"};
+      window.__WEATHER_POC_CONFIG = {"jsonUrl": "/weather/daily_weather.json", "iconBase": "/assets/icons/weather", "locationsIndexUrl": "/data/weather/locations.json", "locationDataBase": "/data/weather/loc"};
       (function() {
         var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
         var tabs = document.querySelectorAll('.index-tab');

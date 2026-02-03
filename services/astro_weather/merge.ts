@@ -1,0 +1,94 @@
+// Merge Open-Meteo and 7Timer data into aligned hourly records
+
+import type { HourRecord } from "./types";
+import type { OpenMeteoResponse } from "./providers/open_meteo";
+import type { SevenTimerResponse } from "./providers/seven_timer";
+
+export function mergeHourlyData(
+  omData: OpenMeteoResponse,
+  stData: SevenTimerResponse | null,
+  tz: string,
+  hours: number
+): HourRecord[] {
+  const hourly = omData.hourly;
+  if (!hourly || !hourly.time || hourly.time.length === 0) {
+    return [];
+  }
+
+  const times = hourly.time;
+  const cloudTotal = hourly.cloudcover || [];
+  const cloudLow = hourly.cloudcover_low || [];
+  const cloudMid = hourly.cloudcover_mid || [];
+  const cloudHigh = hourly.cloudcover_high || [];
+  const precip = hourly.precipitation || [];
+  const precipProb = hourly.precipitation_probability || [];
+  const pressure = hourly.pressure_msl || [];
+  const wind = hourly.windspeed_10m || [];
+  const windDir = hourly.winddirection_10m || [];
+  const visibility = hourly.visibility || [];
+  const temp = hourly.temperature_2m || [];
+
+  // Build 7Timer timepoint map
+  const stMap = new Map<number, { seeing: number | null; transparency: number | null }>();
+  if (stData && stData.init && Array.isArray(stData.dataseries)) {
+    try {
+      const initTime = new Date(stData.init).getTime();
+      for (const point of stData.dataseries) {
+        const timepointHours = point.timepoint || 0;
+        const pointTime = initTime + timepointHours * 3600 * 1000;
+        stMap.set(timepointHours, {
+          seeing: point.seeing ?? null,
+          transparency: point.transparency ?? null,
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to parse 7Timer init time:", e);
+    }
+  }
+
+  const records: HourRecord[] = [];
+  const now = Date.now();
+  const cutoff = now + hours * 3600 * 1000;
+
+  for (let i = 0; i < times.length && i < hours; i++) {
+    const timeStr = times[i];
+    if (!timeStr) continue;
+
+    try {
+      const dt = new Date(timeStr);
+      if (isNaN(dt.getTime()) || dt.getTime() > cutoff) break;
+
+      // Find nearest 7Timer point (3-hour intervals)
+      const stIndex = Math.floor(i / 3);
+      const stPoint = stMap.get(stIndex * 3) || { seeing: null, transparency: null };
+
+      records.push({
+        time: dt.toISOString(),
+        cloud_total: cloudTotal[i] ?? null,
+        cloud_low: cloudLow[i] ?? null,
+        cloud_mid: cloudMid[i] ?? null,
+        cloud_high: cloudHigh[i] ?? null,
+        precip_mm: precip[i] ?? 0,
+        precip_prob: precipProb[i] ?? null,
+        pressure_hpa: pressure[i] ?? null,
+        wind_m_s: wind[i] ?? null,
+        wind_dir_deg: windDir[i] ?? null,
+        temp_c: temp[i] ?? null,
+        visibility_m: visibility[i] ?? null,
+        seeing: stPoint.seeing,
+        transparency: stPoint.transparency,
+        score: 0, // Will be computed later
+        score_breakdown: {
+          components: [],
+          total: 0,
+          clamped_total: 0,
+        },
+      });
+    } catch (e) {
+      console.warn(`Failed to process hour ${i}:`, e);
+      continue;
+    }
+  }
+
+  return records;
+}

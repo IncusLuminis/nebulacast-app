@@ -3,10 +3,14 @@
 
 // URL from config (set by weather/index.html)
 const ASTRO_WEATHER_URL = (window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.jsonUrl) || "/weather/daily_weather.json";
+const LOCATIONS_INDEX_URL = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.locationsIndexUrl;
+const LOCATION_DATA_BASE = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.locationDataBase;
 
 const weatherCard = document.getElementById("poc-weather");
 let weatherData = null;
 let activeProfile = "default";
+let locationsIndex = null;
+let currentLocationId = null;
 
 // Helper: escape HTML
 function escapeHtml(s) {
@@ -1053,7 +1057,11 @@ function renderHourly(hours) {
     return;
   }
 
-  hourlyEl.innerHTML = futureHours.map(hour => {
+  hourlyEl.innerHTML = futureHours.map((hour, futureIdx) => {
+    // Find index in full hours array
+    const fullIdx = hours.findIndex(h => h.time === hour.time);
+    const hourIdx = fullIdx >= 0 ? fullIdx : futureIdx;
+    
     const timeStr = formatTime(hour.time);
     const score = formatScore(getHourScore(hour));
     
@@ -1076,7 +1084,7 @@ function renderHourly(hours) {
     ].filter(Boolean);
     if (paramLines.length === 0) paramLines.push("—");
     return `
-      <div class="hour">
+      <div class="hour" data-hour-idx="${hourIdx}" style="cursor:pointer">
         <div class="t">${escapeHtml(timeStr)}</div>
         <div class="s-wrap">
           <img class="wx-ico" src="${escapeHtml(iconPath)}" alt="" aria-hidden="true">
@@ -1088,6 +1096,16 @@ function renderHourly(hours) {
       </div>
     `;
   }).join("");
+  
+  // Add click handlers to hourly cards
+  hourlyEl.querySelectorAll(".hour[data-hour-idx]").forEach(card => {
+    card.addEventListener("click", function() {
+      const idx = parseInt(this.dataset.hourIdx, 10);
+      if (!isNaN(idx)) {
+        openHourInspector(idx);
+      }
+    });
+  });
 }
 
 // Helper: check if value is invalid (-9999 or null)
@@ -1560,7 +1578,15 @@ function renderBestWindows(bestWindows, hours) {
 async function loadWeather() {
   showLoading();
   try {
-    var url = ASTRO_WEATHER_URL + (ASTRO_WEATHER_URL.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
+    var url;
+    if (LOCATION_DATA_BASE && currentLocationId) {
+      var base = LOCATION_DATA_BASE;
+      if (base.charAt(base.length - 1) === "/") base = base.slice(0, -1);
+      url = base + "/" + currentLocationId + ".json";
+    } else {
+      url = ASTRO_WEATHER_URL;
+    }
+    url = url + (url.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
     var res = await fetch(url);
     if (!res.ok) throw new Error("HTTP " + res.status + ": " + res.statusText);
     var contentType = res.headers.get("content-type") || "";
@@ -1573,7 +1599,13 @@ async function loadWeather() {
       throw new Error("Invalid JSON: missing or empty hours array");
     }
     weatherData = data;
-    var profileList = ["default"].concat(Array.isArray(data.profiles) ? data.profiles.filter(function(p){ return p !== "default"; }) : []);
+    var profileList;
+    if (Array.isArray(data.profiles) && data.profiles.length) {
+      profileList = ["default"].concat(data.profiles.filter(function(p){ return p !== "default"; }));
+    } else {
+      // Fallback profiles for per-location JSON (balanced + 3 profiles)
+      profileList = ["default", "visual", "broadband", "planetary"];
+    }
     var def = typeof data.default_profile === "string" ? data.default_profile : "default";
     activeProfile = profileList.length > 0 ? (profileList.indexOf(def) >= 0 ? def : profileList[0]) : "default";
     syncProfileSegmentUI();
@@ -1587,7 +1619,14 @@ async function loadWeather() {
       var horizonHours = data.horizon_hours || data.hours.length;
       subEl.textContent = (horizonHours >= 70 ? "~" + horizonHours : horizonHours) + " hours • Updated: " + formatDateTime(data.generated_at);
     }
-    if (data.summary && data.summary.best_windows) renderBestWindows(data.summary.best_windows, data.hours);
+    var bestWindowsArr = null;
+    if (data.summary && Array.isArray(data.summary.best_windows)) {
+      bestWindowsArr = data.summary.best_windows;
+    } else if (data.best_windows && data.best_windows.tonight) {
+      bestWindowsArr = [data.best_windows.tonight];
+    }
+    if (bestWindowsArr) renderBestWindows(bestWindowsArr, data.hours);
+    else renderBestWindows(null, data.hours);
     renderNow(nowHour);
     renderHourly(data.hours);
     renderMiniCharts(data.hours, currentMode, nowHour);
@@ -1598,6 +1637,800 @@ async function loadWeather() {
     if (kpiEl) kpiEl.innerHTML = "<div style=\"padding:20px;text-align:center;color:var(--bad)\">Failed to load weather JSON: " + escapeHtml(err.message) + "</div>";
   }
 }
+// Chart overlay functionality
+let currentChartParam = null;
+const chartOverlay = document.getElementById("chartOverlay");
+const chartCanvas = document.getElementById("chartCanvas");
+const chartTooltip = document.getElementById("chartTooltip");
+const chartTitle = document.getElementById("chartOverlayTitle");
+const chartSubheader = document.getElementById("chartOverlaySubheader");
+const chartStatNow = document.getElementById("chartStatNow");
+const chartStatMin = document.getElementById("chartStatMin");
+const chartStatMax = document.getElementById("chartStatMax");
+
+function openChartOverlay(paramKey) {
+  if (!weatherData || !weatherData.hours || !chartOverlay) return;
+  currentChartParam = paramKey;
+  chartOverlay.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  renderChart(paramKey);
+}
+
+function closeChartOverlay() {
+  if (!chartOverlay) return;
+  chartOverlay.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  currentChartParam = null;
+}
+
+function getChartData(paramKey, hours) {
+  const now = Date.now();
+  let selectedHours = [];
+  
+  if (currentMode === "today") {
+    selectedHours = hours
+      .map(h => ({ h, dt: parseISO(h.time) }))
+      .filter(x => x.dt && x.dt.getTime() > now)
+      .slice(0, 12)
+      .map(x => x.h);
+  } else if (currentMode === "48h") {
+    selectedHours = hours
+      .map(h => ({ h, dt: parseISO(h.time) }))
+      .filter(x => x.dt && x.dt.getTime() > now)
+      .slice(0, 48)
+      .map(x => x.h);
+  } else {
+    // 7d: use all available hours (up to 72)
+    selectedHours = hours
+      .map(h => ({ h, dt: parseISO(h.time) }))
+      .filter(x => x.dt && x.dt.getTime() > now)
+      .map(x => x.h);
+  }
+  
+  const values = [];
+  const times = [];
+  const nowIdx = -1;
+  let nearestIdx = 0;
+  let nearestDiff = Infinity;
+  
+  selectedHours.forEach((h, i) => {
+    const dt = parseISO(h.time);
+    if (!dt) return;
+    const diff = Math.abs(dt.getTime() - now);
+    if (diff < nearestDiff) {
+      nearestDiff = diff;
+      nearestIdx = i;
+    }
+    
+    let val = null;
+    if (paramKey === "score") {
+      val = h.score ?? null;
+    } else if (paramKey === "cloud") {
+      val = isValidValue(h.cloud_total) ? h.cloud_total : null;
+    } else if (paramKey === "pressure") {
+      val = isValidValue(h.pressure_hpa) ? h.pressure_hpa : null;
+    } else if (paramKey === "seeing") {
+      val = isValidValue(h.seeing) ? h.seeing : null;
+    } else if (paramKey === "trans") {
+      val = isValidValue(h.transparency) ? h.transparency : null;
+    }
+    
+    values.push(val);
+    times.push(dt);
+  });
+  
+  return { values, times, nowIdx: nearestIdx, hours: selectedHours };
+}
+
+function renderChart(paramKey) {
+  if (!chartCanvas || !weatherData || !chartTitle || !chartSubheader) return;
+  
+  const ctx = chartCanvas.getContext("2d");
+  const chartData = getChartData(paramKey, weatherData.hours);
+  const { values, times, nowIdx, hours } = chartData;
+  
+  if (values.length === 0) return;
+  
+  // Update title and subheader
+  const paramTitles = {
+    score: "Score",
+    cloud: "Cloud",
+    pressure: "Pressure",
+    seeing: "Seeing",
+    trans: "Transparency"
+  };
+  const locationName = weatherData.location?.name || "Unknown";
+  chartTitle.textContent = paramTitles[paramKey] + " • " + locationName;
+  
+  const horizonLabels = {
+    today: "TONIGHT",
+    "48h": "48H",
+    "7d": "7D"
+  };
+  const profileLabels = {
+    default: "Balanced",
+    visual: "Visual",
+    broadband: "Photography",
+    planetary: "Planetary"
+  };
+  const horizonLabel = horizonLabels[currentMode] || "TONIGHT";
+  const profileLabel = profileLabels[activeProfile] || "Balanced";
+  const updatedStr = formatDateTime(weatherData.generated_at);
+  const maxHours = weatherData.horizon_hours || weatherData.hours.length;
+  const horizonText = currentMode === "7d" && maxHours < 168 
+    ? horizonLabel + " (Max available: " + maxHours + "h)" 
+    : horizonLabel;
+  chartSubheader.textContent = "Horizon: " + horizonText + " • Profile: " + profileLabel + " • Updated: " + updatedStr;
+  
+  // Calculate stats
+  const validValues = values.filter(v => v != null);
+  const nowValue = nowIdx >= 0 && nowIdx < values.length ? values[nowIdx] : null;
+  const minValue = validValues.length > 0 ? Math.min(...validValues) : null;
+  const maxValue = validValues.length > 0 ? Math.max(...validValues) : null;
+  
+  // Update stats
+  const formatValue = (v) => {
+    if (v == null) return "—";
+    if (paramKey === "score") return Math.round(v);
+    if (paramKey === "cloud") return Math.round(v) + "%";
+    if (paramKey === "pressure") return Math.round(v) + " hPa";
+    if (paramKey === "seeing") return v + " (1 best – 7 worst)";
+    if (paramKey === "trans") return v + " (1 best – 4 worst)";
+    return String(v);
+  };
+  
+  if (chartStatNow) chartStatNow.textContent = formatValue(nowValue);
+  if (chartStatMin) chartStatMin.textContent = formatValue(minValue);
+  if (chartStatMax) chartStatMax.textContent = formatValue(maxValue);
+  
+  // Set canvas size
+  const dpr = window.devicePixelRatio || 1;
+  const rect = chartCanvas.getBoundingClientRect();
+  chartCanvas.width = rect.width * dpr;
+  chartCanvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  chartCanvas.style.width = rect.width + "px";
+  chartCanvas.style.height = rect.height + "px";
+  
+  // Clear canvas
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  
+  if (validValues.length === 0) {
+    ctx.fillStyle = "var(--muted)";
+    ctx.font = "14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("No data available", rect.width / 2, rect.height / 2);
+    return;
+  }
+  
+  // Determine if labels should be rotated (for X axis)
+  const maxLabels = 20;
+  const shouldRotate = values.length > maxLabels;
+  
+  // Chart dimensions (increase left padding for Y axis labels with units)
+  const padding = { top: 20, right: 20, bottom: shouldRotate ? 50 : 40, left: 70 };
+  const chartWidth = rect.width - padding.left - padding.right;
+  const chartHeight = rect.height - padding.top - padding.bottom;
+  
+  // Determine min/max for Y axis
+  let yMin, yMax;
+  if (paramKey === "score") {
+    yMin = 0;
+    yMax = 100;
+  } else if (paramKey === "cloud") {
+    yMin = 0;
+    yMax = 100;
+  } else if (paramKey === "pressure") {
+    yMin = Math.min(...validValues) - 5;
+    yMax = Math.max(...validValues) + 5;
+  } else if (paramKey === "seeing") {
+    yMin = 1;
+    yMax = 7;
+  } else if (paramKey === "trans") {
+    yMin = 1;
+    yMax = 4;
+  } else {
+    yMin = Math.min(...validValues);
+    yMax = Math.max(...validValues);
+  }
+  
+  const yRange = yMax - yMin || 1;
+  
+  // Calculate number of Y ticks
+  const yTickCount = 10; // Total ticks
+  
+  // Format Y axis label with units
+  function formatYAxisLabel(val) {
+    if (paramKey === "score") {
+      return Math.round(val);
+    } else if (paramKey === "cloud") {
+      return Math.round(val) + "%";
+    } else if (paramKey === "pressure") {
+      return Math.round(val) + " hPa";
+    } else if (paramKey === "seeing") {
+      return Math.round(val * 10) / 10;
+    } else if (paramKey === "trans") {
+      return Math.round(val * 10) / 10;
+    }
+    return Math.round(val * 10) / 10;
+  }
+  
+  // Draw Y axis ticks (will draw labels after graph)
+  ctx.strokeStyle = "rgba(255,255,255,0.3)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= yTickCount; i++) {
+    const yPos = padding.top + chartHeight - (chartHeight * i / yTickCount);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, yPos);
+    ctx.lineTo(padding.left - 4, yPos);
+    ctx.stroke();
+  }
+  
+  // Draw X axis ticks (will draw labels after graph)
+  for (let i = 0; i < values.length; i++) {
+    if (i >= times.length) break;
+    const xPos = padding.left + (chartWidth * i / (values.length - 1 || 1));
+    ctx.beginPath();
+    ctx.moveTo(xPos, padding.top + chartHeight);
+    ctx.lineTo(xPos, padding.top + chartHeight + 4);
+    ctx.stroke();
+  }
+  
+  // Draw axis lines
+  ctx.strokeStyle = "rgba(255,255,255,0.4)";
+  ctx.lineWidth = 1;
+  // Y axis line
+  ctx.beginPath();
+  ctx.moveTo(padding.left, padding.top);
+  ctx.lineTo(padding.left, padding.top + chartHeight);
+  ctx.stroke();
+  // X axis line
+  ctx.beginPath();
+  ctx.moveTo(padding.left, padding.top + chartHeight);
+  ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+  ctx.stroke();
+  
+  // Draw grid lines (horizontal, aligned with Y ticks)
+  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= yTickCount; i++) {
+    const yPos = padding.top + chartHeight - (chartHeight * i / yTickCount);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, yPos);
+    ctx.lineTo(padding.left + chartWidth, yPos);
+    ctx.stroke();
+  }
+  
+  // Draw vertical grid lines (aligned with X ticks, every second for readability)
+  const xGridStep = Math.max(1, Math.floor(values.length / 12)); // Show grid every ~12th point
+  for (let i = 0; i < values.length; i += xGridStep) {
+    if (i >= times.length) break;
+    const xPos = padding.left + (chartWidth * i / (values.length - 1 || 1));
+    ctx.beginPath();
+    ctx.moveTo(xPos, padding.top);
+    ctx.lineTo(xPos, padding.top + chartHeight);
+    ctx.stroke();
+  }
+  
+  // Draw "NOW" vertical line
+  if (nowIdx >= 0 && nowIdx < values.length) {
+    const xNow = padding.left + (chartWidth * nowIdx / (values.length - 1 || 1));
+    ctx.strokeStyle = "rgba(143,182,255,0.6)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xNow, padding.top);
+    ctx.lineTo(xNow, padding.top + chartHeight);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // "NOW" label
+    ctx.fillStyle = "rgba(143,182,255,0.9)";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("NOW", xNow, padding.top - 4);
+  }
+  
+  // Draw line chart
+  ctx.strokeStyle = "rgba(143,182,255,0.8)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  let hasStart = false;
+  
+  values.forEach((val, i) => {
+    if (val == null) {
+      hasStart = false;
+      return;
+    }
+    const x = padding.left + (chartWidth * i / (values.length - 1 || 1));
+    const y = padding.top + chartHeight - ((val - yMin) / yRange * chartHeight);
+    
+    if (!hasStart) {
+      ctx.moveTo(x, y);
+      hasStart = true;
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+  
+  // Draw points
+  ctx.fillStyle = "rgba(143,182,255,0.9)";
+  values.forEach((val, i) => {
+    if (val == null) return;
+    const x = padding.left + (chartWidth * i / (values.length - 1 || 1));
+    const y = padding.top + chartHeight - ((val - yMin) / yRange * chartHeight);
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  // Draw axis labels AFTER graph (so they're visible on top)
+  // Y axis labels (VALUES with units)
+  ctx.fillStyle = "rgba(255,255,255,0.8)"; // More visible than var(--muted)
+  ctx.font = "11px sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  
+  for (let i = 0; i <= yTickCount; i++) {
+    const yVal = yMin + (yRange * i / yTickCount);
+    const yPos = padding.top + chartHeight - (chartHeight * i / yTickCount);
+    const labelText = formatYAxisLabel(yVal);
+    ctx.fillText(labelText, padding.left - 8, yPos);
+  }
+  
+  // X axis labels (TIME - hours)
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.font = "10px sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  
+  for (let i = 0; i < values.length; i++) {
+    if (i >= times.length) break;
+    const xPos = padding.left + (chartWidth * i / (values.length - 1 || 1));
+    const dt = times[i];
+    const timeStr = formatTime(dt.toISOString()); // Format: "HH:00"
+    
+    if (shouldRotate && i % 2 === 0) {
+      // Rotate labels if too many points
+      ctx.save();
+      ctx.translate(xPos, padding.top + chartHeight + 20);
+      ctx.rotate(-Math.PI / 4);
+      ctx.fillText(timeStr, 0, 0);
+      ctx.restore();
+    } else {
+      ctx.fillText(timeStr, xPos, padding.top + chartHeight + 10);
+    }
+  }
+  
+  // Mouse hover tooltip
+  if (chartCanvas._chartTooltipHandler) {
+    chartCanvas.removeEventListener("mousemove", chartCanvas._chartTooltipHandler);
+    chartCanvas.removeEventListener("mouseleave", chartCanvas._chartTooltipLeaveHandler);
+  }
+  
+  chartCanvas._chartTooltipHandler = function(e) {
+    if (!chartTooltip) return;
+    
+    const canvasRect = chartCanvas.getBoundingClientRect();
+    const wrapperRect = chartCanvas.parentElement.getBoundingClientRect();
+    const x = e.clientX - canvasRect.left;
+    const y = e.clientY - canvasRect.top;
+    
+    if (x < padding.left || x > padding.left + chartWidth || y < padding.top || y > padding.top + chartHeight) {
+      chartTooltip.setAttribute("aria-hidden", "true");
+      return;
+    }
+    
+    const idx = Math.round(((x - padding.left) / chartWidth) * (values.length - 1));
+    if (idx < 0 || idx >= values.length || values[idx] == null) {
+      chartTooltip.setAttribute("aria-hidden", "true");
+      return;
+    }
+    
+    const val = values[idx];
+    const dt = times[idx];
+    const hour = hours[idx];
+    
+    let tooltipHTML = '<div class="chart-tooltip-time">' + escapeHtml(formatTime(dt.toISOString())) + '</div>';
+    tooltipHTML += '<div class="chart-tooltip-value">' + escapeHtml(formatValue(val)) + '</div>';
+    
+    if (paramKey === "cloud" && hour) {
+      const low = hour.cloud_low != null ? Math.round(hour.cloud_low) : null;
+      const mid = hour.cloud_mid != null ? Math.round(hour.cloud_mid) : null;
+      const high = hour.cloud_high != null ? Math.round(hour.cloud_high) : null;
+      if (low != null || mid != null || high != null) {
+        tooltipHTML += '<div class="chart-tooltip-cloud-detail">';
+        if (low != null) tooltipHTML += 'Low: ' + low + '%<br>';
+        if (mid != null) tooltipHTML += 'Mid: ' + mid + '%<br>';
+        if (high != null) tooltipHTML += 'High: ' + high + '%';
+        tooltipHTML += '</div>';
+      }
+    }
+    
+    chartTooltip.innerHTML = tooltipHTML;
+    chartTooltip.setAttribute("aria-hidden", "false");
+    
+    // Position relative to canvas wrapper (which has position:relative)
+    // Calculate position relative to wrapper
+    const wrapperX = e.clientX - wrapperRect.left;
+    const wrapperY = e.clientY - wrapperRect.top;
+    
+    // Show tooltip near cursor, but adjust if it goes outside wrapper
+    chartTooltip.style.display = "block";
+    const tooltipRect = chartTooltip.getBoundingClientRect();
+    
+    let tooltipX = wrapperX + 10;
+    let tooltipY = wrapperY - tooltipRect.height - 10;
+    
+    // Adjust if tooltip goes outside wrapper bounds
+    const maxX = wrapperRect.width - tooltipRect.width - 10;
+    const maxY = wrapperRect.height - tooltipRect.height - 10;
+    
+    if (tooltipX > maxX) tooltipX = wrapperX - tooltipRect.width - 10; // Show on left side
+    if (tooltipY < 10) tooltipY = wrapperY + 10; // Show below cursor
+    
+    chartTooltip.style.left = Math.max(10, Math.min(tooltipX, maxX)) + "px";
+    chartTooltip.style.top = Math.max(10, Math.min(tooltipY, maxY)) + "px";
+  };
+  
+  chartCanvas._chartTooltipLeaveHandler = function() {
+    if (chartTooltip) chartTooltip.setAttribute("aria-hidden", "true");
+  };
+  
+  chartCanvas.addEventListener("mousemove", chartCanvas._chartTooltipHandler);
+  chartCanvas.addEventListener("mouseleave", chartCanvas._chartTooltipLeaveHandler);
+}
+
+// Hour Inspector functionality
+let hourInspectorOpen = false;
+
+function getHourInspectorElements() {
+  return {
+    backdrop: document.getElementById("hourInspectorBackdrop"),
+    sheet: document.getElementById("hourInspectorSheet"),
+    time: document.getElementById("hourInspectorTime"),
+    scoreVal: document.getElementById("hourInspectorScoreVal"),
+    scoreLabel: document.getElementById("hourInspectorScoreLabel"),
+    summary: document.getElementById("hourInspectorSummary"),
+    body: document.getElementById("hourInspectorBody")
+  };
+}
+
+function openHourInspector(hourIdx) {
+  if (!weatherData || !weatherData.hours || hourIdx < 0 || hourIdx >= weatherData.hours.length) return;
+  
+  const els = getHourInspectorElements();
+  if (!els.backdrop || !els.sheet) return;
+  
+  // Position sheet centered vertically within widget container bounds
+  const widgetContainer = weatherCard || document.getElementById("poc-weather") || document.querySelector(".weather-widget") || document.querySelector("#widget-weather");
+  if (widgetContainer) {
+    const widgetRect = widgetContainer.getBoundingClientRect();
+    const padding = window.innerWidth <= 768 ? 8 : 16; // Smaller padding on mobile
+    const minPadding = 8; // Minimum padding from screen edges
+    
+    // Calculate left and right positions
+    const leftPos = Math.max(minPadding, widgetRect.left + padding);
+    const rightPos = Math.max(minPadding, window.innerWidth - widgetRect.right + padding);
+    const maxWidth = Math.min(widgetRect.width - padding * 2, window.innerWidth - leftPos - rightPos);
+    
+    // Calculate max height - centered but constrained by widget and viewport
+    const verticalPadding = padding * 2; // Padding top and bottom
+    const maxHeight = Math.min(
+      widgetRect.height - verticalPadding, // Don't exceed widget height
+      window.innerHeight - verticalPadding // Don't exceed viewport
+    );
+    
+    els.sheet.style.left = leftPos + "px";
+    els.sheet.style.right = rightPos + "px";
+    els.sheet.style.maxWidth = maxWidth + "px";
+    els.sheet.style.maxHeight = maxHeight + "px";
+    els.sheet.style.width = "auto";
+    els.sheet.style.top = "50%";
+    els.sheet.style.transform = "translateY(-50%)";
+  } else {
+    // Fallback: center on screen
+    els.sheet.style.left = "50%";
+    els.sheet.style.right = "auto";
+    els.sheet.style.transform = "translate(-50%, -50%)";
+    els.sheet.style.maxWidth = "90%";
+    els.sheet.style.maxHeight = "80vh";
+    els.sheet.style.width = "auto";
+    els.sheet.style.top = "50%";
+  }
+  
+  hourInspectorOpen = true;
+  document.body.style.overflow = "hidden";
+  
+  els.backdrop.setAttribute("aria-hidden", "false");
+  els.sheet.setAttribute("aria-hidden", "false");
+  
+  renderHourInspector(hourIdx);
+}
+
+function closeHourInspector() {
+  const els = getHourInspectorElements();
+  if (!els.backdrop || !els.sheet) return;
+  
+  hourInspectorOpen = false;
+  document.body.style.overflow = "";
+  
+  els.backdrop.setAttribute("aria-hidden", "true");
+  els.sheet.setAttribute("aria-hidden", "true");
+  
+  // Reset positioning
+  els.sheet.style.left = "";
+  els.sheet.style.right = "";
+  els.sheet.style.maxWidth = "";
+  els.sheet.style.maxHeight = "";
+  els.sheet.style.width = "";
+  els.sheet.style.top = "";
+  els.sheet.style.transform = "";
+}
+
+function renderHourInspector(hourIdx) {
+  if (!weatherData || !weatherData.hours || hourIdx < 0 || hourIdx >= weatherData.hours.length) return;
+  
+  const els = getHourInspectorElements();
+  if (!els.time || !els.scoreVal || !els.scoreLabel || !els.summary || !els.body) return;
+  
+  const hour = weatherData.hours[hourIdx];
+  const hours = weatherData.hours;
+  
+  // Header: time and score (compact single row)
+  const timeStr = formatTime(hour.time);
+  const score = formatScore(getHourScore(hour));
+  const rank = scoreRank(score);
+  
+  // Update header structure: time + score + label in one row
+  els.time.textContent = timeStr;
+  els.scoreVal.textContent = score;
+  els.scoreVal.style.color = "var(--" + scoreClass(score) + ")";
+  els.scoreLabel.textContent = rank;
+  els.scoreLabel.style.color = "var(--" + scoreClass(score) + ")";
+  
+  // Summary line (below header, smaller font)
+  const summaryParts = [];
+  const cloud = formatCloud(hour.cloud_total);
+  if (cloud <= 20) summaryParts.push("Clear sky");
+  else if (cloud >= 60) summaryParts.push("Cloudy");
+  
+  const wind = formatWind(hour.wind_m_s);
+  if (wind != null) {
+    if (wind <= 4) summaryParts.push("Calm wind");
+    else if (wind >= 8) summaryParts.push("Windy");
+    else summaryParts.push(wind + " m/s wind");
+  }
+  
+  const visKm = formatVisibility(hour.visibility_m);
+  if (visKm != null) summaryParts.push("Visibility " + visKm + " km");
+  
+  const tempStr = hour.temp_c != null && isValidValue(hour.temp_c) ? Math.round(Number(hour.temp_c)) + "°C" : null;
+  if (tempStr) summaryParts.push(tempStr);
+  
+  els.summary.textContent = summaryParts.length > 0 ? summaryParts.join(" · ") : "—";
+  
+  // Body content
+  let bodyHTML = "";
+  
+  // Context mini-chart (±4 hours, compact)
+  const contextStart = Math.max(0, hourIdx - 4);
+  const contextEnd = Math.min(hours.length - 1, hourIdx + 4);
+  const contextHours = hours.slice(contextStart, contextEnd + 1);
+  
+  bodyHTML += '<div class="hour-inspector-section">';
+  bodyHTML += '<div class="hour-inspector-mini-chart">';
+  contextHours.forEach((h, i) => {
+    const ctxIdx = contextStart + i;
+    const ctxScore = formatScore(getHourScore(h));
+    // Container height is 24px, so calculate pixel height (min 6px, max 20px)
+    const barHeightPx = Math.max(6, Math.min(20, (ctxScore / 100) * 20));
+    const isSelected = ctxIdx === hourIdx;
+    const isMissing = ctxScore === 0 || h.score == null;
+    bodyHTML += '<div class="hour-inspector-mini-bar' + (isSelected ? ' selected' : '') + (isMissing ? ' missing' : '') + '" style="height:' + barHeightPx + 'px" title="' + escapeHtml(formatTime(h.time)) + ': ' + ctxScore + '"></div>';
+  });
+  bodyHTML += '</div></div>';
+  
+  // Primary metrics grid (compact two-column list)
+  bodyHTML += '<div class="hour-inspector-section">';
+  bodyHTML += '<div class="hour-inspector-metric-grid">';
+  
+  // Clouds
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">☁ Clouds</span><span class="hour-inspector-metric-value">' + cloud + '%</span></div>';
+  
+  // Wind
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌬 Wind</span><span class="hour-inspector-metric-value">' + (wind != null ? wind + ' m/s' : '—') + '</span></div>';
+  
+  // Visibility
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">👁 Visibility</span><span class="hour-inspector-metric-value">' + (visKm != null ? visKm + ' km' : '—') + '</span></div>';
+  
+  // Precip
+  const prob = formatPrecipProb(hour.precip_prob);
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌧 Precip</span><span class="hour-inspector-metric-value">' + prob + '%</span></div>';
+  
+  // Pressure
+  const pressure = hour.pressure_hpa != null && isValidValue(hour.pressure_hpa) ? Math.round(hour.pressure_hpa) : null;
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🧭 Pressure</span><span class="hour-inspector-metric-value">' + (pressure != null ? pressure + ' hPa' : '—') + '</span></div>';
+  
+  // Seeing
+  const seeing = formatSeeing(hour.seeing);
+  const seeingLabel = seeing !== "—" ? (seeing <= 2 ? "Excellent" : seeing <= 4 ? "Fair" : "Poor") : "—";
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🔭 Seeing</span><span class="hour-inspector-metric-value">' + seeing + (seeingLabel !== "—" ? ' (' + seeingLabel + ')' : '') + '</span></div>';
+  
+  // Transparency
+  const trans = formatTransparency(hour.transparency);
+  const transLabel = trans !== "—" ? (trans <= 1 ? "Excellent" : trans <= 2 ? "Fair" : "Poor") : "—";
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">✨ Transparency</span><span class="hour-inspector-metric-value">' + trans + (transLabel !== "—" ? ' (' + transLabel + ')' : '') + '</span></div>';
+  
+  // Temperature
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌡 Temp</span><span class="hour-inspector-metric-value">' + (tempStr || '—') + '</span></div>';
+  
+  bodyHTML += '</div></div>';
+  
+  // "Why this hour" section
+  const whyItems = [];
+  const isGood = score >= 70;
+  
+  if (cloud <= 20) whyItems.push({ text: "Clear sky", positive: true });
+  if (cloud >= 60) whyItems.push({ text: "Cloudy", positive: false });
+  
+  if (wind != null) {
+    if (wind <= 4) whyItems.push({ text: "Calm wind", positive: true });
+    if (wind >= 8) whyItems.push({ text: "Windy", positive: false });
+  }
+  
+  if (visKm != null && visKm < 10) whyItems.push({ text: "Low visibility", positive: false });
+  
+  const seeingNum = hour.seeing != null && isValidValue(hour.seeing) ? Number(hour.seeing) : null;
+  if (seeingNum != null && seeingNum >= 6) whyItems.push({ text: "Poor seeing", positive: false });
+  
+  const transNum = hour.transparency != null && isValidValue(hour.transparency) ? Number(hour.transparency) : null;
+  if (transNum != null && transNum >= 3) whyItems.push({ text: "Poor transparency", positive: false });
+  
+  if (tempStr && hour.temp_c != null && hour.temp_c <= -10) whyItems.push({ text: "Very cold", positive: false });
+  
+  // "Why this hour" section (compact inline)
+  if (whyItems.length > 0) {
+    bodyHTML += '<div class="hour-inspector-section">';
+    bodyHTML += '<ul class="hour-inspector-why-list">';
+    whyItems.slice(0, 5).forEach(item => {
+      bodyHTML += '<li class="' + (item.positive ? 'positive' : 'negative') + '">' + escapeHtml(item.text) + '</li>';
+    });
+    bodyHTML += '</ul></div>';
+  }
+  
+  // Profile recommendations (compact one line)
+  const profileScores = computeProfileScores(hour);
+  const getProfileStatus = (s) => s >= 70 ? "good" : s >= 50 ? "fair" : "poor";
+  const getProfileStatusLabel = (s) => s >= 70 ? "Good" : s >= 50 ? "Fair" : "Poor";
+  
+  bodyHTML += '<div class="hour-inspector-section">';
+  bodyHTML += '<div class="hour-inspector-profile-grid">';
+  bodyHTML += '<div class="hour-inspector-profile-item"><span class="hour-inspector-profile-label">Visual:</span><span class="hour-inspector-profile-status ' + getProfileStatus(profileScores.visual) + '">' + getProfileStatusLabel(profileScores.visual) + '</span></div>';
+  bodyHTML += '<div class="hour-inspector-profile-item"><span class="hour-inspector-profile-label">Photo:</span><span class="hour-inspector-profile-status ' + getProfileStatus(profileScores.broadband) + '">' + getProfileStatusLabel(profileScores.broadband) + '</span></div>';
+  bodyHTML += '<div class="hour-inspector-profile-item"><span class="hour-inspector-profile-label">Planetary:</span><span class="hour-inspector-profile-status ' + getProfileStatus(profileScores.planetary) + '">' + getProfileStatusLabel(profileScores.planetary) + '</span></div>';
+  bodyHTML += '</div></div>';
+  
+  els.body.innerHTML = bodyHTML;
+}
+
+// Hour Inspector event handlers (initialize after DOM ready)
+function initHourInspector() {
+  const els = getHourInspectorElements();
+  
+  if (els.backdrop) {
+    els.backdrop.addEventListener("click", function(e) {
+      if (e.target === els.backdrop) {
+        closeHourInspector();
+      }
+    });
+  }
+  
+  if (els.sheet) {
+    const closeBtn = els.sheet.querySelector(".hour-inspector-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeHourInspector);
+    }
+  }
+  
+  // ESC key for hour inspector
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape" && hourInspectorOpen && els.sheet && els.sheet.getAttribute("aria-hidden") === "false") {
+      closeHourInspector();
+    }
+  });
+}
+
+// Initialize hour inspector handlers
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initHourInspector);
+} else {
+  initHourInspector();
+}
+
+// Update sheet position on window resize
+window.addEventListener("resize", function() {
+  if (hourInspectorOpen) {
+    const els = getHourInspectorElements();
+    if (els.sheet && els.sheet.getAttribute("aria-hidden") === "false") {
+      const widgetContainer = weatherCard || document.getElementById("poc-weather") || document.querySelector(".weather-widget") || document.querySelector("#widget-weather");
+      if (widgetContainer) {
+        const widgetRect = widgetContainer.getBoundingClientRect();
+        const padding = window.innerWidth <= 768 ? 8 : 16;
+        const minPadding = 8;
+        
+        const leftPos = Math.max(minPadding, widgetRect.left + padding);
+        const rightPos = Math.max(minPadding, window.innerWidth - widgetRect.right + padding);
+        const maxWidth = Math.min(widgetRect.width - padding * 2, window.innerWidth - leftPos - rightPos);
+        
+        const verticalPadding = padding * 2;
+        const maxHeight = Math.min(
+          widgetRect.height - verticalPadding,
+          window.innerHeight - verticalPadding
+        );
+        
+        els.sheet.style.left = leftPos + "px";
+        els.sheet.style.right = rightPos + "px";
+        els.sheet.style.maxWidth = maxWidth + "px";
+        els.sheet.style.maxHeight = maxHeight + "px";
+        els.sheet.style.width = "auto";
+        els.sheet.style.top = "50%";
+        els.sheet.style.transform = "translateY(-50%)";
+      }
+    }
+  }
+});
+
+// Click handler for mini cards (delegation)
+const miniChartsContainer = document.getElementById("miniChartsContainer");
+if (miniChartsContainer) {
+  miniChartsContainer.addEventListener("click", function(e) {
+    const mini = e.target.closest(".mini[data-chart]");
+    if (!mini) return;
+    const paramKey = mini.dataset.chart;
+    openChartOverlay(paramKey);
+  });
+  
+  // Keyboard support
+  miniChartsContainer.addEventListener("keydown", function(e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const mini = e.target.closest(".mini[data-chart]");
+    if (!mini) return;
+    e.preventDefault();
+    const paramKey = mini.dataset.chart;
+    openChartOverlay(paramKey);
+  });
+}
+
+// Close overlay handlers
+if (chartOverlay) {
+  const closeBtn = chartOverlay.querySelector(".chart-overlay-close");
+  const backdrop = chartOverlay.querySelector(".chart-overlay-backdrop");
+  
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeChartOverlay);
+  }
+  
+  if (backdrop) {
+    backdrop.addEventListener("click", function(e) {
+      if (e.target === backdrop) {
+        closeChartOverlay();
+      }
+    });
+  }
+  
+  // ESC key
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape" && chartOverlay.getAttribute("aria-hidden") === "false") {
+      closeChartOverlay();
+    }
+  });
+}
+
+// Update chart when horizon/profile changes
+const originalSegHandler = document.querySelectorAll(".seg");
 document.querySelectorAll(".seg").forEach(function(seg){
   seg.addEventListener("click", function(e){
     var btn = e.target.closest("button");
@@ -1612,6 +2445,10 @@ document.querySelectorAll(".seg").forEach(function(seg){
       renderNow(r.hour);
       renderHourly(weatherData.hours);
       renderMiniCharts(weatherData.hours, currentMode, r.hour);
+      // Update chart if open
+      if (currentChartParam && chartOverlay && chartOverlay.getAttribute("aria-hidden") === "false") {
+        renderChart(currentChartParam);
+      }
       return;
     }
     seg.querySelectorAll("button").forEach(function(b){ b.dataset.active = "false"; });
@@ -1621,9 +2458,51 @@ document.querySelectorAll(".seg").forEach(function(seg){
       var r = findNearestHour(weatherData.hours || []);
       renderHourly(weatherData.hours);
       renderMiniCharts(weatherData.hours, currentMode, r.hour);
+      // Update chart if open
+      if (currentChartParam && chartOverlay && chartOverlay.getAttribute("aria-hidden") === "false") {
+        renderChart(currentChartParam);
+      }
     }
   });
 });
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", loadWeather);
-else loadWeather();
+
+async function initWeatherWidget() {
+  const selectEl = weatherCard && weatherCard.querySelector("[data-role=location-select]");
+  if (selectEl && LOCATIONS_INDEX_URL) {
+    try {
+      const res = await fetch(LOCATIONS_INDEX_URL + (LOCATIONS_INDEX_URL.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now());
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (data && Array.isArray(data.locations) && data.locations.length > 0) {
+        locationsIndex = data;
+        // Clear options
+        while (selectEl.firstChild) selectEl.removeChild(selectEl.firstChild);
+        const defaultId = data.default_id || (data.locations[0] && data.locations[0].id);
+        data.locations.forEach(function(loc) {
+          const opt = document.createElement("option");
+          opt.value = loc.id;
+          opt.textContent = loc.name || loc.id;
+          selectEl.appendChild(opt);
+        });
+        if (defaultId) {
+          selectEl.value = defaultId;
+          currentLocationId = defaultId;
+        } else {
+          currentLocationId = data.locations[0].id;
+        }
+        selectEl.addEventListener("change", function() {
+          currentLocationId = this.value || currentLocationId;
+          loadWeather();
+        });
+      }
+    } catch (e) {
+      // Fallback: keep existing option and just use legacy single-location JSON
+      console.error("Failed to load locations index:", e);
+    }
+  }
+  await loadWeather();
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initWeatherWidget);
+else initWeatherWidget();
 })();

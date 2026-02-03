@@ -1,48 +1,446 @@
 {
-  "version": 2,
-  "generated_at": "2026-02-03T09:45:23.532382+00:00",
-  "meta": {
-    "generated_at": "2026-02-03T09:45:23.532382+00:00",
-    "location": {
-      "name": "Warsaw",
-      "lat": 52.2297,
-      "lon": 21.0122,
-      "tz": "Europe/Warsaw"
-    },
-    "source": {
-      "open_meteo_fields": [
-        "time",
-        "cloudcover",
-        "cloudcover_low",
-        "cloudcover_mid",
-        "cloudcover_high",
-        "precipitation",
-        "precipitation_probability",
-        "precipitation_type",
-        "rain",
-        "showers",
-        "snowfall",
-        "pressure_msl",
-        "windspeed_10m",
-        "windgusts_10m",
-        "winddirection_10m",
-        "visibility",
-        "temperature_2m",
-        "apparent_temperature",
-        "relativehumidity_2m",
-        "dewpoint_2m",
-        "cape"
-      ]
-    },
-    "horizon_hours": 72
-  },
+  "schema_version": 1,
+  "generated_at": "2026-02-03T09:45:24.531723+00:00",
   "location": {
+    "id": "loc_52.2297_21.0122",
     "name": "Warsaw",
     "lat": 52.2297,
     "lon": 21.0122,
-    "tz": "Europe/Warsaw"
+    "tz": "Europe/Warsaw",
+    "alt_m": null,
+    "source": "config"
   },
   "horizon_hours": 72,
+  "sun": {
+    "today": {
+      "astro_twilight_start": "2026-02-03T05:16:39.911793+01:00",
+      "astro_twilight_end": "2026-02-03T18:23:40.415671+01:00"
+    }
+  },
+  "now": {
+    "time": "2026-02-03T11:00:00+01:00",
+    "cloud_total": 0.0,
+    "cloud_low": 0.0,
+    "cloud_mid": 0.0,
+    "cloud_high": 0.0,
+    "precip_mm": 0.0,
+    "precip_prob": 0.0,
+    "precip_type": 0,
+    "rain_mm": 0.0,
+    "snow_mm": 0.0,
+    "pressure_hpa": 1022.4,
+    "wind_m_s": 2.1,
+    "wind_gust_m_s": 3.9,
+    "wind_dir_deg": 94.0,
+    "visibility_m": 21680.0,
+    "temp_c": -14.5,
+    "feels_like_c": -19.5,
+    "humidity_pct": 56.0,
+    "dewpoint_c": -21.4,
+    "cape_j_kg": 0.0,
+    "seeing": 3,
+    "transparency": 2,
+    "wind_kmh": 7.6,
+    "visibility_km": 21.68,
+    "dewpoint_spread_c": 6.9,
+    "pressure_trend_6h_hpa": -1.6,
+    "fog_risk": "LOW",
+    "score": 89,
+    "score_profile": "default",
+    "score_breakdown": [
+      {
+        "key": "cloud_total",
+        "label": "Clouds",
+        "max": 35,
+        "raw": 0,
+        "normalized": 1.0,
+        "earned": 35,
+        "note": null
+      },
+      {
+        "key": "precip_mm",
+        "label": "Precipitation amount",
+        "max": 10,
+        "raw": 0,
+        "normalized": 1.0,
+        "earned": 10,
+        "note": null
+      },
+      {
+        "key": "precip_prob",
+        "label": "Precipitation probability",
+        "max": 5,
+        "raw": 0,
+        "normalized": 1.0,
+        "earned": 5,
+        "note": null
+      },
+      {
+        "key": "wind_m_s",
+        "label": "Wind",
+        "max": 15,
+        "raw": 2.1,
+        "normalized": 1.0,
+        "earned": 15,
+        "note": null
+      },
+      {
+        "key": "visibility_m",
+        "label": "Visibility",
+        "max": 10,
+        "raw": 21680,
+        "normalized": 0.713,
+        "earned": 7,
+        "note": null
+      },
+      {
+        "key": "seeing",
+        "label": "Seeing",
+        "max": 15,
+        "raw": 3,
+        "normalized": 0.667,
+        "earned": 10,
+        "note": null
+      },
+      {
+        "key": "transparency",
+        "label": "Transparency",
+        "max": 10,
+        "raw": 2,
+        "normalized": 0.667,
+        "earned": 7,
+        "note": null
+      }
+    ],
+    "score_explain": [
+      {
+        "line": "Clouds: 0% → +35",
+        "key": "cloud_total",
+        "earned": 35,
+        "max": 35
+      },
+      {
+        "line": "Precipitation amount: 0 → +10",
+        "key": "precip_mm",
+        "earned": 10,
+        "max": 10
+      },
+      {
+        "line": "Precipitation probability: 0 → +5",
+        "key": "precip_prob",
+        "earned": 5,
+        "max": 5
+      },
+      {
+        "line": "Wind: 2.1 m/s → +15",
+        "key": "wind_m_s",
+        "earned": 15,
+        "max": 15
+      },
+      {
+        "line": "Visibility: 21680 m → +7",
+        "key": "visibility_m",
+        "earned": 7,
+        "max": 10
+      },
+      {
+        "line": "Seeing: 3 → +10",
+        "key": "seeing",
+        "earned": 10,
+        "max": 15
+      },
+      {
+        "line": "Transparency: 2 → +7",
+        "key": "transparency",
+        "earned": 7,
+        "max": 10
+      }
+    ],
+    "profile_scores": {
+      "visual": 89,
+      "photography": 87,
+      "broadband": 87,
+      "planetary": 84
+    },
+    "score_breakdown_by_profile": {
+      "visual": [
+        {
+          "key": "cloud_total",
+          "label": "Clouds",
+          "max": 40,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 40,
+          "note": null
+        },
+        {
+          "key": "transparency",
+          "label": "Transparency",
+          "max": 25,
+          "raw": 2,
+          "normalized": 0.667,
+          "earned": 17,
+          "note": null
+        },
+        {
+          "key": "precip_mm",
+          "label": "Precipitation",
+          "max": 10,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 10,
+          "note": null
+        },
+        {
+          "key": "precip_prob",
+          "label": "Precip probability",
+          "max": 5,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
+          "note": null
+        },
+        {
+          "key": "wind_m_s",
+          "label": "Wind",
+          "max": 10,
+          "raw": 2.1,
+          "normalized": 1.0,
+          "earned": 10,
+          "note": null
+        },
+        {
+          "key": "visibility_m",
+          "label": "Visibility",
+          "max": 5,
+          "raw": 21680,
+          "normalized": 0.713,
+          "earned": 4,
+          "note": null
+        },
+        {
+          "key": "seeing",
+          "label": "Seeing",
+          "max": 5,
+          "raw": 3,
+          "normalized": 0.667,
+          "earned": 3,
+          "note": null
+        }
+      ],
+      "photography": [
+        {
+          "key": "transparency",
+          "label": "Transparency",
+          "max": 35,
+          "raw": 2,
+          "normalized": 0.667,
+          "earned": 23,
+          "note": null
+        },
+        {
+          "key": "cloud_high",
+          "label": "High clouds",
+          "max": 25,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 25,
+          "note": null
+        },
+        {
+          "key": "cloud_total",
+          "label": "Clouds total",
+          "max": 15,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 15,
+          "note": null
+        },
+        {
+          "key": "wind_m_s",
+          "label": "Wind",
+          "max": 10,
+          "raw": 2.1,
+          "normalized": 1.0,
+          "earned": 10,
+          "note": null
+        },
+        {
+          "key": "precip_mm",
+          "label": "Precipitation",
+          "max": 5,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
+          "note": null
+        },
+        {
+          "key": "precip_prob",
+          "label": "Precip probability",
+          "max": 5,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
+          "note": null
+        },
+        {
+          "key": "visibility_m",
+          "label": "Visibility",
+          "max": 5,
+          "raw": 21680,
+          "normalized": 0.713,
+          "earned": 4,
+          "note": null
+        }
+      ],
+      "broadband": [
+        {
+          "key": "transparency",
+          "label": "Transparency",
+          "max": 35,
+          "raw": 2,
+          "normalized": 0.667,
+          "earned": 23,
+          "note": null
+        },
+        {
+          "key": "cloud_high",
+          "label": "High clouds",
+          "max": 25,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 25,
+          "note": null
+        },
+        {
+          "key": "cloud_total",
+          "label": "Clouds total",
+          "max": 15,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 15,
+          "note": null
+        },
+        {
+          "key": "wind_m_s",
+          "label": "Wind",
+          "max": 10,
+          "raw": 2.1,
+          "normalized": 1.0,
+          "earned": 10,
+          "note": null
+        },
+        {
+          "key": "precip_mm",
+          "label": "Precipitation",
+          "max": 5,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
+          "note": null
+        },
+        {
+          "key": "precip_prob",
+          "label": "Precip probability",
+          "max": 5,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
+          "note": null
+        },
+        {
+          "key": "visibility_m",
+          "label": "Visibility",
+          "max": 5,
+          "raw": 21680,
+          "normalized": 0.713,
+          "earned": 4,
+          "note": null
+        }
+      ],
+      "planetary": [
+        {
+          "key": "seeing",
+          "label": "Seeing",
+          "max": 40,
+          "raw": 3,
+          "normalized": 0.667,
+          "earned": 27,
+          "note": null
+        },
+        {
+          "key": "wind_m_s",
+          "label": "Wind",
+          "max": 25,
+          "raw": 2.1,
+          "normalized": 1.0,
+          "earned": 25,
+          "note": null
+        },
+        {
+          "key": "cloud_total",
+          "label": "Clouds",
+          "max": 20,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 20,
+          "note": null
+        },
+        {
+          "key": "transparency",
+          "label": "Transparency",
+          "max": 10,
+          "raw": 2,
+          "normalized": 0.667,
+          "earned": 7,
+          "note": null
+        },
+        {
+          "key": "precip_mm",
+          "label": "Precipitation",
+          "max": 5,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
+          "note": null
+        },
+        {
+          "key": "precip_prob",
+          "label": "Precip probability",
+          "max": 0,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 0,
+          "note": null
+        },
+        {
+          "key": "visibility_m",
+          "label": "Visibility",
+          "max": 0,
+          "raw": 21680,
+          "normalized": 0.713,
+          "earned": 0,
+          "note": null
+        }
+      ]
+    },
+    "temperature_c": -14.5,
+    "score_profiles": {
+      "balanced": 89,
+      "visual": 89,
+      "photography": 87,
+      "planetary": 84
+    }
+  },
+  "trends": {
+    "pressure_trend_6h_hpa": -0.3,
+    "cloud_peak_next_24h_pct": 99.0,
+    "wind_peak_next_24h_m_s": 4.0,
+    "fog_risk": "LOW"
+  },
+  "best_windows": {
+    "tonight": null
+  },
   "hours": [
     {
       "time": "2026-02-03T01:00:00+01:00",
@@ -450,6 +848,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -15.8,
+      "score_profiles": {
+        "balanced": 76,
+        "visual": 84,
+        "photography": 85,
+        "planetary": 57
       }
     },
     {
@@ -858,6 +1263,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -16.3,
+      "score_profiles": {
+        "balanced": 69,
+        "visual": 76,
+        "photography": 77,
+        "planetary": 53
       }
     },
     {
@@ -1266,6 +1678,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -16.6,
+      "score_profiles": {
+        "balanced": 74,
+        "visual": 81,
+        "photography": 82,
+        "planetary": 55
       }
     },
     {
@@ -1674,6 +2093,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -16.8,
+      "score_profiles": {
+        "balanced": 47,
+        "visual": 50,
+        "photography": 51,
+        "planetary": 40
       }
     },
     {
@@ -2082,6 +2508,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -17.0,
+      "score_profiles": {
+        "balanced": 59,
+        "visual": 63,
+        "photography": 65,
+        "planetary": 46
       }
     },
     {
@@ -2490,6 +2923,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -17.1,
+      "score_profiles": {
+        "balanced": 58,
+        "visual": 62,
+        "photography": 62,
+        "planetary": 45
       }
     },
     {
@@ -2898,6 +3338,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -17.0,
+      "score_profiles": {
+        "balanced": 74,
+        "visual": 73,
+        "photography": 72,
+        "planetary": 70
       }
     },
     {
@@ -3306,6 +3753,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -16.9,
+      "score_profiles": {
+        "balanced": 78,
+        "visual": 78,
+        "photography": 78,
+        "planetary": 73
       }
     },
     {
@@ -3714,6 +4168,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -16.5,
+      "score_profiles": {
+        "balanced": 90,
+        "visual": 89,
+        "photography": 88,
+        "planetary": 77
       }
     },
     {
@@ -4122,6 +4583,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -15.9,
+      "score_profiles": {
+        "balanced": 92,
+        "visual": 90,
+        "photography": 88,
+        "planetary": 84
       }
     },
     {
@@ -4530,6 +4998,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -14.5,
+      "score_profiles": {
+        "balanced": 89,
+        "visual": 89,
+        "photography": 87,
+        "planetary": 84
       }
     },
     {
@@ -4938,6 +5413,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -12.8,
+      "score_profiles": {
+        "balanced": 92,
+        "visual": 90,
+        "photography": 88,
+        "planetary": 84
       }
     },
     {
@@ -5346,6 +5828,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.3,
+      "score_profiles": {
+        "balanced": 80,
+        "visual": 78,
+        "photography": 76,
+        "planetary": 60
       }
     },
     {
@@ -5754,6 +6243,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -10.0,
+      "score_profiles": {
+        "balanced": 81,
+        "visual": 79,
+        "photography": 77,
+        "planetary": 60
       }
     },
     {
@@ -6162,6 +6658,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.2,
+      "score_profiles": {
+        "balanced": 79,
+        "visual": 78,
+        "photography": 76,
+        "planetary": 60
       }
     },
     {
@@ -6570,6 +7073,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.5,
+      "score_profiles": {
+        "balanced": 78,
+        "visual": 71,
+        "photography": 65,
+        "planetary": 56
       }
     },
     {
@@ -6978,6 +7488,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -10.3,
+      "score_profiles": {
+        "balanced": 75,
+        "visual": 69,
+        "photography": 63,
+        "planetary": 54
       }
     },
     {
@@ -7386,6 +7903,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.6,
+      "score_profiles": {
+        "balanced": 73,
+        "visual": 69,
+        "photography": 63,
+        "planetary": 54
       }
     },
     {
@@ -7794,6 +8318,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -12.6,
+      "score_profiles": {
+        "balanced": 94,
+        "visual": 97,
+        "photography": 97,
+        "planetary": 96
       }
     },
     {
@@ -8202,6 +8733,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -13.3,
+      "score_profiles": {
+        "balanced": 95,
+        "visual": 97,
+        "photography": 97,
+        "planetary": 97
       }
     },
     {
@@ -8610,6 +9148,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -13.8,
+      "score_profiles": {
+        "balanced": 95,
+        "visual": 97,
+        "photography": 97,
+        "planetary": 98
       }
     },
     {
@@ -9018,6 +9563,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -13.9,
+      "score_profiles": {
+        "balanced": 79,
+        "visual": 71,
+        "photography": 65,
+        "planetary": 59
       }
     },
     {
@@ -9426,6 +9978,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -13.6,
+      "score_profiles": {
+        "balanced": 40,
+        "visual": 30,
+        "photography": 48,
+        "planetary": 40
       }
     },
     {
@@ -9834,6 +10393,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -13.4,
+      "score_profiles": {
+        "balanced": 45,
+        "visual": 32,
+        "photography": 50,
+        "planetary": 40
       }
     },
     {
@@ -10242,6 +10808,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -13.2,
+      "score_profiles": {
+        "balanced": 45,
+        "visual": 30,
+        "photography": 22,
+        "planetary": 54
       }
     },
     {
@@ -10650,6 +11223,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -12.9,
+      "score_profiles": {
+        "balanced": 50,
+        "visual": 33,
+        "photography": 25,
+        "planetary": 54
       }
     },
     {
@@ -11058,6 +11638,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -12.8,
+      "score_profiles": {
+        "balanced": 44,
+        "visual": 30,
+        "photography": 22,
+        "planetary": 54
       }
     },
     {
@@ -11466,6 +12053,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -12.6,
+      "score_profiles": {
+        "balanced": 49,
+        "visual": 32,
+        "photography": 24,
+        "planetary": 54
       }
     },
     {
@@ -11874,6 +12468,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -12.3,
+      "score_profiles": {
+        "balanced": 49,
+        "visual": 32,
+        "photography": 24,
+        "planetary": 53
       }
     },
     {
@@ -12282,6 +12883,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -12.0,
+      "score_profiles": {
+        "balanced": 30,
+        "visual": 18,
+        "photography": 14,
+        "planetary": 51
       }
     },
     {
@@ -12690,6 +13298,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.7,
+      "score_profiles": {
+        "balanced": 29,
+        "visual": 16,
+        "photography": 37,
+        "planetary": 51
       }
     },
     {
@@ -13098,6 +13713,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.7,
+      "score_profiles": {
+        "balanced": 26,
+        "visual": 13,
+        "photography": 35,
+        "planetary": 51
       }
     },
     {
@@ -13506,6 +14128,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.8,
+      "score_profiles": {
+        "balanced": 25,
+        "visual": 13,
+        "photography": 35,
+        "planetary": 48
       }
     },
     {
@@ -13914,6 +14543,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.8,
+      "score_profiles": {
+        "balanced": 28,
+        "visual": 16,
+        "photography": 37,
+        "planetary": 49
       }
     },
     {
@@ -14322,6 +14958,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.5,
+      "score_profiles": {
+        "balanced": 36,
+        "visual": 23,
+        "photography": 41,
+        "planetary": 53
       }
     },
     {
@@ -14730,6 +15373,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -11.1,
+      "score_profiles": {
+        "balanced": 41,
+        "visual": 27,
+        "photography": 44,
+        "planetary": 55
       }
     },
     {
@@ -15138,6 +15788,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -10.8,
+      "score_profiles": {
+        "balanced": 37,
+        "visual": 27,
+        "photography": 45,
+        "planetary": 42
       }
     },
     {
@@ -15546,6 +16203,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -10.5,
+      "score_profiles": {
+        "balanced": 36,
+        "visual": 27,
+        "photography": 45,
+        "planetary": 41
       }
     },
     {
@@ -15954,6 +16618,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -10.1,
+      "score_profiles": {
+        "balanced": 35,
+        "visual": 26,
+        "photography": 45,
+        "planetary": 41
       }
     },
     {
@@ -16362,6 +17033,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -10.0,
+      "score_profiles": {
+        "balanced": 37,
+        "visual": 24,
+        "photography": 42,
+        "planetary": 48
       }
     },
     {
@@ -16770,6 +17448,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -10.0,
+      "score_profiles": {
+        "balanced": 42,
+        "visual": 29,
+        "photography": 47,
+        "planetary": 49
       }
     },
     {
@@ -17178,6 +17863,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.9,
+      "score_profiles": {
+        "balanced": 41,
+        "visual": 29,
+        "photography": 28,
+        "planetary": 48
       }
     },
     {
@@ -17586,6 +18278,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.9,
+      "score_profiles": {
+        "balanced": 43,
+        "visual": 30,
+        "photography": 28,
+        "planetary": 54
       }
     },
     {
@@ -17994,6 +18693,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.8,
+      "score_profiles": {
+        "balanced": 43,
+        "visual": 30,
+        "photography": 25,
+        "planetary": 54
       }
     },
     {
@@ -18402,6 +19108,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.6,
+      "score_profiles": {
+        "balanced": 45,
+        "visual": 28,
+        "photography": 20,
+        "planetary": 56
       }
     },
     {
@@ -18810,6 +19523,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.4,
+      "score_profiles": {
+        "balanced": 43,
+        "visual": 27,
+        "photography": 20,
+        "planetary": 49
       }
     },
     {
@@ -19218,6 +19938,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -9.2,
+      "score_profiles": {
+        "balanced": 41,
+        "visual": 28,
+        "photography": 24,
+        "planetary": 49
       }
     },
     {
@@ -19626,6 +20353,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -8.8,
+      "score_profiles": {
+        "balanced": 41,
+        "visual": 28,
+        "photography": 21,
+        "planetary": 49
       }
     },
     {
@@ -20034,6 +20768,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -8.4,
+      "score_profiles": {
+        "balanced": 48,
+        "visual": 32,
+        "photography": 25,
+        "planetary": 48
       }
     },
     {
@@ -20442,6 +21183,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -8.0,
+      "score_profiles": {
+        "balanced": 48,
+        "visual": 32,
+        "photography": 25,
+        "planetary": 48
       }
     },
     {
@@ -20850,6 +21598,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -7.5,
+      "score_profiles": {
+        "balanced": 48,
+        "visual": 32,
+        "photography": 29,
+        "planetary": 49
       }
     },
     {
@@ -21258,6 +22013,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -7.1,
+      "score_profiles": {
+        "balanced": 39,
+        "visual": 27,
+        "photography": 20,
+        "planetary": 48
       }
     },
     {
@@ -21666,6 +22428,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -6.8,
+      "score_profiles": {
+        "balanced": 39,
+        "visual": 27,
+        "photography": 23,
+        "planetary": 48
       }
     },
     {
@@ -22074,6 +22843,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -6.5,
+      "score_profiles": {
+        "balanced": 39,
+        "visual": 27,
+        "photography": 20,
+        "planetary": 47
       }
     },
     {
@@ -22482,6 +23258,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -6.1,
+      "score_profiles": {
+        "balanced": 49,
+        "visual": 32,
+        "photography": 24,
+        "planetary": 54
       }
     },
     {
@@ -22890,6 +23673,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -5.8,
+      "score_profiles": {
+        "balanced": 41,
+        "visual": 28,
+        "photography": 20,
+        "planetary": 54
       }
     },
     {
@@ -23298,6 +24088,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -5.6,
+      "score_profiles": {
+        "balanced": 49,
+        "visual": 32,
+        "photography": 24,
+        "planetary": 54
       }
     },
     {
@@ -23706,6 +24503,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -5.3,
+      "score_profiles": {
+        "balanced": 49,
+        "visual": 32,
+        "photography": 24,
+        "planetary": 55
       }
     },
     {
@@ -24114,6 +24918,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -5.1,
+      "score_profiles": {
+        "balanced": 41,
+        "visual": 28,
+        "photography": 20,
+        "planetary": 54
       }
     },
     {
@@ -24522,6 +25333,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -4.7,
+      "score_profiles": {
+        "balanced": 39,
+        "visual": 26,
+        "photography": 21,
+        "planetary": 53
       }
     },
     {
@@ -24930,6 +25748,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -4.4,
+      "score_profiles": {
+        "balanced": 40,
+        "visual": 28,
+        "photography": 22,
+        "planetary": 48
       }
     },
     {
@@ -25338,6 +26163,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -3.8,
+      "score_profiles": {
+        "balanced": 40,
+        "visual": 28,
+        "photography": 21,
+        "planetary": 47
       }
     },
     {
@@ -25746,6 +26578,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -3.1,
+      "score_profiles": {
+        "balanced": 40,
+        "visual": 28,
+        "photography": 21,
+        "planetary": 48
       }
     },
     {
@@ -26154,6 +26993,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -3.0,
+      "score_profiles": {
+        "balanced": 48,
+        "visual": 32,
+        "photography": 27,
+        "planetary": 48
       }
     },
     {
@@ -26562,6 +27408,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -1.9,
+      "score_profiles": {
+        "balanced": 48,
+        "visual": 32,
+        "photography": 33,
+        "planetary": 48
       }
     },
     {
@@ -26970,6 +27823,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": -0.8,
+      "score_profiles": {
+        "balanced": 48,
+        "visual": 32,
+        "photography": 28,
+        "planetary": 47
       }
     },
     {
@@ -27378,6 +28238,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": 0.2,
+      "score_profiles": {
+        "balanced": 46,
+        "visual": 31,
+        "photography": 28,
+        "planetary": 47
       }
     },
     {
@@ -27786,6 +28653,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": 1.2,
+      "score_profiles": {
+        "balanced": 48,
+        "visual": 32,
+        "photography": 30,
+        "planetary": 47
       }
     },
     {
@@ -28194,6 +29068,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": 1.3,
+      "score_profiles": {
+        "balanced": 40,
+        "visual": 27,
+        "photography": 20,
+        "planetary": 47
       }
     },
     {
@@ -28602,6 +29483,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": 1.4,
+      "score_profiles": {
+        "balanced": 35,
+        "visual": 23,
+        "photography": 19,
+        "planetary": 45
       }
     },
     {
@@ -29010,6 +29898,13 @@
             "note": null
           }
         ]
+      },
+      "temperature_c": 1.2,
+      "score_profiles": {
+        "balanced": 33,
+        "visual": 21,
+        "photography": 17,
+        "planetary": 44
       }
     },
     {
@@ -29418,69 +30313,14 @@
             "note": null
           }
         ]
-      }
-    }
-  ],
-  "derived": {
-    "next24": {
-      "wind_peak_m_s": 4.0,
-      "wind_peak_time": "2026-02-03T19:00:00+01:00",
-      "cloud_peak_pct": 99.0,
-      "cloud_peak_time": "2026-02-03T23:00:00+01:00",
-      "precip_prob_peak_pct": 0.0,
-      "precip_peak_time": "2026-02-03T01:00:00+01:00",
-      "best_score": 95,
-      "best_score_time": "2026-02-03T20:00:00+01:00"
-    },
-    "next72": {
-      "wind_peak_m_s": 4.2,
-      "wind_peak_time": "2026-02-04T10:00:00+01:00",
-      "cloud_peak_pct": 100.0,
-      "cloud_peak_time": "2026-02-04T01:00:00+01:00",
-      "precip_prob_peak_pct": 100.0,
-      "precip_peak_time": "2026-02-04T16:00:00+01:00",
-      "best_score": 95,
-      "best_score_time": "2026-02-03T20:00:00+01:00"
-    },
-    "now": {
-      "pressure_trend_6h": -0.3,
-      "wind_peak_next_24h": 4.0,
-      "cloud_peak_next_24h": 99.0,
-      "precip_peak_next_24h": 0.0,
-      "visibility_min_next_24h": 11840.0,
-      "heads_up": [
-        "Clouds increase after 00+01"
-      ]
-    }
-  },
-  "summary": {
-    "best_windows": [
-      {
-        "start": "2026-02-03T07:00:00+01:00",
-        "end": "2026-02-03T22:00:00+01:00",
-        "score_avg": 84.0,
-        "label": "Good"
       },
-      {
-        "start": "2026-02-03T01:00:00+01:00",
-        "end": "2026-02-03T03:00:00+01:00",
-        "score_avg": 73.0,
-        "label": "Good"
+      "temperature_c": 1.2,
+      "score_profiles": {
+        "balanced": 38,
+        "visual": 25,
+        "photography": 23,
+        "planetary": 46
       }
-    ]
-  },
-  "profiles": [
-    "visual",
-    "broadband",
-    "planetary"
-  ],
-  "profiles_available": [
-    "default",
-    "visual",
-    "photography",
-    "planetary"
-  ],
-  "scoring_version": "v2",
-  "default_profile": "default",
-  "moon_available": false
+    }
+  ]
 }

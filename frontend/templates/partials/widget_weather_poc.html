@@ -8,6 +8,12 @@
           <div class="sub">Near real-time JSON. Hourly quality + best windows.</div>
           <div class="hdr-best-window" data-role="best-window" aria-live="polite"></div>
         </div>
+        <div class="hdr-location">
+          <label class="hdr-location-label" for="weatherLocationSelect">Location:</label>
+          <select id="weatherLocationSelect" class="hdr-location-select" data-role="location-select">
+            <option value="">Loading…</option>
+          </select>
+        </div>
         <div class="seg" aria-label="weather view">
           <button data-wv="today" data-active="true">Tonight</button>
           <button data-wv="48h">48h</button>
@@ -76,28 +82,28 @@
       </div>
 
       <!-- Compact mini-charts: 5 items (3+2 on mobile) -->
-      <div class="miniCharts" aria-label="mini trends">
-        <div class="mini" data-role="mini-score">
+      <div class="miniCharts" aria-label="mini trends" id="miniChartsContainer">
+        <div class="mini" data-role="mini-score" data-chart="score" aria-label="Open chart: Score" tabindex="0">
           <div class="t">Score</div>
           <div class="bar" data-role="spark-score"></div>
           <div class="now" data-role="now-score">Now 0</div>
         </div>
-        <div class="mini" data-role="mini-cloud">
+        <div class="mini" data-role="mini-cloud" data-chart="cloud" aria-label="Open chart: Cloud" tabindex="0">
           <div class="t">Cloud</div>
           <div class="bar" data-role="spark-cloud"></div>
           <div class="now" data-role="now-cloud">Now 0%</div>
         </div>
-        <div class="mini" data-role="mini-pressure">
+        <div class="mini" data-role="mini-pressure" data-chart="pressure" aria-label="Open chart: Pressure" tabindex="0">
           <div class="t">Pressure</div>
           <div class="bar" data-role="spark-pressure"></div>
           <div class="now" data-role="now-pressure">Now 0 hPa</div>
         </div>
-        <div class="mini" data-role="mini-seeing">
+        <div class="mini" data-role="mini-seeing" data-chart="seeing" aria-label="Open chart: Seeing" tabindex="0">
           <div class="t">Seeing</div>
           <div class="bar" data-role="spark-seeing"></div>
           <div class="now" data-role="now-seeing">Now —</div>
         </div>
-        <div class="mini" data-role="mini-transparency">
+        <div class="mini" data-role="mini-transparency" data-chart="trans" aria-label="Open chart: Transparency" tabindex="0">
           <div class="t">Trans</div>
           <div class="bar" data-role="spark-transparency"></div>
           <div class="now" data-role="now-transparency">Now —</div>

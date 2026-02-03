@@ -199,7 +199,11 @@ def render_from_outputs(
         except Exception:
             return 0.0
 
+    # Sort all records by published_at descending (newest first)
+    selected_nebulacast.sort(key=get_sort_key, reverse=True)
     other_records.sort(key=get_sort_key, reverse=True)
     remaining_other = [r for r in other_records if r.get("url", "").strip() not in selected_nebulacast_urls]
     final_records = (selected_nebulacast + remaining_other)[:max_items]
+    # Final sort by date descending to ensure newest first overall
+    final_records.sort(key=get_sort_key, reverse=True)
     generate_rss(final_records, output_path, base_url=base_url)

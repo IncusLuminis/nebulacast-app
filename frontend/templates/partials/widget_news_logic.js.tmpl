@@ -44,12 +44,30 @@
       el.appendChild(btn);
     });
   }
+  function getItemDate(item) {
+    const pubDateEl = item.querySelector('pubDate');
+    if (!pubDateEl) return 0;
+    const dateStr = pubDateEl.textContent || '';
+    if (!dateStr) return 0;
+    try {
+      return new Date(dateStr).getTime();
+    } catch {
+      return 0;
+    }
+  }
   function applyFilterAndRender() {
     if (!cachedItems || cachedItems.length === 0) return;
     const f = normCat(activeFilter);
     let filtered = cachedItems;
     if (f !== "all") filtered = cachedItems.filter(function(it) { return readCategory(it) === f; });
-    const items = Array.prototype.slice.call(filtered, 0, MAX_ITEMS);
+    // Sort by published date descending (newest first)
+    filtered = Array.prototype.slice.call(filtered);
+    filtered.sort(function(a, b) {
+      const dateA = getItemDate(a);
+      const dateB = getItemDate(b);
+      return dateB - dateA; // descending order (newest first)
+    });
+    const items = filtered.slice(0, MAX_ITEMS);
     renderItems(items);
   }
   function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
