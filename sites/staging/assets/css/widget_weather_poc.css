@@ -66,6 +66,35 @@ a:hover{text-decoration:underline}
   outline:2px solid rgba(143,182,255,.4);
   outline-offset:1px;
 }
+.hdr-location-sep{
+  font-size:10px;
+  color:var(--muted);
+  margin:0 2px;
+}
+.hdr-location-input{
+  font-size:11px;
+  padding:4px 6px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.02);
+  color:var(--text);
+}
+.hdr-location-input:focus{
+  outline:2px solid rgba(143,182,255,.4);
+  outline-offset:1px;
+}
+.hdr-location-btn{
+  font-size:10px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(143,182,255,.1);
+  color:var(--text);
+  cursor:pointer;
+}
+.hdr-location-btn:hover{
+  background:rgba(143,182,255,.2);
+}
 
 .seg{
   display:flex;gap:6px;flex-wrap:nowrap;

@@ -13,6 +13,11 @@
           <select id="weatherLocationSelect" class="hdr-location-select" data-role="location-select">
             <option value="">Loading…</option>
           </select>
+          <span class="hdr-location-sep">or</span>
+          <input type="number" step="0.0001" placeholder="Lat" id="weatherLatInput" class="hdr-location-input" style="width:70px;">
+          <input type="number" step="0.0001" placeholder="Lon" id="weatherLonInput" class="hdr-location-input" style="width:70px;">
+          <input type="text" placeholder="TZ" id="weatherTzInput" class="hdr-location-input" style="width:100px;" value="Europe/Warsaw">
+          <button type="button" id="weatherFetchBtn" class="hdr-location-btn">Fetch</button>
         </div>
         <div class="seg" aria-label="weather view">
           <button data-wv="today" data-active="true">Tonight</button>

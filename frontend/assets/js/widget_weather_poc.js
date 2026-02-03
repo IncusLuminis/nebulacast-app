@@ -5,12 +5,14 @@
 const ASTRO_WEATHER_URL = (window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.jsonUrl) || "/weather/daily_weather.json";
 const LOCATIONS_INDEX_URL = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.locationsIndexUrl;
 const LOCATION_DATA_BASE = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.locationDataBase;
+const API_ASTRO_WEATHER_URL = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.apiAstroWeatherUrl || "/api/astro-weather";
 
 const weatherCard = document.getElementById("poc-weather");
 let weatherData = null;
 let activeProfile = "default";
 let locationsIndex = null;
 let currentLocationId = null;
+let currentLocationCoords = null; // {lat, lon, tz} for API mode
 
 // Helper: escape HTML
 function escapeHtml(s) {
@@ -1579,22 +1581,61 @@ async function loadWeather() {
   showLoading();
   try {
     var url;
-    if (LOCATION_DATA_BASE && currentLocationId) {
+    var useApi = false;
+    
+    // Priority 1: API mode (manual coordinates)
+    if (currentLocationCoords && API_ASTRO_WEATHER_URL) {
+      var params = new URLSearchParams({
+        lat: String(currentLocationCoords.lat),
+        lon: String(currentLocationCoords.lon),
+        tz: currentLocationCoords.tz || "Europe/Warsaw",
+        hours: "72",
+        profile: activeProfile || "default",
+      });
+      url = API_ASTRO_WEATHER_URL + "?" + params.toString();
+      useApi = true;
+    }
+    // Priority 2: Static multi-location JSON
+    else if (LOCATION_DATA_BASE && currentLocationId) {
       var base = LOCATION_DATA_BASE;
       if (base.charAt(base.length - 1) === "/") base = base.slice(0, -1);
       url = base + "/" + currentLocationId + ".json";
-    } else {
+    }
+    // Priority 3: Legacy single-location JSON
+    else {
       url = ASTRO_WEATHER_URL;
     }
-    url = url + (url.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
-    var res = await fetch(url);
-    if (!res.ok) throw new Error("HTTP " + res.status + ": " + res.statusText);
-    var contentType = res.headers.get("content-type") || "";
-    if (contentType.indexOf("application/json") < 0 && contentType.indexOf("text/json") < 0) {
-      var text = await res.text();
-      throw new Error("Expected JSON but got " + contentType);
+    
+    if (!useApi) {
+      url = url + (url.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
     }
-    var data = await res.json();
+    var res = await fetch(url);
+    var data;
+    if (!res.ok) {
+      // If API fails and we're in API mode, fallback to legacy
+      if (useApi && currentLocationCoords) {
+        console.warn("API failed, falling back to legacy JSON");
+        currentLocationCoords = null;
+        url = ASTRO_WEATHER_URL + "?ts=" + Date.now();
+        var res2 = await fetch(url);
+        if (!res2.ok) throw new Error("HTTP " + res2.status + ": " + res2.statusText);
+        var contentType2 = res2.headers.get("content-type") || "";
+        if (contentType2.indexOf("application/json") < 0 && contentType2.indexOf("text/json") < 0) {
+          var text2 = await res2.text();
+          throw new Error("Expected JSON but got " + contentType2);
+        }
+        data = await res2.json();
+      } else {
+        throw new Error("HTTP " + res.status + ": " + res.statusText);
+      }
+    } else {
+      var contentType = res.headers.get("content-type") || "";
+      if (contentType.indexOf("application/json") < 0 && contentType.indexOf("text/json") < 0) {
+        var text = await res.text();
+        throw new Error("Expected JSON but got " + contentType);
+      }
+      data = await res.json();
+    }
     if (!data || !data.hours || !Array.isArray(data.hours) || data.hours.length === 0) {
       throw new Error("Invalid JSON: missing or empty hours array");
     }
@@ -2438,16 +2479,24 @@ document.querySelectorAll(".seg").forEach(function(seg){
     var isProfileSeg = seg.classList.contains("seg-profile");
     var profile = btn.dataset.profile;
     var mode = btn.dataset.wv;
-    if (isProfileSeg && profile && weatherData) {
+    if (isProfileSeg && profile) {
       activeProfile = profile;
       syncProfileSegmentUI();
-      var r = findNearestHour(weatherData.hours || []);
-      renderNow(r.hour);
-      renderHourly(weatherData.hours);
-      renderMiniCharts(weatherData.hours, currentMode, r.hour);
-      // Update chart if open
-      if (currentChartParam && chartOverlay && chartOverlay.getAttribute("aria-hidden") === "false") {
-        renderChart(currentChartParam);
+      // If using API mode, reload with new profile
+      if (currentLocationCoords) {
+        loadWeather();
+        return;
+      }
+      // Otherwise re-render existing data
+      if (weatherData) {
+        var r = findNearestHour(weatherData.hours || []);
+        renderNow(r.hour);
+        renderHourly(weatherData.hours);
+        renderMiniCharts(weatherData.hours, currentMode, r.hour);
+        // Update chart if open
+        if (currentChartParam && chartOverlay && chartOverlay.getAttribute("aria-hidden") === "false") {
+          renderChart(currentChartParam);
+        }
       }
       return;
     }
@@ -2468,6 +2517,29 @@ document.querySelectorAll(".seg").forEach(function(seg){
 
 async function initWeatherWidget() {
   const selectEl = weatherCard && weatherCard.querySelector("[data-role=location-select]");
+  const latInput = weatherCard && document.getElementById("weatherLatInput");
+  const lonInput = weatherCard && document.getElementById("weatherLonInput");
+  const tzInput = weatherCard && document.getElementById("weatherTzInput");
+  const fetchBtn = weatherCard && document.getElementById("weatherFetchBtn");
+  
+  // Handle manual coordinate input + API fetch
+  if (fetchBtn && latInput && lonInput && tzInput) {
+    fetchBtn.addEventListener("click", function() {
+      const lat = parseFloat(latInput.value);
+      const lon = parseFloat(lonInput.value);
+      const tz = (tzInput.value || "Europe/Warsaw").trim();
+      if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        alert("Invalid coordinates. Lat: [-90, 90], Lon: [-180, 180]");
+        return;
+      }
+      currentLocationCoords = { lat, lon, tz };
+      currentLocationId = null; // Clear static location selection
+      if (selectEl) selectEl.value = "";
+      loadWeather();
+    });
+  }
+  
+  // Handle static locations dropdown
   if (selectEl && LOCATIONS_INDEX_URL) {
     try {
       const res = await fetch(LOCATIONS_INDEX_URL + (LOCATIONS_INDEX_URL.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now());
@@ -2491,8 +2563,12 @@ async function initWeatherWidget() {
           currentLocationId = data.locations[0].id;
         }
         selectEl.addEventListener("change", function() {
-          currentLocationId = this.value || currentLocationId;
-          loadWeather();
+          const id = this.value;
+          if (id) {
+            currentLocationId = id;
+            currentLocationCoords = null; // Clear API mode
+            loadWeather();
+          }
         });
       }
     } catch (e) {

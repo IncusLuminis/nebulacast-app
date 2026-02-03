@@ -286,6 +286,8 @@ def main() -> int:
         # Multi-location static data for dropdown
         "locationsIndexUrl": (base_path or "") + "/data/weather/locations.json",
         "locationDataBase": (base_path or "") + "/data/weather/loc",
+        # Cloudflare Pages Function API endpoint
+        "apiAstroWeatherUrl": (base_path or "") + "/api/astro-weather",
     }
     weather_page_tmpl = read_tmpl("weather.html", "pages")
     weather_index_content = (

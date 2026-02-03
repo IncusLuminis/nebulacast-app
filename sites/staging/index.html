@@ -65,6 +65,11 @@
           <select id="weatherLocationSelect" class="hdr-location-select" data-role="location-select">
             <option value="">Loading…</option>
           </select>
+          <span class="hdr-location-sep">or</span>
+          <input type="number" step="0.0001" placeholder="Lat" id="weatherLatInput" class="hdr-location-input" style="width:70px;">
+          <input type="number" step="0.0001" placeholder="Lon" id="weatherLonInput" class="hdr-location-input" style="width:70px;">
+          <input type="text" placeholder="TZ" id="weatherTzInput" class="hdr-location-input" style="width:100px;" value="Europe/Warsaw">
+          <button type="button" id="weatherFetchBtn" class="hdr-location-btn">Fetch</button>
         </div>
         <div class="seg" aria-label="weather view">
           <button data-wv="today" data-active="true">Tonight</button>
@@ -266,7 +271,7 @@
       var base = '';
       window.runNewsWidget({ rootId: 'nrw-main', rssUrl: base + '/news/rss.xml', maxItems: 12, parseMax: 300, filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] });
       window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '/calendar/daily_signal.json', maxItems: 20, filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], iconBase: base + '/assets/icons/alerts' });
-      window.__WEATHER_POC_CONFIG = {"jsonUrl": "/weather/daily_weather.json", "iconBase": "/assets/icons/weather", "locationsIndexUrl": "/data/weather/locations.json", "locationDataBase": "/data/weather/loc"};
+      window.__WEATHER_POC_CONFIG = {"jsonUrl": "/weather/daily_weather.json", "iconBase": "/assets/icons/weather", "locationsIndexUrl": "/data/weather/locations.json", "locationDataBase": "/data/weather/loc", "apiAstroWeatherUrl": "/api/astro-weather"};
       (function() {
         var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
         var tabs = document.querySelectorAll('.index-tab');
