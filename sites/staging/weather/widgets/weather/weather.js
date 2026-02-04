@@ -1815,23 +1815,26 @@ function renderChart(paramKey) {
   if (els.statMin) els.statMin.textContent = formatValue(minValue);
   if (els.statMax) els.statMax.textContent = formatValue(maxValue);
   
-  // Set canvas size
+  // Set canvas size (guard: avoid negative/zero dimensions that can cause SVG rect errors when overlay is hidden)
   const dpr = window.devicePixelRatio || 1;
   const rect = els.canvas.getBoundingClientRect();
-  els.canvas.width = rect.width * dpr;
-  els.canvas.height = rect.height * dpr;
+  const w = Math.max(0, rect.width);
+  const h = Math.max(0, rect.height);
+  if (w <= 0 || h <= 0) return;
+  els.canvas.width = w * dpr;
+  els.canvas.height = h * dpr;
   ctx.scale(dpr, dpr);
-  els.canvas.style.width = rect.width + "px";
-  els.canvas.style.height = rect.height + "px";
-  
+  els.canvas.style.width = w + "px";
+  els.canvas.style.height = h + "px";
+
   // Clear canvas
-  ctx.clearRect(0, 0, rect.width, rect.height);
+  ctx.clearRect(0, 0, w, h);
   
   if (validValues.length === 0) {
     ctx.fillStyle = "var(--muted)";
     ctx.font = "14px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("No data available", rect.width / 2, rect.height / 2);
+    ctx.fillText("No data available", w / 2, h / 2);
     return;
   }
   
@@ -1841,8 +1844,9 @@ function renderChart(paramKey) {
   
   // Chart dimensions (increase left padding for Y axis labels with units)
   const padding = { top: 20, right: 20, bottom: shouldRotate ? 50 : 40, left: 70 };
-  const chartWidth = rect.width - padding.left - padding.right;
-  const chartHeight = rect.height - padding.top - padding.bottom;
+  const chartWidth = Math.max(0, w - padding.left - padding.right);
+  const chartHeight = Math.max(0, h - padding.top - padding.bottom);
+  if (chartWidth <= 0 || chartHeight <= 0) return;
   
   // Determine min/max for Y axis
   let yMin, yMax;
