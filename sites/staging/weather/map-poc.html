@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Map POC • Terrain + Clouds</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --panel: #0f1115;
+      --line: #2a2f3a;
+      --text: #e6e6e6;
+      --muted: #9aa3b2;
+      --title: #e6f2ff;
+      --bad: #e57373;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .page-wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px 12px 40px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .card h2 { margin: 0 0 8px; font-size: 16px; color: var(--title); }
+    .status-line { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
+    .map-wrapper {
+      position: relative;
+      width: 100%;
+      border-radius: 12px;
+      overflow: visible;
+      border: 1px solid var(--line);
+    }
+    #map {
+      width: 100%;
+      height: 320px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    @media (max-width: 560px) {
+      #map { height: 280px; }
+    }
+    .layers-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 1000;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .layers-btn:hover { background: rgba(255,255,255,0.08); }
+    .layers-btn svg { width: 20px; height: 20px; }
+    .layers-popover {
+      position: absolute;
+      top: 8px;
+      right: 48px;
+      z-index: 1001;
+      min-width: 260px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      font-size: 12px;
+      transform: translateX(100%);
+      opacity: 0;
+      visibility: hidden;
+      transition: transform 0.2s ease, opacity 0.2s ease, visibility 0.2s;
+    }
+    .layers-popover.open {
+      transform: translateX(0);
+      opacity: 1;
+      visibility: visible;
+    }
+    .layers-popover-title { font-weight: 700; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; font-size: 11px; }
+    .layers-popover .layer-row { margin-bottom: 10px; }
+    .layers-popover .layer-row:last-child { margin-bottom: 0; }
+    .layers-popover label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; }
+    .layers-popover input[type="checkbox"] { accent-color: var(--title); flex-shrink: 0; }
+    .layers-popover .layer-legend-short { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; margin-left: 26px; }
+    .clouds-source-hint { font-style: italic; margin-top: 4px; }
+    .legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 2px; border: 1px solid rgba(255,255,255,0.2); }
+    .hillshade-unavailable { font-size: 10px; color: var(--muted); font-style: italic; margin-top: 2px; margin-left: 26px; }
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .controls-row .label { margin-right: 4px; }
+    .controls-row .value { color: var(--text); }
+    .toggles { display: flex; gap: 12px; margin-left: auto; }
+    .toggles label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .toggles input[type="checkbox"] { accent-color: var(--title); }
+    .timeline-panel {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+    .timeline-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .timeline-buttons button {
+      padding: 6px 10px;
+      font-size: 11px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .timeline-buttons button:hover { background: rgba(255,255,255,0.1); }
+    .timeline-buttons button.primary { border-color: var(--title); background: rgba(143,182,255,0.15); }
+    .timeline-slider-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .timeline-slider-wrap input[type="range"] { flex: 1; min-width: 0; accent-color: var(--title); }
+    .timeline-slider-wrap span { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .frame-count { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .timeline-panel.disabled { opacity: 0.6; pointer-events: none; }
+    .hillshade-unavailable { font-size: 10px; color: var(--muted); font-style: italic; }
+    .cloud-legend {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      z-index: 900;
+      min-width: 180px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(15,17,21,0.95);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      font-size: 10px;
+    }
+    .cloud-legend-title {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+    .cloud-legend-source {
+      margin-top: 4px;
+      font-size: 9px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .map-extra-controls {
+      position: absolute;
+      top: 52px; /* сразу под кнопкой Layers (8px top + 36px height + небольшой отступ) */
+      right: 8px;
+      z-index: 950;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .map-extra-controls button {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(15,17,21,0.95);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .map-extra-controls button:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    #btnMapHome {
+      font-size: 20px;
+    }
+    .map-tip { font-size: 11px; color: var(--muted); margin-top: 4px; margin-bottom: 10px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <div class="card">
+      <h2>Map • Terrain + Clouds</h2>
+      <p class="map-tip" id="mapTip">Tip: Satellite clouds show where the sky is covered. Radar shows where rain or snow is falling.</p>
+      <div class="status-line" id="statusLine">Loading…</div>
+      <div class="map-wrapper">
+        <div id="map"></div>
+        <button type="button" class="layers-btn" id="layersBtn" aria-label="Layers" title="Layers">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </button>
+        <div class="layers-popover" id="layersPopover">
+          <div class="layers-popover-title">Layers</div>
+          <div class="layer-row">
+            <label>
+              <input type="checkbox" id="toggleTerrain" checked> Terrain (base)
+            </label>
+          </div>
+          <div class="layer-row">
+            <label title="Satellite-like cloud masses from NASA GIBS">
+              <input type="checkbox" id="toggleGibs" checked> Cloud Masses (GIBS)
+            </label>
+          </div>
+          <div class="layer-row">
+            <label title="Radar shows rain/snow, not total cloud cover">
+              <input type="checkbox" id="toggleRadar"> Precipitation (Radar)
+            </label>
+            <span class="layer-legend-short"><span class="legend-swatch" style="background:#4a90d9"></span> light · <span class="legend-swatch" style="background:#f0c030"></span> moderate · <span class="legend-swatch" style="background:#d03030"></span> heavy</span>
+          </div>
+          <div class="layer-row">
+            <label><input type="checkbox" id="toggleHillshade" checked> Hillshade</label>
+            <span class="hillshade-unavailable" id="hillshadeUnavailable" style="display:none;">Hillshade unavailable</span>
+          </div>
+        </div>
+        <div class="cloud-legend" id="cloudLegend" style="display:none;">
+          <div class="cloud-legend-title" id="cloudLegendTitle">Satellite-like clouds (True Color)</div>
+          <div class="cloud-legend-source" id="cloudLegendDate">Date: — (UTC)</div>
+          <div class="cloud-legend-source" id="cloudLegendSource">Daytime imagery; at night may be unavailable.</div>
+        </div>
+        <div class="map-extra-controls">
+          <button type="button" id="btnMapHome" title="Back to location">⌂</button>
+          <button type="button" id="btnMapFullscreen" title="Fullscreen">⤢</button>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <span><span class="label">📍 Location</span><span class="value" id="locationLabel">Warsaw (52.2297, 21.0122)</span></span>
+        <span><span class="label">🛰️ Frame</span><span class="value" id="frameTimeLabel">—</span></span>
+        <div class="toggles">
+          <button type="button" id="btnGibsPrevDay" title="Previous day">← day</button>
+          <button type="button" id="btnGibsToday" title="Today">today</button>
+          <button type="button" id="btnGibsNextDay" title="Next day">day →</button>
+        </div>
+      </div>
+
+      <div class="timeline-panel" id="timelinePanel">
+        <div class="timeline-buttons">
+          <button type="button" id="btnStart" title="First frame">⏮</button>
+          <button type="button" id="btnPlay" title="Play / Pause">▶</button>
+          <button type="button" id="btnMinus6">−6h</button>
+          <button type="button" id="btnMinus3">−3h</button>
+          <button type="button" id="btnNow" class="primary">Now</button>
+          <button type="button" id="btnPlus3">+3h</button>
+          <button type="button" id="btnPlus6">+6h</button>
+        </div>
+        <div class="timeline-slider-wrap">
+          <input type="range" id="frameSlider" min="0" max="0" value="0" step="1">
+          <span id="frameTimeDisplay">—</span>
+        </div>
+        <div class="frame-count" id="frameCount">Frame 0 of 0</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+(function () {
+  "use strict";
+
+  const DEFAULT_CENTER = [52.2297, 21.0122];
+  const DEFAULT_ZOOM = 7;
+  const RAINVIEWER_API = "https://api.rainviewer.com/public/weather-maps.json";
+  const HILLSHADE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
+  const CARTO_DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+  const GIBS_SUBDOMAINS = ["a", "b", "c"];
+  const GIBS_LAYER = "MODIS_Terra_CorrectedReflectance_TrueColor";
+  const GIBS_TILEMATRIXSET = "GoogleMapsCompatible_Level9";
+  const GIBS_OPACITY = 0.65;
+  const STATE_STORAGE_KEY = "map-poc-layer-state-v2";
+
+  let map = null;
+  let baseLayer = null;
+  let hillshadeLayer = null;
+  let gibsLayer = null;
+  let radarLayer = null;
+  /** @type {{ time: number, path?: string }[]} */
+  let radarFrames = [];
+  /** Timeline: radar frames only */
+  let frames = [];
+  let rainviewerHost = "https://tilecache.rainviewer.com";
+  let currentFrameIdx = 0;
+  let terrainOn = true;
+  let gibsOn = true;
+  let radarOn = true;
+  let hillshadeOn = true;
+  let currentCenter = DEFAULT_CENTER.slice();
+  let currentZoom = DEFAULT_ZOOM;
+  let homeCenter = DEFAULT_CENTER.slice();
+  let homeZoom = DEFAULT_ZOOM;
+  let locationName = "Warsaw";
+  let playIntervalId = null;
+  let gibsDayOffset = 0; // 0 = today, -1 = yesterday, etc.
+  let locationMarker = null;
+  // To avoid hammering GIBS when imagery for a date is clearly unavailable,
+  // we track "blocked until" timestamps per base date (YYYY-MM-DD).
+  let gibsBlockedUntilByDate = {};
+
+  function rainviewerRadarTileUrl(path) {
+    return rainviewerHost + path + "/256/{z}/{x}/{y}/0/0_0.png";
+  }
+
+  function findNearestFrameIndex(framesArr, time) {
+    if (!framesArr || framesArr.length === 0) return -1;
+    var best = 0;
+    var bestDiff = Math.abs(framesArr[0].time - time);
+    for (var i = 1; i < framesArr.length; i++) {
+      var d = Math.abs(framesArr[i].time - time);
+      if (d < bestDiff) { bestDiff = d; best = i; }
+    }
+    return best;
+  }
+
+  function formatDateUTC(date) {
+    var y = date.getUTCFullYear();
+    var m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    var d = String(date.getUTCDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+
+  function getGibsDateString() {
+    var now = new Date();
+    var target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    if (gibsDayOffset !== 0) {
+      target.setUTCDate(target.getUTCDate() + gibsDayOffset);
+    }
+    return formatDateUTC(target);
+  }
+
+  function makeGibsLayer(dateStr) {
+    var url = "https://gibs-{s}.earthdata.nasa.gov/wmts/epsg3857/best/"
+      + GIBS_LAYER + "/default/" + dateStr + "/" + GIBS_TILEMATRIXSET + "/{z}/{y}/{x}.jpg";
+    var layer = L.tileLayer(url, {
+      subdomains: GIBS_SUBDOMAINS,
+      opacity: GIBS_OPACITY,
+      minZoom: 1,
+      maxZoom: 9,
+      maxNativeZoom: 9,
+      crossOrigin: true,
+      attribution: "Imagery © NASA GIBS"
+    });
+    var tileErrorCount = 0;
+    layer.on("tileerror", function (e) {
+      if (tileErrorCount < 10) {
+        console.warn("[GIBS tileerror]", e && e.coords, e && e.tile && e.tile.src);
+        tileErrorCount++;
+        if (tileErrorCount === 10) {
+          console.warn("[GIBS tileerror] further errors suppressed for this layer instance");
+        }
+      }
+    });
+    layer.on("load", function () {
+      console.log("[GIBS] load ok for", dateStr);
+    });
+    return layer;
+  }
+
+  function updateGibsLegend(dateStr) {
+    var legend = document.getElementById("cloudLegend");
+    if (!legend) return;
+    if (!gibsOn || !gibsLayer) {
+      legend.style.display = "none";
+      return;
+    }
+    var titleEl = document.getElementById("cloudLegendTitle");
+    var dateEl = document.getElementById("cloudLegendDate");
+    if (titleEl) {
+      titleEl.textContent = "Satellite-like clouds (True Color)";
+    }
+    if (dateEl) {
+      dateEl.textContent = "Date: " + dateStr + " (UTC)";
+    }
+    legend.style.display = "block";
+  }
+
+  var gibsAttemptId = 0;
+
+  function updateGibsLayer() {
+    if (!map) return;
+    if (gibsLayer && map.hasLayer(gibsLayer)) {
+      map.removeLayer(gibsLayer);
+    }
+    gibsLayer = null;
+    if (!gibsOn) {
+      updateGibsLegend(getGibsDateString());
+      return;
+    }
+
+    // Base date from current offset (0 = today)
+    var now = new Date();
+    var base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    if (gibsDayOffset !== 0) {
+      base.setUTCDate(base.getUTCDate() + gibsDayOffset);
+    }
+    var baseDateStr = formatDateUTC(base);
+
+    // If we've recently determined that this base date has no imagery,
+    // don't keep hitting the server until the backoff expires.
+    var blockedUntil = gibsBlockedUntilByDate[baseDateStr];
+    if (blockedUntil && Date.now() < blockedUntil) {
+      updateGibsLegend(baseDateStr);
+      setStatus("GIBS imagery unavailable for selected date", true);
+      return;
+    }
+
+    var candidates = [
+      new Date(base.getTime()),
+      new Date(base.getTime() - 24 * 3600 * 1000),
+      new Date(base.getTime() - 2 * 24 * 3600 * 1000)
+    ].map(formatDateUTC);
+
+    var attemptId = ++gibsAttemptId;
+
+    function tryIndex(i) {
+      if (attemptId !== gibsAttemptId) return;
+      if (i >= candidates.length) {
+        var finalDate = candidates[0];
+        updateGibsLegend(finalDate);
+        // Back off further attempts for this base date for one hour.
+        gibsBlockedUntilByDate[baseDateStr] = Date.now() + 60 * 60 * 1000;
+        setStatus("GIBS imagery unavailable for selected date", true);
+        return;
+      }
+      var dateStr = candidates[i];
+      var layer = makeGibsLayer(dateStr);
+      var loadedTiles = 0;
+      var fallbackTimer = setTimeout(function () {
+        if (attemptId !== gibsAttemptId) return;
+        if (loadedTiles === 0) {
+          if (map.hasLayer(layer)) {
+            map.removeLayer(layer);
+          }
+          tryIndex(i + 1);
+        }
+      }, 2500);
+
+      layer.on("tileload", function () {
+        loadedTiles += 1;
+      });
+
+      layer.addTo(map);
+      layer.setZIndex(500);
+      layer.bringToFront();
+
+      layer.on("load", function () {
+        if (attemptId !== gibsAttemptId) return;
+        if (!map.hasLayer(layer)) return;
+        clearTimeout(fallbackTimer);
+        gibsLayer = layer;
+        updateGibsLegend(dateStr);
+        setStatus("OK");
+      });
+    }
+
+    tryIndex(0);
+  }
+
+  function saveLayerState() {
+    try {
+      var state = {
+        terrainOn: terrainOn,
+        gibsOn: gibsOn,
+        radarOn: radarOn,
+        hillshadeOn: hillshadeOn,
+        gibsDayOffset: gibsDayOffset
+      };
+      window.localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // ignore storage errors
+    }
+  }
+
+  function loadLayerState() {
+    try {
+      var raw = window.localStorage.getItem(STATE_STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+
+
+  function setStatus(text, isError) {
+    var el = document.getElementById("statusLine");
+    if (el) {
+      el.textContent = text;
+      el.style.color = isError ? "var(--bad)" : "var(--muted)";
+    }
+  }
+
+  function setLocation(opts) {
+    if (!opts) return;
+    if (typeof opts.lat === "number" && typeof opts.lon === "number") {
+      homeCenter = [opts.lat, opts.lon];
+      homeZoom = DEFAULT_ZOOM;
+      currentCenter = homeCenter.slice();
+      currentZoom = map ? map.getZoom() : DEFAULT_ZOOM;
+      if (map) {
+        map.setView(homeCenter, homeZoom);
+        if (locationMarker) {
+          locationMarker.setLatLng(homeCenter);
+        }
+      }
+    }
+    if (opts.name) locationName = opts.name;
+    var label = document.getElementById("locationLabel");
+    if (label) {
+      var lat = homeCenter[0].toFixed(4);
+      var lon = homeCenter[1].toFixed(4);
+      label.textContent = locationName + " (" + lat + ", " + lon + ")";
+    }
+  }
+
+  window.addEventListener("nbc:location", function (e) {
+    if (!e.detail) return;
+    setLocation(e.detail);
+  });
+
+  function initMap() {
+    map = L.map("map", { center: currentCenter, zoom: currentZoom });
+    baseLayer = L.tileLayer(CARTO_DARK, {
+      attribution: "© CARTO",
+      subdomains: "abcd",
+      maxZoom: 19
+    });
+    baseLayer.addTo(map);
+
+    hillshadeLayer = L.tileLayer(HILLSHADE_URL, {
+      opacity: 0.35,
+      maxZoom: 19,
+      attribution: "Hillshade © Esri"
+    });
+    var hillshadeFailed = false;
+    hillshadeLayer.on("tileerror", function () {
+      if (hillshadeFailed) return;
+      hillshadeFailed = true;
+      if (map && hillshadeLayer && map.hasLayer(hillshadeLayer)) map.removeLayer(hillshadeLayer);
+      hillshadeOn = false;
+      var cb = document.getElementById("toggleHillshade");
+      if (cb) cb.checked = false;
+      var msg = document.getElementById("hillshadeUnavailable");
+      if (msg) msg.style.display = "inline";
+    });
+    if (hillshadeOn) hillshadeLayer.addTo(map);
+
+    // Top-most pane for location marker
+    map.createPane("topMarkers");
+    var topPane = map.getPane("topMarkers");
+    if (topPane) topPane.style.zIndex = "700";
+    locationMarker = L.circleMarker(homeCenter, {
+      radius: 5,
+      color: "#ff4b4b",
+      weight: 2,
+      fillColor: "#ffe0e0",
+      fillOpacity: 0.9,
+      pane: "topMarkers"
+    });
+    locationMarker.addTo(map);
+
+    var terrainCb = document.getElementById("toggleTerrain");
+    if (terrainCb) {
+      terrainCb.checked = terrainOn;
+      terrainCb.addEventListener("change", function () {
+        terrainOn = this.checked;
+        if (!baseLayer) return;
+        if (terrainOn) {
+          baseLayer.addTo(map);
+        } else {
+          map.removeLayer(baseLayer);
+        }
+        saveLayerState();
+      });
+    }
+
+    var hillshadeCb = document.getElementById("toggleHillshade");
+    if (hillshadeCb) {
+      hillshadeCb.checked = hillshadeOn;
+      hillshadeCb.addEventListener("change", function () {
+        hillshadeOn = this.checked;
+        if (hillshadeLayer) {
+          if (hillshadeOn) hillshadeLayer.addTo(map);
+          else map.removeLayer(hillshadeLayer);
+        }
+        saveLayerState();
+      });
+    }
+
+    var gibsCb = document.getElementById("toggleGibs");
+    if (gibsCb) {
+      gibsCb.checked = gibsOn;
+      gibsCb.addEventListener("change", function () {
+        gibsOn = this.checked;
+        updateGibsLayer();
+        saveLayerState();
+      });
+    }
+
+    var radarCb = document.getElementById("toggleRadar");
+    if (radarCb) {
+      radarCb.checked = radarOn;
+      radarCb.addEventListener("change", function () {
+        radarOn = this.checked;
+        updateRadarLayer();
+        saveLayerState();
+      });
+    }
+
+    // GIBS day controls
+    var btnPrevDay = document.getElementById("btnGibsPrevDay");
+    var btnToday = document.getElementById("btnGibsToday");
+    var btnNextDay = document.getElementById("btnGibsNextDay");
+    if (btnPrevDay) {
+      btnPrevDay.addEventListener("click", function () {
+        gibsDayOffset -= 1;
+        updateGibsLayer();
+        saveLayerState();
+      });
+    }
+    if (btnToday) {
+      btnToday.addEventListener("click", function () {
+        gibsDayOffset = 0;
+        updateGibsLayer();
+        saveLayerState();
+      });
+    }
+    if (btnNextDay) {
+      btnNextDay.addEventListener("click", function () {
+        gibsDayOffset += 1;
+        updateGibsLayer();
+        saveLayerState();
+      });
+    }
+
+    // Extra map controls
+    var btnHome = document.getElementById("btnMapHome");
+    if (btnHome) {
+      btnHome.addEventListener("click", function () {
+        if (!map) return;
+        map.setView(homeCenter, homeZoom);
+        if (locationMarker) {
+          locationMarker.setLatLng(homeCenter);
+        }
+      });
+    }
+    var btnFs = document.getElementById("btnMapFullscreen");
+    if (btnFs) {
+      btnFs.addEventListener("click", function () {
+        if (!map) return;
+        // Use the map wrapper so all overlay controls stay visible in fullscreen.
+        var container = document.querySelector(".map-wrapper") || map.getContainer();
+        if (!document.fullscreenElement) {
+          if (container.requestFullscreen) {
+            container.requestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      });
+    }
+
+    var layersBtn = document.getElementById("layersBtn");
+    var layersPopover = document.getElementById("layersPopover");
+    if (layersBtn && layersPopover) {
+      layersBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        layersPopover.classList.toggle("open");
+      });
+      document.addEventListener("click", function (e) {
+        if (layersPopover.classList.contains("open") && !layersPopover.contains(e.target) && e.target !== layersBtn) {
+          layersPopover.classList.remove("open");
+        }
+      });
+    }
+
+  }
+
+  // RainViewer is now used only for radar precipitation; cloud masses come from NASA GIBS.
+
+  function updateRadarLayer() {
+    if (radarLayer) {
+      map.removeLayer(radarLayer);
+      radarLayer = null;
+    }
+    if (radarFrames.length === 0 || !radarOn || frames.length === 0) {
+      return;
+    }
+    var currentTime = frames[currentFrameIdx].time;
+    var idx = findNearestFrameIndex(radarFrames, currentTime);
+    if (idx < 0) return;
+    var frame = radarFrames[idx];
+    if (!frame.path) return;
+    var url = rainviewerRadarTileUrl(frame.path);
+    radarLayer = L.tileLayer(url, {
+      opacity: 0.8,
+      maxZoom: 19,
+      attribution: "Precipitation © RainViewer"
+    });
+    if (radarOn) {
+      radarLayer.addTo(map);
+      radarLayer.setZIndex(600);
+    }
+  }
+
+  function updateFrameUI() {
+    var timeLabel = document.getElementById("frameTimeLabel");
+    var timeDisplay = document.getElementById("frameTimeDisplay");
+    var slider = document.getElementById("frameSlider");
+    var countEl = document.getElementById("frameCount");
+    if (frames.length === 0) {
+      if (timeLabel) timeLabel.textContent = "—";
+      if (timeDisplay) timeDisplay.textContent = "—";
+      if (countEl) countEl.textContent = "Frame 0 of 0";
+      return;
+    }
+    var frame = frames[currentFrameIdx];
+    var ts = frame.time;
+    var date = new Date(ts * 1000);
+    var str = date.toLocaleString();
+    if (timeLabel) timeLabel.textContent = str;
+    if (timeDisplay) timeDisplay.textContent = str;
+    if (slider) {
+      slider.max = frames.length - 1;
+      slider.value = currentFrameIdx;
+    }
+    if (countEl) countEl.textContent = "Frame " + (currentFrameIdx + 1) + " of " + frames.length;
+  }
+
+  function goToNearestFrame(targetTs) {
+    if (frames.length === 0) return;
+    var bestIdx = 0;
+    var bestDiff = Math.abs(frames[0].time - targetTs);
+    for (var i = 1; i < frames.length; i++) {
+      var d = Math.abs(frames[i].time - targetTs);
+      if (d < bestDiff) {
+        bestDiff = d;
+        bestIdx = i;
+      }
+    }
+    currentFrameIdx = bestIdx;
+    updateFrameUI();
+    updateRadarLayer();
+  }
+
+  function toFrameObj(x) {
+    if (typeof x === "number") return { time: x };
+    var t = x.time != null ? x.time : (x.timestamp != null ? x.timestamp : null);
+    if (t == null) return null;
+    return { time: t, path: x.path || undefined };
+  }
+
+  function loadRainViewerFrames() {
+    return fetch(RAINVIEWER_API + "?t=" + Date.now())
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.host) rainviewerHost = data.host.replace(/\/$/, "");
+        var radArr = (data.radar && Array.isArray(data.radar.past)) ? data.radar.past : [];
+        radarFrames = radArr.map(toFrameObj).filter(function (f) { return f != null; });
+        if (radarFrames.length) radarFrames.sort(function (a, b) { return a.time - b.time; });
+
+        if (radarFrames.length > 0) {
+          frames = radarFrames.slice();
+        } else {
+          frames = [];
+        }
+        if (frames.length > 0) {
+          currentFrameIdx = frames.length - 1;
+          setStatus("OK");
+          document.getElementById("timelinePanel").classList.remove("disabled");
+          updateRadarLayer();
+        } else {
+          frames = [];
+          setStatus("Radar unavailable", true);
+          document.getElementById("timelinePanel").classList.add("disabled");
+        }
+      })
+      .catch(function (err) {
+        frames = [];
+        radarFrames = [];
+        var isCors = err.message && (err.message.includes("CORS") || err.message.includes("Failed to fetch"));
+        if (!isCors) {
+          console.warn("RainViewer API error:", err);
+        }
+        setStatus("Overlay failed", true);
+        document.getElementById("timelinePanel").classList.add("disabled");
+      });
+  }
+
+  function goToPosition(portion) {
+    if (frames.length === 0) return;
+    var maxIdx = frames.length - 1;
+    if (portion <= 0) {
+      currentFrameIdx = 0;
+    } else if (portion >= 1) {
+      currentFrameIdx = maxIdx;
+    } else {
+      currentFrameIdx = Math.round(maxIdx * portion);
+    }
+    updateFrameUI();
+    updateRadarLayer();
+  }
+
+  function togglePlay() {
+    if (frames.length === 0) return;
+    var btn = document.getElementById("btnPlay");
+    if (playIntervalId) {
+      clearInterval(playIntervalId);
+      playIntervalId = null;
+      btn.textContent = "▶";
+      btn.title = "Play";
+      return;
+    }
+    btn.textContent = "⏸";
+    btn.title = "Pause";
+    var interval = 800;
+    playIntervalId = setInterval(function () {
+      if (currentFrameIdx >= frames.length - 1) {
+        currentFrameIdx = 0;
+      } else {
+        currentFrameIdx += 1;
+      }
+      updateFrameUI();
+      updateRadarLayer();
+    }, interval);
+  }
+
+  function setupTimeline() {
+    var slider = document.getElementById("frameSlider");
+    slider.addEventListener("input", function () {
+      currentFrameIdx = parseInt(this.value, 10);
+      updateFrameUI();
+      updateRadarLayer();
+    });
+
+    document.getElementById("btnStart").addEventListener("click", function () {
+      if (frames.length === 0) return;
+      currentFrameIdx = 0;
+      updateFrameUI();
+      updateRadarLayer();
+    });
+    document.getElementById("btnPlay").addEventListener("click", togglePlay);
+    document.getElementById("btnMinus6").addEventListener("click", function () { goToPosition(0); });
+    document.getElementById("btnMinus3").addEventListener("click", function () { goToPosition(0.25); });
+    document.getElementById("btnNow").addEventListener("click", function () { goToPosition(0.5); });
+    document.getElementById("btnPlus3").addEventListener("click", function () { goToPosition(0.75); });
+    document.getElementById("btnPlus6").addEventListener("click", function () { goToPosition(1); });
+  }
+
+  function run() {
+    initMap();
+    // Load saved layer state (if any) before adding dynamic layers
+    var state = loadLayerState();
+    if (state) {
+      terrainOn = state.terrainOn !== false;
+      gibsOn = state.gibsOn !== false;
+      radarOn = !!state.radarOn;
+      hillshadeOn = state.hillshadeOn !== false;
+      gibsDayOffset = state.gibsDayOffset || 0;
+    }
+    // Apply initial visibility for dynamic layers
+    if (!terrainOn && baseLayer && map.hasLayer(baseLayer)) {
+      map.removeLayer(baseLayer);
+    }
+    if (!hillshadeOn && hillshadeLayer && map.hasLayer(hillshadeLayer)) {
+      map.removeLayer(hillshadeLayer);
+    }
+    updateGibsLayer();
+    setupTimeline();
+    loadRainViewerFrames().then(function () {
+      updateFrameUI();
+      updateRadarLayer();
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+})();
+  </script>
+</body>
+</html>
