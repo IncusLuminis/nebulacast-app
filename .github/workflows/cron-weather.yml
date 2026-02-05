@@ -25,11 +25,12 @@ jobs:
       - name: Run weather backend
         run: PYTHONPATH=services/weather python services/weather/pipelines/run_weather.py
 
-      - name: Commit and push outputs
+      - name: Commit and push outputs (data only; do not overwrite weather SPA)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add sites/staging/weather/ 2>/dev/null || true
+          git add sites/staging/weather/daily_weather.json 2>/dev/null || true
+          git add sites/staging/data/weather/ 2>/dev/null || true
           git add services/weather/outputs/ 2>/dev/null || true
           git diff --staged --quiet && exit 0
           git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true

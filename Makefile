@@ -4,7 +4,7 @@
 # make news-front — only frontend (HTML/JS)
 # make server     — local HTTP server :8080
 
-.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front server deps-news deps-calendar deps-weather test-news help
+.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front server deps-news deps-calendar deps-weather test-news help functions-build
 
 # Python: prefer venv if present
 PYTHON ?= python3
@@ -36,6 +36,11 @@ news-back:
 # Only frontend: sites/staging/index.html, news/index.html, news/widget.js, assets
 news-front:
 	$(RUN) frontend/build.py
+
+# Bundle Cloudflare Pages Functions (TS + services/astro_weather -> functions/api/*.js)
+functions-build:
+	npm ci
+	npm run build:functions
 
 # Local HTTP server (root = sites/staging)
 server:
@@ -69,7 +74,7 @@ deps-weather:
 weather-back:
 	PYTHONPATH=$(PYTHONPATH_WEATHER) $(RUN) $(SERVICE_WEATHER)/pipelines/run_weather.py
 
-weather-front:
+weather-front: functions-build
 	$(RUN) frontend/build.py
 
 weather: weather-back weather-front
@@ -84,7 +89,8 @@ help:
 	@echo "  make calendar-front — frontend build only (index, calendar/index.html, calendar/widget.js, assets)"
 	@echo "  make weather   — weather backend + frontend (outputs + sites/staging/weather/daily_weather.json)"
 	@echo "  make weather-back  — weather pipeline only"
-	@echo "  make weather-front — frontend build only"
+	@echo "  make weather-front — functions-build + frontend build (preserves index.html, weather/)"
+	@echo "  make functions-build — bundle Pages Functions (functions/api/*.js)"
 	@echo "  make server     — start local HTTP server on :8080"
 	@echo "  make deps-news  — install news deps (run once)"
 	@echo "  make deps-calendar — install calendar deps (run once)"

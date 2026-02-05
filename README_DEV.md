@@ -34,10 +34,19 @@ bash infra/scripts/serve_local.sh
 
 ## Cloudflare Pages Functions (Production)
 
-Для полной функциональности на Cloudflare Pages:
+Перед деплоем на Cloudflare Pages нужно собрать Functions (бандл TS + services/astro_weather в `functions/api/*.js`):
+
+```bash
+make functions-build
+# или: npm ci && npm run build:functions
+```
+
+В настройках Pages (Build): Build command можно задать `npm ci && npm run build:functions`, Output directory = `sites/staging`. Тогда при деплое будут актуальные `functions/api/*.js` и `/api/astro-weather` не будет отдавать 500.
+
+Локально с Wrangler (опционально):
 
 1. Установи Wrangler: `npm install -g wrangler`
-2. Запусти локально: `wrangler pages dev sites/staging`
+2. Запусти: `wrangler pages dev sites/staging`
 3. Или задеплой: `wrangler pages deploy sites/staging`
 
 ## Troubleshooting

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Frontend build: generate sites/staging/** from frontend/templates + config.
-Output: sites/staging/index.html, sites/staging/news/**, sites/staging/calendar/**, sites/staging/assets/**
+Output: sites/staging/news/**, sites/staging/calendar/**, sites/staging/assets/**
+Does NOT overwrite: sites/staging/index.html, sites/staging/weather/** (preserve list).
 """
 from __future__ import annotations
 
@@ -22,6 +23,20 @@ PARTIALS = TEMPLATES / "partials"
 PAGES = TEMPLATES / "pages"
 ASSETS = FRONTEND_ROOT / "assets"
 CONFIG_PATH = FRONTEND_ROOT / "config" / "widgets.yaml"
+
+# Paths under out_path that must not be generated/overwritten (integrator + weather SPA).
+# Each entry is either a literal file name "index.html" or a directory prefix "weather/"
+PRESERVE_RELATIVE = ("index.html", "weather/")
+
+
+def should_preserve(out_path: Path, rel_path: str) -> bool:
+    """True if rel_path is under preserve list (do not write)."""
+    norm = rel_path.replace("\\", "/").strip("/")
+    if norm == "index.html":
+        return True
+    if norm.startswith("weather/"):
+        return True
+    return False
 
 
 def load_config() -> dict:
@@ -264,43 +279,23 @@ def main() -> int:
     (out_path / "calendar" / "index.html").write_text(cal_index_content, encoding="utf-8")
     generated.append(str(out_path / "calendar" / "index.html"))
 
-    # --- Weather: JSON from /weather/daily_weather.json ---
+    # --- Weather: preserved — do not overwrite sites/staging/weather/** ---
+    print("(Preserved: weather/ — not overwritten)")
     weather_cfg = widgets.get("weather") or {}
     weather_enabled = weather_cfg.get("enabled", True)
     weather_json = weather_cfg.get("json", "/weather/daily_weather.json")
     weather_title = weather_cfg.get("title", "Weather")
-    ensure_dir(out_path / "weather")
-    weather_outputs = REPO_ROOT / "services" / "weather" / "outputs"
-    if weather_outputs.exists():
-        wj = weather_outputs / "daily_weather.json"
-        if wj.exists():
-            shutil.copy2(wj, out_path / "weather" / "daily_weather.json")
-            generated.append(str(out_path / "weather" / "daily_weather.json"))
-
-    # --- Weather POC page: weather/index.html (full widget like poc.html) ---
+    # Template vars for index.html (we do not write index.html when preserved; these are for the template string)
     weather_poc_partial = read_tmpl("widget_weather_poc.html")
     weather_poc_config = {
-        # Legacy single-location JSON (used as fallback)
         "jsonUrl": (base_path or "") + weather_json,
         "iconBase": (base_path or "") + "/assets/icons/weather",
-        # Multi-location static data for dropdown
         "locationsIndexUrl": (base_path or "") + "/data/weather/locations.json",
         "locationDataBase": (base_path or "") + "/data/weather/loc",
-        # Cloudflare Pages Function API endpoint
         "apiAstroWeatherUrl": (base_path or "") + "/api/astro-weather",
     }
-    weather_page_tmpl = read_tmpl("weather.html", "pages")
-    weather_index_content = (
-        weather_page_tmpl.replace("{{SITE_TITLE}}", site_title)
-        .replace("{{SITE_SUBTITLE}}", site_subtitle)
-        .replace("{{BASE_PATH}}", base_path)
-        .replace("{{WIDGET_WEATHER_POC_HTML}}", weather_poc_partial)
-        .replace("{{WIDGET_WEATHER_POC_CONFIG_JSON}}", json.dumps(weather_poc_config))
-    )
-    (out_path / "weather" / "index.html").write_text(weather_index_content, encoding="utf-8")
-    generated.append(str(out_path / "weather" / "index.html"))
 
-    # Full POC-style weather widget for index (same as weather/index.html content)
+    # Full POC-style weather widget for index (same as weather/index.html content) — used only for template vars below
     weather_section_html = (
         '<section class="widget-section weather-widget" id="widget-weather">'
         + weather_poc_partial
@@ -400,9 +395,13 @@ def main() -> int:
     if not base_css_dst.exists() and (ASSETS / "css" / "base.css").exists():
         shutil.copy2(ASSETS / "css" / "base.css", base_css_dst)
         generated.append(str(base_css_dst))
-    index_path = out_path / "index.html"
-    index_path.write_text(index_html, encoding="utf-8")
-    generated.append(str(index_path))
+    # Preserve: do not overwrite sites/staging/index.html (integrator with iframe)
+    if not should_preserve(out_path, "index.html"):
+        index_path = out_path / "index.html"
+        index_path.write_text(index_html, encoding="utf-8")
+        generated.append(str(index_path))
+    else:
+        print("(Preserved: index.html — not overwritten)")
 
     # --- widget_news.css and widget_calendar.css for pages ---
     ensure_dir(out_path / "assets" / "css")

@@ -1,0 +1,11 @@
+{
+  "name": "nebulacast-app",
+  "private": true,
+  "description": "Staging site + Cloudflare Pages Functions (api/astro-weather, geocode, revgeo)",
+  "scripts": {
+    "build:functions": "node scripts/build-functions.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}
