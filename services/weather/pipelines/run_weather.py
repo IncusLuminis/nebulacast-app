@@ -427,10 +427,15 @@ def main() -> int:
         thresholds=thresholds,
     )
 
+    # Validate payload has required fields
+    if not payload.get("hours") or not isinstance(payload.get("hours"), list) or len(payload.get("hours", [])) == 0:
+        log.error("Payload missing or empty hours array! Payload keys: %s", list(payload.keys()))
+        raise ValueError("build_weather_payload returned payload without valid hours array")
+
     out_json = outputs_dir / "daily_weather.json"
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
-    log.info("Wrote %s", out_json)
+    log.info("Wrote %s (%d hours)", out_json, len(payload.get("hours", [])))
 
     repo_root = service_root.parent.parent
     staging_weather = repo_root / "sites" / "staging" / "weather"

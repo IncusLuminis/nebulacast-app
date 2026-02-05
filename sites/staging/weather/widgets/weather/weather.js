@@ -1704,10 +1704,15 @@ async function loadWeather(rootEl, state, forceRefresh) {
         }
       }
       
-      // Try legacy JSON fallback
-      console.warn("[weather] Trying legacy JSON fallback from:", ASTRO_WEATHER_URL);
+      // Try legacy JSON fallback (only if we haven't already tried this URL)
       var fallbackUrl = ASTRO_WEATHER_URL + (ASTRO_WEATHER_URL.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
-      try {
+      // Skip fallback if we already tried to load this exact URL (without timestamp)
+      var alreadyTriedLegacy = !useApi && url && url.indexOf(ASTRO_WEATHER_URL) === 0;
+      if (alreadyTriedLegacy) {
+        console.warn("[weather] Skipping legacy JSON fallback - already tried:", url);
+      } else {
+        console.warn("[weather] Trying legacy JSON fallback from:", ASTRO_WEATHER_URL);
+        try {
         var res2 = await fetch(fallbackUrl);
         console.log("[weather] Legacy JSON fetch result:", res2.status, res2.statusText, "URL:", fallbackUrl);
         if (res2.ok) {
@@ -1739,18 +1744,24 @@ async function loadWeather(rootEl, state, forceRefresh) {
           console.error("[weather] Legacy JSON fetch failed:", res2.status, res2.statusText, "body:", errorText2.slice(0, 200));
           // Don't throw here - let final validation handle it
         }
-      } catch (fallbackError) {
-        console.error("[weather] Legacy JSON fallback exception:", fallbackError);
-        // Don't throw here - let final validation handle it
+        } catch (fallbackError) {
+          console.error("[weather] Legacy JSON fallback exception:", fallbackError);
+          // Don't throw here - let final validation handle it
+        }
       }
     }
     // Final validation: ensure we have valid hours array (skip if we just loaded legacy JSON successfully)
     if (!usedLegacyFallback && (!data || !data.hours || !Array.isArray(data.hours) || data.hours.length === 0)) {
       var errorMsg = "Invalid JSON: missing or empty hours array";
+      var userFriendlyMsg = "Weather data file is corrupted or incomplete. Please try again later.";
       if (data) {
         errorMsg += " (ok: " + data.ok + ", source: " + (data.source || "none") + ")";
         if (data.message) {
           errorMsg += ", message: " + data.message;
+        }
+        // Check if file looks corrupted (has some fields but missing hours)
+        if (data.location || data.meta || data.generated_at) {
+          userFriendlyMsg = "Weather data file is missing forecast hours. The backend may need to regenerate the data file.";
         }
       }
       errorMsg += " (useApi: " + useApi + ", usedLegacyFallback: " + usedLegacyFallback + ", url: " + url + ")";
@@ -1764,7 +1775,7 @@ async function loadWeather(rootEl, state, forceRefresh) {
         usedLegacyFallback: usedLegacyFallback,
         url: url
       });
-      throw new Error(errorMsg);
+      throw new Error(userFriendlyMsg + " (" + errorMsg + ")");
     }
     weatherData = data;
     var profileList;

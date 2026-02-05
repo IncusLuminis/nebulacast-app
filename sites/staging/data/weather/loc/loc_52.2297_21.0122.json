@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-02-05T06:47:15.036666+00:00",
+  "generated_at": "2026-02-05T07:30:00.339849+00:00",
   "location": {
     "id": "loc_52.2297_21.0122",
     "name": "Warsaw",
@@ -18,34 +18,34 @@
     }
   },
   "now": {
-    "time": "2026-02-05T08:00:00+01:00",
+    "time": "2026-02-05T09:00:00+01:00",
     "cloud_total": 100.0,
     "cloud_low": 100.0,
-    "cloud_mid": 37.0,
-    "cloud_high": 99.0,
-    "precip_mm": 0.1,
-    "precip_prob": 8.0,
+    "cloud_mid": 3.0,
+    "cloud_high": 89.0,
+    "precip_mm": 0.0,
+    "precip_prob": 7.0,
     "precip_type": 3,
-    "rain_mm": 0.1,
+    "rain_mm": 0.0,
     "snow_mm": 0.0,
-    "pressure_hpa": 1005.7,
-    "wind_m_s": 3.6,
-    "wind_gust_m_s": 6.9,
-    "wind_dir_deg": 88.0,
-    "visibility_m": 7180.0,
-    "temp_c": -4.8,
-    "feels_like_c": -9.6,
+    "pressure_hpa": 1005.8,
+    "wind_m_s": 4.0,
+    "wind_gust_m_s": 7.7,
+    "wind_dir_deg": 92.0,
+    "visibility_m": 7460.0,
+    "temp_c": -4.5,
+    "feels_like_c": -9.5,
     "humidity_pct": 89.0,
-    "dewpoint_c": -6.4,
+    "dewpoint_c": -6.0,
     "cape_j_kg": 0.0,
     "seeing": 3,
     "transparency": 8,
-    "wind_kmh": 13.0,
-    "visibility_km": 7.18,
-    "dewpoint_spread_c": 1.6,
-    "pressure_trend_6h_hpa": -2.1,
+    "wind_kmh": 14.4,
+    "visibility_km": 7.46,
+    "dewpoint_spread_c": 1.5,
+    "pressure_trend_6h_hpa": -2.3,
     "fog_risk": "MED",
-    "score": 40,
+    "score": 42,
     "score_profile": "default",
     "score_breakdown": [
       {
@@ -61,17 +61,17 @@
         "key": "precip_mm",
         "label": "Precipitation amount",
         "max": 10,
-        "raw": 0.1,
-        "normalized": 0.8,
-        "earned": 8,
+        "raw": 0,
+        "normalized": 1.0,
+        "earned": 10,
         "note": null
       },
       {
         "key": "precip_prob",
         "label": "Precipitation probability",
         "max": 5,
-        "raw": 8,
-        "normalized": 0.92,
+        "raw": 7,
+        "normalized": 0.93,
         "earned": 5,
         "note": null
       },
@@ -79,7 +79,7 @@
         "key": "wind_m_s",
         "label": "Wind",
         "max": 15,
-        "raw": 3.6,
+        "raw": 4,
         "normalized": 1.0,
         "earned": 15,
         "note": null
@@ -88,8 +88,8 @@
         "key": "visibility_m",
         "label": "Visibility",
         "max": 10,
-        "raw": 7180,
-        "normalized": 0.213,
+        "raw": 7460,
+        "normalized": 0.223,
         "earned": 2,
         "note": null
       },
@@ -120,25 +120,25 @@
         "max": 35
       },
       {
-        "line": "Precipitation amount: 0.1 → +8",
+        "line": "Precipitation amount: 0 → +10",
         "key": "precip_mm",
-        "earned": 8,
+        "earned": 10,
         "max": 10
       },
       {
-        "line": "Precipitation probability: 8 → +5",
+        "line": "Precipitation probability: 7 → +5",
         "key": "precip_prob",
         "earned": 5,
         "max": 5
       },
       {
-        "line": "Wind: 3.6 m/s → +15",
+        "line": "Wind: 4 m/s → +15",
         "key": "wind_m_s",
         "earned": 15,
         "max": 15
       },
       {
-        "line": "Visibility: 7180 m → +2",
+        "line": "Visibility: 7460 m → +2",
         "key": "visibility_m",
         "earned": 2,
         "max": 10
@@ -157,10 +157,10 @@
       }
     ],
     "profile_scores": {
-      "visual": 27,
-      "photography": 20,
-      "broadband": 20,
-      "planetary": 54
+      "visual": 29,
+      "photography": 24,
+      "broadband": 24,
+      "planetary": 53
     },
     "score_breakdown_by_profile": {
       "visual": [
@@ -186,17 +186,17 @@
           "key": "precip_mm",
           "label": "Precipitation",
           "max": 10,
-          "raw": 0.1,
-          "normalized": 0.8,
-          "earned": 8,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 10,
           "note": null
         },
         {
           "key": "precip_prob",
           "label": "Precip probability",
           "max": 5,
-          "raw": 8,
-          "normalized": 0.92,
+          "raw": 7,
+          "normalized": 0.93,
           "earned": 5,
           "note": null
         },
@@ -204,7 +204,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 10,
-          "raw": 3.6,
+          "raw": 4,
           "normalized": 1.0,
           "earned": 10,
           "note": null
@@ -213,8 +213,8 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 5,
-          "raw": 7180,
-          "normalized": 0.213,
+          "raw": 7460,
+          "normalized": 0.223,
           "earned": 1,
           "note": null
         },
@@ -242,9 +242,9 @@
           "key": "cloud_high",
           "label": "High clouds",
           "max": 25,
-          "raw": 99,
-          "normalized": 0.01,
-          "earned": 0,
+          "raw": 89,
+          "normalized": 0.11,
+          "earned": 3,
           "note": null
         },
         {
@@ -260,7 +260,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 10,
-          "raw": 3.6,
+          "raw": 4,
           "normalized": 1.0,
           "earned": 10,
           "note": null
@@ -269,17 +269,17 @@
           "key": "precip_mm",
           "label": "Precipitation",
           "max": 5,
-          "raw": 0.1,
-          "normalized": 0.8,
-          "earned": 4,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
           "note": null
         },
         {
           "key": "precip_prob",
           "label": "Precip probability",
           "max": 5,
-          "raw": 8,
-          "normalized": 0.92,
+          "raw": 7,
+          "normalized": 0.93,
           "earned": 5,
           "note": null
         },
@@ -287,8 +287,8 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 5,
-          "raw": 7180,
-          "normalized": 0.213,
+          "raw": 7460,
+          "normalized": 0.223,
           "earned": 1,
           "note": null
         }
@@ -307,9 +307,9 @@
           "key": "cloud_high",
           "label": "High clouds",
           "max": 25,
-          "raw": 99,
-          "normalized": 0.01,
-          "earned": 0,
+          "raw": 89,
+          "normalized": 0.11,
+          "earned": 3,
           "note": null
         },
         {
@@ -325,7 +325,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 10,
-          "raw": 3.6,
+          "raw": 4,
           "normalized": 1.0,
           "earned": 10,
           "note": null
@@ -334,17 +334,17 @@
           "key": "precip_mm",
           "label": "Precipitation",
           "max": 5,
-          "raw": 0.1,
-          "normalized": 0.8,
-          "earned": 4,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
           "note": null
         },
         {
           "key": "precip_prob",
           "label": "Precip probability",
           "max": 5,
-          "raw": 8,
-          "normalized": 0.92,
+          "raw": 7,
+          "normalized": 0.93,
           "earned": 5,
           "note": null
         },
@@ -352,8 +352,8 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 5,
-          "raw": 7180,
-          "normalized": 0.213,
+          "raw": 7460,
+          "normalized": 0.223,
           "earned": 1,
           "note": null
         }
@@ -372,9 +372,9 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 25,
-          "raw": 3.6,
-          "normalized": 0.914,
-          "earned": 23,
+          "raw": 4,
+          "normalized": 0.857,
+          "earned": 21,
           "note": null
         },
         {
@@ -399,17 +399,17 @@
           "key": "precip_mm",
           "label": "Precipitation",
           "max": 5,
-          "raw": 0.1,
-          "normalized": 0.8,
-          "earned": 4,
+          "raw": 0,
+          "normalized": 1.0,
+          "earned": 5,
           "note": null
         },
         {
           "key": "precip_prob",
           "label": "Precip probability",
           "max": 0,
-          "raw": 8,
-          "normalized": 0.92,
+          "raw": 7,
+          "normalized": 0.93,
           "earned": 0,
           "note": null
         },
@@ -417,19 +417,19 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 0,
-          "raw": 7180,
-          "normalized": 0.213,
+          "raw": 7460,
+          "normalized": 0.223,
           "earned": 0,
           "note": null
         }
       ]
     },
-    "temperature_c": -4.8,
+    "temperature_c": -4.5,
     "score_profiles": {
-      "balanced": 40,
-      "visual": 27,
-      "photography": 20,
-      "planetary": 54
+      "balanced": 42,
+      "visual": 29,
+      "photography": 24,
+      "planetary": 53
     }
   },
   "trends": {
