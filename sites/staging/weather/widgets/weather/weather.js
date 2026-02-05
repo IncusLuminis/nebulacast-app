@@ -1650,6 +1650,16 @@ async function loadWeather(rootEl, state, forceRefresh) {
         throw new Error("Expected JSON but got " + contentType);
       }
       data = await res.json();
+      // Log successful API response structure for debugging
+      if (useApi) {
+        console.log("[weather] API response:", {
+          ok: data.ok,
+          source: data.source,
+          hasHours: !!data.hours,
+          hoursLength: Array.isArray(data.hours) ? data.hours.length : "N/A",
+          status: res.status
+        });
+      }
     }
     // Log response structure for debugging
     if (data && (!data.hours || !Array.isArray(data.hours) || data.hours.length === 0)) {
@@ -1663,31 +1673,63 @@ async function loadWeather(rootEl, state, forceRefresh) {
         keys: Object.keys(data || {})
       });
     }
-    // Handle rate-limited response gracefully (hours may be empty)
-    if (data && data.ok === true && data.source === "rate-limited") {
+    // Handle empty hours response gracefully (rate-limited or other issues)
+    if (data && useApi && (!data.hours || !Array.isArray(data.hours) || data.hours.length === 0)) {
+      var isRateLimited = data.ok === true && data.source === "rate-limited";
       showApiFallbackBanner(rootEl);
       const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
       var metaEl = weatherCard.querySelector("[data-role=weather-meta]");
       if (metaEl) {
-        metaEl.innerHTML = `<span style="color: var(--muted)">${escapeHtml(data.message || "Rate limited")}</span>`;
+        if (isRateLimited) {
+          metaEl.innerHTML = `<span style="color: var(--muted)">${escapeHtml(data.message || "Rate limited")}</span>`;
+        } else {
+          metaEl.innerHTML = `<span style="color: var(--muted)">API returned empty data, using cached JSON</span>`;
+        }
       }
       // Try legacy JSON fallback
-      console.warn("API rate-limited, trying legacy JSON fallback");
-      url = ASTRO_WEATHER_URL + "?ts=" + Date.now();
-      var res2 = await fetch(url);
+      console.warn("[weather] API returned empty hours, trying legacy JSON fallback from:", ASTRO_WEATHER_URL);
+      var fallbackUrl = ASTRO_WEATHER_URL + (ASTRO_WEATHER_URL.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
+      var res2 = await fetch(fallbackUrl);
+      console.log("[weather] Legacy JSON fetch result:", res2.status, res2.statusText, "URL:", fallbackUrl);
       if (res2.ok) {
         var contentType2 = res2.headers.get("content-type") || "";
         if (contentType2.indexOf("application/json") >= 0 || contentType2.indexOf("text/json") >= 0) {
-          data = await res2.json();
+          var legacyData = await res2.json();
+          console.log("[weather] Legacy JSON parsed, hasHours:", !!legacyData && !!legacyData.hours, "hoursLength:", legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A");
+          if (legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0) {
+            data = legacyData; // Use legacy data if valid
+            console.log("[weather] Legacy JSON fallback successful, hours:", legacyData.hours.length);
+          } else {
+            console.error("[weather] Legacy JSON fallback has empty hours:", {
+              hasHours: !!legacyData && !!legacyData.hours,
+              hoursLength: legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A",
+              hoursType: legacyData && legacyData.hours ? typeof legacyData.hours : "N/A",
+              keys: legacyData ? Object.keys(legacyData) : []
+            });
+            throw new Error("Legacy JSON fallback has empty hours array");
+          }
         } else {
+          var errorText = await res2.text().catch(function() { return ""; });
+          console.error("[weather] Legacy JSON wrong content-type:", contentType2, "body:", errorText.slice(0, 200));
           throw new Error("Legacy JSON fallback failed: expected JSON but got " + contentType2);
         }
       } else {
-        throw new Error("Legacy JSON fallback failed: HTTP " + res2.status);
+        var errorText2 = await res2.text().catch(function() { return ""; });
+        console.error("[weather] Legacy JSON fetch failed:", res2.status, res2.statusText, "body:", errorText2.slice(0, 200));
+        throw new Error("Legacy JSON fallback failed: HTTP " + res2.status + " " + res2.statusText);
       }
     }
+    // Final validation: ensure we have valid hours array
     if (!data || !data.hours || !Array.isArray(data.hours) || data.hours.length === 0) {
-      throw new Error("Invalid JSON: missing or empty hours array");
+      var errorMsg = "Invalid JSON: missing or empty hours array";
+      if (data) {
+        errorMsg += " (ok: " + data.ok + ", source: " + (data.source || "none") + ")";
+        if (data.message) {
+          errorMsg += ", message: " + data.message;
+        }
+      }
+      console.error("[weather] Final validation failed:", errorMsg, data);
+      throw new Error(errorMsg);
     }
     weatherData = data;
     var profileList;

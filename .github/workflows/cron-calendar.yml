@@ -33,5 +33,5 @@ jobs:
           git add services/calendar/outputs/ 2>/dev/null || true
           git diff --staged --quiet && exit 0
           git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
-          git commit -m "chore(calendar): update backend outputs [skip ci]"
+          git commit -m "chore(calendar): update backend outputs"
           git push
