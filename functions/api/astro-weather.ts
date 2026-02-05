@@ -170,6 +170,16 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
     const stData = await fetchSevenTimer(lat, lon);
     let hourRecords = mergeHourlyData(omResult.data, stData, tz, hours);
 
+    if (!hourRecords || hourRecords.length === 0) {
+      console.error("[astro-weather] mergeHourlyData returned empty array", {
+        omData: omResult.data,
+        stData,
+        tz,
+        hours,
+      });
+      throw new Error("No hourly data available after merge");
+    }
+
     for (let i = 0; i < hourRecords.length; i++) {
       const hour = hourRecords[i];
       const pressureTrend =

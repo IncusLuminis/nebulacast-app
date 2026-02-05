@@ -1970,11 +1970,19 @@
 
   function getGibsDateString() {
     var now = new Date();
-    var target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    if (gibsDayOffset !== 0) {
-      target.setUTCDate(target.getUTCDate() + gibsDayOffset);
+    var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    var target = new Date(today.getTime());
+    var effectiveOffset = Math.min(gibsDayOffset || 0, 0); // Never go into future
+    if (effectiveOffset !== 0) {
+      target.setUTCDate(target.getUTCDate() + effectiveOffset);
     }
-    return formatDateUTC(target);
+    var result = formatDateUTC(target);
+    var todayStr = formatDateUTC(today);
+    // Final safety check
+    if (result > todayStr) {
+      return todayStr;
+    }
+    return result;
   }
 
   // Build GIBS tile URL with explicit subdomain (no wildcard): use gibs-a, gibs-b, gibs-c only
@@ -1989,6 +1997,15 @@
   var gibsLastTileErrorLog = 0;
 
   function makeGibsLayer(dateStr) {
+    // Safety check: never load future dates
+    var now = new Date();
+    var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    var todayStr = formatDateUTC(today);
+    if (dateStr > todayStr) {
+      console.warn("[GIBS] Prevented future date in makeGibsLayer:", dateStr, "using today:", todayStr);
+      dateStr = todayStr;
+    }
+    
     var urlTemplate = "https://gibs-a.earthdata.nasa.gov/wmts/epsg3857/best/"
       + GIBS_LAYER + "/default/" + dateStr + "/" + GIBS_TILEMATRIXSET + "/{z}/{y}/{x}.jpg";
     var layer = L.tileLayer(urlTemplate, {
@@ -2071,7 +2088,7 @@
       btnPrevDay.disabled = gibsDayOffset <= -2; // позавчера
     }
     if (btnNextDay) {
-      btnNextDay.disabled = gibsDayOffset >= 2; // послезавтра
+      btnNextDay.disabled = gibsDayOffset >= 1; // Never allow future dates (tomorrow or later)
     }
     if (btnToday) {
       btnToday.classList.toggle("primary", gibsDayOffset === 0);
@@ -2140,31 +2157,56 @@
       updateCloudSourceDisplay();
       setMapLoading("gibs", false);
       setStatus("GIBS imagery unavailable for future dates");
-      updateStatusIndicator(); // Обновляем индикатор
+      updateStatusIndicator();
       return;
     }
     
     setMapLoading("gibs", true);
 
     // Base date from current offset (0 = today). Fallback: try up to 7 days back.
+    // Never load future dates - GIBS doesn't have them.
     var now = new Date();
     var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    var todayStr = formatDateUTC(today);
     var candidates = [];
-    if (gibsDayOffset < 0) {
-      for (var d = 0; d >= gibsDayOffset && candidates.length < 7; d--) {
+    
+    // Clamp gibsDayOffset to prevent future dates (safety check)
+    var effectiveOffset = Math.min(gibsDayOffset, 0);
+    
+    if (effectiveOffset < 0) {
+      for (var d = 0; d >= effectiveOffset && candidates.length < 7; d--) {
         var checkDate = new Date(today.getTime());
         checkDate.setUTCDate(checkDate.getUTCDate() + d);
         candidates.push(formatDateUTC(checkDate));
       }
     }
     if (candidates.length === 0) {
+      // Default: today and 6 days back
       for (var d = 0; d < 7; d++) {
         var checkDate = new Date(today.getTime());
         checkDate.setUTCDate(checkDate.getUTCDate() - d);
         candidates.push(formatDateUTC(checkDate));
       }
     }
+    
+    // Final safety check: ensure no future dates in candidates
+    candidates = candidates.filter(function(dateStr) {
+      return dateStr <= todayStr; // Only past or today (string comparison works for YYYY-MM-DD)
+    });
+    
+    if (candidates.length === 0) {
+      // Fallback to today if all filtered out
+      candidates = [todayStr];
+    }
+    
     var baseDateStr = candidates[0];
+    
+    // Double-check: never use future dates
+    if (baseDateStr > todayStr) {
+      console.warn("[GIBS] Prevented future date:", baseDateStr, "using today:", todayStr);
+      baseDateStr = todayStr;
+      candidates = [todayStr];
+    }
 
     // If we've recently determined that this base date has no imagery,
     // don't keep hitting the server until the backoff expires.
@@ -3603,7 +3645,7 @@
       forecastOpacity = state.forecastOpacity !== undefined ? state.forecastOpacity : 0.45;
       radarOn = !!state.radarOn;
       hillshadeOn = state.hillshadeOn !== false;
-      gibsDayOffset = state.gibsDayOffset || 0;
+      gibsDayOffset = Math.min(state.gibsDayOffset || 0, 0); // Never allow future dates
     }
     
     // Обновляем checkbox'ы после загрузки состояния
