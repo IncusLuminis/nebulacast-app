@@ -456,22 +456,30 @@ export function mountLocation(rootEl, api) {
   
   // Event listeners
   if (elements.locInput) {
-    const debouncedHandleInput = debounce(() => handleInput(elements), 300);
+    const debouncedHandleInput = debounce(() => handleInput(elements), 500);
+    let isProcessingEnter = false;
     elements.locInput.addEventListener("input", debouncedHandleInput);
     
     elements.locInput.addEventListener("keydown", async (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
+        if (isProcessingEnter) return; // Prevent duplicate Enter handling
+        isProcessingEnter = true;
         const text = elements.locInput.value.trim();
-        if (!text) return;
+        if (!text) {
+          isProcessingEnter = false;
+          return;
+        }
         const coords = parseCoords(text);
         if (coords) {
           await handleInput(elements);
+          isProcessingEnter = false;
           return;
         }
         const firstItem = elements.locDropdown?.querySelector(".loc-dd-item");
         if (firstItem) {
           firstItem.click();
+          isProcessingEnter = false;
           return;
         }
         // City name: trigger fetch and select first result if any
@@ -483,6 +491,7 @@ export function mountLocation(rootEl, api) {
         } else {
           await handleInput(elements);
         }
+        isProcessingEnter = false;
       } else if (e.key === "Escape") {
         closeDropdown(elements.locDropdown);
       }

@@ -27,9 +27,10 @@ export async function fetchOpenMeteo(
   lat: number,
   lon: number,
   tz: string,
-  hours: number
-): Promise<OpenMeteoResponse> {
-  const forecastDays = Math.min(Math.ceil(hours / 24), 7); // Open-Meteo free tier: 7 days max
+  hours: number,
+  cache?: Cache
+): Promise<{ data: OpenMeteoResponse; fromCache: boolean; status: number }> {
+  const forecastDays = Math.min(Math.ceil(hours / 24), 7);
   
   const params = new URLSearchParams({
     latitude: String(lat),
@@ -57,15 +58,48 @@ export async function fetchOpenMeteo(
 
   const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
   
+  // Cache key for Open-Meteo request (10min TTL)
+  if (cache) {
+    const cacheKey = new Request(`https://cache.nebulacast/open-meteo?${params.toString()}`, {
+      method: "GET",
+    });
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+      const data = await cached.json();
+      return { data, fromCache: true, status: 200 };
+    }
+  }
+  
   const response = await fetch(url, {
     headers: {
       "Accept": "application/json",
     },
   });
 
+  if (response.status === 429) {
+    // Rate limited - return error that can be handled gracefully
+    throw new Error("RATE_LIMITED");
+  }
+
   if (!response.ok) {
     throw new Error(`Open-Meteo API error: ${response.status} ${response.statusText}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  
+  // Cache successful response (10 minutes)
+  if (cache) {
+    const cacheKey = new Request(`https://cache.nebulacast/open-meteo?${params.toString()}`, {
+      method: "GET",
+    });
+    const cacheResponse = new Response(JSON.stringify(data), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=3600",
+      },
+    });
+    await cache.put(cacheKey, cacheResponse);
+  }
+
+  return { data, fromCache: false, status: response.status };
 }

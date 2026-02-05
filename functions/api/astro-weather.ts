@@ -128,12 +128,47 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       return cached;
     }
 
-    const [omData, stData] = await Promise.all([
-      fetchOpenMeteo(lat, lon, tz, hours),
-      fetchSevenTimer(lat, lon),
-    ]);
+    let omResult;
+    try {
+      omResult = await fetchOpenMeteo(lat, lon, tz, hours, cache);
+    } catch (omError) {
+      if (omError instanceof Error && omError.message === "RATE_LIMITED") {
+        // Try stale cache for Open-Meteo
+        const staleCacheKey = new Request(`https://cache.nebulacast/open-meteo?latitude=${lat}&longitude=${lon}&timezone=${encodeURIComponent(tz)}&forecast_days=${Math.min(Math.ceil(hours / 24), 7)}`, {
+          method: "GET",
+        });
+        const staleCached = await cache.match(staleCacheKey);
+        if (staleCached) {
+          const staleData = await staleCached.json();
+          omResult = { data: staleData, fromCache: true, status: 200 };
+        } else {
+          // No stale cache - return graceful degradation response
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "public, max-age=60",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+          };
+          if (cfRay) headers["CF-Ray"] = cfRay;
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              source: "rate-limited",
+              message: "Open-Meteo rate limited; please retry in a few minutes",
+              location: { lat, lon, tz },
+              hours: [],
+              derived: {},
+            }),
+            { status: 200, headers }
+          );
+        }
+      } else {
+        throw omError;
+      }
+    }
 
-    let hourRecords = mergeHourlyData(omData, stData, tz, hours);
+    const stData = await fetchSevenTimer(lat, lon);
+    let hourRecords = mergeHourlyData(omResult.data, stData, tz, hours);
 
     for (let i = 0; i < hourRecords.length; i++) {
       const hour = hourRecords[i];
@@ -160,6 +195,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
     };
 
     const responseObj = createSuccessResponse(response, cfRay);
+    // Cache final response (10 minutes)
     await cache.put(cacheKey, responseObj.clone());
     return responseObj;
   } catch (error) {

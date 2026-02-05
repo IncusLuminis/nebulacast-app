@@ -10,6 +10,9 @@ let activeProfile = "default";
 let locationsIndex = null;
 let currentLocationId = null;
 let currentLocationCoords = null; // {lat, lon, tz} for API mode
+let isFetchingWeather = false;
+let lastWeatherFetchTime = 0;
+const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 // Helper: escape HTML
 function escapeHtml(s) {
@@ -1571,7 +1574,12 @@ function renderBestWindows(rootEl, bestWindows, hours) {
 }
 
 // Main: Load and render
-async function loadWeather(rootEl, state) {
+async function loadWeather(rootEl, state, forceRefresh) {
+  if (isFetchingWeather && !forceRefresh) {
+    console.log("[weather] Already fetching, skipping duplicate request");
+    return;
+  }
+  isFetchingWeather = true;
   showLoading(rootEl);
   try {
     var url;
@@ -1678,12 +1686,15 @@ async function loadWeather(rootEl, state) {
     renderNow(rootEl, nowHour);
     renderHourly(rootEl, data.hours);
     renderMiniCharts(rootEl, data.hours, currentMode, nowHour);
+    lastWeatherFetchTime = Date.now();
   } catch (err) {
     console.error("[weather] Weather load failed:", err);
     showError(rootEl, err.message || "Failed to load weather data");
     const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
     var kpiEl = weatherCard.querySelector(".kpi");
     if (kpiEl) kpiEl.innerHTML = "<div style=\"padding:20px;text-align:center;color:var(--bad)\">Failed to load weather JSON: " + escapeHtml(err.message) + "</div>";
+  } finally {
+    isFetchingWeather = false;
   }
 }
 // Chart overlay functionality
@@ -2625,6 +2636,22 @@ export function mountWeather(rootEl, storeApi) {
     }
   });
   
+  // Auto-refresh: only if tab is active and at least 5 minutes passed
+  let autoRefreshTimer = null;
+  function setupAutoRefresh() {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(function() {
+      if (document.hidden) return; // Tab not active
+      if (Date.now() - lastWeatherFetchTime < WEATHER_REFRESH_INTERVAL_MS) return;
+      const currentState = storeApi.getState();
+      if (currentState.location && currentState.location.lat && currentState.location.lon) {
+        loadWeather(rootEl, currentState, true).catch(function(err) {
+          console.error("[weather] Auto-refresh failed:", err);
+        });
+      }
+    }, WEATHER_REFRESH_INTERVAL_MS);
+  }
+  
   // Initial load - trigger immediately with current state
   const initialState = storeApi.getState();
   if (initialState.location && initialState.location.lat && initialState.location.lon) {
@@ -2633,6 +2660,20 @@ export function mountWeather(rootEl, storeApi) {
       console.error("[weather] Initial weather load failed:", err);
     });
   }
+  
+  setupAutoRefresh();
+  
+  // Pause auto-refresh when tab becomes hidden
+  document.addEventListener("visibilitychange", function() {
+    if (document.hidden) {
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+    } else {
+      setupAutoRefresh();
+    }
+  });
   
   return {
     unmount: () => {
