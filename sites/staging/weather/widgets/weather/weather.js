@@ -1670,56 +1670,78 @@ async function loadWeather(rootEl, state, forceRefresh) {
         hasHours: !!data.hours,
         hoursType: Array.isArray(data.hours) ? "array" : typeof data.hours,
         hoursLength: Array.isArray(data.hours) ? data.hours.length : "N/A",
-        keys: Object.keys(data || {})
+        keys: Object.keys(data || {}),
+        useApi: useApi,
+        url: url
       });
     }
     // Handle empty hours response gracefully (rate-limited or other issues)
+    // Try legacy JSON fallback if we got empty hours from API OR from static JSON
     var usedLegacyFallback = false;
-    if (data && useApi && (!data.hours || !Array.isArray(data.hours) || data.hours.length === 0)) {
-      var isRateLimited = data.ok === true && data.source === "rate-limited";
-      showApiFallbackBanner(rootEl);
-      const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
-      var metaEl = weatherCard.querySelector("[data-role=weather-meta]");
-      if (metaEl) {
-        if (isRateLimited) {
-          metaEl.innerHTML = `<span style="color: var(--muted)">${escapeHtml(data.message || "Rate limited")}</span>`;
-        } else {
-          metaEl.innerHTML = `<span style="color: var(--muted)">API returned empty data, using cached JSON</span>`;
+    var hasEmptyHours = !data || !data.hours || !Array.isArray(data.hours) || data.hours.length === 0;
+    if (hasEmptyHours) {
+      var isRateLimited = data && data.ok === true && data.source === "rate-limited";
+      var isApiResponse = useApi && data && (data.source || data.ok !== undefined);
+      
+      console.warn("[weather] Empty hours detected, attempting legacy JSON fallback:", {
+        useApi: useApi,
+        isApiResponse: isApiResponse,
+        isRateLimited: isRateLimited,
+        dataKeys: data ? Object.keys(data) : [],
+        originalUrl: url
+      });
+      
+      if (isApiResponse) {
+        showApiFallbackBanner(rootEl);
+        const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+        var metaEl = weatherCard.querySelector("[data-role=weather-meta]");
+        if (metaEl) {
+          if (isRateLimited) {
+            metaEl.innerHTML = `<span style="color: var(--muted)">${escapeHtml(data.message || "Rate limited")}</span>`;
+          } else {
+            metaEl.innerHTML = `<span style="color: var(--muted)">API returned empty data, using cached JSON</span>`;
+          }
         }
       }
+      
       // Try legacy JSON fallback
-      console.warn("[weather] API returned empty hours, trying legacy JSON fallback from:", ASTRO_WEATHER_URL);
+      console.warn("[weather] Trying legacy JSON fallback from:", ASTRO_WEATHER_URL);
       var fallbackUrl = ASTRO_WEATHER_URL + (ASTRO_WEATHER_URL.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
-      var res2 = await fetch(fallbackUrl);
-      console.log("[weather] Legacy JSON fetch result:", res2.status, res2.statusText, "URL:", fallbackUrl);
-      if (res2.ok) {
-        var contentType2 = res2.headers.get("content-type") || "";
-        if (contentType2.indexOf("application/json") >= 0 || contentType2.indexOf("text/json") >= 0) {
-          var legacyData = await res2.json();
-          console.log("[weather] Legacy JSON parsed, hasHours:", !!legacyData && !!legacyData.hours, "hoursLength:", legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A");
-          if (legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0) {
-            data = legacyData; // Use legacy data if valid
-            usedLegacyFallback = true;
-            console.log("[weather] Legacy JSON fallback successful, hours:", legacyData.hours.length, "data keys:", Object.keys(data));
+      try {
+        var res2 = await fetch(fallbackUrl);
+        console.log("[weather] Legacy JSON fetch result:", res2.status, res2.statusText, "URL:", fallbackUrl);
+        if (res2.ok) {
+          var contentType2 = res2.headers.get("content-type") || "";
+          if (contentType2.indexOf("application/json") >= 0 || contentType2.indexOf("text/json") >= 0) {
+            var legacyData = await res2.json();
+            console.log("[weather] Legacy JSON parsed, hasHours:", !!legacyData && !!legacyData.hours, "hoursLength:", legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A", "keys:", legacyData ? Object.keys(legacyData) : []);
+            if (legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0) {
+              data = legacyData; // Use legacy data if valid
+              usedLegacyFallback = true;
+              console.log("[weather] Legacy JSON fallback successful, hours:", legacyData.hours.length, "data keys:", Object.keys(data));
+            } else {
+              console.error("[weather] Legacy JSON fallback has empty hours:", {
+                hasHours: !!legacyData && !!legacyData.hours,
+                hoursLength: legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A",
+                hoursType: legacyData && legacyData.hours ? typeof legacyData.hours : "N/A",
+                keys: legacyData ? Object.keys(legacyData) : [],
+                sampleHours: legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0 ? legacyData.hours[0] : null
+              });
+              // Don't throw here - let final validation handle it with better error message
+            }
           } else {
-            console.error("[weather] Legacy JSON fallback has empty hours:", {
-              hasHours: !!legacyData && !!legacyData.hours,
-              hoursLength: legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A",
-              hoursType: legacyData && legacyData.hours ? typeof legacyData.hours : "N/A",
-              keys: legacyData ? Object.keys(legacyData) : [],
-              sampleHours: legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0 ? legacyData.hours[0] : null
-            });
-            throw new Error("Legacy JSON fallback has empty hours array");
+            var errorText = await res2.text().catch(function() { return ""; });
+            console.error("[weather] Legacy JSON wrong content-type:", contentType2, "body:", errorText.slice(0, 200));
+            // Don't throw here - let final validation handle it
           }
         } else {
-          var errorText = await res2.text().catch(function() { return ""; });
-          console.error("[weather] Legacy JSON wrong content-type:", contentType2, "body:", errorText.slice(0, 200));
-          throw new Error("Legacy JSON fallback failed: expected JSON but got " + contentType2);
+          var errorText2 = await res2.text().catch(function() { return ""; });
+          console.error("[weather] Legacy JSON fetch failed:", res2.status, res2.statusText, "body:", errorText2.slice(0, 200));
+          // Don't throw here - let final validation handle it
         }
-      } else {
-        var errorText2 = await res2.text().catch(function() { return ""; });
-        console.error("[weather] Legacy JSON fetch failed:", res2.status, res2.statusText, "body:", errorText2.slice(0, 200));
-        throw new Error("Legacy JSON fallback failed: HTTP " + res2.status + " " + res2.statusText);
+      } catch (fallbackError) {
+        console.error("[weather] Legacy JSON fallback exception:", fallbackError);
+        // Don't throw here - let final validation handle it
       }
     }
     // Final validation: ensure we have valid hours array (skip if we just loaded legacy JSON successfully)
@@ -1731,7 +1753,17 @@ async function loadWeather(rootEl, state, forceRefresh) {
           errorMsg += ", message: " + data.message;
         }
       }
-      console.error("[weather] Final validation failed:", errorMsg, data);
+      errorMsg += " (useApi: " + useApi + ", usedLegacyFallback: " + usedLegacyFallback + ", url: " + url + ")";
+      console.error("[weather] Final validation failed:", errorMsg, {
+        data: data,
+        dataKeys: data ? Object.keys(data) : [],
+        hasHours: !!data && !!data.hours,
+        hoursType: data && data.hours ? typeof data.hours : "N/A",
+        hoursLength: data && Array.isArray(data.hours) ? data.hours.length : "N/A",
+        useApi: useApi,
+        usedLegacyFallback: usedLegacyFallback,
+        url: url
+      });
       throw new Error(errorMsg);
     }
     weatherData = data;
