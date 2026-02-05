@@ -1674,6 +1674,7 @@ async function loadWeather(rootEl, state, forceRefresh) {
       });
     }
     // Handle empty hours response gracefully (rate-limited or other issues)
+    var usedLegacyFallback = false;
     if (data && useApi && (!data.hours || !Array.isArray(data.hours) || data.hours.length === 0)) {
       var isRateLimited = data.ok === true && data.source === "rate-limited";
       showApiFallbackBanner(rootEl);
@@ -1698,13 +1699,15 @@ async function loadWeather(rootEl, state, forceRefresh) {
           console.log("[weather] Legacy JSON parsed, hasHours:", !!legacyData && !!legacyData.hours, "hoursLength:", legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A");
           if (legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0) {
             data = legacyData; // Use legacy data if valid
-            console.log("[weather] Legacy JSON fallback successful, hours:", legacyData.hours.length);
+            usedLegacyFallback = true;
+            console.log("[weather] Legacy JSON fallback successful, hours:", legacyData.hours.length, "data keys:", Object.keys(data));
           } else {
             console.error("[weather] Legacy JSON fallback has empty hours:", {
               hasHours: !!legacyData && !!legacyData.hours,
               hoursLength: legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A",
               hoursType: legacyData && legacyData.hours ? typeof legacyData.hours : "N/A",
-              keys: legacyData ? Object.keys(legacyData) : []
+              keys: legacyData ? Object.keys(legacyData) : [],
+              sampleHours: legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0 ? legacyData.hours[0] : null
             });
             throw new Error("Legacy JSON fallback has empty hours array");
           }
@@ -1719,8 +1722,8 @@ async function loadWeather(rootEl, state, forceRefresh) {
         throw new Error("Legacy JSON fallback failed: HTTP " + res2.status + " " + res2.statusText);
       }
     }
-    // Final validation: ensure we have valid hours array
-    if (!data || !data.hours || !Array.isArray(data.hours) || data.hours.length === 0) {
+    // Final validation: ensure we have valid hours array (skip if we just loaded legacy JSON successfully)
+    if (!usedLegacyFallback && (!data || !data.hours || !Array.isArray(data.hours) || data.hours.length === 0)) {
       var errorMsg = "Invalid JSON: missing or empty hours array";
       if (data) {
         errorMsg += " (ok: " + data.ok + ", source: " + (data.source || "none") + ")";
