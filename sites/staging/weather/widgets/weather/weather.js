@@ -1479,6 +1479,21 @@ function showError(rootEl, msg) {
   if (metaEl) metaEl.innerHTML = `<span style="color: var(--bad)">Error: ${escapeHtml(msg)}</span>`;
 }
 
+// Non-blocking banner when API failed and we use cached JSON
+function showApiFallbackBanner(rootEl) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+  let banner = weatherCard.querySelector("[data-role=api-fallback-banner]");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.setAttribute("data-role", "api-fallback-banner");
+    banner.className = "api-fallback-banner";
+    banner.setAttribute("role", "status");
+    weatherCard.insertBefore(banner, weatherCard.firstChild);
+  }
+  banner.textContent = "API error (staging). Using cached JSON.";
+  banner.style.display = "block";
+}
+
 // Step 6: Show loading
 function showLoading(rootEl) {
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
@@ -1594,8 +1609,19 @@ async function loadWeather(rootEl, state) {
     var res = await fetch(url);
     var data;
     if (!res.ok) {
-      // If API fails and we're in API mode, fallback to legacy
       if (useApi && state && state.location) {
+        var errBody = null;
+        try {
+          errBody = await res.json();
+        } catch (e) {
+          errBody = null;
+        }
+        if (errBody) {
+          console.warn("[weather] API error response:", errBody);
+        } else {
+          console.warn("[weather] API returned", res.status, res.statusText);
+        }
+        showApiFallbackBanner(rootEl);
         console.warn("API failed, falling back to legacy JSON");
         url = ASTRO_WEATHER_URL + "?ts=" + Date.now();
         var res2 = await fetch(url);

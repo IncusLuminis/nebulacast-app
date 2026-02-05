@@ -1977,35 +1977,56 @@
     return formatDateUTC(target);
   }
 
+  // Build GIBS tile URL with explicit subdomain (no wildcard): use gibs-a, gibs-b, gibs-c only
+  function getGibsTileUrl(dateStr, coords) {
+    var s = GIBS_SUBDOMAINS[Math.abs((coords.x | 0) + (coords.y | 0)) % GIBS_SUBDOMAINS.length];
+    return "https://gibs-" + s + ".earthdata.nasa.gov/wmts/epsg3857/best/"
+      + GIBS_LAYER + "/default/" + dateStr + "/" + GIBS_TILEMATRIXSET + "/" + coords.z + "/" + coords.y + "/" + coords.x + ".jpg";
+  }
+
+  var GIBS_TILEERROR_THRESHOLD = 20;
+  var GIBS_TILEERROR_DEBOUNCE_MS = 1000;
+  var gibsLastTileErrorLog = 0;
+
   function makeGibsLayer(dateStr) {
-    var url = "https://gibs-{s}.earthdata.nasa.gov/wmts/epsg3857/best/"
+    var urlTemplate = "https://gibs-a.earthdata.nasa.gov/wmts/epsg3857/best/"
       + GIBS_LAYER + "/default/" + dateStr + "/" + GIBS_TILEMATRIXSET + "/{z}/{y}/{x}.jpg";
-    var layer = L.tileLayer(url, {
-      subdomains: GIBS_SUBDOMAINS,
+    var layer = L.tileLayer(urlTemplate, {
       opacity: GIBS_OPACITY,
       minZoom: 1,
       maxZoom: 9,
       maxNativeZoom: 9,
       crossOrigin: true,
-      attribution: "Imagery © NASA GIBS"
+      attribution: "Imagery © NASA GIBS",
+      getTileUrl: function (coords) {
+        return getGibsTileUrl(dateStr, coords);
+      }
     });
     var tileErrorCount = 0;
     layer.on("tileerror", function (e) {
-      if (tileErrorCount < 10) {
-        console.warn("[GIBS tileerror]", e && e.coords, e && e.tile && e.tile.src);
-        tileErrorCount++;
-        if (tileErrorCount === 10) {
-          console.warn("[GIBS tileerror] further errors suppressed for this layer instance");
-        }
+      tileErrorCount++;
+      if (Date.now() - gibsLastTileErrorLog >= GIBS_TILEERROR_DEBOUNCE_MS) {
+        gibsLastTileErrorLog = Date.now();
+        console.warn("[GIBS tileerror]", tileErrorCount, "errors", e && e.coords);
+      }
+      if (tileErrorCount >= GIBS_TILEERROR_THRESHOLD && gibsLayer === layer && map && map.hasLayer(layer)) {
+        map.removeLayer(layer);
+        gibsLayer = null;
+        setMapLoading("gibs", false);
+        setStatus("Satellite unavailable for this date", true);
+        updateCloudSourceDisplay();
+        updateGibsDateSelector();
       }
     });
     layer.on("load", function () {
-      console.log("[GIBS] load ok for", dateStr);
+      if (Date.now() - gibsLastTileErrorLog >= GIBS_TILEERROR_DEBOUNCE_MS) {
+        console.log("[GIBS] load ok for", dateStr);
+      }
     });
     return layer;
   }
 
-  function updateGibsLegend(dateStr) {
+  function updateGibsLegend(dateStr, isFallback) {
     var legend = document.getElementById("cloudLegend");
     if (!legend) return;
     if (!gibsOn || !gibsLayer) {
@@ -2018,7 +2039,7 @@
       titleEl.textContent = "Satellite-like clouds (True Color)";
     }
     if (dateEl) {
-      dateEl.textContent = "Date: " + dateStr + " (UTC)";
+      dateEl.textContent = "Date: " + dateStr + " (UTC)" + (isFallback ? " (fallback)" : "");
     }
     legend.style.display = "block";
   }
@@ -2125,29 +2146,24 @@
     
     setMapLoading("gibs", true);
 
-    // Base date from current offset (0 = today)
+    // Base date from current offset (0 = today). Fallback: try up to 7 days back.
     var now = new Date();
     var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    
-    // Если идем назад во времени (gibsDayOffset < 0), сначала проверяем сегодня, потом вчера и т.д.
     var candidates = [];
     if (gibsDayOffset < 0) {
-      // Начинаем с сегодня, потом вчера, позавчера и т.д.
-      for (var d = 0; d >= gibsDayOffset; d--) {
+      for (var d = 0; d >= gibsDayOffset && candidates.length < 7; d--) {
         var checkDate = new Date(today.getTime());
         checkDate.setUTCDate(checkDate.getUTCDate() + d);
         candidates.push(formatDateUTC(checkDate));
       }
-    } else {
-      // gibsDayOffset === 0 (сегодня) - пробуем сегодня, вчера, позавчера
-      var base = new Date(today.getTime());
-      candidates = [
-        new Date(base.getTime()),
-        new Date(base.getTime() - 24 * 3600 * 1000),
-        new Date(base.getTime() - 2 * 24 * 3600 * 1000)
-      ].map(formatDateUTC);
     }
-    
+    if (candidates.length === 0) {
+      for (var d = 0; d < 7; d++) {
+        var checkDate = new Date(today.getTime());
+        checkDate.setUTCDate(checkDate.getUTCDate() - d);
+        candidates.push(formatDateUTC(checkDate));
+      }
+    }
     var baseDateStr = candidates[0];
 
     // If we've recently determined that this base date has no imagery,
@@ -2239,7 +2255,8 @@
         clearTimeout(fallbackTimer);
         clearTimeout(spinnerTimeout);
         spinnerHidden = true;
-        updateGibsLegend(dateStr);
+        var isFallback = dateStr !== baseDateStr;
+        updateGibsLegend(dateStr, isFallback);
         updateGibsDateSelector();
         setMapLoading("gibs", false);
         // Probe для более точного определения (но не блокируем показ)

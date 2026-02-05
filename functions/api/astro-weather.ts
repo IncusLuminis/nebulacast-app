@@ -11,63 +11,95 @@ interface Env {
   // Cloudflare Pages Functions environment
 }
 
+const VALID_PROFILES: Profile[] = ["default", "visual", "broadband", "planetary"];
+const HOURS_MIN = 1;
+const HOURS_MAX = 168;
+
 function parseQueryParams(url: URL): {
   lat: number;
   lon: number;
   tz: string;
   hours: number;
   profile: Profile;
+  name?: string;
 } {
-  const lat = parseFloat(url.searchParams.get("lat") || "");
-  const lon = parseFloat(url.searchParams.get("lon") || "");
-  const tz = url.searchParams.get("tz") || "Europe/Warsaw";
-  const hours = Math.min(Math.max(24, parseInt(url.searchParams.get("hours") || "72", 10)), 120);
-  const profile = (url.searchParams.get("profile") || "default") as Profile;
+  const lat = parseFloat(url.searchParams.get("lat") ?? "");
+  const lon = parseFloat(url.searchParams.get("lon") ?? "");
+  const tzRaw = url.searchParams.get("tz") ?? "Europe/Warsaw";
+  const tz = typeof tzRaw === "string" && tzRaw.length > 0 ? tzRaw : "Europe/Warsaw";
+  const hoursRaw = parseInt(url.searchParams.get("hours") ?? "72", 10);
+  const hours = Math.min(Math.max(Number.isFinite(hoursRaw) ? hoursRaw : 72, HOURS_MIN), HOURS_MAX);
+  const profile = (url.searchParams.get("profile") ?? "default") as Profile;
+  const name = url.searchParams.get("name") ?? undefined;
 
-  if (isNaN(lat) || lat < -90 || lat > 90) {
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
     throw new Error("Invalid lat: must be number in [-90, 90]");
   }
-  if (isNaN(lon) || lon < -180 || lon > 180) {
+  if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
     throw new Error("Invalid lon: must be number in [-180, 180]");
   }
-
-  const validProfiles: Profile[] = ["default", "visual", "broadband", "planetary"];
-  if (!validProfiles.includes(profile)) {
-    throw new Error(`Invalid profile: must be one of ${validProfiles.join(", ")}`);
+  if (!VALID_PROFILES.includes(profile)) {
+    throw new Error(`Invalid profile: must be one of ${VALID_PROFILES.join(", ")}`);
   }
 
-  return { lat, lon, tz, hours, profile };
+  return { lat, lon, tz, hours, profile, name };
 }
 
-function createErrorResponse(message: string, status: number = 400): Response {
-  return new Response(
-    JSON.stringify({ error: message }),
-    {
-      status,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-      },
-    }
-  );
+function jsonHeaders(cfRay?: string): Record<string, string> {
+  const h: Record<string, string> = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+  };
+  if (cfRay) h["CF-Ray"] = cfRay;
+  return h;
 }
 
-function createSuccessResponse(data: AstroWeatherResponse): Response {
-  return new Response(JSON.stringify(data), {
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "public, max-age=600",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-    },
+function createErrorPayload(opts: {
+  ok: false;
+  where: string;
+  message: string;
+  stack?: string;
+  req: { lat?: number; lon?: number; tz?: string; hours?: number; profile?: string; name?: string };
+}): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    ok: false,
+    where: opts.where,
+    message: opts.message,
+    req: opts.req,
+  };
+  if (opts.stack !== undefined) body.stack = opts.stack;
+  return body;
+}
+
+function createErrorResponse(
+  message: string,
+  status: number = 400,
+  cfRay?: string,
+  payload?: Record<string, unknown>
+): Response {
+  const body = payload ?? { error: message };
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: jsonHeaders(cfRay),
   });
+}
+
+function createSuccessResponse(data: AstroWeatherResponse, cfRay?: string): Response {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "public, max-age=600",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+  };
+  if (cfRay) headers["CF-Ray"] = cfRay;
+  return new Response(JSON.stringify(data), { headers });
 }
 
 export async function onRequest(context: { request: Request; env: Env }): Promise<Response> {
   const { request } = context;
+  const cfRay = request.headers.get("cf-ray") ?? request.headers.get("CF-Ray") ?? undefined;
 
-  // Handle CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -79,14 +111,16 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
   }
 
   if (request.method !== "GET") {
-    return createErrorResponse("Method not allowed", 405);
+    return createErrorResponse("Method not allowed", 405, cfRay);
   }
 
+  let reqParams: { lat?: number; lon?: number; tz?: string; hours?: number; profile?: string; name?: string } = {};
   try {
     const url = new URL(request.url);
-    const { lat, lon, tz, hours, profile } = parseQueryParams(url);
+    const parsed = parseQueryParams(url);
+    const { lat, lon, tz, hours, profile, name } = parsed;
+    reqParams = { lat, lon, tz, hours, profile, name };
 
-    // Check cache
     const cache = caches.default;
     const cacheKey = new Request(url.toString(), request);
     const cached = await cache.match(cacheKey);
@@ -94,16 +128,13 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       return cached;
     }
 
-    // Fetch data from providers
     const [omData, stData] = await Promise.all([
       fetchOpenMeteo(lat, lon, tz, hours),
       fetchSevenTimer(lat, lon),
     ]);
 
-    // Merge hourly data
     let hourRecords = mergeHourlyData(omData, stData, tz, hours);
 
-    // Compute scores for each hour
     for (let i = 0; i < hourRecords.length; i++) {
       const hour = hourRecords[i];
       const pressureTrend =
@@ -115,15 +146,9 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       hour.score_breakdown = breakdown;
     }
 
-    // Compute derived metrics
     const derived = computeDerived(hourRecords);
 
-    // Build response
-    const location: Location = {
-      lat,
-      lon,
-      tz,
-    };
+    const location: Location = { lat, lon, tz };
 
     const response: AstroWeatherResponse = {
       generated_at: new Date().toISOString(),
@@ -134,15 +159,26 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       derived,
     };
 
-    const responseObj = createSuccessResponse(response);
-
-    // Cache response
+    const responseObj = createSuccessResponse(response, cfRay);
     await cache.put(cacheKey, responseObj.clone());
-
     return responseObj;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("astro-weather API error:", error);
-    return createErrorResponse(message, 500);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("[astro-weather]", message, error);
+
+    const payload = createErrorPayload({
+      ok: false,
+      where: "astro-weather",
+      message,
+      stack,
+      req: reqParams,
+    });
+    return createErrorResponse(
+      message,
+      500,
+      cfRay,
+      payload as Record<string, unknown>
+    );
   }
 }

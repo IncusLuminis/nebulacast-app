@@ -411,49 +411,68 @@ function computeDerived(hours) {
 }
 
 // functions/api/astro-weather.ts
+var VALID_PROFILES = ["default", "visual", "broadband", "planetary"];
+var HOURS_MIN = 1;
+var HOURS_MAX = 168;
 function parseQueryParams(url) {
-  const lat = parseFloat(url.searchParams.get("lat") || "");
-  const lon = parseFloat(url.searchParams.get("lon") || "");
-  const tz = url.searchParams.get("tz") || "Europe/Warsaw";
-  const hours = Math.min(Math.max(24, parseInt(url.searchParams.get("hours") || "72", 10)), 120);
-  const profile = url.searchParams.get("profile") || "default";
-  if (isNaN(lat) || lat < -90 || lat > 90) {
+  const lat = parseFloat(url.searchParams.get("lat") ?? "");
+  const lon = parseFloat(url.searchParams.get("lon") ?? "");
+  const tzRaw = url.searchParams.get("tz") ?? "Europe/Warsaw";
+  const tz = typeof tzRaw === "string" && tzRaw.length > 0 ? tzRaw : "Europe/Warsaw";
+  const hoursRaw = parseInt(url.searchParams.get("hours") ?? "72", 10);
+  const hours = Math.min(Math.max(Number.isFinite(hoursRaw) ? hoursRaw : 72, HOURS_MIN), HOURS_MAX);
+  const profile = url.searchParams.get("profile") ?? "default";
+  const name = url.searchParams.get("name") ?? void 0;
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
     throw new Error("Invalid lat: must be number in [-90, 90]");
   }
-  if (isNaN(lon) || lon < -180 || lon > 180) {
+  if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
     throw new Error("Invalid lon: must be number in [-180, 180]");
   }
-  const validProfiles = ["default", "visual", "broadband", "planetary"];
-  if (!validProfiles.includes(profile)) {
-    throw new Error(`Invalid profile: must be one of ${validProfiles.join(", ")}`);
+  if (!VALID_PROFILES.includes(profile)) {
+    throw new Error(`Invalid profile: must be one of ${VALID_PROFILES.join(", ")}`);
   }
-  return { lat, lon, tz, hours, profile };
+  return { lat, lon, tz, hours, profile, name };
 }
-function createErrorResponse(message, status = 400) {
-  return new Response(
-    JSON.stringify({ error: message }),
-    {
-      status,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS"
-      }
-    }
-  );
+function jsonHeaders(cfRay) {
+  const h = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS"
+  };
+  if (cfRay) h["CF-Ray"] = cfRay;
+  return h;
 }
-function createSuccessResponse(data) {
-  return new Response(JSON.stringify(data), {
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "public, max-age=600",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS"
-    }
+function createErrorPayload(opts) {
+  const body = {
+    ok: false,
+    where: opts.where,
+    message: opts.message,
+    req: opts.req
+  };
+  if (opts.stack !== void 0) body.stack = opts.stack;
+  return body;
+}
+function createErrorResponse(message, status = 400, cfRay, payload) {
+  const body = payload ?? { error: message };
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: jsonHeaders(cfRay)
   });
+}
+function createSuccessResponse(data, cfRay) {
+  const headers = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "public, max-age=600",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS"
+  };
+  if (cfRay) headers["CF-Ray"] = cfRay;
+  return new Response(JSON.stringify(data), { headers });
 }
 async function onRequest(context) {
   const { request } = context;
+  const cfRay = request.headers.get("cf-ray") ?? request.headers.get("CF-Ray") ?? void 0;
   if (request.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -464,11 +483,14 @@ async function onRequest(context) {
     });
   }
   if (request.method !== "GET") {
-    return createErrorResponse("Method not allowed", 405);
+    return createErrorResponse("Method not allowed", 405, cfRay);
   }
+  let reqParams = {};
   try {
     const url = new URL(request.url);
-    const { lat, lon, tz, hours, profile } = parseQueryParams(url);
+    const parsed = parseQueryParams(url);
+    const { lat, lon, tz, hours, profile, name } = parsed;
+    reqParams = { lat, lon, tz, hours, profile, name };
     const cache = caches.default;
     const cacheKey = new Request(url.toString(), request);
     const cached = await cache.match(cacheKey);
@@ -488,11 +510,7 @@ async function onRequest(context) {
       hour.score_breakdown = breakdown;
     }
     const derived = computeDerived(hourRecords);
-    const location = {
-      lat,
-      lon,
-      tz
-    };
+    const location = { lat, lon, tz };
     const response = {
       generated_at: (/* @__PURE__ */ new Date()).toISOString(),
       location,
@@ -501,13 +519,26 @@ async function onRequest(context) {
       hours: hourRecords,
       derived
     };
-    const responseObj = createSuccessResponse(response);
+    const responseObj = createSuccessResponse(response, cfRay);
     await cache.put(cacheKey, responseObj.clone());
     return responseObj;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("astro-weather API error:", error);
-    return createErrorResponse(message, 500);
+    const stack = error instanceof Error ? error.stack : void 0;
+    console.error("[astro-weather]", message, error);
+    const payload = createErrorPayload({
+      ok: false,
+      where: "astro-weather",
+      message,
+      stack,
+      req: reqParams
+    });
+    return createErrorResponse(
+      message,
+      500,
+      cfRay,
+      payload
+    );
   }
 }
 export {
