@@ -1,4 +1,10 @@
-/* Tabs on index: News / Calendar / Alerts / Weather — one panel visible at a time */
+/* Tabs on index: News / Calendar / Weather — one panel visible at a time */
+.index-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
 .index-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -7,6 +13,15 @@
   padding-bottom: 12px;
   border-bottom: 1px solid #2a2f3a;
 }
+
+.index-tabs.index-tabs--side {
+  flex-direction: column;
+  align-items: stretch;
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
 .index-tab {
   appearance: none;
   border: 1px solid #2a2f3a;
@@ -20,6 +35,16 @@
   line-height: 1.2;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
+
+.index-tabs.index-tabs--side .index-tab {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
 .index-tab:hover {
   border-color: #3a4252;
   color: #e6f2ff;
@@ -31,6 +56,11 @@
 }
 .index-panels {
   min-height: 200px;
+}
+
+.index-layout .index-panels {
+  flex: 1;
+  min-width: 0;
 }
 .index-panel {
   display: block;

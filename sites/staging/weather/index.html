@@ -10,14 +10,10 @@
   <link rel="stylesheet" href="./widgets/weather/weather.css">
   <link rel="stylesheet" href="./widgets/map/map.css">
   <link rel="stylesheet" href="./widgets/astro/astro.css">
+  <link rel="stylesheet" href="./widgets/sun_moon/sun_moon.css">
 </head>
 <body>
   <div class="page-wrap">
-    <header class="page-header">
-      <h1>Nebulacast</h1>
-      <p class="subtitle">Staging · Weather</p>
-    </header>
-    
     <main>
       <!-- Location widget (always visible) -->
       <div id="w-location" class="widget-container"></div>
@@ -28,14 +24,16 @@
       <!-- Tabs for Weather/Map/Astro -->
       <div class="widget-tabs">
         <button class="widget-tab active" data-tab="weather">Weather</button>
-        <button class="widget-tab" data-tab="map">Map</button>
+        <button class="widget-tab" data-tab="sun">Sun</button>
         <button class="widget-tab" data-tab="astro">Astro</button>
+        <button class="widget-tab" data-tab="map">Map</button>
       </div>
       
       <!-- Tab content containers -->
       <div id="w-weather" class="widget-container widget-tab-content active"></div>
-      <div id="w-map" class="widget-container widget-tab-content"></div>
+      <div id="w-sun" class="widget-container widget-tab-content"></div>
       <div id="w-astro" class="widget-container widget-tab-content"></div>
+      <div id="w-map" class="widget-container widget-tab-content"></div>
     </main>
   </div>
 
@@ -118,12 +116,16 @@
     </div>
   </div>
 
+  <!-- Sun/Moon calculations -->
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+
   <script type="module">
     import { initState, getState, setState, subscribe } from "./core/state.js";
     import { mountLocation } from "./widgets/location/location.js";
     import { mountControls } from "./widgets/controls/controls.js";
     import { mountWeather } from "./widgets/weather/weather.js";
     import { mountMap } from "./widgets/map/map.js";
+    import { mountSunMoon } from "./widgets/sun_moon/sun_moon.js";
     import { mountAstro } from "./widgets/astro/astro.js";
 
     // Create store API object
@@ -149,6 +151,7 @@
 
     // Mount tab widgets
     const weatherEl = document.getElementById("w-weather");
+    const sunEl = document.getElementById("w-sun");
     const mapEl = document.getElementById("w-map");
     const astroEl = document.getElementById("w-astro");
 
@@ -156,10 +159,13 @@
       mountWeather(weatherEl, storeApi);
     }
 
+    if (sunEl) {
+      mountSunMoon(sunEl, storeApi);
+    }
+
     if (mapEl) {
       mountMap(mapEl, storeApi);
     }
-
     if (astroEl) {
       mountAstro(astroEl, storeApi);
     }

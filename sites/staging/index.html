@@ -13,21 +13,48 @@
   <div class="page-wrap">
     <header class="page-header">
       <h1>Nebulacast</h1>
-      <p class="subtitle">Staging</p>
+      <p class="subtitle">Staging · News</p>
     </header>
-    <nav class="index-tabs" role="tablist" aria-label="Sections">
-      <button type="button" id="tab-news" class="index-tab is-active" data-tab="news" role="tab" aria-selected="true" aria-controls="panel-news">News</button>
-      <button type="button" id="tab-calendar" class="index-tab" data-tab="calendar" role="tab" aria-selected="false" aria-controls="panel-calendar">Calendar</button>
-      <button type="button" id="tab-weather" class="index-tab" data-tab="weather" role="tab" aria-selected="false" aria-controls="panel-weather">Weather</button>
-    </nav>
-    <main class="index-panels">
+    <div class="index-layout">
+      <nav class="index-tabs index-tabs--side" role="tablist" aria-label="Sections">
+        <button
+          type="button"
+          id="tab-news"
+          class="index-tab is-active"
+          data-tab="news"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-news"
+          aria-label="News"
+        >📰</button>
+        <button
+          type="button"
+          id="tab-calendar"
+          class="index-tab"
+          data-tab="calendar"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-calendar"
+          aria-label="Calendar"
+        >📅</button>
+        <button
+          type="button"
+          id="tab-weather"
+          class="index-tab"
+          data-tab="weather"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-weather"
+          aria-label="Weather"
+        >☁️</button>
+      </nav>
+      <main class="index-panels">
       <div id="panel-news" class="index-panel" role="tabpanel" aria-labelledby="tab-news">
         <section class="widget-section" id="widget-news"><div id="nrw-main" class="nrw-root">
+  <div class="nrw-filters" data-role="filters"></div>
   <div class="nrw-header">
-    <div class="nrw-title">News Radar</div>
     <div class="nrw-meta"><a class="nrw-rss" href="/news/rss.xml" target="_blank" rel="noopener">RSS</a></div>
   </div>
-  <div class="nrw-filters" data-role="filters"></div>
   <div class="nrw-status" data-role="status">Loading...</div>
   <div class="nrw-list" data-role="list"></div>
 </div>
@@ -35,14 +62,13 @@
       </div>
       <div id="panel-calendar" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-calendar">
         <section class="widget-section" id="widget-calendar"><div id="nrc-main" class="nrc-root">
+  <div class="nrc-filters" data-role="filters"></div>
   <div class="nrc-header">
-    <div class="nrc-title">Sky Alerts</div>
     <div class="nrc-meta">
       <a class="nrc-link" href="/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>
       <a class="nrc-link" href="/alerts/rss.xml" target="_blank" rel="noopener">RSS</a>
     </div>
   </div>
-  <div class="nrc-filters" data-role="filters"></div>
   <div class="nrc-status" data-role="status">Loading...</div>
   <div class="nrc-list" data-role="list"></div>
 </div>
@@ -59,37 +85,59 @@
         </div>
       </div>
     </main>
+    </div>
   </div>
 
-  <script src="/assets/js/widget_runtime.js"></script>
-  <script>
-    (function() {
-      var base = '';
-      window.runNewsWidget({ rootId: 'nrw-main', rssUrl: base + '/news/rss.xml', maxItems: 12, parseMax: 300, filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] });
-      window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '/calendar/daily_signal.json', maxItems: 20, filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], iconBase: base + '/assets/icons/alerts' });
-      // Weather widget is now loaded via iframe from /weather/index.html
-      (function() {
-        var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
-        var tabs = document.querySelectorAll('.index-tab');
-        var panels = document.querySelectorAll('.index-panel');
-        function switchTo(panelId, activeTab) {
-          panels.forEach(function(p) {
-            p.classList.toggle('index-panel--hidden', p.id !== panelId);
-          });
-          tabs.forEach(function(t) {
-            var isActive = t.getAttribute('data-tab') === activeTab;
-            t.classList.toggle('is-active', isActive);
-            t.setAttribute('aria-selected', isActive ? 'true' : 'false');
-          });
-        }
-        tabs.forEach(function(t) {
-          t.addEventListener('click', function() {
-            var tab = t.getAttribute('data-tab');
-            switchTo(tabToPanel[tab], tab);
-          });
-        });
-      })();
-    })();
-  </script>
+      <script src="/assets/js/widget_runtime.js"></script>
+      <script>
+        (function() {
+          var base = '';
+          window.runNewsWidget({ rootId: 'nrw-main', rssUrl: base + '/news/rss.xml', maxItems: 12, parseMax: 300, filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] });
+          window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '/calendar/daily_signal.json', maxItems: 20, filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], iconBase: base + '/assets/icons/alerts' });
+          // Weather widget is now loaded via iframe from /weather/index.html
+          (function() {
+            var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
+            var tabs = document.querySelectorAll('.index-tab');
+            var panels = document.querySelectorAll('.index-panel');
+            var subtitleEl = document.querySelector('.page-header .subtitle');
+
+            function labelForTab(tab) {
+              if (tab === 'calendar') return 'Calendar';
+              if (tab === 'weather') return 'Weather';
+              return 'News';
+            }
+
+            function updatePageHeader(activeTab) {
+              var label = labelForTab(activeTab);
+              if (subtitleEl) {
+                subtitleEl.textContent = 'Staging · ' + label;
+              }
+              document.title = 'Nebulacast — ' + label;
+            }
+
+            function switchTo(panelId, activeTab) {
+              panels.forEach(function(p) {
+                p.classList.toggle('index-panel--hidden', p.id !== panelId);
+              });
+              tabs.forEach(function(t) {
+                var isActive = t.getAttribute('data-tab') === activeTab;
+                t.classList.toggle('is-active', isActive);
+                t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+              });
+              updatePageHeader(activeTab);
+            }
+
+            tabs.forEach(function(t) {
+              t.addEventListener('click', function() {
+                var tab = t.getAttribute('data-tab');
+                switchTo(tabToPanel[tab], tab);
+              });
+            });
+
+            // Initial header/title state
+            updatePageHeader('news');
+          })();
+        })();
+      </script>
 </body>
 </html>

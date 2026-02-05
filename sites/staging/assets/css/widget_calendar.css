@@ -8,17 +8,11 @@
 }
 .nrc-root .nrc-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #2a2f3a;
-  margin-bottom: 12px;
-}
-.nrc-root .nrc-title {
-  font-weight: 700;
-  font-size: 18px;
-  color: #e6f2ff;
-  margin: 0;
+  padding: 4px 0 0 0;
+  border-bottom: none;
+  margin-bottom: 0;
 }
 .nrc-root .nrc-meta {
   font-size: 12px;
