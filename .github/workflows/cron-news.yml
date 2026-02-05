@@ -24,7 +24,10 @@ jobs:
         run: pip install -r services/news/requirements.txt
 
       - name: Run news backend
-        run: PYTHONPATH=services/news python services/news/pipelines/run_news.py
+        run: |
+          set -e  # Exit on error
+          PYTHONPATH=services/news python services/news/pipelines/run_news.py
+          echo "News backend completed successfully"
 
       - name: Commit and push outputs
         run: |

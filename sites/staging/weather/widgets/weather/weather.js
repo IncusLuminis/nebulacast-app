@@ -1614,7 +1614,10 @@ async function loadWeather(rootEl, state, forceRefresh) {
     if (!useApi) {
       url = url + (url.indexOf("?") >= 0 ? "&" : "?") + "ts=" + Date.now();
     }
+    // Log the actual URL being requested (helpful for debugging path issues)
+    console.log("[weather] Fetching from URL:", url, "(useApi:", useApi + ", base:", window.location.origin + window.location.pathname + ")");
     var res = await fetch(url);
+    console.log("[weather] Fetch response:", res.status, res.statusText, "Content-Type:", res.headers.get("content-type"), "URL:", res.url);
     var data;
     if (!res.ok) {
       if (useApi && state && state.location) {
@@ -1643,24 +1646,27 @@ async function loadWeather(rootEl, state, forceRefresh) {
       } else {
         throw new Error("HTTP " + res.status + ": " + res.statusText);
       }
-    } else {
-      var contentType = res.headers.get("content-type") || "";
-      if (contentType.indexOf("application/json") < 0 && contentType.indexOf("text/json") < 0) {
-        var text = await res.text();
-        throw new Error("Expected JSON but got " + contentType);
+      } else {
+        var contentType = res.headers.get("content-type") || "";
+        console.log("[weather] Response Content-Type:", contentType, "Status:", res.status);
+        if (contentType.indexOf("application/json") < 0 && contentType.indexOf("text/json") < 0) {
+          var text = await res.text();
+          console.error("[weather] Expected JSON but got:", contentType, "Body preview:", text.slice(0, 200));
+          throw new Error("Expected JSON but got " + contentType);
+        }
+        data = await res.json();
+        console.log("[weather] JSON parsed successfully. Keys:", Object.keys(data || {}), "hasHours:", !!data.hours, "hoursLength:", data && Array.isArray(data.hours) ? data.hours.length : "N/A");
+        // Log successful API response structure for debugging
+        if (useApi) {
+          console.log("[weather] API response:", {
+            ok: data.ok,
+            source: data.source,
+            hasHours: !!data.hours,
+            hoursLength: Array.isArray(data.hours) ? data.hours.length : "N/A",
+            status: res.status
+          });
+        }
       }
-      data = await res.json();
-      // Log successful API response structure for debugging
-      if (useApi) {
-        console.log("[weather] API response:", {
-          ok: data.ok,
-          source: data.source,
-          hasHours: !!data.hours,
-          hoursLength: Array.isArray(data.hours) ? data.hours.length : "N/A",
-          status: res.status
-        });
-      }
-    }
     // Log response structure for debugging
     if (data && (!data.hours || !Array.isArray(data.hours) || data.hours.length === 0)) {
       console.warn("[weather] Response missing or empty hours:", {
@@ -1711,13 +1717,22 @@ async function loadWeather(rootEl, state, forceRefresh) {
       if (alreadyTriedLegacy) {
         console.warn("[weather] Skipping legacy JSON fallback - already tried:", url);
       } else {
-        console.warn("[weather] Trying legacy JSON fallback from:", ASTRO_WEATHER_URL);
+        console.warn("[weather] Trying legacy JSON fallback from:", ASTRO_WEATHER_URL, "Full URL:", fallbackUrl, "Base:", window.location.origin + window.location.pathname);
         try {
-        var res2 = await fetch(fallbackUrl);
-        console.log("[weather] Legacy JSON fetch result:", res2.status, res2.statusText, "URL:", fallbackUrl);
+          var res2 = await fetch(fallbackUrl);
+          console.log("[weather] Legacy JSON fetch result:", res2.status, res2.statusText, "URL:", res2.url || fallbackUrl, "Content-Type:", res2.headers.get("content-type"), "Content-Length:", res2.headers.get("content-length") || "unknown");
         if (res2.ok) {
           var contentType2 = res2.headers.get("content-type") || "";
+          var contentLength2 = res2.headers.get("content-length");
+          console.log("[weather] Legacy JSON headers - Content-Type:", contentType2, "Content-Length:", contentLength2 || "chunked");
           if (contentType2.indexOf("application/json") >= 0 || contentType2.indexOf("text/json") >= 0) {
+            // Clone response to read text first for debugging
+            var responseClone = res2.clone();
+            var responseText = await responseClone.text();
+            console.log("[weather] Legacy JSON raw response preview (first 500 chars):", responseText.slice(0, 500));
+            console.log("[weather] Legacy JSON raw response preview (last 200 chars):", responseText.slice(-200));
+            console.log("[weather] Legacy JSON response length:", responseText.length, "chars");
+            
             var legacyData = await res2.json();
             console.log("[weather] Legacy JSON parsed, hasHours:", !!legacyData && !!legacyData.hours, "hoursLength:", legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A", "keys:", legacyData ? Object.keys(legacyData) : []);
             if (legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0) {

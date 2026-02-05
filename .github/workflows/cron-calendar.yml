@@ -23,7 +23,10 @@ jobs:
         run: pip install -r services/calendar/requirements.txt
 
       - name: Run calendar backend
-        run: PYTHONPATH=services/calendar python services/calendar/pipelines/run_calendar.py
+        run: |
+          set -e  # Exit on error
+          PYTHONPATH=services/calendar python services/calendar/pipelines/run_calendar.py
+          echo "Calendar backend completed successfully"
 
       - name: Commit and push outputs
         run: |

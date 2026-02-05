@@ -23,7 +23,69 @@ jobs:
         run: pip install -r services/weather/requirements.txt
 
       - name: Run weather backend
-        run: PYTHONPATH=services/weather python services/weather/pipelines/run_weather.py
+        run: |
+          set -e  # Exit on error
+          PYTHONPATH=services/weather python services/weather/pipelines/run_weather.py
+          echo "Weather backend completed successfully"
+
+      - name: Validate generated JSON files
+        run: |
+          echo "Validating daily_weather.json..."
+          python3 << 'EOF'
+          import json
+          import sys
+          from pathlib import Path
+          
+          def validate_weather_json(file_path):
+              """Validate that weather JSON has required fields, especially hours array."""
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      data = json.load(f)
+              
+                  # Check for required fields
+                  if 'hours' not in data:
+                      print(f"ERROR: {file_path} missing 'hours' field")
+                      return False
+                  
+                  if not isinstance(data['hours'], list):
+                      print(f"ERROR: {file_path} 'hours' is not an array (got {type(data['hours'])})")
+                      return False
+                  
+                  if len(data['hours']) == 0:
+                      print(f"ERROR: {file_path} 'hours' array is empty")
+                      return False
+                  
+                  print(f"✓ {file_path} valid: {len(data['hours'])} hours")
+                  return True
+              except json.JSONDecodeError as e:
+                  print(f"ERROR: {file_path} is not valid JSON: {e}")
+                  return False
+              except FileNotFoundError:
+                  print(f"ERROR: {file_path} not found")
+                  return False
+              except Exception as e:
+                  print(f"ERROR: {file_path} validation failed: {e}")
+                  return False
+          
+          # Validate main output file
+          main_file = Path("sites/staging/weather/daily_weather.json")
+          if not main_file.exists():
+              print(f"ERROR: {main_file} does not exist after pipeline run")
+              sys.exit(1)
+          
+          if not validate_weather_json(main_file):
+              print("\nValidation failed - aborting commit to prevent corrupted data")
+              sys.exit(1)
+          
+          # Also validate outputs file if it exists
+          outputs_file = Path("services/weather/outputs/daily_weather.json")
+          if outputs_file.exists():
+              if not validate_weather_json(outputs_file):
+                  print("\nValidation failed for outputs file - aborting commit")
+                  sys.exit(1)
+          
+          print("\nAll JSON files validated successfully")
+          EOF
 
       - name: Commit and push outputs (data only; do not overwrite weather SPA)
         run: |
