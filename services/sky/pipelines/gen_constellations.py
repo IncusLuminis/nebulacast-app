@@ -5,11 +5,11 @@
 Generate canonical constellation lines (HIP-based) from Stellarium western sky culture.
 
 Inputs:
-  - services/sky/data/stars_v2_hip.json  (must exist; produced by gen_stars.py)
+  - services/sky/data/generated/stars.json  (must exist; produced by gen_stars.py)
 
 Outputs:
   - services/sky/data/constellations_v2_hip.json
-  - sites/staging/sky/data/constellations_v2_hip.json
+  - sites/staging/sky/data/generated/constellations_v2_hip.json
 
 Notes:
   - id_scheme: HIP (a/b are HIP numbers)
@@ -31,9 +31,9 @@ import requests
 # CONFIG
 # -----------------------------
 # Must match your stars generator output filename
-STARS_FILENAME = "stars_v2_hip.json"
+STARS_FILENAME = "stars.json"
 
-OUT_FILENAME = "constellations_v2_hip.json"
+OUT_FILENAME = "constellations.json"
 
 STELLARIUM_WESTERN_INDEX_URL = (
     "https://raw.githubusercontent.com/Stellarium/stellarium-skycultures/master/western/index.json"
@@ -46,7 +46,7 @@ STELLARIUM_WESTERN_INDEX_URL = (
 # -> project root is 4 levels up
 # -----------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SERVICES_DATA_DIR = PROJECT_ROOT / "services" / "sky" / "data"
+SERVICES_DATA_DIR = PROJECT_ROOT / "services" / "sky" / "data" / "generated" 
 STAGING_DATA_DIR = PROJECT_ROOT / "sites" / "staging" / "sky" / "data"
 
 

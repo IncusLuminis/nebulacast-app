@@ -9,12 +9,12 @@ async function loadJSON(url) {
   return json;
 }
 
-function loadStars(baseUrl) { return loadJSON(`${baseUrl}/data/stars_v2_hip.json`); }
-function loadConstellations(baseUrl) { return loadJSON(`${baseUrl}/data/constellations_v2_hip.json`); }
+function loadStars(baseUrl) { return loadJSON(`${baseUrl}/data/stars.json`); }
+function loadConstellations(baseUrl) { return loadJSON(`${baseUrl}/data/constellations.json`); }
 
 async function loadMilkyWay(baseUrl) {
   try {
-    return await loadJSON(`${baseUrl}/data/milkyway_v1.json`);
+    return await loadJSON(`${baseUrl}/data/milkyway.json`);
   } catch (e) {
     console.warn("[SKY] Milky Way not loaded:", e.message);
     return null;

@@ -364,17 +364,21 @@ function drawGridEq(ctx, vp, eqGrid) {
 
   ctx.save();
   ctx.setLineDash([3, 6]);
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.strokeStyle = "rgba(7, 149, 54, 0.6)";
   ctx.lineWidth = 1;
 
   // Dec lines
   for (const ln of eqGrid.decLines || []) {
+    ctx.beginPath();
     drawPolylineWithBreaks(ctx, ln.pts);
+    ctx.stroke();
   }
 
   // RA lines
   for (const ln of eqGrid.raLines || []) {
+    ctx.beginPath();
     drawPolylineWithBreaks(ctx, ln.pts);
+    ctx.stroke();
   }
 
   ctx.setLineDash([]);

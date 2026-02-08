@@ -1,316 +1,362 @@
 :root{
-  --bg0:#070b14;
-  --bg1:#0b1020;
-  --card:#0e1424;
-  --stroke: rgba(255,255,255,0.12);
-  --stroke2: rgba(255,255,255,0.18);
-  --text: rgba(255,255,255,0.88);
-  --muted: rgba(255,255,255,0.60);
-  --accent: rgba(90,170,255,0.95);
-
-  /* Compact stage sizing */
-  --stage-max: 800px;
-  --stage-pad: 10px;
+    --bg0:#070b14;
+    --bg1:#0b1020;
+    --card:#0e1424;
+    --stroke: rgba(255,255,255,0.12);
+    --stroke2: rgba(255,255,255,0.18);
+    --text: rgba(255,255,255,0.88);
+    --muted: rgba(255,255,255,0.60);
+    --accent: rgba(90,170,255,0.95);
+  
+    /* Compact stage sizing */
+    --stage-max: 800px;
+    --stage-pad: 10px;
+  }
+  
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background: radial-gradient(1200px 800px at 50% 0%, #121a33 0%, var(--bg0) 55%, #05070d 100%);
+    color:var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  
+  .sky-page{
+    padding: 18px;
+    display:flex;
+    justify-content:center;
+  }
+  
+  .sky-card{
+    width: min(96vw, calc(var(--stage-max) + 40px));
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border: 1px solid var(--stroke);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  }
+  
+  .sky-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 10px;
+  }
+  .sky-h1{
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+  }
+  
+  .sky-topbar{
+    display:flex;
+    gap: 10px;
+    align-items:center;
+    margin-bottom: 12px;
+  }
+  .sky-pill{
+    flex: 1 1 auto;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--stroke);
+    background: rgba(0,0,0,0.22);
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1;
+  }
+  .sky-pill-ok{
+    flex: 0 0 auto;
+    color: rgba(170,255,210,0.9);
+  }
+  
+  /* Stage */
+  .sky-stage{
+    position: relative;
+    width: min(96vw, var(--stage-max));
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--stroke);
+    background: radial-gradient(900px 700px at 50% 40%, rgba(20,35,80,0.85), rgba(6,9,18,1));
+  }
+  
+  /* Make stage roughly square and “compact” */
+  .sky-stage::before{
+    content:"";
+    display:block;
+    padding-top: 70%; /* wide-ish; your canvas inside still scales */
+  }
+  
+  .sky-mount{
+    position:absolute;
+    inset: 0;
+  }
+  
+  /* Widget root from widget.js */
+  .sky-root{position:relative; width:100%; height:100%;}
+  .sky-canvas-wrap{width:100%; height:100%;}
+  .sky-canvas{width:100%; height:100%; display:block;}
+  .sky-status{
+    position:absolute; left: 12px; bottom: 10px;
+    font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    color: rgba(255,255,255,0.70);
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 6px 10px;
+    user-select:none;
+    pointer-events:none;
+  }
+  
+  /* Overlay buttons in stage */
+  .sky-stage-controls{
+    position:absolute;
+    top: 14px;
+    right: 14px;
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 50;
+  }
+  
+  .sky-btn{
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.35);
+    color: rgba(255,255,255,0.88);
+    border-radius: 12px;
+    padding: 10px 12px;
+    cursor:pointer;
+    font-weight: 700;
+    transition: transform .08s ease, border-color .12s ease;
+    user-select:none;
+  }
+  
+  .sky-btn:hover {
+    background: rgba(255,255,255,0.06);
+  }
+  
+  .sky-btn:active {
+    background: rgba(255,255,255,0.10);
+  }
+  
+  .sky-btn-icon{
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 18px;
+  }
+  .sky-btn-primary{
+    border-color: rgba(120,180,255,0.60);
+    box-shadow: 0 0 0 2px rgba(90,170,255,0.22) inset;
+  }
+  
+  /* Popover */
+  .sky-popover{
+    position:absolute;
+    top: 14px;
+    right: 64px;
+    width: 240px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(10,14,22,0.88);
+    backdrop-filter: blur(10px);
+    z-index: 60;
+  }
+  .sky-popover-title{
+    font-weight: 800;
+    margin-bottom: 10px;
+    opacity: 0.9;
+  }
+  .sky-check{
+    display:flex;
+    gap: 10px;
+    align-items:center;
+    padding: 6px 0;
+    color: rgba(255,255,255,0.78);
+    font-size: 14px;
+  }
+  .sky-check input{ transform: translateY(1px); }
+  
+  /* -----------------------
+     Player (base)
+     ----------------------- */
+  .sky-player{
+    width: min(96vw, var(--stage-max));
+    margin: 12px auto 0 auto;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid var(--stroke);
+    background: rgba(0,0,0,0.22);
+  }
+  
+  /* -----------------------
+     Player overlay position
+     ----------------------- */
+  .sky-player-overlay{
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    left: auto;
+    z-index: 55; /* below popover, above canvas */
+    pointer-events: auto;
+  }
+  
+  /* -----------------------
+     Compact layout (the “ideal” one)
+     Width is controlled HERE:
+     --player-w (defaults below)
+     ----------------------- */
+  .sky-player-compact{
+    --player-w: 230px;
+    width: min(var(--player-w), calc(100% - 20px));
+    margin: 0;
+    padding: 8px 8px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.30);
+    backdrop-filter: blur(8px);
+  }
+  
+  /* 4 rows */
+  .sky-player-row{ display:flex; align-items:center; justify-content:space-between; }
+  
+  .sky-player-controls{
+    display:flex;
+    gap: 6px;
+    align-items:center;
+    flex-wrap: nowrap;
+  }
+  
+  .sky-player-steps{
+    display:flex;
+    gap: 6px;
+    align-items:center;
+    justify-content:flex-start;
+    flex-wrap: nowrap;
+  }
+  
+  /* Compact buttons */
+  .sky-player-compact .sky-btn{
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  
+  /* Slider row */
+  .sky-player-compact .sky-slider{
+    width: 100%;
+    margin: 6px 0 6px 0;
+  }
+  
+  /* Hint row */
+  .sky-player-compact .sky-player-hint{
+    font-size: 12px;
+    color: rgba(255,255,255,0.60);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Keep playerTime for JS but hide in compact UI */
+  .sky-player-compact .sky-player-time{
+    display:none;
+  }
+  
+  /* -----------------------
+     Fullscreen mode
+     ----------------------- */
+  .sky-stage.is-fs{
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    z-index: 9999;
+  }
+  .sky-stage.is-fs::before{ display:none; }
+  .sky-stage.is-fs .sky-mount{ inset: 0; }
+  
+  /* Keep overlay buttons visible */
+  .sky-stage.is-fs .sky-stage-controls{
+    position: fixed;
+    top: 14px;
+    right: 14px;
+  }
+  
+  /* Keep popover visible */
+  .sky-stage.is-fs .sky-popover{
+    position: fixed;
+    top: 14px;
+    right: 64px;
+  }
+  
+  /* In fullscreen: pin player bottom-right as fixed so it never disappears */
+  .sky-stage.is-fs .sky-player-overlay{
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    left: auto;
+    z-index: 10000;
+  }
+  
+/* Tooltip */
+.sky-tooltip{
+  position:absolute;
+  display:none;
+  z-index: 80;
+  max-width: 280px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(8,10,14,0.72);
+  border: 1px solid rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.90);
+  font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  pointer-events:none;
+  user-select:none;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
-
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background: radial-gradient(1200px 800px at 50% 0%, #121a33 0%, var(--bg0) 55%, #05070d 100%);
-  color:var(--text);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
-
-.sky-page{
-  padding: 18px;
-  display:flex;
-  justify-content:center;
-}
-
-.sky-card{
-  width: min(96vw, calc(var(--stage-max) + 40px));
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-  border: 1px solid var(--stroke);
-  border-radius: 22px;
-  padding: 18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-}
-
-.sky-title{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom: 10px;
-}
-.sky-h1{
-  font-size: 30px;
+  
+.sky-tip-title{
+  font-size: 13px;
   font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 6px;
   letter-spacing: 0.2px;
 }
 
-.sky-topbar{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  margin-bottom: 12px;
-}
-.sky-pill{
-  flex: 1 1 auto;
-  padding: 8px 10px;
-  border-radius: 14px;
-  border: 1px solid var(--stroke);
-  background: rgba(0,0,0,0.22);
-  color: var(--muted);
-  font-size: 16px;
-  line-height: 1;
-}
-.sky-pill-ok{
-  flex: 0 0 auto;
-  color: rgba(170,255,210,0.9);
-}
-
-/* Stage */
-/* Stage */
-.sky-stage{
-  position: relative;
-
-  /* width remains controllable by --stage-max */
-  width: min(96vw, var(--stage-max));
-  margin: 0 auto;
-
-  /* IMPORTANT: decouple height from width */
-  height: min(78vh, 720px);
-
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid var(--stroke);
-  background: radial-gradient(900px 700px at 50% 40%, rgba(20,35,80,0.85), rgba(6,9,18,1));
-}
-
-/* disable the old aspect-ratio hack */
-.sky-stage{
-  position: relative;
-
-  /* ширина управляется отдельно */
-  width: min(96vw, var(--stage-max));
-  margin: 0 auto;
-
-  /* ✅ фиксируем высоту */
-  height: min(78vh, 660px);
-
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid var(--stroke);
-  background: radial-gradient(
-    900px 700px at 50% 40%,
-    rgba(20,35,80,0.85),
-    rgba(6,9,18,1)
-  );
-}
-
-.sky-stage::before{
-  content: none;
-  display: none;
-}
-
-.sky-mount{
-  position:absolute;
-  inset: 0;
-}
-
-/* Widget root from widget.js */
-.sky-root{position:relative; width:100%; height:100%;}
-.sky-canvas-wrap{width:100%; height:100%;}
-.sky-canvas{width:100%; height:100%; display:block;}
-.sky-status{
-  position:absolute; left: 12px; bottom: 10px;
-  font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  color: rgba(255,255,255,0.70);
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px;
-  padding: 6px 10px;
-  user-select:none;
-  pointer-events:none;
-}
-
-/* Overlay buttons in stage */
-.sky-stage-controls{
-  position:absolute;
-  top: 14px;
-  right: 14px;
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 50;
-}
-
-.sky-btn{
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.35);
-  color: rgba(255,255,255,0.88);
-  border-radius: 12px;
-  padding: 10px 12px;
-  cursor:pointer;
-  font-weight: 700;
-  transition: transform .08s ease, border-color .12s ease;
-  user-select:none;
-}
-.sky-btn:hover{ border-color: rgba(255,255,255,0.25); }
-.sky-btn:active{ transform: translateY(1px); }
-
-.sky-btn-icon{
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size: 18px;
-}
-.sky-btn-primary{
-  border-color: rgba(120,180,255,0.60);
-  box-shadow: 0 0 0 2px rgba(90,170,255,0.22) inset;
-}
-
-/* Popover */
-.sky-popover{
-  position:absolute;
-  top: 14px;
-  right: 64px;
-  width: 240px;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(10,14,22,0.88);
-  backdrop-filter: blur(10px);
-  z-index: 60;
-}
-.sky-popover-title{
-  font-weight: 800;
-  margin-bottom: 10px;
-  opacity: 0.9;
-}
-.sky-check{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  padding: 6px 0;
+.sky-tip-line{
+  font-size: 12px;
+  line-height: 1.25;
   color: rgba(255,255,255,0.78);
-  font-size: 14px;
-}
-.sky-check input{ transform: translateY(1px); }
-
-/* Player */
-.sky-player{
-  width: min(96vw, var(--stage-max));
-  margin: 12px auto 0 auto;
-  padding: 12px;
-  border-radius: 18px;
-  border: 1px solid var(--stroke);
-  background: rgba(0,0,0,0.22);
-}
-.sky-player-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-}
-.sky-player-left{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.sky-player-right{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.sky-player-time{
-  font-size: 18px;
-  color: rgba(255,255,255,0.85);
-  padding-left: 10px;
-}
-.sky-slider{
-  width: 100%;
-  margin: 10px 0 6px 0;
-}
-.sky-player-hint{
-  font-size: 14px;
-  color: rgba(255,255,255,0.55);
+  margin: 3px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* -----------------------
-   Fullscreen mode
-   ----------------------- */
-.sky-stage.is-fs{
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  border-radius: 0;
-  z-index: 9999;
-}
-.sky-stage.is-fs::before{ display:none; }
-.sky-stage.is-fs .sky-mount{ inset: 0; }
-
-/* Keep overlay buttons visible */
-.sky-stage.is-fs .sky-stage-controls{
-  position: fixed;
-  top: 14px;
-  right: 14px;
+.sky-tip-sub{
+  opacity: 0.88;
+  margin-bottom: 2px;
+  color: rgba(210,225,255,0.86);
 }
 
-/* Keep popover visible */
-.sky-stage.is-fs .sky-popover{
-  position: fixed;
-  top: 14px;
-  right: 64px;
+.sky-tip-meta{
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  font-size: 11px;
+  line-height: 1.15;
+  color: rgba(255,255,255,0.60);
+  white-space: nowrap;
 }
 
-/* Player becomes fixed at bottom in fullscreen */
-body.is-sky-fs .sky-player{
-  position: fixed;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
-  width: auto;
-  z-index: 10000;
-}
-
-/* Floating player: always available and does not affect layout */
-.sky-player.is-float{
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 14px;
-  margin: 0;
-  width: min(96vw, var(--stage-max));
-  z-index: 10000;
-}
-
-/* reserve space so floating player doesn't cover bottom content */
-body.has-sky-player{
-  padding-bottom: 120px;
-}
-
-.sky-tooltip{
-  position: fixed;
-  z-index: 20000;
-  pointer-events: none;
-  background: rgba(10,14,22,0.92);
-  border: 1px solid rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.90);
-  padding: 8px 10px;
-  border-radius: 12px;
-  font: 13px system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  max-width: 260px;
-  transform: translate(12px, 12px);
-  display: none;
-}
-
-.sky-canvas{ pointer-events: auto; }
+  .sky-canvas{ pointer-events: auto; }

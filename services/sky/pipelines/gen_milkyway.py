@@ -14,8 +14,8 @@ Idea:
   - Output static JSON used by the widget (no runtime external calls).
 
 Outputs:
-  services/sky/data/milkyway_v1.json
-  sites/staging/sky/data/milkyway_v1.json
+  services/sky/data/generated/milkyway.json
+  sites/staging/sky/data/milkyway.json
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from typing import Dict, List, Tuple
 # -----------------------------
 # CONFIG
 # -----------------------------
-OUT_FILENAME = "milkyway_v1.json"
+OUT_FILENAME = "milkyway.json"
 
 SAMPLE_STEP_DEG = 1.0          # step along galactic longitude l
 BAND_HALF_WIDTH_DEG = 5.0      # band half-width (visual thickness driver in Render too)
@@ -41,7 +41,7 @@ BAND_HALF_WIDTH_DEG = 5.0      # band half-width (visual thickness driver in Ren
 # -> project root is 4 levels up
 # -----------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SERVICES_DATA_DIR = PROJECT_ROOT / "services" / "sky" / "data"
+SERVICES_DATA_DIR = PROJECT_ROOT / "services" / "sky" / "data" / "generated" 
 STAGING_DATA_DIR = PROJECT_ROOT / "sites" / "staging" / "sky" / "data"
 
 

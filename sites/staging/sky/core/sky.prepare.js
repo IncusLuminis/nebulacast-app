@@ -466,5 +466,6 @@ export const Prepare = {
   buildMilkyWay,
   prepareObjects,
   prepareAlerts,
-  buildEquatorialGrid
+  buildEquatorialGrid,
+  buildEqGrid: buildEquatorialGrid
 };
