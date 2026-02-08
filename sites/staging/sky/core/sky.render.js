@@ -35,7 +35,7 @@ function drawHorizon(ctx, vp) {
 function drawGridAz(ctx, vp) {
   ctx.save();
   ctx.setLineDash([]);
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
   ctx.lineWidth = 1;
 
   // altitude circles (stereographic): 0/30/60
@@ -264,6 +264,165 @@ function drawObjects(ctx, vp, objectsPrepared) {
   ctx.restore();
 }
 
+// -----------------------------
+// Sun/Moon layer
+// -----------------------------
+function drawSunMoon(ctx, vp, sunMoonPrepared) {
+  if (!sunMoonPrepared || !sunMoonPrepared.length) return;
+
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  // For Sun/Moon labels use a much lower threshold than stars/objects
+  const LABEL_ALT_MIN_SM = 0; // <- change to 5 if you want "only when higher"
+
+  for (const o of sunMoonPrepared) {
+    if (!o || o.x == null || o.y == null) continue;
+    if (o.visible === false || (typeof o.altDeg === "number" && o.altDeg < 0)) continue;
+
+    const isSun = (o.type === "sun");
+    const isMoon = (o.type === "moon");
+
+    const r = (typeof o.r === "number")
+      ? o.r
+      : (isSun ? 6.0 : 5.2);
+
+    // Outer glow (very soft)
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r + 7.5, 0, Math.PI * 2);
+    ctx.fillStyle = isSun
+      ? "rgba(255,220,140,0.12)"
+      : "rgba(210,230,255,0.08)";
+    ctx.fill();
+
+    // Mid glow
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r + 3.6, 0, Math.PI * 2);
+    ctx.fillStyle = isSun
+      ? "rgba(255,235,170,0.16)"
+      : "rgba(220,240,255,0.10)";
+    ctx.fill();
+
+    // Main disk
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = isSun
+      ? (o.color || "rgba(255,235,185,0.95)")
+      : (o.color || "rgba(220,235,255,0.88)");
+    ctx.fill();
+
+    // -----------------------------
+    // Moon phase overlay
+    // -----------------------------
+    if (isMoon) {
+      // Prefer phase 0..1, fallback to illum_pct 0..100
+      let k = null;
+
+      if (typeof o.phase === "number" && isFinite(o.phase)) {
+        // allow either 0..1 or 0..100 (defensive)
+        k = (o.phase > 1.01) ? (o.phase / 100) : o.phase;
+      } else if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
+        k = o.illum_pct / 100;
+      }
+
+      if (k != null) {
+        k = Math.max(0, Math.min(1, k)); // 0..1
+
+        // shift: 0..2r (new => big shift, full => 0)
+        const shift = (1 - k) * r * 2;
+
+        // waxing => light on RIGHT => shadow on LEFT  => dir = -1
+        // waning => light on LEFT  => shadow on RIGHT => dir = +1
+        const dir = (o.waxing === false) ? +1 : -1;
+
+        ctx.save();
+
+        // clip to lunar disk
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+        ctx.clip();
+
+        // dark overlay disc (shifted)
+        const shadowX = o.x + dir * (shift / 2);
+
+        ctx.beginPath();
+        ctx.arc(shadowX, o.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.68)";
+        ctx.fill();
+
+        ctx.restore();
+
+        // subtle terminator hint
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, r + 0.2, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
+    }
+
+    // Rim
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r + 0.6, 0, Math.PI * 2);
+    ctx.strokeStyle = isSun
+      ? "rgba(255,255,255,0.18)"
+      : "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // -----------------------------
+    // Label (+ Moon phase text)
+    // -----------------------------
+    if (typeof o.altDeg === "number" && o.altDeg >= LABEL_ALT_MIN_SM && o.name) {
+      ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+
+      // text lines
+      const x0 = o.x + 10;
+      const y0 = o.y;
+
+      // Line 1: name
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.strokeText(o.name, x0, y0);
+
+      ctx.fillStyle = isSun
+        ? "rgba(255,245,220,0.78)"
+        : "rgba(230,240,255,0.72)";
+      ctx.fillText(o.name, x0, y0);
+
+      // Line 2: Moon phase percent (optional)
+      if (isMoon) {
+        let pct = null;
+        if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
+          pct = Math.max(0, Math.min(100, o.illum_pct));
+        } else if (typeof o.phase === "number" && isFinite(o.phase)) {
+          const ph = (o.phase > 1.01) ? (o.phase / 100) : o.phase;
+          pct = Math.max(0, Math.min(100, ph * 100));
+        }
+
+        if (pct != null) {
+          const phaseText = `${Math.round(pct)}%${o.waxing === false ? " waning" : " waxing"}`;
+
+          ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+          ctx.lineWidth = 3.2;
+          ctx.strokeStyle = "rgba(0,0,0,0.32)";
+          ctx.strokeText(phaseText, x0, y0 + 14);
+
+          ctx.fillStyle = "rgba(230,240,255,0.58)";
+          ctx.fillText(phaseText, x0, y0 + 14);
+        }
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+
 function drawStars(ctx, vp, starsPrepared) {
   ctx.save();
   ctx.setLineDash([]);
@@ -413,6 +572,7 @@ export const Render = {
   drawMilkyWay,
   drawConstellations,
   drawObjects,
+  drawSunMoon, // +++ add
   drawStars,
   drawAlerts,
   drawGridEq,

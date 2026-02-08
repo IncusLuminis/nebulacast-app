@@ -412,6 +412,143 @@ function prepareAlerts(alertsJson, observer, viewport, options) {
   return filtered;
 }
 
+// -----------------------------
+// Sun/Moon prepared layer from sun_moon.json (frames[])
+// -----------------------------
+function parseHorizonsTUTC(s) {
+  // expects "2026-Feb-08 07:05Z"
+  // returns ms since epoch (UTC) or NaN
+  if (!s || typeof s !== "string") return NaN;
+  const m = s.match(/^(\d{4})-([A-Za-z]{3})-(\d{2})\s+(\d{2}):(\d{2})Z$/);
+  if (!m) return NaN;
+
+  const year = +m[1];
+  const mon3 = m[2];
+  const day = +m[3];
+  const hh = +m[4];
+  const mm = +m[5];
+
+  const monMap = {
+    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+  };
+  const mon = monMap[mon3];
+  if (mon == null) return NaN;
+
+  return Date.UTC(year, mon, day, hh, mm, 0, 0);
+}
+
+function pickNearestFrame(frames, tMs) {
+  if (!Array.isArray(frames) || !frames.length) return null;
+  let best = null;
+  let bestDt = Infinity;
+
+  for (const f of frames) {
+    const ms = parseHorizonsTUTC(f?.t_utc);
+    if (!isFinite(ms)) continue;
+    const dt = Math.abs(ms - tMs);
+    if (dt < bestDt) { bestDt = dt; best = f; }
+  }
+  return best;
+}
+
+function prepareSunMoon(sunMoonJson, observer, viewport) {
+  if (!sunMoonJson || !Array.isArray(sunMoonJson.frames)) return [];
+
+  const latRad = observer.latRad;
+  const lstRad = observer.lstRad;
+
+  const R = viewport.R ?? viewport.r;
+  const tMs = observer?.date ? observer.date.getTime() : Date.now();
+  const frame = pickNearestFrame(sunMoonJson.frames, tMs);
+  if (!frame) return [];
+
+  const out = [];
+
+  // tolerant numeric parser: accepts numbers + numeric strings
+  function num(v) {
+    if (v == null) return null;
+    const n = Number(v);
+    return (typeof n === "number" && isFinite(n)) ? n : null;
+  }
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function pushBody(key, label, color, radiusPx) {
+    const b = frame[key];
+    if (!b) return;
+
+    // RA/Dec are required for our current pipeline (we compute alt/az ourselves)
+    const raDeg = num(b.ra_deg);
+    const decDeg = num(b.dec_deg);
+    if (raDeg == null || decDeg == null) return;
+
+    const raRad = A.deg2rad(raDeg);
+    const decRad = A.deg2rad(decDeg);
+
+    const { altRad, azRad } = A.raDecToAltAz(raRad, decRad, latRad, lstRad);
+
+    const altDeg = A.rad2deg(altRad);
+    const azDeg  = A.rad2deg(azRad);
+
+    // keep in prepared even if below horizon (UI/debug); render can decide
+    const visible = (altRad >= 0);
+
+    const { x, y } = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, R);
+
+    // Moon extras for phase rendering (now expected in JSON)
+    let illum_pct = null;
+    let phase = null;
+    let waxing = null;
+
+    if (key === "moon") {
+      // preferred keys from our generator
+      const illumNum = num(b.illum_pct);
+      if (illumNum != null) illum_pct = clamp(illumNum, 0, 100);
+
+      const phaseNum = num(b.phase);
+      if (phaseNum != null) {
+        // allow either 0..1 or 0..100 just in case
+        phase = (phaseNum > 1.01) ? (phaseNum / 100) : phaseNum;
+        phase = clamp(phase, 0, 1);
+      }
+
+      if (typeof b.waxing === "boolean") waxing = b.waxing;
+
+      // backfill either direction
+      if (phase == null && illum_pct != null) phase = clamp(illum_pct / 100, 0, 1);
+      if (illum_pct == null && phase != null) illum_pct = clamp(phase, 0, 1) * 100;
+    }
+
+    out.push({
+      id: key,                 // "sun" / "moon"
+      type: key,               // to distinguish in UI
+      name: label,             // label text on canvas
+      ra_deg: raDeg,
+      dec_deg: decDeg,
+      mag: (key === "sun") ? -26.74 : null,
+      color: color || null,
+      r: radiusPx,
+      altDeg,
+      azDeg,
+      x, y,
+
+      visible,
+      illum_pct,
+      phase,
+      waxing
+    });
+  }
+
+  // tweak sizes/colors as you like
+  pushBody("sun",  "Sun",  "rgba(255,230,180,0.95)", 6.0);
+  pushBody("moon", "Moon", "rgba(210,230,255,0.85)", 5.2);
+
+  return out;
+}
+
 // Equatorial grid (RA lines + Dec lines), clipped by horizon with breaks
 function buildEquatorialGrid(observer, viewport, options) {
   const latRad = observer.latRad;
@@ -470,5 +607,6 @@ export const Prepare = {
   prepareObjects,
   prepareAlerts,
   buildEquatorialGrid,
-  buildEqGrid: buildEquatorialGrid
+  buildEqGrid: buildEquatorialGrid,
+  prepareSunMoon
 };

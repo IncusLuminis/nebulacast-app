@@ -3,6 +3,7 @@ import { Data } from "./core/sky.data.js";
 import { Layout } from "./core/sky.layout.js";
 import { Prepare } from "./core/sky.prepare.js";
 import { Render } from "./core/sky.render.js";
+import { SkyUI } from "./core/sky.ui.js";
 
 (function () {
   "use strict";
@@ -28,7 +29,7 @@ import { Render } from "./core/sky.render.js";
     return {
       root,
       canvas: root.querySelector("canvas.sky-canvas"),
-      status: root.querySelector('[data-role="status"]')
+      status: root.querySelector('[data-role="status"]'),
     };
   }
 
@@ -46,8 +47,34 @@ import { Render } from "./core/sky.render.js";
   function makeStatusText(observer, starsCount, consLines, mwOn, objCount, alertsCount, gridEqOn) {
     const dt = observer.date;
     const pad2 = (n) => String(n).padStart(2, "0");
-    const stamp = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
-    return `lat ${(observer.latRad * 180 / Math.PI).toFixed(2)}°, lon ${(observer.lonRad * 180 / Math.PI).toFixed(2)}° | ${stamp} | stars ${starsCount} | cons ${consLines}${mwOn ? " | MW" : ""}${(objCount ? " | obj " + objCount : "")}${(alertsCount ? " | alerts " + alertsCount : "")}${gridEqOn ? " | EqGrid" : ""}`;
+    const stamp = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())} ${pad2(
+      dt.getHours()
+    )}:${pad2(dt.getMinutes())}`;
+    return `lat ${(observer.latRad * 180 / Math.PI).toFixed(2)}°, lon ${(observer.lonRad * 180 / Math.PI).toFixed(
+      2
+    )}° | ${stamp} | stars ${starsCount} | cons ${consLines}${mwOn ? " | MW" : ""}${
+      objCount ? " | obj " + objCount : ""
+    }${alertsCount ? " | alerts " + alertsCount : ""}${gridEqOn ? " | EqGrid" : ""}`;
+  }
+
+  // Mouse position in CSS pixels relative to canvas box
+  function getMousePosCSS(canvasEl, ev) {
+    const r = canvasEl.getBoundingClientRect();
+    return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+  }
+
+  // Build a SkyUI hit object from prepared item
+  function toUIHit(preparedItem) {
+    if (!preparedItem) return null;
+
+    // prefer explicit kind, else infer
+    let kind = preparedItem.kind;
+    if (!kind) {
+      if (preparedItem.title || preparedItem.severity != null) kind = "alert";
+      else if (preparedItem.type && preparedItem.name) kind = "object";
+      else kind = "star";
+    }
+    return { kind, data: preparedItem };
   }
 
   async function init(userCfg) {
@@ -58,115 +85,11 @@ import { Render } from "./core/sky.render.js";
     let ctx, viewport;
     ({ ctx, viewport } = Layout.setupCanvas(canvas, mount));
 
-    // --- Tooltip (lives inside widget root so it works in Fullscreen) ---
-    let tooltipEl = null;
-
-    const _esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
-      c === "&" ? "&amp;" :
-      c === "<" ? "&lt;" :
-      c === ">" ? "&gt;" :
-      c === '"' ? "&quot;" : "&#39;"
-    ));
-
-    const _fmtDeg = (v) => (typeof v === "number" && isFinite(v)) ? `${v.toFixed(0)}°` : "—";
-
-    function ensureTooltipEl() {
-      if (tooltipEl) return tooltipEl;
-      tooltipEl = document.createElement("div");
-      tooltipEl.className = "sky-tip";
-      Object.assign(tooltipEl.style, {
-        position: "absolute",
-        display: "none",
-        zIndex: "60",
-        maxWidth: "280px",
-        padding: "8px 10px",
-        borderRadius: "10px",
-        background: "rgba(0,0,0,0.60)",
-        border: "1px solid rgba(255,255,255,0.14)",
-        color: "rgba(255,255,255,0.90)",
-        font: "12px system-ui, -apple-system, Segoe UI, Roboto, Arial",
-        pointerEvents: "none",
-        backdropFilter: "blur(6px)",
-      });
-      root.appendChild(tooltipEl);
-      return tooltipEl;
-    }
-
-    function tooltipHTML(t) {
-      const kind = t?.kind || "item";
-
-      if (kind === "object") {
-        const title = (t.name && t.name.trim()) ? t.name.trim() : "Object";
-        const mag = (typeof t.mag === "number" && isFinite(t.mag)) ? t.mag.toFixed(1) : "—";
-        const sub = `${_esc(t.type || "obj")} • mag ${mag}`;
-        const meta = `alt ${_fmtDeg(t.altDeg)}${t.azDeg != null ? " • az " + _fmtDeg(t.azDeg) : ""}`;
-        return `<div class="sky-tip-title">${_esc(title)}</div><div class="sky-tip-sub">${sub}</div><div class="sky-tip-meta">${meta}</div>`;
-      }
-
-      if (kind === "alert") {
-        const title = t.title || "Alert";
-        const lvl = (t.level || "amateur").toLowerCase();
-        const sub = `${_esc(lvl)} • severity ${_esc(t.severity ?? "?")}`;
-        const meta = `alt ${_fmtDeg(t.altDeg)}${t.azDeg != null ? " • az " + _fmtDeg(t.azDeg) : ""}`;
-        return `<div class="sky-tip-title">${_esc(title)}</div><div class="sky-tip-sub">${sub}</div><div class="sky-tip-meta">${meta}</div>`;
-      }
-
-      // star (default)
-      const title = (t.name && t.name.trim()) ? t.name.trim()
-        : (t.designation && t.designation.trim()) ? t.designation.trim()
-        : (t.hip ? `HIP ${t.hip}` : (t.id ?? "Star"));
-
-      const mag = (typeof t.mag === "number" && isFinite(t.mag)) ? t.mag.toFixed(2) : "—";
-
-      const subParts = [];
-      if (t.name && t.name.trim() && t.designation && t.designation.trim()) subParts.push(t.designation.trim());
-      subParts.push(`mag ${mag}`);
-
-      const meta = `alt ${_fmtDeg(t.altDeg)}${t.azDeg != null ? " • az " + _fmtDeg(t.azDeg) : ""}`;
-
-      return `<div class="sky-tip-title">${_esc(title)}</div><div class="sky-tip-sub">${_esc(subParts.join(" • "))}</div><div class="sky-tip-meta">${meta}</div>`;
-    }
-
-    function showTip(hit, ev) {
-      const el = ensureTooltipEl();
-      if (!hit) { hideTip(); return; }
-
-      el.innerHTML = tooltipHTML(hit);
-      el.style.display = "block";
-
-      const rootRect = root.getBoundingClientRect();
-      const x0 = ev.clientX - rootRect.left;
-      const y0 = ev.clientY - rootRect.top;
-
-      const tw = el.offsetWidth || 260;
-      const th = el.offsetHeight || 90;
-
-      const margin = 10;
-      const off = 14;
-
-      let x = x0 + off;
-      let y = y0 + off;
-
-      const maxX = rootRect.width - margin - tw;
-      const maxY = rootRect.height - margin - th;
-
-      x = Math.max(margin, Math.min(maxX, x));
-      y = Math.max(margin, Math.min(maxY, y));
-
-      el.style.left = Math.round(x) + "px";
-      el.style.top = Math.round(y) + "px";
-    }
-
-    function hideTip() {
-      if (!tooltipEl) return;
-      tooltipEl.style.display = "none";
-    }
-
-    // Mouse position in CSS pixels relative to canvas box
-    function getMousePosCSS(canvasEl, ev) {
-      const r = canvasEl.getBoundingClientRect();
-      return { x: ev.clientX - r.left, y: ev.clientY - r.top };
-    }
+    // --- UI: Tooltip + Modal live ONLY through SkyUI ---
+    const tooltipEl = document.createElement("div");
+    root.appendChild(tooltipEl);
+    const tooltip = SkyUI.createTooltip(root, tooltipEl);
+    const modal = SkyUI.createModal(root);
 
     let starCatalog = null;
     let constellations = null;
@@ -205,7 +128,9 @@ import { Render } from "./core/sky.render.js";
     function recomputeAll() {
       observer = Prepare.makeObserver(cfg);
 
+      // Prepared arrays (keep as-is; we wrap them for UI when needed)
       starsPrepared = Prepare.prepareStars(starCatalog, observer, viewport, cfg.options || {});
+
       consPrepared = cfg.options.showConstellations
         ? Prepare.prepareConstellations(constellations, starCatalog, observer, viewport, cfg.options || {})
         : { lines: [], labels: [] };
@@ -214,22 +139,21 @@ import { Render } from "./core/sky.render.js";
       equatorPts = cfg.options.showEquator ? Prepare.buildEquatorPolyline(observer, viewport) : [];
       eclipticPts = cfg.options.showEcliptic ? Prepare.buildEclipticPolyline(observer, viewport) : [];
 
-      mwPrepared = (cfg.options.showMilkyWay && milkyway)
-        ? Prepare.buildMilkyWay(observer, viewport, milkyway)
-        : null;
+      mwPrepared =
+        cfg.options.showMilkyWay && milkyway ? Prepare.buildMilkyWay(observer, viewport, milkyway) : null;
 
-      objectsPrepared = (cfg.options.showObjects && objectsToday)
-        ? Prepare.prepareObjects(objectsToday, observer, viewport, cfg.options || {})
-        : [];
+      objectsPrepared =
+        cfg.options.showObjects && objectsToday ? Prepare.prepareObjects(objectsToday, observer, viewport, cfg.options || {}) : [];
 
-      alertsPrepared = (cfg.options.showAlerts && alertsToday)
-        ? Prepare.prepareAlerts(alertsToday, observer, viewport, cfg.options || {})
-        : [];
+      alertsPrepared =
+        cfg.options.showAlerts && alertsToday ? Prepare.prepareAlerts(alertsToday, observer, viewport, cfg.options || {}) : [];
 
-      // Eq grid optional
-      eqGridPrepared = (cfg.options.showGridEq && typeof Prepare.buildEqGrid === "function")
-        ? Prepare.buildEqGrid(observer, viewport, cfg.options?.eqGrid)
-        : null;
+      // Eq grid optional:
+      // IMPORTANT: builder expects options.eqGrid.* (so pass cfg.options, not cfg.options.eqGrid)
+      eqGridPrepared =
+        cfg.options.showGridEq && typeof Prepare.buildEqGrid === "function"
+          ? Prepare.buildEqGrid(observer, viewport, cfg.options || {})
+          : null;
     }
 
     function render() {
@@ -288,21 +212,20 @@ import { Render } from "./core/sky.render.js";
       render();
     }
 
-    // --- Hover/Click interactions (tooltip + pin)
+    // --- Hover/Click interactions ---
     let hoverTarget = null;
-    let pinnedTarget = null;
-    let pinnedPos = null;
 
     function hitRadiusForItem(t) {
       if (!t) return 6;
-      if (t.kind === "star") return 8;
-      if (t.kind === "object") return 9;
-      if (t.kind === "alert") return 10;
+      const k = t.kind || (t.title ? "alert" : (t.type && t.name ? "object" : "star"));
+      if (k === "star") return 8;
+      if (k === "object") return 9;
+      if (k === "alert") return 10;
       return 7;
     }
 
     function hitTest(cx, cy) {
-      // search priority: pinned? objects/alerts then stars
+      // priority: alerts > objects > stars
       const list = []
         .concat(alertsPrepared || [])
         .concat(objectsPrepared || [])
@@ -329,56 +252,55 @@ import { Render } from "./core/sky.render.js";
       if (!canvas || canvas.__skyBound) return;
       canvas.__skyBound = true;
 
+      // Hover tooltip
       canvas.addEventListener("mousemove", (ev) => {
         const p = getMousePosCSS(canvas, ev);
         const t = hitTest(p.x, p.y);
 
-        if (pinnedTarget) {
-          return; // keep pinned tooltip in place
-        }
-
         if (t !== hoverTarget) hoverTarget = t;
-        if (t) showTip(t, ev); else hideTip();
+
+        if (t) {
+          const rootRect = root.getBoundingClientRect();
+          const x = ev.clientX - rootRect.left;
+          const y = ev.clientY - rootRect.top;
+          tooltip.show(x, y, SkyUI.tooltipHTML(toUIHit(t)));
+        } else {
+          tooltip.hide();
+        }
       });
 
       canvas.addEventListener("mouseleave", () => {
         hoverTarget = null;
-        if (!pinnedTarget) hideTip();
+        tooltip.hide();
       });
 
+      // Click => open modal (same content as tooltip for now)
       canvas.addEventListener("click", (ev) => {
         const p = getMousePosCSS(canvas, ev);
         const t = hitTest(p.x, p.y);
 
-        // toggle pin: click on same target unpins
-        if (pinnedTarget && t && pinnedTarget === t) {
-          pinnedTarget = null;
-          pinnedPos = null;
-          hideTip();
-          return;
-        }
-
         if (t) {
-          pinnedTarget = t;
-          pinnedPos = { clientX: ev.clientX, clientY: ev.clientY };
-          showTip(t, ev);
-        } else {
-          // click on empty space -> clear pin
-          pinnedTarget = null;
-          pinnedPos = null;
-          hideTip();
+          tooltip.hide(); // avoid overlap
+          modal.showFromHit(toUIHit(t));
         }
       });
 
-      // Touch: simple tap-to-pin
-      canvas.addEventListener("touchstart", (ev) => {
-        if (!ev.touches || !ev.touches.length) return;
-        const t0 = ev.touches[0];
-        const fakeEv = { clientX: t0.clientX, clientY: t0.clientY };
-        const p = getMousePosCSS(canvas, fakeEv);
-        const touchTarget = hitTest(p.x, p.y);
-        if (touchTarget) showTip(touchTarget, fakeEv);
-      }, { passive: true });
+      // Touch => tap opens modal (simple)
+      canvas.addEventListener(
+        "touchstart",
+        (ev) => {
+          if (!ev.touches || !ev.touches.length) return;
+          const t0 = ev.touches[0];
+          const fakeEv = { clientX: t0.clientX, clientY: t0.clientY };
+          const p = getMousePosCSS(canvas, fakeEv);
+          const t = hitTest(p.x, p.y);
+          if (t) {
+            tooltip.hide();
+            modal.showFromHit(toUIHit(t));
+          }
+        },
+        { passive: true }
+      );
     }
 
     const ro = new ResizeObserver(() => resize());
@@ -393,12 +315,14 @@ import { Render } from "./core/sky.render.js";
 
   function makeHandle(parts) {
     return {
-      update: parts.update || function () { },
-      resize: parts.resize || function () { },
+      update: parts.update || function () {},
+      resize: parts.resize || function () {},
       destroy: function () {
-        try { parts.ro && parts.ro.disconnect(); } catch (_) { }
+        try {
+          parts.ro && parts.ro.disconnect();
+        } catch (_) {}
         if (parts.root && parts.root.parentNode) parts.root.parentNode.removeChild(parts.root);
-      }
+      },
     };
   }
 
@@ -406,7 +330,7 @@ import { Render } from "./core/sky.render.js";
   // Bootstrap (robust against script order / async module loading)
   // ------------------------------------------------------------------
   function getCfgNow() {
-    return (typeof window !== "undefined" && window.SKY_CONFIG) ? window.SKY_CONFIG : null;
+    return typeof window !== "undefined" && window.SKY_CONFIG ? window.SKY_CONFIG : null;
   }
 
   function bootWhenReady() {
@@ -415,8 +339,12 @@ import { Render } from "./core/sky.render.js";
     // if config is ready -> init immediately
     if (cfg && cfg.mountId) {
       init(cfg)
-        .then((handle) => { window.__skyWidget = handle; })
-        .catch((err) => { console.error("SKY init failed:", err); });
+        .then((handle) => {
+          window.__skyWidget = handle;
+        })
+        .catch((err) => {
+          console.error("SKY init failed:", err);
+        });
       return;
     }
 
@@ -429,19 +357,25 @@ import { Render } from "./core/sky.render.js";
       if (c && c.mountId) {
         clearInterval(timer);
         init(c)
-          .then((handle) => { window.__skyWidget = handle; })
-          .catch((err) => { console.error("SKY init failed:", err); });
+          .then((handle) => {
+            window.__skyWidget = handle;
+          })
+          .catch((err) => {
+            console.error("SKY init failed:", err);
+          });
         return;
       }
 
       if (Date.now() - startedAt > timeoutMs) {
         clearInterval(timer);
-        console.error("SKY init failed: SKY_CONFIG.mountId is required (e.g. 'skyMount').",
-          "Current SKY_CONFIG:", c);
+        console.error(
+          "SKY init failed: SKY_CONFIG.mountId is required (e.g. 'skyMount').",
+          "Current SKY_CONFIG:",
+          c
+        );
       }
     }, 50);
   }
 
   bootWhenReady();
-
 })();
