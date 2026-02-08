@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Nebulacast — Weather</title>
+
   <link rel="stylesheet" href="./assets/weather.css">
   <link rel="stylesheet" href="./widgets/location/location.css">
   <link rel="stylesheet" href="./widgets/controls/controls.css">
@@ -17,22 +18,28 @@
     <main>
       <!-- Location widget (always visible) -->
       <div id="w-location" class="widget-container"></div>
-      
+
       <!-- Controls: Profile + Time range (below Location) -->
       <div id="w-controls" class="widget-container"></div>
-      
-      <!-- Tabs for Weather/Map/Astro -->
+
+      <!-- Tabs for Weather/Map/Astro/Sky -->
       <div class="widget-tabs">
         <button class="widget-tab active" data-tab="weather">Weather</button>
-        <button class="widget-tab" data-tab="sun">Sun</button>
-        <button class="widget-tab" data-tab="astro">Astro</button>
         <button class="widget-tab" data-tab="map">Map</button>
+        <button class="widget-tab" data-tab="sun">Sun</button>
+        <button class="widget-tab" data-tab="sky">Sky</button>
       </div>
-      
+
       <!-- Tab content containers -->
       <div id="w-weather" class="widget-container widget-tab-content active"></div>
       <div id="w-sun" class="widget-container widget-tab-content"></div>
       <div id="w-astro" class="widget-container widget-tab-content"></div>
+
+      <!-- SKY tab content: mount point -->
+      <div id="w-sky" class="widget-container widget-tab-content">
+        <div id="skyMount"></div>
+      </div>
+
       <div id="w-map" class="widget-container widget-tab-content"></div>
     </main>
   </div>
@@ -116,7 +123,7 @@
     </div>
   </div>
 
-  <!-- Sun/Moon calculations -->
+  <!-- Sun/Moon calculations for weather widget -->
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
 
   <script type="module">
@@ -129,25 +136,17 @@
     import { mountAstro } from "./widgets/astro/astro.js";
 
     // Create store API object
-    const storeApi = {
-      getState,
-      setState,
-      subscribe
-    };
+    const storeApi = { getState, setState, subscribe };
 
     // Initialize state from URL
     initState();
 
     // Mount location widget (always visible)
     const locationEl = document.getElementById("w-location");
-    if (locationEl) {
-      mountLocation(locationEl, storeApi);
-    }
+    if (locationEl) mountLocation(locationEl, storeApi);
 
     const controlsEl = document.getElementById("w-controls");
-    if (controlsEl) {
-      mountControls(controlsEl, storeApi);
-    }
+    if (controlsEl) mountControls(controlsEl, storeApi);
 
     // Mount tab widgets
     const weatherEl = document.getElementById("w-weather");
@@ -155,33 +154,162 @@
     const mapEl = document.getElementById("w-map");
     const astroEl = document.getElementById("w-astro");
 
-    if (weatherEl) {
-      mountWeather(weatherEl, storeApi);
+    if (weatherEl) mountWeather(weatherEl, storeApi);
+    if (sunEl) mountSunMoon(sunEl, storeApi);
+    if (mapEl) mountMap(mapEl, storeApi);
+    if (astroEl) mountAstro(astroEl, storeApi);
+
+    // ------------------------------
+    // SKY (lazy init + bind to state)
+    // ------------------------------
+    let skyInited = false;
+
+    function clampMs(t, a, b) { return Math.max(a, Math.min(b, t)); }
+
+    function pickLatLonFromState(s) {
+      // tolerant to your store shape
+      const lat =
+        s?.location?.lat ??
+        s?.loc?.lat ??
+        s?.coords?.lat ??
+        s?.geo?.lat ??
+        null;
+
+      const lon =
+        s?.location?.lon ??
+        s?.location?.lng ??
+        s?.loc?.lon ??
+        s?.loc?.lng ??
+        s?.coords?.lon ??
+        s?.coords?.lng ??
+        s?.geo?.lon ??
+        s?.geo?.lng ??
+        null;
+
+      return {
+        lat: (typeof lat === "number" && isFinite(lat)) ? lat : null,
+        lon: (typeof lon === "number" && isFinite(lon)) ? lon : null
+      };
     }
 
-    if (sunEl) {
-      mountSunMoon(sunEl, storeApi);
+    function pickDatetimeISOFromState(s) {
+      const v =
+        s?.time?.datetimeISO ??
+        s?.time?.iso ??
+        s?.time?.selectedISO ??
+        s?.controls?.datetimeISO ??
+        s?.controls?.iso ??
+        s?.selectedTimeISO ??
+        null;
+
+      if (typeof v === "string" && v.trim()) return v.trim();
+      return null;
     }
 
-    if (mapEl) {
-      mountMap(mapEl, storeApi);
-    }
-    if (astroEl) {
-      mountAstro(astroEl, storeApi);
+    async function initSkyIfNeeded() {
+      if (skyInited) return;
+      skyInited = true;
+
+      // load Sky CSS only when needed
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "/sky/assets/sky.css";
+      document.head.appendChild(css);
+
+      const state = getState();
+      const { lat, lon } = pickLatLonFromState(state);
+
+      // allow only [now .. now+7d]
+      const now = Date.now();
+      const max = now + 7 * 24 * 60 * 60 * 1000;
+
+      let dtISO = pickDatetimeISOFromState(state);
+      if (dtISO) {
+        const t = Date.parse(dtISO);
+        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
+        else dtISO = null;
+      }
+
+      // IMPORTANT: SKY_CONFIG must exist BEFORE importing /sky/widget.js
+      window.SKY_CONFIG = {
+        baseUrl: "/sky",
+        mountId: "skyMount",
+        lat: (lat != null ? lat : 52.2297),
+        lon: (lon != null ? lon : 21.0122),
+        datetimeISO: dtISO,
+        options: {
+          showSunMoon: true,
+          showMilkyWay: true,
+          showGridEq: true,
+          showConstellations: true,
+          showObjects: true,
+          showAlerts: true
+        }
+      };
+
+      // import the widget module (it will bootstrap itself)
+      await import("/sky/widget.js");
+
+      // ensure correct sizing after first mount
+      setTimeout(() => {
+        try { window.__skyWidget?.resize?.(); } catch (_) {}
+      }, 0);
     }
 
-    // Tab switching logic
+    function syncSkyFromState() {
+      if (!window.__skyWidget || typeof window.__skyWidget.update !== "function") return;
+
+      const s = getState();
+      const { lat, lon } = pickLatLonFromState(s);
+
+      const now = Date.now();
+      const max = now + 7 * 24 * 60 * 60 * 1000;
+
+      let dtISO = pickDatetimeISOFromState(s);
+      if (dtISO) {
+        const t = Date.parse(dtISO);
+        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
+        else dtISO = null;
+      }
+
+      const patch = {};
+      if (lat != null) patch.lat = lat;
+      if (lon != null) patch.lon = lon;
+      patch.datetimeISO = dtISO; // can be null
+
+      try { window.__skyWidget.update(patch); } catch (_) {}
+    }
+
+    // subscribe to store changes -> update Sky when location/time changes
+    subscribe(() => {
+      if (!skyInited) return;
+      syncSkyFromState();
+    });
+
+    // ----------------
+    // Tab switching
+    // ----------------
     const tabs = document.querySelectorAll(".widget-tab");
     const tabContents = document.querySelectorAll(".widget-tab-content");
-    
+
     tabs.forEach(tab => {
       tab.addEventListener("click", () => {
         const targetTab = tab.dataset.tab;
-        
+
+        // Lazy init Sky on first open
+        if (targetTab === "sky") {
+          initSkyIfNeeded().then(() => {
+            syncSkyFromState();
+            setTimeout(() => {
+              try { window.__skyWidget?.resize?.(); } catch (_) {}
+            }, 0);
+          });
+        }
+
         // Update active tab
         tabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
-        
+
         // Show/hide content
         tabContents.forEach(content => {
           const isTarget = content.id === `w-${targetTab}`;
@@ -192,7 +320,7 @@
 
     // Initial render for all widgets (they subscribe to state changes)
     const initialState = getState();
-    // Widgets will render automatically via their subscriptions
+    void initialState;
   </script>
 </body>
 </html>

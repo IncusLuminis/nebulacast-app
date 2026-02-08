@@ -1,3 +1,4 @@
+// widget.js
 import { DEFAULTS } from "./core/sky.constants.js";
 import { Data } from "./core/sky.data.js";
 import { Layout } from "./core/sky.layout.js";
@@ -26,11 +27,37 @@ import { SkyUI } from "./core/sky.ui.js";
       <div class="sky-status" data-role="status">Loading…</div>
     `;
     container.appendChild(root);
-    return {
-      root,
-      canvas: root.querySelector("canvas.sky-canvas"),
-      status: root.querySelector('[data-role="status"]'),
-    };
+
+    const wrap = root.querySelector(".sky-canvas-wrap");
+    const canvas = root.querySelector("canvas.sky-canvas");
+    const status = root.querySelector('[data-role="status"]');
+
+    // IMPORTANT: root must fully fill mount, overlays position relative to root
+    root.style.position = "relative";
+    root.style.width = "100%";
+    root.style.height = "100%";
+    root.style.overflow = "visible";
+
+    // wrap is the drawing box: also fill
+    wrap.style.position = "relative";
+    wrap.style.width = "100%";
+    wrap.style.height = "100%";
+    wrap.style.overflow = "visible";
+
+    // canvas fills wrap
+    canvas.style.display = "block";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+
+    // status is overlay; do not affect layout
+    status.style.position = "absolute";
+    status.style.left = "10px";
+    status.style.right = "10px";
+    status.style.bottom = "10px";
+    status.style.zIndex = "5";
+    status.style.pointerEvents = "none";
+
+    return { root, wrap, canvas, status };
   }
 
   function resolveMount(cfg) {
@@ -44,17 +71,31 @@ import { SkyUI } from "./core/sky.ui.js";
     return el;
   }
 
-  function makeStatusText(observer, starsCount, consLines, mwOn, objCount, alertsCount, gridEqOn, sunMoonOn) {
+  function makeStatusText(
+    observer,
+    starsCount,
+    consLines,
+    mwOn,
+    objCount,
+    alertsCount,
+    gridEqOn,
+    sunMoonOn,
+    planetsOn
+  ) {
     const dt = observer.date;
     const pad2 = (n) => String(n).padStart(2, "0");
     const stamp = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())} ${pad2(
       dt.getHours()
     )}:${pad2(dt.getMinutes())}`;
-    return `lat ${(observer.latRad * 180 / Math.PI).toFixed(2)}°, lon ${(observer.lonRad * 180 / Math.PI).toFixed(
-      2
-    )}° | ${stamp} | stars ${starsCount} | cons ${consLines}${mwOn ? " | MW" : ""}${
+
+    return `lat ${((observer.latRad * 180) / Math.PI).toFixed(2)}°, lon ${(
+      (observer.lonRad * 180) /
+      Math.PI
+    ).toFixed(2)}° | ${stamp} | stars ${starsCount} | cons ${consLines}${mwOn ? " | MW" : ""}${
       objCount ? " | obj " + objCount : ""
-    }${alertsCount ? " | alerts " + alertsCount : ""}${gridEqOn ? " | EqGrid" : ""}${sunMoonOn ? " | SunMoon" : ""}`;
+    }${alertsCount ? " | alerts " + alertsCount : ""}${gridEqOn ? " | EqGrid" : ""}${
+      sunMoonOn ? " | SunMoon" : ""
+    }${planetsOn ? " | Planets" : ""}`;
   }
 
   // Mouse position in CSS pixels relative to canvas box
@@ -67,22 +108,28 @@ import { SkyUI } from "./core/sky.ui.js";
   function toUIHit(preparedItem) {
     if (!preparedItem) return null;
 
-    // prefer explicit kind, else infer
     let kind = preparedItem.kind;
     if (!kind) {
-      // Sun/Moon are "object" kind for UI templates
-      if (preparedItem.type === "sun" || preparedItem.type === "moon") kind = "object";
+      // Sun/Moon/Planets as "object" kind for UI templates
+      if (
+        preparedItem.type === "sun" ||
+        preparedItem.type === "moon" ||
+        preparedItem.type === "planet"
+      ) kind = "object";
       else if (preparedItem.title || preparedItem.severity != null) kind = "alert";
       else if (preparedItem.type && preparedItem.name) kind = "object";
       else kind = "star";
     }
 
-    // do NOT rename any existing fields; just pass through
-    // (optional: add subtype for UI if it wants to show special formatting)
+    // pass-through (no renames)
     const data = preparedItem;
+
+    // additive subtypes (safe)
     if ((preparedItem.type === "sun" || preparedItem.type === "moon") && data && data.subtype == null) {
-      // safe, additive
       data.subtype = preparedItem.type;
+    }
+    if (preparedItem.type === "planet" && data && data.subtype == null) {
+      data.subtype = "planet";
     }
 
     return { kind, data };
@@ -91,12 +138,12 @@ import { SkyUI } from "./core/sky.ui.js";
   async function init(userCfg) {
     const cfg = deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), userCfg || {});
     const mount = resolveMount(cfg);
-    const { root, canvas, status } = makeRoot(mount);
+    const { root, wrap, canvas, status } = makeRoot(mount);
 
     let ctx, viewport;
     ({ ctx, viewport } = Layout.setupCanvas(canvas, mount));
 
-    // --- UI: Tooltip + Modal live ONLY through SkyUI ---
+    // UI
     const tooltipEl = document.createElement("div");
     root.appendChild(tooltipEl);
     const tooltip = SkyUI.createTooltip(root, tooltipEl);
@@ -107,7 +154,10 @@ import { SkyUI } from "./core/sky.ui.js";
     let milkyway = null;
     let objectsToday = null;
     let alertsToday = null;
-    let sunMoon = null; // +++ add
+    let sunMoon = null;
+
+    // +++ PLANETS
+    let planets = null;
 
     try {
       status.textContent = "Loading stars…";
@@ -126,11 +176,13 @@ import { SkyUI } from "./core/sky.ui.js";
       alertsToday = await Data.loadAlertsToday(cfg.baseUrl);
 
       status.textContent = "Loading Sun/Moon…";
-      if (typeof Data.loadSunMoon === "function") {
-        sunMoon = await Data.loadSunMoon(cfg.baseUrl);
-      } else {
-        sunMoon = null;
-      }
+      if (typeof Data.loadSunMoon === "function") sunMoon = await Data.loadSunMoon(cfg.baseUrl);
+      else sunMoon = null;
+
+      // +++ PLANETS
+      status.textContent = "Loading planets…";
+      if (typeof Data.loadPlanets === "function") planets = await Data.loadPlanets(cfg.baseUrl);
+      else planets = null;
     } catch (e) {
       console.error(e);
       status.textContent = "Failed to load sky data";
@@ -143,12 +195,14 @@ import { SkyUI } from "./core/sky.ui.js";
     let objectsPrepared = [];
     let alertsPrepared = [];
     let eqGridPrepared = null;
-    let sunMoonPrepared = []; // +++ add
+    let sunMoonPrepared = [];
+
+    // +++ PLANETS
+    let planetsPrepared = [];
 
     function recomputeAll() {
       observer = Prepare.makeObserver(cfg);
 
-      // Prepared arrays (keep as-is; we wrap them for UI when needed)
       starsPrepared = Prepare.prepareStars(starCatalog, observer, viewport, cfg.options || {});
 
       consPrepared = cfg.options.showConstellations
@@ -163,23 +217,31 @@ import { SkyUI } from "./core/sky.ui.js";
         cfg.options.showMilkyWay && milkyway ? Prepare.buildMilkyWay(observer, viewport, milkyway) : null;
 
       objectsPrepared =
-        cfg.options.showObjects && objectsToday ? Prepare.prepareObjects(objectsToday, observer, viewport, cfg.options || {}) : [];
+        cfg.options.showObjects && objectsToday
+          ? Prepare.prepareObjects(objectsToday, observer, viewport, cfg.options || {})
+          : [];
 
       alertsPrepared =
-        cfg.options.showAlerts && alertsToday ? Prepare.prepareAlerts(alertsToday, observer, viewport, cfg.options || {}) : [];
+        cfg.options.showAlerts && alertsToday
+          ? Prepare.prepareAlerts(alertsToday, observer, viewport, cfg.options || {})
+          : [];
 
-      // Eq grid optional:
-      // IMPORTANT: builder expects options.eqGrid.* (so pass cfg.options, not cfg.options.eqGrid)
       eqGridPrepared =
         cfg.options.showGridEq && typeof Prepare.buildEqGrid === "function"
           ? Prepare.buildEqGrid(observer, viewport, cfg.options || {})
           : null;
 
-      // Sun/Moon layer (enabled by default unless explicitly disabled)
-      const showSunMoon = (cfg.options && cfg.options.showSunMoon === false) ? false : true;
+      const showSunMoon = cfg.options && cfg.options.showSunMoon === false ? false : true;
       sunMoonPrepared =
         showSunMoon && sunMoon && typeof Prepare.prepareSunMoon === "function"
           ? Prepare.prepareSunMoon(sunMoon, observer, viewport)
+          : [];
+
+      // +++ PLANETS (enabled by default unless explicitly disabled)
+      const showPlanets = cfg.options && cfg.options.showPlanets === false ? false : true;
+      planetsPrepared =
+        showPlanets && planets && typeof Prepare.preparePlanets === "function"
+          ? Prepare.preparePlanets(planets, observer, viewport)
           : [];
     }
 
@@ -187,7 +249,6 @@ import { SkyUI } from "./core/sky.ui.js";
       Render.clear(ctx, viewport);
       Render.drawBackground(ctx, viewport);
 
-      // clip to horizon circle
       ctx.save();
       ctx.beginPath();
       ctx.arc(viewport.cx, viewport.cy, viewport.R, 0, Math.PI * 2);
@@ -207,20 +268,23 @@ import { SkyUI } from "./core/sky.ui.js";
 
       if (cfg.options?.showAlerts && alertsPrepared.length) Render.drawAlerts(ctx, viewport, alertsPrepared);
 
-      // Sun/Moon (draw as separate layer; fallback to drawObjects if no dedicated renderer)
+      // Sun/Moon layer
       if (sunMoonPrepared && sunMoonPrepared.length) {
-        if (typeof Render.drawSunMoon === "function") {
-          Render.drawSunMoon(ctx, viewport, sunMoonPrepared);
-        } else if (typeof Render.drawObjects === "function") {
-          Render.drawObjects(ctx, viewport, sunMoonPrepared);
-        }
+        if (typeof Render.drawSunMoon === "function") Render.drawSunMoon(ctx, viewport, sunMoonPrepared);
+        else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, sunMoonPrepared);
+      }
+
+      // +++ PLANETS layer
+      if (planetsPrepared && planetsPrepared.length) {
+        if (typeof Render.drawPlanets === "function") Render.drawPlanets(ctx, viewport, planetsPrepared);
+        else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, planetsPrepared);
       }
 
       if (cfg.options?.showObjects && objectsPrepared.length) Render.drawObjects(ctx, viewport, objectsPrepared);
 
       Render.drawStars(ctx, viewport, starsPrepared);
 
-      ctx.restore(); // end clip
+      ctx.restore();
 
       Render.drawHorizon(ctx, viewport);
       Render.drawCardinals(ctx, viewport);
@@ -233,11 +297,15 @@ import { SkyUI } from "./core/sky.ui.js";
         objectsPrepared.length,
         alertsPrepared.length,
         !!eqGridPrepared,
-        !!(sunMoonPrepared && sunMoonPrepared.length)
+        !!(sunMoonPrepared && sunMoonPrepared.length),
+        !!(planetsPrepared && planetsPrepared.length)
       );
     }
 
     function resize() {
+      const r = mount.getBoundingClientRect();
+      if (!r || r.width < 2 || r.height < 2) return;
+
       ({ ctx, viewport } = Layout.setupCanvas(canvas, mount));
       recomputeAll();
       render();
@@ -249,17 +317,19 @@ import { SkyUI } from "./core/sky.ui.js";
       render();
     }
 
-    // --- Hover/Click interactions ---
+    // Hover/Click interactions
     let hoverTarget = null;
 
     function hitRadiusForItem(t) {
       if (!t) return 6;
 
-      // Sun/Moon: slightly easier to hit (do NOT depend on inferred k)
       if (t.type === "sun") return 14;
       if (t.type === "moon") return 13;
 
-      const k = t.kind || (t.title ? "alert" : (t.type && t.name ? "object" : "star"));
+      // +++ PLANETS
+      if (t.type === "planet") return 12;
+
+      const k = t.kind || (t.title ? "alert" : t.type && t.name ? "object" : "star");
       if (k === "star") return 8;
       if (k === "object") return 9;
       if (k === "alert") return 10;
@@ -267,10 +337,11 @@ import { SkyUI } from "./core/sky.ui.js";
     }
 
     function hitTest(cx, cy) {
-      // priority: alerts > sun/moon > objects > stars
+      // priority: alerts > sun/moon > planets > objects > stars
       const list = []
         .concat(alertsPrepared || [])
         .concat(sunMoonPrepared || [])
+        .concat(planetsPrepared || [])
         .concat(objectsPrepared || [])
         .concat(starsPrepared || []);
 
@@ -295,11 +366,9 @@ import { SkyUI } from "./core/sky.ui.js";
       if (!canvas || canvas.__skyBound) return;
       canvas.__skyBound = true;
 
-      // Hover tooltip
       canvas.addEventListener("mousemove", (ev) => {
         const p = getMousePosCSS(canvas, ev);
         const t = hitTest(p.x, p.y);
-
         if (t !== hoverTarget) hoverTarget = t;
 
         if (t) {
@@ -317,18 +386,15 @@ import { SkyUI } from "./core/sky.ui.js";
         tooltip.hide();
       });
 
-      // Click => open modal (same content as tooltip for now)
       canvas.addEventListener("click", (ev) => {
         const p = getMousePosCSS(canvas, ev);
         const t = hitTest(p.x, p.y);
-
         if (t) {
-          tooltip.hide(); // avoid overlap
+          tooltip.hide();
           modal.showFromHit(toUIHit(t));
         }
       });
 
-      // Touch => tap opens modal (simple)
       canvas.addEventListener(
         "touchstart",
         (ev) => {
@@ -346,14 +412,20 @@ import { SkyUI } from "./core/sky.ui.js";
       );
     }
 
-    const ro = new ResizeObserver(() => resize());
-    ro.observe(mount);
+    // No ResizeObserver
+    const onWinResize = () => {
+      clearTimeout(onWinResize.__t);
+      onWinResize.__t = setTimeout(() => resize(), 50);
+    };
+    window.addEventListener("resize", onWinResize);
 
     recomputeAll();
     render();
     bindInteractionsOnce();
 
-    return makeHandle({ root, update, resize, ro });
+    setTimeout(() => resize(), 0);
+
+    return makeHandle({ root, update, resize, onWinResize });
   }
 
   function makeHandle(parts) {
@@ -362,16 +434,13 @@ import { SkyUI } from "./core/sky.ui.js";
       resize: parts.resize || function () {},
       destroy: function () {
         try {
-          parts.ro && parts.ro.disconnect();
+          if (parts.onWinResize) window.removeEventListener("resize", parts.onWinResize);
         } catch (_) {}
         if (parts.root && parts.root.parentNode) parts.root.parentNode.removeChild(parts.root);
       },
     };
   }
 
-  // ------------------------------------------------------------------
-  // Bootstrap (robust against script order / async module loading)
-  // ------------------------------------------------------------------
   function getCfgNow() {
     return typeof window !== "undefined" && window.SKY_CONFIG ? window.SKY_CONFIG : null;
   }
@@ -379,7 +448,6 @@ import { SkyUI } from "./core/sky.ui.js";
   function bootWhenReady() {
     const cfg = getCfgNow();
 
-    // if config is ready -> init immediately
     if (cfg && cfg.mountId) {
       init(cfg)
         .then((handle) => {
@@ -391,7 +459,6 @@ import { SkyUI } from "./core/sky.ui.js";
       return;
     }
 
-    // otherwise wait a bit for SKY_CONFIG to appear
     const startedAt = Date.now();
     const timeoutMs = 4000;
 

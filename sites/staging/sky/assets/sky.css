@@ -74,23 +74,20 @@
   .sky-stage{
     position: relative;
     width: min(96vw, var(--stage-max));
+    height: min(70vh, 800px); /* подбери как нравится */
     margin: 0 auto;
     border-radius: 20px;
     overflow: hidden;
     border: 1px solid var(--stroke);
     background: radial-gradient(900px 700px at 50% 40%, rgba(20,35,80,0.85), rgba(6,9,18,1));
   }
-  
-  /* Make stage roughly square and “compact” */
-  .sky-stage::before{
-    content:"";
-    display:block;
-    padding-top: 70%; /* wide-ish; your canvas inside still scales */
-  }
-  
-  .sky-mount{
-    position:absolute;
+
+  #skyMount{
+    position: absolute;   /* важно: чтобы занял stage целиком */
     inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
   }
   
   /* Widget root from widget.js */
@@ -360,3 +357,60 @@
 }
 
   .sky-canvas{ pointer-events: auto; }
+
+  /* stage is the positioning root for overlays */
+#skyStage {
+  position: relative;
+  overflow: hidden;
+}
+
+/* mount/canvas layer */
+#skyMount .sky-root,
+#skyMount .sky-canvas-wrap,
+#skyMount canvas.sky-canvas{
+  width: 100%;
+  height: 100%;
+}
+
+/* canvas пусть остаётся block */
+#skyMount canvas.sky-canvas{
+  display: block;
+}
+
+/* overlays MUST be above canvas */
+#stageControls,
+#skyPlayer,
+#layersPanel,
+#skyTooltip {
+  position: absolute;
+  z-index: 2000;
+}
+
+/* controls top-right */
+#stageControls {
+  top: 10px;
+  right: 10px;
+  pointer-events: auto;
+}
+
+/* player bottom-right */
+#skyPlayer {
+  right: 10px;
+  bottom: 10px;
+  pointer-events: auto;
+}
+
+/* layers popover */
+#layersPanel {
+  top: 54px;
+  right: 10px;
+  pointer-events: auto;
+}
+
+/* tooltip doesn't eat clicks */
+#skyTooltip {
+  pointer-events: none;
+}
+
+#skyMount { z-index: 1 !important; }
+#stageControls, #skyPlayer, #layersPanel { z-index: 9999 !important; }

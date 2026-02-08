@@ -596,6 +596,128 @@ function buildEquatorialGrid(observer, viewport, options) {
   return { decLines, raLines };
 }
 
+
+// --- Planets preparation ------------------------------------------
+
+function preparePlanets(planetsJson, observer, viewport) {
+  if (!planetsJson || !Array.isArray(planetsJson.frames)) return [];
+
+  const latRad = observer.latRad;
+  const lstRad = observer.lstRad;
+  const R = viewport.R ?? viewport.r;
+
+  const tMs = observer?.date ? observer.date.getTime() : Date.now();
+  const frame = pickNearestFrame(planetsJson.frames, tMs);
+  if (!frame || !frame.planets) return [];
+
+  const out = [];
+
+  // tolerant numeric parser: accepts numbers + numeric strings
+  function num(v) {
+    if (v == null) return null;
+    const n = Number(v);
+    return (typeof n === "number" && isFinite(n)) ? n : null;
+  }
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  // simple palette by planet key
+  const palette = {
+    mercury: "rgba(210,230,255,0.70)",
+    venus:   "rgba(255,235,200,0.85)",
+    mars:    "rgba(255,190,170,0.80)",
+    jupiter: "rgba(255,230,180,0.78)",
+    saturn:  "rgba(255,240,200,0.78)",
+    uranus:  "rgba(190,240,255,0.70)",
+    neptune: "rgba(170,210,255,0.70)",
+  };
+
+  for (const key of Object.keys(frame.planets || {})) {
+    const b = frame.planets[key];
+    if (!b) continue;
+
+    const raDeg = num(b.ra_deg);
+    const decDeg = num(b.dec_deg);
+    if (raDeg == null || decDeg == null) continue;
+
+    const raRad = A.deg2rad(raDeg);
+    const decRad = A.deg2rad(decDeg);
+
+    const { altRad, azRad } = A.raDecToAltAz(raRad, decRad, latRad, lstRad);
+    const altDeg = A.rad2deg(altRad);
+    const azDeg  = A.rad2deg(azRad);
+
+    const visible = (altRad >= 0);
+
+    const { x, y } = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, R);
+
+    const mag = num(b.mag);
+
+    // phase fields (optional, but your JSON has them)
+    let illum_pct = null;
+    let phase = null;
+    let waxing = null;
+
+    const rawIllum = (b.illum_pct != null) ? b.illum_pct : (b.illum != null ? b.illum : null);
+    const rawPhase = (b.phase != null) ? b.phase : null;
+    const rawWaxing = (b.waxing != null) ? b.waxing : null;
+
+    const illumNum = num(rawIllum);
+    if (illumNum != null) {
+      illum_pct = (illumNum <= 1.01) ? clamp(illumNum, 0, 1) * 100 : clamp(illumNum, 0, 100);
+    }
+
+    const phaseNum = num(rawPhase);
+    if (phaseNum != null) {
+      phase = (phaseNum > 1.01) ? (phaseNum / 100) : phaseNum;
+      phase = clamp(phase, 0, 1);
+    } else if (illum_pct != null) {
+      phase = clamp(illum_pct / 100, 0, 1);
+    }
+
+    if (typeof rawWaxing === "boolean") {
+      waxing = rawWaxing;
+    } else if (rawWaxing != null) {
+      const w = String(rawWaxing).toLowerCase().trim();
+      if (w === "true" || w === "1" || w === "yes") waxing = true;
+      else if (w === "false" || w === "0" || w === "no") waxing = false;
+    }
+
+    if (illum_pct == null && phase != null) illum_pct = clamp(phase, 0, 1) * 100;
+
+    // size a bit by brightness (optional)
+    let r = 4.2;
+    if (mag != null) {
+      // brighter -> slightly bigger; clamp to sane range
+      r = clamp(5.2 - (mag * 0.35), 3.6, 6.0);
+    }
+
+    out.push({
+      id: key,
+      type: "planet",            // IMPORTANT: drawObjects treats this as planet marker
+      name: b.name || key,
+      ra_deg: raDeg,
+      dec_deg: decDeg,
+      altDeg,
+      azDeg,
+      x, y,
+      r,
+      color: palette[key] || "rgba(255,230,180,0.78)",
+
+      // optional extras (for UI + possible phase rendering)
+      mag: (mag != null ? mag : null),
+      visible,
+      illum_pct,
+      phase,
+      waxing
+    });
+  }
+
+  return out;
+}
+
 export const Prepare = {
   makeObserver,
   prepareStars,
@@ -608,5 +730,6 @@ export const Prepare = {
   prepareAlerts,
   buildEquatorialGrid,
   buildEqGrid: buildEquatorialGrid,
-  prepareSunMoon
+  prepareSunMoon,
+  preparePlanets
 };

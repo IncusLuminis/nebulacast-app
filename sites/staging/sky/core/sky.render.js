@@ -423,6 +423,52 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
 }
 
 
+function drawPlanets(ctx, vp, planetsPrepared) {
+  if (!planetsPrepared || !planetsPrepared.length) return;
+
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  const rDefault = 4.2;
+
+  for (const p of planetsPrepared) {
+    if (!p || p.x == null || p.y == null) continue;
+    if (p.visible === false || (typeof p.altDeg === "number" && p.altDeg < 0)) continue;
+
+    const r = (typeof p.r === "number") ? p.r : rDefault;
+
+    // main disk
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color || "rgba(255,230,180,0.90)";
+    ctx.fill();
+
+    // soft outer glow
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r + 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.fill();
+
+    // label (same rule as objects)
+    if (typeof p.altDeg === "number" && p.altDeg >= UI.LABEL_ALT_MIN_DEG && p.name) {
+      ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.strokeText(p.name, p.x + 8, p.y);
+
+      ctx.fillStyle = "rgba(230,240,255,0.72)";
+      ctx.fillText(p.name, p.x + 8, p.y);
+    }
+  }
+
+  ctx.restore();
+}
+
 function drawStars(ctx, vp, starsPrepared) {
   ctx.save();
   ctx.setLineDash([]);
@@ -576,7 +622,8 @@ export const Render = {
   drawStars,
   drawAlerts,
   drawGridEq,
-  drawZenith
+  drawZenith,
+  drawPlanets
 };
 
 export default Render;

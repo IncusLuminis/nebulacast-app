@@ -49,6 +49,16 @@ async function loadSunMoon(baseUrl) {
   }
 }
 
+// +++ Planets
+async function loadPlanets(baseUrl) {
+  try {
+    return await loadJSON(`${baseUrl}/data/planets.json`);
+  } catch (e) {
+    console.warn("[SKY] planets.json not loaded:", e.message);
+    return null;
+  }
+}
+
 export const Data = {
   loadJSON,
   loadStars,
@@ -56,5 +66,6 @@ export const Data = {
   loadMilkyWay,
   loadObjectsToday,
   loadAlertsToday,
-  loadSunMoon
+  loadSunMoon,
+  loadPlanets
 };
