@@ -272,12 +272,12 @@ function buildEclipticPolyline(observer, viewport) {
   return pts;
 }
 
-// Milky Way bands are provided as (ra_deg, dec_deg) polylines in JSON
 function buildMilkyWay(observer, viewport, milkywayJson) {
-  if (!milkywayJson) return null;
+  if (!milkywayJson?.bands) return null;
 
   const latRad = observer.latRad;
   const lstRad = observer.lstRad;
+  const R = viewport.R ?? viewport.r;
 
   function polyFromRaDec(points) {
     const out = [];
@@ -296,17 +296,19 @@ function buildMilkyWay(observer, viewport, milkywayJson) {
         continue;
       }
 
-      const xy = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, viewport.R);
+      const xy = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, R);
       out.push({ x: xy.x, y: xy.y });
       started = true;
     }
     return out;
   }
 
+  const bands = milkywayJson.bands;
+
   return {
-    mid: polyFromRaDec(milkywayJson.mid),
-    top: polyFromRaDec(milkywayJson.top),
-    bot: polyFromRaDec(milkywayJson.bot)
+    mid: polyFromRaDec(bands.mid),
+    top: polyFromRaDec(bands.top),
+    bot: polyFromRaDec(bands.bot)
   };
 }
 
