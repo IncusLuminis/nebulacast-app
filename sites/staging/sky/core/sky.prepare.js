@@ -149,6 +149,7 @@ function prepareStars(starCatalog, observer, viewport, options) {
       id: s.id,
       name: s.name || "",
       mag: s.mag,
+      designation: s.designation || "",
       x, y, r,
       altDeg,
       azDeg
