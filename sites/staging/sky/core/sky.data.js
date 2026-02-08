@@ -39,11 +39,22 @@ async function loadAlertsToday(baseUrl) {
   }
 }
 
+// +++ add
+async function loadSunMoon(baseUrl) {
+  try {
+    return await loadJSON(`${baseUrl}/data/sun_moon.json`);
+  } catch (e) {
+    console.warn("[SKY] sun_moon.json not loaded:", e.message);
+    return null;
+  }
+}
+
 export const Data = {
   loadJSON,
   loadStars,
   loadConstellations,
   loadMilkyWay,
   loadObjectsToday,
-  loadAlertsToday
+  loadAlertsToday,
+  loadSunMoon
 };

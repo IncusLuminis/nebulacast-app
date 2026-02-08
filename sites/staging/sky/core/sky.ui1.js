@@ -1,18 +1,138 @@
-// sites/staging/sky/core/sky.ui.js
+/* sky.ui.js
+ * Tooltip + Modal UI helpers for sky widget.
+ * UI (templates + styles + behavior) lives ONLY here.
+ */
 
-function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+let __stylesInjected = false;
 
-function fmtDeg(x) {
-  if (typeof x !== "number" || !isFinite(x)) return "—";
-  return x.toFixed(1) + "°";
+function injectStyles() {
+  if (__stylesInjected) return;
+  __stylesInjected = true;
+
+  const css = `
+  /* Root-scope classes to avoid collisions */
+  .skyui-tooltip {
+    position: absolute;
+    left: 0; top: 0;
+    transform: translate(-9999px, -9999px);
+    display: none;
+    z-index: 5;
+    max-width: 280px;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .skyui-card {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.88);
+    font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    backdrop-filter: blur(6px);
+    padding: 8px 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  }
+  .skyui-card--modal {
+    background: rgba(0,0,0,0.70);
+    border-radius: 14px;
+    padding: 12px 12px 14px 12px;
+    font-size: 13px;
+  }
+  .skyui-card__title {
+    font-weight: 650;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: rgba(255,255,255,0.94);
+  }
+  .skyui-card--modal .skyui-card__title {
+    font-size: 14px;
+  }
+  .skyui-card__subtitle {
+    opacity: 0.88;
+    line-height: 1.25;
+  }
+  .skyui-card__meta {
+    opacity: 0.70;
+    margin-top: 6px;
+  }
+  .skyui-card__type {
+    opacity: 0.65;
+    margin-top: 6px;
+  }
+
+  .skyui-modal {
+    position: absolute;
+    inset: 0;
+    display: none;
+    z-index: 20;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+  }
+  .skyui-modal__panel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(520px, calc(100% - 28px));
+    max-height: min(70vh, 520px);
+    overflow: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.70);
+    color: rgba(255,255,255,0.90);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    font: 13px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  }
+  .skyui-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px 0 12px;
+  }
+  .skyui-modal__heading {
+    font-weight: 650;
+    opacity: 0.95;
+  }
+  .skyui-modal__close {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+  }
+  .skyui-modal__body {
+    padding: 10px 12px 12px 12px;
+  }
+  `;
+
+  const styleEl = document.createElement("style");
+  styleEl.setAttribute("data-skyui", "1");
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
 }
 
-function setDetails(payload) {
-  try {
-    if (window.SKY_UI && typeof window.SKY_UI.setDetails === "function") {
-      window.SKY_UI.setDetails(payload);
-    }
-  } catch (_) {}
+function clamp(v, a, b) {
+  return Math.max(a, Math.min(b, v));
+}
+
+function fmtDeg(x, digits = 0) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return `${x.toFixed(digits)}°`;
+}
+
+function fmtMag(x, digits = 1) {
+  if (typeof x !== "number" || !isFinite(x)) return "—";
+  return x.toFixed(digits);
+}
+
+function esc(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function normalizeDesignation(des) {
@@ -22,7 +142,6 @@ function normalizeDesignation(des) {
   // если уже есть греческая буква — оставляем как есть
   if (/[αβγδεζηθικλμνξοπρστυφχψω]/.test(s0)) return s0;
 
-  // Stellarium/HYG часто дают Alp/Bet/Gam..., иногда Alpha/Beta...
   const map3 = {
     Alp: "α", Bet: "β", Gam: "γ", Del: "δ", Eps: "ε",
     Zet: "ζ", Eta: "η", The: "θ", Iot: "ι", Kap: "κ",
@@ -39,150 +158,141 @@ function normalizeDesignation(des) {
     Phi: "φ", Chi: "χ", Psi: "ψ", Omega: "ω",
   };
 
-  // "Alp Gem" / "Alpha Lyr" / "Bet 1 Sco" — меняем только лидирующее слово
   const parts = s0.split(/\s+/);
-  const head = parts[0];
-  const greek = map3[head] || mapFull[head];
+  const headRaw = parts[0];
+  const head = headRaw[0]?.toUpperCase() + headRaw.slice(1).toLowerCase(); // alp -> Alp
+  const greek = map3[head] || mapFull[headRaw] || mapFull[head];
   if (!greek) return s0;
 
   return [greek, ...parts.slice(1)].join(" ");
 }
 
+function prepareStars(starCatalog, observer, viewport, options) {
+  // ...
+  for (const s of starCatalog?.stars || []) {
+    // ...
+    const designationRaw =
+      s.designation ??
+      s.desig ??
+      s.bayer ??
+      s.bayer_designation ??
+      s.bayerDes ??
+      s.bayer_name ??
+      "";
 
-function clearDetails() { setDetails(null); }
+    const designation = normalizeDesignation(designationRaw);
 
-function makeDetailsPayloadFromHit(hit) {
-  if (!hit) return null;
-  const d = hit.data;
-
-  if (hit.kind === "alert") {
-    return {
-      type: "Alert",
-      name: d.title || "Alert",
-      alt: fmtDeg(d.altDeg),
-      az: (d.azDeg != null ? fmtDeg(d.azDeg) : "—"),
-      info: `${(d.level || "amateur")} • severity ${d.severity ?? "?"}${d.kind ? " • " + d.kind : ""}`
-    };
+    stars.push({
+      id: s.id,
+      name: s.name || "",
+      designation,          // <-- ВАЖНО: теперь тултип/модал смогут это показать
+      mag: s.mag,
+      x, y, r,
+      altDeg,
+      azDeg
+    });
   }
-
-  if (hit.kind === "object") {
-    const mag = (typeof d.mag === "number") ? (" • mag " + d.mag.toFixed(1)) : "";
-    return {
-      type: "Object",
-      name: d.name || "Object",
-      alt: fmtDeg(d.altDeg),
-      az: (d.azDeg != null ? fmtDeg(d.azDeg) : "—"),
-      info: `${d.type || "obj"}${mag}`
-    };
-  }
-
-  // star
-  return {
-    type: "Star",
-    name: d.name || d.id || "Star",
-    alt: fmtDeg(d.altDeg),
-    az: fmtDeg(d.azDeg),
-    info: (typeof d.mag === "number") ? ("mag " + d.mag.toFixed(2)) : "—"
-  };
+  return stars;
 }
 
-function tooltipHTML(hit) {
+
+/**
+ * True HTML templates (classes + predictable DOM structure).
+ * hit: { kind: "star"|"object"|"alert", data: {...} }
+ */
+function buildInfoCardHTML(hit, mode = "tooltip") {
+  if (!hit) return "";
+
   const d = hit.data || {};
+  const isModal = mode === "modal";
 
-  const mag2 = (typeof d.mag === "number" && isFinite(d.mag)) ? d.mag.toFixed(2) : "—";
-  const mag1 = (typeof d.mag === "number" && isFinite(d.mag)) ? d.mag.toFixed(1) : "—";
-
-  // helpers
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
-    c === "&" ? "&amp;" :
-    c === "<" ? "&lt;" :
-    c === ">" ? "&gt;" :
-    c === '"' ? "&quot;" : "&#39;"
-  ));
+  let title = "—";
+  let subtitle = "—";
+  let meta = "";
 
   if (hit.kind === "alert") {
+    title = d.title || "Alert";
     const lvl = (d.level || "amateur").toLowerCase();
-    return `
-      <div class="sky-tip-title">${esc(d.title || "Alert")}</div>
-      <div class="sky-tip-sub">${esc(lvl)} • severity ${esc(d.severity ?? "?")}</div>
-      <div class="sky-tip-meta">alt ${fmtDeg(d.altDeg)}${d.azDeg != null ? " • az " + fmtDeg(d.azDeg) : ""}</div>
-    `;
+    subtitle = `${lvl} • severity ${d.severity ?? "?"}${d.kind ? " • " + d.kind : ""}`;
+    meta = `alt ${fmtDeg(d.altDeg)}${d.azDeg != null ? " • az " + fmtDeg(d.azDeg) : ""}`;
+
+  } else if (hit.kind === "object") {
+    title = d.name || "Object";
+    subtitle = `${d.type || "obj"} • mag ${fmtMag(d.mag, 1)}`;
+    meta = `alt ${fmtDeg(d.altDeg)}${d.azDeg != null ? " • az " + fmtDeg(d.azDeg) : ""}`;
+
+  } else {
+    // STAR
+    const proper = (d.name || "").trim();
+    const bayer = normalizeDesignation(d.designation || "");
+  
+    // Заголовок
+    title = proper || bayer || d.id || "Star";
+  
+    // subtitle:
+    // 1 строка — байеровская нотация
+    // 2 строка — звездная величина
+    if (proper && bayer) {
+      subtitle = `${esc(bayer)}<br/>mag ${fmtMag(d.mag, 2)}`;
+    } else {
+      subtitle = `mag ${fmtMag(d.mag, 2)}`;
+    }
+  
+    meta = `alt ${fmtDeg(d.altDeg)} • az ${fmtDeg(d.azDeg)}`;
   }
 
-  if (hit.kind === "object") {
-    const title =
-      (d.name && d.name.trim()) ? d.name.trim()
-      : (d.designation && d.designation.trim()) ? d.designation.trim()
-      : "Object";
-  
-    const subParts = [];
-    subParts.push(d.type || "obj");
-    subParts.push(`mag ${mag1}`);
-  
-    return `
-      <div class="sky-tip-title">${esc(title)}</div>
-      <div class="sky-tip-sub">${esc(subParts.join(" • "))}</div>
-      <div class="sky-tip-meta">alt ${fmtDeg(d.altDeg)}${d.azDeg != null ? " • az " + fmtDeg(d.azDeg) : ""}</div>
-    `;
-  }
+  const typeLine = isModal
+    ? `<div class="skyui-card__type">Type: ${esc(hit.kind || "—")}</div>`
+    : "";
 
-    // star
-    const name = (d.name && d.name.trim()) ? d.name.trim() : "";
-    const desRaw = (d.designation && d.designation.trim()) ? d.designation.trim() : "";
-    const des = normalizeDesignation(desRaw);
-
-    const title =
-      name ? name
-      : des ? des
-      : "Star";
-
-    // Строки (как ты просишь):
-    // 1) title
-    // 2) designation (если title=name и designation есть)
-    // 3) mag
-    // 4) HIP (если есть) — тоже отдельной строкой, чтобы не мешалось
-    const lines = [];
-
-    if (name && des) lines.push(des);           // отдельная строка
-    lines.push(`mag ${mag2}`);                  // отдельная строка
-    if (d.hip != null) lines.push(`HIP ${d.hip}`);
-
-    return `
-      <div class="sky-tip-title">${esc(title)}</div>
-      <div class="sky-tip-sub">${esc(lines.join("\n"))}</div>
-      <div class="sky-tip-meta">alt ${fmtDeg(d.altDeg)} • az ${fmtDeg(d.azDeg)}</div>
-    `;
-    
+  return `
+    <div class="skyui-card ${isModal ? "skyui-card--modal" : ""}">
+      <div class="skyui-card__title">${esc(title)}</div>
+      <div class="skyui-card__subtitle">${subtitle}</div>
+      <div class="skyui-card__meta">${esc(meta)}</div>
+      ${typeLine}
+    </div>
+  `;
 }
 
-// Tooltip controller bound to the widget root
+
+/**
+ * Compatibility wrapper (existing name).
+ */
+function tooltipHTML(hit) {
+  return buildInfoCardHTML(hit, "tooltip");
+}
+
+/**
+ * Tooltip controller (positioning via transform).
+ * rootX/rootY: CSS px relative to rootEl.
+ */
 function createTooltip(rootEl, tooltipEl) {
-  // minimal local styling (can be moved to CSS later)
-  tooltipEl.style.position = "absolute";
-  tooltipEl.style.display = "none";
-  tooltipEl.style.zIndex = "5";
-  tooltipEl.style.maxWidth = "260px";
-  tooltipEl.style.padding = "8px 10px";
-  tooltipEl.style.borderRadius = "10px";
-  tooltipEl.style.background = "rgba(0,0,0,0.55)";
-  tooltipEl.style.border = "1px solid rgba(255,255,255,0.14)";
-  tooltipEl.style.color = "rgba(255,255,255,0.86)";
-  tooltipEl.style.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-  tooltipEl.style.pointerEvents = "none";
-  tooltipEl.style.backdropFilter = "blur(6px)";
+  injectStyles();
 
-  function hide() { tooltipEl.style.display = "none"; }
+  // Ensure tooltip element has correct class (layout + visibility)
+  tooltipEl.classList.add("skyui-tooltip");
 
-  // IMPORTANT: x/y are CSS px relative to rootEl (not canvas)
-  function show(rootX, rootY, html) {
-    tooltipEl.innerHTML = html;
-    tooltipEl.style.display = "block";
+  let lastHTML = "";
+  let lastW = 240, lastH = 80;
+  let raf = 0;
+  let pending = null;
 
-    const tw = tooltipEl.offsetWidth || 240;
-    const th = tooltipEl.offsetHeight || 80;
+  function hide() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    pending = null;
+    tooltipEl.style.display = "none";
+    tooltipEl.style.transform = "translate(-9999px, -9999px)";
+  }
 
+  function computeAndPlace(rootX, rootY) {
     const rootRect = rootEl.getBoundingClientRect();
     const margin = 10;
+
+    const tw = tooltipEl.offsetWidth || lastW;
+    const th = tooltipEl.offsetHeight || lastH;
+    lastW = tw; lastH = th;
 
     let x = rootX + 14;
     let y = rootY + 14;
@@ -193,11 +303,114 @@ function createTooltip(rootEl, tooltipEl) {
     x = clamp(x, margin, Math.max(margin, maxX));
     y = clamp(y, margin, Math.max(margin, maxY));
 
-    tooltipEl.style.left = Math.round(x) + "px";
-    tooltipEl.style.top = Math.round(y) + "px";
+    tooltipEl.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  }
+
+  function show(rootX, rootY, html) {
+    pending = { rootX, rootY, html };
+    if (raf) return;
+
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const p = pending;
+      pending = null;
+      if (!p) return;
+
+      if (p.html !== lastHTML) {
+        tooltipEl.innerHTML = p.html;
+        lastHTML = p.html;
+      }
+
+      if (tooltipEl.style.display !== "block") tooltipEl.style.display = "block";
+      computeAndPlace(p.rootX, p.rootY);
+    });
   }
 
   return { show, hide };
+}
+
+/**
+ * Modal controller (HTML content — same card template for now).
+ */
+function createModal(rootEl) {
+  injectStyles();
+
+  const overlay = document.createElement("div");
+  overlay.className = "skyui-modal";
+
+  const panel = document.createElement("div");
+  panel.className = "skyui-modal__panel";
+
+  const header = document.createElement("div");
+  header.className = "skyui-modal__header";
+
+  const heading = document.createElement("div");
+  heading.className = "skyui-modal__heading";
+  heading.textContent = "Details";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "skyui-modal__close";
+  closeBtn.type = "button";
+  closeBtn.textContent = "×";
+
+  const body = document.createElement("div");
+  body.className = "skyui-modal__body";
+
+  header.appendChild(heading);
+  header.appendChild(closeBtn);
+  panel.appendChild(header);
+  panel.appendChild(body);
+  overlay.appendChild(panel);
+  rootEl.appendChild(overlay);
+
+  function hide() {
+    overlay.style.display = "none";
+  }
+
+  function show(html, title = "Details") {
+    heading.textContent = title;
+    body.innerHTML = html;
+    overlay.style.display = "block";
+  }
+
+  function showFromHit(hit) {
+    const title = hit?.kind ? (hit.kind[0].toUpperCase() + hit.kind.slice(1)) : "Details";
+    show(buildInfoCardHTML(hit, "modal"), title);
+  }
+
+  closeBtn.addEventListener("click", hide);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) hide();
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hide();
+  });
+
+  return { show, hide, showFromHit };
+}
+
+/**
+ * Details panel helpers (kept for compatibility with existing wiring).
+ */
+function makeDetailsPayloadFromHit(hit) {
+  if (!hit) return null;
+  const d = hit.data || {};
+  return {
+    kind: hit.kind || "unknown",
+    title: d.title || d.name || d.id || "—",
+    subtitle: d.type || d.kind || "",
+    mag: d.mag,
+    altDeg: d.altDeg,
+    azDeg: d.azDeg
+  };
+}
+
+function setDetails(rootEl, payload) {
+  void rootEl; void payload;
+}
+
+function clearDetails(rootEl) {
+  void rootEl;
 }
 
 export const SkyUI = {
@@ -205,6 +418,12 @@ export const SkyUI = {
   setDetails,
   clearDetails,
   makeDetailsPayloadFromHit,
+
+  // templates
+  buildInfoCardHTML,
   tooltipHTML,
-  createTooltip
+
+  // controllers
+  createTooltip,
+  createModal
 };

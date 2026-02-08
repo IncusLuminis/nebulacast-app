@@ -44,7 +44,7 @@ import { SkyUI } from "./core/sky.ui.js";
     return el;
   }
 
-  function makeStatusText(observer, starsCount, consLines, mwOn, objCount, alertsCount, gridEqOn) {
+  function makeStatusText(observer, starsCount, consLines, mwOn, objCount, alertsCount, gridEqOn, sunMoonOn) {
     const dt = observer.date;
     const pad2 = (n) => String(n).padStart(2, "0");
     const stamp = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())} ${pad2(
@@ -54,7 +54,7 @@ import { SkyUI } from "./core/sky.ui.js";
       2
     )}° | ${stamp} | stars ${starsCount} | cons ${consLines}${mwOn ? " | MW" : ""}${
       objCount ? " | obj " + objCount : ""
-    }${alertsCount ? " | alerts " + alertsCount : ""}${gridEqOn ? " | EqGrid" : ""}`;
+    }${alertsCount ? " | alerts " + alertsCount : ""}${gridEqOn ? " | EqGrid" : ""}${sunMoonOn ? " | SunMoon" : ""}`;
   }
 
   // Mouse position in CSS pixels relative to canvas box
@@ -70,11 +70,22 @@ import { SkyUI } from "./core/sky.ui.js";
     // prefer explicit kind, else infer
     let kind = preparedItem.kind;
     if (!kind) {
-      if (preparedItem.title || preparedItem.severity != null) kind = "alert";
+      // Sun/Moon are "object" kind for UI templates
+      if (preparedItem.type === "sun" || preparedItem.type === "moon") kind = "object";
+      else if (preparedItem.title || preparedItem.severity != null) kind = "alert";
       else if (preparedItem.type && preparedItem.name) kind = "object";
       else kind = "star";
     }
-    return { kind, data: preparedItem };
+
+    // do NOT rename any existing fields; just pass through
+    // (optional: add subtype for UI if it wants to show special formatting)
+    const data = preparedItem;
+    if ((preparedItem.type === "sun" || preparedItem.type === "moon") && data && data.subtype == null) {
+      // safe, additive
+      data.subtype = preparedItem.type;
+    }
+
+    return { kind, data };
   }
 
   async function init(userCfg) {
@@ -96,6 +107,7 @@ import { SkyUI } from "./core/sky.ui.js";
     let milkyway = null;
     let objectsToday = null;
     let alertsToday = null;
+    let sunMoon = null; // +++ add
 
     try {
       status.textContent = "Loading stars…";
@@ -112,6 +124,13 @@ import { SkyUI } from "./core/sky.ui.js";
 
       status.textContent = "Loading alerts…";
       alertsToday = await Data.loadAlertsToday(cfg.baseUrl);
+
+      status.textContent = "Loading Sun/Moon…";
+      if (typeof Data.loadSunMoon === "function") {
+        sunMoon = await Data.loadSunMoon(cfg.baseUrl);
+      } else {
+        sunMoon = null;
+      }
     } catch (e) {
       console.error(e);
       status.textContent = "Failed to load sky data";
@@ -124,6 +143,7 @@ import { SkyUI } from "./core/sky.ui.js";
     let objectsPrepared = [];
     let alertsPrepared = [];
     let eqGridPrepared = null;
+    let sunMoonPrepared = []; // +++ add
 
     function recomputeAll() {
       observer = Prepare.makeObserver(cfg);
@@ -154,6 +174,13 @@ import { SkyUI } from "./core/sky.ui.js";
         cfg.options.showGridEq && typeof Prepare.buildEqGrid === "function"
           ? Prepare.buildEqGrid(observer, viewport, cfg.options || {})
           : null;
+
+      // Sun/Moon layer (enabled by default unless explicitly disabled)
+      const showSunMoon = (cfg.options && cfg.options.showSunMoon === false) ? false : true;
+      sunMoonPrepared =
+        showSunMoon && sunMoon && typeof Prepare.prepareSunMoon === "function"
+          ? Prepare.prepareSunMoon(sunMoon, observer, viewport)
+          : [];
     }
 
     function render() {
@@ -180,6 +207,15 @@ import { SkyUI } from "./core/sky.ui.js";
 
       if (cfg.options?.showAlerts && alertsPrepared.length) Render.drawAlerts(ctx, viewport, alertsPrepared);
 
+      // Sun/Moon (draw as separate layer; fallback to drawObjects if no dedicated renderer)
+      if (sunMoonPrepared && sunMoonPrepared.length) {
+        if (typeof Render.drawSunMoon === "function") {
+          Render.drawSunMoon(ctx, viewport, sunMoonPrepared);
+        } else if (typeof Render.drawObjects === "function") {
+          Render.drawObjects(ctx, viewport, sunMoonPrepared);
+        }
+      }
+
       if (cfg.options?.showObjects && objectsPrepared.length) Render.drawObjects(ctx, viewport, objectsPrepared);
 
       Render.drawStars(ctx, viewport, starsPrepared);
@@ -196,7 +232,8 @@ import { SkyUI } from "./core/sky.ui.js";
         !!mwPrepared,
         objectsPrepared.length,
         alertsPrepared.length,
-        !!eqGridPrepared
+        !!eqGridPrepared,
+        !!(sunMoonPrepared && sunMoonPrepared.length)
       );
     }
 
@@ -217,6 +254,11 @@ import { SkyUI } from "./core/sky.ui.js";
 
     function hitRadiusForItem(t) {
       if (!t) return 6;
+
+      // Sun/Moon: slightly easier to hit (do NOT depend on inferred k)
+      if (t.type === "sun") return 14;
+      if (t.type === "moon") return 13;
+
       const k = t.kind || (t.title ? "alert" : (t.type && t.name ? "object" : "star"));
       if (k === "star") return 8;
       if (k === "object") return 9;
@@ -225,9 +267,10 @@ import { SkyUI } from "./core/sky.ui.js";
     }
 
     function hitTest(cx, cy) {
-      // priority: alerts > objects > stars
+      // priority: alerts > sun/moon > objects > stars
       const list = []
         .concat(alertsPrepared || [])
+        .concat(sunMoonPrepared || [])
         .concat(objectsPrepared || [])
         .concat(starsPrepared || []);
 
