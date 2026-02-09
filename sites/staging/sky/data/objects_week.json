@@ -1,0 +1,2303 @@
+{
+  "version": 1,
+  "generated_at": "2026-02-09T07:27:10Z",
+  "site": {
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "elev_km": 0.1,
+    "tz": "Europe/Warsaw"
+  },
+  "days": 7,
+  "step_min": 10,
+  "sources": {
+    "calendar": "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging/calendar/daily_signal.json",
+    "planets": "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging/sky/data/planets.json",
+    "dso_seed": "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging/sky/data/dso_seed.json"
+  },
+  "frames": [
+    {
+      "date_local": "2026-02-09",
+      "items": [
+        {
+          "id": "planet:jupiter",
+          "group": "planets",
+          "type": "planet",
+          "name": "Jupiter",
+          "ra_deg": 107.50368,
+          "dec_deg": 22.78234,
+          "mag": -2.57,
+          "meta": {
+            "planet_key": "jupiter"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 60.49,
+            "hours_up": 11.66,
+            "best_time_local": "2026-02-09T21:22:49.014113",
+            "meridian_2to4_min_abs_ha_deg": 70.33
+          },
+          "note": "Bright planet. Excellent visibility (60° max). Best around 21:22."
+        },
+        {
+          "id": "planet:saturn",
+          "group": "planets",
+          "type": "planet",
+          "name": "Saturn",
+          "ra_deg": 0.10197,
+          "dec_deg": -2.30609,
+          "mag": 1.02,
+          "meta": {
+            "planet_key": "saturn"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 18.54,
+            "hours_up": 2.2,
+            "best_time_local": "2026-02-09T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 154.3
+          },
+          "note": "Bright planet. Low but possible (19° max). Best around 18:00."
+        },
+        {
+          "id": "planet:uranus",
+          "group": "planets",
+          "type": "planet",
+          "name": "Uranus",
+          "ra_deg": 54.86429,
+          "dec_deg": 19.32853,
+          "mag": 5.71,
+          "meta": {
+            "planet_key": "uranus"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 57.18,
+            "hours_up": 7.77,
+            "best_time_local": "2026-02-09T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 122.97
+          },
+          "note": "Bright planet. Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "planet:neptune",
+          "group": "planets",
+          "type": "planet",
+          "name": "Neptune",
+          "ra_deg": 0.55271,
+          "dec_deg": -1.1904,
+          "mag": 7.81,
+          "meta": {
+            "planet_key": "neptune"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 19.72,
+            "hours_up": 2.37,
+            "best_time_local": "2026-02-09T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 154.75
+          },
+          "note": "Bright planet. Low but possible (20° max). Best around 18:00."
+        },
+        {
+          "id": "M42",
+          "group": "dso",
+          "type": "nebula",
+          "name": "Orion Nebula (M42)",
+          "ra_deg": 83.8221,
+          "dec_deg": -5.3911,
+          "mag": 4.0,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 32.39,
+            "hours_up": 7.44,
+            "best_time_local": "2026-02-09T19:51:32.957756",
+            "meridian_2to4_min_abs_ha_deg": 94.01
+          },
+          "note": "Good visibility (32° max). Best around 19:51."
+        },
+        {
+          "id": "M31",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Andromeda Galaxy (M31)",
+          "ra_deg": 10.6847,
+          "dec_deg": 41.269,
+          "mag": 3.4,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 58.1,
+            "hours_up": 12.17,
+            "best_time_local": "2026-02-09T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 164.88
+          },
+          "note": "Excellent visibility (58° max). Best around 18:00."
+        },
+        {
+          "id": "M13",
+          "group": "dso",
+          "type": "cluster",
+          "name": "Hercules Globular Cluster (M13)",
+          "ra_deg": 250.423,
+          "dec_deg": 36.461,
+          "mag": 5.8,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 71.21,
+            "hours_up": 9.97,
+            "best_time_local": "2026-02-10T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 44.62
+          },
+          "note": "Excellent visibility (71° max). Best around 06:00."
+        },
+        {
+          "id": "M87",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Virgo A (M87)",
+          "ra_deg": 187.7059,
+          "dec_deg": 12.3911,
+          "mag": 8.6,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier",
+              "virgo"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 50.01,
+            "hours_up": 10.31,
+            "best_time_local": "2026-02-10T02:47:19.436647",
+            "meridian_2to4_min_abs_ha_deg": 0.3
+          },
+          "note": "Excellent visibility (50° max). Best around 02:47. Near the meridian in deep night (02–04)."
+        }
+      ]
+    },
+    {
+      "date_local": "2026-02-10",
+      "items": [
+        {
+          "id": "planet:jupiter",
+          "group": "planets",
+          "type": "planet",
+          "name": "Jupiter",
+          "ra_deg": 107.4072,
+          "dec_deg": 22.79455,
+          "mag": -2.57,
+          "meta": {
+            "planet_key": "jupiter"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 60.52,
+            "hours_up": 11.66,
+            "best_time_local": "2026-02-10T21:22:49.014113",
+            "meridian_2to4_min_abs_ha_deg": 71.42
+          },
+          "note": "Bright planet. Excellent visibility (61° max). Best around 21:22."
+        },
+        {
+          "id": "planet:saturn",
+          "group": "planets",
+          "type": "planet",
+          "name": "Saturn",
+          "ra_deg": 0.19946,
+          "dec_deg": -2.26193,
+          "mag": 1.02,
+          "meta": {
+            "planet_key": "saturn"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 18.1,
+            "hours_up": 2.2,
+            "best_time_local": "2026-02-10T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 153.41
+          },
+          "note": "Bright planet. Low but possible (18° max). Best around 18:00."
+        },
+        {
+          "id": "planet:uranus",
+          "group": "planets",
+          "type": "planet",
+          "name": "Uranus",
+          "ra_deg": 54.8699,
+          "dec_deg": 19.33009,
+          "mag": 5.71,
+          "meta": {
+            "planet_key": "uranus"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 57.16,
+            "hours_up": 7.77,
+            "best_time_local": "2026-02-10T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 123.95
+          },
+          "note": "Bright planet. Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "planet:neptune",
+          "group": "planets",
+          "type": "planet",
+          "name": "Neptune",
+          "ra_deg": 0.58106,
+          "dec_deg": -1.17773,
+          "mag": 7.81,
+          "meta": {
+            "planet_key": "neptune"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 19.22,
+            "hours_up": 2.2,
+            "best_time_local": "2026-02-10T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 153.79
+          },
+          "note": "Bright planet. Low but possible (19° max). Best around 18:00."
+        },
+        {
+          "id": "M42",
+          "group": "dso",
+          "type": "nebula",
+          "name": "Orion Nebula (M42)",
+          "ra_deg": 83.8221,
+          "dec_deg": -5.3911,
+          "mag": 4.0,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 32.39,
+            "hours_up": 7.44,
+            "best_time_local": "2026-02-10T19:51:32.957756",
+            "meridian_2to4_min_abs_ha_deg": 95.0
+          },
+          "note": "Good visibility (32° max). Best around 19:51."
+        },
+        {
+          "id": "M31",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Andromeda Galaxy (M31)",
+          "ra_deg": 10.6847,
+          "dec_deg": 41.269,
+          "mag": 3.4,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 57.5,
+            "hours_up": 12.17,
+            "best_time_local": "2026-02-10T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 163.9
+          },
+          "note": "Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "M13",
+          "group": "dso",
+          "type": "cluster",
+          "name": "Hercules Globular Cluster (M13)",
+          "ra_deg": 250.423,
+          "dec_deg": 36.461,
+          "mag": 5.8,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 71.58,
+            "hours_up": 9.97,
+            "best_time_local": "2026-02-11T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 43.64
+          },
+          "note": "Excellent visibility (72° max). Best around 06:00."
+        },
+        {
+          "id": "M87",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Virgo A (M87)",
+          "ra_deg": 187.7059,
+          "dec_deg": 12.3911,
+          "mag": 8.6,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier",
+              "virgo"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 50.01,
+            "hours_up": 10.48,
+            "best_time_local": "2026-02-11T02:47:19.436647",
+            "meridian_2to4_min_abs_ha_deg": 1.26
+          },
+          "note": "Excellent visibility (50° max). Best around 02:47. Near the meridian in deep night (02–04)."
+        }
+      ]
+    },
+    {
+      "date_local": "2026-02-11",
+      "items": [
+        {
+          "id": "cal:https://in-the-sky.org//news.php?id=20260211_16_100",
+          "group": "calendar",
+          "type": "conjunctions",
+          "name": "Antares",
+          "title": "11 Feb 2026 (3 days away): Lunar occultation of Antares",
+          "url": "https://in-the-sky.org//news.php?id=20260211_16_100",
+          "published_at": "2026-02-11",
+          "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, South Georgia and the South Sandwich Islands, Falkland Islands and Bouvet Island amongst others.",
+          "ra_deg": 247.35191542,
+          "dec_deg": -26.43200261,
+          "event_date": "2026-02-11",
+          "event_kind": "conjunctions",
+          "target_name": "Antares",
+          "meta": {
+            "calendar_source": "in_the_sky_conjunctions",
+            "calendar_stream": "conjunctions",
+            "date": "2026-02-11"
+          },
+          "score": 4000.0,
+          "score_breakdown": {
+            "group": "calendar",
+            "w_group": 40.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 4000.0
+          },
+          "vis": {
+            "max_alt_deg": 10.84,
+            "hours_up": 2.7,
+            "best_time_local": "2026-02-12T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 39.58
+          },
+          "note": "Event highlight. Low but possible (11° max). Best around 06:00."
+        },
+        {
+          "id": "planet:mercury",
+          "group": "planets",
+          "type": "planet",
+          "name": "Mercury",
+          "ra_deg": 339.73633,
+          "dec_deg": -9.1926,
+          "mag": -1.05,
+          "meta": {
+            "planet_key": "mercury"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 0.25,
+            "hours_up": 0.17,
+            "best_time_local": "2026-02-11T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 131.96
+          },
+          "note": "Bright planet. Very low (0° max). If you try, aim around 18:00."
+        },
+        {
+          "id": "planet:jupiter",
+          "group": "planets",
+          "type": "planet",
+          "name": "Jupiter",
+          "ra_deg": 107.31357,
+          "dec_deg": 22.80637,
+          "mag": -2.56,
+          "meta": {
+            "planet_key": "jupiter"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 60.53,
+            "hours_up": 11.49,
+            "best_time_local": "2026-02-11T21:22:49.014113",
+            "meridian_2to4_min_abs_ha_deg": 72.49
+          },
+          "note": "Bright planet. Excellent visibility (61° max). Best around 21:22."
+        },
+        {
+          "id": "planet:saturn",
+          "group": "planets",
+          "type": "planet",
+          "name": "Saturn",
+          "ra_deg": 0.29773,
+          "dec_deg": -2.21748,
+          "mag": 1.02,
+          "meta": {
+            "planet_key": "saturn"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 17.66,
+            "hours_up": 2.03,
+            "best_time_local": "2026-02-11T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 152.53
+          },
+          "note": "Bright planet. Low but possible (18° max). Best around 18:00."
+        },
+        {
+          "id": "planet:uranus",
+          "group": "planets",
+          "type": "planet",
+          "name": "Uranus",
+          "ra_deg": 54.87642,
+          "dec_deg": 19.33186,
+          "mag": 5.72,
+          "meta": {
+            "planet_key": "uranus"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 57.13,
+            "hours_up": 7.77,
+            "best_time_local": "2026-02-11T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 124.93
+          },
+          "note": "Bright planet. Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "planet:neptune",
+          "group": "planets",
+          "type": "planet",
+          "name": "Neptune",
+          "ra_deg": 0.60972,
+          "dec_deg": -1.16493,
+          "mag": 7.81,
+          "meta": {
+            "planet_key": "neptune"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 18.72,
+            "hours_up": 2.2,
+            "best_time_local": "2026-02-11T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 152.84
+          },
+          "note": "Bright planet. Low but possible (19° max). Best around 18:00."
+        },
+        {
+          "id": "M42",
+          "group": "dso",
+          "type": "nebula",
+          "name": "Orion Nebula (M42)",
+          "ra_deg": 83.8221,
+          "dec_deg": -5.3911,
+          "mag": 4.0,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 32.39,
+            "hours_up": 7.44,
+            "best_time_local": "2026-02-11T19:41:24.507063",
+            "meridian_2to4_min_abs_ha_deg": 95.99
+          },
+          "note": "Good visibility (32° max). Best around 19:41."
+        },
+        {
+          "id": "M31",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Andromeda Galaxy (M31)",
+          "ra_deg": 10.6847,
+          "dec_deg": 41.269,
+          "mag": 3.4,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 56.89,
+            "hours_up": 12.17,
+            "best_time_local": "2026-02-11T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 162.91
+          },
+          "note": "Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "M13",
+          "group": "dso",
+          "type": "cluster",
+          "name": "Hercules Globular Cluster (M13)",
+          "ra_deg": 250.423,
+          "dec_deg": 36.461,
+          "mag": 5.8,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 71.92,
+            "hours_up": 9.97,
+            "best_time_local": "2026-02-12T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 42.65
+          },
+          "note": "Excellent visibility (72° max). Best around 06:00."
+        },
+        {
+          "id": "M87",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Virgo A (M87)",
+          "ra_deg": 187.7059,
+          "dec_deg": 12.3911,
+          "mag": 8.6,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier",
+              "virgo"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 50.01,
+            "hours_up": 10.48,
+            "best_time_local": "2026-02-12T02:37:10.985914",
+            "meridian_2to4_min_abs_ha_deg": 0.27
+          },
+          "note": "Excellent visibility (50° max). Best around 02:37. Near the meridian in deep night (02–04)."
+        }
+      ]
+    },
+    {
+      "date_local": "2026-02-12",
+      "items": [
+        {
+          "id": "planet:mercury",
+          "group": "planets",
+          "type": "planet",
+          "name": "Mercury",
+          "ra_deg": 341.18203,
+          "dec_deg": -8.41216,
+          "mag": -1.0,
+          "meta": {
+            "planet_key": "mercury"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 1.14,
+            "hours_up": 0.17,
+            "best_time_local": "2026-02-12T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 132.42
+          },
+          "note": "Bright planet. Very low (1° max). If you try, aim around 18:00."
+        },
+        {
+          "id": "planet:jupiter",
+          "group": "planets",
+          "type": "planet",
+          "name": "Jupiter",
+          "ra_deg": 107.22286,
+          "dec_deg": 22.81779,
+          "mag": -2.56,
+          "meta": {
+            "planet_key": "jupiter"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 60.54,
+            "hours_up": 11.49,
+            "best_time_local": "2026-02-12T21:12:40.563380",
+            "meridian_2to4_min_abs_ha_deg": 73.57
+          },
+          "note": "Bright planet. Excellent visibility (61° max). Best around 21:12."
+        },
+        {
+          "id": "planet:saturn",
+          "group": "planets",
+          "type": "planet",
+          "name": "Saturn",
+          "ra_deg": 0.39676,
+          "dec_deg": -2.17275,
+          "mag": 1.02,
+          "meta": {
+            "planet_key": "saturn"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 17.22,
+            "hours_up": 2.03,
+            "best_time_local": "2026-02-12T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 151.64
+          },
+          "note": "Bright planet. Low but possible (17° max). Best around 18:00."
+        },
+        {
+          "id": "planet:uranus",
+          "group": "planets",
+          "type": "planet",
+          "name": "Uranus",
+          "ra_deg": 54.88385,
+          "dec_deg": 19.33384,
+          "mag": 5.72,
+          "meta": {
+            "planet_key": "uranus"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 57.08,
+            "hours_up": 7.61,
+            "best_time_local": "2026-02-12T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 125.91
+          },
+          "note": "Bright planet. Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "planet:neptune",
+          "group": "planets",
+          "type": "planet",
+          "name": "Neptune",
+          "ra_deg": 0.63867,
+          "dec_deg": -1.15202,
+          "mag": 7.81,
+          "meta": {
+            "planet_key": "neptune"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 18.21,
+            "hours_up": 2.2,
+            "best_time_local": "2026-02-12T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 151.88
+          },
+          "note": "Bright planet. Low but possible (18° max). Best around 18:00."
+        },
+        {
+          "id": "M42",
+          "group": "dso",
+          "type": "nebula",
+          "name": "Orion Nebula (M42)",
+          "ra_deg": 83.8221,
+          "dec_deg": -5.3911,
+          "mag": 4.0,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 32.39,
+            "hours_up": 7.27,
+            "best_time_local": "2026-02-12T19:41:24.507063",
+            "meridian_2to4_min_abs_ha_deg": 96.97
+          },
+          "note": "Good visibility (32° max). Best around 19:41."
+        },
+        {
+          "id": "M31",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Andromeda Galaxy (M31)",
+          "ra_deg": 10.6847,
+          "dec_deg": 41.269,
+          "mag": 3.4,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 56.29,
+            "hours_up": 12.17,
+            "best_time_local": "2026-02-12T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 161.93
+          },
+          "note": "Excellent visibility (56° max). Best around 18:00."
+        },
+        {
+          "id": "M13",
+          "group": "dso",
+          "type": "cluster",
+          "name": "Hercules Globular Cluster (M13)",
+          "ra_deg": 250.423,
+          "dec_deg": 36.461,
+          "mag": 5.8,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 72.25,
+            "hours_up": 10.14,
+            "best_time_local": "2026-02-13T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 41.67
+          },
+          "note": "Excellent visibility (72° max). Best around 06:00."
+        },
+        {
+          "id": "M87",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Virgo A (M87)",
+          "ra_deg": 187.7059,
+          "dec_deg": 12.3911,
+          "mag": 8.6,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier",
+              "virgo"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 50.01,
+            "hours_up": 10.48,
+            "best_time_local": "2026-02-13T02:37:10.985914",
+            "meridian_2to4_min_abs_ha_deg": 0.71
+          },
+          "note": "Excellent visibility (50° max). Best around 02:37. Near the meridian in deep night (02–04)."
+        }
+      ]
+    },
+    {
+      "date_local": "2026-02-13",
+      "items": [
+        {
+          "id": "cal:https://in-the-sky.org//news.php?id=20260213_16_100",
+          "group": "calendar",
+          "type": "conjunctions",
+          "name": "Sigma Sagittarii",
+          "title": "13 Feb 2026 (5 days away): Lunar occultation of Sigma Sagittarii",
+          "url": "https://in-the-sky.org//news.php?id=20260213_16_100",
+          "published_at": "2026-02-13",
+          "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki) creating a lunar occultation, though it will open be visible only at sea.",
+          "ra_deg": 283.81636041,
+          "dec_deg": -26.29672411,
+          "event_date": "2026-02-13",
+          "event_kind": "conjunctions",
+          "target_name": "Sigma Sagittarii",
+          "meta": {
+            "calendar_source": "in_the_sky_conjunctions",
+            "calendar_stream": "conjunctions",
+            "date": "2026-02-13"
+          },
+          "score": 4000.0,
+          "score_breakdown": {
+            "group": "calendar",
+            "w_group": 40.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 4000.0
+          },
+          "vis": {
+            "max_alt_deg": 2.61,
+            "hours_up": 0.51,
+            "best_time_local": "2026-02-14T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 74.07
+          },
+          "note": "Event highlight. Very low (3° max). If you try, aim around 06:00."
+        },
+        {
+          "id": "planet:mercury",
+          "group": "planets",
+          "type": "planet",
+          "name": "Mercury",
+          "ra_deg": 342.57149,
+          "dec_deg": -7.63465,
+          "mag": -0.95,
+          "meta": {
+            "planet_key": "mercury"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 2.01,
+            "hours_up": 0.34,
+            "best_time_local": "2026-02-13T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 132.83
+          },
+          "note": "Bright planet. Very low (2° max). If you try, aim around 18:00."
+        },
+        {
+          "id": "planet:jupiter",
+          "group": "planets",
+          "type": "planet",
+          "name": "Jupiter",
+          "ra_deg": 107.13511,
+          "dec_deg": 22.82881,
+          "mag": -2.55,
+          "meta": {
+            "planet_key": "jupiter"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 60.55,
+            "hours_up": 11.49,
+            "best_time_local": "2026-02-13T21:12:40.563380",
+            "meridian_2to4_min_abs_ha_deg": 74.64
+          },
+          "note": "Bright planet. Excellent visibility (61° max). Best around 21:12."
+        },
+        {
+          "id": "planet:saturn",
+          "group": "planets",
+          "type": "planet",
+          "name": "Saturn",
+          "ra_deg": 0.49654,
+          "dec_deg": -2.12775,
+          "mag": 1.02,
+          "meta": {
+            "planet_key": "saturn"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 16.77,
+            "hours_up": 2.03,
+            "best_time_local": "2026-02-13T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 150.75
+          },
+          "note": "Bright planet. Low but possible (17° max). Best around 18:00."
+        },
+        {
+          "id": "planet:uranus",
+          "group": "planets",
+          "type": "planet",
+          "name": "Uranus",
+          "ra_deg": 54.8922,
+          "dec_deg": 19.33601,
+          "mag": 5.72,
+          "meta": {
+            "planet_key": "uranus"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 57.01,
+            "hours_up": 7.61,
+            "best_time_local": "2026-02-13T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 126.89
+          },
+          "note": "Bright planet. Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "planet:neptune",
+          "group": "planets",
+          "type": "planet",
+          "name": "Neptune",
+          "ra_deg": 0.66793,
+          "dec_deg": -1.13898,
+          "mag": 7.81,
+          "meta": {
+            "planet_key": "neptune"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 17.69,
+            "hours_up": 2.03,
+            "best_time_local": "2026-02-13T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 150.92
+          },
+          "note": "Bright planet. Low but possible (18° max). Best around 18:00."
+        },
+        {
+          "id": "M42",
+          "group": "dso",
+          "type": "nebula",
+          "name": "Orion Nebula (M42)",
+          "ra_deg": 83.8221,
+          "dec_deg": -5.3911,
+          "mag": 4.0,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 32.39,
+            "hours_up": 7.27,
+            "best_time_local": "2026-02-13T19:41:24.507063",
+            "meridian_2to4_min_abs_ha_deg": 97.96
+          },
+          "note": "Good visibility (32° max). Best around 19:41."
+        },
+        {
+          "id": "M31",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Andromeda Galaxy (M31)",
+          "ra_deg": 10.6847,
+          "dec_deg": 41.269,
+          "mag": 3.4,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 55.69,
+            "hours_up": 12.17,
+            "best_time_local": "2026-02-13T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 160.94
+          },
+          "note": "Excellent visibility (56° max). Best around 18:00."
+        },
+        {
+          "id": "M13",
+          "group": "dso",
+          "type": "cluster",
+          "name": "Hercules Globular Cluster (M13)",
+          "ra_deg": 250.423,
+          "dec_deg": 36.461,
+          "mag": 5.8,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 72.55,
+            "hours_up": 10.14,
+            "best_time_local": "2026-02-14T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 40.68
+          },
+          "note": "Excellent visibility (73° max). Best around 06:00."
+        },
+        {
+          "id": "M87",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Virgo A (M87)",
+          "ra_deg": 187.7059,
+          "dec_deg": 12.3911,
+          "mag": 8.6,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier",
+              "virgo"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 50.0,
+            "hours_up": 10.65,
+            "best_time_local": "2026-02-14T02:27:02.535221",
+            "meridian_2to4_min_abs_ha_deg": 0.84
+          },
+          "note": "Excellent visibility (50° max). Best around 02:27. Near the meridian in deep night (02–04)."
+        }
+      ]
+    },
+    {
+      "date_local": "2026-02-14",
+      "items": [
+        {
+          "id": "planet:mercury",
+          "group": "planets",
+          "type": "planet",
+          "name": "Mercury",
+          "ra_deg": 343.8969,
+          "dec_deg": -6.86497,
+          "mag": -0.89,
+          "meta": {
+            "planet_key": "mercury"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 2.83,
+            "hours_up": 0.34,
+            "best_time_local": "2026-02-14T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 133.17
+          },
+          "note": "Bright planet. Very low (3° max). If you try, aim around 18:00."
+        },
+        {
+          "id": "planet:jupiter",
+          "group": "planets",
+          "type": "planet",
+          "name": "Jupiter",
+          "ra_deg": 107.05038,
+          "dec_deg": 22.83943,
+          "mag": -2.54,
+          "meta": {
+            "planet_key": "jupiter"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 60.56,
+            "hours_up": 11.32,
+            "best_time_local": "2026-02-14T21:02:32.112687",
+            "meridian_2to4_min_abs_ha_deg": 75.71
+          },
+          "note": "Bright planet. Excellent visibility (61° max). Best around 21:02."
+        },
+        {
+          "id": "planet:saturn",
+          "group": "planets",
+          "type": "planet",
+          "name": "Saturn",
+          "ra_deg": 0.59703,
+          "dec_deg": -2.08248,
+          "mag": 1.02,
+          "meta": {
+            "planet_key": "saturn"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 16.32,
+            "hours_up": 1.86,
+            "best_time_local": "2026-02-14T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 149.87
+          },
+          "note": "Bright planet. Low but possible (16° max). Best around 18:00."
+        },
+        {
+          "id": "planet:uranus",
+          "group": "planets",
+          "type": "planet",
+          "name": "Uranus",
+          "ra_deg": 54.90145,
+          "dec_deg": 19.33838,
+          "mag": 5.72,
+          "meta": {
+            "planet_key": "uranus"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 56.92,
+            "hours_up": 7.44,
+            "best_time_local": "2026-02-14T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 127.86
+          },
+          "note": "Bright planet. Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "planet:neptune",
+          "group": "planets",
+          "type": "planet",
+          "name": "Neptune",
+          "ra_deg": 0.69747,
+          "dec_deg": -1.12583,
+          "mag": 7.81,
+          "meta": {
+            "planet_key": "neptune"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 17.18,
+            "hours_up": 2.03,
+            "best_time_local": "2026-02-14T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 149.97
+          },
+          "note": "Bright planet. Low but possible (17° max). Best around 18:00."
+        },
+        {
+          "id": "M42",
+          "group": "dso",
+          "type": "nebula",
+          "name": "Orion Nebula (M42)",
+          "ra_deg": 83.8221,
+          "dec_deg": -5.3911,
+          "mag": 4.0,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 32.39,
+            "hours_up": 7.1,
+            "best_time_local": "2026-02-14T19:31:16.056370",
+            "meridian_2to4_min_abs_ha_deg": 98.94
+          },
+          "note": "Good visibility (32° max). Best around 19:31."
+        },
+        {
+          "id": "M31",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Andromeda Galaxy (M31)",
+          "ra_deg": 10.6847,
+          "dec_deg": 41.269,
+          "mag": 3.4,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 55.08,
+            "hours_up": 12.17,
+            "best_time_local": "2026-02-14T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 159.96
+          },
+          "note": "Excellent visibility (55° max). Best around 18:00."
+        },
+        {
+          "id": "M13",
+          "group": "dso",
+          "type": "cluster",
+          "name": "Hercules Globular Cluster (M13)",
+          "ra_deg": 250.423,
+          "dec_deg": 36.461,
+          "mag": 5.8,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 72.83,
+            "hours_up": 10.31,
+            "best_time_local": "2026-02-15T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 39.69
+          },
+          "note": "Excellent visibility (73° max). Best around 06:00."
+        },
+        {
+          "id": "M87",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Virgo A (M87)",
+          "ra_deg": 187.7059,
+          "dec_deg": 12.3911,
+          "mag": 8.6,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier",
+              "virgo"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 50.01,
+            "hours_up": 10.65,
+            "best_time_local": "2026-02-15T02:27:02.535221",
+            "meridian_2to4_min_abs_ha_deg": 0.14
+          },
+          "note": "Excellent visibility (50° max). Best around 02:27. Near the meridian in deep night (02–04)."
+        }
+      ]
+    },
+    {
+      "date_local": "2026-02-15",
+      "items": [
+        {
+          "id": "planet:mercury",
+          "group": "planets",
+          "type": "planet",
+          "name": "Mercury",
+          "ra_deg": 344.87082,
+          "dec_deg": -6.28055,
+          "mag": -0.83,
+          "meta": {
+            "planet_key": "mercury"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 3.29,
+            "hours_up": 0.51,
+            "best_time_local": "2026-02-15T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 133.16
+          },
+          "note": "Bright planet. Very low (3° max). If you try, aim around 18:00."
+        },
+        {
+          "id": "planet:jupiter",
+          "group": "planets",
+          "type": "planet",
+          "name": "Jupiter",
+          "ra_deg": 106.9873,
+          "dec_deg": 22.84718,
+          "mag": -2.54,
+          "meta": {
+            "planet_key": "jupiter"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 60.58,
+            "hours_up": 11.32,
+            "best_time_local": "2026-02-15T21:02:32.112687",
+            "meridian_2to4_min_abs_ha_deg": 76.76
+          },
+          "note": "Bright planet. Excellent visibility (61° max). Best around 21:02."
+        },
+        {
+          "id": "planet:saturn",
+          "group": "planets",
+          "type": "planet",
+          "name": "Saturn",
+          "ra_deg": 0.67514,
+          "dec_deg": -2.04742,
+          "mag": 1.02,
+          "meta": {
+            "planet_key": "saturn"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 15.85,
+            "hours_up": 1.86,
+            "best_time_local": "2026-02-15T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 148.96
+          },
+          "note": "Bright planet. Low but possible (16° max). Best around 18:00."
+        },
+        {
+          "id": "planet:uranus",
+          "group": "planets",
+          "type": "planet",
+          "name": "Uranus",
+          "ra_deg": 54.90931,
+          "dec_deg": 19.34034,
+          "mag": 5.72,
+          "meta": {
+            "planet_key": "uranus"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 56.81,
+            "hours_up": 7.44,
+            "best_time_local": "2026-02-15T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 128.84
+          },
+          "note": "Bright planet. Excellent visibility (57° max). Best around 18:00."
+        },
+        {
+          "id": "planet:neptune",
+          "group": "planets",
+          "type": "planet",
+          "name": "Neptune",
+          "ra_deg": 0.72049,
+          "dec_deg": -1.11562,
+          "mag": 7.81,
+          "meta": {
+            "planet_key": "neptune"
+          },
+          "score": 2500.0,
+          "score_breakdown": {
+            "group": "planets",
+            "w_group": 25.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 2500.0
+          },
+          "vis": {
+            "max_alt_deg": 16.65,
+            "hours_up": 2.03,
+            "best_time_local": "2026-02-15T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 149.01
+          },
+          "note": "Bright planet. Low but possible (17° max). Best around 18:00."
+        },
+        {
+          "id": "M42",
+          "group": "dso",
+          "type": "nebula",
+          "name": "Orion Nebula (M42)",
+          "ra_deg": 83.8221,
+          "dec_deg": -5.3911,
+          "mag": 4.0,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 32.39,
+            "hours_up": 7.1,
+            "best_time_local": "2026-02-15T19:31:16.056370",
+            "meridian_2to4_min_abs_ha_deg": 99.93
+          },
+          "note": "Good visibility (32° max). Best around 19:31."
+        },
+        {
+          "id": "M31",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Andromeda Galaxy (M31)",
+          "ra_deg": 10.6847,
+          "dec_deg": 41.269,
+          "mag": 3.4,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 54.48,
+            "hours_up": 12.17,
+            "best_time_local": "2026-02-15T18:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 158.97
+          },
+          "note": "Excellent visibility (54° max). Best around 18:00."
+        },
+        {
+          "id": "M13",
+          "group": "dso",
+          "type": "cluster",
+          "name": "Hercules Globular Cluster (M13)",
+          "ra_deg": 250.423,
+          "dec_deg": 36.461,
+          "mag": 5.8,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 73.09,
+            "hours_up": 10.31,
+            "best_time_local": "2026-02-16T06:00:00.000013",
+            "meridian_2to4_min_abs_ha_deg": 38.71
+          },
+          "note": "Excellent visibility (73° max). Best around 06:00."
+        },
+        {
+          "id": "M87",
+          "group": "dso",
+          "type": "galaxy",
+          "name": "Virgo A (M87)",
+          "ra_deg": 187.7059,
+          "dec_deg": 12.3911,
+          "mag": 8.6,
+          "meta": {
+            "catalog": null,
+            "tags": [
+              "messier",
+              "virgo"
+            ]
+          },
+          "score": 100.0,
+          "score_breakdown": {
+            "group": "dso",
+            "w_group": 1.0,
+            "alt_deg": 0.0,
+            "alt_score": 0.0,
+            "w_alt": 1.0,
+            "time_score": 100.0,
+            "w_time": 1.0,
+            "mer_bonus": 0.0,
+            "mer_max": 12.0,
+            "mer_window_deg": 10.0,
+            "raw": 100.0,
+            "score": 100.0
+          },
+          "vis": {
+            "max_alt_deg": 50.01,
+            "hours_up": 10.82,
+            "best_time_local": "2026-02-16T02:27:02.535221",
+            "meridian_2to4_min_abs_ha_deg": 1.13
+          },
+          "note": "Excellent visibility (50° max). Best around 02:27. Near the meridian in deep night (02–04)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+# yaml/rules.yml
+time:
+  horizon_deg: 0.0
+
+  # "Night for enthusiasts": start at civil dusk (Sun alt <= -6°)
+  dusk_alt_deg: -6.0
+  dawn_alt_deg: -6.0
+
+  # For deep-sky merit: darker window (Sun alt <= -12° or -18°)
+  dark_alt_deg: -12.0
+
+  # Meridian bonus window in local time (hours)
+  meridian_bonus_hours:
+    start: 2
+    end: 4
+    half_width_deg: 10   # +/- 10° around meridian
+
+scoring:
+  # global weights
+  base:
+    calendar_event: 1000
+    planet: 600
+    solar_system: 250
+    dso: 120
+
+  # altitude terms (computed over the night)
+  altitude:
+    min_alt_deg: 5
+    max_alt_weight: 6.0        # multiply max_alt_deg
+    mean_alt_weight: 1.0       # multiply mean_alt_deg
+    time_visible_weight: 0.8   # multiply visible_fraction * 100
+
+  # brightness term (optional, only if mag available)
+  magnitude:
+    enable: true
+    weight: 10.0
+    # lower mag (brighter) => higher score
+    mag_ref: 6.0
+
+  # penalize low altitude clutter
+  penalties:
+    below_10_deg: -40
+    below_5_deg: -100
+
+  # meridian bonus (esp. for DSO/extended objects)
+  meridian_bonus:
+    enable: true
+    weight: 140
+
+text:
+  language: en
+  compass_8: true

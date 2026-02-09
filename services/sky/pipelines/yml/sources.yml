@@ -1,0 +1,26 @@
+# yaml/sources.yml
+site:
+  lat_deg: 52.2297
+  lon_deg: 21.0122
+  elev_m: 100
+  timezone: Europe/Warsaw
+
+paths:
+  project_root_parents_up: 3
+
+inputs:
+  calendar_daily_signal: "sites/staging/calendar/daily_signal.json"
+  planets_json: "sites/staging/sky/data/planets.json"
+  dso_seed: "sites/staging/sky/data/dso_seed.json"
+
+outputs:
+  objects_today: "sites/staging/sky/data/objects_today.json"
+  objects_today_copy_to_services: "services/sky/data/generated/objects_today.json"
+
+limits:
+  max_items: 30
+  max_per_group:
+    calendar: 8
+    planets: 6
+    solar_system: 6
+    dso: 20
