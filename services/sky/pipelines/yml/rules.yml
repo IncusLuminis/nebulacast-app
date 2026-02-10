@@ -61,3 +61,15 @@ scoring:
   dso_pivot_local_h: 3
   dso_pivot_local_m: 0
   dso_pivot_ha_keep_deg: 45
+
+  ranking:
+  total_top: 7
+  quotas:
+    planets: 2
+    dso: 5
+    events: 1
+    alerts: 1
+  reserve:
+    events: 1
+    alerts: 1
+  order: ["alerts", "events", "planets", "dso"]

@@ -92,11 +92,11 @@ export function bootSkyMapUI() {
     safeUpdate({ options: { [opt]: !!inp.checked } });
   });
 
+    // -----------------------
+  // ✅ Ranking popover (button still ★, user label not important)
   // -----------------------
-  // ✅ Best Today popover
-  // -----------------------
-  let _bestCache = null;
-  let _bestLoading = false;
+  let _rankingCache = null;
+  let _rankingLoading = false;
 
   function toggleBest(force) {
     if (!bestPanel) return;
@@ -104,80 +104,117 @@ export function bootSkyMapUI() {
     bestPanel.hidden = !next;
   }
 
-  async function loadBestTodayJSON() {
-    if (_bestCache) return _bestCache;
-    if (_bestLoading) return null;
-    _bestLoading = true;
+  async function loadRankingJSON() {
+    if (_rankingCache) return _rankingCache;
+    if (_rankingLoading) return null;
+    _rankingLoading = true;
 
     try {
       const baseUrl = (window.SKY_CONFIG && window.SKY_CONFIG.baseUrl) ? window.SKY_CONFIG.baseUrl : "/sky";
-      const url = `${baseUrl}/data/objects_today.json`;
+      const url = `${baseUrl}/data/ranking.json`;
       const res = await fetch(url, { cache: "no-cache" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      _bestCache = json;
-      return _bestCache;
+      _rankingCache = json;
+      return _rankingCache;
     } catch (e) {
-      console.warn("[sky.map] BestToday load failed:", e);
+      console.warn("[sky.map] ranking load failed:", e);
       return null;
     } finally {
-      _bestLoading = false;
+      _rankingLoading = false;
     }
   }
 
-  function renderBestPanel(objects) {
+  function iconForGroup(g) {
+    if (g === "planets") return "🪐";
+    if (g === "dso") return "✦";
+    if (g === "alerts") return "⚠️";
+    if (g === "events") return "📅";
+    return "★";
+  }
+
+  function fmtHHMM(isoLocal) {
+    if (!isoLocal || typeof isoLocal !== "string") return "";
+    // expects "YYYY-MM-DDTHH:MM:SS" or "YYYY-MM-DDTHH:MM"
+    const m = isoLocal.match(/T(\d{2}):(\d{2})/);
+    return m ? `${m[1]}:${m[2]}` : "";
+  }
+
+  function renderBestPanelRanking(items, meta) {
     if (!bestPanel) return;
 
-    bestPanel.innerHTML = ""; // reset
+    bestPanel.innerHTML = "";
+
     const title = document.createElement("div");
     title.className = "sky-popover-title";
     title.textContent = "Best Today";
     bestPanel.appendChild(title);
 
+    const sub = document.createElement("div");
+    sub.className = "sky-popover-sub";
+    const totalTop = meta?.total_top ?? (Array.isArray(items) ? items.length : 0);
+    sub.textContent = `Ranking: top ${totalTop}`;
+    bestPanel.appendChild(sub);
+
     const list = document.createElement("div");
     list.className = "sky-best-list";
 
-    if (!objects || !objects.length) {
+    if (!items || !items.length) {
       const empty = document.createElement("div");
       empty.className = "sky-best-empty";
-      empty.textContent = "No objects for today.";
+      empty.textContent = "No ranked objects for today.";
       list.appendChild(empty);
       bestPanel.appendChild(list);
       return;
     }
 
-    for (const obj of objects) {
+    for (const obj of items) {
       const row = document.createElement("button");
       row.type = "button";
       row.className = "sky-best-row";
+
+      // left: icon + name
+      const head = document.createElement("div");
+      head.className = "sky-best-head";
+
+      const ico = document.createElement("div");
+      ico.className = "sky-best-ico";
+      ico.textContent = iconForGroup(obj.group);
 
       const name = document.createElement("div");
       name.className = "sky-best-name";
       name.textContent = obj.name || obj.id || "Object";
 
+      head.appendChild(ico);
+      head.appendChild(name);
+
+      // right/bottom: compact meta line
       const note = document.createElement("div");
       note.className = "sky-best-note";
-      note.textContent = obj.note || "";
 
-      row.appendChild(name);
-      if (obj.note) row.appendChild(note);
+      const maxAlt = (obj?.vis && typeof obj.vis.max_alt_deg === "number") ? Math.round(obj.vis.max_alt_deg) : null;
+      const bestT = fmtHHMM(obj?.vis?.best_time_local_quality || obj?.vis?.best_time_local);
+      const mag = (typeof obj.mag === "number") ? obj.mag.toFixed(1) : null;
+
+      // keep it short; long prose stays for the “expanded list” component later
+      const parts = [];
+      if (maxAlt != null) parts.push(`${maxAlt}°`);
+      if (bestT) parts.push(bestT);
+      if (mag != null) parts.push(`mag ${mag}`);
+      note.textContent = parts.join(" • ");
+
+      row.appendChild(head);
+      if (note.textContent) row.appendChild(note);
 
       row.addEventListener("click", (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
 
+        // Keep modal behavior: show full object payload (note + vis + score)
         if (modal) {
           modal.showFromHit({
             kind: "object",
-            data: {
-              id: obj.id,
-              name: obj.name,
-              type: obj.type,
-              mag: obj.mag,
-              altDeg: obj.altDeg,
-              azDeg: obj.azDeg,
-              note: obj.note
-            }
+            data: obj
           });
         }
       });
@@ -192,25 +229,28 @@ export function bootSkyMapUI() {
     e.preventDefault();
     e.stopPropagation();
 
+    // close layers if open
     if (layersPanel && !layersPanel.hidden) toggleLayers(false);
 
     toggleBest();
     if (!bestPanel || bestPanel.hidden) return;
 
-    bestPanel.innerHTML = `<div class="sky-popover-title">Best Today</div><div class="sky-best-empty">Loading…</div>`;
+    bestPanel.innerHTML =
+      `<div class="sky-popover-title">Best Today</div><div class="sky-best-empty">Loading…</div>`;
 
-    const json = await loadBestTodayJSON();
-    const items = Array.isArray(json?.items) ? json.items : (Array.isArray(json) ? json : []);
-    renderBestPanel(items);
+    const json = await loadRankingJSON();
+    const items = Array.isArray(json?.items) ? json.items : [];
+    renderBestPanelRanking(items, json?.meta);
   });
 
+  // click outside closes
   document.addEventListener("click", (e) => {
     if (!bestPanel || bestPanel.hidden) return;
     if (btnBestToday && btnBestToday.contains(e.target)) return;
     if (bestPanel.contains(e.target)) return;
     toggleBest(false);
   });
-
+  
   // -----------------------
   // Timeline model
   // -----------------------
