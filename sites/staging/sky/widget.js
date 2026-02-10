@@ -19,6 +19,16 @@ import { SkyUI } from "./core/sky.ui.js";
     return dst;
   }
 
+  function applyUIHighlight(patch) {
+    const hid = patch?.ui?.highlightId;
+    if (!hid) return;
+
+    window.__skyHighlight = {
+      id: String(hid),
+      until: Date.now() + (patch.ui.highlightMs ?? 3000),
+    };
+  }
+
   function makeRoot(container) {
     const root = document.createElement("div");
     root.className = "sky-root";
@@ -32,24 +42,20 @@ import { SkyUI } from "./core/sky.ui.js";
     const canvas = root.querySelector("canvas.sky-canvas");
     const status = root.querySelector('[data-role="status"]');
 
-    // IMPORTANT: root must fully fill mount, overlays position relative to root
     root.style.position = "relative";
     root.style.width = "100%";
     root.style.height = "100%";
     root.style.overflow = "visible";
 
-    // wrap is the drawing box: also fill
     wrap.style.position = "relative";
     wrap.style.width = "100%";
     wrap.style.height = "100%";
     wrap.style.overflow = "visible";
 
-    // canvas fills wrap
     canvas.style.display = "block";
     canvas.style.width = "100%";
     canvas.style.height = "100%";
 
-    // status is overlay; do not affect layout
     status.style.position = "absolute";
     status.style.left = "10px";
     status.style.right = "10px";
@@ -98,19 +104,39 @@ import { SkyUI } from "./core/sky.ui.js";
     }${planetsOn ? " | Planets" : ""}`;
   }
 
-  // Mouse position in CSS pixels relative to canvas box
+  // -----------------------
+  // Highlight helper (global) used by Render.drawObjects()
+  // -----------------------
+  window.__skyIsHighlighted = function (obj) {
+    const h = window.__skyHighlight;
+    if (!h) return false;
+    if (Date.now() > h.until) return false;
+    if (!obj) return false;
+
+    const hid = String(h.id || "").toLowerCase();
+
+    const candidates = [
+      obj.id,
+      obj.name,
+      (obj.group && obj.name) ? `${obj.group}:${obj.name}` : null,
+      obj.meta?.planet_key,
+    ]
+      .filter(Boolean)
+      .map((v) => String(v).toLowerCase());
+
+    return candidates.includes(hid);
+  };
+
   function getMousePosCSS(canvasEl, ev) {
     const r = canvasEl.getBoundingClientRect();
     return { x: ev.clientX - r.left, y: ev.clientY - r.top };
   }
 
-  // Build a SkyUI hit object from prepared item
   function toUIHit(preparedItem) {
     if (!preparedItem) return null;
 
     let kind = preparedItem.kind;
     if (!kind) {
-      // Sun/Moon/Planets as "object" kind for UI templates
       if (
         preparedItem.type === "sun" ||
         preparedItem.type === "moon" ||
@@ -121,10 +147,8 @@ import { SkyUI } from "./core/sky.ui.js";
       else kind = "star";
     }
 
-    // pass-through (no renames)
     const data = preparedItem;
 
-    // additive subtypes (safe)
     if ((preparedItem.type === "sun" || preparedItem.type === "moon") && data && data.subtype == null) {
       data.subtype = preparedItem.type;
     }
@@ -143,7 +167,6 @@ import { SkyUI } from "./core/sky.ui.js";
     let ctx, viewport;
     ({ ctx, viewport } = Layout.setupCanvas(canvas, mount));
 
-    // UI
     const tooltipEl = document.createElement("div");
     root.appendChild(tooltipEl);
     const tooltip = SkyUI.createTooltip(root, tooltipEl);
@@ -155,8 +178,6 @@ import { SkyUI } from "./core/sky.ui.js";
     let objectsToday = null;
     let alertsToday = null;
     let sunMoon = null;
-
-    // +++ PLANETS
     let planets = null;
 
     try {
@@ -179,7 +200,6 @@ import { SkyUI } from "./core/sky.ui.js";
       if (typeof Data.loadSunMoon === "function") sunMoon = await Data.loadSunMoon(cfg.baseUrl);
       else sunMoon = null;
 
-      // +++ PLANETS
       status.textContent = "Loading planets…";
       if (typeof Data.loadPlanets === "function") planets = await Data.loadPlanets(cfg.baseUrl);
       else planets = null;
@@ -196,8 +216,6 @@ import { SkyUI } from "./core/sky.ui.js";
     let alertsPrepared = [];
     let eqGridPrepared = null;
     let sunMoonPrepared = [];
-
-    // +++ PLANETS
     let planetsPrepared = [];
 
     function recomputeAll() {
@@ -237,7 +255,6 @@ import { SkyUI } from "./core/sky.ui.js";
           ? Prepare.prepareSunMoon(sunMoon, observer, viewport)
           : [];
 
-      // +++ PLANETS (enabled by default unless explicitly disabled)
       const showPlanets = cfg.options && cfg.options.showPlanets === false ? false : true;
       planetsPrepared =
         showPlanets && planets && typeof Prepare.preparePlanets === "function"
@@ -266,15 +283,16 @@ import { SkyUI } from "./core/sky.ui.js";
 
       if (cfg.options?.showConstellations) Render.drawConstellations(ctx, viewport, consPrepared);
 
+      // stars background
+      Render.drawStars(ctx, viewport, starsPrepared);
+
       if (cfg.options?.showAlerts && alertsPrepared.length) Render.drawAlerts(ctx, viewport, alertsPrepared);
 
-      // Sun/Moon layer
       if (sunMoonPrepared && sunMoonPrepared.length) {
         if (typeof Render.drawSunMoon === "function") Render.drawSunMoon(ctx, viewport, sunMoonPrepared);
         else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, sunMoonPrepared);
       }
 
-      // +++ PLANETS layer
       if (planetsPrepared && planetsPrepared.length) {
         if (typeof Render.drawPlanets === "function") Render.drawPlanets(ctx, viewport, planetsPrepared);
         else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, planetsPrepared);
@@ -282,9 +300,6 @@ import { SkyUI } from "./core/sky.ui.js";
 
       if (cfg.options?.showObjects && objectsPrepared.length) Render.drawObjects(ctx, viewport, objectsPrepared);
 
-      Render.drawStars(ctx, viewport, starsPrepared);
-
-      // NEW: draw all labels once, with de-overlap
       Render.flushLabels(ctx, viewport);
 
       ctx.restore();
@@ -314,22 +329,56 @@ import { SkyUI } from "./core/sky.ui.js";
       render();
     }
 
-    function update(patch) {
-      deepMerge(cfg, patch || {});
-      recomputeAll();
-      render();
+    // -----------------------
+    // Animation loop (only while highlight is active)
+    // -----------------------
+    let rafId = 0;
+
+    function isHighlightActive() {
+      const h = typeof window !== "undefined" ? window.__skyHighlight : null;
+      return !!(h && Date.now() <= h.until && h.id != null && String(h.id).length > 0);
     }
 
-    // Hover/Click interactions
+    function stopAnim() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+
+    function startAnim() {
+      if (rafId) return;
+
+      const tick = () => {
+        if (!isHighlightActive()) {
+          stopAnim();
+          render(); // финальный кадр
+          return;
+        }
+        render();
+        rafId = requestAnimationFrame(tick);
+      };
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function update(patch) {
+      if (!patch) return;
+
+      deepMerge(cfg, patch);
+      applyUIHighlight(patch);
+
+      recomputeAll();
+      render();
+
+      // if highlight was applied -> animate breathing
+      if (isHighlightActive()) startAnim();
+    }
+
     let hoverTarget = null;
 
     function hitRadiusForItem(t) {
       if (!t) return 6;
-
       if (t.type === "sun") return 14;
       if (t.type === "moon") return 13;
-
-      // +++ PLANETS
       if (t.type === "planet") return 12;
 
       const k = t.kind || (t.title ? "alert" : t.type && t.name ? "object" : "star");
@@ -340,7 +389,6 @@ import { SkyUI } from "./core/sky.ui.js";
     }
 
     function hitTest(cx, cy) {
-      // priority: alerts > sun/moon > planets > objects > stars
       const list = []
         .concat(alertsPrepared || [])
         .concat(sunMoonPrepared || [])
@@ -364,31 +412,6 @@ import { SkyUI } from "./core/sky.ui.js";
       }
       return best;
     }
-
-    function getBestTodayObjects() {
-      return (window.__skyPrepared?.objects || [])
-        .filter(o => o.group !== "calendar") // календарь тут не нужен
-        .slice(0, 10);
-    }
-
-    function renderBestTodayList(items) {
-      const el = document.getElementById("bestTodayList");
-      if (!el) return;
-    
-      el.innerHTML = "";
-    
-      items.forEach(obj => {
-        const row = document.createElement("div");
-        row.className = "sky-best-item";
-        row.textContent = `${obj.name}: ${obj.note || ""}`;
-        row.onclick = () => {
-          window.__skyUI?.openObjectModal(obj);
-        };
-        el.appendChild(row);
-      });
-    }
-
-
 
     function bindInteractionsOnce() {
       if (!canvas || canvas.__skyBound) return;
@@ -440,7 +463,6 @@ import { SkyUI } from "./core/sky.ui.js";
       );
     }
 
-    // No ResizeObserver
     const onWinResize = () => {
       clearTimeout(onWinResize.__t);
       onWinResize.__t = setTimeout(() => resize(), 50);
@@ -451,9 +473,12 @@ import { SkyUI } from "./core/sky.ui.js";
     render();
     bindInteractionsOnce();
 
+    // if highlight already exists on boot
+    if (isHighlightActive()) startAnim();
+
     setTimeout(() => resize(), 0);
 
-    return makeHandle({ root, update, resize, onWinResize });
+    return makeHandle({ root, update, resize, onWinResize, stopAnim });
   }
 
   function makeHandle(parts) {
@@ -462,6 +487,7 @@ import { SkyUI } from "./core/sky.ui.js";
       resize: parts.resize || function () {},
       destroy: function () {
         try {
+          if (parts.stopAnim) parts.stopAnim();
           if (parts.onWinResize) window.removeEventListener("resize", parts.onWinResize);
         } catch (_) {}
         if (parts.root && parts.root.parentNode) parts.root.parentNode.removeChild(parts.root);

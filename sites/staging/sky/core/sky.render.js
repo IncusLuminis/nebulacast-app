@@ -401,6 +401,37 @@ function drawConstellations(ctx, vp, consPrepared) {
   ctx.restore();
 }
 
+// -----------------------
+// Highlight helpers
+// -----------------------
+function _highlightAlphaNow() {
+  // ~1.2s period (noticeable like Stellarium/SkySafari)
+  const t = performance.now();
+  const omega = 0.0052; // 2π / 0.0052 ≈ 1208ms CHANGE HERE TO GET FASTER/SLOWER animation
+  const s = 0.5 + 0.5 * Math.sin(t * omega); // 0..1
+  return 0.10 + 0.80 * s; // 0.10..0.90
+}
+
+// Wrapper for highlighted "filled" object (planet marker).
+function drawHighlightedObject(ctx, drawFn) {
+  const alpha = _highlightAlphaNow();
+
+  ctx.save();
+
+  // breathe by alpha
+  ctx.globalAlpha *= alpha;
+
+  // glow
+  ctx.shadowColor = "rgba(255,215,120,0.95)";
+  ctx.shadowBlur = 28;
+
+  drawFn();
+
+  ctx.restore();
+
+  return { alpha };
+}
+
 function drawObjects(ctx, vp, objectsPrepared) {
   if (!objectsPrepared || !objectsPrepared.length) return;
 
@@ -414,48 +445,110 @@ function drawObjects(ctx, vp, objectsPrepared) {
 
   for (const o of objectsPrepared) {
     const isPlanet = (o.type === "planet");
+    const highlighted =
+      typeof window !== "undefined" &&
+      window.__skyIsHighlighted &&
+      window.__skyIsHighlighted(o);
+
+    // ---------- marker ----------
+    const r = isPlanet ? rPlanet : rDS;
+    const rr = highlighted ? r * 1.8 : r;
 
     if (isPlanet) {
-      // planet marker (keep marker if it arrives via objects layer)
-      ctx.beginPath();
-      ctx.arc(o.x, o.y, rPlanet, 0, Math.PI * 2);
-      ctx.fillStyle = o.color || "rgba(255,230,180,0.90)";
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(o.x, o.y, rPlanet + 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
-      ctx.fill();
+      if (highlighted) {
+        drawHighlightedObject(ctx, () => {
+          ctx.beginPath();
+          ctx.arc(o.x, o.y, rr, 0, Math.PI * 2);
+          ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
+          ctx.fill();
+        });
+      } else {
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
+        ctx.fill();
+      }
     } else {
-      // DSO marker
-      const r = rDS;
       ctx.beginPath();
-      ctx.moveTo(o.x, o.y - r);
-      ctx.lineTo(o.x + r, o.y);
-      ctx.lineTo(o.x, o.y + r);
-      ctx.lineTo(o.x - r, o.y);
+      ctx.moveTo(o.x, o.y - rr);
+      ctx.lineTo(o.x + rr, o.y);
+      ctx.lineTo(o.x, o.y + rr);
+      ctx.lineTo(o.x - rr, o.y);
       ctx.closePath();
-
-      ctx.strokeStyle = "rgba(210,230,255,0.55)";
-      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = "rgba(210,230,255,0.65)";
+      ctx.lineWidth = highlighted ? 2.4 : 1.4;
       ctx.stroke();
-
-      ctx.fillStyle = "rgba(210,230,255,0.10)";
+      ctx.fillStyle = "rgba(210,230,255,0.12)";
       ctx.fill();
     }
 
-    // IMPORTANT: do NOT label planets from objects layer (labels come from drawPlanets)
-    if (!isPlanet && o.altDeg >= UI.LABEL_ALT_MIN_DEG && o.name) {
-      ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "left";
+    // ---------- highlight ring + crosshair ----------
+    if (highlighted) {
+      const t = performance.now();
+      const s = 0.5 + 0.5 * Math.sin(t * 0.0028);
+      const alpha = 0.10 + 0.80 * s;
 
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.strokeText(o.name, o.x + 8, o.y);
+      ctx.save();
+      ctx.globalAlpha *= alpha;
 
-      ctx.fillStyle = "rgba(230,240,255,0.72)";
-      ctx.fillText(o.name, o.x + 8, o.y);
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, rr + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,180,0.95)";
+      ctx.lineWidth = 3.2;
+      ctx.stroke();
+
+      const gap = rr + 2;
+      const len = rr + 18;
+
+      ctx.beginPath();
+      ctx.moveTo(o.x - len, o.y);
+      ctx.lineTo(o.x - gap, o.y);
+      ctx.moveTo(o.x + gap, o.y);
+      ctx.lineTo(o.x + len, o.y);
+      ctx.moveTo(o.x, o.y - len);
+      ctx.lineTo(o.x, o.y - gap);
+      ctx.moveTo(o.x, o.y + gap);
+      ctx.lineTo(o.x, o.y + len);
+
+      ctx.strokeStyle = "rgba(255,215,120,0.95)";
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // ---------- label (QUEUE ONLY; no direct draw) ----------
+    const showLabel =
+      highlighted ||
+      (typeof o.altDeg === "number" && o.altDeg >= UI.LABEL_ALT_MIN_DEG);
+
+    if (showLabel && o.name) {
+      const font = highlighted ? "bold 14px system-ui" : "13px system-ui";
+      const fillStyle = highlighted
+        ? "rgba(255,255,200,0.95)"
+        : "rgba(230,240,255,0.75)";
+
+      // critical: same dedupKey as planets layer, so Jupiter won't duplicate
+      const dedupKey = isPlanet
+        ? `planet:${o.name}`
+        : (o.id != null ? `obj:${o.id}` : `obj:${o.name}`);
+
+      enqueueLabel(ctx, vp, {
+        text: o.name,
+        x: o.x,
+        y: o.y,
+        dx: rr + 8,
+        dy: 0,
+        font,
+        align: "left",
+        baseline: "middle",
+        fillStyle,
+        strokeStyle: "rgba(0,0,0,0.45)",
+        strokeWidth: 4,
+        priority: highlighted ? 900 : 240,
+        dedupKey,
+      });
     }
   }
 
@@ -556,8 +649,6 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
         strokeStyle: "rgba(0,0,0,0.35)",
         strokeWidth: 3.5,
         priority: 300,
-        // optional dedup too (safe)
-        // dedupKey: isSun ? "sun" : (isMoon ? "moon" : null),
       });
 
       if (isMoon) {
@@ -582,7 +673,7 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
             strokeStyle: "rgba(0,0,0,0.32)",
             strokeWidth: 3.2,
             priority: 295,
-            dedupKey: "moon_phase", // keep just one
+            dedupKey: "moon_phase",
           });
         }
       }
@@ -618,7 +709,6 @@ function drawPlanets(ctx, vp, planetsPrepared) {
     ctx.fillStyle = "rgba(255,255,255,0.06)";
     ctx.fill();
 
-    // label -> queue (DEDUP by planet name)
     if (typeof p.altDeg === "number" && p.altDeg >= UI.LABEL_ALT_MIN_DEG && p.name) {
       enqueueLabel(ctx, vp, {
         text: p.name,
@@ -727,8 +817,6 @@ function drawAlerts(ctx, vp, alertsPrepared) {
         strokeStyle: "rgba(0,0,0,0.35)",
         strokeWidth: 3.5,
         priority: 400,
-        // optional: avoid duplicates if same alert title appears twice
-        // dedupKey: `alert:${a.title}`,
       });
     }
   }

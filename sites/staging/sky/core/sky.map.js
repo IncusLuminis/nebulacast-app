@@ -142,23 +142,24 @@ export function bootSkyMapUI() {
 
   function renderBestPanelRanking(items, meta) {
     if (!bestPanel) return;
-
+  
     bestPanel.innerHTML = "";
-
+  
+    const totalTop = meta?.total_top ?? (Array.isArray(items) ? items.length : 0);
+  
     const title = document.createElement("div");
     title.className = "sky-popover-title";
-    title.textContent = "Best Today";
+    title.textContent = "Top objects";
     bestPanel.appendChild(title);
-
+  
     const sub = document.createElement("div");
     sub.className = "sky-popover-sub";
-    const totalTop = meta?.total_top ?? (Array.isArray(items) ? items.length : 0);
     sub.textContent = `Ranking: top ${totalTop}`;
     bestPanel.appendChild(sub);
-
+  
     const list = document.createElement("div");
     list.className = "sky-best-list";
-
+  
     if (!items || !items.length) {
       const empty = document.createElement("div");
       empty.className = "sky-best-empty";
@@ -167,61 +168,53 @@ export function bootSkyMapUI() {
       bestPanel.appendChild(list);
       return;
     }
-
+  
     for (const obj of items) {
       const row = document.createElement("button");
       row.type = "button";
       row.className = "sky-best-row";
-
-      // left: icon + name
+  
       const head = document.createElement("div");
       head.className = "sky-best-head";
-
+  
       const ico = document.createElement("div");
       ico.className = "sky-best-ico";
       ico.textContent = iconForGroup(obj.group);
-
+  
       const name = document.createElement("div");
       name.className = "sky-best-name";
       name.textContent = obj.name || obj.id || "Object";
-
+  
       head.appendChild(ico);
       head.appendChild(name);
-
-      // right/bottom: compact meta line
+  
       const note = document.createElement("div");
       note.className = "sky-best-note";
-
-      const maxAlt = (obj?.vis && typeof obj.vis.max_alt_deg === "number") ? Math.round(obj.vis.max_alt_deg) : null;
+  
+      const maxAlt = typeof obj?.vis?.max_alt_deg === "number"
+        ? Math.round(obj.vis.max_alt_deg)
+        : null;
       const bestT = fmtHHMM(obj?.vis?.best_time_local_quality || obj?.vis?.best_time_local);
-      const mag = (typeof obj.mag === "number") ? obj.mag.toFixed(1) : null;
-
-      // keep it short; long prose stays for the “expanded list” component later
+      const mag = typeof obj.mag === "number" ? obj.mag.toFixed(1) : null;
+  
       const parts = [];
       if (maxAlt != null) parts.push(`${maxAlt}°`);
       if (bestT) parts.push(bestT);
       if (mag != null) parts.push(`mag ${mag}`);
       note.textContent = parts.join(" • ");
-
+  
       row.appendChild(head);
       if (note.textContent) row.appendChild(note);
-
+  
       row.addEventListener("click", (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-
-        // Keep modal behavior: show full object payload (note + vis + score)
-        if (modal) {
-          modal.showFromHit({
-            kind: "object",
-            data: obj
-          });
-        }
+        focusOnRankingItem(obj);
       });
-
+  
       list.appendChild(row);
     }
-
+  
     bestPanel.appendChild(list);
   }
 
@@ -250,7 +243,42 @@ export function bootSkyMapUI() {
     if (bestPanel.contains(e.target)) return;
     toggleBest(false);
   });
+
+  function pickBestLocalDate(obj) {
+    const iso =
+      obj?.vis?.best_time_local_quality ||
+      obj?.vis?.best_time_local;
+
+    if (!iso) return null;
+
+    const dt = new Date(iso); // local time
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+
+  function focusOnRankingItem(obj) {
+    const dt = pickBestLocalDate(obj);
+    if (!dt) return;
   
+    base = dt;
+    tSlider.value = "50";
+    applySlider();
+  
+    safeUpdate({
+      ui: {
+        highlightId: obj.id ?? `${obj.group}:${obj.name}`,
+        highlightMs: 5000,
+        highlightMode: "Focus"
+      }
+    });
+  }
+
+
+  function centerOnDate(dt) {
+    base = dt;
+    tSlider.value = "50";
+    applySlider();
+  }
+
   // -----------------------
   // Timeline model
   // -----------------------
