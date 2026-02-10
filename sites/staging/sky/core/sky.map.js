@@ -58,7 +58,23 @@ export function bootSkyMapUI() {
     )}:${pad2(dt.getMinutes())}:00${sign}${hh}:${mm}`;
   }
 
+  function humanizeISO(iso) {
+    if (!iso) return "";
+    return String(iso).replace("T", " ");
+  }
+
+  // -----------------------
+  // IMPORTANT: prevent echo-loop from postMessage(datetimeISO)
+  // -----------------------
+  let _lastSentDatetimeISO = null;
+  let _suppressEchoUntilMs = 0;
+
   function safeUpdate(patch) {
+    // If we're sending datetimeISO, remember it so we can ignore echoed messages.
+    if (patch && typeof patch.datetimeISO === "string") {
+      _lastSentDatetimeISO = patch.datetimeISO;
+      _suppressEchoUntilMs = Date.now() + 1500; // enough to pass through one redraw / postMessage roundtrip
+    }
     window.__skyWidget?.update?.(patch);
   }
 
@@ -92,8 +108,8 @@ export function bootSkyMapUI() {
     safeUpdate({ options: { [opt]: !!inp.checked } });
   });
 
-    // -----------------------
-  // ✅ Ranking popover (button still ★, user label not important)
+  // -----------------------
+  // ✅ Ranking popover
   // -----------------------
   let _rankingCache = null;
   let _rankingLoading = false;
@@ -135,31 +151,30 @@ export function bootSkyMapUI() {
 
   function fmtHHMM(isoLocal) {
     if (!isoLocal || typeof isoLocal !== "string") return "";
-    // expects "YYYY-MM-DDTHH:MM:SS" or "YYYY-MM-DDTHH:MM"
     const m = isoLocal.match(/T(\d{2}):(\d{2})/);
     return m ? `${m[1]}:${m[2]}` : "";
   }
 
   function renderBestPanelRanking(items, meta) {
     if (!bestPanel) return;
-  
+
     bestPanel.innerHTML = "";
-  
+
     const totalTop = meta?.total_top ?? (Array.isArray(items) ? items.length : 0);
-  
+
     const title = document.createElement("div");
     title.className = "sky-popover-title";
     title.textContent = "Top objects";
     bestPanel.appendChild(title);
-  
+
     const sub = document.createElement("div");
     sub.className = "sky-popover-sub";
     sub.textContent = `Ranking: top ${totalTop}`;
     bestPanel.appendChild(sub);
-  
+
     const list = document.createElement("div");
     list.className = "sky-best-list";
-  
+
     if (!items || !items.length) {
       const empty = document.createElement("div");
       empty.className = "sky-best-empty";
@@ -168,53 +183,53 @@ export function bootSkyMapUI() {
       bestPanel.appendChild(list);
       return;
     }
-  
+
     for (const obj of items) {
       const row = document.createElement("button");
       row.type = "button";
       row.className = "sky-best-row";
-  
+
       const head = document.createElement("div");
       head.className = "sky-best-head";
-  
+
       const ico = document.createElement("div");
       ico.className = "sky-best-ico";
       ico.textContent = iconForGroup(obj.group);
-  
+
       const name = document.createElement("div");
       name.className = "sky-best-name";
       name.textContent = obj.name || obj.id || "Object";
-  
+
       head.appendChild(ico);
       head.appendChild(name);
-  
+
       const note = document.createElement("div");
       note.className = "sky-best-note";
-  
+
       const maxAlt = typeof obj?.vis?.max_alt_deg === "number"
         ? Math.round(obj.vis.max_alt_deg)
         : null;
       const bestT = fmtHHMM(obj?.vis?.best_time_local_quality || obj?.vis?.best_time_local);
       const mag = typeof obj.mag === "number" ? obj.mag.toFixed(1) : null;
-  
+
       const parts = [];
       if (maxAlt != null) parts.push(`${maxAlt}°`);
       if (bestT) parts.push(bestT);
       if (mag != null) parts.push(`mag ${mag}`);
       note.textContent = parts.join(" • ");
-  
+
       row.appendChild(head);
       if (note.textContent) row.appendChild(note);
-  
+
       row.addEventListener("click", (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
         focusOnRankingItem(obj);
       });
-  
+
       list.appendChild(row);
     }
-  
+
     bestPanel.appendChild(list);
   }
 
@@ -222,7 +237,6 @@ export function bootSkyMapUI() {
     e.preventDefault();
     e.stopPropagation();
 
-    // close layers if open
     if (layersPanel && !layersPanel.hidden) toggleLayers(false);
 
     toggleBest();
@@ -236,7 +250,6 @@ export function bootSkyMapUI() {
     renderBestPanelRanking(items, json?.meta);
   });
 
-  // click outside closes
   document.addEventListener("click", (e) => {
     if (!bestPanel || bestPanel.hidden) return;
     if (btnBestToday && btnBestToday.contains(e.target)) return;
@@ -255,74 +268,84 @@ export function bootSkyMapUI() {
     return isNaN(dt.getTime()) ? null : dt;
   }
 
-  function focusOnRankingItem(obj) {
-    const dt = pickBestLocalDate(obj);
-    if (!dt) return;
-  
-    base = dt;
-    tSlider.value = "50";
-    applySlider();
-  
-    safeUpdate({
-      ui: {
-        highlightId: obj.id ?? `${obj.group}:${obj.name}`,
-        highlightMs: 5000,
-        highlightMode: "Focus"
-      }
-    });
-  }
-
-
-  function centerOnDate(dt) {
-    base = dt;
-    tSlider.value = "50";
-    applySlider();
-  }
-
   // -----------------------
-  // Timeline model
+  // Timeline model (asymmetric window)
+  //  - start: now - 48h
+  //  - end:   now + 7d
+  //  - slider value uses FRACTIONS (no rounding), otherwise 1h steps may not move at all.
   // -----------------------
-  let stepHours = 1;      // ✅ DEFAULT: 1h
-  let spanHours = 48;     // +/-24h
-  let base = new Date();  // center time
+  let stepHours = 1;          // default: 1h
+  let pastHours = 48;         // now - 48h
+  let futureHours = 24 * 7;   // now + 7d
+  let base = new Date();      // anchor ("now")
   let playing = false;
   let timer = null;
+
+  // IMPORTANT: allow fractional slider values
+  // (range supports it; if your HTML has step=1, override it here)
+  try {
+    tSlider.min = "0";
+    tSlider.max = "100";
+    if (!tSlider.step || tSlider.step === "1") tSlider.step = "0.1"; // 0.1% ~ 13 min for 9 days window
+  } catch (_) {}
 
   function clamp(v, a, b) {
     return Math.max(a, Math.min(b, v));
   }
 
+  function windowBoundsMs() {
+    const t0 = base.getTime() - pastHours * 3600 * 1000;
+    const t1 = base.getTime() + futureHours * 3600 * 1000;
+    return { t0, t1 };
+  }
+
+  function baseSliderPos01() {
+    const denom = pastHours + futureHours;
+    return denom > 0 ? (pastHours / denom) : 0.5;
+  }
+
+  function setSliderToBase() {
+    // DON'T round; keep fractions so buttons can step smoothly
+    tSlider.value = String(baseSliderPos01() * 100);
+  }
+
   function sliderToDt(val01) {
-    const ms = spanHours * 3600 * 1000;
-    const t0 = base.getTime() - ms / 2;
-    return new Date(t0 + clamp(val01, 0, 1) * ms);
+    const { t0, t1 } = windowBoundsMs();
+    const v = clamp(val01, 0, 1);
+    return new Date(t0 + (t1 - t0) * v);
   }
 
   function dtToSlider(dt) {
-    const ms = spanHours * 3600 * 1000;
-    const t0 = base.getTime() - ms / 2;
-    return clamp((dt.getTime() - t0) / ms, 0, 1);
+    const { t0, t1 } = windowBoundsMs();
+    if (t1 <= t0) return 0.5;
+    return clamp((dt.getTime() - t0) / (t1 - t0), 0, 1);
   }
 
   function applySlider() {
     const v = Number(tSlider.value) / 100;
     const dt = sliderToDt(v);
-    framePill.textContent = `🛰 Frame ${fmtLocal(dt)}`;
 
+    framePill.textContent = `🛰 Frame ${fmtLocal(dt)}`;
     if (playerTime) playerTime.textContent = fmtLocal(dt);
 
+    const iso = toISOWithTZ(dt);
+
     if (playerHint) {
-      const iso = toISOWithTZ(dt);
-      playerHint.textContent = iso;
+      // UI only: replace T with space for readability
+      playerHint.textContent = humanizeISO(iso);
     }
 
-    safeUpdate({ datetimeISO: toISOWithTZ(dt) });
+    // engine expects real ISO with 'T'
+    safeUpdate({ datetimeISO: iso });
   }
 
   function stepDir(dir) {
     const cur = sliderToDt(Number(tSlider.value) / 100);
     const next = new Date(cur.getTime() + dir * stepHours * 3600 * 1000);
-    tSlider.value = String(Math.round(dtToSlider(next) * 100));
+    const next01 = dtToSlider(next);
+
+    // DON'T round to int percent, иначе при больших окнах 1h не меняет value
+    tSlider.value = String(next01 * 100);
     applySlider();
   }
 
@@ -340,9 +363,7 @@ export function bootSkyMapUI() {
     if (tPlay) tPlay.classList.add("is-on");
 
     if (timer) clearInterval(timer);
-    timer = setInterval(() => {
-      stepDir(+1);
-    }, 650);
+    timer = setInterval(() => stepDir(+1), 650);
   }
 
   tSlider?.addEventListener("input", applySlider);
@@ -358,7 +379,7 @@ export function bootSkyMapUI() {
     e.preventDefault();
     e.stopPropagation();
     base = new Date();
-    tSlider.value = "50";
+    setSliderToBase(); // "Now" should not be center=50; it should be at base position in asymmetric window
     applySlider();
   });
 
@@ -377,10 +398,10 @@ export function bootSkyMapUI() {
   tHome?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    tSlider.value = "0";
+    tSlider.value = "0"; // start of window = base - pastHours
     applySlider();
   });
-
+  
   // step buttons
   document.querySelectorAll("[data-step]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -395,7 +416,7 @@ export function bootSkyMapUI() {
     });
   });
 
-  // ✅ Ensure UI reflects default stepHours=1, even if HTML has some other active button
+  // Ensure UI reflects default stepHours=1
   (function syncStepButtonsToDefault() {
     const btn = document.querySelector('[data-step="1"]');
     if (!btn) return;
@@ -461,10 +482,15 @@ export function bootSkyMapUI() {
     }
 
     if (msg.datetimeISO) {
+      // 🔒 ignore echo from our own safeUpdate(datetimeISO)
+      if (_lastSentDatetimeISO && msg.datetimeISO === _lastSentDatetimeISO && Date.now() < _suppressEchoUntilMs) {
+        return;
+      }
+
       const dt = new Date(msg.datetimeISO);
       if (!isNaN(dt.getTime())) {
         base = dt;
-        tSlider.value = "50";
+        setSliderToBase();
         applySlider();
       }
     }
@@ -474,7 +500,7 @@ export function bootSkyMapUI() {
   // Init
   // -----------------------
   if (locPill && locPill.textContent.trim() === "") locPill.textContent = "📍 Location —";
-  tSlider.value = "50";
+  setSliderToBase();
   applySlider();
 
   window.parent?.postMessage?.({ type: "sky-ready" }, "*");
