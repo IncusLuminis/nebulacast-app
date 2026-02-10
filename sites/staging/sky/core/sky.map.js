@@ -1,4 +1,6 @@
 // sites/staging/sky/core/sky.map.js
+import { SkyUI } from "./sky.ui.js";
+
 export function bootSkyMapUI() {
   const locPill = document.getElementById("locPill");
   const framePill = document.getElementById("framePill");
@@ -6,6 +8,10 @@ export function bootSkyMapUI() {
   const btnLayers = document.getElementById("btnLayers");
   const btnFullscreen = document.getElementById("btnFullscreen");
   const layersPanel = document.getElementById("layersPanel");
+
+  // ✅ Best Today
+  const btnBestToday = document.getElementById("btnBestToday");
+  const bestPanel = document.getElementById("bestPanel");
 
   const skyStage = document.getElementById("skyStage");
 
@@ -31,10 +37,15 @@ export function bootSkyMapUI() {
     document.body.classList.add("has-sky-player");
   }
 
+  // ✅ Modal for Best Today (attached to stage so it works over canvas)
+  const modal = (skyStage ? SkyUI.createModal(skyStage) : null);
+
   const pad2 = (n) => String(n).padStart(2, "0");
 
   function fmtLocal(dt) {
-    return `${pad2(dt.getDate())}/${pad2(dt.getMonth() + 1)}/${dt.getFullYear()}, ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+    return `${pad2(dt.getDate())}/${pad2(dt.getMonth() + 1)}/${dt.getFullYear()}, ${pad2(
+      dt.getHours()
+    )}:${pad2(dt.getMinutes())}`;
   }
 
   function toISOWithTZ(dt) {
@@ -42,7 +53,9 @@ export function bootSkyMapUI() {
     const sign = off >= 0 ? "+" : "-";
     const hh = pad2(Math.floor(Math.abs(off) / 60));
     const mm = pad2(Math.abs(off) % 60);
-    return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}T${pad2(dt.getHours())}:${pad2(dt.getMinutes())}:00${sign}${hh}:${mm}`;
+    return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}T${pad2(
+      dt.getHours()
+    )}:${pad2(dt.getMinutes())}:00${sign}${hh}:${mm}`;
   }
 
   function safeUpdate(patch) {
@@ -54,7 +67,7 @@ export function bootSkyMapUI() {
   // -----------------------
   function toggleLayers(force) {
     if (!layersPanel) return;
-    const next = (typeof force === "boolean") ? force : !!layersPanel.hidden;
+    const next = typeof force === "boolean" ? force : !!layersPanel.hidden;
     layersPanel.hidden = !next;
   }
 
@@ -80,54 +93,242 @@ export function bootSkyMapUI() {
   });
 
   // -----------------------
+  // ✅ Best Today popover
+  // -----------------------
+  let _bestCache = null;
+  let _bestLoading = false;
+
+  function toggleBest(force) {
+    if (!bestPanel) return;
+    const next = typeof force === "boolean" ? force : !!bestPanel.hidden;
+    bestPanel.hidden = !next;
+  }
+
+  async function loadBestTodayJSON() {
+    if (_bestCache) return _bestCache;
+    if (_bestLoading) return null;
+    _bestLoading = true;
+
+    try {
+      const baseUrl = (window.SKY_CONFIG && window.SKY_CONFIG.baseUrl) ? window.SKY_CONFIG.baseUrl : "/sky";
+      const url = `${baseUrl}/data/objects_today.json`;
+      const res = await fetch(url, { cache: "no-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      _bestCache = json;
+      return _bestCache;
+    } catch (e) {
+      console.warn("[sky.map] BestToday load failed:", e);
+      return null;
+    } finally {
+      _bestLoading = false;
+    }
+  }
+
+  function renderBestPanel(objects) {
+    if (!bestPanel) return;
+
+    bestPanel.innerHTML = ""; // reset
+    const title = document.createElement("div");
+    title.className = "sky-popover-title";
+    title.textContent = "Best Today";
+    bestPanel.appendChild(title);
+
+    const list = document.createElement("div");
+    list.className = "sky-best-list";
+
+    if (!objects || !objects.length) {
+      const empty = document.createElement("div");
+      empty.className = "sky-best-empty";
+      empty.textContent = "No objects for today.";
+      list.appendChild(empty);
+      bestPanel.appendChild(list);
+      return;
+    }
+
+    for (const obj of objects) {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "sky-best-row";
+
+      const name = document.createElement("div");
+      name.className = "sky-best-name";
+      name.textContent = obj.name || obj.id || "Object";
+
+      const note = document.createElement("div");
+      note.className = "sky-best-note";
+      note.textContent = obj.note || "";
+
+      row.appendChild(name);
+      if (obj.note) row.appendChild(note);
+
+      row.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        // Open modal with note (and whatever else exists)
+        if (modal) {
+          modal.showFromHit({
+            kind: "object",
+            data: {
+              id: obj.id,
+              name: obj.name,
+              type: obj.type,
+              mag: obj.mag,
+              altDeg: obj.altDeg,
+              azDeg: obj.azDeg,
+              note: obj.note
+            }
+          });
+        }
+      });
+
+      list.appendChild(row);
+    }
+
+    bestPanel.appendChild(list);
+  }
+
+  btnBestToday?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // close layers if open, keep UX clean
+    if (layersPanel && !layersPanel.hidden) toggleLayers(false);
+
+    toggleBest();
+    if (!bestPanel || bestPanel.hidden) return;
+
+    // Populate when opening
+    bestPanel.innerHTML = `<div class="sky-popover-title">Best Today</div><div class="sky-best-empty">Loading…</div>`;
+
+    const json = await loadBestTodayJSON();
+    const items = Array.isArray(json?.items) ? json.items : (Array.isArray(json) ? json : []);
+    renderBestPanel(items);
+  });
+
+  // click outside closes BestToday
+  document.addEventListener("click", (e) => {
+    if (!bestPanel || bestPanel.hidden) return;
+    if (btnBestToday && btnBestToday.contains(e.target)) return;
+    if (bestPanel.contains(e.target)) return;
+    toggleBest(false);
+  });
+
+  // -----------------------
   // Timeline model
   // -----------------------
   let stepHours = 6;
-  let spanHours = 48;     // +/-24h
-  let base = new Date();  // center time
+  let spanHours = 48; // +/-24h
+  let base = new Date(); // center time
   let playing = false;
   let timer = null;
 
-  function sliderToDate() {
-    const t = Number(tSlider.value) / 100; // 0..1
-    const ms = base.getTime() + (t - 0.5) * spanHours * 3600 * 1000;
-    return new Date(ms);
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function sliderToDt(val01) {
+    const ms = spanHours * 3600 * 1000;
+    const t0 = base.getTime() - ms / 2;
+    return new Date(t0 + clamp(val01, 0, 1) * ms);
+  }
+
+  function dtToSlider(dt) {
+    const ms = spanHours * 3600 * 1000;
+    const t0 = base.getTime() - ms / 2;
+    return clamp((dt.getTime() - t0) / ms, 0, 1);
   }
 
   function applySlider() {
-    const dt = sliderToDate();
-    playerTime.textContent = fmtLocal(dt);
-    playerHint.textContent = `t = ${fmtLocal(dt)} • step ${stepHours}h • range ±${spanHours / 2}h`;
+    const v = Number(tSlider.value) / 100;
+    const dt = sliderToDt(v);
     framePill.textContent = `🛰 Frame ${fmtLocal(dt)}`;
+
+    if (playerTime) playerTime.textContent = fmtLocal(dt);
+
+    if (playerHint) {
+      const iso = toISOWithTZ(dt);
+      playerHint.textContent = iso;
+    }
+
     safeUpdate({ datetimeISO: toISOWithTZ(dt) });
   }
 
-  function bump(dir) {
-    const v = Number(tSlider.value);
-    const dv = (stepHours / spanHours) * 100;
-    tSlider.value = String(Math.max(0, Math.min(100, v + dir * dv)));
+  function stepDir(dir) {
+    const cur = sliderToDt(Number(tSlider.value) / 100);
+    const next = new Date(cur.getTime() + dir * stepHours * 3600 * 1000);
+    tSlider.value = String(Math.round(dtToSlider(next) * 100));
     applySlider();
   }
 
-  tSlider.addEventListener("input", applySlider);
+  function stopPlay() {
+    playing = false;
+    if (timer) clearInterval(timer);
+    timer = null;
+    if (tPlay) tPlay.textContent = "▶";
+    if (tPlay) tPlay.classList.remove("is-on");
+  }
 
-  tPrev?.addEventListener("click", () => bump(-1));
-  tNext?.addEventListener("click", () => bump(+1));
-  tHome?.addEventListener("click", () => { tSlider.value = "0"; applySlider(); });
-  tNow?.addEventListener("click", () => { base = new Date(); tSlider.value = "50"; applySlider(); });
+  function startPlay() {
+    playing = true;
+    if (tPlay) tPlay.textContent = "⏸";
+    if (tPlay) tPlay.classList.add("is-on");
 
-  document.querySelectorAll("[data-step]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      stepHours = Number(btn.getAttribute("data-step")) || 6;
-      applySlider();
-    });
+    if (timer) clearInterval(timer);
+    timer = setInterval(() => {
+      stepDir(+1);
+    }, 650);
+  }
+
+  tSlider?.addEventListener("input", applySlider);
+
+  tPlay?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!playing) startPlay();
+    else stopPlay();
   });
 
-  tPlay?.addEventListener("click", () => {
-    playing = !playing;
-    tPlay.textContent = playing ? "⏸" : "▶";
-    if (timer) { clearInterval(timer); timer = null; }
-    if (playing) timer = setInterval(() => bump(+1), 700);
+  tNow?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    base = new Date();
+    tSlider.value = "50";
+    applySlider();
+  });
+
+  tPrev?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    stepDir(-1);
+  });
+
+  tNext?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    stepDir(+1);
+  });
+
+  tHome?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    tSlider.value = "0";
+    applySlider();
+  });
+
+  // step buttons
+  document.querySelectorAll("[data-step]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const h = Number(btn.getAttribute("data-step"));
+      if (!isNaN(h) && h > 0) {
+        stepHours = h;
+        document.querySelectorAll("[data-step]").forEach((b) => b.classList.remove("sky-btn-active"));
+        btn.classList.add("sky-btn-active");
+      }
+    });
   });
 
   // -----------------------
@@ -142,8 +343,9 @@ export function bootSkyMapUI() {
       btnFullscreen.title = isFs ? "Exit fullscreen" : "Fullscreen";
     }
 
-    // keep Layers reachable
+    // keep overlays reachable
     if (btnLayers) btnLayers.style.display = "flex";
+    if (btnBestToday) btnBestToday.style.display = "flex";
   }
 
   async function toggleFullscreen() {
@@ -182,7 +384,8 @@ export function bootSkyMapUI() {
 
     if (msg.location && typeof msg.location.lat === "number" && typeof msg.location.lon === "number") {
       const { name, lat, lon } = msg.location;
-      if (locPill) locPill.textContent = `📍 Location ${name ? name + " " : ""}(${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+      if (locPill)
+        locPill.textContent = `📍 Location ${name ? name + " " : ""}(${lat.toFixed(4)}, ${lon.toFixed(4)})`;
       safeUpdate({ lat, lon });
     }
 

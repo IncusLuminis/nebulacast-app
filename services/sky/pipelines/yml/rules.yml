@@ -50,3 +50,14 @@ scoring:
 text:
   language: en
   compass_8: true
+
+  groups:
+    calendar: 40
+    planets: 25
+    solar_system: 10
+    dso: 5
+
+scoring:
+  dso_pivot_local_h: 3
+  dso_pivot_local_m: 0
+  dso_pivot_ha_keep_deg: 45

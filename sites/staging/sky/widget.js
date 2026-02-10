@@ -149,6 +149,64 @@ import { SkyUI } from "./core/sky.ui.js";
     const tooltip = SkyUI.createTooltip(root, tooltipEl);
     const modal = SkyUI.createModal(root);
 
+    // --- Best Today button + popover (objects_today.json: name + note) ---
+    const bestBtn = document.createElement("button");
+    bestBtn.type = "button";
+    bestBtn.className = "sky-best-btn";
+    bestBtn.innerHTML = `
+      <span aria-hidden="true">★</span>
+      <span>Best Today</span>
+    `;
+
+    // place button inside root (bottom-right, above status)
+    // simplest: absolute overlay in root
+    bestBtn.style.position = "absolute";
+    bestBtn.style.right = "12px";
+    bestBtn.style.bottom = "8px";
+    bestBtn.style.zIndex = "25";
+
+    root.appendChild(bestBtn);
+
+    let bestPopover = null;
+    let bestOpen = false;
+
+    function closeBest() {
+      bestOpen = false;
+      if (bestPopover) bestPopover.style.display = "none";
+    }
+
+    function openBest() {
+      // rebuild each time (keeps it in sync with current prepared objects)
+      if (bestPopover) bestPopover.remove();
+
+      bestPopover = SkyUI.buildBestTodayPopover(objectsPrepared, (obj) => {
+        closeBest();
+        modal.showFromHit(toUIHit(obj));
+      });
+
+      root.appendChild(bestPopover);
+      bestPopover.style.display = "block";
+      bestOpen = true;
+    }
+
+    bestBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (bestOpen) closeBest();
+      else openBest();
+    });
+
+    // click outside closes
+    root.addEventListener("click", (e) => {
+      if (!bestOpen) return;
+      if (e.target === bestBtn) return;
+      if (bestPopover && bestPopover.contains(e.target)) return;
+      closeBest();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeBest();
+    });
+
     let starCatalog = null;
     let constellations = null;
     let milkyway = null;
@@ -361,6 +419,31 @@ import { SkyUI } from "./core/sky.ui.js";
       }
       return best;
     }
+
+    function getBestTodayObjects() {
+      return (window.__skyPrepared?.objects || [])
+        .filter(o => o.group !== "calendar") // календарь тут не нужен
+        .slice(0, 10);
+    }
+
+    function renderBestTodayList(items) {
+      const el = document.getElementById("bestTodayList");
+      if (!el) return;
+    
+      el.innerHTML = "";
+    
+      items.forEach(obj => {
+        const row = document.createElement("div");
+        row.className = "sky-best-item";
+        row.textContent = `${obj.name}: ${obj.note || ""}`;
+        row.onclick = () => {
+          window.__skyUI?.openObjectModal(obj);
+        };
+        el.appendChild(row);
+      });
+    }
+
+
 
     function bindInteractionsOnce() {
       if (!canvas || canvas.__skyBound) return;

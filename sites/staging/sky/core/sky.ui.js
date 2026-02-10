@@ -104,6 +104,74 @@ function injectStyles() {
   .skyui-modal__body {
     padding: 10px 12px 12px 12px;
   }
+
+    .skyui-card__note {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    opacity: 0.92;
+    line-height: 1.25;
+  }
+
+  /* Best Today UI */
+  .sky-best-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.86);
+    cursor: pointer;
+    user-select: none;
+    font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  }
+  .sky-best-btn:hover { background: rgba(255,255,255,0.09); }
+
+  .sky-best-popover {
+    position: absolute;
+    z-index: 30;
+    right: 12px;
+    bottom: 46px;
+    width: min(420px, calc(100% - 24px));
+    max-height: min(56vh, 420px);
+    overflow: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.70);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    padding: 8px;
+    display: none;
+  }
+
+  .sky-best-item {
+    padding: 8px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .sky-best-item:hover { background: rgba(255,255,255,0.06); }
+
+  .sky-best-name {
+    font-weight: 650;
+    color: rgba(255,255,255,0.92);
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .sky-best-note {
+    color: rgba(255,255,255,0.80);
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+    .skyui-card__note {
+    margin-top: 8px;
+    opacity: 0.92;
+    line-height: 1.25;
+  }
+
   `;
 
   const styleEl = document.createElement("style");
@@ -205,10 +273,19 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
 
   const d = hit.data || {};
   const isModal = mode === "modal";
+  const noteLine = d.note
+  ? `<div class="skyui-card__note">${esc(d.note)}</div>`
+  : "";
+
+  const typeLine = isModal
+    ? `<div class="skyui-card__type">Type: ${esc(hit.kind || "—")}</div>`
+    : "";
+
 
   let title = "—";
   let subtitle = "—";
   let meta = "";
+
 
   if (hit.kind === "alert") {
     title = d.title || "Alert";
@@ -218,43 +295,36 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
 
   } else if (hit.kind === "object") {
     title = d.name || "Object";
-    subtitle = `${d.type || "obj"} • mag ${fmtMag(d.mag, 1)}`;
+
+    const typeStr = d.type || "obj";
+    const magStr = (typeof d.mag === "number" && isFinite(d.mag)) ? ` • mag ${fmtMag(d.mag, 1)}` : "";
+    subtitle = `${typeStr}${magStr}`;
+
     meta = `alt ${fmtDeg(d.altDeg)}${d.azDeg != null ? " • az " + fmtDeg(d.azDeg) : ""}`;
 
   } else {
     // STAR
     const proper = (d.name || "").trim();
     const bayer = normalizeDesignation(d.designation || "");
-  
-    // Заголовок
+
     title = proper || bayer || d.id || "Star";
-  
-    // subtitle:
-    // 1 строка — байеровская нотация
-    // 2 строка — звездная величина
-    if (proper && bayer) {
-      subtitle = `${esc(bayer)}<br/>mag ${fmtMag(d.mag, 2)}`;
-    } else {
-      subtitle = `mag ${fmtMag(d.mag, 2)}`;
-    }
-  
+
+    if (proper && bayer) subtitle = `${esc(bayer)}<br/>mag ${fmtMag(d.mag, 2)}`;
+    else subtitle = `mag ${fmtMag(d.mag, 2)}`;
+
     meta = `alt ${fmtDeg(d.altDeg)} • az ${fmtDeg(d.azDeg)}`;
   }
-
-  const typeLine = isModal
-    ? `<div class="skyui-card__type">Type: ${esc(hit.kind || "—")}</div>`
-    : "";
 
   return `
     <div class="skyui-card ${isModal ? "skyui-card--modal" : ""}">
       <div class="skyui-card__title">${esc(title)}</div>
       <div class="skyui-card__subtitle">${subtitle}</div>
       <div class="skyui-card__meta">${esc(meta)}</div>
+      ${noteLine}
       ${typeLine}
     </div>
   `;
 }
-
 
 /**
  * Compatibility wrapper (existing name).
@@ -405,6 +475,37 @@ function makeDetailsPayloadFromHit(hit) {
   };
 }
 
+function buildBestTodayPopover(objects, onPick) {
+  const el = document.createElement("div");
+  el.className = "sky-best-popover";
+
+  (objects || []).forEach(obj => {
+    const item = document.createElement("div");
+    item.className = "sky-best-item";
+
+    const name = document.createElement("div");
+    name.className = "sky-best-name";
+    name.textContent = obj.name || obj.id || "—";
+    item.appendChild(name);
+
+    if (obj.note) {
+      const note = document.createElement("div");
+      note.className = "sky-best-note";
+      note.textContent = obj.note;
+      item.appendChild(note);
+    }
+
+    item.addEventListener("click", () => {
+      if (typeof onPick === "function") onPick(obj);
+    });
+
+    el.appendChild(item);
+  });
+
+  return el;
+}
+
+
 function setDetails(rootEl, payload) {
   void rootEl; void payload;
 }
@@ -425,5 +526,6 @@ export const SkyUI = {
 
   // controllers
   createTooltip,
-  createModal
+  createModal,
+  buildBestTodayPopover
 };

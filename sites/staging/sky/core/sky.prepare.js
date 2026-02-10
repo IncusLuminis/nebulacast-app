@@ -341,7 +341,8 @@ function prepareObjects(objectsJson, observer, viewport, options) {
       mag: (typeof it.mag === "number") ? it.mag : null,
       color: it.color || null,
       altDeg,
-      x, y
+      x, y,
+      note: (typeof it.note === "string" && it.note.trim()) ? it.note.trim() : null
     });
   }
 

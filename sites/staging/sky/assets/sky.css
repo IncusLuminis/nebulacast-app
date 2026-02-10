@@ -150,6 +150,10 @@
     border-color: rgba(120,180,255,0.60);
     box-shadow: 0 0 0 2px rgba(90,170,255,0.22) inset;
   }
+
+  #tHome.sky-btn {
+    width: 38px;   /* или 40px — под |◀ обычно лучше */
+  }
   
   /* Popover */
   .sky-popover{
@@ -195,9 +199,8 @@
      Player overlay position
      ----------------------- */
   .sky-player-overlay{
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
+    right: 12px;
+    bottom: 12px;
     left: auto;
     z-index: 55; /* below popover, above canvas */
     pointer-events: auto;
@@ -209,7 +212,7 @@
      --player-w (defaults below)
      ----------------------- */
   .sky-player-compact{
-    --player-w: 230px;
+    --player-w: 280px;
     width: min(var(--player-w), calc(100% - 20px));
     margin: 0;
     padding: 8px 8px;
@@ -414,3 +417,50 @@
 
 #skyMount { z-index: 1 !important; }
 #stageControls, #skyPlayer, #layersPanel { z-index: 9999 !important; }
+
+
+
+.sky-btn {
+  margin-left: 8px;
+}
+
+.sky-best-popover {
+  position: absolute;
+  right: 20px;
+  top: 70px;
+  z-index: 50;
+  max-width: 360px;
+  background: rgba(15, 20, 35, 0.96);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 13px;
+}
+
+.sky-best-item {
+  cursor: pointer;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sky-best-item:hover {
+  text-decoration: underline;
+}
+
+
+/* Best Today popover list */
+.sky-best-list { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+.sky-best-row {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.sky-best-row:hover { background: rgba(255,255,255,0.10); }
+.sky-best-name { font-weight: 650; font-size: 12px; }
+.sky-best-note { margin-top: 4px; opacity: 0.85; font-size: 12px; line-height: 1.2; }
+.sky-best-empty { opacity: 0.75; padding: 6px 2px; }

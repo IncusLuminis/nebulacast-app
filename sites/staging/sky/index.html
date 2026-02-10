@@ -38,6 +38,8 @@
           </button>
 
           <button class="sky-btn sky-btn-icon" id="btnFullscreen" type="button" title="Fullscreen">⤢</button>
+
+          <button class="sky-btn sky-btn-icon" id="btnBestToday" type="button" title="Best objects tonight">⭐</button>
         </div>
 
           <!-- tooltip -->
@@ -61,6 +63,11 @@
           <label class="sky-check"><input type="checkbox" data-opt="showAlerts" checked> Alerts</label>
         </div>
 
+        <div class="sky-popover" id="bestPanel" hidden>
+          <div class="sky-popover-title">Best tonight</div>
+          <div class="sky-best-list" id="bestTodayList"></div>
+        </div>
+
         <!-- ✅ PLAYER AS OVERLAY INSIDE STAGE (compact, bottom-right) -->
         <div class="sky-player sky-player-overlay sky-player-compact" id="skyPlayer">
           <!-- row 1: controls -->
@@ -77,9 +84,9 @@
           <!-- row 2: step buttons -->
           <div class="sky-player-row sky-player-row2">
             <div class="sky-player-steps">
-              <button class="sky-btn" data-step="1" type="button">1h</button>
+              <button class="sky-btn sky-btn-active" data-step="1" type="button">1h</button>
               <button class="sky-btn" data-step="3" type="button">3h</button>
-              <button class="sky-btn sky-btn-active" data-step="6" type="button">6h</button>
+              <button class="sky-btn" data-step="6" type="button">6h</button>
               <button class="sky-btn" data-step="12" type="button">12h</button>
             </div>
           </div>
