@@ -3,17 +3,64 @@
     "stream": "ALL",
     "freshness_days": null,
     "sources": [
+      "in_the_sky_comets",
       "in_the_sky_occultations",
+      "in_the_sky_conjunctions",
       "in_the_sky_meteors",
-      "in_the_sky_eclipses",
-      "in_the_sky_conjunctions"
+      "in_the_sky_eclipses"
     ],
-    "raw_count": 46,
-    "fresh_count": 46,
-    "generated_at": "2026-02-10T02:25:29.731872+00:00",
-    "final_count": 46
+    "raw_count": 58,
+    "fresh_count": 58,
+    "generated_at": "2026-02-10T07:03:03.203550+00:00",
+    "final_count": 58
   },
   "items": [
+    {
+      "id": "in_the_sky_comets:182761f58069",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "26 Jan 2026 (15 days ago): Comet C/2024 E1 (Wierzchos) reaches peak brightness",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_CK24E010_101",
+      "published_at": "2026-01-26",
+      "summary": "Comet C/2024 E1 (Wierzchos) is forecast to reach the brightest point in its 2026 apparition.",
+      "summary_html": "<p>Comet C/2024 E1 (Wierzchos) is forecast to reach the brightest point in its 2026 apparition.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 37.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 25.0
+      },
+      "fingerprint": "in_the_sky_comets:182761f58069"
+    },
+    {
+      "id": "in_the_sky_comets:3419249e3ab5",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "20 Nov 2025 (82 days ago): Comet C/2025 T1 (ATLAS) reaches peak brightness",
+      "url": "https://in-the-sky.org//news.php?id=2025_19_CK25T010_101",
+      "published_at": "2025-11-20",
+      "summary": "Comet C/2025 T1 (ATLAS) is forecast to reach the brightest point in its 2025 apparition.",
+      "summary_html": "<p>Comet C/2025 T1 (ATLAS) is forecast to reach the brightest point in its 2025 apparition.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 37.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 25.0
+      },
+      "fingerprint": "in_the_sky_comets:3419249e3ab5"
+    },
     {
       "id": "in_the_sky_eclipses:16f1e3654df4",
       "stream": "eclipses",
@@ -475,11 +522,11 @@
       "fingerprint": "in_the_sky_occultations:3db159e854be"
     },
     {
-      "id": "in_the_sky_conjunctions:10e614729c00",
+      "id": "in_the_sky_conjunctions:d0b4d0f15130",
       "stream": "conjunctions",
       "category": "CONJUNCTIONS",
       "source": "in_the_sky_conjunctions",
-      "title": "11 Feb 2026 (Tomorrow): Lunar occultation of Antares",
+      "title": "11 Feb 2026 (20 hours away): Lunar occultation of Antares",
       "url": "https://in-the-sky.org//news.php?id=20260211_16_100",
       "published_at": "2026-02-11",
       "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, South Georgia and the South Sandwich Islands, Falkland Islands and Bouvet Island amongst others.",
@@ -495,14 +542,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_conjunctions:10e614729c00"
+      "fingerprint": "in_the_sky_conjunctions:d0b4d0f15130"
     },
     {
-      "id": "in_the_sky_occultations:10e614729c00",
+      "id": "in_the_sky_occultations:d0b4d0f15130",
       "stream": "occultations",
       "category": "OCCULTATIONS",
       "source": "in_the_sky_occultations",
-      "title": "11 Feb 2026 (Tomorrow): Lunar occultation of Antares",
+      "title": "11 Feb 2026 (20 hours away): Lunar occultation of Antares",
       "url": "https://in-the-sky.org//news.php?id=20260211_16_100",
       "published_at": "2026-02-11",
       "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, South Georgia and the South Sandwich Islands, Falkland Islands and Bouvet Island amongst others.",
@@ -518,7 +565,7 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_occultations:10e614729c00"
+      "fingerprint": "in_the_sky_occultations:d0b4d0f15130"
     },
     {
       "id": "in_the_sky_meteors:f512c8166a09",
@@ -935,6 +982,121 @@
       "fingerprint": "in_the_sky_eclipses:9fbdc6a9246c"
     },
     {
+      "id": "in_the_sky_comets:cf2ffe8dce2b",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "23 Apr 2026 (72 days away): Comet 141P/Machholz passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0141P_100",
+      "published_at": "2026-04-23",
+      "summary": "Comet 141P/Machholz makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 141P/Machholz makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:cf2ffe8dce2b"
+    },
+    {
+      "id": "in_the_sky_comets:6d30370a5404",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "19 Apr 2026 (68 days away): Comet C/2025 R3 (PANSTARRS) passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_CK25R030_100",
+      "published_at": "2026-04-19",
+      "summary": "Comet C/2025 R3 (PANSTARRS) makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet C/2025 R3 (PANSTARRS) makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:6d30370a5404"
+    },
+    {
+      "id": "in_the_sky_comets:6e0e96f73a33",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "05 Apr 2026 (54 days away): Comet C/2026 A1 (MAPS) passes perigee",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_CK26A010_101",
+      "published_at": "2026-04-05",
+      "summary": "Comet C/2026 A1 (MAPS) makes its closest approach to the Earth.",
+      "summary_html": "<p>Comet C/2026 A1 (MAPS) makes its closest approach to the Earth.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:6e0e96f73a33"
+    },
+    {
+      "id": "in_the_sky_comets:134563efbeca",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "04 Apr 2026 (53 days away): Comet C/2026 A1 (MAPS) passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_CK26A010_100",
+      "published_at": "2026-04-04",
+      "summary": "Comet C/2026 A1 (MAPS) makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet C/2026 A1 (MAPS) makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:134563efbeca"
+    },
+    {
+      "id": "in_the_sky_comets:6c12ee11b7e1",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "18 Mar 2026 (36 days away): Comet 88P/Howell passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0088P_100",
+      "published_at": "2026-03-18",
+      "summary": "Comet 88P/Howell makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 88P/Howell makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:6c12ee11b7e1"
+    },
+    {
       "id": "in_the_sky_conjunctions:667d7760eb9d",
       "stream": "conjunctions",
       "category": "CONJUNCTIONS",
@@ -979,6 +1141,29 @@
         "signal_bonus": 0.0
       },
       "fingerprint": "in_the_sky_conjunctions:098887f0df32"
+    },
+    {
+      "id": "in_the_sky_comets:2fa8617251a7",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "17 Feb 2026 (7 days away): Comet C/2024 E1 (Wierzchos) passes perigee",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_CK24E010_102",
+      "published_at": "2026-02-17",
+      "summary": "Comet C/2024 E1 (Wierzchos) makes its closest approach to the Earth.",
+      "summary_html": "<p>Comet C/2024 E1 (Wierzchos) makes its closest approach to the Earth.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:2fa8617251a7"
     },
     {
       "id": "in_the_sky_conjunctions:9adcfa673f85",
@@ -1071,6 +1256,98 @@
         "signal_bonus": 0.0
       },
       "fingerprint": "in_the_sky_conjunctions:0345f4eba549"
+    },
+    {
+      "id": "in_the_sky_comets:0e3b764a12a4",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "20 Jan 2026 (21 days ago): Comet C/2024 E1 (Wierzchos) passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_CK24E010_100",
+      "published_at": "2026-01-20",
+      "summary": "Comet C/2024 E1 (Wierzchos) makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet C/2024 E1 (Wierzchos) makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:0e3b764a12a4"
+    },
+    {
+      "id": "in_the_sky_comets:d9b7f7cfe15c",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "08 Jan 2026 (33 days ago): Comet 24P/Schaumasse passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0024P_100",
+      "published_at": "2026-01-08",
+      "summary": "Comet 24P/Schaumasse makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 24P/Schaumasse makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:d9b7f7cfe15c"
+    },
+    {
+      "id": "in_the_sky_comets:ae00c730c658",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "02 Dec 2025 (70 days ago): Comet C/2025 T1 (ATLAS) passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2025_19_CK25T010_102",
+      "published_at": "2025-12-02",
+      "summary": "Comet C/2025 T1 (ATLAS) makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet C/2025 T1 (ATLAS) makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:ae00c730c658"
+    },
+    {
+      "id": "in_the_sky_comets:94a1a40816cc",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "22 Nov 2025 (80 days ago): Comet 210P/Christensen passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2025_19_0210P_100",
+      "published_at": "2025-11-22",
+      "summary": "Comet 210P/Christensen makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 210P/Christensen makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:94a1a40816cc"
     }
   ]
 }
