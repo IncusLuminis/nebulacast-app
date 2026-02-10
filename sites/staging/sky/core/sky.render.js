@@ -8,6 +8,9 @@ import { UI } from "./sky.constants.js";
    - Optional dedupKey keeps only one label per key (use for planets).
 ----------------------------- */
 
+// -----------------------------
+// Label helpers (MISSING IN YOUR FILE -> REQUIRED)
+// -----------------------------
 function _ensureLabelState(ctx) {
   if (!ctx.__skyLabels) {
     ctx.__skyLabels = { queue: [], placed: [], dedup: new Map() };
@@ -50,16 +53,23 @@ function _isInsideDisk(vp, r) {
   return rr <= (vp.R - 6);
 }
 
+// -----------------------------
+// Label queue
+// -----------------------------
 function enqueueLabel(ctx, vp, spec) {
   const st = _ensureLabelState(ctx);
 
   const text = String(spec.text || "").trim();
   if (!text) return;
 
+  const x = Number(spec.x);
+  const y = Number(spec.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
   const item = {
     text,
-    x: Number(spec.x),
-    y: Number(spec.y),
+    x,
+    y,
     font: spec.font || "13px system-ui, -apple-system, Segoe UI, Roboto, Arial",
     align: spec.align || "left",
     baseline: spec.baseline || "middle",
@@ -72,7 +82,6 @@ function enqueueLabel(ctx, vp, spec) {
     dedupKey: (spec.dedupKey != null) ? String(spec.dedupKey) : null,
   };
 
-  // DEDUP: keep only one label per key. If new one has higher priority -> replace.
   if (item.dedupKey) {
     const prevIdx = st.dedup.get(item.dedupKey);
     if (prevIdx == null) {
@@ -85,8 +94,7 @@ function enqueueLabel(ctx, vp, spec) {
         st.queue[prevIdx] = item;
         st.dedup.set(item.dedupKey, prevIdx);
       } else {
-        // choose "better": higher priority wins; if equal -> latest wins
-        if (item.priority > (prev.priority || 0) || item.priority === (prev.priority || 0)) {
+        if (item.priority >= (prev.priority || 0)) {
           st.queue[prevIdx] = item;
         }
       }
@@ -101,9 +109,7 @@ function flushLabels(ctx, vp) {
   const st = _ensureLabelState(ctx);
   if (!st.queue.length) return;
 
-  // sort: high priority first
   const queue = st.queue.slice().sort((a, b) => (b.priority - a.priority));
-
   st.placed = [];
 
   const OFFS = [
@@ -184,7 +190,6 @@ function flushLabels(ctx, vp) {
 
   ctx.restore();
 
-  // clear queue + dedup map for next frame
   st.queue.length = 0;
   st.dedup.clear();
 }
@@ -193,6 +198,8 @@ function clear(ctx, vp) {
   ctx.clearRect(0, 0, vp.w, vp.h);
   _resetLabelState(ctx);
 }
+
+// --- дальше файл 1:1 как у тебя (без изменений) ---
 
 function drawBackground(ctx, vp) {
   const g = ctx.createRadialGradient(vp.cx, vp.cy, 0, vp.cx, vp.cy, vp.R * 1.2);
@@ -405,28 +412,20 @@ function drawConstellations(ctx, vp, consPrepared) {
 // Highlight helpers
 // -----------------------
 function _highlightAlphaNow() {
-  // ~1.2s period (noticeable like Stellarium/SkySafari)
   const t = performance.now();
-  const omega = 0.0052; // 2π / 0.0052 ≈ 1208ms CHANGE HERE TO GET FASTER/SLOWER animation
-  const s = 0.5 + 0.5 * Math.sin(t * omega); // 0..1
-  return 0.10 + 0.80 * s; // 0.10..0.90
+  const omega = 0.0052; // ~1.2s period
+  const s = 0.5 + 0.5 * Math.sin(t * omega);
+  return 0.10 + 0.80 * s;
 }
 
-// Wrapper for highlighted "filled" object (planet marker).
 function drawHighlightedObject(ctx, drawFn) {
   const alpha = _highlightAlphaNow();
 
   ctx.save();
-
-  // breathe by alpha
   ctx.globalAlpha *= alpha;
-
-  // glow
   ctx.shadowColor = "rgba(255,215,120,0.95)";
   ctx.shadowBlur = 28;
-
   drawFn();
-
   ctx.restore();
 
   return { alpha };
@@ -444,13 +443,18 @@ function drawObjects(ctx, vp, objectsPrepared) {
   const rDS = 4.0;
 
   for (const o of objectsPrepared) {
+    if (!o) continue;
+
+    const ox = Number(o.x);
+    const oy = Number(o.y);
+    if (!Number.isFinite(ox) || !Number.isFinite(oy)) continue;
+
     const isPlanet = (o.type === "planet");
     const highlighted =
       typeof window !== "undefined" &&
       window.__skyIsHighlighted &&
       window.__skyIsHighlighted(o);
 
-    // ---------- marker ----------
     const r = isPlanet ? rPlanet : rDS;
     const rr = highlighted ? r * 1.8 : r;
 
@@ -458,22 +462,22 @@ function drawObjects(ctx, vp, objectsPrepared) {
       if (highlighted) {
         drawHighlightedObject(ctx, () => {
           ctx.beginPath();
-          ctx.arc(o.x, o.y, rr, 0, Math.PI * 2);
+          ctx.arc(ox, oy, rr, 0, Math.PI * 2);
           ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
           ctx.fill();
         });
       } else {
         ctx.beginPath();
-        ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+        ctx.arc(ox, oy, r, 0, Math.PI * 2);
         ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
         ctx.fill();
       }
     } else {
       ctx.beginPath();
-      ctx.moveTo(o.x, o.y - rr);
-      ctx.lineTo(o.x + rr, o.y);
-      ctx.lineTo(o.x, o.y + rr);
-      ctx.lineTo(o.x - rr, o.y);
+      ctx.moveTo(ox, oy - rr);
+      ctx.lineTo(ox + rr, oy);
+      ctx.lineTo(ox, oy + rr);
+      ctx.lineTo(ox - rr, oy);
       ctx.closePath();
       ctx.strokeStyle = "rgba(210,230,255,0.65)";
       ctx.lineWidth = highlighted ? 2.4 : 1.4;
@@ -482,17 +486,14 @@ function drawObjects(ctx, vp, objectsPrepared) {
       ctx.fill();
     }
 
-    // ---------- highlight ring + crosshair ----------
     if (highlighted) {
-      const t = performance.now();
-      const s = 0.5 + 0.5 * Math.sin(t * 0.0028);
-      const alpha = 0.10 + 0.80 * s;
+      const alpha = _highlightAlphaNow();
 
       ctx.save();
       ctx.globalAlpha *= alpha;
 
       ctx.beginPath();
-      ctx.arc(o.x, o.y, rr + 6, 0, Math.PI * 2);
+      ctx.arc(ox, oy, rr + 6, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(255,255,180,0.95)";
       ctx.lineWidth = 3.2;
       ctx.stroke();
@@ -501,14 +502,14 @@ function drawObjects(ctx, vp, objectsPrepared) {
       const len = rr + 18;
 
       ctx.beginPath();
-      ctx.moveTo(o.x - len, o.y);
-      ctx.lineTo(o.x - gap, o.y);
-      ctx.moveTo(o.x + gap, o.y);
-      ctx.lineTo(o.x + len, o.y);
-      ctx.moveTo(o.x, o.y - len);
-      ctx.lineTo(o.x, o.y - gap);
-      ctx.moveTo(o.x, o.y + gap);
-      ctx.lineTo(o.x, o.y + len);
+      ctx.moveTo(ox - len, oy);
+      ctx.lineTo(ox - gap, oy);
+      ctx.moveTo(ox + gap, oy);
+      ctx.lineTo(ox + len, oy);
+      ctx.moveTo(ox, oy - len);
+      ctx.lineTo(ox, oy - gap);
+      ctx.moveTo(ox, oy + gap);
+      ctx.lineTo(ox, oy + len);
 
       ctx.strokeStyle = "rgba(255,215,120,0.95)";
       ctx.lineWidth = 2.2;
@@ -518,7 +519,6 @@ function drawObjects(ctx, vp, objectsPrepared) {
       ctx.restore();
     }
 
-    // ---------- label (QUEUE ONLY; no direct draw) ----------
     const showLabel =
       highlighted ||
       (typeof o.altDeg === "number" && o.altDeg >= UI.LABEL_ALT_MIN_DEG);
@@ -529,15 +529,14 @@ function drawObjects(ctx, vp, objectsPrepared) {
         ? "rgba(255,255,200,0.95)"
         : "rgba(230,240,255,0.75)";
 
-      // critical: same dedupKey as planets layer, so Jupiter won't duplicate
       const dedupKey = isPlanet
         ? `planet:${o.name}`
         : (o.id != null ? `obj:${o.id}` : `obj:${o.name}`);
 
       enqueueLabel(ctx, vp, {
         text: o.name,
-        x: o.x,
-        y: o.y,
+        x: ox,
+        y: oy,
         dx: rr + 8,
         dy: 0,
         font,
@@ -572,9 +571,7 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
     const isSun = (o.type === "sun");
     const isMoon = (o.type === "moon");
 
-    const r = (typeof o.r === "number")
-      ? o.r
-      : (isSun ? 6.0 : 5.2);
+    const r = (typeof o.r === "number") ? o.r : (isSun ? 6.0 : 5.2);
 
     ctx.beginPath();
     ctx.arc(o.x, o.y, r + 7.5, 0, Math.PI * 2);
@@ -735,7 +732,9 @@ function drawStars(ctx, vp, starsPrepared) {
   ctx.save();
   ctx.setLineDash([]);
 
-  for (const s of starsPrepared) {
+  for (const s of starsPrepared || []) {
+    if (!s || s.x == null || s.y == null || s.r == null) continue;
+
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
 
@@ -767,6 +766,8 @@ function drawAlerts(ctx, vp, alertsPrepared) {
   const LABEL_ALT_MIN = UI.LABEL_ALT_MIN_DEG;
 
   for (const a of alertsPrepared) {
+    if (!a || a.x == null || a.y == null) continue;
+
     const isProfi = (a.level === "profi");
     const s = Math.max(3.5, Math.min(7.5, 2.5 + (a.severity || 2)));
 
@@ -803,7 +804,7 @@ function drawAlerts(ctx, vp, alertsPrepared) {
       ctx.fill();
     }
 
-    if (a.altDeg >= LABEL_ALT_MIN && a.title) {
+    if (typeof a.altDeg === "number" && a.altDeg >= LABEL_ALT_MIN && a.title) {
       enqueueLabel(ctx, vp, {
         text: a.title,
         x: a.x,

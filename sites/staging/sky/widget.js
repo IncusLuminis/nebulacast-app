@@ -112,18 +112,22 @@ import { SkyUI } from "./core/sky.ui.js";
     if (!h) return false;
     if (Date.now() > h.until) return false;
     if (!obj) return false;
-
-    const hid = String(h.id || "").toLowerCase();
-
+  
+    const hid = String(h.id || "").trim().toLowerCase();
+    if (!hid) return false;
+  
+    const group = obj.group ? String(obj.group).trim().toLowerCase() : "";
+    const id = obj.id ? String(obj.id).trim().toLowerCase() : "";
+    const name = obj.name ? String(obj.name).trim().toLowerCase() : "";
+  
     const candidates = [
-      obj.id,
-      obj.name,
-      (obj.group && obj.name) ? `${obj.group}:${obj.name}` : null,
-      obj.meta?.planet_key,
-    ]
-      .filter(Boolean)
-      .map((v) => String(v).toLowerCase());
-
+      id,
+      name,
+      (group && id) ? `${group}:${id}` : null,
+      (group && name) ? `${group}:${name}` : null,
+      obj.meta?.planet_key ? String(obj.meta.planet_key).trim().toLowerCase() : null,
+    ].filter(Boolean);
+  
     return candidates.includes(hid);
   };
 
@@ -234,14 +238,19 @@ import { SkyUI } from "./core/sky.ui.js";
       mwPrepared =
         cfg.options.showMilkyWay && milkyway ? Prepare.buildMilkyWay(observer, viewport, milkyway) : null;
 
+      const uiHighlightId =
+        (typeof window !== "undefined" && window.__skyHighlight && window.__skyHighlight.id != null)
+         ? String(window.__skyHighlight.id)
+         : null;
+      
       objectsPrepared =
         cfg.options.showObjects && objectsToday
-          ? Prepare.prepareObjects(objectsToday, observer, viewport, cfg.options || {})
+          ? Prepare.prepareObjects(objectsToday, observer, viewport, { ...(cfg.options || {}), uiHighlightId })
           : [];
-
+      
       alertsPrepared =
         cfg.options.showAlerts && alertsToday
-          ? Prepare.prepareAlerts(alertsToday, observer, viewport, cfg.options || {})
+          ? Prepare.prepareAlerts(alertsToday, observer, viewport, { ...(cfg.options || {}), uiHighlightId })
           : [];
 
       eqGridPrepared =

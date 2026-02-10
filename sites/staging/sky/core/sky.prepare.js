@@ -319,6 +319,37 @@ function prepareObjects(objectsJson, observer, viewport, options) {
   const latRad = observer.latRad;
   const lstRad = observer.lstRad;
 
+  // highlight id comes from widget via options (recommended),
+  // fallback to global to keep backwards compatibility.
+  const hidRaw =
+    (options && options.uiHighlightId != null) ? String(options.uiHighlightId) :
+    ((typeof window !== "undefined" && window.__skyHighlight && window.__skyHighlight.id != null)
+      ? String(window.__skyHighlight.id)
+      : null);
+
+  const hid = hidRaw ? hidRaw.toLowerCase() : null;
+
+  function normStr(v) {
+    return (v == null) ? "" : String(v).trim();
+  }
+
+  function isHighlightedItem(it) {
+    if (!hid) return false;
+
+    const g = normStr(it.group).toLowerCase();
+    const id = normStr(it.id || it.name || it.name_en || it.name_ru).toLowerCase();
+    const name = normStr(it.name_ru || it.name_en || it.name || it.id).toLowerCase();
+
+    const candidates = [
+      id,
+      name,
+      (g && id) ? `${g}:${id}` : null,
+      (g && name) ? `${g}:${name}` : null,
+    ].filter(Boolean);
+
+    return candidates.includes(hid);
+  }
+
   const out = [];
   for (const it of objectsJson.items) {
     if (typeof it.ra_deg !== "number" || typeof it.dec_deg !== "number") continue;
@@ -327,43 +358,68 @@ function prepareObjects(objectsJson, observer, viewport, options) {
     const decRad = A.deg2rad(it.dec_deg);
 
     const { altRad, azRad } = A.raDecToAltAz(raRad, decRad, latRad, lstRad);
-    const altDeg = A.rad2deg(altRad);
-    if (altRad < 0) continue;
+    if (altRad < 0) continue; // below horizon -> cannot be on map
 
+    const altDeg = A.rad2deg(altRad);
     const { x, y } = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, viewport.R);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+
+    const group = normStr(it.group).toLowerCase(); // IMPORTANT: keep group
+    const stableId = normStr(it.id || it.name || it.name_en || it.name_ru); // IMPORTANT: never empty if possible
 
     out.push({
-      id: it.id || "",
+      group,                               // <-- NEW (used by highlight)
+      id: stableId || "",                  // <-- fixed: stable id
       type: it.type || "ds",
-      name: it.name_ru || it.name_en || it.name || it.id || "",
+      name: it.name_ru || it.name_en || it.name || stableId || "",
       ra_deg: it.ra_deg,
       dec_deg: it.dec_deg,
       mag: (typeof it.mag === "number") ? it.mag : null,
       color: it.color || null,
       altDeg,
       x, y,
-      note: (typeof it.note === "string" && it.note.trim()) ? it.note.trim() : null
+      note: (typeof it.note === "string" && it.note.trim()) ? it.note.trim() : null,
+
+      __is_highlight: isHighlightedItem(it), // internal helper
     });
   }
 
-  // iteration-1 ranking + limits
+  // ranking + limits
   const minAlt = (typeof options?.minAltObjectsDeg === "number") ? options.minAltObjectsDeg : 10;
+  const maxN = (typeof options?.maxObjects === "number") ? options.maxObjects : 8;
+
+  // strict base filter
   let filtered = out.filter(o => o.altDeg >= minAlt);
 
   for (const o of filtered) {
     const mag = (typeof o.mag === "number") ? o.mag : 8.0;
     o._score = o.altDeg - 0.7 * mag;
   }
-
   filtered.sort((a, b) => (b._score - a._score));
-
-  const maxN = (typeof options?.maxObjects === "number") ? options.maxObjects : 8;
   filtered = filtered.slice(0, Math.max(0, maxN));
 
-  for (const o of filtered) delete o._score;
+  // FORCE INCLUDE highlighted object (above horizon already guaranteed here)
+  const forced = hid ? out.find(o => o.__is_highlight) : null;
+  if (forced) {
+    const already = filtered.some(o =>
+      (o.group && forced.group && o.group === forced.group && o.id && forced.id && o.id === forced.id) ||
+      (o.name && forced.name && o.name === forced.name)
+    );
+
+    if (!already) {
+      if (filtered.length >= maxN && maxN > 0) filtered[filtered.length - 1] = forced;
+      else filtered.push(forced);
+    }
+  }
+
+  for (const o of filtered) {
+    delete o._score;
+    delete o.__is_highlight;
+  }
 
   return filtered;
 }
+
 
 function prepareAlerts(alertsJson, observer, viewport, options) {
   if (!alertsJson || !Array.isArray(alertsJson.items)) return [];
