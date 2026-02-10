@@ -183,91 +183,83 @@
   }
   .sky-check input{ transform: translateY(1px); }
   
-  /* -----------------------
-     Player (base)
-     ----------------------- */
-  .sky-player{
-    width: min(96vw, var(--stage-max));
-    margin: 12px auto 0 auto;
-    padding: 12px;
-    border-radius: 18px;
-    border: 1px solid var(--stroke);
-    background: rgba(0,0,0,0.22);
-  }
+  /* =======================
+   Player (single source of truth)
+   ======================= */
+
+/* stage is positioning root */
+.sky-stage{
+  position: relative;
+}
+
+/* base player */
+.sky-player{
+  position: absolute;
+  left: 12px;          /* выравнивание по левому краю canvas */
+  bottom: 52px;        /* подняли вверх */
+  z-index: 55;
+  pointer-events: auto;
+
+  width: min(280px, calc(100% - 24px));
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(0,0,0,0.30);
+  backdrop-filter: blur(8px);
+}
+
+/* compact layout */
+.sky-player-compact{
+  margin: 0;
+}
+
+/* rows */
+.sky-player-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.sky-player-controls{
+  display:flex;
+  gap: 6px;
+}
+
+/* buttons */
+.sky-player .sky-btn{
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* slider */
+.sky-player .sky-slider{
+  width: 100%;
+  margin: 6px 0;
+}
+
+/* hint */
+.sky-player .sky-player-hint{
+  font-size: 12px;
+  color: rgba(255,255,255,0.60);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* hide step buttons */
+.sky-player-row2{
+  display: none !important;
+}
+
+/* hide legacy time span */
+.sky-player-time{
+  display: none;
+}
   
-  /* -----------------------
-     Player overlay position
-     ----------------------- */
-  .sky-player-overlay{
-    right: 12px;
-    bottom: 12px;
-    left: auto;
-    z-index: 55; /* below popover, above canvas */
-    pointer-events: auto;
-  }
-  
-  /* -----------------------
-     Compact layout (the “ideal” one)
-     Width is controlled HERE:
-     --player-w (defaults below)
-     ----------------------- */
-  .sky-player-compact{
-    --player-w: 280px;
-    width: min(var(--player-w), calc(100% - 20px));
-    margin: 0;
-    padding: 8px 8px;
-    border-radius: 14px;
-    background: rgba(0,0,0,0.30);
-    backdrop-filter: blur(8px);
-  }
-  
-  /* 4 rows */
-  .sky-player-row{ display:flex; align-items:center; justify-content:space-between; }
-  
-  .sky-player-controls{
-    display:flex;
-    gap: 6px;
-    align-items:center;
-    flex-wrap: nowrap;
-  }
-  
-  .sky-player-steps{
-    display:flex;
-    gap: 6px;
-    align-items:center;
-    justify-content:flex-start;
-    flex-wrap: nowrap;
-  }
-  
-  /* Compact buttons */
-  .sky-player-compact .sky-btn{
-    padding: 6px 8px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1;
-  }
-  
-  /* Slider row */
-  .sky-player-compact .sky-slider{
-    width: 100%;
-    margin: 6px 0 6px 0;
-  }
-  
-  /* Hint row */
-  .sky-player-compact .sky-player-hint{
-    font-size: 12px;
-    color: rgba(255,255,255,0.60);
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  /* Keep playerTime for JS but hide in compact UI */
-  .sky-player-compact .sky-player-time{
-    display:none;
-  }
   
   /* -----------------------
      Fullscreen mode
@@ -298,14 +290,6 @@
     right: 64px;
   }
   
-  /* In fullscreen: pin player bottom-right as fixed so it never disappears */
-  .sky-stage.is-fs .sky-player-overlay{
-    position: fixed;
-    right: 14px;
-    bottom: 14px;
-    left: auto;
-    z-index: 10000;
-  }
   
 /* Tooltip */
 .sky-tooltip{
@@ -380,14 +364,7 @@
   display: block;
 }
 
-/* overlays MUST be above canvas */
-#stageControls,
-#skyPlayer,
-#layersPanel,
-#skyTooltip {
-  position: absolute;
-  z-index: 2000;
-}
+
 
 /* controls top-right */
 #stageControls {
@@ -396,12 +373,6 @@
   pointer-events: auto;
 }
 
-/* player bottom-right */
-#skyPlayer {
-  right: 10px;
-  bottom: 10px;
-  pointer-events: auto;
-}
 
 /* layers popover */
 #layersPanel {

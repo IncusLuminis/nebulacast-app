@@ -166,7 +166,6 @@ export function bootSkyMapUI() {
         ev.preventDefault();
         ev.stopPropagation();
 
-        // Open modal with note (and whatever else exists)
         if (modal) {
           modal.showFromHit({
             kind: "object",
@@ -193,13 +192,11 @@ export function bootSkyMapUI() {
     e.preventDefault();
     e.stopPropagation();
 
-    // close layers if open, keep UX clean
     if (layersPanel && !layersPanel.hidden) toggleLayers(false);
 
     toggleBest();
     if (!bestPanel || bestPanel.hidden) return;
 
-    // Populate when opening
     bestPanel.innerHTML = `<div class="sky-popover-title">Best Today</div><div class="sky-best-empty">Loading…</div>`;
 
     const json = await loadBestTodayJSON();
@@ -207,7 +204,6 @@ export function bootSkyMapUI() {
     renderBestPanel(items);
   });
 
-  // click outside closes BestToday
   document.addEventListener("click", (e) => {
     if (!bestPanel || bestPanel.hidden) return;
     if (btnBestToday && btnBestToday.contains(e.target)) return;
@@ -218,9 +214,9 @@ export function bootSkyMapUI() {
   // -----------------------
   // Timeline model
   // -----------------------
-  let stepHours = 6;
-  let spanHours = 48; // +/-24h
-  let base = new Date(); // center time
+  let stepHours = 1;      // ✅ DEFAULT: 1h
+  let spanHours = 48;     // +/-24h
+  let base = new Date();  // center time
   let playing = false;
   let timer = null;
 
@@ -331,6 +327,14 @@ export function bootSkyMapUI() {
     });
   });
 
+  // ✅ Ensure UI reflects default stepHours=1, even if HTML has some other active button
+  (function syncStepButtonsToDefault() {
+    const btn = document.querySelector('[data-step="1"]');
+    if (!btn) return;
+    document.querySelectorAll("[data-step]").forEach((b) => b.classList.remove("sky-btn-active"));
+    btn.classList.add("sky-btn-active");
+  })();
+
   // -----------------------
   // Fullscreen (stage only)
   // -----------------------
@@ -343,7 +347,6 @@ export function bootSkyMapUI() {
       btnFullscreen.title = isFs ? "Exit fullscreen" : "Fullscreen";
     }
 
-    // keep overlays reachable
     if (btnLayers) btnLayers.style.display = "flex";
     if (btnBestToday) btnBestToday.style.display = "flex";
   }

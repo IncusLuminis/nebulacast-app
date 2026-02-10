@@ -1,8 +1,197 @@
 // core/sky.render.js
 import { UI } from "./sky.constants.js";
 
+/* -----------------------------
+   Label queue + simple collision resolver + DEDUP KEYS
+   - All labels are queued during layer draw.
+   - One flush at end draws labels with priorities and avoids overlaps.
+   - Optional dedupKey keeps only one label per key (use for planets).
+----------------------------- */
+
+function _ensureLabelState(ctx) {
+  if (!ctx.__skyLabels) {
+    ctx.__skyLabels = { queue: [], placed: [], dedup: new Map() };
+  }
+  if (!Array.isArray(ctx.__skyLabels.queue)) ctx.__skyLabels.queue = [];
+  if (!Array.isArray(ctx.__skyLabels.placed)) ctx.__skyLabels.placed = [];
+  if (!(ctx.__skyLabels.dedup instanceof Map)) ctx.__skyLabels.dedup = new Map();
+  return ctx.__skyLabels;
+}
+
+function _resetLabelState(ctx) {
+  ctx.__skyLabels = { queue: [], placed: [], dedup: new Map() };
+}
+
+function _parseFontPx(font) {
+  const m = String(font || "").match(/(\d+(?:\.\d+)?)px/);
+  return m ? Number(m[1]) : 13;
+}
+
+function _measureLabel(ctx, text, font) {
+  const prev = ctx.font;
+  ctx.font = font;
+  const w = ctx.measureText(text).width || 0;
+  ctx.font = prev;
+
+  const h = _parseFontPx(font) * 1.15;
+  return { w, h };
+}
+
+function _rectsIntersect(a, b) {
+  return !(a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2);
+}
+
+function _isInsideDisk(vp, r) {
+  const cx = (r.x1 + r.x2) * 0.5;
+  const cy = (r.y1 + r.y2) * 0.5;
+  const dx = cx - vp.cx;
+  const dy = cy - vp.cy;
+  const rr = Math.sqrt(dx * dx + dy * dy);
+  return rr <= (vp.R - 6);
+}
+
+function enqueueLabel(ctx, vp, spec) {
+  const st = _ensureLabelState(ctx);
+
+  const text = String(spec.text || "").trim();
+  if (!text) return;
+
+  const item = {
+    text,
+    x: Number(spec.x),
+    y: Number(spec.y),
+    font: spec.font || "13px system-ui, -apple-system, Segoe UI, Roboto, Arial",
+    align: spec.align || "left",
+    baseline: spec.baseline || "middle",
+    dx: Number.isFinite(spec.dx) ? spec.dx : 0,
+    dy: Number.isFinite(spec.dy) ? spec.dy : 0,
+    fillStyle: spec.fillStyle || "rgba(230,240,255,0.72)",
+    strokeStyle: spec.strokeStyle || "rgba(0,0,0,0.35)",
+    strokeWidth: Number.isFinite(spec.strokeWidth) ? spec.strokeWidth : 3.5,
+    priority: Number.isFinite(spec.priority) ? spec.priority : 200,
+    dedupKey: (spec.dedupKey != null) ? String(spec.dedupKey) : null,
+  };
+
+  // DEDUP: keep only one label per key. If new one has higher priority -> replace.
+  if (item.dedupKey) {
+    const prevIdx = st.dedup.get(item.dedupKey);
+    if (prevIdx == null) {
+      const idx = st.queue.length;
+      st.queue.push(item);
+      st.dedup.set(item.dedupKey, idx);
+    } else {
+      const prev = st.queue[prevIdx];
+      if (!prev) {
+        st.queue[prevIdx] = item;
+        st.dedup.set(item.dedupKey, prevIdx);
+      } else {
+        // choose "better": higher priority wins; if equal -> latest wins
+        if (item.priority > (prev.priority || 0) || item.priority === (prev.priority || 0)) {
+          st.queue[prevIdx] = item;
+        }
+      }
+    }
+    return;
+  }
+
+  st.queue.push(item);
+}
+
+function flushLabels(ctx, vp) {
+  const st = _ensureLabelState(ctx);
+  if (!st.queue.length) return;
+
+  // sort: high priority first
+  const queue = st.queue.slice().sort((a, b) => (b.priority - a.priority));
+
+  st.placed = [];
+
+  const OFFS = [
+    [0, 0],
+    [0, -12],
+    [0, 12],
+    [10, -14],
+    [10, 14],
+    [16, 0],
+    [16, -16],
+    [16, 16],
+    [-16, 0],
+    [-16, -16],
+    [-16, 16],
+    [0, -22],
+    [0, 22],
+  ];
+
+  ctx.save();
+  ctx.setLineDash([]);
+
+  for (const it of queue) {
+    const { w, h } = _measureLabel(ctx, it.text, it.font);
+
+    const rectFor = (x, y) => {
+      let x1 = x;
+      let y1 = y;
+
+      if (it.align === "center") x1 = x - w * 0.5;
+      else if (it.align === "right") x1 = x - w;
+
+      if (it.baseline === "middle") y1 = y - h * 0.5;
+      else if (it.baseline === "bottom" || it.baseline === "ideographic") y1 = y - h;
+
+      const pad = 2.0;
+      return { x1: x1 - pad, y1: y1 - pad, x2: x1 + w + pad, y2: y1 + h + pad };
+    };
+
+    const anchorX = it.x + it.dx;
+    const anchorY = it.y + it.dy;
+
+    let placed = null;
+
+    for (const [ox, oy] of OFFS) {
+      const cx = anchorX + ox;
+      const cy = anchorY + oy;
+
+      const r = rectFor(cx, cy);
+      if (!_isInsideDisk(vp, r)) continue;
+
+      let collide = false;
+      for (const pr of st.placed) {
+        if (_rectsIntersect(r, pr)) { collide = true; break; }
+      }
+      if (collide) continue;
+
+      placed = { x: cx, y: cy, rect: r };
+      break;
+    }
+
+    if (!placed) continue;
+
+    ctx.font = it.font;
+    ctx.textAlign = it.align;
+    ctx.textBaseline = it.baseline;
+
+    if (it.strokeWidth > 0) {
+      ctx.lineWidth = it.strokeWidth;
+      ctx.strokeStyle = it.strokeStyle;
+      ctx.strokeText(it.text, placed.x, placed.y);
+    }
+
+    ctx.fillStyle = it.fillStyle;
+    ctx.fillText(it.text, placed.x, placed.y);
+
+    st.placed.push(placed.rect);
+  }
+
+  ctx.restore();
+
+  // clear queue + dedup map for next frame
+  st.queue.length = 0;
+  st.dedup.clear();
+}
+
 function clear(ctx, vp) {
   ctx.clearRect(0, 0, vp.w, vp.h);
+  _resetLabelState(ctx);
 }
 
 function drawBackground(ctx, vp) {
@@ -38,7 +227,6 @@ function drawGridAz(ctx, vp) {
   ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
   ctx.lineWidth = 1;
 
-  // altitude circles (stereographic): 0/30/60
   const altCircles = [0, 30, 60];
   for (const alt of altCircles) {
     const z = (Math.PI / 2) - (alt * Math.PI / 180);
@@ -48,7 +236,6 @@ function drawGridAz(ctx, vp) {
     ctx.stroke();
   }
 
-  // az rays
   for (let az = 0; az < 360; az += 30) {
     const rad = (az * Math.PI) / 180;
     const x = vp.cx + vp.R * Math.sin(rad);
@@ -59,7 +246,6 @@ function drawGridAz(ctx, vp) {
     ctx.stroke();
   }
 
-  // labels
   ctx.fillStyle = "rgba(255,255,255,0.30)";
   ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
   ctx.textAlign = "left";
@@ -132,7 +318,7 @@ function drawMeridian(ctx, vp, meridianPts) {
 
 function drawEquator(ctx, vp, equatorPts) {
   ctx.save();
-  ctx.setLineDash([]); // solid
+  ctx.setLineDash([]);
   ctx.strokeStyle = "rgba(140,200,255,0.22)";
   ctx.lineWidth = 1.4;
   ctx.lineJoin = "round";
@@ -144,7 +330,7 @@ function drawEquator(ctx, vp, equatorPts) {
 
 function drawEcliptic(ctx, vp, eclPts) {
   ctx.save();
-  ctx.setLineDash([6, 6]); // dashed
+  ctx.setLineDash([6, 6]);
   ctx.strokeStyle = "rgba(255,210,140,0.24)";
   ctx.lineWidth = 1.4;
   ctx.lineJoin = "round";
@@ -196,11 +382,20 @@ function drawConstellations(ctx, vp, consPrepared) {
   }
 
   if (consPrepared.labels && consPrepared.labels.length) {
-    ctx.fillStyle = "rgba(190,210,255,0.55)";
-    ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    for (const lab of consPrepared.labels) ctx.fillText(lab.name, lab.x, lab.y);
+    for (const lab of consPrepared.labels) {
+      enqueueLabel(ctx, vp, {
+        text: lab.name,
+        x: lab.x,
+        y: lab.y,
+        font: "13px system-ui, -apple-system, Segoe UI, Roboto, Arial",
+        align: "center",
+        baseline: "middle",
+        fillStyle: "rgba(190,210,255,0.55)",
+        strokeStyle: "rgba(0,0,0,0.28)",
+        strokeWidth: 3.2,
+        priority: 100,
+      });
+    }
   }
 
   ctx.restore();
@@ -221,6 +416,7 @@ function drawObjects(ctx, vp, objectsPrepared) {
     const isPlanet = (o.type === "planet");
 
     if (isPlanet) {
+      // planet marker (keep marker if it arrives via objects layer)
       ctx.beginPath();
       ctx.arc(o.x, o.y, rPlanet, 0, Math.PI * 2);
       ctx.fillStyle = o.color || "rgba(255,230,180,0.90)";
@@ -231,6 +427,7 @@ function drawObjects(ctx, vp, objectsPrepared) {
       ctx.fillStyle = "rgba(255,255,255,0.06)";
       ctx.fill();
     } else {
+      // DSO marker
       const r = rDS;
       ctx.beginPath();
       ctx.moveTo(o.x, o.y - r);
@@ -247,7 +444,8 @@ function drawObjects(ctx, vp, objectsPrepared) {
       ctx.fill();
     }
 
-    if (o.altDeg >= UI.LABEL_ALT_MIN_DEG && o.name) {
+    // IMPORTANT: do NOT label planets from objects layer (labels come from drawPlanets)
+    if (!isPlanet && o.altDeg >= UI.LABEL_ALT_MIN_DEG && o.name) {
       ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
       ctx.textBaseline = "middle";
       ctx.textAlign = "left";
@@ -264,9 +462,6 @@ function drawObjects(ctx, vp, objectsPrepared) {
   ctx.restore();
 }
 
-// -----------------------------
-// Sun/Moon layer
-// -----------------------------
 function drawSunMoon(ctx, vp, sunMoonPrepared) {
   if (!sunMoonPrepared || !sunMoonPrepared.length) return;
 
@@ -275,8 +470,7 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
 
-  // For Sun/Moon labels use a much lower threshold than stars/objects
-  const LABEL_ALT_MIN_SM = 0; // <- change to 5 if you want "only when higher"
+  const LABEL_ALT_MIN_SM = 0;
 
   for (const o of sunMoonPrepared) {
     if (!o || o.x == null || o.y == null) continue;
@@ -289,23 +483,16 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       ? o.r
       : (isSun ? 6.0 : 5.2);
 
-    // Outer glow (very soft)
     ctx.beginPath();
     ctx.arc(o.x, o.y, r + 7.5, 0, Math.PI * 2);
-    ctx.fillStyle = isSun
-      ? "rgba(255,220,140,0.12)"
-      : "rgba(210,230,255,0.08)";
+    ctx.fillStyle = isSun ? "rgba(255,220,140,0.12)" : "rgba(210,230,255,0.08)";
     ctx.fill();
 
-    // Mid glow
     ctx.beginPath();
     ctx.arc(o.x, o.y, r + 3.6, 0, Math.PI * 2);
-    ctx.fillStyle = isSun
-      ? "rgba(255,235,170,0.16)"
-      : "rgba(220,240,255,0.10)";
+    ctx.fillStyle = isSun ? "rgba(255,235,170,0.16)" : "rgba(220,240,255,0.10)";
     ctx.fill();
 
-    // Main disk
     ctx.beginPath();
     ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
     ctx.fillStyle = isSun
@@ -313,40 +500,26 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       : (o.color || "rgba(220,235,255,0.88)");
     ctx.fill();
 
-    // -----------------------------
-    // Moon phase overlay
-    // -----------------------------
     if (isMoon) {
-      // Prefer phase 0..1, fallback to illum_pct 0..100
       let k = null;
 
       if (typeof o.phase === "number" && isFinite(o.phase)) {
-        // allow either 0..1 or 0..100 (defensive)
         k = (o.phase > 1.01) ? (o.phase / 100) : o.phase;
       } else if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
         k = o.illum_pct / 100;
       }
 
       if (k != null) {
-        k = Math.max(0, Math.min(1, k)); // 0..1
-
-        // shift: 0..2r (new => big shift, full => 0)
+        k = Math.max(0, Math.min(1, k));
         const shift = (1 - k) * r * 2;
-
-        // waxing => light on RIGHT => shadow on LEFT  => dir = -1
-        // waning => light on LEFT  => shadow on RIGHT => dir = +1
         const dir = (o.waxing === false) ? +1 : -1;
 
         ctx.save();
-
-        // clip to lunar disk
         ctx.beginPath();
         ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
         ctx.clip();
 
-        // dark overlay disc (shifted)
         const shadowX = o.x + dir * (shift / 2);
-
         ctx.beginPath();
         ctx.arc(shadowX, o.y, r, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(0,0,0,0.68)";
@@ -354,7 +527,6 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
 
         ctx.restore();
 
-        // subtle terminator hint
         ctx.beginPath();
         ctx.arc(o.x, o.y, r + 0.2, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(255,255,255,0.08)";
@@ -363,38 +535,31 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       }
     }
 
-    // Rim
     ctx.beginPath();
     ctx.arc(o.x, o.y, r + 0.6, 0, Math.PI * 2);
-    ctx.strokeStyle = isSun
-      ? "rgba(255,255,255,0.18)"
-      : "rgba(255,255,255,0.16)";
+    ctx.strokeStyle = isSun ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.16)";
     ctx.lineWidth = 1.2;
     ctx.stroke();
 
-    // -----------------------------
-    // Label (+ Moon phase text)
-    // -----------------------------
     if (typeof o.altDeg === "number" && o.altDeg >= LABEL_ALT_MIN_SM && o.name) {
-      ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "left";
-
-      // text lines
       const x0 = o.x + 10;
       const y0 = o.y;
 
-      // Line 1: name
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.strokeText(o.name, x0, y0);
+      enqueueLabel(ctx, vp, {
+        text: o.name,
+        x: x0,
+        y: y0,
+        font: "13px system-ui, -apple-system, Segoe UI, Roboto, Arial",
+        align: "left",
+        baseline: "middle",
+        fillStyle: isSun ? "rgba(255,245,220,0.78)" : "rgba(230,240,255,0.72)",
+        strokeStyle: "rgba(0,0,0,0.35)",
+        strokeWidth: 3.5,
+        priority: 300,
+        // optional dedup too (safe)
+        // dedupKey: isSun ? "sun" : (isMoon ? "moon" : null),
+      });
 
-      ctx.fillStyle = isSun
-        ? "rgba(255,245,220,0.78)"
-        : "rgba(230,240,255,0.72)";
-      ctx.fillText(o.name, x0, y0);
-
-      // Line 2: Moon phase percent (optional)
       if (isMoon) {
         let pct = null;
         if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
@@ -406,14 +571,19 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
 
         if (pct != null) {
           const phaseText = `${Math.round(pct)}%${o.waxing === false ? " waning" : " waxing"}`;
-
-          ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-          ctx.lineWidth = 3.2;
-          ctx.strokeStyle = "rgba(0,0,0,0.32)";
-          ctx.strokeText(phaseText, x0, y0 + 14);
-
-          ctx.fillStyle = "rgba(230,240,255,0.58)";
-          ctx.fillText(phaseText, x0, y0 + 14);
+          enqueueLabel(ctx, vp, {
+            text: phaseText,
+            x: x0,
+            y: y0 + 14,
+            font: "12px system-ui, -apple-system, Segoe UI, Roboto, Arial",
+            align: "left",
+            baseline: "middle",
+            fillStyle: "rgba(230,240,255,0.58)",
+            strokeStyle: "rgba(0,0,0,0.32)",
+            strokeWidth: 3.2,
+            priority: 295,
+            dedupKey: "moon_phase", // keep just one
+          });
         }
       }
     }
@@ -421,7 +591,6 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
 
   ctx.restore();
 }
-
 
 function drawPlanets(ctx, vp, planetsPrepared) {
   if (!planetsPrepared || !planetsPrepared.length) return;
@@ -439,30 +608,33 @@ function drawPlanets(ctx, vp, planetsPrepared) {
 
     const r = (typeof p.r === "number") ? p.r : rDefault;
 
-    // main disk
     ctx.beginPath();
     ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
     ctx.fillStyle = p.color || "rgba(255,230,180,0.90)";
     ctx.fill();
 
-    // soft outer glow
     ctx.beginPath();
     ctx.arc(p.x, p.y, r + 2.2, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(255,255,255,0.06)";
     ctx.fill();
 
-    // label (same rule as objects)
+    // label -> queue (DEDUP by planet name)
     if (typeof p.altDeg === "number" && p.altDeg >= UI.LABEL_ALT_MIN_DEG && p.name) {
-      ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "left";
-
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.strokeText(p.name, p.x + 8, p.y);
-
-      ctx.fillStyle = "rgba(230,240,255,0.72)";
-      ctx.fillText(p.name, p.x + 8, p.y);
+      enqueueLabel(ctx, vp, {
+        text: p.name,
+        x: p.x,
+        y: p.y,
+        dx: 8,
+        dy: 0,
+        font: "13px system-ui, -apple-system, Segoe UI, Roboto, Arial",
+        align: "left",
+        baseline: "middle",
+        fillStyle: "rgba(230,240,255,0.72)",
+        strokeStyle: "rgba(0,0,0,0.35)",
+        strokeWidth: 3.5,
+        priority: 260,
+        dedupKey: `planet:${p.name}`,
+      });
     }
   }
 
@@ -506,12 +678,9 @@ function drawAlerts(ctx, vp, alertsPrepared) {
 
   for (const a of alertsPrepared) {
     const isProfi = (a.level === "profi");
-
-    // marker size by severity (1..5)
     const s = Math.max(3.5, Math.min(7.5, 2.5 + (a.severity || 2)));
 
     if (isProfi) {
-      // "burst" cross
       ctx.strokeStyle = "rgba(255,120,120,0.70)";
       ctx.lineWidth = 1.6;
 
@@ -525,13 +694,11 @@ function drawAlerts(ctx, vp, alertsPrepared) {
       ctx.lineTo(a.x, a.y + s);
       ctx.stroke();
 
-      // small ring
       ctx.beginPath();
       ctx.arc(a.x, a.y, s * 0.9, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(255,120,120,0.25)";
       ctx.stroke();
     } else {
-      // amateur triangle
       ctx.strokeStyle = "rgba(120,255,200,0.65)";
       ctx.lineWidth = 1.6;
 
@@ -546,18 +713,23 @@ function drawAlerts(ctx, vp, alertsPrepared) {
       ctx.fill();
     }
 
-    // label only if high enough
     if (a.altDeg >= LABEL_ALT_MIN && a.title) {
-      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "left";
-
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.strokeText(a.title, a.x + 9, a.y);
-
-      ctx.fillStyle = isProfi ? "rgba(255,170,170,0.80)" : "rgba(190,255,230,0.70)";
-      ctx.fillText(a.title, a.x + 9, a.y);
+      enqueueLabel(ctx, vp, {
+        text: a.title,
+        x: a.x,
+        y: a.y,
+        dx: 9,
+        dy: 0,
+        font: "12px system-ui, -apple-system, Segoe UI, Roboto, Arial",
+        align: "left",
+        baseline: "middle",
+        fillStyle: isProfi ? "rgba(255,170,170,0.80)" : "rgba(190,255,230,0.70)",
+        strokeStyle: "rgba(0,0,0,0.35)",
+        strokeWidth: 3.5,
+        priority: 400,
+        // optional: avoid duplicates if same alert title appears twice
+        // dedupKey: `alert:${a.title}`,
+      });
     }
   }
 
@@ -572,14 +744,12 @@ function drawGridEq(ctx, vp, eqGrid) {
   ctx.strokeStyle = "rgba(7, 149, 54, 0.6)";
   ctx.lineWidth = 1;
 
-  // Dec lines
   for (const ln of eqGrid.decLines || []) {
     ctx.beginPath();
     drawPolylineWithBreaks(ctx, ln.pts);
     ctx.stroke();
   }
 
-  // RA lines
   for (const ln of eqGrid.raLines || []) {
     ctx.beginPath();
     drawPolylineWithBreaks(ctx, ln.pts);
@@ -618,12 +788,13 @@ export const Render = {
   drawMilkyWay,
   drawConstellations,
   drawObjects,
-  drawSunMoon, // +++ add
+  drawSunMoon,
   drawStars,
   drawAlerts,
   drawGridEq,
   drawZenith,
-  drawPlanets
+  drawPlanets,
+  flushLabels,
 };
 
 export default Render;
