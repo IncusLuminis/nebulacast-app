@@ -445,6 +445,10 @@ function drawObjects(ctx, vp, objectsPrepared) {
   const rPlanet = 4.2;
   const rDS = 4.0;
 
+  // ✅ Fix: do not draw planet markers from Objects layer to avoid "oval" double-draw.
+  // Planets still stay in objectsPrepared for search/recommendations/highlight.
+  const HIDE_PLANET_MARKERS_IN_OBJECTS = true;
+
   for (const o of objectsPrepared) {
     if (!o) continue;
 
@@ -461,21 +465,29 @@ function drawObjects(ctx, vp, objectsPrepared) {
     const r = isPlanet ? rPlanet : rDS;
     const rr = highlighted ? r * 1.8 : r;
 
+    // -------------------------
+    // Marker drawing
+    // -------------------------
     if (isPlanet) {
-      if (highlighted) {
-        drawHighlightedObject(ctx, () => {
+      // ✅ Skip planet body marker from Objects layer to avoid mismatch with Planets layer.
+      // We still allow highlight ring/crosshair later (below) so search/highlight remains visible.
+      if (!HIDE_PLANET_MARKERS_IN_OBJECTS) {
+        if (highlighted) {
+          drawHighlightedObject(ctx, () => {
+            ctx.beginPath();
+            ctx.arc(ox, oy, rr, 0, Math.PI * 2);
+            ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
+            ctx.fill();
+          });
+        } else {
           ctx.beginPath();
-          ctx.arc(ox, oy, rr, 0, Math.PI * 2);
+          ctx.arc(ox, oy, r, 0, Math.PI * 2);
           ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
           ctx.fill();
-        });
-      } else {
-        ctx.beginPath();
-        ctx.arc(ox, oy, r, 0, Math.PI * 2);
-        ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
-        ctx.fill();
+        }
       }
     } else {
+      // DSO marker (diamond)
       ctx.beginPath();
       ctx.moveTo(ox, oy - rr);
       ctx.lineTo(ox + rr, oy);
@@ -489,6 +501,9 @@ function drawObjects(ctx, vp, objectsPrepared) {
       ctx.fill();
     }
 
+    // -------------------------
+    // Highlight overlay (keep for both DSOs and planets)
+    // -------------------------
     if (highlighted) {
       const alpha = _highlightAlphaNow();
 
@@ -522,6 +537,9 @@ function drawObjects(ctx, vp, objectsPrepared) {
       ctx.restore();
     }
 
+    // -------------------------
+    // Labels (keep; dedupKey already collapses planet duplicates)
+    // -------------------------
     const showLabel =
       highlighted ||
       (typeof o.altDeg === "number" && o.altDeg >= UI.LABEL_ALT_MIN_DEG);
