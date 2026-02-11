@@ -226,7 +226,8 @@ export function bootSkyMapUI() {
   }
 
   function qualityFromScore(score) {
-    if (score >= 600) return { label: "Excellent", dot: "rgba(90,220,140,0.95)", text: "rgba(190,255,215,0.92)" };
+    if (score >= 1000) return { label: "Excellent", dot: "rgba(90,220,140,0.95)", text: "rgba(190,255,215,0.92)" };
+    if (score >= 600) return { label: "Good", dot: "rgba(109, 181, 226, 0.95)", text: "rgba(109, 181, 226, 0.92)" };
     if (score >= 300) return { label: "Fair", dot: "rgba(245,215,90,0.95)", text: "rgba(255,240,190,0.90)" };
     return { label: "Poor", dot: "rgba(255,110,110,0.95)", text: "rgba(255,205,205,0.88)" };
   }
