@@ -65,11 +65,15 @@ function raDecToAltAz(raRad, decRad, latRad, lstRadVal) {
 }
 
 // Stereographic projection from zenith
+// Stereographic projection from zenith
 function altAzToXY(altRad, azRad, cx, cy, R) {
   const z = (Math.PI / 2) - altRad; // zenith distance
   const rr = R * Math.tan(z / 2);   // horizon -> R
 
-  const x = cx + rr * Math.sin(azRad);
+  // ✅ Mirror horizontally to match Stellarium/SkySafari orientation:
+  // az: 0=N, π/2=E, π=W? (convention stays the same),
+  // but on screen: E must be LEFT, W must be RIGHT.
+  const x = cx - rr * Math.sin(azRad);
   const y = cy - rr * Math.cos(azRad);
   return { x, y, rr };
 }

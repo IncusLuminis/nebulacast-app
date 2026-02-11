@@ -245,7 +245,7 @@ function drawGridAz(ctx, vp) {
 
   for (let az = 0; az < 360; az += 30) {
     const rad = (az * Math.PI) / 180;
-    const x = vp.cx + vp.R * Math.sin(rad);
+    const x = vp.cx - vp.R * Math.sin(rad); // ✅ mirror
     const y = vp.cy - vp.R * Math.cos(rad);
     ctx.beginPath();
     ctx.moveTo(vp.cx, vp.cy);
@@ -280,16 +280,19 @@ function drawCardinals(ctx, vp) {
   const pad = 18;
   ctx.fillText("N", vp.cx, vp.cy - vp.R - pad);
   ctx.fillText("S", vp.cx, vp.cy + vp.R + pad);
-  ctx.fillText("E", vp.cx + vp.R + pad, vp.cy);
-  ctx.fillText("W", vp.cx - vp.R - pad, vp.cy);
+
+  // ✅ After mirroring projection: W is on the right, E is on the left
+  ctx.fillText("W", vp.cx + vp.R + pad, vp.cy);
+  ctx.fillText("E", vp.cx - vp.R - pad, vp.cy);
 
   ctx.strokeStyle = "rgba(255,255,255,0.18)";
   ctx.lineWidth = 1;
   for (let az = 0; az < 360; az += 45) {
     const rad = (az * Math.PI) / 180;
-    const x1 = vp.cx + (vp.R - 6) * Math.sin(rad);
+    // ✅ mirror tick marks too
+    const x1 = vp.cx - (vp.R - 6) * Math.sin(rad);
     const y1 = vp.cy - (vp.R - 6) * Math.cos(rad);
-    const x2 = vp.cx + (vp.R + 2) * Math.sin(rad);
+    const x2 = vp.cx - (vp.R + 2) * Math.sin(rad);
     const y2 = vp.cy - (vp.R + 2) * Math.cos(rad);
     ctx.beginPath();
     ctx.moveTo(x1, y1);

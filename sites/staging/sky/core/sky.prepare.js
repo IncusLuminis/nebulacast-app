@@ -89,9 +89,11 @@ const A = (function () {
 
   // Stereographic from zenith: horizon -> radius R
   function altAzToXY(altRad, azRad, cx, cy, R) {
-    const z = (Math.PI / 2) - altRad;        // zenith distance
-    const rr = R * Math.tan(z / 2);          // horizon (z=90°)->R
-    const x = cx + rr * Math.sin(azRad);
+    const z = (Math.PI / 2) - altRad; // zenith distance
+    const rr = R * Math.tan(z / 2);   // horizon -> R
+  
+    // ✅ Mirror horizontally (same as in sky.astro.js)
+    const x = cx - rr * Math.sin(azRad);
     const y = cy - rr * Math.cos(azRad);
     return { x, y, rr };
   }
