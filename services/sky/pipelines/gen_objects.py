@@ -144,34 +144,163 @@ def save_simbad_cache(cache: Dict[str, Dict[str, float]]) -> None:
     _write_json(SIMBAD_CACHE_PATH, cache)
 
 
+# --- added: robust name variants for SIMBAD (minimal but effective) ---
+_CONST_GENITIVE_TO_ABBR = {
+    "andromedae": "And",
+    "aquarii": "Aqr",
+    "aquilae": "Aql",
+    "arianis": "Ari",
+    "arietis": "Ari",
+    "aurigae": "Aur",
+    "boötis": "Boo",
+    "bootis": "Boo",
+    "cancri": "Cnc",
+    "canis majoris": "CMa",
+    "canis minoris": "CMi",
+    "capricorni": "Cap",
+    "cassiopeiae": "Cas",
+    "centauri": "Cen",
+    "cephei": "Cep",
+    "ceti": "Cet",
+    "columbae": "Col",
+    "corvi": "Crv",
+    "coronae borealis": "CrB",
+    "coronae australis": "CrA",
+    "crucis": "Cru",
+    "cygni": "Cyg",
+    "delphini": "Del",
+    "draconis": "Dra",
+    "equulei": "Equ",
+    "eridani": "Eri",
+    "geminorum": "Gem",
+    "herculis": "Her",
+    "hydrae": "Hya",
+    "leonis": "Leo",
+    "librae": "Lib",
+    "lyrae": "Lyr",
+    "ophiuchi": "Oph",
+    "orionis": "Ori",
+    "pegasi": "Peg",
+    "persei": "Per",
+    "piscis austrini": "PsA",
+    "piscis austrinus": "PsA",
+    "piscis": "Psc",
+    "sagittarii": "Sgr",
+    "scorpii": "Sco",
+    "tauri": "Tau",
+    "ursae majoris": "UMa",
+    "ursae minoris": "UMi",
+    "virginis": "Vir",
+}
+
+_GREEK_WORD_TO_BAYER = {
+    "alpha": "alf",
+    "beta": "bet",
+    "gamma": "gam",
+    "delta": "del",
+    "epsilon": "eps",
+    "zeta": "zet",
+    "eta": "eta",
+    "theta": "tet",
+    "iota": "iot",
+    "kappa": "kap",
+    "lambda": "lam",
+    "mu": "mu",
+    "nu": "nu",
+    "xi": "ksi",
+    "omicron": "omi",
+    "pi": "pi",
+    "rho": "rho",
+    "sigma": "sig",
+    "tau": "tau",
+    "upsilon": "ups",
+    "phi": "phi",
+    "chi": "chi",
+    "psi": "psi",
+    "omega": "ome",
+}
+
+
+def _simbad_name_variants(name: str) -> List[str]:
+    """
+    Produce a small set of robust SIMBAD query variants.
+    Example: "Sigma Sagittarii" -> ["Sigma Sagittarii", "Sigma Sgr", "sig Sgr", "sig Sagittarii"]
+    """
+    q = " ".join((name or "").strip().split())
+    if not q:
+        return []
+
+    variants: List[str] = []
+    def _add(s: str):
+        s2 = " ".join((s or "").strip().split())
+        if s2 and s2 not in variants:
+            variants.append(s2)
+
+    _add(q)
+
+    parts = q.split(" ")
+    if len(parts) >= 2:
+        greek = parts[0].strip()
+        const_gen = " ".join(parts[1:]).strip()
+        const_key = const_gen.lower()
+
+        abbr = _CONST_GENITIVE_TO_ABBR.get(const_key)
+        if abbr:
+            _add(f"{greek} {abbr}")
+
+            bayer = _GREEK_WORD_TO_BAYER.get(greek.lower())
+            if bayer:
+                _add(f"{bayer} {abbr}")
+                _add(f"{bayer} {const_gen}")
+
+    return variants
+
+
 def simbad_resolve_ra_dec(name: str, cache: Dict[str, Dict[str, float]]) -> Optional[Tuple[float, float]]:
     """
     Resolve a target name to (ra_deg, dec_deg) using SIMBAD, with cache.
     """
-    q = (name or "").strip()
-    if not q:
+    q0 = (name or "").strip()
+    if not q0:
         return None
 
-    key = q.lower()
-    if key in cache:
-        v = cache[key]
+    # Try exact cache hit first
+    key0 = q0.lower()
+    if key0 in cache:
+        v = cache[key0]
         ra = v.get("ra_deg")
         dec = v.get("dec_deg")
         if isinstance(ra, (int, float)) and isinstance(dec, (int, float)):
             return float(ra), float(dec)
 
-    try:
-        custom = Simbad()
-        custom.add_votable_fields("ra(d)", "dec(d)")
-        r = custom.query_object(q)
-        if r is None or len(r) == 0:
-            return None
-        ra_deg = float(r["RA_d"][0])
-        dec_deg = float(r["DEC_d"][0])
-        cache[key] = {"ra_deg": ra_deg, "dec_deg": dec_deg}
-        return ra_deg, dec_deg
-    except Exception:
-        return None
+    queries = _simbad_name_variants(q0)
+
+    for q in queries:
+        key = q.lower()
+        if key in cache:
+            v = cache[key]
+            ra = v.get("ra_deg")
+            dec = v.get("dec_deg")
+            if isinstance(ra, (int, float)) and isinstance(dec, (int, float)):
+                return float(ra), float(dec)
+
+        try:
+            custom = Simbad()
+            custom.add_votable_fields("ra(d)", "dec(d)")
+            r = custom.query_object(q)
+            if r is None or len(r) == 0:
+                continue
+            ra_deg = float(r["RA_d"][0])
+            dec_deg = float(r["DEC_d"][0])
+            cache[key] = {"ra_deg": ra_deg, "dec_deg": dec_deg}
+
+            # also write-through to original key to avoid repeated misses on "Sigma Sagittarii"
+            cache.setdefault(key0, {"ra_deg": ra_deg, "dec_deg": dec_deg})
+            return ra_deg, dec_deg
+        except Exception:
+            continue
+
+    return None
 
 
 # -----------------------------
@@ -185,6 +314,28 @@ _MONTHS = {
 _RE_TITLE_DATE = re.compile(r"^\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\b")
 _RE_OCCULTATION_OF = re.compile(r"\boccultation of\s+(.+?)\s*$", re.IGNORECASE)
 _RE_CONJUNCTION_WITH = re.compile(r"\bconjunction(?:\s+of)?\s+(.+?)\s+(?:with|and)\s+(.+?)\s*$", re.IGNORECASE)
+
+# --- added: display name extraction from title ---
+_RE_CAL_TITLE_PREFIX = re.compile(
+    r"^\s*\d{1,2}\s+[A-Za-z]{3}\s+\d{4}\s*(?:\([^)]*\))?\s*:\s*(.+?)\s*$"
+)
+
+
+def calendar_display_name_from_title(title: str) -> str:
+    """
+    Convert daily_signal title into a human display label:
+      "13 Feb 2026 (5 days away): Lunar occultation of Sigma Sagittarii"
+    -> "Lunar occultation of Sigma Sagittarii"
+    Fallback: original title stripped.
+    """
+    t = (title or "").strip()
+    if not t:
+        return ""
+    m = _RE_CAL_TITLE_PREFIX.match(t)
+    if m:
+        tail = (m.group(1) or "").strip()
+        return tail or t
+    return t
 
 
 def parse_event_date_from_title(title: str) -> Optional[date]:
@@ -830,11 +981,14 @@ def calendar_candidates_for_day(
         ev_id = f"cal:{url_key}" if url_key else str(it.get("id") or f"cal:{obj_name}:{d_iso}")
         category = str(it.get("category") or "event").strip().lower()
 
+        # --- changed: display name from title; keep target_name for search/linking ---
+        display_name = calendar_display_name_from_title(title) or obj_name
+
         out.append({
             "id": ev_id,
             "group": "calendar",
             "type": category,
-            "name": obj_name,
+            "name": display_name,          # was obj_name
             "title": title,
             "url": url,
             "published_at": it.get("published_at"),
@@ -844,7 +998,7 @@ def calendar_candidates_for_day(
 
             "event_date": d_iso,
             "event_kind": category,
-            "target_name": obj_name,
+            "target_name": obj_name,       # keep raw target for search
 
             "meta": {
                 "calendar_source": it.get("source"),

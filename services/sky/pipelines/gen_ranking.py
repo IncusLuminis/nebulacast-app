@@ -69,7 +69,35 @@ def read_yaml(path: Path) -> Dict[str, Any]:
 # Normalization
 # -----------------------------
 def norm_group(item: Dict[str, Any]) -> str:
-    return str(item.get("group", "")).strip().lower()
+    """
+    Canonical group order for ranking/display:
+      1) alerts
+      2) calendar (aka events)
+      3) planets
+      4) dso
+    Keep this mapping minimal and backwards-compatible with existing JSONs.
+    """
+    g = str(item.get("group", "")).strip().lower()
+
+    # Back-compat / synonyms
+    if g in ("event", "events"):
+        return "calendar"
+    if g == "calendar":
+        return "calendar"
+
+    # Planets bucket
+    if g == "planets":
+        return "planets"
+
+    # DSO bucket
+    if g == "dso":
+        return "dso"
+
+    # Alerts bucket
+    if g == "alerts":
+        return "alerts"
+
+    return g
 
 
 def norm_id(item: Dict[str, Any]) -> str:
@@ -102,22 +130,34 @@ def load_ranking_cfg(rules: Dict[str, Any]) -> RankingCfg:
     total_top = int(r.get("total_top", 7))
 
     quotas = {
-        k.lower(): int(v)
+        str(k).lower(): int(v)
         for k, v in (r.get("quotas", {}) or {}).items()
     }
 
+    # Default quotas aligned with canonical group names
     if not quotas:
-        quotas = {"planets": 2, "dso": 5, "events": 1, "alerts": 1}
+        quotas = {"planets": 2, "dso": 5, "calendar": 1, "alerts": 1}
 
-    order = [s.lower() for s in r.get("order", ["alerts", "events", "planets", "dso"])]
+    order = [str(s).lower() for s in r.get("order", ["alerts", "calendar", "planets", "dso"])]
 
     reserve = {
-        k.lower(): int(v)
+        str(k).lower(): int(v)
         for k, v in (r.get("reserve", {}) or {}).items()
     }
 
     if not reserve:
-        reserve = {"alerts": 1, "events": 1}
+        reserve = {"alerts": 1, "calendar": 1}
+
+    # Back-compat: if rules.yml still uses "events", map it to "calendar"
+    def _canon_group(g: str) -> str:
+        gg = (g or "").strip().lower()
+        if gg in ("event", "events"):
+            return "calendar"
+        return gg
+
+    quotas = {_canon_group(k): int(v) for k, v in quotas.items()}
+    order = [_canon_group(x) for x in order]
+    reserve = {_canon_group(k): int(v) for k, v in reserve.items()}
 
     return RankingCfg(
         total_top=max(1, total_top),
@@ -131,28 +171,30 @@ def load_ranking_cfg(rules: Dict[str, Any]) -> RankingCfg:
 # Ranking logic
 # -----------------------------
 def build_ranking(items: List[Dict[str, Any]], cfg: RankingCfg) -> List[Dict[str, Any]]:
-    by_key: Dict[Key, Dict[str, Any]] = {}
     buckets: Dict[str, List[Dict[str, Any]]] = {}
 
     for it in items:
         g, i = key_of(it)
         if not g or not i:
             continue
-        by_key[(g, i)] = it
         buckets.setdefault(g, []).append(it)
 
+    # Within group: by score desc, then name for stability
     for lst in buckets.values():
-        lst.sort(key=lambda x: (-score_of(x), x.get("name", "")))
+        lst.sort(key=lambda x: (-score_of(x), str(x.get("name", ""))))
 
     picked: List[Dict[str, Any]] = []
     used: Dict[str, int] = {}
     used_keys: set[Key] = set()
 
-    def pick(group: str, limit: int):
+    def pick(group: str, limit: int) -> None:
         if limit <= 0:
             return
-        quota = cfg.quotas.get(group, 0)
-        if quota <= used.get(group, 0):
+
+        quota = int(cfg.quotas.get(group, 0))
+        if quota <= 0:
+            return
+        if used.get(group, 0) >= quota:
             return
 
         for it in buckets.get(group, []):
@@ -161,22 +203,24 @@ def build_ranking(items: List[Dict[str, Any]], cfg: RankingCfg) -> List[Dict[str
             k = key_of(it)
             if k in used_keys:
                 continue
+
             picked.append(it)
             used_keys.add(k)
             used[group] = used.get(group, 0) + 1
+
             limit -= 1
-            if limit <= 0:
+            if limit <= 0 or used.get(group, 0) >= quota:
                 break
 
-    # reserved slots first
+    # 1) reserved slots first (to guarantee calendar/alerts presence near top)
     for g, n in cfg.reserve.items():
-        pick(g, n)
+        pick(g, int(n))
 
-    # fill by order
+    # 2) fill by canonical order (alerts -> calendar -> planets -> dso)
     for g in cfg.order:
         if len(picked) >= cfg.total_top:
             break
-        pick(g, cfg.quotas.get(g, 0))
+        pick(g, int(cfg.quotas.get(g, 0)))
 
     return picked[: cfg.total_top]
 
@@ -213,6 +257,9 @@ def main() -> None:
             "count": len(ranking_items),
             "total_top": cfg.total_top,
             "quotas": cfg.quotas,
+            "order": cfg.order,
+            "reserve": cfg.reserve,
+            "sort_rule": ["alerts", "calendar", "planets", "dso"],
         },
         "items": ranking_items,
     }
