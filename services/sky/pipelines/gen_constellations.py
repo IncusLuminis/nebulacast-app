@@ -20,9 +20,11 @@ from __future__ import annotations
 
 import json
 import math
+import re
+import html as _html
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 import requests
 
@@ -39,6 +41,9 @@ STELLARIUM_WESTERN_INDEX_URL = (
     "https://raw.githubusercontent.com/Stellarium/stellarium-skycultures/master/western/index.json"
 )
 
+# IAU conventions table (Latin nominative/genitive + abbreviation)
+AAVSO_IAU_NAMES_URL = "https://www.aavso.org/constellation-names-and-abbreviations"
+
 
 # -----------------------------
 # Paths
@@ -46,7 +51,7 @@ STELLARIUM_WESTERN_INDEX_URL = (
 # -> project root is 4 levels up
 # -----------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SERVICES_DATA_DIR = PROJECT_ROOT / "services" / "sky" / "data" / "generated" 
+SERVICES_DATA_DIR = PROJECT_ROOT / "services" / "sky" / "data" / "generated"
 STAGING_DATA_DIR = PROJECT_ROOT / "sites" / "staging" / "sky" / "data"
 
 
@@ -61,15 +66,70 @@ def read_json(path: Path) -> Any:
 def dump_json(path: Path, obj: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-    json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
-    encoding="utf-8"
-)
+        json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8"
+    )
 
 
 def fetch_stellarium_index() -> Dict[str, Any]:
     r = requests.get(STELLARIUM_WESTERN_INDEX_URL, timeout=30)
     r.raise_for_status()
     return r.json()
+
+
+def fetch_aavso_iau_constellation_names() -> Dict[str, Dict[str, str]]:
+    """
+    Returns mapping:
+      { "UMa": {"name_la": "Ursa Major", "name_la_gen": "Ursae Majoris"}, ... }
+
+    Parser is intentionally lightweight (no BeautifulSoup).
+    If AAVSO page format changes, this may return {} and we fallback.
+    """
+    try:
+        r = requests.get(AAVSO_IAU_NAMES_URL, timeout=30)
+        r.raise_for_status()
+        html = r.text
+    except Exception:
+        return {}
+
+    # Try to locate table rows with 3 columns: Latin nominative | Latin genitive | Abbreviation
+    # We parse <tr> ... <td> ... </td> ... </tr> and extract inner text.
+    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", html, flags=re.IGNORECASE | re.DOTALL)
+
+    out: Dict[str, Dict[str, str]] = {}
+
+    def clean_cell(s: str) -> str:
+        # remove tags, compress whitespace, unescape entities
+        s = re.sub(r"<[^>]+>", " ", s)
+        s = _html.unescape(s)
+        return " ".join(s.split()).strip()
+
+    for row in rows:
+        cells = re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, flags=re.IGNORECASE | re.DOTALL)
+        if len(cells) < 3:
+            continue
+
+        c0 = clean_cell(cells[0])
+        c1 = clean_cell(cells[1])
+        c2 = clean_cell(cells[2])
+
+        # Header guard
+        if not c2 or c2.lower() in {"abbr", "abbrev", "abbreviation"}:
+            continue
+
+        # IAU abbreviations are 3 chars, sometimes mixed case (e.g. "CVn", "PsA", "LMi")
+        if len(c2) != 3:
+            continue
+
+        # Basic sanity: Latin name should contain letters/spaces
+        if not c0 or not re.search(r"[A-Za-z]", c0):
+            continue
+        if not c1 or not re.search(r"[A-Za-z]", c1):
+            continue
+
+        out[c2] = {"name_la": c0, "name_la_gen": c1}
+
+    return out
 
 
 def mean_ra_dec_deg(ra_deg_list: List[float], dec_deg_list: List[float]) -> Tuple[float, float]:
@@ -111,15 +171,20 @@ def mean_ra_dec_deg(ra_deg_list: List[float], dec_deg_list: List[float]) -> Tupl
     return math.degrees(ra), math.degrees(dec)
 
 
-def parse_constellations_from_stellarium(index_json: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+def parse_constellations_from_stellarium(
+    index_json: Dict[str, Any],
+    iau_latin_names: Optional[Dict[str, Dict[str, str]]] = None
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
     Returns:
       lines:  [{con: "UMa", a: HIP, b: HIP}, ...]
-      labels: [{con, name_en, name_ru, hips:[...], ra_deg:None, dec_deg:None}, ...]
+      labels: [{con, name_en, name_ru, name_la_gen, hips:[...], ra_deg:None, dec_deg:None}, ...]
     """
     consts = index_json.get("constellations", [])
     lines_out: List[Dict[str, Any]] = []
     labels_out: List[Dict[str, Any]] = []
+
+    iau_latin_names = iau_latin_names or {}
 
     for c in consts:
         iau = c.get("iau")
@@ -127,7 +192,13 @@ def parse_constellations_from_stellarium(index_json: Dict[str, Any]) -> Tuple[Li
             continue
 
         cname = c.get("common_name") or {}
-        name_en = cname.get("english") or iau
+        fallback_en = cname.get("english") or iau
+
+        # Canonical Latin (IAU conventions) if available
+        latin = iau_latin_names.get(iau)
+        name_en = (latin.get("name_la") if latin else None) or fallback_en
+        name_la_gen = (latin.get("name_la_gen") if latin else None)
+
         # ru пока заглушка; можно заменить позже вручную или отдельным скриптом
         name_ru = name_en
 
@@ -158,7 +229,15 @@ def parse_constellations_from_stellarium(index_json: Dict[str, Any]) -> Tuple[Li
                 lines_out.append({"con": iau, "a": a, "b": b})
 
         labels_out.append(
-            {"con": iau, "name_en": name_en, "name_ru": name_ru, "hips": sorted(set(used_hips)), "ra_deg": None, "dec_deg": None}
+            {
+                "con": iau,
+                "name_en": name_en,
+                "name_ru": name_ru,
+                "name_la_gen": name_la_gen,
+                "hips": sorted(set(used_hips)),
+                "ra_deg": None,
+                "dec_deg": None
+            }
         )
 
     return lines_out, labels_out
@@ -223,9 +302,16 @@ def main() -> None:
     stars = stars_obj.get("stars") or []
     stars_by_hip = {int(s["hip"]): s for s in stars if s.get("hip") is not None}
 
+    # Optional but preferred: IAU canonical Latin constellation names (nominative/genitive)
+    iau_latin = fetch_aavso_iau_constellation_names()
+    if iau_latin:
+        print(f"[sky] loaded IAU Latin constellation names: {len(iau_latin)} (AAVSO)")
+    else:
+        print("[warn] failed to load IAU Latin constellation names (AAVSO). Falling back to Stellarium common_name.english")
+
     print("[sky] fetching Stellarium western constellations...")
     idx = fetch_stellarium_index()
-    lines, labels = parse_constellations_from_stellarium(idx)
+    lines, labels = parse_constellations_from_stellarium(idx, iau_latin_names=iau_latin)
 
     print("[sky] computing label positions...")
     attach_label_positions(labels, stars_by_hip)
@@ -235,6 +321,7 @@ def main() -> None:
         "epoch": "J2000",
         "generated_at": utc_now_iso(),
         "source": "Stellarium stellarium-skycultures western/index.json",
+        "names_source": "AAVSO IAU constellation names (nominative/genitive/abbr)",
         "id_scheme": "HIP",
         "lines": lines,
         "labels": labels,

@@ -776,6 +776,106 @@ function drawStars(ctx, vp, starsPrepared) {
   ctx.restore();
 }
 
+// ADD near other layer functions (e.g. after drawObjects)
+
+function drawMessier(ctx, vp, messierPrepared) {
+  if (!messierPrepared || !messierPrepared.length) return;
+
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  // policy: show labels only for highlighted or bright ones
+  const LABEL_ALT_MIN = UI.LABEL_ALT_MIN_DEG;
+  const LABEL_MAG_MAX = 6.5;
+
+  for (const m of messierPrepared) {
+    if (!m) continue;
+    if (m.visible === false) continue;
+
+    const x = Number(m.x);
+    const y = Number(m.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+
+    const highlighted =
+      typeof window !== "undefined" &&
+      window.__skyIsHighlighted &&
+      window.__skyIsHighlighted(m);
+
+    const magVal = (typeof m.mag === "number" && Number.isFinite(m.mag)) ? m.mag : 9.5;
+
+    // size + alpha by magnitude (roughly)
+    const r = highlighted ? 5.0 : Math.max(2.4, Math.min(4.0, 4.2 - 0.18 * magVal));
+    const a = highlighted ? 0.95 : Math.max(0.20, Math.min(0.65, 0.70 - 0.04 * magVal));
+
+    // marker: small square + inner dot (distinct from generic DSO diamond)
+    ctx.save();
+    ctx.globalAlpha *= a;
+
+    ctx.beginPath();
+    ctx.rect(x - r, y - r, 2 * r, 2 * r);
+    ctx.strokeStyle = "rgba(210,230,255,0.70)";
+    ctx.lineWidth = highlighted ? 2.2 : 1.2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(1.2, r * 0.35), 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(210,230,255,0.22)";
+    ctx.fill();
+
+    ctx.restore();
+
+    // highlight overlay (reuse same style as objects)
+    if (highlighted) {
+      const alpha = _highlightAlphaNow();
+
+      ctx.save();
+      ctx.globalAlpha *= alpha;
+
+      ctx.beginPath();
+      ctx.arc(x, y, r + 7, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,180,0.95)";
+      ctx.lineWidth = 3.0;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // labels (very conservative)
+    const altOk = (typeof m.altDeg === "number") ? (m.altDeg >= LABEL_ALT_MIN) : true;
+    const magOk = (typeof m.mag === "number" && Number.isFinite(m.mag)) ? (m.mag <= LABEL_MAG_MAX) : false;
+    const showLabel = highlighted || (altOk && magOk);
+
+    if (showLabel && m.name) {
+      const rawId = (m.id != null ? m.id : m.name);
+      const normId = String(rawId || "").trim().toUpperCase();
+
+      // IMPORTANT: use the same dedupKey namespace as Objects labels if you want cross-layer dedup.
+      // In your drawObjects you use `obj:${o.id}` or `obj:${o.name}` — so we align with that.
+      const dedupKey = normId ? `obj:${normId}` : `obj:${String(m.name).trim().toUpperCase()}`;
+
+      enqueueLabel(ctx, vp, {
+        text: m.name, // "M31"
+        x,
+        y,
+        dx: r + 8,
+        dy: 0,
+        font: highlighted ? "bold 14px system-ui" : "12px system-ui",
+        align: "left",
+        baseline: "middle",
+        fillStyle: highlighted ? "rgba(255,255,200,0.95)" : "rgba(230,240,255,0.60)",
+        strokeStyle: "rgba(0,0,0,0.45)",
+        strokeWidth: 4,
+        priority: highlighted ? 880 : 180,
+        dedupKey,
+      });
+    }
+  }
+
+  ctx.restore();
+}
+
 function drawAlerts(ctx, vp, alertsPrepared) {
   if (!alertsPrepared || !alertsPrepared.length) return;
 
@@ -905,6 +1005,7 @@ export const Render = {
   drawZenith,
   drawPlanets,
   flushLabels,
+  drawMessier
 };
 
 export default Render;

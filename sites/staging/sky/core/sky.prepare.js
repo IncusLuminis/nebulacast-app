@@ -125,7 +125,7 @@ function starRadiusFromMag(mag) {
 }
 
 function prepareStars(starCatalog, observer, viewport, options) {
-  const minMag = options?.minStarMag ?? starCatalog?.limit_mag ?? 3.0;
+  const minMag = options?.minStarMag ?? starCatalog?.limit_mag ?? 4.0;
   const stars = [];
 
   const latRad = observer.latRad;
@@ -210,6 +210,86 @@ function prepareConstellations(constellations, starCatalog, observer, viewport, 
 
   return { lines, labels };
 }
+
+// --- Messier preparation ------------------------------------------
+// Input: dso_messier.json (items[] with ra_deg/dec_deg/mag)
+// Output: prepared list with x/y/altDeg etc, WITHOUT ranking/slicing
+function prepareMessier(messierJson, observer, viewport, options) {
+  if (!messierJson || !Array.isArray(messierJson.items)) return [];
+
+  const latRad = observer.latRad;
+  const lstRad = observer.lstRad;
+
+  const minAlt = (typeof options?.minAltMessierDeg === "number")
+    ? options.minAltMessierDeg
+    : 0; // default: show anything above horizon
+
+  // optional: hard cap (future-proof if catalog grows)
+  const maxN = (typeof options?.messierMaxN === "number" && options.messierMaxN > 0)
+    ? Math.floor(options.messierMaxN)
+    : null;
+
+  const out = [];
+
+  for (const it of messierJson.items) {
+    let raVal = it.ra_deg;
+    const decDeg = it.dec_deg;
+
+    if (typeof raVal !== "number" || typeof decDeg !== "number") continue;
+
+    // ✅ FIX: many catalogs store RA in HOURS but call it *_deg
+    // heuristic: RA in [0..24] and Dec in [-90..90] => treat RA as hours
+    const raLooksLikeHours = (raVal >= 0 && raVal <= 24.0) && (decDeg >= -90 && decDeg <= 90);
+    const raDeg = raLooksLikeHours ? (raVal * 15.0) : raVal;
+
+    const raRad = A.deg2rad(raDeg);
+    const decRad = A.deg2rad(decDeg);
+
+    const { altRad, azRad } = A.raDecToAltAz(raRad, decRad, latRad, lstRad);
+    if (!(altRad > 0)) continue; // below or on horizon (treat 0 as hidden)
+
+    const altDeg = A.rad2deg(altRad);
+    if (altDeg < minAlt) continue;
+
+    const { x, y } = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, viewport.R);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+
+    const id = (it.id != null) ? String(it.id) : "";
+    const name = (it.name != null) ? String(it.name) : id;
+
+    const mag = (typeof it.mag === "number" && Number.isFinite(it.mag)) ? it.mag : null;
+
+    out.push({
+      group: "dso",
+      id,
+      type: it.type || "dso",
+      name,
+
+      // keep original inputs for debugging
+      ra_deg: raVal,
+      dec_deg: decDeg,
+      ra_deg_norm: raDeg, // ✅ handy for sanity checks
+
+      mag,
+      altDeg,
+      x, y,
+
+      meta: it.meta || null,
+    });
+  }
+
+  // deterministic order: brighter first, then higher altitude
+  out.sort((a, b) => {
+    const am = (a.mag == null) ? 99 : a.mag;
+    const bm = (b.mag == null) ? 99 : b.mag;
+    if (am !== bm) return am - bm;
+    return (b.altDeg || 0) - (a.altDeg || 0);
+  });
+
+  if (maxN != null && out.length > maxN) return out.slice(0, maxN);
+  return out;
+}
+
 
 function buildMeridianPolyline(viewport) {
   return [
@@ -790,5 +870,6 @@ export const Prepare = {
   buildEquatorialGrid,
   buildEqGrid: buildEquatorialGrid,
   prepareSunMoon,
-  preparePlanets
+  preparePlanets,
+  prepareMessier
 };

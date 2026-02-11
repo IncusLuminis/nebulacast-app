@@ -5,7 +5,7 @@ export const DEFAULTS = {
   lon: 21.0122,
   datetimeISO: null,
   options: {
-    minStarMag: 3.5,
+    minStarMag: 4.5,
 
     showGridAz: true,
     showGridEq: true,
@@ -16,6 +16,7 @@ export const DEFAULTS = {
     showMeridian: true,
     showEquator: true,
     showEcliptic: true,
+    showSunMoon: true,
 
     showMilkyWay: true,
     showObjects: true,
@@ -26,6 +27,9 @@ export const DEFAULTS = {
     maxAlerts: 8,
     minAltObjectsDeg: 10,
     minAltAlertsDeg: 5,
+
+    showMessier: true,
+    minAltMessierDeg: 0,
 
     // grid density
     eqGrid: {

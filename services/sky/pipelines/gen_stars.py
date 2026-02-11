@@ -29,7 +29,7 @@ from pathlib import Path
 # -----------------------------
 # CONFIG
 # -----------------------------
-LIMIT_MAG = 4.0
+LIMIT_MAG = 5.0
 OUT_FILENAME = "stars.json"
 
 RAW_FILENAME = "hygdata_v41.csv"

@@ -183,7 +183,8 @@ import { SkyUI } from "./core/sky.ui.js";
     let alertsToday = null;
     let sunMoon = null;
     let planets = null;
-
+    let messierJson = null;
+    
     try {
       status.textContent = "Loading stars…";
       starCatalog = await Data.loadStars(cfg.baseUrl);
@@ -204,6 +205,10 @@ import { SkyUI } from "./core/sky.ui.js";
       if (typeof Data.loadSunMoon === "function") sunMoon = await Data.loadSunMoon(cfg.baseUrl);
       else sunMoon = null;
 
+      status.textContent = "Loading Messier…";
+      if (typeof Data.loadMessier === "function") messierJson = await Data.loadMessier(cfg.baseUrl);
+      else messierJson = null;
+
       status.textContent = "Loading planets…";
       if (typeof Data.loadPlanets === "function") planets = await Data.loadPlanets(cfg.baseUrl);
       else planets = null;
@@ -221,6 +226,7 @@ import { SkyUI } from "./core/sky.ui.js";
     let eqGridPrepared = null;
     let sunMoonPrepared = [];
     let planetsPrepared = [];
+    let messierPrepared = [];
 
     function recomputeAll() {
       observer = Prepare.makeObserver(cfg);
@@ -258,6 +264,11 @@ import { SkyUI } from "./core/sky.ui.js";
           ? Prepare.buildEqGrid(observer, viewport, cfg.options || {})
           : null;
 
+      messierPrepared =
+        cfg.options?.showMessier && messierJson && typeof Prepare.prepareMessier === "function"
+          ? Prepare.prepareMessier(messierJson, observer, viewport, cfg.options || {})
+          : [];
+
       const showSunMoon = cfg.options && cfg.options.showSunMoon === false ? false : true;
       sunMoonPrepared =
         showSunMoon && sunMoon && typeof Prepare.prepareSunMoon === "function"
@@ -274,48 +285,54 @@ import { SkyUI } from "./core/sky.ui.js";
     function render() {
       Render.clear(ctx, viewport);
       Render.drawBackground(ctx, viewport);
-
+    
       ctx.save();
       ctx.beginPath();
       ctx.arc(viewport.cx, viewport.cy, viewport.R, 0, Math.PI * 2);
       ctx.clip();
-
+    
       if (cfg.options?.showGridAz) Render.drawGridAz(ctx, viewport);
-
+    
       if (cfg.options?.showMeridian) Render.drawMeridian(ctx, viewport, meridianPts);
       if (cfg.options?.showEquator) Render.drawEquator(ctx, viewport, equatorPts);
       if (cfg.options?.showEcliptic) Render.drawEcliptic(ctx, viewport, eclipticPts);
-
+    
       if (cfg.options?.showGridEq && eqGridPrepared) Render.drawGridEq(ctx, viewport, eqGridPrepared);
-
+    
       if (cfg.options?.showMilkyWay && mwPrepared) Render.drawMilkyWay(ctx, viewport, mwPrepared);
-
+    
       if (cfg.options?.showConstellations) Render.drawConstellations(ctx, viewport, consPrepared);
-
+    
       // stars background
       Render.drawStars(ctx, viewport, starsPrepared);
-
+    
       if (cfg.options?.showAlerts && alertsPrepared.length) Render.drawAlerts(ctx, viewport, alertsPrepared);
-
+    
       if (sunMoonPrepared && sunMoonPrepared.length) {
         if (typeof Render.drawSunMoon === "function") Render.drawSunMoon(ctx, viewport, sunMoonPrepared);
         else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, sunMoonPrepared);
       }
-
+    
       if (planetsPrepared && planetsPrepared.length) {
         if (typeof Render.drawPlanets === "function") Render.drawPlanets(ctx, viewport, planetsPrepared);
         else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, planetsPrepared);
       }
-
+    
+      // --- NEW: Messier layer (draw markers + optionally labels via enqueueLabel) ---
+      if (cfg.options?.showMessier && typeof Render.drawMessier === "function" && messierPrepared && messierPrepared.length) {
+        Render.drawMessier(ctx, viewport, messierPrepared);
+      }
+    
+      // curated objects (recommended / best)
       if (cfg.options?.showObjects && objectsPrepared.length) Render.drawObjects(ctx, viewport, objectsPrepared);
-
+    
       Render.flushLabels(ctx, viewport);
-
+    
       ctx.restore();
-
+    
       Render.drawHorizon(ctx, viewport);
       Render.drawCardinals(ctx, viewport);
-
+    
       status.textContent = makeStatusText(
         observer,
         starsPrepared.length,
@@ -403,6 +420,7 @@ import { SkyUI } from "./core/sky.ui.js";
         .concat(sunMoonPrepared || [])
         .concat(planetsPrepared || [])
         .concat(objectsPrepared || [])
+        .concat(messierPrepared || [])
         .concat(starsPrepared || []);
 
       let best = null;

@@ -59,6 +59,15 @@ async function loadPlanets(baseUrl) {
   }
 }
 
+async function loadMessier(baseUrl) {
+  try {
+    return await loadJSON(`${baseUrl}/data/dso_messier.json`);
+  } catch (e) {
+    console.warn("[SKY] messier.json not loaded:", e.message);
+    return null;
+  }
+}
+
 export const Data = {
   loadJSON,
   loadStars,
@@ -67,5 +76,6 @@ export const Data = {
   loadObjectsToday,
   loadAlertsToday,
   loadSunMoon,
-  loadPlanets
+  loadPlanets,
+  loadMessier
 };
