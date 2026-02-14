@@ -509,27 +509,150 @@ function prepareAlerts(alertsJson, observer, viewport, options) {
   const latRad = observer.latRad;
   const lstRad = observer.lstRad;
 
-  const out = [];
-  for (const it of alertsJson.items) {
-    if (typeof it.ra_deg !== "number" || typeof it.dec_deg !== "number") continue;
+  function num(v) {
+    if (v == null) return null;
+    const n = Number(v);
+    return (typeof n === "number" && isFinite(n)) ? n : null;
+  }
 
-    const raRad = A.deg2rad(it.ra_deg);
-    const decRad = A.deg2rad(it.dec_deg);
+  function parseMs(s) {
+    const ms = Date.parse(s);
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  function roundN(x, n) {
+    const p = Math.pow(10, n);
+    return Math.round(x * p) / p;
+  }
+
+  function canonicalId(id) {
+    let s = (id == null) ? "" : String(id).trim();
+    // TOCP duplicates: "TCP Jxxxx" vs "Jxxxx"
+    s = s.replace(/^TCP\s+/i, "");
+    return s;
+  }
+
+  function severityFromItem(it) {
+    const sn = num(it.score_norm);
+    if (sn != null) return Math.max(1, Math.min(5, 1 + Math.floor(sn * 4)));
+
+    const sr = num(it.score_raw);
+    if (sr != null) {
+      const s01 = Math.max(0, Math.min(1, sr / 100));
+      return Math.max(1, Math.min(5, 1 + Math.floor(s01 * 4)));
+    }
+
+    const g = String(it.group || "").toLowerCase();
+    if (g === "grb") return 5;
+    if (g === "neocp") return 4;
+    return 2;
+  }
+
+  function titleFromItem(it) {
+    const t =
+      it.title_ru || it.title_en || it.title ||
+      (it.meta && (it.meta.title || it.meta.designation_raw)) ||
+      it.id;
+    return (t == null) ? "" : String(t);
+  }
+
+  // 1) collapse raw items -> best per key (ignore updated_utc in key)
+  const bestByKey = new Map();
+
+  for (const it of alertsJson.items) {
+    const raDeg = num(it.ra_deg);
+    const decDeg = num(it.dec_deg);
+    if (raDeg == null || decDeg == null) continue;
+
+    const source = (it.source || "").trim().toLowerCase();
+    const group = (it.group || "").trim().toLowerCase();
+
+    // coords rounding: enough to absorb tiny numeric differences but not merge different objects
+    const raR = roundN(raDeg, 4);
+    const decR = roundN(decDeg, 4);
+
+    const idC = canonicalId(it.id || "");
+    // If id empty (rare), fall back to title/meta designation
+    const idOrTitle = idC || canonicalId(titleFromItem(it));
+
+    const key = `${source}|${group}|${idOrTitle}|${raR}|${decR}`;
+
+    const cand = {
+      _src: it,
+      raDeg,
+      decDeg,
+      raR,
+      decR,
+      idC: idC || "",
+      title: titleFromItem(it),
+      severity: severityFromItem(it),
+      updated_ms: parseMs(it.updated_utc),
+      score_norm: num(it.score_norm),
+    };
+
+    const prev = bestByKey.get(key);
+    if (!prev) {
+      bestByKey.set(key, cand);
+      continue;
+    }
+
+    // choose "better" record:
+    // 1) newer updated_ms (if both exist)
+    // 2) higher severity
+    // 3) higher score_norm
+    const pMs = prev.updated_ms;
+    const cMs = cand.updated_ms;
+
+    let take = false;
+    if (pMs == null && cMs != null) take = true;
+    else if (pMs != null && cMs != null && cMs > pMs) take = true;
+    else if ((cMs == null && pMs == null) || (pMs != null && cMs != null && cMs === pMs)) {
+      if (cand.severity > prev.severity) take = true;
+      else if (cand.severity === prev.severity) {
+        const ps = (typeof prev.score_norm === "number") ? prev.score_norm : -1;
+        const cs = (typeof cand.score_norm === "number") ? cand.score_norm : -1;
+        if (cs > ps) take = true;
+      }
+    }
+
+    if (take) bestByKey.set(key, cand);
+  }
+
+  // 2) project -> out
+  const out = [];
+  for (const cand of bestByKey.values()) {
+    const it = cand._src;
+
+    const raRad = A.deg2rad(cand.raDeg);
+    const decRad = A.deg2rad(cand.decDeg);
 
     const { altRad, azRad } = A.raDecToAltAz(raRad, decRad, latRad, lstRad);
-    const altDeg = A.rad2deg(altRad);
     if (altRad < 0) continue;
 
+    const altDeg = A.rad2deg(altRad);
     const { x, y } = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, viewport.R);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
 
     out.push({
-      id: it.id || "",
+      // contract used by drawAlerts
+      id: cand.idC || canonicalId(it.id || ""),
       level: it.level || "amateur",
       type: it.type || "event",
-      title: it.title_ru || it.title_en || it.title || it.id || "",
-      severity: (typeof it.severity === "number") ? it.severity : 2,
+      title: cand.title,
+      severity: cand.severity,
       altDeg,
-      x, y
+      x, y,
+
+      // extras (optional)
+      group: it.group || null,
+      source: it.source || null,
+      updated_utc: it.updated_utc || null,
+      updated_ms: cand.updated_ms,
+      ra_deg: cand.raDeg,
+      dec_deg: cand.decDeg,
+      mag: (num(it.mag) != null) ? num(it.mag) : null,
+      note: (typeof it.note === "string" && it.note.trim()) ? it.note.trim() : null,
+      meta: it.meta || null
     });
   }
 
@@ -538,7 +661,8 @@ function prepareAlerts(alertsJson, observer, viewport, options) {
 
   for (const a of filtered) {
     const sev = (typeof a.severity === "number") ? a.severity : 2;
-    a._score = 10 * sev + a.altDeg;
+    const rec = (typeof a.updated_ms === "number") ? (a.updated_ms / 1e12) : 0;
+    a._score = 10 * sev + a.altDeg + rec;
   }
 
   filtered.sort((a, b) => (b._score - a._score));

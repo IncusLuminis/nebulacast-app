@@ -24,3 +24,22 @@ limits:
     planets: 6
     solar_system: 6
     dso: 20
+
+alerts:
+  grb_fermi:
+    type: heasarc_grb
+    catalog: fermigbrst
+    url: "https://heasarc.gsfc.nasa.gov/db-perl/W3Browse/w3table.pl?tablehead=name%3Dfermigbrst"
+    group: "grb"
+    days_back: 2
+    max_rows: 50
+
+  neocp:
+    type: text
+    url: "https://minorplanetcenter.net/iau/NEO/neocp.txt"
+    group: "neocp"
+
+  tocp:
+    type: rss
+    url: "http://www.cbat.eps.harvard.edu/unconf/tocp.xml"
+    group: "transient"

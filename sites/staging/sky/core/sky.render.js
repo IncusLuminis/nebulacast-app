@@ -876,6 +876,40 @@ function drawMessier(ctx, vp, messierPrepared) {
   ctx.restore();
 }
 
+// --- add near other helpers (before drawAlerts) ---
+function _alertStyle(a) {
+  const g = String(a?.group || a?.source || "").toLowerCase();
+
+  // defaults (fallback)
+  let shape = "triangle";
+  let stroke = "rgba(120,255,200,0.65)";
+  let fill = "rgba(120,255,200,0.12)";
+  let labelFill = "rgba(190,255,230,0.70)";
+
+  if (g === "grb") {
+    // GRB: "danger"/urgent
+    shape = "cross";
+    stroke = "rgba(255,140,140,0.78)";
+    fill = "rgba(255,120,120,0.10)";
+    labelFill = "rgba(255,190,190,0.82)";
+  } else if (g === "neocp") {
+    // NEOCP: "action" (follow-up)
+    shape = "triangle";
+    stroke = "rgba(120,255,200,0.68)";
+    fill = "rgba(120,255,200,0.12)";
+    labelFill = "rgba(190,255,230,0.70)";
+  } else if (g === "transient" || g === "tocp") {
+    // TOCP/Transient: distinct from NEOs
+    shape = "diamond";
+    stroke = "rgba(255,210,140,0.70)";
+    fill = "rgba(255,210,140,0.12)";
+    labelFill = "rgba(255,230,185,0.74)";
+  }
+
+  return { shape, stroke, fill, labelFill };
+}
+
+
 function drawAlerts(ctx, vp, alertsPrepared) {
   if (!alertsPrepared || !alertsPrepared.length) return;
 
@@ -886,62 +920,133 @@ function drawAlerts(ctx, vp, alertsPrepared) {
 
   const LABEL_ALT_MIN = UI.LABEL_ALT_MIN_DEG;
 
+  // hard dedup per frame (independent from enqueueLabel internals)
+  const seenLabelKeys = new Set();
+
+  function roundN(x, n) {
+    const p = Math.pow(10, n);
+    return Math.round(x * p) / p;
+  }
+
   for (const a of alertsPrepared) {
     if (!a || a.x == null || a.y == null) continue;
 
-    const isProfi = (a.level === "profi");
-    const s = Math.max(3.5, Math.min(7.5, 2.5 + (a.severity || 2)));
+    const ax = Number(a.x);
+    const ay = Number(a.y);
+    if (!Number.isFinite(ax) || !Number.isFinite(ay)) continue;
 
-    if (isProfi) {
-      ctx.strokeStyle = "rgba(255,120,120,0.70)";
-      ctx.lineWidth = 1.6;
+    const sev = (typeof a.severity === "number" && isFinite(a.severity)) ? a.severity : 2;
+    const s0 = 2.6 + sev; // base size
+    const s = Math.max(3.6, Math.min(8.6, s0));
 
+    const { shape, stroke, fill, labelFill } = _alertStyle(a);
+
+    const highlighted =
+      typeof window !== "undefined" &&
+      window.__skyIsHighlighted &&
+      window.__skyIsHighlighted(a);
+
+    // marker
+    ctx.save();
+    ctx.strokeStyle = stroke;
+    ctx.fillStyle = fill;
+    ctx.lineWidth = highlighted ? 2.4 : 1.6;
+
+    if (shape === "cross") {
       ctx.beginPath();
-      ctx.moveTo(a.x - s, a.y);
-      ctx.lineTo(a.x + s, a.y);
+      ctx.moveTo(ax - s, ay);
+      ctx.lineTo(ax + s, ay);
+      ctx.moveTo(ax, ay - s);
+      ctx.lineTo(ax, ay + s);
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.moveTo(a.x, a.y - s);
-      ctx.lineTo(a.x, a.y + s);
+      ctx.arc(ax, ay, s * 0.95, 0, Math.PI * 2);
+      ctx.strokeStyle = stroke.replace(/0\.\d+\)$/, "0.30)");
+      ctx.lineWidth = highlighted ? 2.0 : 1.3;
       ctx.stroke();
-
+    } else if (shape === "diamond") {
       ctx.beginPath();
-      ctx.arc(a.x, a.y, s * 0.9, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255,120,120,0.25)";
-      ctx.stroke();
-    } else {
-      ctx.strokeStyle = "rgba(120,255,200,0.65)";
-      ctx.lineWidth = 1.6;
-
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y - s);
-      ctx.lineTo(a.x + s, a.y + s);
-      ctx.lineTo(a.x - s, a.y + s);
+      ctx.moveTo(ax, ay - s);
+      ctx.lineTo(ax + s, ay);
+      ctx.lineTo(ax, ay + s);
+      ctx.lineTo(ax - s, ay);
       ctx.closePath();
       ctx.stroke();
-
-      ctx.fillStyle = "rgba(120,255,200,0.12)";
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(ax, ay - s);
+      ctx.lineTo(ax + s, ay + s);
+      ctx.lineTo(ax - s, ay + s);
+      ctx.closePath();
+      ctx.stroke();
       ctx.fill();
     }
 
-    if (typeof a.altDeg === "number" && a.altDeg >= LABEL_ALT_MIN && a.title) {
+    ctx.restore();
+
+    // highlight overlay
+    if (highlighted) {
+      const alpha = _highlightAlphaNow();
+
+      ctx.save();
+      ctx.globalAlpha *= alpha;
+
+      ctx.beginPath();
+      ctx.arc(ax, ay, s + 7, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,180,0.95)";
+      ctx.lineWidth = 3.0;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // label
+    const src = String(a.source || "").toLowerCase().trim();
+
+    // normalize alert family so TOCP doesn't split into transient/tocp variants
+    let fam = src;
+    if (fam === "tocp" || String(a.group || "").toLowerCase().trim() === "transient") {
+      fam = "tocp";
+    } else if (!fam) {
+      fam = "alerts";
+    }
+    
+    const ra = (typeof a.ra_deg === "number" && Number.isFinite(a.ra_deg)) ? a.ra_deg : null;
+    const dec = (typeof a.dec_deg === "number" && Number.isFinite(a.dec_deg)) ? a.dec_deg : null;
+    
+    let dedupKey = "";
+    if (ra != null && dec != null) {
+      const rra = roundN(ra, 6);
+      const rdec = roundN(dec, 6);
+      // IMPORTANT: do NOT include group; use normalized family/source
+      dedupKey = `alert:${fam}:${rra}:${rdec}`;
+    } else {
+      dedupKey = `alert:${fam}:xy:${Math.round(ax)}:${Math.round(ay)}:${String(a.title).trim()}`;
+    }
+    
+    if (seenLabelKeys.has(dedupKey)) continue;
+    seenLabelKeys.add(dedupKey);
+
       enqueueLabel(ctx, vp, {
         text: a.title,
-        x: a.x,
-        y: a.y,
+        x: ax,
+        y: ay,
         dx: 9,
         dy: 0,
-        font: "12px system-ui, -apple-system, Segoe UI, Roboto, Arial",
+        font: highlighted ? "bold 12px system-ui, -apple-system, Segoe UI, Roboto, Arial"
+                          : "12px system-ui, -apple-system, Segoe UI, Roboto, Arial",
         align: "left",
         baseline: "middle",
-        fillStyle: isProfi ? "rgba(255,170,170,0.80)" : "rgba(190,255,230,0.70)",
+        fillStyle: highlighted ? "rgba(255,255,200,0.92)" : labelFill,
         strokeStyle: "rgba(0,0,0,0.35)",
         strokeWidth: 3.5,
-        priority: 400,
+        priority: highlighted ? 820 : (420 + sev * 10),
+        dedupKey,
       });
     }
-  }
+
 
   ctx.restore();
 }

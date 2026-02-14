@@ -32,7 +32,7 @@ async function loadObjectsToday(baseUrl) {
 
 async function loadAlertsToday(baseUrl) {
   try {
-    return await loadJSON(`${baseUrl}/data/alerts_today.json`);
+    return await loadJSON(`${baseUrl}/data/alerts_now.json`);
   } catch (e) {
     console.warn("[SKY] alerts_today.json not loaded:", e.message);
     return null;

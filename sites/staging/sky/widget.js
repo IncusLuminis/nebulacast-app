@@ -440,6 +440,8 @@ import { SkyUI } from "./core/sky.ui.js";
       return best;
     }
 
+    
+
     function bindInteractionsOnce() {
       if (!canvas || canvas.__skyBound) return;
       canvas.__skyBound = true;
