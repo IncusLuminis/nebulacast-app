@@ -28,42 +28,11 @@
 
         <!-- overlay buttons (inside stage) -->
         <div class="sky-stage-controls" id="stageControls">
-          <button class="sky-btn sky-btn-icon" id="btnLayers" type="button" title="Layers">
-            <svg viewBox="0 0 24 24" width="20" height="20"
-            fill="none" stroke="currentColor" stroke-width="2" 
-            stroke-linecap="round" stroke-linejoin="round"
-            aria-hidden="true">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </button>
-
-          <button class="sky-btn sky-btn-icon" id="btnBestToday" type="button" title="Best objects tonight">⭐</button>
-
           <button class="sky-btn sky-btn-icon" id="btnFullscreen" type="button" title="Fullscreen">⤢</button>
-
         </div>
 
-          <!-- tooltip -->
+        <!-- tooltip -->
         <div class="sky-tooltip" id="skyTooltip" aria-hidden="true"></div>
-
-        <!-- layers popover -->
-        <div class="sky-popover" id="layersPanel" hidden>
-          <div class="sky-popover-title">Layers</div>
-
-          <label class="sky-check"><input type="checkbox" data-opt="showGridAz" checked> Az grid</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showGridEq" checked> Eq grid</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showMeridian" checked> Meridian</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showEquator" checked> Equator</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showEcliptic" checked> Ecliptic</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showMilkyWay" checked> Milky Way</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showConstellations" checked> Constellations</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showConstellationLabels" checked> Con labels</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showSunMoon" checked> Sun/Moon</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showPlanets" checked> Planets</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showMessier" checked> Messier</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showObjects" checked> Objects</label>
-          <label class="sky-check"><input type="checkbox" data-opt="showAlerts" checked> Alerts</label>
-        </div>
 
         <div class="sky-popover" id="bestPanel" hidden>
           <div class="sky-popover-title">Best tonight</div>
@@ -98,22 +67,22 @@
 
 <script>
   // ✅ MUST exist before widget.js is imported
-    window.SKY_CONFIG = {
-      baseUrl: "/sky",
-      mountId: "skyMount",
-      lat: 52.2297,
-      lon: 21.0122,
-      datetimeISO: null
-    };
-    console.log("[sky] SKY_CONFIG:", window.SKY_CONFIG);
-  </script>
+  window.SKY_CONFIG = {
+    baseUrl: "/sky",
+    mountId: "skyMount",
+    lat: 52.2297,
+    lon: 21.0122,
+    datetimeISO: null
+  };
+  console.log("[sky] SKY_CONFIG:", window.SKY_CONFIG);
+</script>
 
-  <script type="module">
-    import "./core/sky.ui.js";  // ✅ MUST be imported before widget.js
-    import "./widget.js";
-    import { bootSkyMapUI } from "./core/sky.map.js";
-    bootSkyMapUI();
-  </script>
+<script type="module">
+  import "./core/sky.ui.js";  // ✅ MUST be imported before widget.js
+  import "./widget.js";
+  import { bootSkyMapUI } from "./core/sky.map.js";
+  bootSkyMapUI();
+</script>
 
 </body>
 </html>

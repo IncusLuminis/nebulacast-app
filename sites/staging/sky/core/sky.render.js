@@ -437,6 +437,10 @@ function drawHighlightedObject(ctx, drawFn) {
 function drawObjects(ctx, vp, objectsPrepared) {
   if (!objectsPrepared || !objectsPrepared.length) return;
 
+  // Tune here
+  const OBJECTS_ALPHA = 0.55; // overall opacity for non-highlighted object markers
+  const LABELS_ALPHA = 0.65;  // overall opacity for non-highlighted labels
+
   ctx.save();
   ctx.setLineDash([]);
   ctx.lineJoin = "round";
@@ -480,25 +484,38 @@ function drawObjects(ctx, vp, objectsPrepared) {
             ctx.fill();
           });
         } else {
+          // dim non-highlighted planet marker (if enabled)
+          ctx.save();
+          ctx.globalAlpha *= OBJECTS_ALPHA;
+
           ctx.beginPath();
           ctx.arc(ox, oy, r, 0, Math.PI * 2);
           ctx.fillStyle = o.color || "rgba(255,230,180,0.95)";
           ctx.fill();
+
+          ctx.restore();
         }
       }
     } else {
       // DSO marker (diamond)
+      ctx.save();
+      if (!highlighted) ctx.globalAlpha *= OBJECTS_ALPHA;
+
       ctx.beginPath();
       ctx.moveTo(ox, oy - rr);
       ctx.lineTo(ox + rr, oy);
       ctx.lineTo(ox, oy + rr);
       ctx.lineTo(ox - rr, oy);
       ctx.closePath();
+
       ctx.strokeStyle = "rgba(210,230,255,0.65)";
       ctx.lineWidth = highlighted ? 2.4 : 1.4;
       ctx.stroke();
+
       ctx.fillStyle = "rgba(210,230,255,0.12)";
       ctx.fill();
+
+      ctx.restore();
     }
 
     // -------------------------
@@ -546,13 +563,16 @@ function drawObjects(ctx, vp, objectsPrepared) {
 
     if (showLabel && o.name) {
       const font = highlighted ? "bold 14px system-ui" : "13px system-ui";
-      const fillStyle = highlighted
-        ? "rgba(255,255,200,0.95)"
-        : "rgba(230,240,255,0.75)";
+      const baseFillStyle = highlighted
+        ? "rgba(255,255,200,0.45)"
+        : "rgba(230,240,255,0.35)";
 
       const dedupKey = isPlanet
         ? `planet:${o.name}`
         : (o.id != null ? `obj:${o.id}` : `obj:${o.name}`);
+
+      // Dim non-highlighted labels via alpha (don’t rewrite colors everywhere)
+      const labelAlpha = highlighted ? 1.0 : LABELS_ALPHA;
 
       enqueueLabel(ctx, vp, {
         text: o.name,
@@ -563,7 +583,8 @@ function drawObjects(ctx, vp, objectsPrepared) {
         font,
         align: "left",
         baseline: "middle",
-        fillStyle,
+        fillStyle: baseFillStyle,
+        fillAlpha: labelAlpha, // <-- requires support in enqueueLabel/flushLabels (see note below)
         strokeStyle: "rgba(0,0,0,0.45)",
         strokeWidth: 4,
         priority: highlighted ? 900 : 240,
@@ -574,6 +595,7 @@ function drawObjects(ctx, vp, objectsPrepared) {
 
   ctx.restore();
 }
+
 
 function drawSunMoon(ctx, vp, sunMoonPrepared) {
   if (!sunMoonPrepared || !sunMoonPrepared.length) return;
