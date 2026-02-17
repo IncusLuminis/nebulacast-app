@@ -58,6 +58,11 @@ export class UISideToolbar extends HTMLElement {
   _render() {
     this._list.innerHTML = "";
     for (const it of this._items) {
+      if (it.kind === "divider") {
+        this._list.appendChild(el("div", { class: "divider" }));
+        continue;
+      }
+
       const iconNode =
         typeof it.icon === "string" && it.icon.trim().startsWith("<svg")
           ? svgToNode(it.icon, "ico")

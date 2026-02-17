@@ -34,7 +34,7 @@ export class UIPlayer extends HTMLElement {
         this.setPlaying(!this._state.playing);
         dispatch(this, "player:toggle", { playing: this._state.playing });
       } else if (act === "seek-first") {
-        dispatch(this, "player:seek", { position01: 0 });
+        dispatch(this, "player:seek-first", {});
       } else if (act === "seek-back") {
         dispatch(this, "player:seek-back", {});
       } else if (act === "seek-forward") {

@@ -18,4 +18,5 @@ export const SIDE_TOOLBAR_CSS = baseHostCSS(`
 .btn[aria-disabled="true"]{ opacity:0.4; pointer-events:none; }
 
 .ico{ width: 16px; height: 16px; display:block; } /* <-- размер иконки */
+.divider{ width: 60%; height: 1px; background: rgba(255,255,255,0.12); border-radius: 1px; }
 `.trim());

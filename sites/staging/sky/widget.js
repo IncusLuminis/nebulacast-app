@@ -64,11 +64,19 @@ import * as Popovers from "./widgets/widget.popovers.js";
     canvas.style.height = "100%";
 
     status.style.position = "absolute";
-    status.style.left = "10px";
-    status.style.right = "10px";
+    status.style.left = "50%";
+    status.style.transform = "translateX(-50%)";
     status.style.bottom = "10px";
     status.style.zIndex = "5";
     status.style.pointerEvents = "none";
+    status.style.whiteSpace = "nowrap";
+    status.style.textAlign = "center";
+    status.style.padding = "5px 14px";
+    status.style.borderRadius = "10px";
+    status.style.background = "var(--ui-surface, rgba(20,24,36,0.72))";
+    status.style.border = "1px solid rgba(255,255,255,0.08)";
+    status.style.backdropFilter = "blur(6px)";
+    status.style.fontSize = "11px";
 
     return { root, wrap, canvas, status };
   }
@@ -231,7 +239,8 @@ import * as Popovers from "./widgets/widget.popovers.js";
     const tooltip = SkyUI.createTooltip(root, tooltipEl);
 
     // Modular UI components (custom elements) - optional
-    const side = uiEnabled("sideToolbar") ? document.createElement("ui-side-toolbar") : null;
+    const sideFs  = uiEnabled("sideToolbar") ? document.createElement("ui-side-toolbar") : null;
+    const sidePop = uiEnabled("sideToolbar") ? document.createElement("ui-side-toolbar") : null;
     const bottom = uiEnabled("bottomToolbar") ? document.createElement("ui-bottom-toolbar") : null;
 
     // Three popovers (Ranking / Objects / Alerts)
@@ -252,40 +261,120 @@ import * as Popovers from "./widgets/widget.popovers.js";
     const player = uiEnabled("player") ? document.createElement("ui-player") : null;
 
     // Positioning (host level)
-    if (side) {
-      side.style.position = "absolute";
-      side.style.right = "14px";
-      side.style.top = "60px";
-      side.style.zIndex = "20";
+    if (sideFs) {
+      sideFs.style.position = "absolute";
+      sideFs.style.right = "14px";
+      sideFs.style.top = "14px";
+      sideFs.style.zIndex = "20";
+    }
+
+    if (sidePop) {
+      sidePop.style.position = "absolute";
+      sidePop.style.left = "14px";
+      sidePop.style.top = "14px";
+      sidePop.style.zIndex = "20";
     }
 
     // bottom aligned to bottom-right corner of canvas
     if (bottom) {
       bottom.style.position = "absolute";
       bottom.style.right = "14px";
-      bottom.style.bottom = "78px";
+      bottom.style.bottom = "14px";
       bottom.style.left = "auto";
-      bottom.style.transform = "none";
       bottom.style.zIndex = "20";
     }
 
     if (player) {
       player.style.position = "absolute";
-      player.style.right = "14px";
-      player.style.bottom = "78px";
+      player.style.left = "14px";
+      player.style.bottom = "14px";
       player.style.zIndex = "20";
-      player.style.width = "min(520px, calc(100% - 28px))";
+      player.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+      // hidden from start
+      player.style.opacity = "0";
+      player.style.transform = "translateY(12px)";
+      player.style.pointerEvents = "none";
     }
 
+    if (bottom) {
+      bottom.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+      // hidden from start
+      bottom.style.opacity = "0";
+      bottom.style.transform = "translateY(12px)";
+      bottom.style.pointerEvents = "none";
+    }
+
+    // ── Toggle-player button (bottom-left, just above player) ──
+    const SVG_PLAYER_SHOW = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>`;
+    const SVG_PLAYER_HIDE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>`;
+
+    // Player toggle — surface wrap + inner button styled like sidebar
+    const wrapTogglePlayer = document.createElement("div");
+    Object.assign(wrapTogglePlayer.style, {
+      position: "absolute", left: "14px", bottom: "14px", zIndex: "21",
+      padding: "10px", borderRadius: "12px",
+      background: "var(--ui-surface, rgba(20,24,36,0.72))",
+      border: "1px solid rgba(255,255,255,0.08)",
+      backdropFilter: "blur(6px)",
+      transition: "bottom 0.25s ease",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    });
+    const btnTogglePlayer = document.createElement("div");
+    btnTogglePlayer.title = "Show/hide player";
+    btnTogglePlayer.innerHTML = SVG_PLAYER_HIDE;
+    Object.assign(btnTogglePlayer.style, {
+      width: "20px", height: "20px", borderRadius: "8px",
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "var(--ui-surface)", color: "var(--ui-fg)",
+      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "0",
+    });
+    btnTogglePlayer.querySelector("svg") && (btnTogglePlayer.querySelector("svg").style.width = "16px");
+    wrapTogglePlayer.appendChild(btnTogglePlayer);
+
+    // ── Toggle-bottom button (bottom-right, just above bottom toolbar) ──
+    const SVG_LAYERS_SHOW = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`;
+    const SVG_LAYERS_HIDE = SVG_LAYERS_SHOW;
+
+    // Bottom toolbar toggle — surface wrap + inner button styled like sidebar
+    const wrapToggleBottom = document.createElement("div");
+    Object.assign(wrapToggleBottom.style, {
+      position: "absolute", right: "14px", bottom: "14px", zIndex: "21",
+      padding: "10px", borderRadius: "12px",
+      background: "var(--ui-surface, rgba(20,24,36,0.72))",
+      border: "1px solid rgba(255,255,255,0.08)",
+      backdropFilter: "blur(6px)",
+      transition: "bottom 0.25s ease",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    });
+    const btnToggleBottom = document.createElement("div");
+    btnToggleBottom.title = "Show/hide layers";
+    btnToggleBottom.innerHTML = SVG_LAYERS_SHOW;
+    Object.assign(btnToggleBottom.style, {
+      width: "20px", height: "20px", borderRadius: "8px",
+      border: "1px solid rgba(255,255,255,0.10)",
+      background: "var(--ui-surface)", color: "var(--ui-fg)",
+      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "0",
+    });
+    wrapToggleBottom.appendChild(btnToggleBottom);
+
     // Append only enabled ones
-    root.append(...[side, bottom, popRanking, popObjects, popAlerts, modalWC, player].filter(Boolean));
+    root.append(...[sideFs, sidePop, bottom, popRanking, popObjects, popAlerts, modalWC, player].filter(Boolean));
+    root.append(wrapTogglePlayer, wrapToggleBottom);
 
     // Right toolbar items (Ranking / Objects / Alerts)
-    if (side) {
-      side.baseUrl = cfg.baseUrl;
-      side.items = [
+    if (sideFs) {
+      sideFs.items = [
+        { id: "fullscreen", label: "Fullscreen", icon: UI_ICONS.fullscreen ?? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`, kind: "toggle", pressed: false },
+      ];
+    }
+
+    if (sidePop) {
+      sidePop.baseUrl = cfg.baseUrl;
+      sidePop.items = [
         { id: "ranking", label: "Ranking", icon: UI_ICONS.ranking, kind: "action" },
-        { id: "alerts", label: "Alerts", icon: UI_ICONS.alerts, kind: "action" },
+        { id: "alerts",  label: "Alerts",  icon: UI_ICONS.alerts,  kind: "action" },
       ];
     }
 
@@ -355,6 +444,13 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     // Bottom toolbar events: toggles for everything
+    if (sideFs) {
+      sideFs.addEventListener("toolbar:toggle", (e) => {
+        const { id } = e.detail || {};
+        if (id === "fullscreen") toggleFullscreen();
+      });
+    }
+
     if (bottom) {
       bottom.addEventListener("toolbar:toggle", (e) => {
         const { id, pressed } = e.detail || {};
@@ -1434,18 +1530,32 @@ function wireModalClicks() {
     
 
     // Right toolbar events: open popovers
-    if (side) {
-      // Contract: side_toolbar dispatches `toolbar:action` with detail { id, anchorEl }
-      side.addEventListener("toolbar:action", (e) => {
-        console.log("[side action]", e.detail);
+    if (sidePop) {
+      sidePop.addEventListener("toolbar:action", (e) => {
         const { id, anchorEl } = e.detail || {};
-        if (!id) return;
-        if (!anchorEl) return;
-
+        if (!id || !anchorEl) return;
         if (id === "ranking") openRankingPopover(anchorEl);
-        if (id === "alerts") openAlertsPopover(anchorEl);
+        if (id === "alerts")  openAlertsPopover(anchorEl);
       });
     }
+
+    // Fullscreen: toggle on the stage element; update button icon via side toolbar
+    function _fsTarget() {
+      return document.getElementById("skyStage") || root;
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        _fsTarget().requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      const isFs = !!document.fullscreenElement;
+      if (sideFs) sideFs.setPressed("fullscreen", isFs);
+    });
 
     // Modal remains for clicking on canvas objects
     function openHitModal(hit) {
@@ -1459,12 +1569,174 @@ function wireModalClicks() {
       }
     }
 
-    // Player events (wire to engine later)
-    if (player) {
-      player.addEventListener("player:toggle", (_e) => {});
-      player.addEventListener("player:seek", (_e) => {});
-      player.addEventListener("player:mute", (_e) => {});
+    // ---- PLAYER: time engine ----
+    // The window is fixed once at init from the data range (9 days).
+    // It never shifts — scrubber position is always relative to this fixed window.
+    let _playerPlaying = false;
+    let _playerRafId = 0;
+    // Speed: 1 real second of playback = 30 sky minutes
+    const PLAYER_SPEED_MIN_PER_SEC = 30;
+    const STEP_MINUTES = 60;
+
+    // Fixed window: 2 days before now (midnight) → now + 7 days (midnight).
+    // "Now" sits at ~2/9 ≈ 22% which keeps past context visible on the left.
+    function buildDataWindow() {
+      const now = new Date();
+
+      // Start: midnight 2 days ago (local time)
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - 2);
+
+      // End: midnight 7 days from now (local time)
+      const end = new Date(now);
+      end.setHours(0, 0, 0, 0);
+      end.setDate(end.getDate() + 8); // +7 full days ahead
+
+      return { start: start.getTime(), end: end.getTime() };
     }
+
+    // Fixed once — never recomputed
+    const _dataWindow = buildDataWindow();
+
+    function playerCurrentMs() {
+      const d = cfg.datetimeISO ? new Date(cfg.datetimeISO) : new Date();
+      return d.getTime();
+    }
+
+    function playerSetTimeMs(ms) {
+      // Clamp to window
+      const clamped = Math.max(_dataWindow.start, Math.min(_dataWindow.end, ms));
+      setTimeISO(new Date(clamped).toISOString());
+      playerSyncUI();
+    }
+
+    function playerSyncUI() {
+      if (!player) return;
+      const dur = (_dataWindow.end - _dataWindow.start) / 1000;  // seconds
+      const elapsed = (playerCurrentMs() - _dataWindow.start) / 1000;
+      player.setTime(Math.max(0, elapsed), dur);
+      player.setPlaying(_playerPlaying);
+    }
+
+    function playerStop() {
+      _playerPlaying = false;
+      if (_playerRafId) { cancelAnimationFrame(_playerRafId); _playerRafId = 0; }
+      if (player) player.setPlaying(false);
+    }
+
+    function playerPlay() {
+      _playerPlaying = true;
+      if (player) player.setPlaying(true);
+      let lastTs = null;
+
+      const tick = (ts) => {
+        if (!_playerPlaying) return;
+        if (lastTs !== null) {
+          const dtSec = (ts - lastTs) / 1000;
+          const addMs = dtSec * PLAYER_SPEED_MIN_PER_SEC * 60 * 1000;
+          const next = playerCurrentMs() + addMs;
+          if (next >= _dataWindow.end) {
+            playerSetTimeMs(_dataWindow.end);
+            playerStop();
+            return;
+          }
+          playerSetTimeMs(next);
+        }
+        lastTs = ts;
+        _playerRafId = requestAnimationFrame(tick);
+      };
+
+      _playerRafId = requestAnimationFrame(tick);
+    }
+
+    if (player) {
+      // Play / Pause toggle
+      player.addEventListener("player:toggle", (e) => {
+        if (e.detail?.playing) playerPlay(); else playerStop();
+      });
+
+      // Scrubber drag — maps position01 across the fixed data window
+      player.addEventListener("player:seek", (e) => {
+        playerStop();
+        const pos = e.detail?.position01 ?? 0;
+        playerSetTimeMs(_dataWindow.start + pos * (_dataWindow.end - _dataWindow.start));
+      });
+
+      // |◀  Jump to start of data window
+      player.addEventListener("player:seek-first", () => {
+        playerStop();
+        playerSetTimeMs(_dataWindow.start);
+      });
+
+      // ◀◀  Step back one hour
+      player.addEventListener("player:seek-back", () => {
+        playerStop();
+        playerSetTimeMs(playerCurrentMs() - STEP_MINUTES * 60 * 1000);
+      });
+
+      // ▶▶  Step forward one hour
+      player.addEventListener("player:seek-forward", () => {
+        playerStop();
+        playerSetTimeMs(playerCurrentMs() + STEP_MINUTES * 60 * 1000);
+      });
+
+      // Now — jump to current real wall-clock time (clamped to window)
+      player.addEventListener("player:seek-now", () => {
+        playerStop();
+        playerSetTimeMs(Date.now());
+      });
+
+      // Start at current real time so scrubber shows ~30% and sky shows now
+      requestAnimationFrame(() => playerSetTimeMs(Date.now()));
+    }
+
+    // ── Player visibility toggle ──
+    // Player height: ~84px. Button sits above it when visible, at edge when hidden.
+    const PLAYER_H = 84;
+    const EDGE = 14;
+    function _syncPlayerBtn() {
+      wrapTogglePlayer.style.bottom = _playerVisible
+        ? (EDGE + PLAYER_H + 8) + "px"
+        : EDGE + "px";
+    }
+    let _playerVisible = false;
+    _syncPlayerBtn();
+    btnTogglePlayer.innerHTML = SVG_PLAYER_SHOW;
+    btnTogglePlayer.style.background = "var(--ui-accent, #4a6fa5)";
+    btnTogglePlayer.addEventListener("click", () => {
+      _playerVisible = !_playerVisible;
+      if (player) {
+        player.style.opacity = _playerVisible ? "1" : "0";
+        player.style.transform = _playerVisible ? "translateY(0)" : "translateY(12px)";
+        player.style.pointerEvents = _playerVisible ? "" : "none";
+      }
+      _syncPlayerBtn();
+      btnTogglePlayer.innerHTML = _playerVisible ? SVG_PLAYER_HIDE : SVG_PLAYER_SHOW;
+      btnTogglePlayer.style.background = _playerVisible ? "var(--ui-surface)" : "var(--ui-accent, #4a6fa5)";
+    });
+
+    // ── Bottom toolbar visibility toggle ──
+    // Bottom toolbar height: ~48px (dense 24px buttons + padding). Button sits above it.
+    const BOTTOM_H = 48;
+    function _syncBottomBtn() {
+      wrapToggleBottom.style.bottom = _bottomVisible
+        ? (EDGE + BOTTOM_H + 8) + "px"
+        : EDGE + "px";
+    }
+    let _bottomVisible = false;
+    _syncBottomBtn();
+    btnToggleBottom.style.background = "var(--ui-accent, #4a6fa5)";
+    btnToggleBottom.addEventListener("click", () => {
+      _bottomVisible = !_bottomVisible;
+      if (bottom) {
+        bottom.style.opacity = _bottomVisible ? "1" : "0";
+        bottom.style.transform = _bottomVisible ? "translateY(0)" : "translateY(12px)";
+        bottom.style.pointerEvents = _bottomVisible ? "" : "none";
+      }
+      _syncBottomBtn();
+      btnToggleBottom.style.background = _bottomVisible ? "var(--ui-surface)" : "var(--ui-accent, #4a6fa5)";
+    });
 
     // --------- HIT TEST / INTERACTIONS ----------
     let hoverTarget = null;

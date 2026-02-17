@@ -26,11 +26,6 @@
       <div class="sky-stage" id="skyStage">
         <div class="sky-mount" id="skyMount"></div>
 
-        <!-- overlay buttons (inside stage) -->
-        <div class="sky-stage-controls" id="stageControls">
-          <button class="sky-btn sky-btn-icon" id="btnFullscreen" type="button" title="Fullscreen">⤢</button>
-        </div>
-
         <!-- tooltip -->
         <div class="sky-tooltip" id="skyTooltip" aria-hidden="true"></div>
 
@@ -39,28 +34,8 @@
           <div class="sky-best-list" id="bestTodayList"></div>
         </div>
 
-        <!-- ✅ PLAYER AS OVERLAY INSIDE STAGE (compact, bottom-right) -->
-        <div class="sky-player sky-player-overlay sky-player-compact" id="skyPlayer">
-          <!-- row 1: controls -->
-          <div class="sky-player-row sky-player-row1">
-            <div class="sky-player-controls">
-              <button class="sky-btn" id="tHome" type="button" title="Start">|◀</button>
-              <button class="sky-btn" id="tPrev" type="button" title="Step back">◀◀</button>
-              <button class="sky-btn sky-btn-primary" id="tPlay" type="button" title="Play">▶</button>
-              <button class="sky-btn" id="tNext" type="button" title="Step forward">▶▶</button>
-              <button class="sky-btn" id="tNow" type="button" title="Now">Now</button>
-            </div>
-          </div>
-
-          <!-- row 3: progress -->
-          <input class="sky-slider" id="tSlider" type="range" min="0" max="100" value="50" />
-
-          <!-- row 4: hint line -->
-          <div class="sky-player-hint" id="playerHint">—</div>
-
-          <!-- keep for JS compatibility (hidden in CSS for compact layout) -->
-          <span class="sky-player-time" id="playerTime">—</span>
-        </div>
+        <!-- PLAYER: ui-player web component -->
+        <ui-player id="skyPlayer"></ui-player>
       </div>
     </div>
   </div>
