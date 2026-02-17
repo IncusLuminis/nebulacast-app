@@ -212,7 +212,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
       bottomToolbar: true,
       popover: true,
       modal: true,
-      player: false,
+      player: true,
     };
     function uiEnabled(name) {
       const v = cfg.ui?.components?.[name];
@@ -1127,8 +1127,8 @@ function wireModalClicks() {
         if (!src) return "unknown";
         const s = String(src).toLowerCase();
         if (s.includes("tocp")) return "Transient (TOCP)";
-        if (s.includes("aavso")) return "AAVSO";
-        if (s.includes("mpc")) return "Minor Planet";
+        if (s.includes("grb_fermi")) return "Gamma Ray Burst (FERMI)";
+        if (s.includes("neocp")) return "Minor Planet (NEOCP)";
         return s.toUpperCase();
       }
     
@@ -1151,7 +1151,9 @@ function wireModalClicks() {
             "div",
             { class: "sky-pop-line1" },
             el("span", { class: "sky-pop-emoji", text: emoji }),
-            el("span", { class: "sky-pop-name", text: title })
+            el("span", { class: "sky-pop-name", text: title }),
+            el("span", { class: "sky-pop-name", text: "   " }),
+            el("span", { class: "sky-pop-chip", text: categoryFromSource(a?.source) }),
           ),
     
           // optional note
@@ -1161,8 +1163,6 @@ function wireModalClicks() {
           el(
             "div",
             { class: "sky-pop-meta2" },
-            el("span", { class: "sky-pop-chip", text: categoryFromSource(a?.source) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
             el("span", { class: "sky-pop-chip", text: fmtRA(a?.ra_deg) }),
             el("span", { class: "sky-pop-dot", text: "·" }),
             el("span", { class: "sky-pop-chip", text: fmtDEC(a?.dec_deg) }),

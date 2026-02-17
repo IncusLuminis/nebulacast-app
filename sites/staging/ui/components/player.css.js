@@ -2,28 +2,38 @@
 import { baseHostCSS } from "../shared/style.js";
 
 export const PLAYER_CSS = baseHostCSS(`
-.wrap{
-  display:flex; align-items:center; gap: 10px;
+:host {
+  display: inline-block;        /* shrink-wraps to content width */
+}
+.wrap {
+  display: inline-flex;         /* sized by the btn-row, not the container */
+  flex-direction: column;
+  align-items: stretch;         /* seek bar stretches to match btn-row width */
+  gap: 6px;
   padding: var(--ui-pad);
   border-radius: var(--ui-radius);
 }
-button{
+.btn-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+button {
   width: 42px; height: 42px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.10);
   background: var(--ui-surface);
   color: var(--ui-fg);
   cursor: pointer;
-  display:flex; align-items:center; justify-content:center;
-  padding:0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  flex-shrink: 0;               /* buttons never compress */
 }
 button:hover{ background: var(--ui-hover); }
 button:active{ transform: translateY(1px); }
-.time{
-  font: 12px/1.2 var(--ui-mono);
-  color: var(--ui-fg-dim);
-  min-width: 110px;
-  text-align:center;
+.seek {
+  width: 100%;
+  box-sizing: border-box;
 }
-input[type="range"]{ flex: 1; min-width: 140px; }
+  
 `.trim());

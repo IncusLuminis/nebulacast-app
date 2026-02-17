@@ -19,7 +19,7 @@ export const POPOVER_CSS = baseHostCSS(`
 }
 
 .panel{
-  width: min(500px, 94vw);
+  width: min(450px, 94vw);
   min-width: 320px;
   max-height: 70vh;
   overflow-y: auto;

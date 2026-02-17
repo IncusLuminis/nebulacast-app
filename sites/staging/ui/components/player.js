@@ -9,16 +9,22 @@ export class UIPlayer extends HTMLElement {
     this.attachShadow({ mode: "open" });
     mountShadowStyle(this.shadowRoot, PLAYER_CSS);
 
-    this._state = { playing: false, muted: false, current: 0, duration: 0 };
+    this._state = { playing: false, current: 0, duration: 0 };
 
     this._wrap = el("div", { class: "surface wrap" });
-    this._btnPlay = el("button", { type: "button", title: "Play/Pause", "data-action": "toggle-play" }, ["▶"]);
-    this._btnMute = el("button", { type: "button", title: "Mute", "data-action": "toggle-mute" }, ["🔈"]);
-    this._time = el("div", { class: "time" }, ["00:00 / 00:00"]);
-    this._seek = el("input", { type: "range", min: "0", max: "1000", value: "0", step: "1", "data-action": "seek" });
 
+    this._btnRow = el("div", { class: "btn-row" });
+    this._btnFirst = el("button", { type: "button", title: "First",      "data-action": "seek-first"   }, ["|◀"]);
+    this._btnFB    = el("button", { type: "button", title: "FB",         "data-action": "seek-back"    }, ["◀◀"]);
+    this._btnPlay  = el("button", { type: "button", title: "Play/Pause", "data-action": "toggle-play"  }, ["▶"]);
+    this._btnFF    = el("button", { type: "button", title: "FF",         "data-action": "seek-forward" }, ["▶▶"]);
+    this._btnNow   = el("button", { type: "button", title: "Now",        "data-action": "seek-now"     }, ["Now"]);
+
+    this._seek = el("input", { type: "range", min: "0", max: "1000", value: "0", step: "1", "data-action": "seek", class: "seek" });
+
+    this._btnRow.append(this._btnFirst, this._btnFB, this._btnPlay, this._btnFF, this._btnNow);
+    this._wrap.append(this._btnRow, this._seek);
     this.shadowRoot.append(this._wrap);
-    this._wrap.append(this._btnPlay, this._btnMute, this._time, this._seek);
 
     this._wrap.addEventListener("click", (e) => {
       const a = e.target.closest("[data-action]");
@@ -27,9 +33,14 @@ export class UIPlayer extends HTMLElement {
       if (act === "toggle-play") {
         this.setPlaying(!this._state.playing);
         dispatch(this, "player:toggle", { playing: this._state.playing });
-      } else if (act === "toggle-mute") {
-        this.setMuted(!this._state.muted);
-        dispatch(this, "player:mute", { muted: this._state.muted });
+      } else if (act === "seek-first") {
+        dispatch(this, "player:seek", { position01: 0 });
+      } else if (act === "seek-back") {
+        dispatch(this, "player:seek-back", {});
+      } else if (act === "seek-forward") {
+        dispatch(this, "player:seek-forward", {});
+      } else if (act === "seek-now") {
+        dispatch(this, "player:seek-now", {});
       }
     });
 
@@ -44,15 +55,9 @@ export class UIPlayer extends HTMLElement {
     this._btnPlay.textContent = this._state.playing ? "⏸" : "▶";
   }
 
-  setMuted(v) {
-    this._state.muted = !!v;
-    this._btnMute.textContent = this._state.muted ? "🔇" : "🔈";
-  }
-
   setTime(currentSec, durationSec) {
     this._state.current = Math.max(0, Number(currentSec) || 0);
     this._state.duration = Math.max(0, Number(durationSec) || 0);
-    this._time.textContent = `${fmtTimeMMSS(this._state.current)} / ${fmtTimeMMSS(this._state.duration)}`;
     const p = this._state.duration > 0 ? (this._state.current / this._state.duration) : 0;
     this._seek.value = String(Math.max(0, Math.min(1000, Math.round(p * 1000))));
   }
