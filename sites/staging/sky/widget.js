@@ -816,7 +816,107 @@ import * as Popovers from "./widgets/widget.popovers.js";
       return toHTML(wrap);
     }
 
-    function wireAllObjectsModalClicks() {
+    function buildAllAlertsModalContent() {
+      const src = Array.isArray(alertsToday)
+        ? alertsToday
+        : (alertsToday?.items || alertsToday?.alerts || []);
+      const arr = Array.isArray(src) ? src.slice() : [];
+
+      if (!arr.length) {
+        const wrap = el("div", { style: "padding:24px;opacity:0.5;text-align:center", text: "No alerts." });
+        return toHTML(wrap);
+      }
+
+      // Sort: score desc, then updated_utc desc
+      arr.sort((a, b) => {
+        const sa = Number(a?.score_norm ?? a?.score_raw ?? 0);
+        const sb = Number(b?.score_norm ?? b?.score_raw ?? 0);
+        if (sa !== sb) return sb - sa;
+        const ta = Date.parse(a?.updated_utc || "");
+        const tb = Date.parse(b?.updated_utc || "");
+        if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+        return 0;
+      });
+
+      // Formatters
+      const pad2 = (n) => String(n).padStart(2, "0");
+      const fmtRA = (ra) => {
+        const v = Number(ra);
+        if (!Number.isFinite(v)) return "—";
+        const totalSec = (v / 15) * 3600;
+        const hh = Math.floor(totalSec / 3600);
+        const mm = Math.floor((totalSec % 3600) / 60);
+        return `${pad2(hh)}h${pad2(mm)}m`;
+      };
+      const fmtDEC = (dec) => {
+        const v = Number(dec);
+        if (!Number.isFinite(v)) return "—";
+        const sign = v >= 0 ? "+" : "−";
+        const a = Math.abs(v);
+        const dd = Math.floor(a);
+        const mm = Math.floor((a - dd) * 60);
+        return `${sign}${dd}°${pad2(mm)}′`;
+      };
+      const fmtScore = (a) => {
+        const s = Number(a?.score_norm ?? a?.score_raw);
+        return Number.isFinite(s) ? s.toFixed(2) : "—";
+      };
+      const categoryFromSource = (src) => {
+        if (!src) return "Unknown";
+        const s = String(src).toLowerCase();
+        if (s.includes("tocp")) return "Transient";
+        if (s.includes("grb_fermi")) return "GRB";
+        if (s.includes("neocp")) return "Minor Planet";
+        return src.toUpperCase();
+      };
+
+      // Table
+      const GRID = "display:grid;grid-template-columns:56px 1fr 80px 80px 120px 80px;gap:5px;";
+      const C2   = "border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:6px 10px;";
+      const CH2  = C2 + "opacity:0.45;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;text-align:center;";
+
+      let html = `<div style="padding:4px 2px;">`;
+      html += `<div style="${GRID}gap:5px;margin-bottom:5px;padding:0 2px;">`;
+      for (const label of ["Type", "Object", "RA", "DEC", "Category", "Score"]) {
+        html += `<div style="${CH2}">${label}</div>`;
+      }
+      html += `</div>`;
+
+      for (const a of arr) {
+        const hid   = (makeHighlightIdFromRaw(a) || "").replace(/"/g, "&quot;");
+        const title = ((a?.meta?.title || a?.id || "Alert")).replace(/</g,"&lt;");
+        const emoji = emojiForAlert(a);
+        const ra    = fmtRA(a?.ra_deg);
+        const dec   = fmtDEC(a?.dec_deg);
+        const cat   = categoryFromSource(a?.source);
+        const score = fmtScore(a);
+
+        const cellStyle = (extra = "") => `${C2}${extra}`;
+
+        html += `<div style="${GRID}gap:5px;margin-bottom:4px;padding:0 2px;cursor:pointer;" data-hid="${hid}">`;
+        html += `<div style="${cellStyle("text-align:center;font-size:18px;line-height:1;")}">${emoji}</div>`;
+        html += `<div style="${cellStyle("font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;")}">${title}</div>`;
+        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${ra}</div>`;
+        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${dec}</div>`;
+        html += `<div style="${cellStyle("text-align:center;font-size:11px;")}">${cat}</div>`;
+        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;font-weight:600;")}">${score}</div>`;
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+
+      const wrap = el("div", {});
+      wrap.innerHTML = html;
+
+      wrap.querySelectorAll("[data-hid]").forEach(row => {
+        row.addEventListener("mouseenter", () => row.style.filter = "brightness(1.25)");
+        row.addEventListener("mouseleave", () => row.style.filter = "");
+      });
+
+      return toHTML(wrap);
+    }
+
+        function wireAllObjectsModalClicks() {
       if (!modalWC || !modalWC.shadowRoot) return;
       const host = modalWC.shadowRoot.querySelector(".body");
       if (!host) return;
@@ -847,7 +947,16 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     // --------- POPOVER: Ranking (TOP 7) ----------
-    function buildRankingContent7() {
+    function openAllAlertsModal() {
+      if (!modalWC) return;
+      modalWC.open({
+        title: "All Alerts",
+        content: buildAllAlertsModalContent(),
+      });
+      requestAnimationFrame(() => wireAllObjectsModalClicks());
+    }
+
+        function buildRankingContent7() {
       const items =
         Array.isArray(rankingJson?.items) ? rankingJson.items :
         Array.isArray(rankingJson) ? rankingJson :
@@ -1217,7 +1326,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
         );
       }
     
-      const LIMIT = 30;
+      const LIMIT = 5;
       for (let i = 0; i < Math.min(arr.length, LIMIT); i++) {
         root.appendChild(buildRow(arr[i]));
       }
@@ -1295,7 +1404,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
       popAlerts.content = buildAlertsListContent();
       popAlerts.open(anchorEl, { placement: "left", offset: 10, boundaryEl: root });
       requestAnimationFrame(() => {
-        wirePopoverClicks(popAlerts, { onShowAll: () => openAllObjectsModal() });
+        wirePopoverClicks(popAlerts, { onShowAll: () => openAllAlertsModal() });
       });
     }
 
