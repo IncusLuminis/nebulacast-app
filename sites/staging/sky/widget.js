@@ -1492,6 +1492,156 @@ import * as Popovers from "./widgets/widget.popovers.js";
       }
     }
 
+    // ---- PLAYER: time engine ----
+    // The window is fixed once at init from the data range (9 days).
+    // It never shifts — scrubber position is always relative to this fixed window.
+    let _playerPlaying = false;
+    let _playerRafId = 0;
+    // Speed: 1 real second of playback = 30 sky minutes
+    const PLAYER_SPEED_MIN_PER_SEC = 30;
+    const STEP_MINUTES = 60;
+
+    // Fixed window: computed once from data. Falls back to now ± 4.5 days.
+    function buildDataWindow() {
+      // Try to derive range from loaded data timestamps
+      let earliest = Infinity;
+      let latest = -Infinity;
+
+      const sources = [
+        objectsToday, alertsToday, rankingJson?.items ?? rankingJson
+      ];
+      for (const src of sources) {
+        const arr = Array.isArray(src) ? src : (src?.items || src?.objects || src?.alerts || []);
+        for (const o of (Array.isArray(arr) ? arr : [])) {
+          const iso = bestTimeISO(o);
+          if (iso) {
+            const t = Date.parse(iso);
+            if (Number.isFinite(t)) {
+              if (t < earliest) earliest = t;
+              if (t > latest) latest = t;
+            }
+          }
+        }
+      }
+
+      // If we found a real range, expand it to include: now -2 days to now +7 days
+      if (Number.isFinite(earliest) && Number.isFinite(latest) && latest > earliest) {
+        const now = Date.now();
+        const expandedStart = Math.min(earliest - 3600_000, now - 2 * 24 * 3600_000);
+        const expandedEnd = Math.max(latest + 3600_000, now + 7 * 24 * 3600_000);
+        return { start: expandedStart, end: expandedEnd };
+      }
+
+      // Fallback: now -2 days to now +7 days (9 days total)
+      const now = Date.now();
+      return { 
+        start: now - 2 * 24 * 3600_000, 
+        end: now + 7 * 24 * 3600_000 
+      };
+    }
+
+    // Fixed once — never recomputed
+    const _dataWindow = buildDataWindow();
+    console.log("[Player] Data window:", new Date(_dataWindow.start), "to", new Date(_dataWindow.end));
+    console.log("[Player] Current time:", new Date());
+
+    function playerCurrentMs() {
+      const d = cfg.datetimeISO ? new Date(cfg.datetimeISO) : new Date();
+      return d.getTime();
+    }
+
+    function playerSetTimeMs(ms) {
+      // Clamp to window
+      const clamped = Math.max(_dataWindow.start, Math.min(_dataWindow.end, ms));
+      setTimeISO(new Date(clamped).toISOString());
+      playerSyncUI();
+    }
+
+    function playerSyncUI() {
+      if (!player) return;
+      const dur = (_dataWindow.end - _dataWindow.start) / 1000;  // seconds
+      const elapsed = (playerCurrentMs() - _dataWindow.start) / 1000;
+      player.setTime(Math.max(0, elapsed), dur);
+      player.setPlaying(_playerPlaying);
+    }
+
+    function playerStop() {
+      _playerPlaying = false;
+      if (_playerRafId) { cancelAnimationFrame(_playerRafId); _playerRafId = 0; }
+      if (player) player.setPlaying(false);
+    }
+
+    function playerPlay() {
+      _playerPlaying = true;
+      if (player) player.setPlaying(true);
+      let lastTs = null;
+
+      const tick = (ts) => {
+        if (!_playerPlaying) return;
+        if (lastTs !== null) {
+          const dtSec = (ts - lastTs) / 1000;
+          const addMs = dtSec * PLAYER_SPEED_MIN_PER_SEC * 60 * 1000;
+          const next = playerCurrentMs() + addMs;
+          if (next >= _dataWindow.end) {
+            playerSetTimeMs(_dataWindow.end);
+            playerStop();
+            return;
+          }
+          playerSetTimeMs(next);
+        }
+        lastTs = ts;
+        _playerRafId = requestAnimationFrame(tick);
+      };
+
+      _playerRafId = requestAnimationFrame(tick);
+    }
+
+    if (player) {
+      // Play / Pause toggle
+      player.addEventListener("player:toggle", (e) => {
+        if (e.detail?.playing) playerPlay(); else playerStop();
+      });
+
+      // Scrubber drag — maps position01 across the fixed data window
+      player.addEventListener("player:seek", (e) => {
+        playerStop();
+        const pos = e.detail?.position01 ?? 0;
+        playerSetTimeMs(_dataWindow.start + pos * (_dataWindow.end - _dataWindow.start));
+      });
+
+      // |◀  Jump to start of data window
+      player.addEventListener("player:seek-first", () => {
+        playerStop();
+        playerSetTimeMs(_dataWindow.start);
+      });
+
+      // ◀◀  Step back one hour
+      player.addEventListener("player:seek-back", () => {
+        playerStop();
+        playerSetTimeMs(playerCurrentMs() - STEP_MINUTES * 60 * 1000);
+      });
+
+      // ▶▶  Step forward one hour
+      player.addEventListener("player:seek-forward", () => {
+        playerStop();
+        playerSetTimeMs(playerCurrentMs() + STEP_MINUTES * 60 * 1000);
+      });
+
+      // Now — jump to current real wall-clock time (clamped to window)
+      player.addEventListener("player:seek-now", () => {
+        console.log("[Player] Now button clicked, Date.now():", new Date(Date.now()));
+        console.log("[Player] Data window start:", new Date(_dataWindow.start), "end:", new Date(_dataWindow.end));
+        playerStop();
+        playerSetTimeMs(Date.now());
+      });
+
+      // Set initial time to "now" and sync UI
+      const initialTime = Math.max(_dataWindow.start, Math.min(_dataWindow.end, Date.now()));
+      console.log("[Player] Setting initial time:", new Date(initialTime), "from Date.now():", new Date(Date.now()));
+      setTimeISO(new Date(initialTime).toISOString());
+      requestAnimationFrame(() => playerSyncUI());
+    }
+
     // --------- HIT TEST / INTERACTIONS ----------
     let hoverTarget = null;
 
