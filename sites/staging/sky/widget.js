@@ -1435,49 +1435,43 @@ import * as Popovers from "./widgets/widget.popovers.js";
     });
 
     // ── Player visibility toggle ──
-    // Player height: ~84px. Button sits above it when visible, at edge when hidden.
+    // Player height: ~84px. Button stays fixed at EDGE, player slides up from below.
     const PLAYER_H = 84;
     const EDGE = 14;
-    function _syncPlayerBtn() {
-      wrapTogglePlayer.style.bottom = _playerVisible
-        ? (EDGE + PLAYER_H + 8) + "px"
-        : EDGE + "px";
-    }
+    // Button stays at EDGE always
+    wrapTogglePlayer.style.bottom = EDGE + "px";
+    
     let _playerVisible = false;
-    _syncPlayerBtn();
     btnTogglePlayer.innerHTML = SVG_PLAYER_SHOW;
     btnTogglePlayer.style.background = "var(--ui-accent, #4a6fa5)";
     btnTogglePlayer.addEventListener("click", () => {
       _playerVisible = !_playerVisible;
       if (player) {
         player.style.opacity = _playerVisible ? "1" : "0";
-        player.style.transform = _playerVisible ? "translateY(0)" : "translateY(12px)";
+        // Slide up from below, visible position is -32px to clear the button
+        player.style.transform = _playerVisible ? "translateY(-32px)" : "translateY(100px)";
         player.style.pointerEvents = _playerVisible ? "" : "none";
       }
-      _syncPlayerBtn();
       btnTogglePlayer.innerHTML = _playerVisible ? SVG_PLAYER_HIDE : SVG_PLAYER_SHOW;
       btnTogglePlayer.style.background = _playerVisible ? "var(--ui-surface)" : "var(--ui-accent, #4a6fa5)";
     });
 
     // ── Bottom toolbar visibility toggle ──
-    // Bottom toolbar height: ~48px (dense 24px buttons + padding). Button sits above it.
+    // Bottom toolbar height: ~48px. Button stays fixed at EDGE, toolbar slides up from below.
     const BOTTOM_H = 48;
-    function _syncBottomBtn() {
-      wrapToggleBottom.style.bottom = _bottomVisible
-        ? (EDGE + BOTTOM_H + 8) + "px"
-        : EDGE + "px";
-    }
+    // Button stays at EDGE always
+    wrapToggleBottom.style.bottom = EDGE + "px";
+    
     let _bottomVisible = false;
-    _syncBottomBtn();
     btnToggleBottom.style.background = "var(--ui-accent, #4a6fa5)";
     btnToggleBottom.addEventListener("click", () => {
       _bottomVisible = !_bottomVisible;
       if (bottom) {
         bottom.style.opacity = _bottomVisible ? "1" : "0";
-        bottom.style.transform = _bottomVisible ? "translateY(0)" : "translateY(12px)";
+        // Slide up from below, visible position is -32px to clear the button
+        bottom.style.transform = _bottomVisible ? "translateY(-32px)" : "translateY(100px)";
         bottom.style.pointerEvents = _bottomVisible ? "" : "none";
       }
-      _syncBottomBtn();
       btnToggleBottom.style.background = _bottomVisible ? "var(--ui-surface)" : "var(--ui-accent, #4a6fa5)";
     });
 
