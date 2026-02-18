@@ -1,0 +1,48 @@
+# Backend pipeline: sky alerts. Writes to sites/staging/sky/data/alerts_now.json
+name: Cron — Sky Alerts backend
+
+on:
+  schedule:
+    # Every 12 hours (UTC)
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sky-alerts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sky-alerts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install sky deps
+        run: pip install -r services/sky/requirements.txt
+
+      - name: Run sky alerts pipeline
+        run: |
+          set -e
+          PYTHONPATH=services/sky python services/sky/pipelines/gen_alerts.py
+          echo "Sky alerts pipeline completed successfully"
+
+      - name: Commit and push outputs
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add sites/staging/sky/data/alerts_now.json 2>/dev/null || true
+          git diff --staged --quiet && exit 0
+
+          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
+          git commit -m "chore(sky): update alerts"
+          git push

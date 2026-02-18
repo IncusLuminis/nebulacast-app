@@ -3,8 +3,13 @@ name: Cron — Calendar backend
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    # Daily at 03:20 UTC (04:20 Warsaw in winter, 05:20 in summer)
+    - cron: "20 3 * * *"
   workflow_dispatch:
+
+concurrency:
+  group: calendar-back-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   calendar-back:
@@ -30,11 +35,16 @@ jobs:
 
       - name: Commit and push outputs
         run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add sites/staging/alerts/ sites/staging/calendar/ 2>/dev/null || true
-          git add services/calendar/outputs/ 2>/dev/null || true
-          git diff --staged --quiet && exit 0
+
+          # pull first to reduce push races
           git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
+
+          # stage only expected output paths (including deletions inside them)
+          git add -A sites/staging/alerts/ sites/staging/calendar/ services/calendar/outputs/ 2>/dev/null || true
+
+          git diff --staged --quiet && exit 0
           git commit -m "chore(calendar): update backend outputs"
           git push
