@@ -26,23 +26,36 @@ jobs:
           python-version: "3.12"
 
       - name: Install sky deps
-        run: pip install -r services/sky/requirements.txt
+        run: |
+          set -euxo pipefail
+          pip install -r services/sky/requirements.txt
 
       - name: Run sky planets pipeline
         run: |
-          set -e
-          PYTHONPATH=services/sky python services/sky/pipelines/gen_planets.py
-          echo "Sky planets pipeline completed successfully"
+          set -euxo pipefail
+          PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_planets.py
+          ls -la sites/staging/sky/data/planets.json
 
       - name: Commit and push outputs
         run: |
-          set -e
+          set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add sites/staging/sky/data/planets.json 2>/dev/null || true
+          # 1) Update branch BEFORE staging/committing
+          git fetch origin "${{ github.ref_name }}"
+          git pull --rebase origin "${{ github.ref_name }}"
+
+          # 2) Stage outputs (use -A to avoid unstaged surprises)
+          git add -A sites/staging/sky/data/planets.json 2>/dev/null || true
+          git add -A services/sky/data/generated/planets.json 2>/dev/null || true
+
+          # Optional: show what's staged
+          git status --porcelain
+
+          # 3) No changes -> exit
           git diff --staged --quiet && exit 0
 
-          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
-          git commit -m "chore(sky): update planets"
-          git push
+          # 4) Commit + push
+          git commit -m "chore(sky-planets): update planets"
+          git push origin "${{ github.ref_name }}"
