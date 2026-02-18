@@ -24,33 +24,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Sync branch (pre-run)
+        run: |
+          set -euxo pipefail
+          git fetch origin "${{ github.ref_name }}"
+          git pull --rebase origin "${{ github.ref_name }}"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install sky deps
-        run: pip install -r services/sky/requirements.txt
+        run: |
+          set -euxo pipefail
+          pip install -r services/sky/requirements.txt
 
       - name: Run sky objects pipeline
         run: |
-          set -e
-          PYTHONPATH=services/sky python services/sky/pipelines/gen_objects.py
+          set -euxo pipefail
+          PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_objects.py
           echo "Sky objects pipeline completed successfully"
+          ls -la services/sky/data/generated/objects_today.json
+          ls -la services/sky/data/generated/objects_week.json
+          ls -la sites/staging/sky/data/objects_today.json
+          ls -la sites/staging/sky/data/objects_week.json
 
       - name: Commit and push outputs
         run: |
-          set -e
+          set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add services/sky/data/generated/objects_today.json 2>/dev/null || true
-          git add services/sky/data/generated/objects_week.json 2>/dev/null || true
-          git add sites/staging/sky/data/objects_today.json 2>/dev/null || true
-          git add sites/staging/sky/data/objects_week.json 2>/dev/null || true
+          # stage outputs (use -A to avoid unstaged surprises)
+          git add -A \
+            services/sky/data/generated/objects_today.json \
+            services/sky/data/generated/objects_week.json \
+            sites/staging/sky/data/objects_today.json \
+            sites/staging/sky/data/objects_week.json \
+            2>/dev/null || true
 
+          git status --porcelain
           git diff --staged --quiet && exit 0
 
-          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
-          git commit -m "chore(sky): update objects"
-          git push
+          # rebase safely even if something changed locally
+          git pull --rebase --autostash origin "${{ github.ref_name }}"
+
+          git commit -m "chore(sky-objects): update objects"
+          git push origin "${{ github.ref_name }}"
