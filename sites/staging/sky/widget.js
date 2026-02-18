@@ -712,21 +712,19 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
 
-    // ---------- MODAL: all objects (objects_today.json) ----------
+    // ---------- MODAL: all objects — table layout ----------
     function buildAllObjectsModalContent() {
       const src = Array.isArray(objectsToday)
         ? objectsToday
         : (objectsToday?.items || objectsToday?.objects || []);
       const arr = Array.isArray(src) ? src.slice() : [];
 
-      const root = el("div", { class: "sky-modal-ranking" });
-
       if (!arr.length) {
-        root.appendChild(el("div", { text: "No objects." }));
-        return toHTML(root);
+        const wrap = el("div", { style: "padding:24px;opacity:0.5;text-align:center", text: "No objects." });
+        return toHTML(wrap);
       }
 
-      // group/sort (same approach as before)
+      // Group + sort
       const groupOf = (o) => {
         const t = normLower(o?.group || o?.type || o?.kind || o?.subtype || "");
         if (t.includes("calendar")) return "calendar";
@@ -734,128 +732,88 @@ import * as Popovers from "./widgets/widget.popovers.js";
         if (normLower(o?.meta?.planet_key || "").length) return "planets";
         return "dso";
       };
-
       const byScoreDesc = (a, b) => scoreOf(b) - scoreOf(a);
-
-      const calendar = [];
-      const planetsList = [];
-      const dso = [];
-
+      const calendar = [], planetsList = [], dso = [];
       for (const o of arr) {
         const g = groupOf(o);
         if (g === "calendar") calendar.push(o);
         else if (g === "planets") planetsList.push(o);
         else dso.push(o);
       }
-
       calendar.sort(byScoreDesc);
       planetsList.sort(byScoreDesc);
       dso.sort(byScoreDesc);
+      const sorted = [...calendar, ...planetsList, ...dso];
 
+      // Formatters
       const fmtTimeLocal = (x) => {
         if (!x) return "—";
-        const s = String(x);
-        const m = s.match(/T(\d{2}:\d{2})/);
-        return m ? m[1] : s;
+        const m = String(x).match(/T(\d{2}:\d{2})/);
+        return m ? m[1] : String(x);
       };
-
-      const fmtMag = (o) => {
-        const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 2);
-        return v != null ? `mag ${v}` : "mag —";
+      const fmtMagVal  = (o) => { const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 1); return v != null ? String(v) : "—"; };
+      const fmtAltVal  = (o) => {
+        const v = fmtMaybeNumber(o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ?? o?.max_alt_deg ?? o?.altDeg ?? o?.alt ?? o?.altitude, 0);
+        return v != null ? `${v}°` : "—";
       };
+      const gradeColor = (g) => ({ Excellent: "#4caf50", Good: "#2196f3", Fair: "#ffc107", Bad: "#9e9e9e" }[g] || "#9e9e9e");
 
-      const fmtAlt = (o) => {
-        // max altitude (fallback chain)
-        const v = fmtMaybeNumber(
-          o?.vis?.max_alt_deg ??
-            o?.vis?.max_alt_deg_quality ??
-            o?.max_alt_deg ??
-            o?.altDeg ??
-            o?.alt ??
-            o?.altitude,
-          0
-        );
-        return v != null ? `alt ${v}°` : "alt —";
-      };
+      // Shared cell style
+      const C  = "border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:6px 10px;";
+      const CH = C + "opacity:0.45;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;text-align:center;";
 
-      const fmtRA = (o) => {
-        const ra = Number(o?.ra_deg ?? o?.raDeg ?? o?.ra);
-        if (!Number.isFinite(ra)) return "RA —";
-        const totalSec = (ra / 15) * 3600;
-        const hh = Math.floor(totalSec / 3600);
-        const mm = Math.floor((totalSec % 3600) / 60);
-        const ss = Math.floor(totalSec % 60);
-        const pad2 = (n) => String(n).padStart(2, "0");
-        return `RA ${pad2(hh)}h${pad2(mm)}m${pad2(ss)}s`;
-      };
+      // Table wrapper — build as HTML string, toHTML wraps it in a node
+      const GRID = "display:grid;grid-template-columns:44px 1fr 72px 56px 56px 100px;gap:5px;";
+      const C2   = "border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:6px 10px;";
+      const CH2  = C2 + "opacity:0.45;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;text-align:center;";
 
-      const fmtDEC = (o) => {
-        const dec = Number(o?.dec_deg ?? o?.decDeg ?? o?.dec);
-        if (!Number.isFinite(dec)) return "DEC —";
-        const sign = dec >= 0 ? "+" : "−";
-        const a = Math.abs(dec);
-        const dd = Math.floor(a);
-        const mm = Math.floor((a - dd) * 60);
-        const ss = Math.floor((((a - dd) * 60) - mm) * 60);
-        const pad2 = (n) => String(n).padStart(2, "0");
-        return `DEC ${sign}${dd}°${pad2(mm)}′${pad2(ss)}″`;
-      };
+      let html = `<div style="padding:4px 2px;">`;
 
-      function buildRow(o) {
-        const hid = makeHighlightIdFromRaw(o);
-        const name =
-          (o && (o.name || o.target_name)) ? String(o.name || o.target_name) : pickTitle(o);
+      // Header
+      html += `<div style="${GRID}gap:5px;margin-bottom:5px;padding:0 2px;">`;
+      for (const label of ["Group", "Object", "Time", "Mag", "Alt", "Conditions"]) {
+        html += `<div style="${CH2}">${label}</div>`;
+      }
+      html += `</div>`;
 
-        const note = String(o?.note || "").trim();
-        const tISO = bestTimeISO(o);
-        const best = fmtTimeLocal(tISO);
-
+      // Rows
+      for (const o of sorted) {
+        const hid   = (makeHighlightIdFromRaw(o) || "").replace(/"/g, "&quot;");
+        const tISO  = (bestTimeISO(o) || "").replace(/"/g, "&quot;");
+        const name  = ((o?.name || o?.target_name) ? String(o.name || o.target_name) : pickTitle(o)).replace(/</g,"&lt;");
+        const time  = fmtTimeLocal(tISO);
+        const mag   = fmtMagVal(o);
+        const alt   = fmtAltVal(o);
         const grade = gradeOf(scoreOf(o));
+        const color = gradeColor(grade);
+        const emoji = emojiForItem(o);
 
-        return el(
-          "div",
-          { class: "sky-modal-row", "data-hid": hid || "", "data-time": tISO || "" },
+        const cellStyle = (extra = "") => `${C2}${extra}`;
 
-          el(
-            "div",
-            { class: "sky-modal-left" },
-            el(
-              "div",
-              { class: "sky-modal-r1" },
-              el("span", { class: "sky-modal-emoji", text: emojiForItem(o) }),
-              el("span", { class: "sky-modal-name", text: name })
-            ),
-            note ? el("div", { class: "sky-modal-note", text: note }) : null,
-            el(
-              "div",
-              { class: "sky-modal-meta" },
-              el("span", { class: "sky-modal-chip", text: `Culmination ${best !== "—" ? best : "—"}` }),
-              el("span", { class: "sky-modal-dot", text: "·" }),
-              el("span", { class: "sky-modal-chip", text: fmtMag(o) }),
-              el("span", { class: "sky-modal-dot", text: "·" }),
-              el("span", { class: "sky-modal-chip", text: fmtAlt(o) }),
-              el("span", { class: "sky-modal-dot", text: "·" }),
-              el("span", { class: "sky-modal-chip", text: fmtRA(o) }),
-              el("span", { class: "sky-modal-dot", text: "·" }),
-              el("span", { class: "sky-modal-chip", text: fmtDEC(o) })
-            )
-          ),
-
-          el(
-            "div",
-            { class: "sky-modal-right", "data-grade": grade },
-            el("span", { class: "sky-modal-dotcircle", "data-grade": grade }),
-            el("span", { class: "sky-modal-grade", "data-grade": grade, text: grade })
-          )
-        );
+        html += `<div style="${GRID}gap:5px;margin-bottom:4px;padding:0 2px;cursor:pointer;" data-hid="${hid}" data-time="${tISO}">`;
+        html += `<div style="${cellStyle("text-align:center;font-size:18px;line-height:1;")}">${emoji}</div>`;
+        html += `<div style="${cellStyle("font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;")}">${name}</div>`;
+        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${time}</div>`;
+        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${mag}</div>`;
+        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${alt}</div>`;
+        html += `<div style="${cellStyle("display:flex;align-items:center;gap:7px;font-size:12px;")}">`;
+        html += `<span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>`;
+        html += `<span>${grade}</span></div>`;
+        html += `</div>`;
       }
 
-      // no section titles — just ordered blocks
-      for (const o of calendar) root.appendChild(buildRow(o));
-      for (const o of planetsList) root.appendChild(buildRow(o));
-      for (const o of dso) root.appendChild(buildRow(o));
+      html += `</div>`;
 
-      return toHTML(root);
+      const wrap = el("div", {});
+      wrap.innerHTML = html;
+
+      // Wire hover on rows after DOM is built
+      wrap.querySelectorAll("[data-hid]").forEach(row => {
+        row.addEventListener("mouseenter", () => row.style.filter = "brightness(1.25)");
+        row.addEventListener("mouseleave", () => row.style.filter = "");
+      });
+
+      return toHTML(wrap);
     }
 
     function wireAllObjectsModalClicks() {
@@ -1022,42 +980,31 @@ import * as Popovers from "./widgets/widget.popovers.js";
       return { html: toHTML(root), hasFooterBtn: true };
     }
 
-function wireModalClicks() {
-  if (!modalWC || !modalWC.shadowRoot) return;
-  // В modal.css.js контент живёт в .body
-  const host = modalWC.shadowRoot.querySelector(".body");
-  if (!host) return;
+    function wireModalClicks() {
+      if (!modalWC || !modalWC.shadowRoot) return;
+      // В modal.css.js контент живёт в .body
+      const host = modalWC.shadowRoot.querySelector(".body");
+      if (!host) return;
 
-  host.onclick = (e) => {
-    const row = e.target && e.target.closest ? e.target.closest("[data-hid]") : null;
-    if (!row) return;
+      host.onclick = (e) => {
+        const row = e.target && e.target.closest ? e.target.closest("[data-hid]") : null;
+        if (!row) return;
 
-    const hid = row.getAttribute("data-hid");
-    if (!hid) return;
+        const hid = row.getAttribute("data-hid");
+        if (!hid) return;
 
-    // 1) закрыть модал
-    try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
+        // 1) закрыть модал
+        try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
 
-    // 2) повернуть время (если есть)
-    const tISO = row.getAttribute("data-time");
-    if (tISO) setTimeISO(tISO);
+        // 2) повернуть время (если есть)
+        const tISO = row.getAttribute("data-time");
+        if (tISO) setTimeISO(tISO);
 
-    // 3) подсветить
-    setHighlightById(hid, 3600);
-  };
-}
-
-    
-    function openAllObjectsModal() {
-      if (!modalWC) return;
-      modalWC.open({
-        title: "Best Objects this night",
-        content: buildAllObjectsModalContent(),
-      });
-      requestAnimationFrame(() => wireModalClicks());
+        // 3) подсветить
+        setHighlightById(hid, 3600);
+      };
     }
 
-    // --------- POPOVERS (Ranking / Objects / Alerts) ----------
     function buildObjectsRankingContent() {
       const src = Array.isArray(objectsToday)
         ? objectsToday
@@ -1278,258 +1225,80 @@ function wireModalClicks() {
       return toHTML(root);
     }
 
-    function buildRankingContent7() {
-      const items =
-        Array.isArray(rankingJson?.items) ? rankingJson.items :
-        Array.isArray(rankingJson) ? rankingJson :
-        [];
-    
-      const top = items.slice(0, 7);
-    
-      const calendar = [];
-      const planetsRank = [];
-      const dsoRank = [];
-    
-      for (const o of top) {
-        const t = normLower(o?.group || o?.type || o?.kind || "");
-        if (t.includes("calendar")) calendar.push(o);
-        else if (t.includes("planet") || t.includes("sun") || t.includes("moon")) planetsRank.push(o);
-        else dsoRank.push(o);
-      }
-    
-      const root = el("div", { class: "sky-pop-ranking" });
-    
-      // header: title + compact Show All button
-      root.appendChild(
-        el(
-          "div",
-          { class: "sky-pop-header" },
-          el("div", { class: "sky-pop-title", text: "TOP 7 objects of the night" }),
-          el(
-            "button",
-            { class: "sky-pop-btn sky-pop-btn--small sky-pop-showall-btn", type: "button" },
-            "Show All"
-          )
-        )
-      );
-    
-      if (!top.length) {
-        root.appendChild(el("div", { class: "sky-pop-empty", text: "No ranking data." }));
-        return { html: toHTML(root), hasFooterBtn: false };
-      }
-    
-      function fmtTimeLocal(x) {
-        if (!x) return "—";
-        const s = String(x);
-        const m = s.match(/T(\d{2}:\d{2})/);
-        return m ? m[1] : s;
-      }
-    
-      function fmtMag(o) {
-        const v = fmtMaybeNumber(o?.mag, 2);
-        return v != null ? `mag ${v}` : "mag —";
-      }
-    
-      function fmtAlt(o) {
-        const v = fmtMaybeNumber(
-          o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ?? o?.altDeg ?? o?.alt,
-          0
-        );
-        return v != null ? `alt ${v}°` : "alt —";
-      }
-    
-      function fmtRA(o) {
-        const ra = Number(o?.ra_deg);
-        if (!Number.isFinite(ra)) return "RA —";
-        const totalSec = (ra / 15) * 3600;
-        const hh = Math.floor(totalSec / 3600);
-        const mm = Math.floor((totalSec % 3600) / 60);
-        const ss = Math.floor(totalSec % 60);
-        const pad2 = (n) => String(n).padStart(2, "0");
-        return `RA ${pad2(hh)}h${pad2(mm)}m${pad2(ss)}s`;
-      }
-    
-      function fmtDEC(o) {
-        const dec = Number(o?.dec_deg);
-        if (!Number.isFinite(dec)) return "DEC —";
-        const sign = dec >= 0 ? "+" : "−";
-        const a = Math.abs(dec);
-        const dd = Math.floor(a);
-        const mm = Math.floor((a - dd) * 60);
-        const ss = Math.floor((((a - dd) * 60) - mm) * 60);
-        const pad2 = (n) => String(n).padStart(2, "0");
-        return `DEC ${sign}${dd}°${pad2(mm)}′${pad2(ss)}″`;
-      }
-    
-      function fmtScore(o) {
-        const v = fmtMaybeNumber(scoreOf(o), 2);
-        return v != null ? `score ${v}` : "score —";
-      }
-    
-      function buildRow(o) {
-        const hid = makeHighlightIdFromRaw(o);
-    
-        const name =
-          (o && (o.name || o.target_name)) ? String(o.name || o.target_name) :
-          pickTitle(o);
-    
-        const note = String(o?.note || "").trim();
-        const tISO = bestTimeISO(o);
-        const best = fmtTimeLocal(tISO);
-    
-        // grade computed but NOT shown here (popover already has score in meta2)
-        // left for possible future use
-        // const sc = scoreOf(o);
-        // const grade = gradeOf(sc);
-    
-        const row = el(
-          "div",
-          { class: "sky-pop-item sky-pop-item--ranking", "data-hid": hid || "", "data-time": tISO || "" },
-    
-          // line 1: emoji + big bold name (same line!)
-          el(
-            "div",
-            { class: "sky-pop-line1" },
-            el("span", { class: "sky-pop-emoji", text: emojiForItem(o) }),
-            el("span", { class: "sky-pop-name", text: name }),
-            el("span", { class: "sky-pop-spacer", text: "" })
-          ),
-    
-          // note (wrap)
-          note ? el("div", { class: "sky-pop-note", text: note }) : null,
-    
-          // line 2: compact meta
-          el(
-            "div",
-            { class: "sky-pop-meta2" },
-            el("span", { class: "sky-pop-chip", text: best }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip", text: fmtMag(o) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip", text: fmtAlt(o) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip", text: fmtRA(o) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip", text: fmtDEC(o) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip sky-pop-chip--score", text: fmtScore(o) })
-          )
-        );
-    
-        // drop nulls (when note empty)
-        row.replaceChildren(...Array.from(row.childNodes).filter(Boolean));
-        return row;
-      }
-    
-      function section(title, arr) {
-        if (!arr.length) return;
-        // use existing popover section header styling
-        root.appendChild(el("div", { class: "sky-pop-section-h", text: title }));
-        for (const o of arr) root.appendChild(buildRow(o));
-      }
-    
-      for (const o of calendar) root.appendChild(buildRow(o));
-      for (const o of planetsRank) root.appendChild(buildRow(o));
-      for (const o of dsoRank) root.appendChild(buildRow(o));
-
-      return { html: toHTML(root), hasFooterBtn: true };
-    }
 
     function wirePopoverClicks(pop, { onShowAll } = {}) {
       if (!pop) return;
-    
-      // ui-popover is a web component; its markup lives in shadowRoot
       const sr = pop.shadowRoot;
       if (!sr) return;
-    
-      // Try to find the clickable container inside the popover
-      const host =
-        sr.querySelector(".content") ||
-        sr.querySelector(".panel") ||
-        sr;
-    
-      // Avoid stacking handlers on repeated open()
-      host.onclick = null;
-    
-      host.onclick = (e) => {
-        // "Show All" button (sticky header)
-        const btn = e.target && e.target.closest ? e.target.closest(".sky-pop-showall-btn") : null;
+
+      // .content is the direct parent of the injected innerHTML — always present
+      const container = sr.querySelector(".content") || sr.querySelector(".panel") || sr;
+
+      if (pop._skyClickHandler) {
+        container.removeEventListener("click", pop._skyClickHandler);
+      }
+
+      pop._skyClickHandler = (e) => {
+        const btn = e.target?.closest?.(".sky-pop-showall-btn");
         if (btn) {
           try { if (typeof pop.close === "function") pop.close(); } catch (_) {}
           if (typeof onShowAll === "function") onShowAll();
           return;
         }
-    
-        // Click on a ranking/object row
-        const row = e.target && e.target.closest ? e.target.closest("[data-hid]") : null;
+
+        const row = e.target?.closest?.("[data-hid]");
         if (!row) return;
-    
+
         const hid = row.getAttribute("data-hid");
         if (!hid) return;
-    
-        // close popover
+
         try { if (typeof pop.close === "function") pop.close(); } catch (_) {}
-    
-        // rotate sky to best time (if present)
         const tISO = row.getAttribute("data-time");
         if (tISO) setTimeISO(tISO);
-    
-        // highlight (existing behavior)
         setHighlightById(hid, 3600);
       };
+
+      container.addEventListener("click", pop._skyClickHandler);
     }
 
-    // NOTE: UIPopover API:
-    //   pop.content = "<html...>"
-    //   pop.open(anchorEl, { placement, offset })
+
     function openRankingPopover(anchorEl) {
       if (!popRanking || typeof popRanking.open !== "function") return;
       try { if (popObjects && typeof popObjects.close === "function") popObjects.close(); } catch (_) {}
       try { if (popAlerts && typeof popAlerts.close === "function") popAlerts.close(); } catch (_) {}
-    
+
       const res = buildRankingContent7();
       popRanking.content = res.html;
-    
-      // NEW: boundaryEl: root
       popRanking.open(anchorEl, { placement: "left", offset: 10, boundaryEl: root });
-    
       requestAnimationFrame(() => {
         wirePopoverClicks(popRanking, { onShowAll: () => openAllObjectsModal() });
       });
     }
-    
+
     function openObjectsPopover(anchorEl) {
       if (!popObjects || typeof popObjects.open !== "function") return;
       try { if (popRanking && typeof popRanking.close === "function") popRanking.close(); } catch (_) {}
       try { if (popAlerts && typeof popAlerts.close === "function") popAlerts.close(); } catch (_) {}
-    
+
       popObjects.content = buildObjectsRankingContent();
-    
-      // NEW: boundaryEl: root
       popObjects.open(anchorEl, { placement: "left", offset: 10, boundaryEl: root });
-    
       requestAnimationFrame(() => {
-        wirePopoverClicks(popObjects);
+        wirePopoverClicks(popObjects, { onShowAll: () => openAllObjectsModal() });
       });
     }
-    
+
     function openAlertsPopover(anchorEl) {
       if (!popAlerts || typeof popAlerts.open !== "function") return;
       try { if (popRanking && typeof popRanking.close === "function") popRanking.close(); } catch (_) {}
       try { if (popObjects && typeof popObjects.close === "function") popObjects.close(); } catch (_) {}
-    
+
       popAlerts.content = buildAlertsListContent();
-    
-      // NEW: boundaryEl: root
       popAlerts.open(anchorEl, { placement: "left", offset: 10, boundaryEl: root });
-    
       requestAnimationFrame(() => {
-        wirePopoverClicks(popAlerts);
+        wirePopoverClicks(popAlerts, { onShowAll: () => openAllObjectsModal() });
       });
     }
-    
 
-    // Right toolbar events: open popovers
     if (sidePop) {
       sidePop.addEventListener("toolbar:action", (e) => {
         const { id, anchorEl } = e.detail || {};
@@ -1539,7 +1308,6 @@ function wireModalClicks() {
       });
     }
 
-    // Fullscreen: toggle on the stage element; update button icon via side toolbar
     function _fsTarget() {
       return document.getElementById("skyStage") || root;
     }
@@ -1556,140 +1324,6 @@ function wireModalClicks() {
       const isFs = !!document.fullscreenElement;
       if (sideFs) sideFs.setPressed("fullscreen", isFs);
     });
-
-    // Modal remains for clicking on canvas objects
-    function openHitModal(hit) {
-      if (!hit) return;
-      const html = SkyUI.tooltipHTML(hit);
-      if (modalWC) {
-        modalWC.open({ title: "Details", content: html });
-        requestAnimationFrame(() => wireModalClicks());
-      } else {
-        console.log("Hit:", hit);
-      }
-    }
-
-    // ---- PLAYER: time engine ----
-    // The window is fixed once at init from the data range (9 days).
-    // It never shifts — scrubber position is always relative to this fixed window.
-    let _playerPlaying = false;
-    let _playerRafId = 0;
-    // Speed: 1 real second of playback = 30 sky minutes
-    const PLAYER_SPEED_MIN_PER_SEC = 30;
-    const STEP_MINUTES = 60;
-
-    // Fixed window: 2 days before now (midnight) → now + 7 days (midnight).
-    // "Now" sits at ~2/9 ≈ 22% which keeps past context visible on the left.
-    function buildDataWindow() {
-      const now = new Date();
-
-      // Start: midnight 2 days ago (local time)
-      const start = new Date(now);
-      start.setHours(0, 0, 0, 0);
-      start.setDate(start.getDate() - 2);
-
-      // End: midnight 7 days from now (local time)
-      const end = new Date(now);
-      end.setHours(0, 0, 0, 0);
-      end.setDate(end.getDate() + 8); // +7 full days ahead
-
-      return { start: start.getTime(), end: end.getTime() };
-    }
-
-    // Fixed once — never recomputed
-    const _dataWindow = buildDataWindow();
-
-    function playerCurrentMs() {
-      const d = cfg.datetimeISO ? new Date(cfg.datetimeISO) : new Date();
-      return d.getTime();
-    }
-
-    function playerSetTimeMs(ms) {
-      // Clamp to window
-      const clamped = Math.max(_dataWindow.start, Math.min(_dataWindow.end, ms));
-      setTimeISO(new Date(clamped).toISOString());
-      playerSyncUI();
-    }
-
-    function playerSyncUI() {
-      if (!player) return;
-      const dur = (_dataWindow.end - _dataWindow.start) / 1000;  // seconds
-      const elapsed = (playerCurrentMs() - _dataWindow.start) / 1000;
-      player.setTime(Math.max(0, elapsed), dur);
-      player.setPlaying(_playerPlaying);
-    }
-
-    function playerStop() {
-      _playerPlaying = false;
-      if (_playerRafId) { cancelAnimationFrame(_playerRafId); _playerRafId = 0; }
-      if (player) player.setPlaying(false);
-    }
-
-    function playerPlay() {
-      _playerPlaying = true;
-      if (player) player.setPlaying(true);
-      let lastTs = null;
-
-      const tick = (ts) => {
-        if (!_playerPlaying) return;
-        if (lastTs !== null) {
-          const dtSec = (ts - lastTs) / 1000;
-          const addMs = dtSec * PLAYER_SPEED_MIN_PER_SEC * 60 * 1000;
-          const next = playerCurrentMs() + addMs;
-          if (next >= _dataWindow.end) {
-            playerSetTimeMs(_dataWindow.end);
-            playerStop();
-            return;
-          }
-          playerSetTimeMs(next);
-        }
-        lastTs = ts;
-        _playerRafId = requestAnimationFrame(tick);
-      };
-
-      _playerRafId = requestAnimationFrame(tick);
-    }
-
-    if (player) {
-      // Play / Pause toggle
-      player.addEventListener("player:toggle", (e) => {
-        if (e.detail?.playing) playerPlay(); else playerStop();
-      });
-
-      // Scrubber drag — maps position01 across the fixed data window
-      player.addEventListener("player:seek", (e) => {
-        playerStop();
-        const pos = e.detail?.position01 ?? 0;
-        playerSetTimeMs(_dataWindow.start + pos * (_dataWindow.end - _dataWindow.start));
-      });
-
-      // |◀  Jump to start of data window
-      player.addEventListener("player:seek-first", () => {
-        playerStop();
-        playerSetTimeMs(_dataWindow.start);
-      });
-
-      // ◀◀  Step back one hour
-      player.addEventListener("player:seek-back", () => {
-        playerStop();
-        playerSetTimeMs(playerCurrentMs() - STEP_MINUTES * 60 * 1000);
-      });
-
-      // ▶▶  Step forward one hour
-      player.addEventListener("player:seek-forward", () => {
-        playerStop();
-        playerSetTimeMs(playerCurrentMs() + STEP_MINUTES * 60 * 1000);
-      });
-
-      // Now — jump to current real wall-clock time (clamped to window)
-      player.addEventListener("player:seek-now", () => {
-        playerStop();
-        playerSetTimeMs(Date.now());
-      });
-
-      // Start at current real time so scrubber shows ~30% and sky shows now
-      requestAnimationFrame(() => playerSetTimeMs(Date.now()));
-    }
 
     // ── Player visibility toggle ──
     // Player height: ~84px. Button sits above it when visible, at edge when hidden.
@@ -1737,6 +1371,17 @@ function wireModalClicks() {
       _syncBottomBtn();
       btnToggleBottom.style.background = _bottomVisible ? "var(--ui-surface)" : "var(--ui-accent, #4a6fa5)";
     });
+
+    function openHitModal(hit) {
+      if (!hit) return;
+      const html = SkyUI.tooltipHTML(hit);
+      if (modalWC) {
+        modalWC.open({ title: "Details", content: html });
+        requestAnimationFrame(() => wireModalClicks());
+      } else {
+        console.log("Hit:", hit);
+      }
+    }
 
     // --------- HIT TEST / INTERACTIONS ----------
     let hoverTarget = null;
