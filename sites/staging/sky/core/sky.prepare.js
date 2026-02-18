@@ -152,6 +152,8 @@ function prepareStars(starCatalog, observer, viewport, options) {
       name: s.name || "",
       mag: s.mag,
       designation: s.designation || "",
+      ra_deg: s.ra_deg,
+      dec_deg: s.dec_deg,
       x, y, r,
       altDeg,
       azDeg

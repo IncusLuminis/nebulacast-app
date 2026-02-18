@@ -10,7 +10,8 @@ function injectStyles() {
   __stylesInjected = true;
 
   const css = `
-  /* Root-scope classes to avoid collisions */
+  /* SkyUI-specific styles - tooltip/modal only */
+  
   .skyui-tooltip {
     position: absolute;
     left: 0; top: 0;
@@ -21,42 +22,23 @@ function injectStyles() {
     pointer-events: none;
     will-change: transform;
   }
+  
   .skyui-card {
     background: rgba(0,0,0,0.55);
     border: 1px solid rgba(255,255,255,0.14);
     border-radius: 10px;
     color: rgba(255,255,255,0.88);
-    font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    font: 12px system-ui, -apple-system, Segoe UI, Roboto, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial;
     backdrop-filter: blur(6px);
     padding: 8px 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.18);
   }
+  
   .skyui-card--modal {
     background: rgba(0,0,0,0.70);
     border-radius: 14px;
     padding: 12px 12px 14px 12px;
     font-size: 13px;
-  }
-  .skyui-card__title {
-    font-weight: 650;
-    font-size: 12px;
-    margin-bottom: 6px;
-    color: rgba(255,255,255,0.94);
-  }
-  .skyui-card--modal .skyui-card__title {
-    font-size: 14px;
-  }
-  .skyui-card__subtitle {
-    opacity: 0.88;
-    line-height: 1.25;
-  }
-  .skyui-card__meta {
-    opacity: 0.70;
-    margin-top: 6px;
-  }
-  .skyui-card__type {
-    opacity: 0.65;
-    margin-top: 6px;
   }
 
   .skyui-modal {
@@ -67,6 +49,7 @@ function injectStyles() {
     background: rgba(0,0,0,0.45);
     backdrop-filter: blur(2px);
   }
+  
   .skyui-modal__panel {
     position: absolute;
     left: 50%;
@@ -80,18 +63,21 @@ function injectStyles() {
     background: rgba(0,0,0,0.70);
     color: rgba(255,255,255,0.90);
     box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    font: 13px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    font: 13px system-ui, -apple-system, Segoe UI, Roboto, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial;
   }
+  
   .skyui-modal__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px 0 12px;
   }
+  
   .skyui-modal__heading {
     font-weight: 650;
     opacity: 0.95;
   }
+  
   .skyui-modal__close {
     width: 34px;
     height: 34px;
@@ -101,77 +87,10 @@ function injectStyles() {
     color: rgba(255,255,255,0.85);
     cursor: pointer;
   }
+  
   .skyui-modal__body {
     padding: 10px 12px 12px 12px;
   }
-
-    .skyui-card__note {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,0.12);
-    opacity: 0.92;
-    line-height: 1.25;
-  }
-
-  /* Best Today UI */
-  .sky-best-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.86);
-    cursor: pointer;
-    user-select: none;
-    font: 12px system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  }
-  .sky-best-btn:hover { background: rgba(255,255,255,0.09); }
-
-  .sky-best-popover {
-    position: absolute;
-    z-index: 30;
-    right: 12px;
-    bottom: 46px;
-    width: min(420px, calc(100% - 24px));
-    max-height: min(56vh, 420px);
-    overflow: auto;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(0,0,0,0.70);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    padding: 8px;
-    display: none;
-  }
-
-  .sky-best-item {
-    padding: 8px 10px;
-    border-radius: 12px;
-    cursor: pointer;
-  }
-  .sky-best-item:hover { background: rgba(255,255,255,0.06); }
-
-  .sky-best-name {
-    font-weight: 650;
-    color: rgba(255,255,255,0.92);
-    margin-bottom: 4px;
-    font-size: 12px;
-  }
-  .sky-best-note {
-    color: rgba(255,255,255,0.80);
-    font-size: 12px;
-    line-height: 1.25;
-  }
-
-    .skyui-card__note {
-    margin-top: 8px;
-    opacity: 0.92;
-    line-height: 1.25;
-  }
-
   `;
 
   const styleEl = document.createElement("style");
@@ -273,55 +192,111 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
 
   const d = hit.data || {};
   const isModal = mode === "modal";
-  const noteLine = d.note
-  ? `<div class="skyui-card__note">${esc(d.note)}</div>`
-  : "";
 
-  const typeLine = isModal
-    ? `<div class="skyui-card__type">Type: ${esc(hit.kind || "—")}</div>`
-    : "";
-
+  // Determine emoji based on type
+  let emoji = "⭐";  // default for stars
+  if (hit.kind === "alert") {
+    emoji = "💥";
+  } else if (hit.kind === "object" || d.type === "dso") {
+    emoji = "🌀";
+  } else if (d.type === "planet" || d.type === "sun" || d.type === "moon") {
+    emoji = "🪐";
+  } else if (hit.kind === "star") {
+    emoji = "⭐";
+  } else if (hit.kind || d.type) {
+    emoji = "🔵";  // other
+  }
 
   let title = "—";
-  let subtitle = "—";
-  let meta = "";
+  let note = "";
+  const raDec = [];
+  const metaParts = [];
 
+  // Helper to format RA in hours/minutes
+  const fmtRA = (ra) => {
+    const v = Number(ra);
+    if (!Number.isFinite(v)) return null;
+    const totalSec = (v / 15) * 3600;
+    const hh = Math.floor(totalSec / 3600);
+    const mm = Math.floor((totalSec % 3600) / 60);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(hh)}h${pad(mm)}m`;
+  };
+
+  // Helper to format DEC in degrees/arcminutes
+  const fmtDEC = (dec) => {
+    const v = Number(dec);
+    if (!Number.isFinite(v)) return null;
+    const sign = v >= 0 ? "+" : "−";
+    const a = Math.abs(v);
+    const dd = Math.floor(a);
+    const mm = Math.floor((a - dd) * 60);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${sign}${dd}°${pad(mm)}′`;
+  };
 
   if (hit.kind === "alert") {
     title = d.title || "Alert";
+    note = d.note || "";
+    
+    // RA/DEC line
+    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
+    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
+    
+    // Meta line
+    if (d.mag != null) metaParts.push(`mag ${fmtMag(d.mag, 1)}`);
+    if (d.altDeg != null) metaParts.push(`alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.azDeg != null) metaParts.push(`az ${fmtDeg(d.azDeg, 0)}`);
     const lvl = (d.level || "amateur").toLowerCase();
-    subtitle = `${lvl} • severity ${d.severity ?? "?"}${d.kind ? " • " + d.kind : ""}`;
-    meta = `alt ${fmtDeg(d.altDeg)}${d.azDeg != null ? " • az " + fmtDeg(d.azDeg) : ""}`;
+    if (lvl) metaParts.push(lvl);
+    if (d.severity != null) metaParts.push(`severity ${d.severity}`);
 
   } else if (hit.kind === "object") {
     title = d.name || "Object";
-
-    const typeStr = d.type || "obj";
-    const magStr = (typeof d.mag === "number" && isFinite(d.mag)) ? ` • mag ${fmtMag(d.mag, 1)}` : "";
-    subtitle = `${typeStr}${magStr}`;
-
-    meta = `alt ${fmtDeg(d.altDeg)}${d.azDeg != null ? " • az " + fmtDeg(d.azDeg) : ""}`;
+    note = d.note || "";
+    
+    // RA/DEC line
+    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
+    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
+    
+    // Meta line
+    if (d.type) metaParts.push(d.type);
+    if (d.mag != null) metaParts.push(`mag ${fmtMag(d.mag, 1)}`);
+    if (d.altDeg != null) metaParts.push(`alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.azDeg != null) metaParts.push(`az ${fmtDeg(d.azDeg, 0)}`);
+    if (d.constellation) metaParts.push(d.constellation);
+    if (d.distance) metaParts.push(d.distance);
 
   } else {
     // STAR
     const proper = (d.name || "").trim();
     const bayer = normalizeDesignation(d.designation || "");
-
     title = proper || bayer || d.id || "Star";
-
-    if (proper && bayer) subtitle = `${esc(bayer)}<br/>mag ${fmtMag(d.mag, 2)}`;
-    else subtitle = `mag ${fmtMag(d.mag, 2)}`;
-
-    meta = `alt ${fmtDeg(d.altDeg)} • az ${fmtDeg(d.azDeg)}`;
+    note = "";
+    
+    // RA/DEC line
+    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
+    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
+    
+    // Meta line
+    if (d.mag != null) metaParts.push(`mag ${fmtMag(d.mag, 2)}`);
+    if (d.altDeg != null) metaParts.push(`alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.azDeg != null) metaParts.push(`az ${fmtDeg(d.azDeg, 0)}`);
+    if (d.constellation) metaParts.push(d.constellation);
   }
 
+  const raDecText = raDec.join(" · ");
+  const metaText = metaParts.join(" · ");
+
   return `
-    <div class="skyui-card ${isModal ? "skyui-card--modal" : ""}">
-      <div class="skyui-card__title">${esc(title)}</div>
-      <div class="skyui-card__subtitle">${subtitle}</div>
-      <div class="skyui-card__meta">${esc(meta)}</div>
-      ${noteLine}
-      ${typeLine}
+    <div class="skyui-card ${isModal ? "skyui-card--modal" : ""}" style="display:flex;flex-direction:column;gap:4px;min-width:180px;max-width:320px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:20px;line-height:1;flex-shrink:0;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;">${emoji}</span>
+        <span style="font-size:14px;font-weight:700;line-height:1.2;">${esc(title)}</span>
+      </div>
+      ${note ? `<div style="font-size:12px;line-height:1.3;opacity:0.85;word-wrap:break-word;margin-top:-2px;">${esc(note)}</div>` : ""}
+      ${raDecText ? `<div style="font-size:10px;line-height:1.3;opacity:0.70;font-variant-numeric:tabular-nums;">${raDecText}</div>` : ""}
+      ${metaText ? `<div style="font-size:9px;line-height:1.3;opacity:0.65;word-wrap:break-word;">${metaText}</div>` : ""}
     </div>
   `;
 }
