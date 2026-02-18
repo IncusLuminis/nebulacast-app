@@ -5,6 +5,7 @@ import { Layout } from "./core/sky.layout.js";
 import { Prepare } from "./core/sky.prepare.js";
 import { Render } from "./core/sky.render.js";
 import { SkyUI } from "./core/sky.ui.js";
+import { buildCardData } from "./core/sky.ui.js";
 
 // New modular UI (one component per file)
 import "../ui/components/side_toolbar.js";
@@ -12,6 +13,7 @@ import "../ui/components/bottom_toolbar.js";
 import "../ui/components/popover.js";
 import "../ui/components/modal.js";
 import "../ui/components/player.js";
+import "../ui/components/sky_card.js";
 
 import { UI_ICONS } from "../ui/shared/icons.js";
 
@@ -259,6 +261,11 @@ import * as Popovers from "./widgets/widget.popovers.js";
 
     const modalWC = uiEnabled("modal") ? document.createElement("ui-modal") : null;
     const player = uiEnabled("player") ? document.createElement("ui-player") : null;
+    const skyCard = document.createElement("sky-card");
+    
+    // Append skyCard to root and set initial state
+    root.appendChild(skyCard);
+    skyCard.style.display = "none";
 
     // Positioning (host level)
     if (sideFs) {
@@ -1477,12 +1484,9 @@ import * as Popovers from "./widgets/widget.popovers.js";
 
     function openHitModal(hit) {
       if (!hit) return;
-      const html = SkyUI.tooltipHTML(hit);
-      if (modalWC) {
-        modalWC.open({ title: "Details", content: html });
-        requestAnimationFrame(() => wireModalClicks());
-      } else {
-        console.log("Hit:", hit);
+      const cardData = buildCardData(hit);
+      if (cardData) {
+        skyCard.open(cardData);
       }
     }
 

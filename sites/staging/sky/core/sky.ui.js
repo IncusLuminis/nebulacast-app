@@ -193,18 +193,31 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
   const d = hit.data || {};
   const isModal = mode === "modal";
 
-  // Determine emoji based on type
-  let emoji = "⭐";  // default for stars
-  if (hit.kind === "alert") {
-    emoji = "💥";
-  } else if (hit.kind === "object" || d.type === "dso") {
-    emoji = "🌀";
-  } else if (d.type === "planet" || d.type === "sun" || d.type === "moon") {
-    emoji = "🪐";
-  } else if (hit.kind === "star") {
-    emoji = "⭐";
-  } else if (hit.kind || d.type) {
-    emoji = "🔵";  // other
+  // Determine emoji/image based on type
+  let iconHTML = "";
+  
+  // Check if it's a planet/sun/moon with image
+  if (d.type === "sun") {
+    iconHTML = '<img src="/sky/assets/images/Sun.png" style="width:20px;height:20px;display:block;" alt="Sun">';
+  } else if (d.type === "moon") {
+    iconHTML = '<img src="/sky/assets/images/Moon.png" style="width:20px;height:20px;display:block;" alt="Moon">';
+  } else if (d.type === "planet" && d.name) {
+    // Planet name to filename: "Jupiter" -> "Jupiter.png"
+    const planetName = d.name.charAt(0).toUpperCase() + d.name.slice(1).toLowerCase();
+    iconHTML = `<img src="/sky/assets/images/${planetName}.png" style="width:20px;height:20px;display:block;" alt="${planetName}">`;
+  } else {
+    // Fall back to emoji
+    let emoji = "⭐";  // default for stars
+    if (hit.kind === "alert") {
+      emoji = "💥";
+    } else if (hit.kind === "object" || d.type === "dso") {
+      emoji = "🌀";
+    } else if (hit.kind === "star") {
+      emoji = "⭐";
+    } else {
+      emoji = "🔵";  // other
+    }
+    iconHTML = `<span style="font-size:20px;line-height:1;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;">${emoji}</span>`;
   }
 
   let title = "—";
@@ -260,7 +273,8 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
     if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
     
     // Meta line
-    if (d.type) metaParts.push(d.type);
+    // Skip showing "planet" type for planets (redundant with image)
+    if (d.type && d.type !== "planet" && d.type !== "sun" && d.type !== "moon") metaParts.push(d.type);
     if (d.mag != null) metaParts.push(`mag ${fmtMag(d.mag, 1)}`);
     if (d.altDeg != null) metaParts.push(`alt ${fmtDeg(d.altDeg, 0)}`);
     if (d.azDeg != null) metaParts.push(`az ${fmtDeg(d.azDeg, 0)}`);
@@ -291,11 +305,11 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
   return `
     <div class="skyui-card ${isModal ? "skyui-card--modal" : ""}" style="display:flex;flex-direction:column;gap:4px;min-width:180px;max-width:320px;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:20px;line-height:1;flex-shrink:0;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;">${emoji}</span>
+        <span style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:20px;height:20px;">${iconHTML}</span>
         <span style="font-size:14px;font-weight:700;line-height:1.2;">${esc(title)}</span>
       </div>
       ${note ? `<div style="font-size:12px;line-height:1.3;opacity:0.85;word-wrap:break-word;margin-top:-2px;">${esc(note)}</div>` : ""}
-      ${raDecText ? `<div style="font-size:10px;line-height:1.3;opacity:0.70;font-variant-numeric:tabular-nums;">${raDecText}</div>` : ""}
+      ${raDecText ? `<div style="font-size:9px;line-height:1.3;opacity:0.70;font-variant-numeric:tabular-nums;">${raDecText}</div>` : ""}
       ${metaText ? `<div style="font-size:9px;line-height:1.3;opacity:0.65;word-wrap:break-word;">${metaText}</div>` : ""}
     </div>
   `;
@@ -504,3 +518,111 @@ export const SkyUI = {
   createModal,
   buildBestTodayPopover
 };
+
+/**
+ * Prepare data for sky-card component
+ * Returns: { iconHTML, title, note, raDecText, metaText }
+ */
+export function buildCardData(hit) {
+  if (!hit) return null;
+  
+  const d = hit.data || {};
+  
+  // Determine icon (same logic as tooltip)
+  let iconHTML = "";
+  
+  if (d.type === "sun") {
+    iconHTML = '<img src="/sky/assets/images/Sun.png" alt="Sun">';
+  } else if (d.type === "moon") {
+    iconHTML = '<img src="/sky/assets/images/Moon.png" alt="Moon">';
+  } else if (d.type === "planet" && d.name) {
+    const planetName = d.name.charAt(0).toUpperCase() + d.name.slice(1).toLowerCase();
+    iconHTML = `<img src="/sky/assets/images/${planetName}.png" alt="${planetName}">`;
+  } else {
+    let emoji = "⭐";
+    if (hit.kind === "alert") emoji = "💥";
+    else if (hit.kind === "object" || d.type === "dso") emoji = "🌀";
+    else if (hit.kind === "star") emoji = "⭐";
+    else emoji = "🔵";
+    iconHTML = `<span>${emoji}</span>`;
+  }
+  
+  // Build title, note, coords, meta (same logic as tooltip)
+  let title = "—";
+  let note = "";
+  const raDec = [];
+  const metaParts = [];
+  
+  const fmtRA = (ra) => {
+    const v = Number(ra);
+    if (!Number.isFinite(v)) return null;
+    const totalSec = (v / 15) * 3600;
+    const hh = Math.floor(totalSec / 3600);
+    const mm = Math.floor((totalSec % 3600) / 60);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(hh)}h${pad(mm)}m`;
+  };
+  
+  const fmtDEC = (dec) => {
+    const v = Number(dec);
+    if (!Number.isFinite(v)) return null;
+    const sign = v >= 0 ? "+" : "−";
+    const a = Math.abs(v);
+    const dd = Math.floor(a);
+    const mm = Math.floor((a - dd) * 60);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${sign}${dd}°${pad(mm)}′`;
+  };
+  
+  const fmtMag = (mag, decimals = 1) => {
+    const v = Number(mag);
+    if (!Number.isFinite(v)) return "—";
+    return v.toFixed(decimals);
+  };
+  
+  const fmtDeg = (deg, decimals = 0) => {
+    const v = Number(deg);
+    if (!Number.isFinite(v)) return "—";
+    return v.toFixed(decimals) + "°";
+  };
+  
+  if (hit.kind === "alert") {
+    title = d.title || "Alert";
+    note = d.note || "";
+    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
+    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
+    if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
+    if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
+  } else if (hit.kind === "object") {
+    title = d.name || "Object";
+    note = d.note || "";
+    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
+    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
+    if (d.type && d.type !== "planet" && d.type !== "sun" && d.type !== "moon") metaParts.push(d.type);
+    if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
+    if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
+    if (d.constellation) metaParts.push(d.constellation);
+  } else {
+    // STAR
+    const proper = (d.name || "").trim();
+    const bayer = (d.designation || "").trim();
+    title = proper || bayer || d.id || "Star";
+    note = "";
+    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
+    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
+    if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 2)}`);
+    if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
+    if (d.constellation) metaParts.push(d.constellation);
+  }
+  
+  return {
+    iconHTML,
+    title,
+    note,
+    raDecText: raDec.join(" · "),
+    metaText: metaParts.join(" · ")
+  };
+}
