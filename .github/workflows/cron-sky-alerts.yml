@@ -45,9 +45,12 @@ jobs:
           set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add sites/staging/sky/data/alerts_now.json 2>/dev/null || true
-          git add services/sky/data/generated/ 2>/dev/null || true
-          git diff --staged --quiet && exit 0
+
+          git fetch origin "${{ github.ref_name }}"
           git pull --rebase origin "${{ github.ref_name }}"
+
+          git add -A sites/staging/sky/data/alerts_now.json services/sky/data/generated/ 2>/dev/null || true
+          git status --porcelain
+          git diff --staged --quiet && exit 0
           git commit -m "chore(sky-alerts): update alerts_now"
-          git push
+          git push origin "${{ github.ref_name }}"
