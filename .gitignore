@@ -16,3 +16,9 @@ services/**/outputs/
 .DS_Store
 *.swp
 *.swo
+
+# JPL kernels (binary)
+/services/sky/data/raw/*.bsp
+
+# JPL kernel (local only)
+/services/sky/data/raw/*.bsp
