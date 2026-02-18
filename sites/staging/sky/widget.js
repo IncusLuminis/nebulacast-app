@@ -652,10 +652,34 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     function resize() {
-      const r = mount.getBoundingClientRect();
-      if (!r || r.width < 2 || r.height < 2) return;
+      // In fullscreen mode, use window dimensions instead of mount
+      const isFs = !!document.fullscreenElement;
+      let r;
+      
+      if (isFs) {
+        // Fullscreen: use window dimensions
+        r = {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          left: 0,
+          top: 0
+        };
+        console.log("[sky] resize in fullscreen mode, using window:", r.width, "x", r.height);
+      } else {
+        // Normal mode: use mount container
+        r = mount.getBoundingClientRect();
+        if (!r || r.width < 2 || r.height < 2) return;
+        console.log("[sky] resize in normal mode, using mount:", r.width, "x", r.height);
+      }
 
-      ({ ctx, viewport } = Layout.setupCanvas(canvas, mount));
+      // Create temporary container with correct dimensions for setupCanvas
+      const container = isFs ? {
+        clientWidth: r.width,
+        clientHeight: r.height,
+        getBoundingClientRect: () => r
+      } : mount;
+
+      ({ ctx, viewport } = Layout.setupCanvas(canvas, container));
       recomputeAll();
       render();
     }
@@ -1439,6 +1463,21 @@ import * as Popovers from "./widgets/widget.popovers.js";
     document.addEventListener("fullscreenchange", () => {
       const isFs = !!document.fullscreenElement;
       if (sideFs) sideFs.setPressed("fullscreen", isFs);
+      
+      // Resize canvas to fit new dimensions (normal or fullscreen)
+      setTimeout(() => {
+        console.log("[sky] fullscreenchange: isFs =", isFs);
+        console.log("[sky] mount client size:", mount.clientWidth, "x", mount.clientHeight);
+        console.log("[sky] root client size:", root.clientWidth, "x", root.clientHeight);
+        console.log("[sky] canvas client size:", canvas.clientWidth, "x", canvas.clientHeight);
+        console.log("[sky] window size:", window.innerWidth, "x", window.innerHeight);
+        try {
+          resize();
+          console.log("[sky] after resize - canvas:", canvas.width, "x", canvas.height);
+        } catch (err) {
+          console.error("[sky] resize after fullscreen failed:", err);
+        }
+      }, 100);
     });
 
     // ── Player visibility toggle ──
