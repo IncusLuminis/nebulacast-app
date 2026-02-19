@@ -1,20 +1,20 @@
-# Backend pipeline: sky planets. Writes to:
-# - services/sky/data/generated/planets.json
-# - sites/staging/sky/data/planets.json
-name: Cron — Sky Planets backend
+# Backend pipeline: sun+moon (offline DE421). Writes to:
+# - services/sky/data/generated/sun_moon.json
+# - sites/staging/sky/data/sun_moon.json
+name: Cron — Sky Sun+Moon backend
 
 on:
   schedule:
-    # Daily at 02:00 UTC
-    - cron: "0 2 * * *"
+    # Twice daily (UTC): 00:00 and 12:00
+    - cron: "0 0,12 * * *"
   workflow_dispatch:
 
 concurrency:
-  group: sky-planets-${{ github.ref }}
+  group: sky-sunmoon-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  sky-planets:
+  sky-sunmoon:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -40,7 +40,6 @@ jobs:
           if [ ! -f services/sky/data/raw/de421.bsp ]; then
             echo "[sky] de421.bsp not found in cache; downloading from NAIF..."
             url="https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/a_old_versions/de421.bsp"
-            # Resume if partial, retry on transient failures, and avoid infinite hangs
             curl -L --fail \
               --retry 6 --retry-delay 3 --retry-all-errors \
               --connect-timeout 20 --max-time 900 \
@@ -49,7 +48,6 @@ jobs:
               "$url"
           fi
           ls -lah services/sky/data/raw/de421.bsp
-          # Basic sanity (size must be > 1MB)
           test "$(stat -c%s services/sky/data/raw/de421.bsp)" -gt 1000000
 
       - name: Install sky deps
@@ -57,12 +55,12 @@ jobs:
           set -euxo pipefail
           pip install -r services/sky/requirements.txt
 
-      - name: Run sky planets pipeline
+      - name: Run sun+moon pipeline
         run: |
           set -euxo pipefail
-          PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_planets.py
-          ls -la sites/staging/sky/data/planets.json
-          ls -la services/sky/data/generated/planets.json
+          PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_sunmoon.py
+          ls -la sites/staging/sky/data/sun_moon.json
+          ls -la services/sky/data/generated/sun_moon.json
 
       - name: Commit and push outputs
         run: |
@@ -70,16 +68,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Update branch BEFORE staging/committing
           git fetch origin "${{ github.ref_name }}"
           git pull --rebase origin "${{ github.ref_name }}"
 
-          # Stage outputs (use -A to avoid unstaged surprises)
-          git add -A sites/staging/sky/data/planets.json 2>/dev/null || true
-          git add -A services/sky/data/generated/planets.json 2>/dev/null || true
+          git add -A sites/staging/sky/data/sun_moon.json 2>/dev/null || true
+          git add -A services/sky/data/generated/sun_moon.json 2>/dev/null || true
 
           git status --porcelain
           git diff --staged --quiet && exit 0
 
-          git commit -m "chore(sky-planets): update planets"
+          git commit -m "chore(sky-sunmoon): update sun_moon"
           git push origin "${{ github.ref_name }}"

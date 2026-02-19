@@ -22,3 +22,8 @@ services/**/outputs/
 
 # JPL kernel (local only)
 /services/sky/data/raw/*.bsp
+# SPICE kernels (downloaded at runtime in GitHub Actions)
+services/sky/data/raw/*.spk
+services/sky/data/raw/*.bc
+services/sky/data/raw/*.tls
+services/sky/data/raw/*.tpc
