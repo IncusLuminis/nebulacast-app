@@ -21,6 +21,10 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..
 OUTPUT_PATH = os.path.join(PROJECT_ROOT, "sites/staging/sky/data/alerts_now.json")
 os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
+SERVICES_GEN_DATA = os.path.join(PROJECT_ROOT, "services/sky/data/generated")
+os.makedirs(SERVICES_GEN_DATA, exist_ok=True)
+GEN_DATA = os.path.join(SERVICES_GEN_DATA, "alerts_now.json")
+
 SOURCES_PATH = os.path.join(PROJECT_ROOT, "services/sky/pipelines/yml/sources.yml")
 
 RAW_DIR = os.path.join(PROJECT_ROOT, "services/sky/data/raw")
@@ -719,6 +723,9 @@ def main():
     }
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
+
+    with open(GEN_DATA, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
     print(f"[ok] wrote {len(deduped)} alerts -> {OUTPUT_PATH}")

@@ -43,3 +43,15 @@ alerts:
     type: rss
     url: "http://www.cbat.eps.harvard.edu/unconf/tocp.xml"
     group: "transient"
+
+pha:
+  type: jpl_cad
+  base_url: "https://ssd-api.jpl.nasa.gov/cad.api"
+  group: "pha"
+  body: "Earth"
+  pha: true
+  date_min: "now"
+  date_max_days: 7
+  dist_max: "1LD"
+  sort: "date"
+  limit: 200
