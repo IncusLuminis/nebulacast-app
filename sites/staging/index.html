@@ -3,141 +3,513 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nebulacast — Staging</title>
+  <title>Nebulacast</title>
+  
+  <!-- Base styles -->
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/widget_news.css">
   <link rel="stylesheet" href="/assets/css/widget_calendar.css">
-  <link rel="stylesheet" href="/assets/css/index_tabs.css">
+  
+  <!-- Weather widget styles -->
+  <link rel="stylesheet" href="/weather/assets/weather.css">
+  <link rel="stylesheet" href="/weather/widgets/location/location.css">
+  <link rel="stylesheet" href="/weather/widgets/controls/controls.css">
+  <link rel="stylesheet" href="/weather/widgets/weather/weather.css">
+  <link rel="stylesheet" href="/weather/widgets/map/map.css">
+  <link rel="stylesheet" href="/weather/widgets/sun_moon/sun_moon.css">
+  <link rel="stylesheet" href="/weather/widgets/astro/astro.css">
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0e14;
+      color: #fff;
+    }
+
+    /* Main layout */
+    .nebulacast-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Vertical sidebar */
+    .nebulacast-sidebar {
+      width: 60px;
+      background: rgba(20, 24, 36, 0.95);
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 0;
+      gap: 4px;
+      flex-shrink: 0;
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .nebulacast-tab {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nebulacast-tab:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .nebulacast-tab.is-active {
+      background: rgba(74, 111, 165, 0.2);
+      color: #4a6fa5;
+    }
+
+    /* Main content area */
+    .nebulacast-main {
+      margin-left: 60px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Top bar with location */
+    .nebulacast-topbar {
+      background: rgba(20, 24, 36, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 20px;
+      flex-shrink: 0;
+    }
+
+    /* Content panels */
+    .nebulacast-content {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    .nebulacast-panel {
+      display: none;
+    }
+
+    .nebulacast-panel.is-active {
+      display: block;
+    }
+
+    /* Weather/Map/Sun widgets need widget-container wrapper */
+    .widget-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Sky panel - full height and width like Map */
+    #panel-sky {
+      padding: 0;
+      height: calc(100vh - 100px);
+      max-width: none; /* Remove width restriction */
+    }
+
+    #panel-sky .widget-container {
+      height: 100%;
+      max-width: none;
+    }
+
+    #w-sky {
+      height: 100%;
+      background: #0a0e14;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #skyMount {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* Ensure sky-root stays contained */
+    #skyMount .sky-root {
+      position: relative !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+    }
+
+    /* Fullscreen mode */
+    .sky-root:fullscreen,
+    :fullscreen .sky-root {
+      position: fixed !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      top: 0 !important;
+      left: 0 !important;
+      background: #000 !important;
+      overflow: visible !important;
+    }
+
+    /* News/Calendar widgets */
+    .widget-section {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Map iframe takes full height like Sky */
+    #panel-map {
+      height: calc(100vh - 100px);
+      padding: 0;
+      max-width: none; /* Remove width restriction */
+    }
+
+    .map-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+  </style>
 </head>
 <body>
-  <div class="page-wrap">
-    <header class="page-header">
-      <h1>Nebulacast</h1>
-      <p class="subtitle">Staging · News</p>
-    </header>
-    <div class="index-layout">
-      <nav class="index-tabs index-tabs--side" role="tablist" aria-label="Sections">
-        <button
-          type="button"
-          id="tab-news"
-          class="index-tab is-active"
-          data-tab="news"
-          role="tab"
-          aria-selected="true"
-          aria-controls="panel-news"
-          aria-label="News"
-        >📰</button>
-        <button
-          type="button"
-          id="tab-calendar"
-          class="index-tab"
-          data-tab="calendar"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-calendar"
-          aria-label="Calendar"
-        >📅</button>
-        <button
-          type="button"
-          id="tab-weather"
-          class="index-tab"
-          data-tab="weather"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-weather"
-          aria-label="Weather"
-        >☁️</button>
-      </nav>
-      <main class="index-panels">
-      <div id="panel-news" class="index-panel" role="tabpanel" aria-labelledby="tab-news">
-        <section class="widget-section" id="widget-news"><div id="nrw-main" class="nrw-root">
-  <div class="nrw-filters" data-role="filters"></div>
-  <div class="nrw-header">
-    <div class="nrw-meta"><a class="nrw-rss" href="/news/rss.xml" target="_blank" rel="noopener">RSS</a></div>
-  </div>
-  <div class="nrw-status" data-role="status">Loading...</div>
-  <div class="nrw-list" data-role="list"></div>
-</div>
-</section>
+  <div class="nebulacast-layout">
+    <!-- Left sidebar navigation -->
+    <nav class="nebulacast-sidebar" role="tablist">
+      <button type="button" class="nebulacast-tab" data-tab="calendar" title="Calendar">📅</button>
+      <button type="button" class="nebulacast-tab is-active" data-tab="weather" title="Weather">☁️</button>
+      <button type="button" class="nebulacast-tab" data-tab="map" title="Map">🗺️</button>
+      <button type="button" class="nebulacast-tab" data-tab="sun" title="Sun">☀️</button>
+      <button type="button" class="nebulacast-tab" data-tab="sky" title="Sky">🌌</button>
+      <button type="button" class="nebulacast-tab" data-tab="news" title="News">📰</button>
+    </nav>
+
+    <!-- Main content -->
+    <div class="nebulacast-main">
+      <!-- Top bar with location widget -->
+      <div class="nebulacast-topbar">
+        <div id="w-location"></div>
       </div>
-      <div id="panel-calendar" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-calendar">
-        <section class="widget-section" id="widget-calendar"><div id="nrc-main" class="nrc-root">
-  <div class="nrc-filters" data-role="filters"></div>
-  <div class="nrc-header">
-    <div class="nrc-meta">
-      <a class="nrc-link" href="/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>
-      <a class="nrc-link" href="/alerts/rss.xml" target="_blank" rel="noopener">RSS</a>
-    </div>
-  </div>
-  <div class="nrc-status" data-role="status">Loading...</div>
-  <div class="nrc-list" data-role="list"></div>
-</div>
-</section>
-      </div>
-      <div id="panel-weather" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-weather">
-        <div class="weather-iframe-container">
+
+      <!-- Content panels -->
+      <div class="nebulacast-content">
+        <!-- Calendar panel -->
+        <div id="panel-calendar" class="nebulacast-panel">
+          <section class="widget-section">
+            <div id="nrc-main" class="nrc-root">
+              <div class="nrc-filters" data-role="filters"></div>
+              <div class="nrc-header">
+                <div class="nrc-meta">
+                  <a class="nrc-link" href="/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>
+                  <a class="nrc-link" href="/alerts/rss.xml" target="_blank" rel="noopener">RSS</a>
+                </div>
+              </div>
+              <div class="nrc-status" data-role="status">Loading...</div>
+              <div class="nrc-list" data-role="list"></div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Weather panel -->
+        <div id="panel-weather" class="nebulacast-panel is-active">
+          <div id="w-controls" class="widget-container"></div>
+          <div id="w-weather" class="widget-container"></div>
+        </div>
+
+        <!-- Map panel -->
+        <div id="panel-map" class="nebulacast-panel">
           <iframe 
-            id="weatherIframe" 
-            src="/weather/index.html" 
-            class="weather-iframe"
-            title="Weather Widget"
+            id="mapIframe" 
+            src="/weather/map-poc.html" 
+            class="map-iframe"
+            title="Weather Map"
+            frameborder="0"
           ></iframe>
         </div>
+
+        <!-- Sun panel -->
+        <div id="panel-sun" class="nebulacast-panel">
+          <div id="w-sun" class="widget-container"></div>
+        </div>
+
+        <!-- Sky panel -->
+        <div id="panel-sky" class="nebulacast-panel">
+          <div id="w-sky" class="widget-container">
+            <div id="skyMount"></div>
+          </div>
+        </div>
+
+        <!-- News panel -->
+        <div id="panel-news" class="nebulacast-panel">
+          <section class="widget-section">
+            <div id="nrw-main" class="nrw-root">
+              <div class="nrw-filters" data-role="filters"></div>
+              <div class="nrw-header">
+                <div class="nrw-meta">
+                  <a class="nrw-rss" href="/news/rss.xml" target="_blank" rel="noopener">RSS</a>
+                </div>
+              </div>
+              <div class="nrw-status" data-role="status">Loading...</div>
+              <div class="nrw-list" data-role="list"></div>
+            </div>
+          </section>
+        </div>
       </div>
-    </main>
     </div>
   </div>
 
-      <script src="/assets/js/widget_runtime.js"></script>
-      <script>
-        (function() {
-          var base = '';
-          window.runNewsWidget({ rootId: 'nrw-main', rssUrl: base + '/news/rss.xml', maxItems: 12, parseMax: 300, filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] });
-          window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '/calendar/daily_signal.json', maxItems: 20, filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], iconBase: base + '/assets/icons/alerts' });
-          // Weather widget is now loaded via iframe from /weather/index.html
-          (function() {
-            var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
-            var tabs = document.querySelectorAll('.index-tab');
-            var panels = document.querySelectorAll('.index-panel');
-            var subtitleEl = document.querySelector('.page-header .subtitle');
+  <!-- Sun/Moon calculations -->
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
 
-            function labelForTab(tab) {
-              if (tab === 'calendar') return 'Calendar';
-              if (tab === 'weather') return 'Weather';
-              return 'News';
+  <!-- News/Calendar widgets -->
+  <script src="/assets/js/widget_runtime.js"></script>
+
+  <!-- Weather app state and widgets -->
+  <script type="module">
+    import { initState, getState, setState, subscribe } from "/weather/core/state.js";
+    import { mountLocation } from "/weather/widgets/location/location.js";
+    import { mountControls } from "/weather/widgets/controls/controls.js";
+    import { mountWeather } from "/weather/widgets/weather/weather.js";
+    import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js";
+
+    // Initialize state
+    initState();
+    const storeApi = { getState, setState, subscribe };
+
+    // Mount location widget (always visible in topbar)
+    const locationEl = document.getElementById("w-location");
+    if (locationEl) mountLocation(locationEl, storeApi);
+
+    // Mount controls widget (for Map panel)
+    const controlsEl = document.getElementById("w-controls");
+    if (controlsEl) mountControls(controlsEl, storeApi);
+
+    // Mount weather widgets
+    const weatherEl = document.getElementById("w-weather");
+    const sunEl = document.getElementById("w-sun");
+
+    if (weatherEl) mountWeather(weatherEl, storeApi);
+    if (sunEl) mountSunMoon(sunEl, storeApi);
+
+    // Map is now loaded via iframe from /weather/map-poc.html
+    // Listen for location changes and send to iframe
+    const mapIframe = document.getElementById("mapIframe");
+    if (mapIframe) {
+      // When iframe loads, inject minimal CSS to make it fullwidth
+      mapIframe.addEventListener('load', () => {
+        try {
+          const iframeDoc = mapIframe.contentDocument || mapIframe.contentWindow.document;
+          const style = iframeDoc.createElement('style');
+          style.textContent = `
+            /* Remove width restriction, keep all structure intact */
+            .page-wrap {
+              max-width: none !important;
+              width: 100% !important;
+              padding: 12px !important;
             }
-
-            function updatePageHeader(activeTab) {
-              var label = labelForTab(activeTab);
-              if (subtitleEl) {
-                subtitleEl.textContent = 'Staging · ' + label;
-              }
-              document.title = 'Nebulacast — ' + label;
+            
+            /* Make map taller to use available space */
+            #map {
+              height: calc(100vh - 250px) !important;
             }
-
-            function switchTo(panelId, activeTab) {
-              panels.forEach(function(p) {
-                p.classList.toggle('index-panel--hidden', p.id !== panelId);
-              });
-              tabs.forEach(function(t) {
-                var isActive = t.getAttribute('data-tab') === activeTab;
-                t.classList.toggle('is-active', isActive);
-                t.setAttribute('aria-selected', isActive ? 'true' : 'false');
-              });
-              updatePageHeader(activeTab);
+            
+            /* Remove rounded corners for cleaner look */
+            .card,
+            .map-wrapper,
+            #map {
+              border-radius: 0 !important;
             }
+          `;
+          iframeDoc.head.appendChild(style);
+        } catch (e) {
+          console.warn('Could not inject CSS into map iframe:', e);
+        }
+      });
+      
+      subscribe(() => {
+        const state = getState();
+        const location = state?.location;
+        if (location && mapIframe.contentWindow) {
+          mapIframe.contentWindow.postMessage({
+            type: "update-location",
+            location: location
+          }, "*");
+        }
+      });
+    }
 
-            tabs.forEach(function(t) {
-              t.addEventListener('click', function() {
-                var tab = t.getAttribute('data-tab');
-                switchTo(tabToPanel[tab], tab);
-              });
-            });
+    // Initialize news/calendar widgets
+    window.runCalendarWidget({ 
+      rootId: 'nrc-main', 
+      jsonUrl: '/calendar/daily_signal.json', 
+      maxItems: 20, 
+      filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], 
+      iconBase: '/assets/icons/alerts' 
+    });
 
-            // Initial header/title state
-            updatePageHeader('news');
-          })();
-        })();
-      </script>
+    window.runNewsWidget({ 
+      rootId: 'nrw-main', 
+      rssUrl: '/news/rss.xml', 
+      maxItems: 12, 
+      parseMax: 300, 
+      filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] 
+    });
+
+    // ------------------------------
+    // SKY widget (lazy load)
+    // ------------------------------
+    let skyInited = false;
+
+    function clampMs(t, a, b) { return Math.max(a, Math.min(b, t)); }
+
+    function pickLatLonFromState(s) {
+      const lat = s?.location?.lat ?? s?.loc?.lat ?? s?.coords?.lat ?? s?.geo?.lat ?? null;
+      const lon = s?.location?.lon ?? s?.location?.lng ?? s?.loc?.lon ?? s?.loc?.lng ?? 
+                  s?.coords?.lon ?? s?.coords?.lng ?? s?.geo?.lon ?? s?.geo?.lng ?? null;
+      return {
+        lat: (typeof lat === "number" && isFinite(lat)) ? lat : null,
+        lon: (typeof lon === "number" && isFinite(lon)) ? lon : null
+      };
+    }
+
+    function pickDatetimeISOFromState(s) {
+      const v = s?.time?.datetimeISO ?? s?.time?.iso ?? s?.time?.selectedISO ?? 
+                s?.controls?.datetimeISO ?? s?.controls?.iso ?? s?.selectedTimeISO ?? null;
+      if (typeof v === "string" && v.trim()) return v.trim();
+      return null;
+    }
+
+    async function initSkyIfNeeded() {
+      if (skyInited) return;
+      skyInited = true;
+
+      // Load Sky CSS
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "/sky/assets/sky.css";
+      document.head.appendChild(css);
+
+      const state = getState();
+      const { lat, lon } = pickLatLonFromState(state);
+
+      const now = Date.now();
+      const max = now + 7 * 24 * 60 * 60 * 1000;
+
+      let dtISO = pickDatetimeISOFromState(state);
+      if (dtISO) {
+        const t = Date.parse(dtISO);
+        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
+        else dtISO = null;
+      }
+
+      window.SKY_CONFIG = {
+        baseUrl: "/sky",
+        mountId: "skyMount",
+        lat: (lat != null ? lat : 52.2297),
+        lon: (lon != null ? lon : 21.0122),
+        datetimeISO: dtISO,
+        options: {
+          showSunMoon: true,
+          showMilkyWay: true,
+          showGridEq: true,
+          showConstellations: true,
+          showObjects: true,
+          showAlerts: true
+        }
+      };
+
+      await import("/sky/widget.js");
+
+      setTimeout(() => {
+        try { window.__skyWidget?.resize?.(); } catch (_) {}
+      }, 0);
+    }
+
+    function syncSkyFromState() {
+      if (!window.__skyWidget || typeof window.__skyWidget.update !== "function") return;
+
+      const s = getState();
+      const { lat, lon } = pickLatLonFromState(s);
+
+      const now = Date.now();
+      const max = now + 7 * 24 * 60 * 60 * 1000;
+
+      let dtISO = pickDatetimeISOFromState(s);
+      if (dtISO) {
+        const t = Date.parse(dtISO);
+        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
+        else dtISO = null;
+      }
+
+      const patch = {};
+      if (lat != null) patch.lat = lat;
+      if (lon != null) patch.lon = lon;
+      patch.datetimeISO = dtISO;
+
+      try { window.__skyWidget.update(patch); } catch (_) {}
+    }
+
+    subscribe(() => {
+      if (!skyInited) return;
+      syncSkyFromState();
+    });
+
+    // ------------------------------
+    // Tab switching
+    // ------------------------------
+    const tabs = document.querySelectorAll('.nebulacast-tab');
+    const panels = document.querySelectorAll('.nebulacast-panel');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+
+        // Lazy init Sky on first open
+        if (targetTab === 'sky') {
+          initSkyIfNeeded().then(() => {
+            syncSkyFromState();
+            setTimeout(() => {
+              try { window.__skyWidget?.resize?.(); } catch (_) {}
+            }, 100);
+          });
+        }
+
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('is-active'));
+        tab.classList.add('is-active');
+
+        // Show/hide panels
+        panels.forEach(panel => {
+          const isTarget = panel.id === `panel-${targetTab}`;
+          panel.classList.toggle('is-active', isTarget);
+        });
+
+        // Update page title
+        const titles = {
+          calendar: 'Calendar',
+          weather: 'Weather',
+          map: 'Map',
+          sun: 'Sun',
+          sky: 'Sky',
+          news: 'News'
+        };
+        document.title = `Nebulacast — ${titles[targetTab] || 'Weather'}`;
+      });
+    });
+  </script>
 </body>
 </html>

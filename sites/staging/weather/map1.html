@@ -1,0 +1,2880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weather Map</title>
+  
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  
+  <!-- Map styles -->
+  <link rel="stylesheet" href="./map.css">
+</head>
+<body>
+  <!-- Leaflet map -->
+  <div id="map"></div>
+  
+  <!-- Loading spinner (used by setMapLoading) -->
+  <div id="mapLoadingSpinner" class="map-loading-spinner" aria-hidden="true"></div>
+
+  <!-- Left sidebar: Home -->
+  <div class="map-sidebar-left">
+    <ui-side-toolbar id="sidebarLeft"></ui-side-toolbar>
+  </div>
+  
+  <!-- Right sidebar: Fullscreen -->
+  <div class="map-sidebar-right">
+    <ui-side-toolbar id="sidebarRight"></ui-side-toolbar>
+  </div>
+  
+  <!-- Bottom right: Layers toolbar -->
+  <div class="map-toolbar-bottom">
+    <ui-bottom-toolbar id="toolbarBottom" dense></ui-bottom-toolbar>
+  </div>
+  
+  <!-- Bottom left: Player -->
+  <div class="map-player">
+    <ui-player id="mapPlayer"></ui-player>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- UI Components -->
+  <script type="module" src="./widget.js"></script>
+  
+  <!-- Map Logic -->
+  <script>
+(function () {
+  "use strict";
+  const DEFAULT_CENTER = [52.2297, 21.0122];
+  const DEFAULT_ZOOM = 7;
+  const RAINVIEWER_API = "https://api.rainviewer.com/public/weather-maps.json";
+  const HILLSHADE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
+  const CARTO_DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+  const GIBS_SUBDOMAINS = ["a", "b", "c"];
+  const GIBS_LAYER = "MODIS_Terra_CorrectedReflectance_TrueColor";
+  const GIBS_TILEMATRIXSET = "GoogleMapsCompatible_Level9";
+  const GIBS_OPACITY = 0.65;
+  const STATE_STORAGE_KEY = "map-poc-layer-state-v2";
+  // Night + Moon constants
+  const NIGHT_MASK_GRID_SIZE_X = 120; // Grid width (adaptive to aspect ratio)
+  const NIGHT_MASK_GRID_SIZE_Y = 80; // Grid height
+  const CIVIL_TWILIGHT_DEG = -6; // Civil twilight threshold
+  const ASTRO_TWILIGHT_DEG = -12; // Astronomical twilight threshold
+  const NIGHT_THRESHOLD_DEG = -18; // Astronomical night threshold
+  // Fixed alpha values for discrete zones (no interpolation)
+  const CIVIL_TWILIGHT_ALPHA = 0.18; // Light gray
+  const ASTRO_TWILIGHT_ALPHA = 0.38; // Dark gray
+  const NIGHT_ALPHA = 0.58; // Darkest
+  const MOON_UPDATE_INTERVAL_MS = 60000; // Update moon info every 60 seconds
+  // Moon phase boundaries (based on phase value 0-1)
+  const MOON_PHASE_NEW_MAX = 0.03;
+  const MOON_PHASE_WAXING_CRESCENT_MAX = 0.22;
+  const MOON_PHASE_FIRST_QUARTER_MAX = 0.28;
+  const MOON_PHASE_WAXING_GIBBOUS_MAX = 0.47;
+  const MOON_PHASE_FULL_MAX = 0.53;
+  const MOON_PHASE_WANING_GIBBOUS_MAX = 0.72;
+  const MOON_PHASE_LAST_QUARTER_MAX = 0.78;
+  const MOON_PHASE_WANING_CRESCENT_MAX = 0.97;
+  // Open-Meteo forecast clouds (model)
+  const OPEN_METEO_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
+  const FORECAST_HOURS = 72;         // горизонт прогноза (часы)
+  const FORECAST_CACHE_TTL_MS = 10 * 60 * 1000; // 10 минут
+  const FORECAST_MAX_CONCURRENCY = 3; // уменьшено для избежания rate limiting
+  const FORECAST_MAX_POINTS = 1000;  // уменьшено максимальное количество точек в grid
+  const FORECAST_UPDATE_DEBOUNCE_MS = 400; // debounce для moveend/zoomend
+  const FORECAST_REQUEST_DELAY_MS = 200; // задержка между запросами (ms)
+  const FORECAST_RETRY_DELAY_MS = 2000; // задержка перед retry при 429
+  const FORECAST_SPAN_DEG = 3;       // ±3° вокруг центра для начальной загрузки
+  const FORECAST_STEP_DEG = 0.5;     // шаг сетки для начальной загрузки
+  let map = null;
+  let baseLayer = null;
+  let hillshadeLayer = null;
+  let gibsLayer = null;
+  // Forecast variables temporarily disabled - will be replaced with tile server backend
+  /*
+  let forecastLayer = null;
+  let forecastCanvas = null;
+  let forecastCanvasOverlay = null;
+  let forecastGrid = null;
+  let forecastBlurPx = 6;
+  let forecastOpacity = 0.45;
+  let forecastUpdateTimer = null;
+  let forecastLastUpdateTime = null;
+  */
+  let forecastLayer = null;
+  let forecastCanvas = null;
+  let forecastCanvasOverlay = null;
+  let forecastGrid = null;
+  let forecastBlurPx = 6;
+  let forecastOpacity = 0.45;
+  let forecastUpdateTimer = null;
+  let forecastLastUpdateTime = null;
+  let radarLayer = null;
+  /** @type {{ time: number, path?: string }[]} */
+  let radarFrames = [];
+  /** Timeline: radar frames only */
+  let frames = [];
+  let rainviewerHost = "https://tilecache.rainviewer.com";
+  let currentFrameIdx = 0;
+  // Master timeline state (single source of truth)
+  let stepHours = 6; // default step size
+  let currentTimeUtcMs = null; // current time in UTC (milliseconds since epoch)
+  let startTimeUtcMs = null; // start of timeline range (UTC ms)
+  let endTimeUtcMs = null; // end of timeline range (UTC ms)
+  let isPlaying = false;
+  let playTimer = null;
+  let currentTimeUpdateTimer = null; // Timer for updating current time display
+  let terrainOn = true;
+  let gibsOn = true;
+  // Forecast temporarily disabled
+  let forecastOn = false; // Changed from true to false
+  let observedAvailable = false;
+  let radarOn = true;
+  let hillshadeOn = true;
+  let currentCenter = DEFAULT_CENTER.slice();
+  let currentZoom = DEFAULT_ZOOM;
+  let homeCenter = DEFAULT_CENTER.slice();
+  let homeZoom = DEFAULT_ZOOM;
+  let locationName = "Warsaw";
+  let playIntervalId = null;
+  let gibsDayOffset = 0; // 0 = today, -1 = yesterday, etc.
+  let locationMarker = null;
+  // Layer adapters (each layer implements setTime)
+  const layerAdapters = {
+    radar: { enabled: true, setTime: null }, // Will be set up later
+    satellite: { enabled: true, setTime: null },
+    nightMask: { enabled: true, setTime: null },
+    moon: { enabled: true, setTime: null }
+  };
+  /**
+   * Helper functions for time manipulation
+   */
+  /**
+   * Floors a UTC timestamp to 00:00:00 UTC of that day
+   */
+  function floorToUtcDay(ms) {
+    var d = new Date(ms);
+    d.setUTCHours(0, 0, 0, 0);
+    return d.getTime();
+  }
+  /**
+   * Ceils a UTC timestamp to 23:59:59 UTC of that day
+   */
+  function ceilToUtcDayEnd(ms) {
+    var d = new Date(ms);
+    d.setUTCHours(23, 59, 59, 999);
+    return d.getTime();
+  }
+  /**
+   * Adds hours to a UTC timestamp
+   */
+  function addHours(ms, hours) {
+    return ms + (hours * 60 * 60 * 1000);
+  }
+  /**
+   * Formats a UTC timestamp as local time for display
+   * Format: DD/MM/YYYY, HH:MM (local)
+   */
+  function formatLocal(ms) {
+    var d = new Date(ms);
+    var day = String(d.getDate()).padStart(2, '0');
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var year = d.getFullYear();
+    var hours = String(d.getHours()).padStart(2, '0');
+    var minutes = String(d.getMinutes()).padStart(2, '0');
+    return day + "/" + month + "/" + year + ", " + hours + ":" + minutes;
+  }
+  /**
+   * Clamps a timestamp to the timeline range [startTimeUtcMs, endTimeUtcMs]
+   */
+  function clampTime(ms) {
+    if (startTimeUtcMs === null || endTimeUtcMs === null) {
+      return ms;
+    }
+    if (ms < startTimeUtcMs) return startTimeUtcMs;
+    if (ms > endTimeUtcMs) return endTimeUtcMs;
+    return ms;
+  }
+  /**
+   * Initializes the master timeline range
+   * startTime = 00:00 UTC of (today - 2 days)
+   * endTime = 23:59 UTC of (today + 2 days)
+   */
+  function initTimelineRange() {
+    var now = Date.now();
+    var todayUtc = floorToUtcDay(now);
+    startTimeUtcMs = addHours(todayUtc, -48); // -2 days
+    endTimeUtcMs = ceilToUtcDayEnd(addHours(todayUtc, 48)); // +2 days
+    if (currentTimeUtcMs === null) {
+      currentTimeUtcMs = now; // Start at current time
+    }
+    currentTimeUtcMs = clampTime(currentTimeUtcMs);
+  }
+  // To avoid hammering GIBS when imagery for a date is clearly unavailable,
+  // we track "blocked until" timestamps per base date (YYYY-MM-DD).
+  let gibsBlockedUntilByDate = {};
+  // Night + Moon state
+  let nightMaskCanvas = null;
+  let nightMaskOn = true;
+  let moonInfoOn = true;
+  let moonUpdateTimer = null;
+  // Состояние загрузки для spinner
+  let loadingState = {
+    forecast: false,
+    gibs: false,
+    radar: false
+  };
+  // In-memory cache для модельной облачности Open-Meteo.
+  // Ключ: `${lat.toFixed(2)}:${lon.toFixed(2)}:${hours}`
+  // Значение: { expires: number, data: ForecastGrid }
+  let forecastCache = {};
+  /**
+   * Layer adapter implementations
+   */
+  /**
+   * Finds the nearest frame in frames array by timestamp (Unix seconds)
+   * @param {Array} framesArr - Array of frame objects with .time property (Unix seconds)
+   * @param {number} timeUtcMs - UTC timestamp in milliseconds
+   * @returns {number} - Index of nearest frame, or -1 if not found
+   */
+  function findNearestFrameByTime(framesArr, timeUtcMs) {
+    if (!framesArr || framesArr.length === 0) return -1;
+    var timeSec = Math.floor(timeUtcMs / 1000);
+    var best = 0;
+    var bestDiff = Math.abs(framesArr[0].time - timeSec);
+    for (var i = 1; i < framesArr.length; i++) {
+      var d = Math.abs(framesArr[i].time - timeSec);
+      if (d < bestDiff) { bestDiff = d; best = i; }
+    }
+    return best;
+  }
+  /**
+   * Radar adapter: updates radar layer to nearest frame
+   */
+  function adapterRadarSetTime(tUtcMs) {
+    if (!radarOn || radarFrames.length === 0) {
+      if (radarLayer && map.hasLayer(radarLayer)) {
+        map.removeLayer(radarLayer);
+        radarLayer = null;
+      }
+      return;
+    }
+    var idx = findNearestFrameByTime(radarFrames, tUtcMs);
+    if (idx < 0) return;
+    var frame = radarFrames[idx];
+    if (!frame.path) return;
+    // Remove old layer
+    if (radarLayer) {
+      map.removeLayer(radarLayer);
+      radarLayer = null;
+    }
+    // Create new layer with updated URL
+    var url = rainviewerRadarTileUrl(frame.path);
+    radarLayer = L.tileLayer(url, {
+      opacity: 0.8,
+      maxZoom: 19,
+      attribution: "Precipitation © RainViewer"
+    });
+    if (radarOn) {
+      radarLayer.addTo(map);
+      radarLayer.setZIndex(600);
+    }
+  }
+  /**
+   * Satellite adapter: updates GIBS layer to nearest available date
+   */
+  function adapterSatelliteSetTime(tUtcMs) {
+    if (!gibsOn) {
+      if (gibsLayer && map.hasLayer(gibsLayer)) {
+        map.removeLayer(gibsLayer);
+        gibsLayer = null;
+      }
+      updateCloudSourceDisplay();
+      return;
+    }
+    // Map time to UTC date string (YYYY-MM-DD)
+    var date = new Date(tUtcMs);
+    var dateStr = formatDateUTC(date);
+    // Check if we already have this date loaded (simple check via stored date string)
+    if (gibsLayer && gibsLayer._gibsDateStr === dateStr) {
+      // Already loaded, no need to update
+      return;
+    }
+    // Remove old layer
+    if (gibsLayer && map.hasLayer(gibsLayer)) {
+      map.removeLayer(gibsLayer);
+    }
+    gibsLayer = null;
+    // Don't load future dates (GIBS doesn't have them)
+    var now = Date.now();
+    if (tUtcMs > now) {
+      updateGibsLegend(dateStr);
+      updateCloudSourceDisplay();
+      observedAvailable = false;
+      setMapLoading("gibs", false);
+      return;
+    }
+    setMapLoading("gibs", true);
+    var layer = makeGibsLayer(dateStr);
+    layer._gibsDateStr = dateStr; // Store date string for comparison
+    layer.addTo(map);
+    layer.setZIndex(500);
+    gibsLayer = layer;
+    // Update legend
+    updateGibsLegend(dateStr);
+    updateCloudSourceDisplay();
+    // Track tile errors to detect unavailability
+    var tileErrorCount = 0;
+    var tileLoadCount = 0;
+    var checkTimeout = null;
+    layer.on("tileload", function() {
+      tileLoadCount++;
+      if (tileLoadCount > 0 && gibsLayer === layer) {
+        setMapLoading("gibs", false);
+        observedAvailable = true;
+        updateCloudSourceDisplay();
+      }
+    });
+    layer.on("tileerror", function() {
+      tileErrorCount++;
+      // If we get many errors and no successful loads, mark as unavailable
+      if (checkTimeout) clearTimeout(checkTimeout);
+      checkTimeout = setTimeout(function() {
+        if (gibsLayer === layer && tileLoadCount === 0 && tileErrorCount > 3) {
+          setMapLoading("gibs", false);
+          observedAvailable = false;
+          updateCloudSourceDisplay();
+        }
+      }, 3000);
+    });
+  }
+  /**
+   * Night mask adapter: recomputes night mask for given time
+   */
+  function adapterNightMaskSetTime(tUtcMs) {
+    if (!nightMaskOn) {
+      if (nightMaskCanvas && nightMaskCanvas.parentNode) {
+        nightMaskCanvas.parentNode.removeChild(nightMaskCanvas);
+        nightMaskCanvas = null;
+      }
+      return;
+    }
+    var date = new Date(tUtcMs);
+    renderNightMask(date);
+  }
+  /**
+   * Moon adapter: updates moon info for given time
+   */
+  function adapterMoonSetTime(tUtcMs) {
+    if (!moonInfoOn) {
+      var moonPanel = document.getElementById("moonInfoPanel");
+      if (moonPanel) {
+        moonPanel.classList.add("hidden");
+      }
+      return;
+    }
+    var date = new Date(tUtcMs);
+    updateMoonInfo(date);
+  }
+  // Initialize layer adapters
+  layerAdapters.radar.setTime = adapterRadarSetTime;
+  layerAdapters.satellite.setTime = adapterSatelliteSetTime;
+  layerAdapters.nightMask.setTime = adapterNightMaskSetTime;
+  layerAdapters.moon.setTime = adapterMoonSetTime;
+  function rainviewerRadarTileUrl(path) {
+    return rainviewerHost + path + "/256/{z}/{x}/{y}/0/0_0.png";
+  }
+  function findNearestFrameIndex(framesArr, time) {
+    if (!framesArr || framesArr.length === 0) return -1;
+    var best = 0;
+    var bestDiff = Math.abs(framesArr[0].time - time);
+    for (var i = 1; i < framesArr.length; i++) {
+      var d = Math.abs(framesArr[i].time - time);
+      if (d < bestDiff) { bestDiff = d; best = i; }
+    }
+    return best;
+  }
+  // ---------- Open-Meteo forecast cloud grid (data only, no rendering yet) ----------
+  // Forecast functionality temporarily disabled - will be replaced with tile server backend
+  /*
+  function getForecastCacheKey(lat, lon, hours) {
+    return lat.toFixed(2) + ":" + lon.toFixed(2) + ":" + hours;
+  }
+  */
+  // Stub functions to prevent errors
+  function getForecastCacheKey(lat, lon, hours) {
+    return "";
+  }
+  /**
+   * Генерирует ключ кэша для bbox-based grid.
+   */
+  function getForecastBboxCacheKey(bounds, stepDeg, timeISO) {
+    var sw = bounds.getSouthWest();
+    var ne = bounds.getNorthEast();
+    var bboxKey = sw.lat.toFixed(2) + "," + sw.lng.toFixed(2) + ":" + 
+                  ne.lat.toFixed(2) + "," + ne.lng.toFixed(2) + ":" + 
+                  stepDeg.toFixed(2);
+    var timeKey = timeISO ? timeISO.substring(0, 13) : "current"; // округляем до часа
+    return "bbox:" + bboxKey + ":" + timeKey;
+  }
+  /**
+   * Вычисляет шаг сетки в градусах в зависимости от zoom уровня.
+   * Увеличены значения по умолчанию для уменьшения количества запросов.
+   */
+  function getForecastGridStepDeg(zoom) {
+    if (zoom <= 6) return 0.75;
+    if (zoom <= 8) return 0.50;
+    if (zoom <= 10) return 0.25;
+    return 0.15;
+  }
+  /**
+   * Строит простую сетку вокруг центра локации (для начальной загрузки).
+   * Возвращает { lats: number[], lons: number[], points: { lat, lon, iy, ix }[] }.
+   */
+  function buildForecastGridDefinitionSimple(centerLat, centerLon) {
+    var lats = [];
+    var lons = [];
+    var points = [];
+    var minLat = Math.max(-90, centerLat - FORECAST_SPAN_DEG);
+    var maxLat = Math.min(90, centerLat + FORECAST_SPAN_DEG);
+    var minLon = Math.max(-180, centerLon - FORECAST_SPAN_DEG);
+    var maxLon = Math.min(180, centerLon + FORECAST_SPAN_DEG);
+    for (var lat = minLat; lat <= maxLat + 1e-6; lat += FORECAST_STEP_DEG) {
+      lats.push(parseFloat(lat.toFixed(3)));
+    }
+    for (var lon = minLon; lon <= maxLon + 1e-6; lon += FORECAST_STEP_DEG) {
+      lons.push(parseFloat(lon.toFixed(3)));
+    }
+    for (var iy = 0; iy < lats.length; iy++) {
+      for (var ix = 0; ix < lons.length; ix++) {
+        points.push({
+          lat: lats[iy],
+          lon: lons[ix],
+          iy: iy,
+          ix: ix
+        });
+      }
+    }
+    return { lats: lats, lons: lons, points: points };
+  }
+  /**
+   * Строит определение регулярной сетки по bounds карты с адаптивным разрешением.
+   * Возвращает { lats: number[], lons: number[], points: { lat, lon, iy, ix }[], stepDeg: number, bounds: L.LatLngBounds }.
+   */
+  function buildForecastGridDefinitionFromBounds(bounds, zoom) {
+    var lats = [];
+    var lons = [];
+    var points = [];
+    var stepDeg = getForecastGridStepDeg(zoom);
+    var minLat = Math.max(-90, bounds.getSouth());
+    var maxLat = Math.min(90, bounds.getNorth());
+    var minLon = Math.max(-180, bounds.getWest());
+    var maxLon = Math.min(180, bounds.getEast());
+    // Вычисляем количество точек
+    var latSpan = maxLat - minLat;
+    var lonSpan = maxLon - minLon;
+    var latCount = Math.ceil(latSpan / stepDeg) + 1;
+    var lonCount = Math.ceil(lonSpan / stepDeg) + 1;
+    var totalPoints = latCount * lonCount;
+    // Если точек слишком много, увеличиваем step до допустимого предела
+    while (totalPoints > FORECAST_MAX_POINTS && stepDeg < 1.0) {
+      stepDeg *= 2;
+      latCount = Math.ceil(latSpan / stepDeg) + 1;
+      lonCount = Math.ceil(lonSpan / stepDeg) + 1;
+      totalPoints = latCount * lonCount;
+    }
+    // Генерируем сетку
+    for (var lat = minLat; lat <= maxLat + 1e-6; lat += stepDeg) {
+      lats.push(parseFloat(lat.toFixed(3)));
+    }
+    for (var lon = minLon; lon <= maxLon + 1e-6; lon += stepDeg) {
+      lons.push(parseFloat(lon.toFixed(3)));
+    }
+    for (var iy = 0; iy < lats.length; iy++) {
+      for (var ix = 0; ix < lons.length; ix++) {
+        points.push({
+          lat: lats[iy],
+          lon: lons[ix],
+          iy: iy,
+          ix: ix
+        });
+      }
+    }
+    return { lats: lats, lons: lons, points: points, stepDeg: stepDeg, bounds: bounds };
+  }
+  /**
+   * Делает один запрос в Open-Meteo для точки lat/lon с retry при 429.
+   * Возвращает Promise<{ times: string[], values: number[] }>.
+   */
+  function fetchOpenMeteoPoint(lat, lon, hours, retryCount) {
+    retryCount = retryCount || 0;
+    var url = OPEN_METEO_ENDPOINT
+      + "?latitude=" + encodeURIComponent(lat)
+      + "&longitude=" + encodeURIComponent(lon)
+      + "&hourly=cloudcover"
+      + "&timezone=UTC"
+      + "&forecast_days=" + Math.ceil(hours / 24);
+    return fetch(url)
+      .then(function (res) {
+        if (res.status === 429 && retryCount < 2) {
+          // Rate limit - retry после задержки
+          return new Promise(function(resolve) {
+            setTimeout(function() {
+              fetchOpenMeteoPoint(lat, lon, hours, retryCount + 1)
+                .then(resolve)
+                .catch(function(err) {
+                  resolve({ times: [], values: [] }); // возвращаем пустые данные при ошибке
+                });
+            }, FORECAST_RETRY_DELAY_MS * (retryCount + 1));
+          });
+        }
+        if (!res.ok) {
+          throw new Error("Open-Meteo HTTP " + res.status);
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        var hourly = data && data.hourly;
+        if (!hourly || !hourly.time || !hourly.cloudcover) {
+          throw new Error("Open-Meteo: missing hourly.cloudcover");
+        }
+        var times = hourly.time;
+        var vals = hourly.cloudcover;
+        // Нормализуем к 0..100 и обрезаем длину до FORECAST_HOURS
+        var n = Math.min(times.length, FORECAST_HOURS);
+        var outTimes = [];
+        var outVals = [];
+        for (var i = 0; i < n; i++) {
+          outTimes.push(times[i]);
+          var v = vals[i];
+          if (v == null || isNaN(v)) v = 0;
+          v = Math.max(0, Math.min(100, v));
+          outVals.push(v);
+        }
+        return { times: outTimes, values: outVals };
+      });
+  }
+  /**
+   * Строит time-indexed forecast grid по bounds карты с адаптивным разрешением.
+   * Возвращает Promise<{
+   *   times: string[],            // ISO timestamps (UTC) длиной H (<= FORECAST_HOURS)
+   *   lats: number[],
+   *   lons: number[],
+   *   values: number[][][]        // [t][iy][ix] в процентах (0..100)
+   *   stepDeg: number,
+   *   bounds: L.LatLngBounds
+   * }>.
+   */
+  /**
+   * Простая функция загрузки forecast grid по центру локации (для начального показа).
+   * Возвращает Promise<{ times: string[], lats: number[], lons: number[], values: number[][][] }>.
+   */
+  function buildForecastGridSimple(centerLat, centerLon, hours) {
+    var cacheKey = getForecastCacheKey(centerLat, centerLon, hours);
+    var cached = forecastCache[cacheKey];
+    var now = Date.now();
+    if (cached && cached.expires > now && cached.data) {
+      console.log("[buildForecastGridSimple] Returning cached data");
+      return Promise.resolve(cached.data);
+    }
+    var def = buildForecastGridDefinitionSimple(centerLat, centerLon);
+    var points = def.points;
+    console.log("[buildForecastGridSimple] Grid definition:", points.length, "points");
+    if (points.length === 0) {
+      return Promise.resolve(null);
+    }
+    var times = null;
+    var H = 0;
+    var ny = def.lats.length;
+    var nx = def.lons.length;
+    var values = null;
+    var results = new Array(points.length);
+    var index = 0;
+    var active = 0;
+    return new Promise(function (resolve, reject) {
+      var resolved = false;
+      function safeResolve(data) {
+        if (resolved) return;
+        resolved = true;
+        console.log("[buildForecastGridSimple] Resolving with:", data ? "data" : "null");
+        resolve(data);
+      }
+      function next() {
+        if (index >= points.length && active === 0) {
+          console.log("[buildForecastGridSimple] All requests completed, times:", times ? "has" : "null");
+          if (!times) {
+            console.log("[buildForecastGridSimple] No times data, resolving with null");
+            safeResolve(null);
+            return;
+          }
+          var data = { 
+            times: times, 
+            lats: def.lats, 
+            lons: def.lons, 
+            values: values
+          };
+          forecastCache[cacheKey] = {
+            expires: Date.now() + FORECAST_CACHE_TTL_MS,
+            data: data
+          };
+          console.log("[buildForecastGridSimple] Resolving with data:", data.lats.length, "x", data.lons.length);
+          safeResolve(data);
+          return;
+        }
+        if (index >= points.length) {
+          // Все запросы запущены, ждем их завершения
+          return;
+        }
+        var started = 0;
+        while (active < FORECAST_MAX_CONCURRENCY && index < points.length) {
+          (function (idx) {
+            var p = points[idx];
+            active++;
+            started++;
+            // Убираем избыточное логирование для производительности
+            if (idx % 20 === 0) {
+              console.log("[buildForecastGridSimple] Starting request", idx, "/", points.length, "active:", active);
+            }
+            // Убираем задержку - параллелизм уже ограничивает нагрузку
+            var requestTimeout = setTimeout(function() {
+              console.warn("[buildForecastGridSimple] Request timeout for point", idx);
+              active--;
+              next();
+            }, 30000);
+            fetchOpenMeteoPoint(p.lat, p.lon, hours)
+              .then(function (res) {
+                clearTimeout(requestTimeout);
+                if (idx % 20 === 0) {
+                  console.log("[buildForecastGridSimple] Request", idx, "completed");
+                }
+                results[idx] = res;
+                if (!times) {
+                  times = res.times;
+                  H = times.length;
+                  values = new Array(H);
+                  for (var t = 0; t < H; t++) {
+                    values[t] = new Array(ny);
+                    for (var iy = 0; iy < ny; iy++) {
+                      values[t][iy] = new Array(nx);
+                      for (var ix = 0; ix < nx; ix++) {
+                        values[t][iy][ix] = 0;
+                      }
+                    }
+                  }
+                  console.log("[buildForecastGridSimple] Initialized values array:", H, "hours");
+                }
+                if (res.values && res.values.length === H) {
+                  for (var t2 = 0; t2 < H; t2++) {
+                    values[t2][p.iy][p.ix] = res.values[t2];
+                  }
+                }
+              })
+              .catch(function (err) {
+                clearTimeout(requestTimeout);
+                if (err && err.message && !err.message.includes("429")) {
+                  console.warn("[buildForecastGridSimple] Request", idx, "failed:", err.message);
+                }
+              })
+              .finally(function () {
+                active--;
+                next();
+              });
+          })(index++);
+        }
+        if (started > 0 && index % 20 === 0) {
+          console.log("[buildForecastGridSimple] Progress:", index, "/", points.length, "active:", active);
+        }
+      }
+      var safetyTimeout = setTimeout(function() {
+        if (!resolved) {
+          console.warn("[buildForecastGridSimple] Safety timeout, resolving with null");
+          safeResolve(null);
+        }
+      }, 120000);
+      var originalResolve = safeResolve;
+      safeResolve = function(data) {
+        clearTimeout(safetyTimeout);
+        originalResolve(data);
+      };
+      next();
+    });
+  }
+  function buildForecastGridFromBounds(bounds, zoom, hours, targetTimeISO) {
+    console.log("[buildForecastGridFromBounds] Called with bounds:", bounds.toString(), "zoom:", zoom);
+    var stepDeg = getForecastGridStepDeg(zoom);
+    var cacheKey = getForecastBboxCacheKey(bounds, stepDeg, targetTimeISO);
+    var cached = forecastCache[cacheKey];
+    var now = Date.now();
+    if (cached && cached.expires > now && cached.data) {
+      console.log("[buildForecastGridFromBounds] Returning cached data");
+      return Promise.resolve(cached.data);
+    }
+    console.log("[buildForecastGridFromBounds] Cache miss, fetching new data");
+    var def = buildForecastGridDefinitionFromBounds(bounds, zoom);
+    var points = def.points;
+    console.log("[buildForecastGridFromBounds] Grid definition:", points.length, "points");
+    if (points.length === 0) {
+      console.log("[buildForecastGridFromBounds] No points, resolving with null");
+      return Promise.resolve(null);
+    }
+    var times = null;
+    var H = 0;
+    var ny = def.lats.length;
+    var nx = def.lons.length;
+    var values = null; // заполним позже [H][ny][nx]
+    var results = new Array(points.length);
+    var index = 0;
+    var active = 0;
+    console.log("[buildForecastGridFromBounds] Creating Promise for", points.length, "points");
+    return new Promise(function (resolve, reject) {
+      var resolved = false;
+      function safeResolve(data) {
+        if (resolved) {
+          console.warn("[buildForecastGridFromBounds] Attempted to resolve already resolved promise");
+          return;
+        }
+        resolved = true;
+        console.log("[buildForecastGridFromBounds] safeResolve called with:", data ? "data" : "null");
+        resolve(data);
+      }
+      function next() {
+        // Убираем избыточное логирование
+        if (index % 10 === 0 || index >= points.length) {
+          console.log("[buildForecastGridFromBounds] next() called, index:", index, "active:", active, "points.length:", points.length);
+        }
+        if (index >= points.length && active === 0) {
+          console.log("[buildForecastGridFromBounds] All requests completed, times:", times ? "has" : "null");
+          if (!times) {
+            console.log("[buildForecastGridFromBounds] No times data, resolving with null");
+            safeResolve(null);
+            return;
+          }
+          var data = { 
+            times: times, 
+            lats: def.lats, 
+            lons: def.lons, 
+            values: values,
+            stepDeg: def.stepDeg,
+            bounds: def.bounds
+          };
+          forecastCache[cacheKey] = {
+            expires: Date.now() + FORECAST_CACHE_TTL_MS,
+            data: data
+          };
+          console.log("[buildForecastGridFromBounds] Resolving with data:", data.lats.length, "x", data.lons.length);
+          safeResolve(data);
+          return;
+        }
+        // Если все запросы запущены, но еще активны, просто ждем
+        if (index >= points.length) {
+          return;
+        }
+        while (active < FORECAST_MAX_CONCURRENCY && index < points.length) {
+          (function (idx) {
+            var p = points[idx];
+            active++;
+            var requestStartTime = Date.now();
+            // Добавляем небольшую задержку между запросами
+            setTimeout(function() {
+              var fetchPromise = fetchOpenMeteoPoint(p.lat, p.lon, hours);
+              // Добавляем таймаут для каждого запроса
+              var requestTimeout = setTimeout(function() {
+                console.warn("[buildForecastGridFromBounds] Request timeout for point", idx, p.lat, p.lon);
+                active--;
+                next();
+              }, 30000); // 30 секунд на запрос
+              fetchPromise
+                .then(function (res) {
+                  clearTimeout(requestTimeout);
+                  results[idx] = res;
+                  if (!times) {
+                    times = res.times;
+                    H = times.length;
+                    values = new Array(H);
+                    for (var t = 0; t < H; t++) {
+                      values[t] = new Array(ny);
+                      for (var iy = 0; iy < ny; iy++) {
+                        values[t][iy] = new Array(nx);
+                        for (var ix = 0; ix < nx; ix++) {
+                          values[t][iy][ix] = 0;
+                        }
+                      }
+                    }
+                  }
+                  if (res.values && res.values.length === H) {
+                    for (var t2 = 0; t2 < H; t2++) {
+                      values[t2][p.iy][p.ix] = res.values[t2];
+                    }
+                  }
+                })
+                .catch(function (err) {
+                  clearTimeout(requestTimeout);
+                  // Подавляем предупреждения для 429, так как они обрабатываются через retry
+                  if (err && err.message && !err.message.includes("429") && !err.message.includes("HTTP 429")) {
+                    // Только логируем не-429 ошибки
+                  }
+                  // Оставляем нули в grid для этой точки
+                })
+                .finally(function () {
+                  active--;
+                  next();
+                });
+            }, idx * FORECAST_REQUEST_DELAY_MS);
+          })(index++);
+        }
+      }
+      // Добавляем таймаут на случай, если все запросы зависнут
+      var safetyTimeout = setTimeout(function() {
+        if (!resolved) {
+          console.warn("[buildForecastGridFromBounds] Safety timeout reached, resolving with null");
+          safeResolve(null);
+        }
+      }, 120000); // 2 минуты максимум
+      // Очищаем таймаут при успешном резолве
+      var originalResolve = safeResolve;
+      safeResolve = function(data) {
+        clearTimeout(safetyTimeout);
+        originalResolve(data);
+      };
+      next();
+    });
+  }
+  // ---------- Forecast cloud canvas overlay rendering ----------
+  // Forecast rendering functions temporarily disabled - will be replaced with tile server backend
+  /*
+  // Находит ближайший индекс времени в forecast grid для заданного timestamp (секунды с epoch).
+  function findForecastTimeIndex(grid, targetTimestampSec) {
+    if (!grid || !grid.times || grid.times.length === 0) return -1;
+    var targetTime = new Date(targetTimestampSec * 1000).toISOString();
+    var bestIdx = 0;
+    var bestDiff = Infinity;
+    for (var i = 0; i < grid.times.length; i++) {
+      var t = grid.times[i];
+      var diff = Math.abs(new Date(t).getTime() - new Date(targetTime).getTime());
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = i;
+      }
+    }
+    return bestDiff < 2 * 3600 * 1000 ? bestIdx : -1; // допуск 2 часа
+  }
+  // Создает или обновляет canvas overlay для forecast clouds.
+  // Рендерит grid на canvas с blur и размытием.
+  function renderForecastCanvasOverlay(grid, tIndex, blurPx, opacity) {
+    console.log("[renderForecastCanvasOverlay] Called with tIndex:", tIndex, "blur:", blurPx, "opacity:", opacity);
+    if (!map || !grid || tIndex < 0 || tIndex >= grid.times.length) {
+      console.warn("renderForecastCanvasOverlay: invalid params", { map: !!map, grid: !!grid, tIndex, timesLength: grid ? grid.times.length : 0 });
+      return;
+    }
+    var ny = grid.lats.length;
+    var nx = grid.lons.length;
+    var values = grid.values[tIndex];
+    console.log("[renderForecastCanvasOverlay] Grid size:", ny, "x", nx, "values:", values ? "exists" : "null", values ? values.length : 0);
+    if (!values || values.length !== ny) {
+      console.warn("renderForecastCanvasOverlay: invalid values", { values: !!values, valuesLength: values ? values.length : 0, ny });
+      return;
+    }
+    // Проверяем, есть ли ненулевые значения
+    var hasNonZeroValues = false;
+    var maxValue = 0;
+    for (var iy = 0; iy < ny; iy++) {
+      for (var ix = 0; ix < nx; ix++) {
+        var v = values[iy][ix] || 0;
+        if (v > 0) hasNonZeroValues = true;
+        if (v > maxValue) maxValue = v;
+      }
+    }
+    console.log("[renderForecastCanvasOverlay] Data check - hasNonZero:", hasNonZeroValues, "maxValue:", maxValue);
+    // Получаем размеры контейнера карты
+    var container = map.getContainer();
+    var width = container.offsetWidth || container.clientWidth;
+    var height = container.offsetHeight || container.clientHeight;
+    // Если размеры не определены, используем размеры карты
+    if (width === 0 || height === 0) {
+      var mapSize = map.getSize();
+      width = mapSize.x || 800;
+      height = mapSize.y || 600;
+    }
+    if (width === 0 || height === 0) {
+      console.warn("[renderForecastCanvasOverlay] Invalid canvas size:", width, "x", height);
+      return;
+    }
+    console.log("[renderForecastCanvasOverlay] Container size:", container.offsetWidth, "x", container.offsetHeight, "canvas:", width, "x", height);
+    // Создаем или получаем canvas
+    var oldWidth = forecastCanvas ? forecastCanvas.width : 0;
+    var oldHeight = forecastCanvas ? forecastCanvas.height : 0;
+    // Если размер изменился, пересоздаем canvas для гарантированной очистки
+    if (!forecastCanvas || oldWidth !== width || oldHeight !== height) {
+      if (forecastCanvas && forecastCanvas.parentNode) {
+        forecastCanvas.parentNode.removeChild(forecastCanvas);
+      }
+      forecastCanvas = document.createElement("canvas");
+      forecastCanvas.id = "forecastCanvasOverlay";
+      container.appendChild(forecastCanvas);
+      console.log("[renderForecastCanvasOverlay] Canvas created/recreated, size:", width, "x", height, "old:", oldWidth, "x", oldHeight);
+    }
+    // Устанавливаем стили для правильного позиционирования
+    forecastCanvas.style.position = "absolute";
+    forecastCanvas.style.top = "0";
+    forecastCanvas.style.left = "0";
+    forecastCanvas.style.width = width + "px";
+    forecastCanvas.style.height = height + "px";
+    forecastCanvas.style.pointerEvents = "none";
+    forecastCanvas.style.zIndex = "550";
+    forecastCanvas.style.display = "block";
+    // Устанавливаем размеры canvas элемента (это автоматически очищает canvas)
+    forecastCanvas.width = width;
+    forecastCanvas.height = height;
+    var ctx = forecastCanvas.getContext("2d", { willReadFrequently: false });
+    // Дополнительно очищаем canvas
+    ctx.clearRect(0, 0, width, height);
+    console.log("[renderForecastCanvasOverlay] Canvas prepared, size:", width, "x", height);
+    // Создаем временный canvas для рендеринга с высоким разрешением
+    var renderScale = 2; // для более плавного рендеринга
+    var renderW = width * renderScale;
+    var renderH = height * renderScale;
+    var renderCanvas = document.createElement("canvas");
+    renderCanvas.width = renderW;
+    renderCanvas.height = renderH;
+    var renderCtx = renderCanvas.getContext("2d", { willReadFrequently: false });
+    var renderImageData = renderCtx.createImageData(renderW, renderH);
+    // Рендерим grid на render canvas через интерполяцию
+    // Canvas должен покрывать весь viewport карты
+    var bounds = map.getBounds();
+    var gridMinLat = grid.lats[0];
+    var gridMaxLat = grid.lats[ny - 1];
+    var gridMinLon = grid.lons[0];
+    var gridMaxLon = grid.lons[nx - 1];
+    // Сначала заполняем весь canvas прозрачным цветом
+    for (var i = 0; i < renderImageData.data.length; i += 4) {
+      renderImageData.data[i] = 0;     // R
+      renderImageData.data[i + 1] = 0; // G
+      renderImageData.data[i + 2] = 0; // B
+      renderImageData.data[i + 3] = 0; // A (прозрачный)
+    }
+    // Теперь рендерим только те пиксели, которые попадают в grid
+    for (var py = 0; py < renderH; py++) {
+      for (var px = 0; px < renderW; px++) {
+        // Преобразуем пиксель обратно в lat/lon
+        var containerPoint = L.point(px / renderScale, py / renderScale);
+        var latLng = map.containerPointToLatLng(containerPoint);
+        // Интерполируем значение из grid
+        var lat = latLng.lat;
+        var lon = latLng.lng;
+        // Проверяем, находится ли точка в пределах grid данных
+        if (lat < gridMinLat || lat > gridMaxLat || lon < gridMinLon || lon > gridMaxLon) {
+          // Точка вне grid - уже прозрачная (заполнили выше), пропускаем
+          continue;
+        }
+        // Находим ближайшие точки в grid
+        var iy = 0;
+        var ix = 0;
+        for (var i = 0; i < ny - 1; i++) {
+          if (lat >= grid.lats[i] && lat <= grid.lats[i + 1]) {
+            iy = i;
+            break;
+          }
+        }
+        if (iy === 0 && lat < grid.lats[0]) iy = 0;
+        if (iy === ny - 2 && lat > grid.lats[ny - 1]) iy = ny - 2;
+        for (var j = 0; j < nx - 1; j++) {
+          if (lon >= grid.lons[j] && lon <= grid.lons[j + 1]) {
+            ix = j;
+            break;
+          }
+        }
+        if (ix === 0 && lon < grid.lons[0]) ix = 0;
+        if (ix === nx - 2 && lon > grid.lons[nx - 1]) ix = nx - 2;
+        var iy1 = Math.min(iy + 1, ny - 1);
+        var ix1 = Math.min(ix + 1, nx - 1);
+        // Bilinear interpolation
+        var dy = ny > 1 ? (lat - grid.lats[iy]) / (grid.lats[iy1] - grid.lats[iy] || 1) : 0;
+        var dx = nx > 1 ? (lon - grid.lons[ix]) / (grid.lons[ix1] - grid.lons[ix] || 1) : 0;
+        dy = Math.max(0, Math.min(1, dy));
+        dx = Math.max(0, Math.min(1, dx));
+        var v00 = values[iy][ix] || 0;
+        var v01 = values[iy][ix1] || 0;
+        var v10 = values[iy1][ix] || 0;
+        var v11 = values[iy1][ix1] || 0;
+        var v0 = v00 * (1 - dx) + v01 * dx;
+        var v1 = v10 * (1 - dx) + v11 * dx;
+        var cloudcover = v0 * (1 - dy) + v1 * dy;
+        // Маппинг cloudcover 0..100 → alpha
+        var maxAlpha = Math.round(160 * opacity * (cloudcover / 100));
+        var gray = 240;
+        var idx = (py * renderW + px) * 4;
+        renderImageData.data[idx] = gray;
+        renderImageData.data[idx + 1] = gray;
+        renderImageData.data[idx + 2] = gray;
+        renderImageData.data[idx + 3] = maxAlpha;
+      }
+    }
+    renderCtx.putImageData(renderImageData, 0, 0);
+    // Применяем blur к render canvas
+    if (blurPx > 0) {
+      renderCtx.filter = "blur(" + (blurPx * renderScale) + "px)";
+      var blurred = document.createElement("canvas");
+      blurred.width = renderW;
+      blurred.height = renderH;
+      var blurredCtx = blurred.getContext("2d");
+      blurredCtx.drawImage(renderCanvas, 0, 0);
+      renderCanvas = blurred;
+      renderCtx = blurredCtx;
+    }
+    // Масштабируем на основной canvas
+    // Используем globalCompositeOperation для правильного наложения
+    ctx.globalCompositeOperation = "source-over";
+    ctx.drawImage(renderCanvas, 0, 0, width, height);
+    // Убеждаемся, что canvas полностью обновлен
+    ctx.globalCompositeOperation = "source-over";
+    forecastLastUpdateTime = new Date();
+    // Проверяем, что canvas действительно виден
+    setTimeout(function() {
+      var rect = forecastCanvas.getBoundingClientRect();
+      var computedStyle = window.getComputedStyle(forecastCanvas);
+      console.log("[renderForecastCanvasOverlay] Rendering complete.");
+      console.log("[renderForecastCanvasOverlay] Canvas computed style - display:", computedStyle.display, "visibility:", computedStyle.visibility, "opacity:", computedStyle.opacity);
+      console.log("[renderForecastCanvasOverlay] Canvas position:", rect.left, rect.top, "size:", rect.width, "x", rect.height);
+      console.log("[renderForecastCanvasOverlay] Canvas element size:", forecastCanvas.width, "x", forecastCanvas.height);
+      // Проверяем, есть ли пиксели на canvas
+      var imageData = ctx.getImageData(0, 0, Math.min(100, width), Math.min(100, height));
+      var hasPixels = false;
+      for (var i = 3; i < imageData.data.length; i += 4) {
+        if (imageData.data[i] > 0) {
+          hasPixels = true;
+          break;
+        }
+      }
+      console.log("[renderForecastCanvasOverlay] Canvas has non-transparent pixels:", hasPixels);
+    }, 100);
+  }
+  */
+  // Forecast functions temporarily disabled - will be replaced with tile server backend
+  /*
+  // Обновляет forecast cloud overlay на карте (динамически по текущим bounds).
+  function updateForecastLayer() {
+    if (!map || !forecastOn) {
+      setMapLoading("forecast", false); // Убеждаемся, что спиннер выключен
+      if (forecastCanvas && forecastCanvas.parentNode) {
+        forecastCanvas.parentNode.removeChild(forecastCanvas);
+        forecastCanvas = null;
+      }
+      updateCloudSourceDisplay();
+      return;
+    }
+    var bounds = map.getBounds();
+    var zoom = map.getZoom();
+    // Определяем текущий time index из таймлайна
+    var targetTimeISO = null;
+    var tIndex = -1;
+    if (frames.length > 0 && currentFrameIdx >= 0 && currentFrameIdx < frames.length) {
+      var frameTime = frames[currentFrameIdx].time;
+      targetTimeISO = new Date(frameTime * 1000).toISOString();
+    }
+    // Для начальной загрузки используем простую логику по центру локации
+    // Если grid уже загружен, просто перерисовываем
+    if (forecastGrid) {
+      setMapLoading("forecast", false);
+      var frameTime = null;
+      if (frames.length > 0 && currentFrameIdx >= 0 && currentFrameIdx < frames.length) {
+        frameTime = frames[currentFrameIdx].time;
+      } else if (forecastGrid.times && forecastGrid.times.length > 0) {
+        frameTime = Math.floor(new Date(forecastGrid.times[0]).getTime() / 1000);
+      }
+      if (frameTime !== null) {
+        tIndex = findForecastTimeIndex(forecastGrid, frameTime);
+        if (tIndex >= 0) {
+          renderForecastCanvasOverlay(forecastGrid, tIndex, forecastBlurPx, forecastOpacity);
+          updateCloudSourceDisplay();
+          updateForecastStatus();
+        } else if (forecastGrid.times && forecastGrid.times.length > 0) {
+          renderForecastCanvasOverlay(forecastGrid, 0, forecastBlurPx, forecastOpacity);
+          updateCloudSourceDisplay();
+          updateForecastStatus();
+        }
+      }
+      return;
+    }
+    // Загружаем grid по центру локации (простая логика для начального показа)
+    var centerLat = currentCenter[0];
+    var centerLon = currentCenter[1];
+    var cacheKey = getForecastCacheKey(centerLat, centerLon, FORECAST_HOURS);
+    var cached = forecastCache[cacheKey];
+    var now = Date.now();
+    var isCached = cached && cached.expires > now && cached.data;
+    if (!isCached) {
+      setMapLoading("forecast", true);
+    }
+    console.log("[updateForecastLayer] Loading forecast grid for center:", centerLat, centerLon);
+    buildForecastGridSimple(centerLat, centerLon, FORECAST_HOURS)
+      .then(function (grid) {
+        console.log("[updateForecastLayer] Grid loaded/resolved:", grid ? "has grid" : "null");
+        if (!grid) {
+          setMapLoading("forecast", false);
+          return;
+        }
+        forecastGrid = grid;
+        console.log("Forecast grid loaded:", grid.lats.length, "x", grid.lons.length, "points", isCached ? "(cached)" : "(fresh)");
+        // Определяем time index для рендеринга
+        var frameTime = null;
+        if (frames.length > 0 && currentFrameIdx >= 0 && currentFrameIdx < frames.length) {
+          frameTime = frames[currentFrameIdx].time;
+        } else if (grid.times && grid.times.length > 0) {
+          frameTime = Math.floor(new Date(grid.times[0]).getTime() / 1000);
+        }
+        if (frameTime !== null) {
+          tIndex = findForecastTimeIndex(forecastGrid, frameTime);
+          console.log("Forecast time index:", tIndex, "for frame", frameTime);
+          if (tIndex >= 0) {
+            renderForecastCanvasOverlay(forecastGrid, tIndex, forecastBlurPx, forecastOpacity);
+            console.log("Forecast canvas rendered");
+          } else if (grid.times && grid.times.length > 0) {
+            console.log("Using index 0 as fallback");
+            renderForecastCanvasOverlay(forecastGrid, 0, forecastBlurPx, forecastOpacity);
+          }
+        } else if (grid.times && grid.times.length > 0) {
+          console.log("No frame time, using index 0");
+          renderForecastCanvasOverlay(forecastGrid, 0, forecastBlurPx, forecastOpacity);
+        }
+        setMapLoading("forecast", false);
+        updateCloudSourceDisplay();
+        updateForecastStatus();
+      })
+      .catch(function (err) {
+        console.warn("[updateForecastLayer] Failed to load forecast grid:", err);
+        setMapLoading("forecast", false);
+        updateCloudSourceDisplay();
+      });
+    return; // Прерываем выполнение, не используем bounds-based загрузку
+    // Проверяем кэш перед включением спиннера
+    var stepDeg = getForecastGridStepDeg(zoom);
+    var cacheKey = getForecastBboxCacheKey(bounds, stepDeg, targetTimeISO);
+    var cached = forecastCache[cacheKey];
+    var now = Date.now();
+    var isCached = cached && cached.expires > now && cached.data;
+    // Включаем спиннер только если данные не в кэше
+    if (!isCached) {
+      setMapLoading("forecast", true);
+    }
+    // Загружаем grid с гарантированным завершением
+    console.log("[updateForecastLayer] Starting buildForecastGridFromBounds");
+    // Используем setTimeout для гарантии асинхронности даже для кэша
+    setTimeout(function() {
+      var forecastPromise = buildForecastGridFromBounds(bounds, zoom, FORECAST_HOURS, targetTimeISO);
+      // Добавляем таймаут на случай, если Promise зависнет
+      var timeoutId = setTimeout(function() {
+        console.warn("[updateForecastLayer] Forecast grid load timeout after 30s, forcing hide spinner");
+        setMapLoading("forecast", false);
+      }, 30000);
+      forecastPromise.then(function (grid) {
+        clearTimeout(timeoutId);
+        console.log("[updateForecastLayer] Grid loaded/resolved:", grid ? "has grid" : "null");
+        if (!grid) {
+          console.log("[updateForecastLayer] Grid is null, hiding spinner");
+          setMapLoading("forecast", false);
+          return;
+        }
+        forecastGrid = grid;
+        console.log("Forecast grid loaded:", grid.lats.length, "x", grid.lons.length, "points", isCached ? "(cached)" : "(fresh)");
+        // Определяем time index для рендеринга
+        var frameTime = null;
+        if (frames.length > 0 && currentFrameIdx >= 0 && currentFrameIdx < frames.length) {
+          frameTime = frames[currentFrameIdx].time;
+        } else if (grid.times && grid.times.length > 0) {
+          // Если нет frames, используем первое время из grid (текущее)
+          frameTime = Math.floor(new Date(grid.times[0]).getTime() / 1000);
+        }
+        if (frameTime !== null) {
+          tIndex = findForecastTimeIndex(forecastGrid, frameTime);
+          console.log("Forecast time index:", tIndex, "for frame", frameTime, "times available:", grid.times ? grid.times.length : 0);
+          if (tIndex >= 0) {
+            renderForecastCanvasOverlay(forecastGrid, tIndex, forecastBlurPx, forecastOpacity);
+            console.log("Forecast canvas rendered");
+          } else {
+            console.warn("No valid time index found for forecast, trying index 0");
+            // Пробуем использовать первый доступный индекс
+            if (grid.times && grid.times.length > 0) {
+              renderForecastCanvasOverlay(forecastGrid, 0, forecastBlurPx, forecastOpacity);
+            }
+          }
+        } else {
+          console.warn("No frame time available, using index 0");
+          if (grid.times && grid.times.length > 0) {
+            renderForecastCanvasOverlay(forecastGrid, 0, forecastBlurPx, forecastOpacity);
+          }
+        }
+        // Всегда выключаем спиннер после загрузки
+        console.log("[updateForecastLayer] Hiding spinner after successful load");
+        setMapLoading("forecast", false);
+        updateCloudSourceDisplay();
+        updateForecastStatus();
+      }).catch(function (err) {
+        clearTimeout(timeoutId);
+        console.warn("[updateForecastLayer] Failed to load forecast grid:", err);
+        setMapLoading("forecast", false);
+        updateCloudSourceDisplay();
+      });
+    }, 0);
+  }
+  // Debounced версия updateForecastLayer для moveend/zoomend.
+  function updateForecastLayerDebounced() {
+    if (forecastUpdateTimer) {
+      clearTimeout(forecastUpdateTimer);
+    }
+    forecastUpdateTimer = setTimeout(function() {
+      updateForecastLayer();
+    }, FORECAST_UPDATE_DEBOUNCE_MS);
+  }
+  // Обновляет статус текст для forecast overlay.
+  function updateForecastStatus() {
+    if (!forecastGrid) return;
+    var statusEl = document.getElementById("forecastStatus");
+    if (!statusEl) return;
+    var stepDeg = forecastGrid.stepDeg || 0.25;
+    var blurPx = forecastBlurPx || 6;
+    var timeStr = forecastLastUpdateTime ? 
+      forecastLastUpdateTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : 
+      "—";
+    statusEl.textContent = "Model clouds: step " + stepDeg.toFixed(2) + "° • blur " + blurPx + "px • Last update: " + timeStr;
+  }
+  */
+  function formatDateUTC(date) {
+    var y = date.getUTCFullYear();
+    var m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    var d = String(date.getUTCDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+  function getGibsDateString() {
+    var now = new Date();
+    var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    var target = new Date(today.getTime());
+    var effectiveOffset = Math.min(gibsDayOffset || 0, 0); // Never go into future
+    if (effectiveOffset !== 0) {
+      target.setUTCDate(target.getUTCDate() + effectiveOffset);
+    }
+    var result = formatDateUTC(target);
+    var todayStr = formatDateUTC(today);
+    // Final safety check
+    if (result > todayStr) {
+      return todayStr;
+    }
+    return result;
+  }
+  // Build GIBS tile URL with explicit subdomain (no wildcard): use gibs-a, gibs-b, gibs-c only
+  function getGibsTileUrl(dateStr, coords) {
+    var s = GIBS_SUBDOMAINS[Math.abs((coords.x | 0) + (coords.y | 0)) % GIBS_SUBDOMAINS.length];
+    return "https://gibs-" + s + ".earthdata.nasa.gov/wmts/epsg3857/best/"
+      + GIBS_LAYER + "/default/" + dateStr + "/" + GIBS_TILEMATRIXSET + "/" + coords.z + "/" + coords.y + "/" + coords.x + ".jpg";
+  }
+  var GIBS_TILEERROR_THRESHOLD = 20;
+  var GIBS_TILEERROR_DEBOUNCE_MS = 1000;
+  var gibsLastTileErrorLog = 0;
+  function makeGibsLayer(dateStr) {
+    // Safety check: never load future dates
+    var now = new Date();
+    var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    var todayStr = formatDateUTC(today);
+    if (dateStr > todayStr) {
+      console.warn("[GIBS] Prevented future date in makeGibsLayer:", dateStr, "using today:", todayStr);
+      dateStr = todayStr;
+    }
+    var urlTemplate = "https://gibs-a.earthdata.nasa.gov/wmts/epsg3857/best/"
+      + GIBS_LAYER + "/default/" + dateStr + "/" + GIBS_TILEMATRIXSET + "/{z}/{y}/{x}.jpg";
+    var layer = L.tileLayer(urlTemplate, {
+      opacity: GIBS_OPACITY,
+      minZoom: 1,
+      maxZoom: 9,
+      maxNativeZoom: 9,
+      crossOrigin: true,
+      attribution: "Imagery © NASA GIBS",
+      getTileUrl: function (coords) {
+        return getGibsTileUrl(dateStr, coords);
+      }
+    });
+    var tileErrorCount = 0;
+    layer.on("tileerror", function (e) {
+      tileErrorCount++;
+      if (Date.now() - gibsLastTileErrorLog >= GIBS_TILEERROR_DEBOUNCE_MS) {
+        gibsLastTileErrorLog = Date.now();
+        console.warn("[GIBS tileerror]", tileErrorCount, "errors", e && e.coords);
+      }
+      if (tileErrorCount >= GIBS_TILEERROR_THRESHOLD && gibsLayer === layer && map && map.hasLayer(layer)) {
+        map.removeLayer(layer);
+        gibsLayer = null;
+        setMapLoading("gibs", false);
+        setStatus("Satellite unavailable for this date", true);
+        updateCloudSourceDisplay();
+        updateGibsDateSelector();
+      }
+    });
+    layer.on("load", function () {
+      if (Date.now() - gibsLastTileErrorLog >= GIBS_TILEERROR_DEBOUNCE_MS) {
+        console.log("[GIBS] load ok for", dateStr);
+      }
+    });
+    return layer;
+  }
+  function updateGibsLegend(dateStr, isFallback) {
+    var legend = document.getElementById("cloudLegend");
+    if (!legend) return;
+    if (!gibsOn || !gibsLayer) {
+      legend.style.display = "none";
+      return;
+    }
+    var titleEl = document.getElementById("cloudLegendTitle");
+    var dateEl = document.getElementById("cloudLegendDate");
+    if (titleEl) {
+      titleEl.textContent = "Satellite-like clouds (True Color)";
+    }
+    if (dateEl) {
+      dateEl.textContent = "Date: " + dateStr + " (UTC)" + (isFallback ? " (fallback)" : "");
+    }
+    legend.style.display = "block";
+  }
+  /**
+   * Обновляет UI селектора дат: отображает текущую дату и деактивирует кнопки при достижении границ.
+   */
+  function updateGibsDateSelector() {
+    var dateStr = getGibsDateString();
+    // Frame display now shows current time (not GIBS date)
+    var dateDisplay = document.getElementById("gibsDateDisplay");
+    if (dateDisplay) {
+      var now = Date.now();
+      dateDisplay.textContent = formatLocal(now);
+    }
+    // Обновляем дату в легенде
+    if (gibsOn && gibsLayer) {
+      updateGibsLegend(dateStr);
+    }
+    // Деактивируем кнопки при достижении границ
+    var btnPrevDay = document.getElementById("btnGibsPrevDay");
+    var btnNextDay = document.getElementById("btnGibsNextDay");
+    var btnToday = document.getElementById("btnGibsToday");
+    if (btnPrevDay) {
+      btnPrevDay.disabled = gibsDayOffset <= -2; // позавчера
+    }
+    if (btnNextDay) {
+      btnNextDay.disabled = gibsDayOffset >= 1; // Never allow future dates (tomorrow or later)
+    }
+    if (btnToday) {
+      btnToday.classList.toggle("primary", gibsDayOffset === 0);
+    }
+  }
+  var gibsAttemptId = 0;
+  /**
+   * Проверяет доступность GIBS тайла для заданной даты через probe (Image onload/onerror).
+   * Возвращает Promise<boolean>.
+   */
+  function probeGibsTile(dateStr, centerLat, centerLon, zoom) {
+    if (!map) return Promise.resolve(false);
+    zoom = zoom || 5;
+    // Получаем координаты тайла из lat/lon используя стандартную формулу Leaflet
+    var centerPoint = L.latLng(centerLat, centerLon);
+    var n = Math.pow(2, zoom);
+    var latRad = centerPoint.lat * Math.PI / 180;
+    var x = Math.floor((centerPoint.lng + 180) / 360 * n);
+    var y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+    var subdomain = GIBS_SUBDOMAINS[Math.abs(x + y) % GIBS_SUBDOMAINS.length];
+    var url = "https://gibs-" + subdomain + ".earthdata.nasa.gov/wmts/epsg3857/best/" + GIBS_LAYER +
+      "/default/" + dateStr + "/" + GIBS_TILEMATRIXSET + "/" + zoom + "/" + y + "/" + x + ".jpg";
+    return new Promise(function (resolve) {
+      var img = new Image();
+      var timeout = setTimeout(function () {
+        img.onload = null;
+        img.onerror = null;
+        resolve(false);
+      }, 3000);
+      img.onload = function () {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      img.onerror = function () {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      img.crossOrigin = "anonymous";
+      img.src = url;
+    });
+  }
+  function updateGibsLayer() {
+    if (!map) return;
+    if (gibsLayer && map.hasLayer(gibsLayer)) {
+      map.removeLayer(gibsLayer);
+    }
+    gibsLayer = null;
+    if (!gibsOn) {
+      updateGibsLegend(getGibsDateString());
+      updateGibsDateSelector();
+      observedAvailable = false;
+      updateCloudSourceDisplay();
+      setMapLoading("gibs", false);
+      return;
+    }
+    // Если мы в будущем (gibsDayOffset > 0), не загружаем GIBS - спутниковых данных нет
+    if (gibsDayOffset > 0) {
+      updateGibsLegend(getGibsDateString());
+      updateGibsDateSelector();
+      observedAvailable = false;
+      updateCloudSourceDisplay();
+      setMapLoading("gibs", false);
+      setStatus("GIBS imagery unavailable for future dates");
+      updateStatusIndicator();
+      return;
+    }
+    setMapLoading("gibs", true);
+    // Base date from current offset (0 = today). Fallback: try up to 7 days back.
+    // Never load future dates - GIBS doesn't have them.
+    var now = new Date();
+    var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    var todayStr = formatDateUTC(today);
+    var candidates = [];
+    // Clamp gibsDayOffset to prevent future dates (safety check)
+    var effectiveOffset = Math.min(gibsDayOffset, 0);
+    if (effectiveOffset < 0) {
+      for (var d = 0; d >= effectiveOffset && candidates.length < 7; d--) {
+        var checkDate = new Date(today.getTime());
+        checkDate.setUTCDate(checkDate.getUTCDate() + d);
+        candidates.push(formatDateUTC(checkDate));
+      }
+    }
+    if (candidates.length === 0) {
+      // Default: today and 6 days back
+      for (var d = 0; d < 7; d++) {
+        var checkDate = new Date(today.getTime());
+        checkDate.setUTCDate(checkDate.getUTCDate() - d);
+        candidates.push(formatDateUTC(checkDate));
+      }
+    }
+    // Final safety check: ensure no future dates in candidates
+    candidates = candidates.filter(function(dateStr) {
+      return dateStr <= todayStr; // Only past or today (string comparison works for YYYY-MM-DD)
+    });
+    if (candidates.length === 0) {
+      // Fallback to today if all filtered out
+      candidates = [todayStr];
+    }
+    var baseDateStr = candidates[0];
+    // Double-check: never use future dates
+    if (baseDateStr > todayStr) {
+      console.warn("[GIBS] Prevented future date:", baseDateStr, "using today:", todayStr);
+      baseDateStr = todayStr;
+      candidates = [todayStr];
+    }
+    // If we've recently determined that this base date has no imagery,
+    // don't keep hitting the server until the backoff expires.
+    var blockedUntil = gibsBlockedUntilByDate[baseDateStr];
+    if (blockedUntil && Date.now() < blockedUntil) {
+        updateGibsLegend(baseDateStr);
+        updateGibsDateSelector();
+        setMapLoading("gibs", false);
+        setStatus("GIBS imagery unavailable for selected date", true);
+        return;
+    }
+    var attemptId = ++gibsAttemptId;
+    function tryIndex(i) {
+      if (attemptId !== gibsAttemptId) return;
+      if (i >= candidates.length) {
+        var finalDate = candidates[0];
+        updateGibsLegend(finalDate);
+        updateGibsDateSelector();
+        setMapLoading("gibs", false);
+        // Back off further attempts for this base date for one hour.
+        gibsBlockedUntilByDate[baseDateStr] = Date.now() + 60 * 60 * 1000;
+        observedAvailable = false;
+        updateCloudSourceDisplay();
+        setStatus("GIBS imagery unavailable for selected date", true);
+        updateStatusIndicator(); // Обновляем индикатор после ошибки GIBS
+        return;
+      }
+      var dateStr = candidates[i];
+      var layer = makeGibsLayer(dateStr);
+      var loadedTiles = 0;
+      var fallbackTimer = setTimeout(function () {
+        if (attemptId !== gibsAttemptId) return;
+        if (loadedTiles === 0) {
+          if (map.hasLayer(layer)) {
+            map.removeLayer(layer);
+          }
+          // Не скрываем spinner здесь, т.к. переходим к следующей дате
+          tryIndex(i + 1);
+        }
+      }, 2500);
+      // Таймаут для гарантированного скрытия spinner через 10 секунд
+      var spinnerTimeout = setTimeout(function() {
+        if (attemptId === gibsAttemptId) {
+          setMapLoading("gibs", false);
+        }
+      }, 10000);
+      var tileLoadCount = 0;
+      var tileErrorCount = 0;
+      var spinnerHidden = false;
+      function hideSpinnerIfReady() {
+        if (spinnerHidden || attemptId !== gibsAttemptId) return;
+        // Скрываем spinner если загрузилось хотя бы несколько тайлов или прошло достаточно времени
+        if (tileLoadCount >= 3 || (tileLoadCount > 0 && tileErrorCount > 0 && tileLoadCount + tileErrorCount >= 10)) {
+          spinnerHidden = true;
+          clearTimeout(spinnerTimeout);
+          setMapLoading("gibs", false);
+        }
+      }
+      layer.on("tileload", function () {
+        loadedTiles += 1;
+        tileLoadCount += 1;
+        hideSpinnerIfReady();
+      });
+      layer.on("tileerror", function() {
+        tileErrorCount += 1;
+        hideSpinnerIfReady();
+      });
+      layer.addTo(map);
+      layer.setZIndex(500);
+      layer.bringToFront();
+      // Сразу устанавливаем gibsLayer и показываем слой (до завершения probe)
+      gibsLayer = layer;
+      observedAvailable = true; // Предполагаем доступность до проверки
+      updateCloudSourceDisplay();
+      layer.on("load", function () {
+        if (attemptId !== gibsAttemptId) return;
+        if (!map.hasLayer(layer)) return;
+        clearTimeout(fallbackTimer);
+        clearTimeout(spinnerTimeout);
+        spinnerHidden = true;
+        var isFallback = dateStr !== baseDateStr;
+        updateGibsLegend(dateStr, isFallback);
+        updateGibsDateSelector();
+        setMapLoading("gibs", false);
+        // Probe для более точного определения (но не блокируем показ)
+        probeGibsTile(dateStr, currentCenter[0], currentCenter[1], 5)
+          .then(function (available) {
+            if (attemptId === gibsAttemptId) {
+              observedAvailable = available;
+              updateCloudSourceDisplay();
+            }
+          })
+          .catch(function () {
+            // Не меняем observedAvailable, если probe упал - оставляем true, т.к. слой уже загрузился
+          });
+        setStatus("OK");
+        updateStatusIndicator(); // Обновляем индикатор после успешной загрузки GIBS
+      });
+    }
+    tryIndex(0);
+  }
+  /**
+   * Обновляет видимость слоёв и легенды: если GIBS доступен и включен - показываем его, иначе Forecast если включен.
+   */
+  function updateCloudSourceDisplay() {
+    if (!map) return;
+    var showGibs = false;
+    var showForecast = false;
+    var sourceText = "";
+    // Если GIBS доступен и включен - показываем его
+    if (observedAvailable && gibsOn && gibsLayer) {
+      showGibs = true;
+      // Forecast temporarily disabled
+      // showForecast = forecastOn && forecastGrid;
+      // sourceText = showForecast ? "Source: Observed (GIBS) + Forecast" : "Source: Observed (GIBS)";
+      sourceText = "Source: Observed (GIBS)";
+    } else if (gibsOn && gibsLayer) {
+      // Fallback: если GIBS включен, показываем его (может быть частично доступен)
+      showGibs = true;
+      // Forecast temporarily disabled
+      // showForecast = forecastOn && forecastGrid;
+      // sourceText = showForecast ? "Source: Observed (GIBS) + Forecast" : "Source: Observed (GIBS)";
+      sourceText = "Source: Observed (GIBS)";
+    }
+    // Forecast temporarily disabled
+    /*
+    else if (forecastOn && forecastGrid) {
+      // Если GIBS недоступен, показываем Forecast если включен
+      showGibs = false;
+      showForecast = true;
+      sourceText = "Source: Forecast (Open-Meteo)";
+    }
+    */
+    // Обновляем видимость GIBS слоя
+    if (gibsLayer) {
+      if (showGibs) {
+        // Если слой должен быть показан, добавляем его на карту
+        if (!map.hasLayer(gibsLayer)) {
+          gibsLayer.addTo(map);
+          gibsLayer.setZIndex(500);
+          gibsLayer.bringToFront();
+        }
+      } else {
+        // Если слой не должен быть показан, удаляем его
+        if (map.hasLayer(gibsLayer)) {
+          map.removeLayer(gibsLayer);
+        }
+      }
+    }
+    // Forecast canvas visibility temporarily disabled
+    /*
+    // Обновляем видимость Forecast canvas
+    if (forecastCanvas) {
+      forecastCanvas.style.display = showForecast ? "block" : "none";
+      console.log("[updateCloudSourceDisplay] Forecast canvas display:", forecastCanvas.style.display, "showForecast:", showForecast);
+    }
+    */
+    // Обновляем легенды
+    var gibsLegend = document.getElementById("cloudLegend");
+    if (gibsLegend) {
+      gibsLegend.style.display = showGibs && gibsLayer ? "block" : "none";
+    }
+    // Forecast legend temporarily disabled
+    /*
+    var forecastLegend = document.getElementById("forecastLegend");
+    var forecastLegendSource = document.getElementById("forecastLegendSource");
+    if (forecastLegend) {
+      forecastLegend.style.display = showForecast && forecastGrid ? "block" : "none";
+      if (forecastLegendSource) {
+        forecastLegendSource.textContent = sourceText;
+      }
+    }
+    */
+  }
+  function saveLayerState() {
+    try {
+      var state = {
+        terrainOn: terrainOn,
+        gibsOn: gibsOn,
+        // Forecast temporarily disabled
+        // forecastOn: forecastOn,
+        // forecastBlurPx: forecastBlurPx,
+        // forecastOpacity: forecastOpacity,
+        radarOn: radarOn,
+        hillshadeOn: hillshadeOn,
+        gibsDayOffset: gibsDayOffset
+      };
+      window.localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // ignore storage errors
+    }
+  }
+  function loadLayerState() {
+    try {
+      var raw = window.localStorage.getItem(STATE_STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+  function setStatus(text, isError) {
+    // setStatus теперь использует updateStatusIndicator для синхронизации
+    // Но для явных ошибок сразу устанавливаем error
+    if (isError) {
+      var indicator = document.getElementById("statusIndicator");
+      if (indicator) {
+        indicator.classList.remove("loading", "success");
+        indicator.classList.add("error");
+      }
+    } else if (text === "OK") {
+      // При успехе обновляем через updateStatusIndicator для проверки всех данных
+      updateStatusIndicator();
+    }
+  }
+  // ---------- Night Mask Functions ----------
+  /**
+   * Renders night mask overlay on canvas based on sun altitude.
+   * Uses discrete zones (civil twilight, astro twilight, night) without interpolation.
+   * @param {Date} date - The date/time to use for sun position calculation (UTC). If not provided, uses current time.
+   */
+  function renderNightMask(date) {
+    if (!date) {
+      date = new Date(); // Fallback to current time
+    }
+    if (!map || !nightMaskOn) {
+      if (nightMaskCanvas && nightMaskCanvas.parentNode) {
+        nightMaskCanvas.parentNode.removeChild(nightMaskCanvas);
+        nightMaskCanvas = null;
+      }
+      return;
+    }
+    var container = map.getContainer();
+    var width = container.offsetWidth || container.clientWidth;
+    var height = container.offsetHeight || container.clientHeight;
+    if (width === 0 || height === 0) {
+      var mapSize = map.getSize();
+      width = mapSize.x || 800;
+      height = mapSize.y || 600;
+    }
+    if (width === 0 || height === 0) return;
+    // Create or reuse canvas
+    if (!nightMaskCanvas) {
+      nightMaskCanvas = document.createElement("canvas");
+      nightMaskCanvas.id = "nightMaskCanvas";
+      container.appendChild(nightMaskCanvas);
+    }
+    nightMaskCanvas.style.position = "absolute";
+    nightMaskCanvas.style.top = "0";
+    nightMaskCanvas.style.left = "0";
+    nightMaskCanvas.style.width = width + "px";
+    nightMaskCanvas.style.height = height + "px";
+    nightMaskCanvas.style.pointerEvents = "none";
+    nightMaskCanvas.style.zIndex = "400";
+    nightMaskCanvas.width = width;
+    nightMaskCanvas.height = height;
+    // Get context for main canvas
+    var ctx = nightMaskCanvas.getContext("2d");
+    ctx.clearRect(0, 0, width, height);
+    // Check if SunCalc is available before starting calculations
+    var SunCalcLib = window.SunCalc || (typeof SunCalc !== "undefined" ? SunCalc : null);
+    if (!SunCalcLib) {
+      console.warn("SunCalc not loaded, skipping night mask");
+      return;
+    }
+    // Adaptive grid size based on aspect ratio
+    var aspectRatio = width / height;
+    var nx = Math.round(NIGHT_MASK_GRID_SIZE_X * aspectRatio);
+    var ny = NIGHT_MASK_GRID_SIZE_Y;
+    var cellW = width / nx;
+    var cellH = height / ny;
+    // Calculate sun altitude for each grid cell and draw discrete zones
+    for (var gy = 0; gy < ny; gy++) {
+      for (var gx = 0; gx < nx; gx++) {
+        // Calculate center of cell
+        var px = (gx + 0.5) * cellW;
+        var py = (gy + 0.5) * cellH;
+        var containerPoint = L.point(px, py);
+        var latLng = map.containerPointToLatLng(containerPoint);
+        // Get sun position
+        var sunPos = SunCalcLib.getPosition(date, latLng.lat, latLng.lng);
+        var sunAltDeg = sunPos.altitude * 180 / Math.PI; // Convert radians to degrees
+        // Determine zone based on sun altitude (discrete, no interpolation)
+        var alpha = 0;
+        if (sunAltDeg > CIVIL_TWILIGHT_DEG) {
+          // Day - no mask (alpha = 0, skip drawing)
+          continue;
+        } else if (sunAltDeg > ASTRO_TWILIGHT_DEG) {
+          // Civil twilight: -6 >= sunAltDeg > -12
+          alpha = CIVIL_TWILIGHT_ALPHA;
+        } else if (sunAltDeg > NIGHT_THRESHOLD_DEG) {
+          // Astronomical twilight: -12 >= sunAltDeg > -18
+          alpha = ASTRO_TWILIGHT_ALPHA;
+        } else {
+          // Night: sunAltDeg <= -18
+          alpha = NIGHT_ALPHA;
+        }
+        // Draw cell with overlap to prevent gaps
+        var x = gx * cellW - 0.5;
+        var y = gy * cellH - 0.5;
+        ctx.fillStyle = "rgba(0,0,0," + alpha + ")";
+        ctx.fillRect(x, y, cellW + 1, cellH + 1);
+      }
+    }
+  }
+  // Debounced version for map events (uses current scrubber time)
+  var nightMaskUpdateTimer = null;
+  function renderNightMaskDebounced() {
+    if (nightMaskUpdateTimer) {
+      clearTimeout(nightMaskUpdateTimer);
+    }
+    nightMaskUpdateTimer = setTimeout(function() {
+      if (currentTimeUtcMs !== null) {
+        var date = new Date(currentTimeUtcMs);
+        renderNightMask(date);
+      }
+    }, 100);
+  }
+  // ---------- Moon Info Functions ----------
+  /**
+   * Updates moon info panel with current moon phase, altitude, and azimuth.
+   * @param {Date} date - The date/time to use for moon calculation (UTC). If not provided, uses current time.
+   */
+  function updateMoonInfo(date) {
+    if (!map || !moonInfoOn) {
+      var moonPanel = document.getElementById("moonInfoPanel");
+      if (moonPanel) {
+        moonPanel.classList.add("hidden");
+      }
+      return;
+    }
+    var moonPanel = document.getElementById("moonInfoPanel");
+    if (!moonPanel) return;
+    moonPanel.classList.remove("hidden");
+    var center = map.getCenter();
+    if (!date) {
+      date = new Date(); // Fallback to current time
+    }
+    var SunCalcLib = window.SunCalc || (typeof SunCalc !== "undefined" ? SunCalc : null);
+    if (!SunCalcLib) {
+      console.warn("SunCalc not loaded");
+      return;
+    }
+    // Get moon illumination
+    var moonIllum = SunCalcLib.getMoonIllumination(date);
+    var fraction = moonIllum.fraction; // 0 = new moon, 1 = full moon (illumination)
+    var phase = moonIllum.phase; // 0-1, where 0/1 = new moon, 0.5 = full moon (phase)
+    // Get moon position
+    var moonPos = SunCalcLib.getMoonPosition(date, center.lat, center.lng);
+    var altDeg = moonPos.altitude * 180 / Math.PI;
+    var azDeg = moonPos.azimuth * 180 / Math.PI;
+    // Convert azimuth from south-based (SunCalc) to north-based (0-360)
+    azDeg = (azDeg + 180) % 360;
+    // Determine phase name and emoji based on phase value (not fraction!)
+    var phaseName = "New Moon";
+    var phaseEmoji = "🌑";
+    if (phase < MOON_PHASE_NEW_MAX || phase >= MOON_PHASE_WANING_CRESCENT_MAX) {
+      phaseName = "New Moon";
+      phaseEmoji = "🌑";
+    } else if (phase < MOON_PHASE_WAXING_CRESCENT_MAX) {
+      phaseName = "Waxing Crescent";
+      phaseEmoji = "🌒";
+    } else if (phase < MOON_PHASE_FIRST_QUARTER_MAX) {
+      phaseName = "First Quarter";
+      phaseEmoji = "🌓";
+    } else if (phase < MOON_PHASE_WAXING_GIBBOUS_MAX) {
+      phaseName = "Waxing Gibbous";
+      phaseEmoji = "🌔";
+    } else if (phase < MOON_PHASE_FULL_MAX) {
+      phaseName = "Full Moon";
+      phaseEmoji = "🌕";
+    } else if (phase < MOON_PHASE_WANING_GIBBOUS_MAX) {
+      phaseName = "Waning Gibbous";
+      phaseEmoji = "🌖";
+    } else if (phase < MOON_PHASE_LAST_QUARTER_MAX) {
+      phaseName = "Last Quarter";
+      phaseEmoji = "🌗";
+    } else {
+      phaseName = "Waning Crescent";
+      phaseEmoji = "🌘";
+    }
+    // Calculate phase percentage (0% = New Moon, 100% = Full Moon)
+    // phase: 0-0.5 (waxing) → 0-100%, 0.5-1 (waning) → 100-0%
+    var phasePercent;
+    if (phase <= 0.5) {
+      phasePercent = Math.round(phase * 200); // 0-0.5 → 0-100%
+    } else {
+      phasePercent = Math.round((1 - phase) * 200); // 0.5-1 → 100-0%
+    }
+    // Update UI
+    var line1 = document.getElementById("moonInfoLine1");
+    var line2 = document.getElementById("moonInfoLine2");
+    if (line1) {
+      line1.textContent = phaseEmoji + " Moon: " + phasePercent + "% (" + phaseName + ")";
+    }
+    if (line2) {
+      var altSign = altDeg >= 0 ? "+" : "";
+      line2.textContent = "Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
+    }
+  }
+  /**
+   * Starts periodic moon info updates (uses scrubber time).
+   */
+  function startMoonUpdates() {
+    if (moonUpdateTimer) {
+      clearInterval(moonUpdateTimer);
+    }
+    // Initial update
+    if (currentTimeUtcMs !== null) {
+      layerAdapters.moon.setTime(currentTimeUtcMs);
+    }
+    // Periodic updates (every 60 seconds)
+    moonUpdateTimer = setInterval(function() {
+      if (currentTimeUtcMs !== null) {
+        layerAdapters.moon.setTime(currentTimeUtcMs);
+      }
+    }, MOON_UPDATE_INTERVAL_MS);
+  }
+  /**
+   * Stops moon info updates.
+   */
+  function stopMoonUpdates() {
+    if (moonUpdateTimer) {
+      clearInterval(moonUpdateTimer);
+      moonUpdateTimer = null;
+    }
+  }
+  /**
+   * Управление индикатором загрузки над картой.
+   */
+  function setMapLoading(type, isLoading) {
+    if (!loadingState) {
+      loadingState = { forecast: false, gibs: false, radar: false };
+    }
+    loadingState[type] = isLoading;
+    var spinner = document.getElementById("mapLoadingSpinner");
+    if (!spinner) {
+      console.warn("mapLoadingSpinner not found");
+      return;
+    }
+    // Показываем spinner если хотя бы один тип данных загружается
+    var anyLoading = loadingState.forecast || loadingState.gibs || loadingState.radar;
+    console.log("[setMapLoading]", type, isLoading, "-> anyLoading:", anyLoading, loadingState);
+    if (anyLoading) {
+      spinner.classList.add("active");
+    } else {
+      spinner.classList.remove("active");
+    }
+    // Обновляем статус индикатор на основе состояния загрузки
+    updateStatusIndicator();
+  }
+  /**
+   * Обновляет статус индикатор на основе состояния загрузки данных.
+   */
+  function updateStatusIndicator() {
+    var indicator = document.getElementById("statusIndicator");
+    if (!indicator) return;
+    // Если идет загрузка - желтый (мигает)
+    var anyLoading = loadingState && (loadingState.forecast || loadingState.gibs || loadingState.radar);
+    if (anyLoading) {
+      indicator.classList.remove("success", "error");
+      indicator.classList.add("loading");
+      return;
+    }
+    // Если загрузка завершена, проверяем наличие данных
+    // Основной источник данных для скраббера - radar frames
+    var hasRadarData = frames && frames.length > 0;
+    // Обновляем индикатор на основе наличия данных
+    indicator.classList.remove("loading", "success", "error");
+    if (hasRadarData) {
+      // Зеленый - данные загружены успешно
+      indicator.classList.add("success");
+    } else {
+      // Красный - нет данных (ошибка загрузки или данные недоступны)
+      // Это происходит когда загрузка завершилась, но frames пустой
+      indicator.classList.add("error");
+    }
+  }
+  function setLocation(opts) {
+    if (!opts) return;
+    if (typeof opts.lat === "number" && typeof opts.lon === "number") {
+      homeCenter = [opts.lat, opts.lon];
+      homeZoom = DEFAULT_ZOOM;
+      currentCenter = homeCenter.slice();
+      currentZoom = map ? map.getZoom() : DEFAULT_ZOOM;
+      if (map) {
+        map.setView(homeCenter, homeZoom);
+        if (locationMarker) {
+          locationMarker.setLatLng(homeCenter);
+          if (locationMarker.getTooltip) {
+            var tooltip = locationMarker.getTooltip();
+            if (tooltip) {
+              locationMarker.setTooltipContent(locationName);
+            } else {
+              locationMarker.bindTooltip(locationName, {
+                permanent: true,
+                direction: "right",
+                offset: [10, 0],
+                className: "location-marker-label",
+                opacity: 1
+              });
+            }
+          }
+        }
+        // Forecast temporarily disabled
+        // При смене локации обновляем forecast layer для новых bounds
+        // if (forecastOn) {
+        //   updateForecastLayer();
+        // } else {
+        //   updateForecastLayer();
+        // }
+      }
+    }
+    if (opts.name) locationName = opts.name;
+    var label = document.getElementById("locationLabel");
+    if (label) {
+      var lat = homeCenter[0].toFixed(4);
+      var lon = homeCenter[1].toFixed(4);
+      label.textContent = locationName + " (" + lat + ", " + lon + ")";
+    }
+    // Update marker tooltip if marker exists
+    if (locationMarker) {
+      var tooltip = locationMarker.getTooltip ? locationMarker.getTooltip() : null;
+      if (tooltip) {
+        locationMarker.setTooltipContent(locationName);
+      } else {
+        locationMarker.bindTooltip(locationName, {
+          permanent: true,
+          direction: "right",
+          offset: [10, 0],
+          className: "location-marker-label",
+          opacity: 1
+        });
+      }
+    }
+  }
+  window.addEventListener("nbc:location", function (e) {
+    if (!e.detail) return;
+    setLocation(e.detail);
+  });
+  function initMap() {
+    map = L.map("map", { center: currentCenter, zoom: currentZoom });
+    baseLayer = L.tileLayer(CARTO_DARK, {
+      attribution: "© CARTO",
+      subdomains: "abcd",
+      maxZoom: 19
+    });
+    baseLayer.addTo(map);
+    hillshadeLayer = L.tileLayer(HILLSHADE_URL, {
+      opacity: 0.35,
+      maxZoom: 19,
+      attribution: "Hillshade © Esri"
+    });
+    var hillshadeFailed = false;
+    hillshadeLayer.on("tileerror", function () {
+      if (hillshadeFailed) return;
+      hillshadeFailed = true;
+      if (map && hillshadeLayer && map.hasLayer(hillshadeLayer)) map.removeLayer(hillshadeLayer);
+      hillshadeOn = false;
+      var cb = document.getElementById("toggleHillshade");
+      if (cb) cb.checked = false;
+      var msg = document.getElementById("hillshadeUnavailable");
+      if (msg) msg.style.display = "inline";
+    });
+    if (hillshadeOn) hillshadeLayer.addTo(map);
+    // Top-most pane for location marker
+    map.createPane("topMarkers");
+    var topPane = map.getPane("topMarkers");
+    if (topPane) topPane.style.zIndex = "700";
+    locationMarker = L.circleMarker(homeCenter, {
+      radius: 5,
+      color: "#ff4b4b",
+      weight: 2,
+      fillColor: "#ffe0e0",
+      fillOpacity: 0.9,
+      pane: "topMarkers"
+    });
+    locationMarker.addTo(map);
+    // Add location name label next to marker
+    locationMarker.bindTooltip(locationName, {
+      permanent: true,
+      direction: "right",
+      offset: [10, 0],
+      className: "location-marker-label",
+      opacity: 1
+    });
+    var terrainCb = document.getElementById("toggleTerrain");
+    if (terrainCb) {
+      terrainCb.checked = terrainOn;
+      terrainCb.addEventListener("change", function () {
+        terrainOn = this.checked;
+        if (!baseLayer) return;
+        if (terrainOn) {
+          baseLayer.addTo(map);
+        } else {
+          map.removeLayer(baseLayer);
+        }
+        saveLayerState();
+      });
+    }
+    var hillshadeCb = document.getElementById("toggleHillshade");
+    if (hillshadeCb) {
+      hillshadeCb.checked = hillshadeOn;
+      hillshadeCb.addEventListener("change", function () {
+        hillshadeOn = this.checked;
+        if (hillshadeLayer) {
+          if (hillshadeOn) hillshadeLayer.addTo(map);
+          else map.removeLayer(hillshadeLayer);
+        }
+        saveLayerState();
+      });
+    }
+    var gibsCb = document.getElementById("toggleGibs");
+    if (gibsCb) {
+      gibsCb.checked = gibsOn;
+      gibsCb.addEventListener("change", function () {
+        gibsOn = this.checked;
+        layerAdapters.satellite.enabled = this.checked;
+        if (currentTimeUtcMs !== null) {
+          layerAdapters.satellite.setTime(currentTimeUtcMs);
+        }
+        saveLayerState();
+      });
+    }
+    layerAdapters.satellite.enabled = gibsOn;
+    // Forecast controls temporarily disabled - will be replaced with tile server backend
+    /*
+    var forecastCb = document.getElementById("toggleForecast");
+    var forecastControls = document.getElementById("forecastControls");
+    if (forecastCb) {
+      forecastCb.checked = forecastOn;
+      forecastCb.addEventListener("change", function () {
+        forecastOn = this.checked;
+        if (forecastControls) {
+          forecastControls.style.display = forecastOn ? "block" : "none";
+        }
+        // Forecast layer обновляется автоматически через updateForecastLayer()
+        updateForecastLayer();
+        saveLayerState();
+      });
+      // Показываем/скрываем controls при загрузке
+      if (forecastControls) {
+        forecastControls.style.display = forecastOn ? "block" : "none";
+      }
+    }
+    // Blur controls
+    var blurSlider = document.getElementById("blurSlider");
+    var blurValue = document.getElementById("blurValue");
+    var toggleBlur = document.getElementById("toggleBlur");
+    if (blurSlider && blurValue) {
+      blurSlider.value = forecastBlurPx;
+      blurValue.textContent = forecastBlurPx + "px";
+      blurSlider.addEventListener("input", function () {
+        forecastBlurPx = parseInt(this.value, 10);
+        blurValue.textContent = forecastBlurPx + "px";
+        if (forecastOn && forecastGrid) {
+          updateForecastLayer();
+        }
+        saveLayerState();
+      });
+    }
+    if (toggleBlur) {
+      toggleBlur.checked = forecastBlurPx > 0;
+      toggleBlur.addEventListener("change", function () {
+        if (this.checked) {
+          forecastBlurPx = parseInt(blurSlider ? blurSlider.value : 6, 10);
+        } else {
+          forecastBlurPx = 0;
+        }
+        if (blurSlider) blurSlider.value = forecastBlurPx;
+        if (blurValue) blurValue.textContent = forecastBlurPx + "px";
+        if (forecastOn && forecastGrid) {
+          updateForecastLayer();
+        }
+        saveLayerState();
+      });
+    }
+    // Opacity controls
+    var opacitySlider = document.getElementById("opacitySlider");
+    var opacityValue = document.getElementById("opacityValue");
+    if (opacitySlider && opacityValue) {
+      opacitySlider.value = forecastOpacity;
+      opacityValue.textContent = Math.round(forecastOpacity * 100) + "%";
+      opacitySlider.addEventListener("input", function () {
+        forecastOpacity = parseFloat(this.value);
+        opacityValue.textContent = Math.round(forecastOpacity * 100) + "%";
+        if (forecastOn && forecastGrid) {
+          updateForecastLayer();
+        }
+        saveLayerState();
+      });
+    }
+    */
+    // Forecast controls temporarily disabled - will be replaced with tile server backend
+    /*
+    // Инициализация значений слайдеров из сохранённого состояния
+    if (blurSlider && blurValue) {
+      blurSlider.value = forecastBlurPx;
+      blurValue.textContent = forecastBlurPx + "px";
+    }
+    if (opacitySlider && opacityValue) {
+      opacitySlider.value = forecastOpacity;
+      opacityValue.textContent = Math.round(forecastOpacity * 100) + "%";
+    }
+    if (toggleBlur) {
+      toggleBlur.checked = forecastBlurPx > 0;
+    }
+    */
+    var radarCb = document.getElementById("toggleRadar");
+    if (radarCb) {
+      radarCb.checked = radarOn;
+      radarCb.addEventListener("change", function () {
+        radarOn = this.checked;
+        layerAdapters.radar.enabled = this.checked;
+        if (currentTimeUtcMs !== null) {
+          layerAdapters.radar.setTime(currentTimeUtcMs);
+        }
+        saveLayerState();
+      });
+    }
+    layerAdapters.radar.enabled = radarOn;
+    // GIBS day controls removed - now controlled by unified timeline
+    // Extra map controls
+    var btnHome = document.getElementById("btnMapHome");
+    if (btnHome) {
+      btnHome.addEventListener("click", function () {
+        if (!map) return;
+        map.setView(homeCenter, homeZoom);
+        if (locationMarker) {
+          locationMarker.setLatLng(homeCenter);
+          locationMarker.setTooltipContent(locationName);
+        }
+      });
+    }
+    var btnFs = document.getElementById("btnMapFullscreen");
+    if (btnFs) {
+      btnFs.addEventListener("click", function () {
+        if (!map) return;
+        var wrapper = document.querySelector(".map-wrapper");
+        if (!wrapper) return;
+        var isFs = wrapper.classList.contains("fullscreen-mode");
+        if (!isFs) {
+          // Входим в кастомный fullscreen-режим (fixed + 100vw/100vh)
+          document.body.classList.add("fullscreen-map");
+          wrapper.classList.add("fullscreen-mode");
+          setTimeout(function () {
+            map.invalidateSize();
+          }, 50);
+        } else {
+          // Выходим из кастомного fullscreen
+          document.body.classList.remove("fullscreen-map");
+          wrapper.classList.remove("fullscreen-mode");
+          setTimeout(function () {
+            map.invalidateSize();
+          }, 50);
+        }
+      });
+    }
+    var layersBtn = document.getElementById("layersBtn");
+    var layersPopover = document.getElementById("layersPopover");
+    if (layersBtn && layersPopover) {
+      layersBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        layersPopover.classList.toggle("open");
+      });
+      document.addEventListener("click", function (e) {
+        if (layersPopover.classList.contains("open") && !layersPopover.contains(e.target) && e.target !== layersBtn) {
+          layersPopover.classList.remove("open");
+        }
+      });
+      // Expandable legend toggles
+      layersPopover.addEventListener("click", function (e) {
+        var toggleBtn = e.target.closest("[data-role=\"radar-legend-toggle\"], [data-role=\"nightmask-legend-toggle\"], [data-role=\"mooninfo-legend-toggle\"]");
+        if (!toggleBtn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var expanded = toggleBtn.getAttribute("aria-expanded") === "true";
+        var next = !expanded;
+        toggleBtn.setAttribute("aria-expanded", String(next));
+        toggleBtn.textContent = next ? "▼" : "▶";
+        var role = toggleBtn.getAttribute("data-role");
+        var panelRole = role.replace("-toggle", "-panel");
+        var panel = layersPopover.querySelector('[data-role="' + panelRole + '"]');
+        if (panel) {
+          panel.setAttribute("aria-hidden", String(!next));
+        }
+      });
+    }
+    // Night mask toggle
+    var toggleNightMask = document.getElementById("toggleNightMask");
+    if (toggleNightMask) {
+      toggleNightMask.checked = nightMaskOn;
+      toggleNightMask.addEventListener("change", function () {
+        nightMaskOn = this.checked;
+        layerAdapters.nightMask.enabled = this.checked;
+        if (currentTimeUtcMs !== null) {
+          layerAdapters.nightMask.setTime(currentTimeUtcMs);
+        }
+      });
+    }
+    layerAdapters.nightMask.enabled = nightMaskOn;
+    // Moon info toggle
+    var toggleMoonInfo = document.getElementById("toggleMoonInfo");
+    if (toggleMoonInfo) {
+      toggleMoonInfo.checked = moonInfoOn;
+      toggleMoonInfo.addEventListener("change", function () {
+        moonInfoOn = this.checked;
+        layerAdapters.moon.enabled = this.checked;
+        if (moonInfoOn) {
+          if (currentTimeUtcMs !== null) {
+            layerAdapters.moon.setTime(currentTimeUtcMs);
+          }
+          startMoonUpdates();
+        } else {
+          stopMoonUpdates();
+          var moonPanel = document.getElementById("moonInfoPanel");
+          if (moonPanel) {
+            moonPanel.classList.add("hidden");
+          }
+        }
+      });
+    }
+    layerAdapters.moon.enabled = moonInfoOn;
+    // Update night mask on map events (also updates moon info when center changes)
+    map.on("moveend", function () {
+      renderNightMaskDebounced();
+      if (moonInfoOn && currentTimeUtcMs !== null) {
+        layerAdapters.moon.setTime(currentTimeUtcMs);
+      }
+    });
+    map.on("zoomend", function () {
+      renderNightMaskDebounced();
+      if (moonInfoOn && currentTimeUtcMs !== null) {
+        layerAdapters.moon.setTime(currentTimeUtcMs);
+      }
+    });
+    map.on("resize", function () {
+      setTimeout(function() {
+        renderNightMaskDebounced();
+        if (moonInfoOn && currentTimeUtcMs !== null) {
+          layerAdapters.moon.setTime(currentTimeUtcMs);
+        }
+      }, 50);
+    });
+    // Forecast layer temporarily disabled - will be replaced with tile server backend
+    /*
+    // Update forecast layer on map move (debounced)
+    map.on("moveend", function () {
+      if (forecastOn) {
+        updateForecastLayerDebounced();
+      }
+    });
+    // zoomend обрабатывается отдельно выше для немедленной перерисовки canvas
+    */
+    // Forecast resize/zoom handlers temporarily disabled
+    /*
+    map.on("resize", function () {
+      // При изменении размера карты перерисовываем forecast canvas
+      // Используем setTimeout чтобы дать Leaflet время обновить размеры
+      setTimeout(function() {
+        if (forecastOn && forecastGrid && forecastCanvas) {
+          var tIndex = -1;
+          if (frames.length > 0 && currentFrameIdx >= 0 && currentFrameIdx < frames.length) {
+            var frameTime = frames[currentFrameIdx].time;
+            tIndex = findForecastTimeIndex(forecastGrid, frameTime);
+          } else if (forecastGrid.times && forecastGrid.times.length > 0) {
+            tIndex = 0; // Используем первый доступный индекс
+          }
+          if (tIndex >= 0) {
+            console.log("[map resize] Re-rendering forecast canvas, tIndex:", tIndex);
+            renderForecastCanvasOverlay(forecastGrid, tIndex, forecastBlurPx, forecastOpacity);
+          }
+        }
+      }, 50);
+    });
+    map.on("zoomend", function () {
+      // При зуме также перерисовываем canvas, так как размер может измениться
+      // Используем setTimeout чтобы дать Leaflet время обновить размеры
+      setTimeout(function() {
+        if (forecastOn && forecastGrid && forecastCanvas) {
+          var tIndex = -1;
+          if (frames.length > 0 && currentFrameIdx >= 0 && currentFrameIdx < frames.length) {
+            var frameTime = frames[currentFrameIdx].time;
+            tIndex = findForecastTimeIndex(forecastGrid, frameTime);
+          } else if (forecastGrid.times && forecastGrid.times.length > 0) {
+            tIndex = 0;
+          }
+          if (tIndex >= 0) {
+            console.log("[map zoomend] Re-rendering forecast canvas, tIndex:", tIndex);
+            renderForecastCanvasOverlay(forecastGrid, tIndex, forecastBlurPx, forecastOpacity);
+          }
+        }
+      }, 50);
+      // Также обновляем через debounced версию для возможной перезагрузки данных
+      if (forecastOn) {
+        updateForecastLayerDebounced();
+      }
+    });
+    */
+  }
+  // RainViewer is now used only for radar precipitation; cloud masses come from NASA GIBS.
+  function updateRadarLayer() {
+    if (radarLayer) {
+      map.removeLayer(radarLayer);
+      radarLayer = null;
+    }
+    if (radarFrames.length === 0 || !radarOn || frames.length === 0) {
+      return;
+    }
+    var currentTime = frames[currentFrameIdx].time;
+    var idx = findNearestFrameIndex(radarFrames, currentTime);
+    if (idx < 0) return;
+    var frame = radarFrames[idx];
+    if (!frame.path) return;
+    var url = rainviewerRadarTileUrl(frame.path);
+    radarLayer = L.tileLayer(url, {
+      opacity: 0.8,
+      maxZoom: 19,
+      attribution: "Precipitation © RainViewer"
+    });
+    if (radarOn) {
+      radarLayer.addTo(map);
+      radarLayer.setZIndex(600);
+    }
+  }
+  /**
+   * Sets the current time (UTC) and updates all layers.
+   * This is the single source of truth for time changes.
+   * @param {number} ms - UTC timestamp in milliseconds
+   * @param {Object} options - Options object
+   * @param {string} options.source - Source of the time change ("ui", "scrubber", "play", etc.)
+   */
+  function setTimeUtc(ms, options) {
+    options = options || {};
+    var source = options.source || "ui";
+    currentTimeUtcMs = clampTime(ms);
+    updateTimeUI();
+    syncAllLayersToTime(currentTimeUtcMs);
+  }
+  /**
+   * Updates the time UI (time label, scrubber position, frame info)
+   */
+  function updateTimeUI() {
+    if (currentTimeUtcMs === null || startTimeUtcMs === null || endTimeUtcMs === null) {
+      return;
+    }
+    // Update current time label in frame info (real current time)
+    var currentTimeLabelEl = document.getElementById("currentTimeLabel");
+    if (currentTimeLabelEl) {
+      var now = Date.now();
+      currentTimeLabelEl.textContent = formatLocal(now);
+    }
+    // Update animation time label (after Now button)
+    var animationTimeEl = document.getElementById("animationTime");
+    if (animationTimeEl) {
+      animationTimeEl.textContent = formatLocal(currentTimeUtcMs);
+    }
+    // Update step label
+    var stepLabelEl = document.getElementById("stepLabel");
+    if (stepLabelEl) {
+      stepLabelEl.textContent = stepHours + "h";
+    }
+    // Update range label
+    var rangeLabelEl = document.getElementById("rangeLabel");
+    if (rangeLabelEl) {
+      var startStr = formatLocal(startTimeUtcMs);
+      var endStr = formatLocal(endTimeUtcMs);
+      rangeLabelEl.textContent = startStr + " → " + endStr;
+    }
+    // Update scrubber position (0-100%)
+    var slider = document.getElementById("timeSlider");
+    if (slider) {
+      var range = endTimeUtcMs - startTimeUtcMs;
+      if (range > 0) {
+        var position = ((currentTimeUtcMs - startTimeUtcMs) / range) * 100;
+        slider.value = Math.round(position);
+      }
+    }
+  }
+  /**
+   * Synchronizes all enabled layers to the given UTC time.
+   * This is called whenever time changes.
+   * @param {number} tUtcMs - UTC timestamp in milliseconds
+   */
+  function syncAllLayersToTime(tUtcMs) {
+    Object.values(layerAdapters).forEach(function(adapter) {
+      if (adapter.enabled && adapter.setTime) {
+        try {
+          adapter.setTime(tUtcMs);
+        } catch (err) {
+          console.warn("Layer adapter error:", err);
+        }
+      }
+    });
+  }
+  /**
+   * Returns the selected date/time from the scrubber as a Date object (UTC).
+   * DEPRECATED: Use currentTimeUtcMs directly instead.
+   */
+  function getSelectedDateUTC() {
+    if (currentTimeUtcMs !== null) {
+      return new Date(currentTimeUtcMs);
+    }
+    return new Date(); // Fallback to current time
+  }
+  /**
+   * Updates all time-dependent layers based on the selected scrubber time.
+   * DEPRECATED: Use syncAllLayersToTime instead.
+   */
+  function updateAllTimeDependentLayers() {
+    if (currentTimeUtcMs !== null) {
+      syncAllLayersToTime(currentTimeUtcMs);
+    }
+  }
+  function updateFrameUI() {
+    var timeLabel = document.getElementById("frameTimeLabel");
+    var timeDisplay = document.getElementById("frameTimeDisplay");
+    var slider = document.getElementById("frameSlider");
+    var countEl = document.getElementById("frameCount");
+    if (frames.length === 0) {
+      if (timeLabel) timeLabel.textContent = "—";
+      if (timeDisplay) timeDisplay.textContent = "—";
+      if (countEl) countEl.textContent = "Frame 0 of 0";
+      return;
+    }
+    var frame = frames[currentFrameIdx];
+    var ts = frame.time;
+    var date = new Date(ts * 1000);
+    var str = date.toLocaleString();
+    // timeLabel больше не используется для даты GIBS
+    if (timeDisplay) timeDisplay.textContent = str;
+    if (slider) {
+      slider.max = frames.length - 1;
+      slider.value = currentFrameIdx;
+    }
+    if (countEl) countEl.textContent = "Frame " + (currentFrameIdx + 1) + " of " + frames.length;
+  }
+  function goToNearestFrame(targetTs) {
+    if (frames.length === 0) return;
+    var bestIdx = 0;
+    var bestDiff = Math.abs(frames[0].time - targetTs);
+    for (var i = 1; i < frames.length; i++) {
+      var d = Math.abs(frames[i].time - targetTs);
+      if (d < bestDiff) {
+        bestDiff = d;
+        bestIdx = i;
+      }
+    }
+    currentFrameIdx = bestIdx;
+    updateFrameUI();
+    updateAllTimeDependentLayers();
+  }
+  function toFrameObj(x) {
+    if (typeof x === "number") return { time: x };
+    var t = x.time != null ? x.time : (x.timestamp != null ? x.timestamp : null);
+    if (t == null) return null;
+    return { time: t, path: x.path || undefined };
+  }
+  function loadRainViewerFrames() {
+    setMapLoading("radar", true);
+    return fetch(RAINVIEWER_API + "?t=" + Date.now())
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.host) rainviewerHost = data.host.replace(/\/$/, "");
+        var radArr = (data.radar && Array.isArray(data.radar.past)) ? data.radar.past : [];
+        radarFrames = radArr.map(toFrameObj).filter(function (f) { return f != null; });
+        if (radarFrames.length) radarFrames.sort(function (a, b) { return a.time - b.time; });
+        if (radarFrames.length > 0) {
+          frames = radarFrames.slice();
+        } else {
+          frames = [];
+        }
+        setMapLoading("radar", false);
+        if (radarFrames.length > 0) {
+          document.getElementById("timelinePanel").classList.remove("disabled");
+          // Sync radar adapter with current time
+          if (currentTimeUtcMs !== null) {
+            syncAllLayersToTime(currentTimeUtcMs);
+          }
+          updateStatusIndicator(); // Обновляем индикатор после успешной загрузки
+        } else {
+          setStatus("Radar unavailable", true);
+          document.getElementById("timelinePanel").classList.add("disabled");
+          // Still sync other layers even if radar unavailable
+          if (currentTimeUtcMs !== null) {
+            syncAllLayersToTime(currentTimeUtcMs);
+          }
+        }
+      })
+      .catch(function (err) {
+        setMapLoading("radar", false);
+        radarFrames = [];
+        var isCors = err.message && (err.message.includes("CORS") || err.message.includes("Failed to fetch"));
+        if (!isCors) {
+          console.warn("RainViewer API error:", err);
+        }
+        setStatus("Overlay failed", true);
+        document.getElementById("timelinePanel").classList.add("disabled");
+        // Still sync other layers even if radar failed
+        if (currentTimeUtcMs !== null) {
+          syncAllLayersToTime(currentTimeUtcMs);
+        }
+        updateStatusIndicator(); // Обновляем индикатор после ошибки
+      });
+  }
+  function goToPosition(portion) {
+    if (frames.length === 0) return;
+    var maxIdx = frames.length - 1;
+    if (portion <= 0) {
+      currentFrameIdx = 0;
+    } else if (portion >= 1) {
+      currentFrameIdx = maxIdx;
+    } else {
+      currentFrameIdx = Math.round(maxIdx * portion);
+    }
+    updateFrameUI();
+    updateAllTimeDependentLayers();
+  }
+  function togglePlay() {
+    if (frames.length === 0) return;
+    var btn = document.getElementById("btnPlay");
+    if (playIntervalId) {
+      clearInterval(playIntervalId);
+      playIntervalId = null;
+      btn.textContent = "▶";
+      btn.title = "Play";
+      return;
+    }
+    btn.textContent = "⏸";
+    btn.title = "Pause";
+    var interval = 800;
+    playIntervalId = setInterval(function () {
+      if (currentFrameIdx >= frames.length - 1) {
+        currentFrameIdx = 0;
+      } else {
+        currentFrameIdx += 1;
+      }
+      updateFrameUI();
+      updateAllTimeDependentLayers();
+    }, interval);
+  }
+  /**
+   * Sets up the new Magnetophone timeline controls
+   */
+  function setupTimeline() {
+    // Initialize timeline range
+    initTimelineRange();
+    // Scrubber (time slider)
+    var slider = document.getElementById("timeSlider");
+    if (slider) {
+      slider.min = 0;
+      slider.max = 100;
+      slider.step = 1;
+      slider.addEventListener("input", function () {
+        var percent = parseFloat(this.value);
+        var range = endTimeUtcMs - startTimeUtcMs;
+        var newTime = startTimeUtcMs + (range * percent / 100);
+        setTimeUtc(newTime, { source: "scrubber" });
+      });
+    }
+    // Jump to start button
+    var btnJumpStart = document.getElementById("btnJumpStart");
+    if (btnJumpStart) {
+      btnJumpStart.addEventListener("click", function () {
+        setTimeUtc(startTimeUtcMs, { source: "ui" });
+      });
+    }
+    // Step backward button
+    var btnStepBack = document.getElementById("btnStepBack");
+    if (btnStepBack) {
+      btnStepBack.addEventListener("click", function () {
+        var newTime = addHours(currentTimeUtcMs, -stepHours);
+        setTimeUtc(newTime, { source: "ui" });
+      });
+    }
+    // Play/Pause button
+    var btnPlayPause = document.getElementById("btnPlayPause");
+    if (btnPlayPause) {
+      btnPlayPause.addEventListener("click", function () {
+        togglePlayPause();
+      });
+    }
+    // Step forward button
+    var btnStepForward = document.getElementById("btnStepForward");
+    if (btnStepForward) {
+      btnStepForward.addEventListener("click", function () {
+        var newTime = addHours(currentTimeUtcMs, stepHours);
+        setTimeUtc(newTime, { source: "ui" });
+      });
+    }
+    // Now button (jump to current time)
+    var btnNow = document.getElementById("btnNow");
+    if (btnNow) {
+      btnNow.addEventListener("click", function () {
+        var now = Date.now();
+        setTimeUtc(now, { source: "ui" });
+      });
+    }
+    // Step selector buttons
+    var stepButtons = document.querySelectorAll(".step-btn");
+    stepButtons.forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var newStep = parseInt(this.getAttribute("data-step"), 10);
+        stepHours = newStep;
+        // Update active state
+        stepButtons.forEach(function(b) {
+          b.classList.remove("active");
+        });
+        this.classList.add("active");
+        // Update scrubber step
+        if (slider) {
+          // Step size in percentage of range
+          var range = endTimeUtcMs - startTimeUtcMs;
+          var stepPercent = (stepHours * 60 * 60 * 1000 / range) * 100;
+          slider.step = Math.max(0.1, stepPercent);
+        }
+        // Update UI (step label and animation time)
+        updateTimeUI();
+      });
+    });
+    // Initial UI update
+    updateTimeUI();
+    // Start periodic update of current time (every minute)
+    if (currentTimeUpdateTimer) {
+      clearInterval(currentTimeUpdateTimer);
+    }
+    currentTimeUpdateTimer = setInterval(function() {
+      var now = Date.now();
+      var nowStr = formatLocal(now);
+      // Update current time label in frame info
+      var currentTimeLabelEl = document.getElementById("currentTimeLabel");
+      if (currentTimeLabelEl) {
+        currentTimeLabelEl.textContent = nowStr;
+      }
+      // Update Frame display in controls row
+      var frameDisplay = document.getElementById("gibsDateDisplay");
+      if (frameDisplay) {
+        frameDisplay.textContent = nowStr;
+      }
+    }, 60000); // Update every minute
+    // Initial update of Frame display
+    var frameDisplay = document.getElementById("gibsDateDisplay");
+    if (frameDisplay) {
+      frameDisplay.textContent = formatLocal(Date.now());
+    }
+  }
+  /**
+   * Toggles play/pause state
+   */
+  function togglePlayPause() {
+    if (isPlaying) {
+      // Pause
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
+      isPlaying = false;
+      var btn = document.getElementById("btnPlayPause");
+      if (btn) {
+        btn.textContent = "▶";
+        btn.title = "Play";
+      }
+      
+      // Update player UI
+      if (window.uiComponents && window.uiComponents.mapPlayer) {
+        window.uiComponents.mapPlayer.setPlaying(false);
+      }
+    } else {
+      // Play
+      isPlaying = true;
+      var btn = document.getElementById("btnPlayPause");
+      if (btn) {
+        btn.textContent = "⏸";
+        btn.title = "Pause";
+      }
+      
+      // Update player UI
+      if (window.uiComponents && window.uiComponents.mapPlayer) {
+        window.uiComponents.mapPlayer.setPlaying(true);
+      }
+      playTimer = setInterval(function() {
+        var newTime = addHours(currentTimeUtcMs, stepHours);
+        if (newTime > endTimeUtcMs) {
+          // Stop at end (no loop for MVP)
+          togglePlayPause();
+          setTimeUtc(endTimeUtcMs, { source: "play" });
+        } else {
+          setTimeUtc(newTime, { source: "play" });
+        }
+      }, 1000); // Update every 1 second
+    }
+  }
+  function run() {
+    initMap();
+    // Инициализируем состояние загрузки
+    if (!loadingState) {
+      loadingState = { forecast: false, gibs: false, radar: false };
+    } else {
+      // Сбрасываем все состояния при старте
+      loadingState.forecast = false;
+      loadingState.gibs = false;
+      loadingState.radar = false;
+    }
+    setMapLoading("forecast", false);
+    setMapLoading("gibs", false);
+    setMapLoading("radar", false);
+    // Initialize status indicator as loading
+    updateStatusIndicator();
+    // Load saved layer state (if any) before adding dynamic layers
+    var state = loadLayerState();
+    if (state) {
+      terrainOn = state.terrainOn !== false;
+      gibsOn = state.gibsOn !== false;
+      // Forecast temporarily disabled
+      // Forecast temporarily disabled
+      forecastOn = false; // state.forecastOn !== undefined ? state.forecastOn : true;
+      // forecastBlurPx = state.forecastBlurPx !== undefined ? state.forecastBlurPx : 6;
+      // forecastOpacity = state.forecastOpacity !== undefined ? state.forecastOpacity : 0.45;
+      forecastBlurPx = state.forecastBlurPx !== undefined ? state.forecastBlurPx : 6;
+      forecastOpacity = state.forecastOpacity !== undefined ? state.forecastOpacity : 0.45;
+      radarOn = !!state.radarOn;
+      hillshadeOn = state.hillshadeOn !== false;
+      gibsDayOffset = Math.min(state.gibsDayOffset || 0, 0); // Never allow future dates
+    }
+    // Обновляем checkbox'ы после загрузки состояния
+    var terrainCb = document.getElementById("toggleTerrain");
+    if (terrainCb) terrainCb.checked = terrainOn;
+    var gibsCb = document.getElementById("toggleGibs");
+    if (gibsCb) gibsCb.checked = gibsOn;
+    var radarCb = document.getElementById("toggleRadar");
+    if (radarCb) radarCb.checked = radarOn;
+    var hillshadeCb = document.getElementById("toggleHillshade");
+    if (hillshadeCb) hillshadeCb.checked = hillshadeOn;
+    // Apply initial visibility for dynamic layers
+    if (!terrainOn && baseLayer && map.hasLayer(baseLayer)) {
+      map.removeLayer(baseLayer);
+    }
+    if (!hillshadeOn && hillshadeLayer && map.hasLayer(hillshadeLayer)) {
+      map.removeLayer(hillshadeLayer);
+    }
+    // Показываем spinner для radar сразу при старте загрузки
+    setMapLoading("radar", true);
+    // Setup unified timeline (initializes timeline range and UI)
+    setupTimeline();
+    // Initialize all layers with current time
+    if (currentTimeUtcMs !== null) {
+      syncAllLayersToTime(currentTimeUtcMs);
+    }
+    // Start moon updates if enabled
+    if (moonInfoOn) {
+      startMoonUpdates();
+    }
+    // Load radar frames (will sync radar adapter when loaded)
+    loadRainViewerFrames().catch(function(err) {
+      console.warn("RainViewer frames load failed:", err);
+      setMapLoading("radar", false);
+    });
+  }
+  // Listen for location updates from parent window (when embedded in weather/index.html)
+  window.addEventListener("message", function(event) {
+    if (event.data && event.data.type === "update-location" && event.data.location) {
+      var loc = event.data.location;
+      // Update location variables
+      currentCenter = [loc.lat, loc.lon];
+      homeCenter = [loc.lat, loc.lon];
+      locationName = loc.name || (loc.lat.toFixed(4) + ", " + loc.lon.toFixed(4));
+      // Update location label
+      var locationLabelEl = document.getElementById("locationLabel");
+      if (locationLabelEl) {
+        locationLabelEl.textContent = locationName + " (" + loc.lat.toFixed(4) + ", " + loc.lon.toFixed(4) + ")";
+      }
+      // Update map center if map is initialized
+      if (map) {
+        map.setView(currentCenter, currentZoom);
+        // Update location marker
+        if (locationMarker) {
+          locationMarker.setLatLng(currentCenter);
+          locationMarker.setTooltipContent(locationName);
+        } else {
+          // Create marker if it doesn't exist
+          var topPane = map.getPane("topMarkers");
+          if (topPane) {
+            locationMarker = L.circleMarker(currentCenter, {
+              radius: 8,
+              fillColor: "#ff6b6b",
+              color: "#fff",
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.8,
+              pane: "topMarkers"
+            }).addTo(map);
+            locationMarker.bindTooltip(locationName, {
+              permanent: true,
+              direction: "right",
+              className: "location-marker-label",
+              offset: [8, 0]
+            });
+            locationMarker.setTooltipContent(locationName);
+          }
+        }
+        // Update night mask and moon info for new location
+        if (currentTimeUtcMs !== null) {
+          syncAllLayersToTime(currentTimeUtcMs);
+        }
+      }
+    }
+  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+})();
+  </script>
+</body>
+</html>
