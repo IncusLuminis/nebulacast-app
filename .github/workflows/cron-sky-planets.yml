@@ -1,6 +1,4 @@
-# Backend pipeline: sky planets. Writes to:
-# - services/sky/data/generated/planets.json
-# - sites/staging/sky/data/planets.json
+# Backend pipeline: sky planets. Writes to sites/staging/sky/data/planets.json
 name: Cron — Sky Planets backend
 
 on:
@@ -27,35 +25,29 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Restore DE421 kernel from cache
-        uses: actions/cache@v4
-        with:
-          path: services/sky/data/raw/de421.bsp
-          key: de421-bsp-v1
-
-      - name: Ensure DE421 kernel present
+      # IMPORTANT: update branch BEFORE generating files
+      - name: Sync branch
         run: |
           set -euxo pipefail
-          mkdir -p services/sky/data/raw
-          if [ ! -f services/sky/data/raw/de421.bsp ]; then
-            echo "[sky] de421.bsp not found in cache; downloading from NAIF..."
-            url="https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/a_old_versions/de421.bsp"
-            # Resume if partial, retry on transient failures, and avoid infinite hangs
-            curl -L --fail \
-              --retry 6 --retry-delay 3 --retry-all-errors \
-              --connect-timeout 20 --max-time 900 \
-              -C - \
-              -o services/sky/data/raw/de421.bsp \
-              "$url"
-          fi
-          ls -lah services/sky/data/raw/de421.bsp
-          # Basic sanity (size must be > 1MB)
-          test "$(stat -c%s services/sky/data/raw/de421.bsp)" -gt 1000000
+          git fetch origin "${{ github.ref_name }}"
+          git pull --rebase origin "${{ github.ref_name }}"
 
       - name: Install sky deps
         run: |
           set -euxo pipefail
           pip install -r services/sky/requirements.txt
+
+      # Download DE421 kernel (do NOT commit it)
+      - name: Fetch DE421 kernel
+        run: |
+          set -euxo pipefail
+          mkdir -p services/sky/data/raw
+          K=services/sky/data/raw/de421.bsp
+          if [ ! -s "$K" ]; then
+            curl -L --fail --retry 5 --retry-delay 5 --connect-timeout 20 --max-time 600 \
+              -o "$K" "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de421.bsp"
+          fi
+          ls -lah "$K"
 
       - name: Run sky planets pipeline
         run: |
@@ -70,16 +62,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Update branch BEFORE staging/committing
-          git fetch origin "${{ github.ref_name }}"
-          git pull --rebase origin "${{ github.ref_name }}"
-
-          # Stage outputs (use -A to avoid unstaged surprises)
-          git add -A sites/staging/sky/data/planets.json 2>/dev/null || true
-          git add -A services/sky/data/generated/planets.json 2>/dev/null || true
-
+          # stage ONLY data outputs (never the kernel)
+          git add -A sites/staging/sky/data/planets.json services/sky/data/generated/planets.json 2>/dev/null || true
           git status --porcelain
-          git diff --staged --quiet && exit 0
 
+          git diff --staged --quiet && exit 0
           git commit -m "chore(sky-planets): update planets"
           git push origin "${{ github.ref_name }}"
