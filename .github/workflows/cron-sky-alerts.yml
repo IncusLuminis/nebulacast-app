@@ -40,6 +40,8 @@ jobs:
         env:
           PYTHONUNBUFFERED: "1"
           PYTHONPATH: "services/sky"
+          NASA_CLIENT_ID: ${{ secrets.NASA_CLIENT_ID }}
+          NASA_CLIENT_SECRET: ${{ secrets.NASA_CLIENT_SECRET }}
         run: |
           set -euxo pipefail
           python -u services/sky/pipelines/gen_gcn_alerts.py
