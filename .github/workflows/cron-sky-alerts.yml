@@ -5,9 +5,14 @@ on:
     - cron: "0 */12 * * *"
   workflow_dispatch:
 
+concurrency:
+  group: sky-alerts-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   sky-alerts:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -23,17 +28,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Debug env
-        run: |
-          set -euxo pipefail
-          pwd
-          ls -la
-          python -V
-          pip -V
-          ls -la services/sky || true
-          ls -la services/sky/pipelines || true
-          ls -la sites/staging/sky/data || true
+          cache: "pip"
+          cache-dependency-path: services/sky/requirements.txt
 
       - name: Install sky deps
         run: |
@@ -41,10 +37,19 @@ jobs:
           pip install -r services/sky/requirements.txt
 
       - name: Run sky alerts backend
+        env:
+          PYTHONUNBUFFERED: "1"
+          PYTHONPATH: "services/sky"
         run: |
           set -euxo pipefail
-          PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts.py
-          ls -la sites/staging/sky/data/alerts_now.json
+          python -u services/sky/pipelines/gen_gcn_alerts.py
+          python -u services/sky/pipelines/gen_neo_alerts.py
+          python -u services/sky/pipelines/gen_neocp_alerts.py
+          python -u services/sky/pipelines/gen_risk_alerts.py
+          python -u services/sky/pipelines/gen_alerts.py
+
+          test -f services/sky/data/generated/alerts_now.json
+          test -f sites/staging/sky/data/alerts_now.json
 
       - name: Commit and push outputs
         run: |
@@ -52,15 +57,25 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # stage outputs
-          git add -A sites/staging/sky/data/alerts_now.json services/sky/data/generated/ 2>/dev/null || true
-          git status --porcelain
+          git add -A \
+            services/sky/data/generated/alerts_gcn.json \
+            services/sky/data/generated/alerts_neo.json \
+            services/sky/data/generated/alerts_neocp_tocp_grb.json \
+            services/sky/data/generated/alerts_now.json \
+            services/sky/data/generated/alerts_pha.json \
+            services/sky/data/generated/alerts_risk.json \
+            sites/staging/sky/data/alerts_gcn.json \
+            sites/staging/sky/data/alerts_neo.json \
+            sites/staging/sky/data/alerts_neocp_tocp_grb.json \
+            sites/staging/sky/data/alerts_now.json \
+            sites/staging/sky/data/alerts_pha.json \
+            sites/staging/sky/data/alerts_risk.json
 
           # no changes -> exit
           git diff --staged --quiet && exit 0
 
-          # rebase safely even if something changed locally
+          # rebase safely if remote moved
           git pull --rebase --autostash origin "${{ github.ref_name }}"
 
-          git commit -m "chore(sky-alerts): update alerts_now"
+          git commit -m "chore(sky-alerts): update alerts datasets"
           git push origin "${{ github.ref_name }}"

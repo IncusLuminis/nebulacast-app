@@ -13,11 +13,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
@@ -115,6 +115,137 @@ def _get_gcn_cfg(sources: Dict[str, Any]) -> GcnCfg:
     )
 
 
+def _sha256_hex(data: bytes) -> str:
+    h = hashlib.sha256()
+    h.update(data)
+    return h.hexdigest()
+
+
+def _igwn_gwalert_enrich(
+    *,
+    payload_text: Optional[str],
+    payload_json: Optional[Dict[str, Any]],
+) -> Tuple[Optional[str], Optional[str], Dict[str, Any], Optional[Dict[str, Any]]]:
+    """
+    Enrich IGWN GW alert payload into:
+      - title (for UI)
+      - note (short summary)
+      - meta_extra (to be merged into item.meta)
+      - payload_json_sanitized (payload_json with huge skymap removed; keeps fingerprint)
+
+    We do NOT attempt RA/Dec here (GW alerts come with sky maps, not a point).
+    """
+    obj: Optional[Dict[str, Any]] = None
+    if isinstance(payload_json, dict):
+        obj = payload_json
+    elif isinstance(payload_text, str):
+        s = payload_text.strip()
+        if s.startswith("{") and s.endswith("}"):
+            try:
+                o = json.loads(s)
+                if isinstance(o, dict):
+                    obj = o
+            except Exception:
+                obj = None
+
+    if not isinstance(obj, dict):
+        return None, None, {}, payload_json
+
+    event = obj.get("event") or {}
+    if not isinstance(event, dict):
+        event = {}
+
+    urls = obj.get("urls") or {}
+    if not isinstance(urls, dict):
+        urls = {}
+
+    classification = event.get("classification") or {}
+    if not isinstance(classification, dict):
+        classification = {}
+
+    top_class = None
+    top_p = None
+    if classification:
+        try:
+            top_class, top_p = max(
+                ((k, v) for k, v in classification.items() if isinstance(v, (int, float))),
+                key=lambda kv: kv[1],
+            )
+        except Exception:
+            top_class, top_p = None, None
+
+    props = event.get("properties") or {}
+    if not isinstance(props, dict):
+        props = {}
+
+    # sanitize skymap (it can be enormous: base64 FITS/healpix)
+    payload_json_sanitized = dict(obj)
+    event_s = dict(event)
+    skymap_val = event_s.pop("skymap", None)
+
+    skymap_meta: Optional[Dict[str, Any]] = None
+    if isinstance(skymap_val, str) and skymap_val:
+        b = skymap_val.encode("utf-8", errors="ignore")
+        skymap_meta = {"present": True, "bytes": len(b), "sha256": _sha256_hex(b)}
+        event_s["skymap_meta"] = skymap_meta
+
+    payload_json_sanitized["event"] = event_s
+
+    superevent_id = obj.get("superevent_id")
+    alert_type = obj.get("alert_type")
+    time_created = obj.get("time_created")
+    evt_time = event.get("time")
+    far = event.get("far")
+    instruments = event.get("instruments") or []
+    if not isinstance(instruments, list):
+        instruments = []
+
+    title = None
+    note = None
+    if superevent_id:
+        # Example: "GW PRELIMINARY: MS260220n (BNS 0.99999)"
+        if top_class and isinstance(top_p, (int, float)):
+            title = f"GW {alert_type}: {superevent_id} ({top_class} {top_p:.5f})"
+        else:
+            title = f"GW {alert_type}: {superevent_id}"
+
+        inst_s = ",".join([str(x) for x in instruments if str(x)]) if instruments else "—"
+        far_s = f"{far:.3e}" if isinstance(far, (int, float)) else "—"
+        note = f"{inst_s} · FAR {far_s}"
+        if evt_time:
+            note += f" · t={evt_time}"
+
+    meta_extra: Dict[str, Any] = {
+        "gw": {
+            "alert_type": alert_type,
+            "time_created_utc": time_created,
+            "superevent_id": superevent_id,
+            "significant": event.get("significant"),
+            "event_time_utc": evt_time,
+            "far": far,
+            "instruments": instruments,
+            "group": event.get("group"),
+            "pipeline": event.get("pipeline"),
+            "search": event.get("search"),
+            "properties": props,
+            "classification": classification,
+            "classification_top": top_class,
+        }
+    }
+    if skymap_meta:
+        meta_extra["gw"]["skymap"] = skymap_meta
+
+    if urls.get("gracedb"):
+        meta_extra["urls"] = {"gracedb": urls.get("gracedb")}
+
+    if title:
+        meta_extra["title"] = title
+    if note:
+        meta_extra["note"] = note
+
+    return title, note, meta_extra, payload_json_sanitized
+
+
 def _build_item(
     *,
     cfg_group: str,
@@ -168,12 +299,45 @@ def _build_item(
                 except Exception:
                     pass
 
+    # Base meta (raw)
+    meta: Dict[str, Any] = {
+        "topic": topic,
+        "offset": offset,
+        "kafka_timestamp_ms": kafka_ts_ms,
+        "payload_text": payload_text,
+        "payload_json": payload_json,  # may be None; may be sanitized below for some topics
+    }
+
+    # Topic-specific enrichment (additive). For GW alerts we also sanitize skymap to avoid huge JSON diffs.
+    note: Optional[str] = None
+    if topic == "igwn.gwalert":
+        title, note, meta_extra, payload_json_sanitized = _igwn_gwalert_enrich(
+            payload_text=payload_text,
+            payload_json=payload_json,
+        )
+                # Trim payload_text too (it may embed huge skymap). Keep fingerprint for audit.
+        if isinstance(payload_text, str) and payload_text:
+            b = payload_text.encode("utf-8", errors="ignore")
+            meta["payload_text_meta"] = {
+                "present": True,
+                "bytes": len(b),
+                "sha256": _sha256_hex(b),
+                "truncated": True,
+                "max_chars": 4096,
+            }
+            meta["payload_text"] = None
+
+        if payload_json_sanitized is not None:
+            meta["payload_json"] = payload_json_sanitized
+        if meta_extra:
+            meta.update(meta_extra)
+
     return {
         "id": _id,
         "source": "gcn_kafka",
         "group": cfg_group,
         "type": "gcn",
-        "note": None,
+        "note": note,  # previously None; now filled when we can (e.g., GW alerts)
         "score_raw": None,
         "score_norm": 0.5,  # neutral default; later we can specialize by topic family
         "ra_deg": ra_deg,
@@ -182,24 +346,15 @@ def _build_item(
         "discovery": None,
         "updated_utc": updated_utc,
         "ingested_utc": ingested_utc,
-        "meta": {
-            "topic": topic,
-            "offset": offset,
-            "kafka_timestamp_ms": kafka_ts_ms,
-            "payload_text": payload_text,
-            "payload_json": payload_json,  # may be None
-        },
+        "meta": meta,
     }
 
 
 def main() -> None:
     import os
-    import time
-    from pathlib import Path
     from typing import Any, Dict, List
 
     from dotenv import load_dotenv
-    from gcn_kafka import Consumer
 
     # Load .env from project root (same style as other pipelines)
     load_dotenv(PROJECT_ROOT / ".env")
@@ -326,7 +481,7 @@ def main() -> None:
         f"[sky] done elapsed={elapsed}s items={len(items)} polls={total_polls} empty={empty_polls}",
         flush=True,
     )
-    
+
 
 if __name__ == "__main__":
     main()
