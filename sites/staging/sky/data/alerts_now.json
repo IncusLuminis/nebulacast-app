@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-02-19T12:51:56.010267+00:00",
+  "generated_utc": "2026-02-20T01:26:57.576523+00:00",
   "observer": {
     "lat_deg": 52.2297,
     "lon_deg": 21.0122
@@ -19,55 +19,99 @@
     }
   ],
   "counts": {
-    "total_filtered": 34,
+    "total_filtered": 41,
     "by_group": {
-      "neocp": 26,
+      "neocp": 34,
       "grb": 1,
-      "transient": 7
+      "transient": 6
     }
   },
   "groups": {
     "neocp": [
       {
-        "id": "P12lPfw",
+        "id": "P22lUvC",
         "source": "neocp",
         "group": "neocp",
         "type": "neo",
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 176.7645,
-        "dec_deg": 7.9886,
+        "ra_deg": 205.0515,
+        "dec_deg": 14.4739,
         "mag": 20.2,
         "discovery": {
           "year": "2026",
           "month": "02",
-          "day": "18.5"
+          "day": "19.5"
         },
-        "updated_utc": "2026-02-19T11:02:24+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "updated_utc": "2026-02-19T22:48:00+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
       },
       {
-        "id": "or08750",
+        "id": "P12lWEs",
         "source": "neocp",
         "group": "neocp",
         "type": "neo",
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 118.212,
-        "dec_deg": 43.9725,
-        "mag": 20.7,
+        "ra_deg": 129.7545,
+        "dec_deg": 27.3925,
+        "mag": 21.1,
         "discovery": {
           "year": "2026",
           "month": "02",
-          "day": "18.9"
+          "day": "19.4"
         },
-        "updated_utc": "2026-02-19T10:48:00+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "updated_utc": "2026-02-19T21:21:36+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "A11yweM",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": "S",
+        "score_raw": 100,
+        "score_norm": 1.0,
+        "ra_deg": 160.611,
+        "dec_deg": 9.7137,
+        "mag": 17.9,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.4"
+        },
+        "updated_utc": "2026-02-19T15:21:36+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "A11yweL",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 100,
+        "score_norm": 1.0,
+        "ra_deg": 161.517,
+        "dec_deg": 23.0829,
+        "mag": 19.2,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.5"
+        },
+        "updated_utc": "2026-02-19T15:07:12+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "added"
         }
@@ -80,8 +124,8 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 157.767,
-        "dec_deg": -7.2243,
+        "ra_deg": 157.827,
+        "dec_deg": -7.2975,
         "mag": 21.1,
         "discovery": {
           "year": "2026",
@@ -89,97 +133,9 @@
           "day": "18.5"
         },
         "updated_utc": "2026-02-19T10:04:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
-        }
-      },
-      {
-        "id": "P12lSLt",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": null,
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 83.7015,
-        "dec_deg": 13.9456,
-        "mag": 20.7,
-        "discovery": {
-          "year": "2026",
-          "month": "02",
-          "day": "19.3"
-        },
-        "updated_utc": "2026-02-19T09:50:24+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-        "meta": {
-          "action": "added"
-        }
-      },
-      {
-        "id": "P22lSla",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": null,
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 111.8085,
-        "dec_deg": 49.6748,
-        "mag": 20.0,
-        "discovery": {
-          "year": "2026",
-          "month": "02",
-          "day": "19.3"
-        },
-        "updated_utc": "2026-02-19T08:38:24+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-        "meta": {
-          "action": "added"
-        }
-      },
-      {
-        "id": "P22lSl7",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": null,
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 112.8465,
-        "dec_deg": 21.6055,
-        "mag": 21.0,
-        "discovery": {
-          "year": "2026",
-          "month": "02",
-          "day": "19.3"
-        },
-        "updated_utc": "2026-02-19T08:38:24+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "P22lSl8",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": null,
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 112.7895,
-        "dec_deg": 15.8051,
-        "mag": 20.8,
-        "discovery": {
-          "year": "2026",
-          "month": "02",
-          "day": "19.2"
-        },
-        "updated_utc": "2026-02-19T08:24:00+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-        "meta": {
-          "action": "added"
         }
       },
       {
@@ -190,8 +146,8 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 273.726,
-        "dec_deg": 32.393,
+        "ra_deg": 273.87600000000003,
+        "dec_deg": 32.7851,
         "mag": 20.0,
         "discovery": {
           "year": "2026",
@@ -199,7 +155,7 @@
           "day": "17.2"
         },
         "updated_utc": "2026-02-19T05:16:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -212,8 +168,8 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 165.852,
-        "dec_deg": 26.777,
+        "ra_deg": 166.371,
+        "dec_deg": 26.6233,
         "mag": 21.1,
         "discovery": {
           "year": "2026",
@@ -221,7 +177,7 @@
           "day": "14.0"
         },
         "updated_utc": "2026-02-19T05:16:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -234,8 +190,8 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 193.2495,
-        "dec_deg": -12.301,
+        "ra_deg": 192.77700000000002,
+        "dec_deg": -12.4654,
         "mag": 21.2,
         "discovery": {
           "year": "2026",
@@ -243,29 +199,7 @@
           "day": "17.6"
         },
         "updated_utc": "2026-02-18T13:55:12+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "P22lJO2",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": null,
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 163.7535,
-        "dec_deg": 40.5441,
-        "mag": 20.9,
-        "discovery": {
-          "year": "2026",
-          "month": "02",
-          "day": "16.5"
-        },
-        "updated_utc": "2026-02-18T08:38:24+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -278,8 +212,8 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 237.735,
-        "dec_deg": 26.3088,
+        "ra_deg": 237.80100000000002,
+        "dec_deg": 26.5284,
         "mag": 19.8,
         "discovery": {
           "year": "2026",
@@ -287,7 +221,7 @@
           "day": "18.2"
         },
         "updated_utc": "2026-02-18T08:24:00+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "added"
         }
@@ -300,8 +234,8 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 193.84050000000002,
-        "dec_deg": -11.0581,
+        "ra_deg": 191.48850000000002,
+        "dec_deg": -17.9123,
         "mag": 19.9,
         "discovery": {
           "year": "2026",
@@ -309,7 +243,7 @@
           "day": "16.4"
         },
         "updated_utc": "2026-02-18T05:31:12+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -322,16 +256,16 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 181.44,
-        "dec_deg": -68.4025,
-        "mag": 21.0,
+        "ra_deg": 191.34900000000002,
+        "dec_deg": -68.4531,
+        "mag": 21.2,
         "discovery": {
           "year": "2026",
           "month": "02",
           "day": "14.2"
         },
         "updated_utc": "2026-02-18T05:16:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -344,8 +278,8 @@
         "note": null,
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 183.1695,
-        "dec_deg": 40.3351,
+        "ra_deg": 183.465,
+        "dec_deg": 40.7498,
         "mag": 21.1,
         "discovery": {
           "year": "2026",
@@ -353,29 +287,139 @@
           "day": "12.6"
         },
         "updated_utc": "2026-02-18T05:16:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
       },
       {
-        "id": "Sar2867",
+        "id": "P22lSl8",
         "source": "neocp",
         "group": "neocp",
         "type": "neo",
         "note": null,
         "score_raw": 98,
         "score_norm": 0.98,
-        "ra_deg": 134.76,
-        "dec_deg": 24.5253,
+        "ra_deg": 113.66550000000001,
+        "dec_deg": 14.8612,
+        "mag": 21.1,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.2"
+        },
+        "updated_utc": "2026-02-20T01:12:00+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P12lSLt",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 98,
+        "score_norm": 0.98,
+        "ra_deg": 84.05250000000001,
+        "dec_deg": 13.4113,
         "mag": 20.7,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.3"
+        },
+        "updated_utc": "2026-02-20T00:43:12+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P22lSla",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 98,
+        "score_norm": 0.98,
+        "ra_deg": 116.58,
+        "dec_deg": 52.3824,
+        "mag": 20.1,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.3"
+        },
+        "updated_utc": "2026-02-19T23:16:48+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P22lUlu",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 98,
+        "score_norm": 0.98,
+        "ra_deg": 159.86849999999998,
+        "dec_deg": 22.9826,
+        "mag": 20.7,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.4"
+        },
+        "updated_utc": "2026-02-19T22:48:00+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P22lSl7",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 98,
+        "score_norm": 0.98,
+        "ra_deg": 113.637,
+        "dec_deg": 21.6808,
+        "mag": 20.8,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.3"
+        },
+        "updated_utc": "2026-02-19T22:33:36+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "or08750",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 98,
+        "score_norm": 0.98,
+        "ra_deg": 121.31849999999999,
+        "dec_deg": 42.2461,
+        "mag": 20.3,
         "discovery": {
           "year": "2026",
           "month": "02",
           "day": "18.9"
         },
-        "updated_utc": "2026-02-19T03:07:12+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "updated_utc": "2026-02-19T20:38:24+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -388,8 +432,8 @@
         "note": null,
         "score_raw": 97,
         "score_norm": 0.97,
-        "ra_deg": 201.885,
-        "dec_deg": -8.9075,
+        "ra_deg": 202.17600000000002,
+        "dec_deg": -8.1954,
         "mag": 21.1,
         "discovery": {
           "year": "2026",
@@ -397,9 +441,75 @@
           "day": "17.6"
         },
         "updated_utc": "2026-02-19T11:16:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
+        }
+      },
+      {
+        "id": "P22lUvi",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 96,
+        "score_norm": 0.96,
+        "ra_deg": 178.371,
+        "dec_deg": 27.9422,
+        "mag": 20.4,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.4"
+        },
+        "updated_utc": "2026-02-20T00:00:00+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P12lPfw",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 96,
+        "score_norm": 0.96,
+        "ra_deg": 175.8375,
+        "dec_deg": 8.2309,
+        "mag": 20.3,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "18.5"
+        },
+        "updated_utc": "2026-02-19T19:55:12+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "A11yweJ",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 96,
+        "score_norm": 0.96,
+        "ra_deg": 124.782,
+        "dec_deg": 22.86,
+        "mag": 19.5,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.4"
+        },
+        "updated_utc": "2026-02-19T14:09:36+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "added"
         }
       },
       {
@@ -410,16 +520,16 @@
         "note": null,
         "score_raw": 89,
         "score_norm": 0.89,
-        "ra_deg": 148.9485,
-        "dec_deg": 9.3419,
-        "mag": 21.4,
+        "ra_deg": 148.3965,
+        "dec_deg": 9.6556,
+        "mag": 21.5,
         "discovery": {
           "year": "2026",
           "month": "02",
           "day": "13.4"
         },
         "updated_utc": "2026-02-19T05:31:12+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -432,8 +542,8 @@
         "note": null,
         "score_raw": 87,
         "score_norm": 0.87,
-        "ra_deg": 169.5,
-        "dec_deg": 31.4407,
+        "ra_deg": 169.4445,
+        "dec_deg": 31.4788,
         "mag": 20.9,
         "discovery": {
           "year": "2026",
@@ -441,7 +551,29 @@
           "day": "14.8"
         },
         "updated_utc": "2026-02-18T05:31:12+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P22lUlt",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 86,
+        "score_norm": 0.86,
+        "ra_deg": 149.1405,
+        "dec_deg": 18.8658,
+        "mag": 19.2,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.4"
+        },
+        "updated_utc": "2026-02-20T00:14:24+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -452,18 +584,40 @@
         "group": "neocp",
         "type": "neo",
         "note": null,
-        "score_raw": 79,
-        "score_norm": 0.79,
-        "ra_deg": 140.931,
-        "dec_deg": 20.789,
-        "mag": 20.2,
+        "score_raw": 77,
+        "score_norm": 0.77,
+        "ra_deg": 140.478,
+        "dec_deg": 21.2056,
+        "mag": 20.1,
         "discovery": {
           "year": "2026",
           "month": "02",
           "day": "17.7"
         },
-        "updated_utc": "2026-02-19T02:52:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "updated_utc": "2026-02-20T00:00:00+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "Sar2867",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 76,
+        "score_norm": 0.76,
+        "ra_deg": 137.99699999999999,
+        "dec_deg": 24.9732,
+        "mag": 20.6,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "18.9"
+        },
+        "updated_utc": "2026-02-19T23:16:48+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -476,8 +630,8 @@
         "note": null,
         "score_raw": 63,
         "score_norm": 0.63,
-        "ra_deg": 216.5805,
-        "dec_deg": 40.4675,
+        "ra_deg": 216.4725,
+        "dec_deg": 40.4164,
         "mag": 21.1,
         "discovery": {
           "year": "2026",
@@ -485,7 +639,7 @@
           "day": "17.6"
         },
         "updated_utc": "2026-02-19T11:16:48+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -498,8 +652,8 @@
         "note": null,
         "score_raw": 56,
         "score_norm": 0.56,
-        "ra_deg": 196.34099999999998,
-        "dec_deg": -25.1253,
+        "ra_deg": 196.4205,
+        "dec_deg": -25.3191,
         "mag": 21.5,
         "discovery": {
           "year": "2026",
@@ -507,29 +661,7 @@
           "day": "28.6"
         },
         "updated_utc": "2026-02-18T11:02:24+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "P12lwY3",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": null,
-        "score_raw": 35,
-        "score_norm": 0.35,
-        "ra_deg": 162.29850000000002,
-        "dec_deg": 0.7188,
-        "mag": 20.2,
-        "discovery": {
-          "year": "2026",
-          "month": "02",
-          "day": "13.4"
-        },
-        "updated_utc": "2026-02-18T21:21:36+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -542,16 +674,60 @@
         "note": null,
         "score_raw": 35,
         "score_norm": 0.35,
-        "ra_deg": 261.4755,
-        "dec_deg": 40.9745,
-        "mag": 20.2,
+        "ra_deg": 261.63,
+        "dec_deg": 41.1157,
+        "mag": 20.1,
         "discovery": {
           "year": "2026",
           "month": "01",
           "day": "15.5"
         },
-        "updated_utc": "2026-02-18T16:19:12+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "updated_utc": "2026-02-19T21:50:24+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P12lwY3",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 35,
+        "score_norm": 0.35,
+        "ra_deg": 162.2175,
+        "dec_deg": 0.7693,
+        "mag": 20.2,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "13.4"
+        },
+        "updated_utc": "2026-02-18T21:21:36+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "P22lUn8",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": null,
+        "score_raw": 34,
+        "score_norm": 0.34,
+        "ra_deg": 160.5285,
+        "dec_deg": 18.2744,
+        "mag": 21.3,
+        "discovery": {
+          "year": "2026",
+          "month": "02",
+          "day": "19.4"
+        },
+        "updated_utc": "2026-02-19T22:48:00+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -564,8 +740,8 @@
         "note": null,
         "score_raw": 20,
         "score_norm": 0.2,
-        "ra_deg": 167.103,
-        "dec_deg": -6.6198,
+        "ra_deg": 167.0115,
+        "dec_deg": -6.5508,
         "mag": 20.8,
         "discovery": {
           "year": "2026",
@@ -573,7 +749,7 @@
           "day": "13.5"
         },
         "updated_utc": "2026-02-19T05:31:12+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -586,16 +762,16 @@
         "note": null,
         "score_raw": 10,
         "score_norm": 0.1,
-        "ra_deg": 178.4325,
-        "dec_deg": 14.3888,
-        "mag": 20.2,
+        "ra_deg": 178.53,
+        "dec_deg": 14.6856,
+        "mag": 20.3,
         "discovery": {
           "year": "2026",
           "month": "02",
           "day": "12.8"
         },
-        "updated_utc": "2026-02-19T11:02:24+00:00",
-        "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+        "updated_utc": "2026-02-19T20:09:36+00:00",
+        "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
         "meta": {
           "action": "updated"
         }
@@ -615,7 +791,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-17T09:18:43+00:00",
-        "ingested_utc": "2026-02-19T12:51:48.677612+00:00",
+        "ingested_utc": "2026-02-20T01:26:50.897778+00:00",
         "meta": {
           "trigger_name": "bn260217388"
         }
@@ -635,7 +811,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-19T12:24:35+00:00",
-        "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+        "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 19",
@@ -655,7 +831,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-19T12:06:10+00:00",
-        "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+        "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 19.457",
@@ -675,7 +851,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-18T01:10:20+00:00",
-        "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+        "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 17.5511",
@@ -695,7 +871,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-09T03:21:34+00:00",
-        "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+        "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 08.8090",
@@ -715,7 +891,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-04T00:18:06+00:00",
-        "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+        "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 01 31.8519",
@@ -735,76 +911,100 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-01-26T22:26:51+00:00",
-        "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+        "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
         "meta": {
           "title": "Possible nova",
           "observation_date": "2026 01 26.8081",
           "designation_raw": "PNV J09544647+6906317"
-        }
-      },
-      {
-        "id": "TCP J06571119-1724439",
-        "source": "tocp",
-        "group": "transient",
-        "type": "transient",
-        "note": null,
-        "score_raw": null,
-        "score_norm": 0.5,
-        "ra_deg": 104.296625,
-        "dec_deg": -17.41219444444444,
-        "mag": 14.5,
-        "discovery": null,
-        "updated_utc": "2026-01-21T01:12:08+00:00",
-        "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
-        "meta": {
-          "title": "Possible transient object",
-          "observation_date": "2026 01 19.4310",
-          "designation_raw": "TCP J06571119-1724439"
         }
       }
     ]
   },
   "items": [
     {
-      "id": "P12lPfw",
+      "id": "P22lUvC",
       "source": "neocp",
       "group": "neocp",
       "type": "neo",
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 176.7645,
-      "dec_deg": 7.9886,
+      "ra_deg": 205.0515,
+      "dec_deg": 14.4739,
       "mag": 20.2,
       "discovery": {
         "year": "2026",
         "month": "02",
-        "day": "18.5"
+        "day": "19.5"
       },
-      "updated_utc": "2026-02-19T11:02:24+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "updated_utc": "2026-02-19T22:48:00+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
     },
     {
-      "id": "or08750",
+      "id": "P12lWEs",
       "source": "neocp",
       "group": "neocp",
       "type": "neo",
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 118.212,
-      "dec_deg": 43.9725,
-      "mag": 20.7,
+      "ra_deg": 129.7545,
+      "dec_deg": 27.3925,
+      "mag": 21.1,
       "discovery": {
         "year": "2026",
         "month": "02",
-        "day": "18.9"
+        "day": "19.4"
       },
-      "updated_utc": "2026-02-19T10:48:00+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "updated_utc": "2026-02-19T21:21:36+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "A11yweM",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": "S",
+      "score_raw": 100,
+      "score_norm": 1.0,
+      "ra_deg": 160.611,
+      "dec_deg": 9.7137,
+      "mag": 17.9,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.4"
+      },
+      "updated_utc": "2026-02-19T15:21:36+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "A11yweL",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 100,
+      "score_norm": 1.0,
+      "ra_deg": 161.517,
+      "dec_deg": 23.0829,
+      "mag": 19.2,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.5"
+      },
+      "updated_utc": "2026-02-19T15:07:12+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "added"
       }
@@ -817,8 +1017,8 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 157.767,
-      "dec_deg": -7.2243,
+      "ra_deg": 157.827,
+      "dec_deg": -7.2975,
       "mag": 21.1,
       "discovery": {
         "year": "2026",
@@ -826,97 +1026,9 @@
         "day": "18.5"
       },
       "updated_utc": "2026-02-19T10:04:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
-      }
-    },
-    {
-      "id": "P12lSLt",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": null,
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 83.7015,
-      "dec_deg": 13.9456,
-      "mag": 20.7,
-      "discovery": {
-        "year": "2026",
-        "month": "02",
-        "day": "19.3"
-      },
-      "updated_utc": "2026-02-19T09:50:24+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-      "meta": {
-        "action": "added"
-      }
-    },
-    {
-      "id": "P22lSla",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": null,
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 111.8085,
-      "dec_deg": 49.6748,
-      "mag": 20.0,
-      "discovery": {
-        "year": "2026",
-        "month": "02",
-        "day": "19.3"
-      },
-      "updated_utc": "2026-02-19T08:38:24+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-      "meta": {
-        "action": "added"
-      }
-    },
-    {
-      "id": "P22lSl7",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": null,
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 112.8465,
-      "dec_deg": 21.6055,
-      "mag": 21.0,
-      "discovery": {
-        "year": "2026",
-        "month": "02",
-        "day": "19.3"
-      },
-      "updated_utc": "2026-02-19T08:38:24+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "P22lSl8",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": null,
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 112.7895,
-      "dec_deg": 15.8051,
-      "mag": 20.8,
-      "discovery": {
-        "year": "2026",
-        "month": "02",
-        "day": "19.2"
-      },
-      "updated_utc": "2026-02-19T08:24:00+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-      "meta": {
-        "action": "added"
       }
     },
     {
@@ -927,8 +1039,8 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 273.726,
-      "dec_deg": 32.393,
+      "ra_deg": 273.87600000000003,
+      "dec_deg": 32.7851,
       "mag": 20.0,
       "discovery": {
         "year": "2026",
@@ -936,7 +1048,7 @@
         "day": "17.2"
       },
       "updated_utc": "2026-02-19T05:16:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -949,8 +1061,8 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 165.852,
-      "dec_deg": 26.777,
+      "ra_deg": 166.371,
+      "dec_deg": 26.6233,
       "mag": 21.1,
       "discovery": {
         "year": "2026",
@@ -958,7 +1070,7 @@
         "day": "14.0"
       },
       "updated_utc": "2026-02-19T05:16:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -971,8 +1083,8 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 193.2495,
-      "dec_deg": -12.301,
+      "ra_deg": 192.77700000000002,
+      "dec_deg": -12.4654,
       "mag": 21.2,
       "discovery": {
         "year": "2026",
@@ -980,29 +1092,7 @@
         "day": "17.6"
       },
       "updated_utc": "2026-02-18T13:55:12+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "P22lJO2",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": null,
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 163.7535,
-      "dec_deg": 40.5441,
-      "mag": 20.9,
-      "discovery": {
-        "year": "2026",
-        "month": "02",
-        "day": "16.5"
-      },
-      "updated_utc": "2026-02-18T08:38:24+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1015,8 +1105,8 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 237.735,
-      "dec_deg": 26.3088,
+      "ra_deg": 237.80100000000002,
+      "dec_deg": 26.5284,
       "mag": 19.8,
       "discovery": {
         "year": "2026",
@@ -1024,7 +1114,7 @@
         "day": "18.2"
       },
       "updated_utc": "2026-02-18T08:24:00+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "added"
       }
@@ -1037,8 +1127,8 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 193.84050000000002,
-      "dec_deg": -11.0581,
+      "ra_deg": 191.48850000000002,
+      "dec_deg": -17.9123,
       "mag": 19.9,
       "discovery": {
         "year": "2026",
@@ -1046,7 +1136,7 @@
         "day": "16.4"
       },
       "updated_utc": "2026-02-18T05:31:12+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1059,16 +1149,16 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 181.44,
-      "dec_deg": -68.4025,
-      "mag": 21.0,
+      "ra_deg": 191.34900000000002,
+      "dec_deg": -68.4531,
+      "mag": 21.2,
       "discovery": {
         "year": "2026",
         "month": "02",
         "day": "14.2"
       },
       "updated_utc": "2026-02-18T05:16:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1081,8 +1171,8 @@
       "note": null,
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 183.1695,
-      "dec_deg": 40.3351,
+      "ra_deg": 183.465,
+      "dec_deg": 40.7498,
       "mag": 21.1,
       "discovery": {
         "year": "2026",
@@ -1090,7 +1180,7 @@
         "day": "12.6"
       },
       "updated_utc": "2026-02-18T05:16:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1108,29 +1198,139 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-17T09:18:43+00:00",
-      "ingested_utc": "2026-02-19T12:51:48.677612+00:00",
+      "ingested_utc": "2026-02-20T01:26:50.897778+00:00",
       "meta": {
         "trigger_name": "bn260217388"
       }
     },
     {
-      "id": "Sar2867",
+      "id": "P22lSl8",
       "source": "neocp",
       "group": "neocp",
       "type": "neo",
       "note": null,
       "score_raw": 98,
       "score_norm": 0.98,
-      "ra_deg": 134.76,
-      "dec_deg": 24.5253,
+      "ra_deg": 113.66550000000001,
+      "dec_deg": 14.8612,
+      "mag": 21.1,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.2"
+      },
+      "updated_utc": "2026-02-20T01:12:00+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P12lSLt",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 98,
+      "score_norm": 0.98,
+      "ra_deg": 84.05250000000001,
+      "dec_deg": 13.4113,
       "mag": 20.7,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.3"
+      },
+      "updated_utc": "2026-02-20T00:43:12+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P22lSla",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 98,
+      "score_norm": 0.98,
+      "ra_deg": 116.58,
+      "dec_deg": 52.3824,
+      "mag": 20.1,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.3"
+      },
+      "updated_utc": "2026-02-19T23:16:48+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P22lUlu",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 98,
+      "score_norm": 0.98,
+      "ra_deg": 159.86849999999998,
+      "dec_deg": 22.9826,
+      "mag": 20.7,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.4"
+      },
+      "updated_utc": "2026-02-19T22:48:00+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P22lSl7",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 98,
+      "score_norm": 0.98,
+      "ra_deg": 113.637,
+      "dec_deg": 21.6808,
+      "mag": 20.8,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.3"
+      },
+      "updated_utc": "2026-02-19T22:33:36+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "or08750",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 98,
+      "score_norm": 0.98,
+      "ra_deg": 121.31849999999999,
+      "dec_deg": 42.2461,
+      "mag": 20.3,
       "discovery": {
         "year": "2026",
         "month": "02",
         "day": "18.9"
       },
-      "updated_utc": "2026-02-19T03:07:12+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "updated_utc": "2026-02-19T20:38:24+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1143,8 +1343,8 @@
       "note": null,
       "score_raw": 97,
       "score_norm": 0.97,
-      "ra_deg": 201.885,
-      "dec_deg": -8.9075,
+      "ra_deg": 202.17600000000002,
+      "dec_deg": -8.1954,
       "mag": 21.1,
       "discovery": {
         "year": "2026",
@@ -1152,9 +1352,75 @@
         "day": "17.6"
       },
       "updated_utc": "2026-02-19T11:16:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
+      }
+    },
+    {
+      "id": "P22lUvi",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 96,
+      "score_norm": 0.96,
+      "ra_deg": 178.371,
+      "dec_deg": 27.9422,
+      "mag": 20.4,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.4"
+      },
+      "updated_utc": "2026-02-20T00:00:00+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P12lPfw",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 96,
+      "score_norm": 0.96,
+      "ra_deg": 175.8375,
+      "dec_deg": 8.2309,
+      "mag": 20.3,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "18.5"
+      },
+      "updated_utc": "2026-02-19T19:55:12+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "A11yweJ",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 96,
+      "score_norm": 0.96,
+      "ra_deg": 124.782,
+      "dec_deg": 22.86,
+      "mag": 19.5,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.4"
+      },
+      "updated_utc": "2026-02-19T14:09:36+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "added"
       }
     },
     {
@@ -1165,16 +1431,16 @@
       "note": null,
       "score_raw": 89,
       "score_norm": 0.89,
-      "ra_deg": 148.9485,
-      "dec_deg": 9.3419,
-      "mag": 21.4,
+      "ra_deg": 148.3965,
+      "dec_deg": 9.6556,
+      "mag": 21.5,
       "discovery": {
         "year": "2026",
         "month": "02",
         "day": "13.4"
       },
       "updated_utc": "2026-02-19T05:31:12+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1187,8 +1453,8 @@
       "note": null,
       "score_raw": 87,
       "score_norm": 0.87,
-      "ra_deg": 169.5,
-      "dec_deg": 31.4407,
+      "ra_deg": 169.4445,
+      "dec_deg": 31.4788,
       "mag": 20.9,
       "discovery": {
         "year": "2026",
@@ -1196,7 +1462,29 @@
         "day": "14.8"
       },
       "updated_utc": "2026-02-18T05:31:12+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P22lUlt",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 86,
+      "score_norm": 0.86,
+      "ra_deg": 149.1405,
+      "dec_deg": 18.8658,
+      "mag": 19.2,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.4"
+      },
+      "updated_utc": "2026-02-20T00:14:24+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1207,18 +1495,40 @@
       "group": "neocp",
       "type": "neo",
       "note": null,
-      "score_raw": 79,
-      "score_norm": 0.79,
-      "ra_deg": 140.931,
-      "dec_deg": 20.789,
-      "mag": 20.2,
+      "score_raw": 77,
+      "score_norm": 0.77,
+      "ra_deg": 140.478,
+      "dec_deg": 21.2056,
+      "mag": 20.1,
       "discovery": {
         "year": "2026",
         "month": "02",
         "day": "17.7"
       },
-      "updated_utc": "2026-02-19T02:52:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "updated_utc": "2026-02-20T00:00:00+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "Sar2867",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 76,
+      "score_norm": 0.76,
+      "ra_deg": 137.99699999999999,
+      "dec_deg": 24.9732,
+      "mag": 20.6,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "18.9"
+      },
+      "updated_utc": "2026-02-19T23:16:48+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1231,8 +1541,8 @@
       "note": null,
       "score_raw": 63,
       "score_norm": 0.63,
-      "ra_deg": 216.5805,
-      "dec_deg": 40.4675,
+      "ra_deg": 216.4725,
+      "dec_deg": 40.4164,
       "mag": 21.1,
       "discovery": {
         "year": "2026",
@@ -1240,7 +1550,7 @@
         "day": "17.6"
       },
       "updated_utc": "2026-02-19T11:16:48+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1253,8 +1563,8 @@
       "note": null,
       "score_raw": 56,
       "score_norm": 0.56,
-      "ra_deg": 196.34099999999998,
-      "dec_deg": -25.1253,
+      "ra_deg": 196.4205,
+      "dec_deg": -25.3191,
       "mag": 21.5,
       "discovery": {
         "year": "2026",
@@ -1262,7 +1572,7 @@
         "day": "28.6"
       },
       "updated_utc": "2026-02-18T11:02:24+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1280,7 +1590,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-19T12:24:35+00:00",
-      "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+      "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 19",
@@ -1300,7 +1610,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-19T12:06:10+00:00",
-      "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+      "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 19.457",
@@ -1320,7 +1630,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-18T01:10:20+00:00",
-      "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+      "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 17.5511",
@@ -1340,7 +1650,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-09T03:21:34+00:00",
-      "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+      "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 08.8090",
@@ -1360,7 +1670,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-04T00:18:06+00:00",
-      "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+      "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 01 31.8519",
@@ -1380,53 +1690,11 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-01-26T22:26:51+00:00",
-      "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
+      "ingested_utc": "2026-02-20T01:26:57.048435+00:00",
       "meta": {
         "title": "Possible nova",
         "observation_date": "2026 01 26.8081",
         "designation_raw": "PNV J09544647+6906317"
-      }
-    },
-    {
-      "id": "TCP J06571119-1724439",
-      "source": "tocp",
-      "group": "transient",
-      "type": "transient",
-      "note": null,
-      "score_raw": null,
-      "score_norm": 0.5,
-      "ra_deg": 104.296625,
-      "dec_deg": -17.41219444444444,
-      "mag": 14.5,
-      "discovery": null,
-      "updated_utc": "2026-01-21T01:12:08+00:00",
-      "ingested_utc": "2026-02-19T12:51:55.460347+00:00",
-      "meta": {
-        "title": "Possible transient object",
-        "observation_date": "2026 01 19.4310",
-        "designation_raw": "TCP J06571119-1724439"
-      }
-    },
-    {
-      "id": "P12lwY3",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": null,
-      "score_raw": 35,
-      "score_norm": 0.35,
-      "ra_deg": 162.29850000000002,
-      "dec_deg": 0.7188,
-      "mag": 20.2,
-      "discovery": {
-        "year": "2026",
-        "month": "02",
-        "day": "13.4"
-      },
-      "updated_utc": "2026-02-18T21:21:36+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
-      "meta": {
-        "action": "updated"
       }
     },
     {
@@ -1437,16 +1705,60 @@
       "note": null,
       "score_raw": 35,
       "score_norm": 0.35,
-      "ra_deg": 261.4755,
-      "dec_deg": 40.9745,
-      "mag": 20.2,
+      "ra_deg": 261.63,
+      "dec_deg": 41.1157,
+      "mag": 20.1,
       "discovery": {
         "year": "2026",
         "month": "01",
         "day": "15.5"
       },
-      "updated_utc": "2026-02-18T16:19:12+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "updated_utc": "2026-02-19T21:50:24+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P12lwY3",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 35,
+      "score_norm": 0.35,
+      "ra_deg": 162.2175,
+      "dec_deg": 0.7693,
+      "mag": 20.2,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "13.4"
+      },
+      "updated_utc": "2026-02-18T21:21:36+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "P22lUn8",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": null,
+      "score_raw": 34,
+      "score_norm": 0.34,
+      "ra_deg": 160.5285,
+      "dec_deg": 18.2744,
+      "mag": 21.3,
+      "discovery": {
+        "year": "2026",
+        "month": "02",
+        "day": "19.4"
+      },
+      "updated_utc": "2026-02-19T22:48:00+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1459,8 +1771,8 @@
       "note": null,
       "score_raw": 20,
       "score_norm": 0.2,
-      "ra_deg": 167.103,
-      "dec_deg": -6.6198,
+      "ra_deg": 167.0115,
+      "dec_deg": -6.5508,
       "mag": 20.8,
       "discovery": {
         "year": "2026",
@@ -1468,7 +1780,7 @@
         "day": "13.5"
       },
       "updated_utc": "2026-02-19T05:31:12+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1481,16 +1793,16 @@
       "note": null,
       "score_raw": 10,
       "score_norm": 0.1,
-      "ra_deg": 178.4325,
-      "dec_deg": 14.3888,
-      "mag": 20.2,
+      "ra_deg": 178.53,
+      "dec_deg": 14.6856,
+      "mag": 20.3,
       "discovery": {
         "year": "2026",
         "month": "02",
         "day": "12.8"
       },
-      "updated_utc": "2026-02-19T11:02:24+00:00",
-      "ingested_utc": "2026-02-19T12:51:54.023877+00:00",
+      "updated_utc": "2026-02-19T20:09:36+00:00",
+      "ingested_utc": "2026-02-20T01:26:55.852668+00:00",
       "meta": {
         "action": "updated"
       }
