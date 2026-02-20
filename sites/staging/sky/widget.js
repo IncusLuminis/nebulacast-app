@@ -745,15 +745,115 @@ import * as Popovers from "./widgets/widget.popovers.js";
 
     // ---------- MODAL: all objects — table layout ----------
     function buildAllObjectsModalContent() {
-      const src = Array.isArray(objectsToday)
-        ? objectsToday
-        : (objectsToday?.items || objectsToday?.objects || []);
-      const arr = Array.isArray(src) ? src.slice() : [];
+  const src = Array.isArray(objectsToday)
+    ? objectsToday
+    : (objectsToday?.items || objectsToday?.objects || []);
+  const arr = Array.isArray(src) ? src.slice() : [];
 
-      if (!arr.length) {
-        const wrap = el("div", { style: "padding:24px;opacity:0.5;text-align:center", text: "No objects." });
-        return toHTML(wrap);
-      }
+  if (!arr.length) {
+    return '<div class="sky-modal-empty">No objects available</div>';
+  }
+
+  // Group + sort
+  const groupOf = (o) => {
+    const t = normLower(o?.group || o?.type || o?.kind || o?.subtype || "");
+    if (t.includes("calendar")) return "calendar";
+    if (t.includes("planet") || t.includes("sun") || t.includes("moon")) return "planets";
+    if (normLower(o?.meta?.planet_key || "").length) return "planets";
+    return "dso";
+  };
+  const byScoreDesc = (a, b) => scoreOf(b) - scoreOf(a);
+  const calendar = [], planetsList = [], dso = [];
+  for (const o of arr) {
+    const g = groupOf(o);
+    if (g === "calendar") calendar.push(o);
+    else if (g === "planets") planetsList.push(o);
+    else dso.push(o);
+  }
+  calendar.sort(byScoreDesc);
+  planetsList.sort(byScoreDesc);
+  dso.sort(byScoreDesc);
+  const sorted = [...calendar, ...planetsList, ...dso];
+
+  // Formatters
+  const fmtTimeLocal = (x) => {
+    if (!x) return "—";
+    const m = String(x).match(/T(\d{2}:\d{2})/);
+    return m ? m[1] : String(x);
+  };
+  const fmtMagVal = (o) => {
+    const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 1);
+    return v != null ? String(v) : "—";
+  };
+  const fmtAltVal = (o) => {
+    const v = fmtMaybeNumber(
+      o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ?? 
+      o?.max_alt_deg ?? o?.altDeg ?? o?.alt ?? o?.altitude, 0
+    );
+    return v != null ? `${v}°` : "—";
+  };
+
+  // Build table HTML with sortable structure
+  let html = '<div class="sky-modal-ranking">';
+  
+  // Header with sortable columns
+  html += '<div class="sky-modal-table-header">';
+  html += '<div data-sort="time">Time</div>';
+  html += '<div data-sort="name">Object</div>';
+  html += '<div data-sort="score">Score</div>';
+  html += '</div>';
+
+  // Rows
+  for (const o of sorted) {
+    const hid = (makeHighlightIdFromRaw(o) || "").replace(/"/g, "&quot;");
+    const tISO = (bestTimeISO(o) || "").replace(/"/g, "&quot;");
+    const name = ((o?.name || o?.target_name) ? String(o.name || o.target_name) : pickTitle(o)).replace(/</g,"&lt;");
+    const time = fmtTimeLocal(tISO);
+    const mag = fmtMagVal(o);
+    const alt = fmtAltVal(o);
+    const score = Math.round(scoreOf(o));
+    const grade = gradeOf(score);
+    const emoji = emojiForItem(o);
+
+    html += `<div class="sky-modal-row" data-hid="${hid}" data-time="${tISO}">`;
+    
+    // Time column
+    html += `<div class="sky-modal-time">${time}</div>`;
+    
+    // Center content (name + metadata)
+    html += '<div class="sky-modal-left">';
+    html += '<div class="sky-modal-r1">';
+    html += `<div class="sky-modal-gradeEmoji">${emoji}</div>`;
+    html += `<div class="sky-modal-name">${name}</div>`;
+    html += '</div>';
+    
+    // Note line
+    const noteText = grade;
+    html += `<div class="sky-modal-note"><span class="sky-modal-gradeText">${noteText}</span></div>`;
+    
+    // Metadata chips
+    html += '<div class="sky-modal-meta">';
+    if (mag !== "—") html += `<span class="sky-modal-chip">Mag ${mag}</span>`;
+    if (alt !== "—") html += `<span class="sky-modal-chip">Alt ${alt}</span>`;
+    html += '</div>';
+    
+    html += '</div>'; // .sky-modal-left
+    
+    // Score column with bar
+    html += '<div class="sky-modal-score">';
+    html += '<div class="sky-modal-bar">';
+    html += `<div class="sky-modal-bar-fill" style="width: ${score}%"></div>`;
+    html += '</div>';
+    html += `<div class="sky-modal-score-value">${score}</div>`;
+    html += '</div>';
+    
+    html += '</div>'; // .sky-modal-row
+  }
+
+  html += '</div>'; // .sky-modal-ranking
+
+  return html;
+}
 
       // Group + sort
       const groupOf = (o) => {
@@ -848,15 +948,118 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     function buildAllAlertsModalContent() {
-      const src = Array.isArray(alertsToday)
-        ? alertsToday
-        : (alertsToday?.items || alertsToday?.alerts || []);
-      const arr = Array.isArray(src) ? src.slice() : [];
+  const src = Array.isArray(alertsToday)
+    ? alertsToday
+    : (alertsToday?.items || alertsToday?.alerts || []);
+  const arr = Array.isArray(src) ? src.slice() : [];
 
-      if (!arr.length) {
-        const wrap = el("div", { style: "padding:24px;opacity:0.5;text-align:center", text: "No alerts." });
-        return toHTML(wrap);
-      }
+  if (!arr.length) {
+    return '<div class="sky-modal-empty">No alerts available</div>';
+  }
+
+  // Sort: score desc, then updated_utc desc
+  arr.sort((a, b) => {
+    const sa = Number(a?.score_norm ?? a?.score_raw ?? 0);
+    const sb = Number(b?.score_norm ?? b?.score_raw ?? 0);
+    if (sa !== sb) return sb - sa;
+    const ta = Date.parse(a?.updated_utc || "");
+    const tb = Date.parse(b?.updated_utc || "");
+    if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+    return 0;
+  });
+
+  // Formatters
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const fmtRA = (ra) => {
+    const v = Number(ra);
+    if (!Number.isFinite(v)) return "—";
+    const totalSec = (v / 15) * 3600;
+    const hh = Math.floor(totalSec / 3600);
+    const mm = Math.floor((totalSec % 3600) / 60);
+    return `${pad2(hh)}h${pad2(mm)}m`;
+  };
+  const fmtDEC = (dec) => {
+    const v = Number(dec);
+    if (!Number.isFinite(v)) return "—";
+    const sign = v >= 0 ? "+" : "−";
+    const a = Math.abs(v);
+    const dd = Math.floor(a);
+    const mm = Math.floor((a - dd) * 60);
+    return `${sign}${dd}°${pad2(mm)}′`;
+  };
+  const fmtScore = (a) => {
+    const s = Number(a?.score_norm ?? a?.score_raw);
+    return Number.isFinite(s) ? Math.round(s * 100) : 0;
+  };
+  const categoryFromSource = (src) => {
+    if (!src) return "Unknown";
+    const s = String(src).toLowerCase();
+    if (s.includes("tocp")) return "Transient";
+    if (s.includes("grb_fermi")) return "GRB";
+    if (s.includes("neocp")) return "Minor Planet";
+    return src.toUpperCase();
+  };
+
+  // Build table HTML with sortable structure
+  let html = '<div class="sky-modal-ranking">';
+  
+  // Header with sortable columns
+  html += '<div class="sky-modal-table-header">';
+  html += '<div data-sort="time">Type</div>';
+  html += '<div data-sort="name">Alert</div>';
+  html += '<div data-sort="score">Score</div>';
+  html += '</div>';
+
+  // Rows
+  for (const a of arr) {
+    const hid = (makeHighlightIdFromRaw(a) || "").replace(/"/g, "&quot;");
+    const title = ((a?.meta?.title || a?.id || "Alert")).replace(/</g,"&lt;");
+    const emoji = emojiForAlert(a);
+    const ra = fmtRA(a?.ra_deg);
+    const dec = fmtDEC(a?.dec_deg);
+    const cat = categoryFromSource(a?.source);
+    const score = fmtScore(a);
+
+    html += `<div class="sky-modal-row" data-hid="${hid}">`;
+    
+    // Type/Time column (using emoji as type indicator)
+    html += `<div class="sky-modal-time">${cat}</div>`;
+    
+    // Center content
+    html += '<div class="sky-modal-left">';
+    html += '<div class="sky-modal-r1">';
+    html += `<div class="sky-modal-gradeEmoji">${emoji}</div>`;
+    html += `<div class="sky-modal-name">${title}</div>`;
+    html += '</div>';
+    
+    // Coordinates as note
+    const coords = (ra !== "—" || dec !== "—") ? `RA ${ra} · DEC ${dec}` : "";
+    if (coords) {
+      html += `<div class="sky-modal-note">${coords}</div>`;
+    }
+    
+    // Metadata
+    html += '<div class="sky-modal-meta">';
+    html += `<span class="sky-modal-chip">${cat}</span>`;
+    html += '</div>';
+    
+    html += '</div>'; // .sky-modal-left
+    
+    // Score column
+    html += '<div class="sky-modal-score">';
+    html += '<div class="sky-modal-bar">';
+    html += `<div class="sky-modal-bar-fill" style="width: ${score}%"></div>`;
+    html += '</div>';
+    html += `<div class="sky-modal-score-value">${score}</div>`;
+    html += '</div>';
+    
+    html += '</div>'; // .sky-modal-row
+  }
+
+  html += '</div>'; // .sky-modal-ranking
+
+  return html;
+}
 
       // Sort: score desc, then updated_utc desc
       arr.sort((a, b) => {
@@ -1855,7 +2058,6 @@ import * as Popovers from "./widgets/widget.popovers.js";
         );
       }
     }, 50);
-  }
 
   bootWhenReady();
 })();
