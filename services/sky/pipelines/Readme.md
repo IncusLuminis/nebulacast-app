@@ -207,3 +207,8 @@ Each generator SHOULD ship a pipelines/misc/check_<dataset>.py validator that ch
 	•	item required fields + types,
 	•	ra/dec ranges,
 	•	no NaNs.
+
+
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts.py
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_neo_alerts.py
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts_merge_neo.py
