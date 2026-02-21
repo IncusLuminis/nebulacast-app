@@ -8,16 +8,6 @@ export const POPOVER_CSS = baseHostCSS(`
   z-index: 1000;
 }
 
-/* --- single source of truth for typography in ranking popover --- */
-:host{
-  --pop-fz-title: 20px;
-  --pop-fz-name: 18px;
-  --pop-fz-note: 13px;
-  --pop-fw-note: 400;
-  --pop-fz-meta: 13px;     /* хочешь 9px -> поставь 9px */
-  --pop-fw-meta: 400;      /* как note */
-}
-
 .panel{
   width: min(450px, 94vw);
   min-width: 320px;
@@ -69,7 +59,7 @@ export const POPOVER_CSS = baseHostCSS(`
 }
 
 .sky-pop-ranking .sky-pop-title{
-  font-size: var(--pop-fz-title);
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.01em;
   line-height: 1.05;
@@ -79,7 +69,6 @@ export const POPOVER_CSS = baseHostCSS(`
   word-break: break-word;
 }
 
-/* Show All button in header — themed */
 .sky-pop-ranking .sky-pop-showall-btn{
   appearance: none;
   -webkit-appearance: none;
@@ -98,20 +87,13 @@ export const POPOVER_CSS = baseHostCSS(`
   white-space: nowrap;
 
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .sky-pop-ranking .sky-pop-showall-btn:hover{
   background: rgba(255,255,255,0.09);
   border-color: rgba(255,255,255,0.16);
-}
-
-
-.sky-pop-ranking .sky-pop-section-title{
-  margin: 10px 6px 6px;
-  font-size: 22px;
-  line-height: 1.1;
-  font-weight: 700;
-  opacity: 0.95;
 }
 
 .sky-pop-ranking .sky-pop-item--ranking{
@@ -125,6 +107,9 @@ export const POPOVER_CSS = baseHostCSS(`
   border: 1px solid rgba(255,255,255,0.14);
   background: rgba(0,0,0,0.22);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .sky-pop-ranking .sky-pop-item--ranking:hover{
@@ -134,7 +119,7 @@ export const POPOVER_CSS = baseHostCSS(`
 
 .sky-pop-ranking .sky-pop-name{
   font-weight: 800;
-  font-size: var(--pop-fz-name);
+  font-size: 18px;
   line-height: 1.15;
   margin-left: 10px;
 
@@ -144,7 +129,6 @@ export const POPOVER_CSS = baseHostCSS(`
   min-width: 0;
 }
 
-/* NOTE (вторая строка) */
 .sky-pop-ranking .sky-pop-note{
   font-size: 13px;
   line-height: 1.25;
@@ -154,7 +138,6 @@ export const POPOVER_CSS = baseHostCSS(`
   margin-left: 1px;
 }
 
-/* META (третья строка) — контейнер */
 .sky-pop-ranking .sky-pop-meta2{
   font-size: 10px;
   font-weight: 400;
@@ -169,7 +152,6 @@ export const POPOVER_CSS = baseHostCSS(`
   margin-left: 1px;
 }
 
-/* META — сами чипы (time/mag/alt/RA/DEC/score) */
 .sky-pop-ranking .sky-pop-meta2 .sky-pop-chip,
 .sky-pop-ranking .sky-pop-meta2 .sky-pop-dot{
   font-size: 10px;
@@ -178,12 +160,10 @@ export const POPOVER_CSS = baseHostCSS(`
   white-space: nowrap;
 }
 
-/* score не выделяем жирностью */
 .sky-pop-ranking .sky-pop-meta2 .sky-pop-chip--score{
   font-weight: 300;
 }
 
-/* Ranking: НЕ показываем заголовки секций вообще */
 .sky-pop-ranking .sky-pop-section-title,
 .sky-pop-ranking .sky-pop-section-h{
   display: none !important;
@@ -191,10 +171,191 @@ export const POPOVER_CSS = baseHostCSS(`
   padding: 0 !important;
 }
 
-/* Если "воздух" создаётся отступами вокруг секций */
 .sky-pop-ranking .sky-pop-section{
   margin-top: 0 !important;
 }
+
+/* ===== Alerts popover (new card-based design) ===== */
+
+.sky-alerts-container{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sky-alerts-header{
+  position: sticky;
+  top: -12px;
+  z-index: 2;
   
+  background: rgba(18,22,28,0.95);
+  backdrop-filter: blur(12px);
+  padding: 6px 2px 10px;
+  margin: -12px -12px 4px;
+  padding-left: 12px;
+  padding-right: 12px;
+  
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sky-alerts-title{
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  opacity: 0.95;
+}
+
+.sky-alerts-showall-btn{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sky-alerts-showall-btn:hover{
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.16);
+}
+
+/* Alert item card */
+.sky-alert-item{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  padding: 14px;
+  border-radius: 16px;
+  
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
+  
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sky-alert-item:hover{
+  background: rgba(0,0,0,0.35);
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+
+/* Header row: icon + title + type badge */
+.sky-alert-header{
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.sky-alert-icon{
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-size: 20px;
+  line-height: 1;
+}
+
+.sky-alert-main{
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sky-alert-title{
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sky-alert-type{
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.65;
+  letter-spacing: 0.03em;
+}
+
+/* Metadata row */
+.sky-alert-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11px;
+  opacity: 0.85;
+  line-height: 1.3;
+  margin-left: 42px;
+}
+
+.sky-alert-meta-item{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.sky-alert-meta-label{
+  opacity: 0.7;
+}
+
+.sky-alert-meta-value{
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Score indicator with colored dot */
+.sky-alert-score{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sky-alert-score-dot{
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.sky-alert-score-dot--high{
+  background: #4ade80;
+}
+
+.sky-alert-score-dot--medium{
+  background: #fbbf24;
+}
+
+.sky-alert-score-dot--low{
+  background: #94a3b8;
+}
+
+/* Empty state */
+.sky-alerts-empty{
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.6;
+}
 
 `.trim());

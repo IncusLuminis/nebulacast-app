@@ -14,8 +14,11 @@ import "../ui/components/popover.js";
 import "../ui/components/modal.js";
 import "../ui/components/player.js";
 import "../ui/components/sky_card.js";
+import "../ui/components/sky-table.js";
 
 import { UI_ICONS } from "../ui/shared/icons.js";
+
+import { buildAlertsPopoverHTML } from "./widgets/widget.alerts.js";
 
 import {
   deepMerge,
@@ -745,251 +748,150 @@ import * as Popovers from "./widgets/widget.popovers.js";
 
     // ---------- MODAL: all objects — table layout ----------
     function buildAllObjectsModalContent() {
-  const src = Array.isArray(objectsToday)
-    ? objectsToday
-    : (objectsToday?.items || objectsToday?.objects || []);
-  const arr = Array.isArray(src) ? src.slice() : [];
+      const src = Array.isArray(objectsToday)
+        ? objectsToday
+        : (objectsToday?.items || objectsToday?.objects || []);
+      const arr = Array.isArray(src) ? src.slice() : [];
 
-  if (!arr.length) {
-    return '<div class="sky-modal-empty">No objects available</div>';
-  }
+      const groupOf = (o) => {
+        const t = normLower(o?.group || o?.type || o?.kind || o?.subtype || "");
+        if (t.includes("calendar")) return "calendar";
+        if (t.includes("planet") || t.includes("sun") || t.includes("moon")) return "planets";
+        if (normLower(o?.meta?.planet_key || "").length) return "planets";
+        return "dso";
+      };
 
-  // Group + sort
-  const groupOf = (o) => {
-    const t = normLower(o?.group || o?.type || o?.kind || o?.subtype || "");
-    if (t.includes("calendar")) return "calendar";
-    if (t.includes("planet") || t.includes("sun") || t.includes("moon")) return "planets";
-    if (normLower(o?.meta?.planet_key || "").length) return "planets";
-    return "dso";
-  };
-  const byScoreDesc = (a, b) => scoreOf(b) - scoreOf(a);
-  const calendar = [], planetsList = [], dso = [];
-  for (const o of arr) {
-    const g = groupOf(o);
-    if (g === "calendar") calendar.push(o);
-    else if (g === "planets") planetsList.push(o);
-    else dso.push(o);
-  }
-  calendar.sort(byScoreDesc);
-  planetsList.sort(byScoreDesc);
-  dso.sort(byScoreDesc);
-  const sorted = [...calendar, ...planetsList, ...dso];
+      const byScoreDesc = (a, b) => scoreOf(b) - scoreOf(a);
+      const calendar = [], planetsList = [], dso = [];
+      for (const o of arr) {
+        const g = groupOf(o);
+        if (g === "calendar") calendar.push(o);
+        else if (g === "planets") planetsList.push(o);
+        else dso.push(o);
+      }
+      calendar.sort(byScoreDesc);
+      planetsList.sort(byScoreDesc);
+      dso.sort(byScoreDesc);
+      const sorted = [...calendar, ...planetsList, ...dso];
 
-  // Formatters
-  const fmtTimeLocal = (x) => {
-    if (!x) return "—";
-    const m = String(x).match(/T(\d{2}:\d{2})/);
-    return m ? m[1] : String(x);
-  };
-  const fmtMagVal = (o) => {
-    const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 1);
-    return v != null ? String(v) : "—";
-  };
-  const fmtAltVal = (o) => {
-    const v = fmtMaybeNumber(
-      o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ?? 
-      o?.max_alt_deg ?? o?.altDeg ?? o?.alt ?? o?.altitude, 0
-    );
-    return v != null ? `${v}°` : "—";
-  };
+      const fmtTimeLocal = (x) => {
+        if (!x) return "—";
+        const m = String(x).match(/T(\d{2}:\d{2})/);
+        return m ? m[1] : String(x);
+      };
+      const fmtMagVal = (o) => {
+        const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 1);
+        return v != null ? String(v) : "—";
+      };
+      const fmtAltVal = (o) => {
+        const v = fmtMaybeNumber(
+          o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ??
+          o?.max_alt_deg ?? o?.altDeg ?? o?.alt ?? o?.altitude,
+          0
+        );
+        return v != null ? `${v}°` : "—";
+      };
 
-  // Build table HTML with sortable structure
-  let html = '<div class="sky-modal-ranking">';
-  
-  // Header with sortable columns
-  html += '<div class="sky-modal-table-header">';
-  html += '<div data-sort="time">Time</div>';
-  html += '<div data-sort="name">Object</div>';
-  html += '<div data-sort="score">Score</div>';
-  html += '</div>';
+      // Build flat row objects for sky-table (one field per cell)
+      const allRows = sorted.map((o, i) => {
+        const g = groupOf(o);
+        const name = String(
+          (o?.name || o?.target_name) ? (o.name || o.target_name) : pickTitle(o)
+        );
+        const tISO = bestTimeISO(o);
+        return {
+          id:     i,
+          _raw:   o,
+          _tISO:  tISO,
+          _group: g,
+          icon:   emojiForItem(o),
+          group:  g,
+          name:   name,
+          note:   String(o?.note || "").trim(),
+          mag:    fmtMagVal(o),
+          alt:    fmtAltVal(o),
+          time:   fmtTimeLocal(tISO),
+          score:  scoreOf(o) ? String(Math.round(scoreOf(o))) : "—",
+        };
+      });
 
-  // Rows
-  for (const o of sorted) {
-    const hid = (makeHighlightIdFromRaw(o) || "").replace(/"/g, "&quot;");
-    const tISO = (bestTimeISO(o) || "").replace(/"/g, "&quot;");
-    const name = ((o?.name || o?.target_name) ? String(o.name || o.target_name) : pickTitle(o)).replace(/</g,"&lt;");
-    const time = fmtTimeLocal(tISO);
-    const mag = fmtMagVal(o);
-    const alt = fmtAltVal(o);
-    const score = Math.round(scoreOf(o));
-    const grade = gradeOf(score);
-    const emoji = emojiForItem(o);
+      // ── Outer wrapper ──
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "display:flex;flex-direction:column;gap:0;";
 
-    html += `<div class="sky-modal-row" data-hid="${hid}" data-time="${tISO}">`;
-    
-    // Time column
-    html += `<div class="sky-modal-time">${time}</div>`;
-    
-    // Center content (name + metadata)
-    html += '<div class="sky-modal-left">';
-    html += '<div class="sky-modal-r1">';
-    html += `<div class="sky-modal-gradeEmoji">${emoji}</div>`;
-    html += `<div class="sky-modal-name">${name}</div>`;
-    html += '</div>';
-    
-    // Note line
-    const noteText = grade;
-    html += `<div class="sky-modal-note"><span class="sky-modal-gradeText">${noteText}</span></div>`;
-    
-    // Metadata chips
-    html += '<div class="sky-modal-meta">';
-    if (mag !== "—") html += `<span class="sky-modal-chip">Mag ${mag}</span>`;
-    if (alt !== "—") html += `<span class="sky-modal-chip">Alt ${alt}</span>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-left
-    
-    // Score column with bar
-    html += '<div class="sky-modal-score">';
-    html += '<div class="sky-modal-bar">';
-    html += `<div class="sky-modal-bar-fill" style="width: ${score}%"></div>`;
-    html += '</div>';
-    html += `<div class="sky-modal-score-value">${score}</div>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-row
-  }
+      // ── Tabs ──
+      const TABS = [
+        { id: "all",      label: "All" },
+        { id: "calendar", label: "Calendar" },
+        { id: "planets",  label: "Planets" },
+        { id: "dso",      label: "DSO" },
+      ];
 
-  html += '</div>'; // .sky-modal-ranking
+      const tabsEl = document.createElement("div");
+      tabsEl.className = "sky-objects-tabs";
+      const tabBtns = {};
+      for (const t of TABS) {
+        const btn = document.createElement("button");
+        btn.className = "sky-objects-tab" + (t.id === "all" ? " active" : "");
+        btn.dataset.tab = t.id;
+        btn.textContent = t.label;
+        tabsEl.appendChild(btn);
+        tabBtns[t.id] = btn;
+      }
 
-  return html;
-}
+      // ── sky-table ──
+      const tableEl = document.createElement("sky-table");
+      tableEl.style.cssText = "height:480px;margin-top:8px;";
 
-    function buildAllAlertsModalContent() {
-  const src = Array.isArray(alertsToday)
-    ? alertsToday
-    : (alertsToday?.items || alertsToday?.alerts || []);
-  const arr = Array.isArray(src) ? src.slice() : [];
+      tableEl.setColumns([
+        { key: "icon",  label: "",       width: "28px",  type: "icon" },
+        { key: "group", label: "Group",  width: "70px",  type: "badge" },
+        { key: "name",  label: "Object", width: "auto",  type: "name" },
+        { key: "note",  label: "Note",   width: "150px", type: "note" },
+        { key: "mag",   label: "Mag",    width: "46px",  type: "mono", align: "right" },
+        { key: "alt",   label: "Alt",    width: "46px",  type: "mono", align: "right" },
+        { key: "time",  label: "Culm.",  width: "52px",  type: "mono" },
+        { key: "score", label: "Score",  width: "52px",  type: "mono", align: "right" },
+      ]);
 
-  if (!arr.length) {
-    return '<div class="sky-modal-empty">No alerts available</div>';
-  }
+      tableEl.setRows(allRows);
 
-  // Sort: score desc, then updated_utc desc
-  arr.sort((a, b) => {
-    const sa = Number(a?.score_norm ?? a?.score_raw ?? 0);
-    const sb = Number(b?.score_norm ?? b?.score_raw ?? 0);
-    if (sa !== sb) return sb - sa;
-    const ta = Date.parse(a?.updated_utc || "");
-    const tb = Date.parse(b?.updated_utc || "");
-    if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
-    return 0;
-  });
+      // ── Tab filtering ──
+      tabsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-tab]");
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const tabId = btn.dataset.tab || "all";
+        for (const [id, b] of Object.entries(tabBtns)) {
+          b.classList.toggle("active", id === tabId);
+        }
+        const filtered = tabId === "all"
+          ? allRows
+          : allRows.filter((r) => r._group === tabId);
+        tableEl.setRows(filtered);
+      });
 
-  // Formatters
-  const pad2 = (n) => String(n).padStart(2, "0");
-  const fmtRA = (ra) => {
-    const v = Number(ra);
-    if (!Number.isFinite(v)) return "—";
-    const totalSec = (v / 15) * 3600;
-    const hh = Math.floor(totalSec / 3600);
-    const mm = Math.floor((totalSec % 3600) / 60);
-    return `${pad2(hh)}h${pad2(mm)}m`;
-  };
-  const fmtDEC = (dec) => {
-    const v = Number(dec);
-    if (!Number.isFinite(v)) return "—";
-    const sign = v >= 0 ? "+" : "−";
-    const a = Math.abs(v);
-    const dd = Math.floor(a);
-    const mm = Math.floor((a - dd) * 60);
-    return `${sign}${dd}°${pad2(mm)}′`;
-  };
-  const fmtScore = (a) => {
-    const s = Number(a?.score_norm ?? a?.score_raw);
-    return Number.isFinite(s) ? Math.round(s * 100) : 0;
-  };
-  const categoryFromSource = (src) => {
-    if (!src) return "Unknown";
-    const s = String(src).toLowerCase();
-    if (s.includes("tocp")) return "Transient";
-    if (s.includes("grb_fermi")) return "GRB";
-    if (s.includes("neocp")) return "Minor Planet";
-    return src.toUpperCase();
-  };
+      // ── Row click ──
+      tableEl.addEventListener("sky-table:row-click", (e) => {
+        const row = e.detail?.row;
+        const o = row?._raw;
+        if (!o) return;
 
-  // Build table HTML with sortable structure
-  let html = '<div class="sky-modal-ranking">';
-  
-  // Header with sortable columns
-  html += '<div class="sky-modal-table-header">';
-  html += '<div data-sort="time">Type</div>';
-  html += '<div data-sort="name">Alert</div>';
-  html += '<div data-sort="score">Score</div>';
-  html += '</div>';
-
-  // Rows
-  for (const a of arr) {
-    const hid = (makeHighlightIdFromRaw(a) || "").replace(/"/g, "&quot;");
-    const title = ((a?.meta?.title || a?.id || "Alert")).replace(/</g,"&lt;");
-    const emoji = emojiForAlert(a);
-    const ra = fmtRA(a?.ra_deg);
-    const dec = fmtDEC(a?.dec_deg);
-    const cat = categoryFromSource(a?.source);
-    const score = fmtScore(a);
-
-    html += `<div class="sky-modal-row" data-hid="${hid}">`;
-    
-    // Type/Time column (using emoji as type indicator)
-    html += `<div class="sky-modal-time">${cat}</div>`;
-    
-    // Center content
-    html += '<div class="sky-modal-left">';
-    html += '<div class="sky-modal-r1">';
-    html += `<div class="sky-modal-gradeEmoji">${emoji}</div>`;
-    html += `<div class="sky-modal-name">${title}</div>`;
-    html += '</div>';
-    
-    // Coordinates as note
-    const coords = (ra !== "—" || dec !== "—") ? `RA ${ra} · DEC ${dec}` : "";
-    if (coords) {
-      html += `<div class="sky-modal-note">${coords}</div>`;
-    }
-    
-    // Metadata
-    html += '<div class="sky-modal-meta">';
-    html += `<span class="sky-modal-chip">${cat}</span>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-left
-    
-    // Score column
-    html += '<div class="sky-modal-score">';
-    html += '<div class="sky-modal-bar">';
-    html += `<div class="sky-modal-bar-fill" style="width: ${score}%"></div>`;
-    html += '</div>';
-    html += `<div class="sky-modal-score-value">${score}</div>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-row
-  }
-
-  html += '</div>'; // .sky-modal-ranking
-
-  return html;
-}
-
-
-
-        function wireAllObjectsModalClicks() {
-      if (!modalWC || !modalWC.shadowRoot) return;
-      const host = modalWC.shadowRoot.querySelector(".body");
-      if (!host) return;
-
-      host.onclick = (e) => {
-        const row = e.target && e.target.closest ? e.target.closest("[data-hid]") : null;
-        if (!row) return;
-
-        const hid = row.getAttribute("data-hid");
-        if (!hid) return;
+        const hid = makeHighlightIdFromRaw(o);
+        const tISO = row._tISO;
 
         try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
-
-        const tISO = row.getAttribute("data-time");
         if (tISO) setTimeISO(tISO);
+        if (hid) setHighlightById(hid, 3600);
+      });
 
-        setHighlightById(hid, 3600);
-      };
+      wrap.append(tabsEl, tableEl);
+      return wrap;
+    }
+
+    function wireAllObjectsModalClicks() {
+      // Events are wired inside buildAllObjectsModalContent(); nothing to do here.
     }
 
     function openAllObjectsModal() {
@@ -998,20 +900,172 @@ import * as Popovers from "./widgets/widget.popovers.js";
         title: "Best Objects this night",
         content: buildAllObjectsModalContent(),
       });
-      requestAnimationFrame(() => wireAllObjectsModalClicks());
     }
 
-    // --------- POPOVER: Ranking (TOP 7) ----------
-    function openAllAlertsModal() {
-      if (!modalWC) return;
-      modalWC.open({
-        title: "All Alerts",
-        content: buildAllAlertsModalContent(),
-      });
-      requestAnimationFrame(() => wireAllObjectsModalClicks());
+    // buildAllAlertsModalContent() - Full implementation matching screenshot
+    // Replace in widget.js
+
+// ---- MODAL: all alerts — same visual language as sky-modal-* ----
+
+function buildAllAlertsModalContent() {
+  const src = Array.isArray(alertsToday)
+    ? alertsToday
+    : (alertsToday?.items || alertsToday?.alerts || []);
+  const arr = Array.isArray(src) ? src.slice() : [];
+
+  const normG = (x) => String(x || "").trim().toLowerCase();
+
+  function groupIcon(item) {
+    const g = normG(item?.group);
+    if (g === "neo" || g === "neocp") return "🪨";
+    if (g === "risk") return "⚠️";
+    if (g === "pha") return "🟥";
+    if (g === "transient") return "💥";
+    if (g === "grb") return "🚨";
+    if (g === "gcn") return "📡";
+    return "⚠️";
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    const t = Date.parse(String(iso));
+    if (!Number.isFinite(t)) return "—";
+    const d = new Date(t);
+    const pad2 = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+
+  function fmtScoreNorm(it) {
+    const v = Number(it?.score_norm);
+    if (!Number.isFinite(v)) return null;
+    return Math.max(0, Math.min(1, v));
+  }
+
+  // Sort: score_norm desc, then updated_utc desc
+  arr.sort((a, b) => {
+    const sa = fmtScoreNorm(a) ?? -1;
+    const sb = fmtScoreNorm(b) ?? -1;
+    if (sa !== sb) return sb - sa;
+    const ta = Date.parse(a?.updated_utc || a?.ingested_utc || "");
+    const tb = Date.parse(b?.updated_utc || b?.ingested_utc || "");
+    if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+    return 0;
+  });
+
+  // Build flat row objects for sky-table (one field per cell)
+  const allRows = arr.map((it, i) => {
+    const scoreN = fmtScoreNorm(it);
+    return {
+      id:      i,
+      _raw:    it,
+      _group:  normG(it?.group),
+      icon:    groupIcon(it),
+      group:   String(it?.group || "other"),
+      title:   String(it?.title || it?.id || "Alert"),
+      note:    String(it?.note || "").trim(),
+      score:   scoreN != null ? scoreN.toFixed(2) : "—",
+      updated: fmtDate(it?.updated_utc || it?.ingested_utc),
+    };
+  });
+
+  // ── Outer wrapper ──
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "display:flex;flex-direction:column;gap:0;";
+
+  // ── Tabs ──
+  const TABS = [
+    { id: "all",       label: "All" },
+    { id: "neo",       label: "Neo" },
+    { id: "risk",      label: "Risk" },
+    { id: "neocp",     label: "NeoCP" },
+    { id: "transient", label: "Transient" },
+    { id: "grb",       label: "GRB" },
+    { id: "gcn",       label: "GCN" },
+    { id: "pha",       label: "PHA" },
+  ];
+
+  const tabsEl = document.createElement("div");
+  tabsEl.className = "sky-objects-tabs";
+  const tabBtns = {};
+  for (const t of TABS) {
+    const btn = document.createElement("button");
+    btn.className = "sky-objects-tab" + (t.id === "all" ? " active" : "");
+    btn.dataset.tab = t.id;
+    btn.textContent = t.label;
+    tabsEl.appendChild(btn);
+    tabBtns[t.id] = btn;
+  }
+
+  // ── sky-table ──
+  const tableEl = document.createElement("sky-table");
+  tableEl.style.cssText = "height:480px;margin-top:8px;";
+
+  tableEl.setColumns([
+    { key: "icon",    label: "",       width: "28px",  type: "icon" },
+    { key: "group",   label: "Group",  width: "66px",  type: "badge" },
+    { key: "title",   label: "Event",  width: "auto",  type: "name" },
+    { key: "note",    label: "Note",   width: "150px", type: "note" },
+    { key: "score",   label: "Score",  width: "52px",  type: "mono", align: "right" },
+    { key: "updated", label: "Date",   width: "82px",  type: "mono" },
+  ]);
+
+  tableEl.setRows(allRows);
+
+  // ── Tab filtering ──
+  tabsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-tab]");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const tabId = btn.dataset.tab || "all";
+    for (const [id, b] of Object.entries(tabBtns)) {
+      b.classList.toggle("active", id === tabId);
+    }
+    const filtered = tabId === "all"
+      ? allRows
+      : allRows.filter((r) => r._group === tabId);
+    tableEl.setRows(filtered);
+  });
+
+  // ── Row click ──
+  tableEl.addEventListener("sky-table:row-click", (e) => {
+    const row = e.detail?.row;
+    const it = row?._raw;
+    if (!it) return;
+
+    const hasCoords = it?.ra_deg != null && it?.dec_deg != null;
+    const hid = makeHighlightIdFromRaw(it) || it?.id;
+
+    try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
+
+    if (hasCoords && hid) {
+      setHighlightById(hid, 3600);
+      return;
     }
 
-        function buildRankingContent7() {
+    try {
+      openHitModal({ kind: "alert", data: it });
+    } catch (_) {}
+  });
+
+  wrap.append(tabsEl, tableEl);
+  return wrap;
+}
+
+function wireAlertsModalClicks() {
+  // Events are wired inside buildAllAlertsModalContent(); nothing to do here.
+}
+
+function openAllAlertsModal() {
+  if (!modalWC) return;
+  modalWC.open({
+    title: "Alerts tonight",
+    content: buildAllAlertsModalContent(),
+  });
+}
+
+
+    function buildRankingContent7() {
       const items =
         Array.isArray(rankingJson?.items) ? rankingJson.items :
         Array.isArray(rankingJson) ? rankingJson :
@@ -1261,134 +1315,214 @@ import * as Popovers from "./widgets/widget.popovers.js";
       return "⚠️";
     }
 
+// Integrated buildAlertsListContent() function for widget.js
+// Replaces the old function - uses new card-based design from specification
+// Uses existing formatters (fmtRA, fmtDEC, pad2, fmtScoreHelper)
 
-    function buildAlertsListContent() {
-      const src = Array.isArray(alertsToday)
-        ? alertsToday
-        : (alertsToday?.items || alertsToday?.alerts || []);
-      const arr = Array.isArray(src) ? src.slice() : [];
-    
-      const root = el("div", { class: "sky-pop-ranking" });
-    
-      root.appendChild(
-        el(
-          "div",
-          { class: "sky-pop-header" },
-          el("div", { class: "sky-pop-title", text: "Alerts" }),
-          el("button", { class: "sky-pop-showall-btn", type: "button" }, "Show All")
-        )
-      );
-    
-      if (!arr.length) {
-        root.appendChild(el("div", { class: "sky-pop-empty", text: "No alerts." }));
-        return toHTML(root);
-      }
-    
-      // сортировка: score_norm desc, затем updated
-      arr.sort((a, b) => {
-        const sa = Number(a?.score_norm ?? a?.score_raw ?? 0);
-        const sb = Number(b?.score_norm ?? b?.score_raw ?? 0);
-        if (sa !== sb) return sb - sa;
-    
-        const ta = Date.parse(a?.updated_utc || "");
-        const tb = Date.parse(b?.updated_utc || "");
-        if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
-        return 0;
-      });
-    
-      const pad2 = (n) => String(n).padStart(2, "0");
-    
-      function fmtRA(ra) {
-        const v = Number(ra);
-        if (!Number.isFinite(v)) return "RA —";
-        const totalSec = (v / 15) * 3600;
-        const hh = Math.floor(totalSec / 3600);
-        const mm = Math.floor((totalSec % 3600) / 60);
-        const ss = Math.floor(totalSec % 60);
-        return `RA ${pad2(hh)}h${pad2(mm)}m${pad2(ss)}s`;
-      }
-    
-      function fmtDEC(dec) {
-        const v = Number(dec);
-        if (!Number.isFinite(v)) return "DEC —";
-        const sign = v >= 0 ? "+" : "−";
-        const a = Math.abs(v);
-        const dd = Math.floor(a);
-        const mm = Math.floor((a - dd) * 60);
-        const ss = Math.floor((((a - dd) * 60) - mm) * 60);
-        return `DEC ${sign}${dd}°${pad2(mm)}′${pad2(ss)}″`;
-      }
-    
-      function fmtScore(a) {
-        const s = Number(a?.score_norm ?? a?.score_raw);
-        return Number.isFinite(s) ? `score ${s.toFixed(2)}` : "score —";
-      }
-    
-      function fmtObsDate(a) {
-        return a?.meta?.observation_date
-          ? `Obs ${a.meta.observation_date}`
-          : "Obs —";
-      }
-    
-      function categoryFromSource(src) {
-        if (!src) return "unknown";
-        const s = String(src).toLowerCase();
-        if (s.includes("tocp")) return "Transient (TOCP)";
-        if (s.includes("grb_fermi")) return "Gamma Ray Burst (FERMI)";
-        if (s.includes("neocp")) return "Minor Planet (NEOCP)";
-        return s.toUpperCase();
-      }
-    
-      function buildRow(a) {
-        const hid = makeHighlightIdFromRaw(a);
-        const title = a?.meta?.title || a?.id || "Alert";
-    
-        const note = String(a?.note || "").trim();
-        const emoji = emojiForAlert(a);
+function buildAlertsListContent() {
+  const src = Array.isArray(alertsToday)
+    ? alertsToday
+    : (alertsToday?.items || alertsToday?.alerts || []);
+  const arr = Array.isArray(src) ? src.slice() : [];
 
-        return el(
-          "div",
-          {
-            class: "sky-pop-item--ranking",
-            "data-hid": hid || "",
-          },
+  if (!arr.length) {
+    const root = el("div", { class: "sky-alerts-container" });
+    root.appendChild(
+      el("div", { class: "sky-alerts-header" },
+        el("div", { class: "sky-alerts-title", text: "Alerts" })
+      )
+    );
+    root.appendChild(el("div", { class: "sky-alerts-empty", text: "No alerts available" }));
+    return toHTML(root);
+  }
+
+  // Sort: score_norm desc, then updated_utc desc
+  arr.sort((a, b) => {
+    const sa = Number(a?.score_norm ?? a?.score_raw ?? 0);
+    const sb = Number(b?.score_norm ?? b?.score_raw ?? 0);
+    if (sa !== sb) return sb - sa;
+
+    const ta = Date.parse(a?.updated_utc || "");
+    const tb = Date.parse(b?.updated_utc || "");
+    if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+    return 0;
+  });
+
+  // Helper: Get alert icon based on group/type
+  function getAlertIcon(a) {
+    const group = String(a?.group || '').toLowerCase();
+    const type = String(a?.type || '').toLowerCase();
     
-          // line 1
-          el(
-            "div",
-            { class: "sky-pop-line1" },
-            el("span", { class: "sky-pop-emoji", text: emoji }),
-            el("span", { class: "sky-pop-name", text: title }),
-            el("span", { class: "sky-pop-name", text: "   " }),
-            el("span", { class: "sky-pop-chip", text: categoryFromSource(a?.source) }),
-          ),
+    if (group.includes('grb')) return '🚨';
+    if (group.includes('neocp') || group.includes('neo')) return '🪨';
+    if (group.includes('transient')) return '💥';
+    if (group.includes('risk')) return '⚠️';
+    if (group.includes('gcn')) return '📡';
     
-          // optional note
-          note ? el("div", { class: "sky-pop-note", text: note }) : null,
+    if (type.includes('supernova') || type.includes('sn')) return '💫';
+    if (type.includes('nova')) return '✨';
+    if (type.includes('comet')) return '☄️';
+    if (type.includes('asteroid')) return '🪨';
     
-          // meta
-          el(
-            "div",
-            { class: "sky-pop-meta2" },
-            el("span", { class: "sky-pop-chip", text: fmtRA(a?.ra_deg) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip", text: fmtDEC(a?.dec_deg) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip", text: fmtObsDate(a) }),
-            el("span", { class: "sky-pop-dot", text: "·" }),
-            el("span", { class: "sky-pop-chip sky-pop-chip--score", text: fmtScore(a) })
-          )
+    return '⚠️';
+  }
+
+  // Helper: Get score level for color
+  function getScoreLevel(a) {
+    const score = a?.score_norm;
+    if (score == null) return 'low';
+    if (score >= 0.7) return 'high';
+    if (score >= 0.4) return 'medium';
+    return 'low';
+  }
+
+  // Helper: Get key metrics based on group (per specification)
+  function getKeyMetrics(a) {
+    const group = String(a?.group || '').toLowerCase();
+    const meta = a?.meta || {};
+    const metrics = [];
+    
+    if (group.includes('grb')) {
+      // GRB: trigger_name or note
+      if (meta.trigger_name) {
+        metrics.push({ label: 'Trigger', value: meta.trigger_name });
+      } else if (a.note) {
+        metrics.push({ label: 'Note', value: a.note });
+      }
+    } else if (group.includes('neocp')) {
+      // NEOCP: score + mag
+      if (a.score_norm != null) {
+        metrics.push({ label: 'Score', value: (a.score_norm * 100).toFixed(0) });
+      }
+      if (a.mag != null) {
+        metrics.push({ label: 'Mag', value: a.mag.toFixed(1) });
+      }
+    } else if (group.includes('transient')) {
+      // Transient: type + mag
+      if (a.type) {
+        metrics.push({ label: 'Type', value: a.type });
+      }
+      if (a.mag != null) {
+        metrics.push({ label: 'Mag', value: a.mag.toFixed(1) });
+      }
+    } else if (group.includes('neo')) {
+      // NEO: distance, diameter, MOID
+      if (meta.dist_ld != null) {
+        metrics.push({ label: 'Dist', value: `${meta.dist_ld.toFixed(2)} LD` });
+      } else if (meta.dist_au != null) {
+        metrics.push({ label: 'Dist', value: `${meta.dist_au.toFixed(3)} AU` });
+      }
+      if (meta.diameter_est_km) {
+        metrics.push({ label: 'Diam', value: `${meta.diameter_est_km} km` });
+      }
+      if (meta.moid_au != null) {
+        metrics.push({ label: 'MOID', value: `${meta.moid_au.toFixed(4)} AU` });
+      }
+    } else if (group.includes('risk')) {
+      // Risk: IP, PS, last obs
+      if (meta.ip != null) {
+        metrics.push({ label: 'IP', value: meta.ip.toExponential(2) });
+      }
+      if (meta.ps != null) {
+        metrics.push({ label: 'PS', value: meta.ps.toFixed(2) });
+      }
+      if (meta.last_obs) {
+        metrics.push({ label: 'Last obs', value: meta.last_obs });
+      }
+    } else if (group.includes('gcn')) {
+      // GCN: topic + kafka timestamp
+      if (meta.topic) {
+        metrics.push({ label: 'Topic', value: meta.topic });
+      }
+      if (meta.kafka_ts_ms) {
+        const date = new Date(meta.kafka_ts_ms);
+        const pad = (n) => String(n).padStart(2, '0');
+        const formatted = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        metrics.push({ label: 'Time', value: formatted });
+      }
+    }
+    
+    // Fallback: show RA/DEC if available and no other metrics
+    if (metrics.length === 0 && a.ra_deg != null && a.dec_deg != null) {
+      metrics.push({ label: 'RA', value: fmtRA(a.ra_deg).replace('RA ', '') });
+      metrics.push({ label: 'DEC', value: fmtDEC(a.dec_deg).replace('DEC ', '') });
+    }
+    
+    return metrics;
+  }
+
+  // Build container
+  const root = el("div", { class: "sky-alerts-container" });
+
+  // Header with title + "Show All" button
+  root.appendChild(
+    el("div", { class: "sky-alerts-header" },
+      el("div", { class: "sky-alerts-title", text: "Alerts" }),
+      el("button", { class: "sky-alerts-showall-btn", type: "button" }, "Show All")
+    )
+  );
+
+  // Build alert cards (limit to 5)
+  const LIMIT = 5;
+  for (let i = 0; i < Math.min(arr.length, LIMIT); i++) {
+    const a = arr[i];
+    const hid = makeHighlightIdFromRaw(a);
+    const title = a?.meta?.title || a?.title || a?.id || "Alert";
+    const type = a?.group || a?.type || "Unknown";
+    const icon = getAlertIcon(a);
+    const scoreLevel = getScoreLevel(a);
+    const score = a?.score_norm != null 
+      ? (a.score_norm * 100).toFixed(0) 
+      : (a?.score_raw != null ? a.score_raw.toFixed(0) : '—');
+    
+    const metrics = getKeyMetrics(a);
+
+    // Create alert card
+    const card = el("div", {
+      class: "sky-alert-item",
+      "data-hid": hid || "",
+      "data-ra": a?.ra_deg || "",
+      "data-dec": a?.dec_deg || ""
+    });
+
+    // Header: icon + title + type
+    const header = el("div", { class: "sky-alert-header" },
+      el("div", { class: "sky-alert-icon", text: icon }),
+      el("div", { class: "sky-alert-main" },
+        el("div", { class: "sky-alert-title", text: title }),
+        el("div", { class: "sky-alert-type", text: type })
+      )
+    );
+    card.appendChild(header);
+
+    // Metadata row (if we have metrics)
+    if (metrics.length > 0) {
+      const metaRow = el("div", { class: "sky-alert-meta" });
+      
+      // Add metric chips
+      for (const m of metrics) {
+        const chip = el("div", { class: "sky-alert-meta-item" },
+          el("span", { class: "sky-alert-meta-label", text: `${m.label}:` }),
+          el("span", { class: "sky-alert-meta-value", text: m.value })
         );
+        metaRow.appendChild(chip);
       }
-    
-      const LIMIT = 5;
-      for (let i = 0; i < Math.min(arr.length, LIMIT); i++) {
-        root.appendChild(buildRow(arr[i]));
-      }
-    
-      return toHTML(root);
+      
+      // Add score indicator
+      const scoreChip = el("div", { class: "sky-alert-score" },
+        el("span", { class: `sky-alert-score-dot sky-alert-score-dot--${scoreLevel}` }),
+        el("span", { text: score })
+      );
+      metaRow.appendChild(scoreChip);
+      
+      card.appendChild(metaRow);
     }
 
+    root.appendChild(card);
+  }
+
+  return toHTML(root);
+}
 
     function wirePopoverClicks(pop, { onShowAll } = {}) {
       if (!pop) return;
@@ -1403,7 +1537,9 @@ import * as Popovers from "./widgets/widget.popovers.js";
       }
 
       pop._skyClickHandler = (e) => {
-        const btn = e.target?.closest?.(".sky-pop-showall-btn");
+        const btn = e.target?.closest?.(".sky-pop-showall-btn") || 
+        e.target?.closest?.(".sky-alerts-showall-btn");
+
         if (btn) {
           try { if (typeof pop.close === "function") pop.close(); } catch (_) {}
           if (typeof onShowAll === "function") onShowAll();
