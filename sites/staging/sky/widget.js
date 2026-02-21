@@ -855,98 +855,6 @@ import * as Popovers from "./widgets/widget.popovers.js";
   return html;
 }
 
-      // Group + sort
-      const groupOf = (o) => {
-        const t = normLower(o?.group || o?.type || o?.kind || o?.subtype || "");
-        if (t.includes("calendar")) return "calendar";
-        if (t.includes("planet") || t.includes("sun") || t.includes("moon")) return "planets";
-        if (normLower(o?.meta?.planet_key || "").length) return "planets";
-        return "dso";
-      };
-      const byScoreDesc = (a, b) => scoreOf(b) - scoreOf(a);
-      const calendar = [], planetsList = [], dso = [];
-      for (const o of arr) {
-        const g = groupOf(o);
-        if (g === "calendar") calendar.push(o);
-        else if (g === "planets") planetsList.push(o);
-        else dso.push(o);
-      }
-      calendar.sort(byScoreDesc);
-      planetsList.sort(byScoreDesc);
-      dso.sort(byScoreDesc);
-      const sorted = [...calendar, ...planetsList, ...dso];
-
-      // Formatters
-      const fmtTimeLocal = (x) => {
-        if (!x) return "—";
-        const m = String(x).match(/T(\d{2}:\d{2})/);
-        return m ? m[1] : String(x);
-      };
-      const fmtMagVal  = (o) => { const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 1); return v != null ? String(v) : "—"; };
-      const fmtAltVal  = (o) => {
-        const v = fmtMaybeNumber(o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ?? o?.max_alt_deg ?? o?.altDeg ?? o?.alt ?? o?.altitude, 0);
-        return v != null ? `${v}°` : "—";
-      };
-      const gradeColor = (g) => ({ Excellent: "#4caf50", Good: "#2196f3", Fair: "#ffc107", Bad: "#9e9e9e" }[g] || "#9e9e9e");
-
-      // Shared cell style
-      const C  = "border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:6px 10px;";
-      const CH = C + "opacity:0.45;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;text-align:center;";
-
-      // Table wrapper — build as HTML string, toHTML wraps it in a node
-      const GRID = "display:grid;grid-template-columns:44px 1fr 72px 56px 56px 100px;gap:5px;";
-      const C2   = "border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:6px 10px;";
-      const CH2  = C2 + "opacity:0.45;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;text-align:center;";
-
-      let html = `<div style="padding:4px 2px;">`;
-
-      // Header
-      html += `<div style="${GRID}gap:5px;margin-bottom:5px;padding:0 2px;">`;
-      for (const label of ["Group", "Object", "Time", "Mag", "Alt", "Conditions"]) {
-        html += `<div style="${CH2}">${label}</div>`;
-      }
-      html += `</div>`;
-
-      // Rows
-      for (const o of sorted) {
-        const hid   = (makeHighlightIdFromRaw(o) || "").replace(/"/g, "&quot;");
-        const tISO  = (bestTimeISO(o) || "").replace(/"/g, "&quot;");
-        const name  = ((o?.name || o?.target_name) ? String(o.name || o.target_name) : pickTitle(o)).replace(/</g,"&lt;");
-        const time  = fmtTimeLocal(tISO);
-        const mag   = fmtMagVal(o);
-        const alt   = fmtAltVal(o);
-        const grade = gradeOf(scoreOf(o));
-        const color = gradeColor(grade);
-        const emoji = emojiForItem(o);
-
-        const cellStyle = (extra = "") => `${C2}${extra}`;
-
-        html += `<div style="${GRID}gap:5px;margin-bottom:4px;padding:0 2px;cursor:pointer;" data-hid="${hid}" data-time="${tISO}">`;
-        html += `<div style="${cellStyle("text-align:center;font-size:18px;line-height:1;")}">${emoji}</div>`;
-        html += `<div style="${cellStyle("font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;")}">${name}</div>`;
-        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${time}</div>`;
-        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${mag}</div>`;
-        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${alt}</div>`;
-        html += `<div style="${cellStyle("display:flex;align-items:center;gap:7px;font-size:12px;")}">`;
-        html += `<span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>`;
-        html += `<span>${grade}</span></div>`;
-        html += `</div>`;
-      }
-
-      html += `</div>`;
-
-      const wrap = el("div", {});
-      wrap.innerHTML = html;
-
-      // Wire hover on rows after DOM is built
-      wrap.querySelectorAll("[data-hid]").forEach(row => {
-        row.addEventListener("mouseenter", () => row.style.filter = "brightness(1.25)");
-        row.addEventListener("mouseleave", () => row.style.filter = "");
-      });
-
-      return toHTML(wrap);
-    }
-
     function buildAllAlertsModalContent() {
   const src = Array.isArray(alertsToday)
     ? alertsToday
@@ -1061,94 +969,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
   return html;
 }
 
-      // Sort: score desc, then updated_utc desc
-      arr.sort((a, b) => {
-        const sa = Number(a?.score_norm ?? a?.score_raw ?? 0);
-        const sb = Number(b?.score_norm ?? b?.score_raw ?? 0);
-        if (sa !== sb) return sb - sa;
-        const ta = Date.parse(a?.updated_utc || "");
-        const tb = Date.parse(b?.updated_utc || "");
-        if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
-        return 0;
-      });
 
-      // Formatters
-      const pad2 = (n) => String(n).padStart(2, "0");
-      const fmtRA = (ra) => {
-        const v = Number(ra);
-        if (!Number.isFinite(v)) return "—";
-        const totalSec = (v / 15) * 3600;
-        const hh = Math.floor(totalSec / 3600);
-        const mm = Math.floor((totalSec % 3600) / 60);
-        return `${pad2(hh)}h${pad2(mm)}m`;
-      };
-      const fmtDEC = (dec) => {
-        const v = Number(dec);
-        if (!Number.isFinite(v)) return "—";
-        const sign = v >= 0 ? "+" : "−";
-        const a = Math.abs(v);
-        const dd = Math.floor(a);
-        const mm = Math.floor((a - dd) * 60);
-        return `${sign}${dd}°${pad2(mm)}′`;
-      };
-      const fmtScore = (a) => {
-        const s = Number(a?.score_norm ?? a?.score_raw);
-        return Number.isFinite(s) ? s.toFixed(2) : "—";
-      };
-      const categoryFromSource = (src) => {
-        if (!src) return "Unknown";
-        const s = String(src).toLowerCase();
-        if (s.includes("tocp")) return "Transient";
-        if (s.includes("grb_fermi")) return "GRB";
-        if (s.includes("neocp")) return "Minor Planet";
-        return src.toUpperCase();
-      };
-
-      // Table
-      const GRID = "display:grid;grid-template-columns:56px 1fr 80px 80px 120px 80px;gap:5px;";
-      const C2   = "border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:6px 10px;";
-      const CH2  = C2 + "opacity:0.45;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;text-align:center;";
-
-      let html = `<div style="padding:4px 2px;">`;
-      html += `<div style="${GRID}gap:5px;margin-bottom:5px;padding:0 2px;">`;
-      for (const label of ["Type", "Object", "RA", "DEC", "Category", "Score"]) {
-        html += `<div style="${CH2}">${label}</div>`;
-      }
-      html += `</div>`;
-
-      for (const a of arr) {
-        const hid   = (makeHighlightIdFromRaw(a) || "").replace(/"/g, "&quot;");
-        const title = ((a?.meta?.title || a?.id || "Alert")).replace(/</g,"&lt;");
-        const emoji = emojiForAlert(a);
-        const ra    = fmtRA(a?.ra_deg);
-        const dec   = fmtDEC(a?.dec_deg);
-        const cat   = categoryFromSource(a?.source);
-        const score = fmtScore(a);
-
-        const cellStyle = (extra = "") => `${C2}${extra}`;
-
-        html += `<div style="${GRID}gap:5px;margin-bottom:4px;padding:0 2px;cursor:pointer;" data-hid="${hid}">`;
-        html += `<div style="${cellStyle("text-align:center;font-size:18px;line-height:1;")}">${emoji}</div>`;
-        html += `<div style="${cellStyle("font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;")}">${title}</div>`;
-        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${ra}</div>`;
-        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;")}">${dec}</div>`;
-        html += `<div style="${cellStyle("text-align:center;font-size:11px;")}">${cat}</div>`;
-        html += `<div style="${cellStyle("text-align:center;font-size:12px;font-variant-numeric:tabular-nums;font-weight:600;")}">${score}</div>`;
-        html += `</div>`;
-      }
-
-      html += `</div>`;
-
-      const wrap = el("div", {});
-      wrap.innerHTML = html;
-
-      wrap.querySelectorAll("[data-hid]").forEach(row => {
-        row.addEventListener("mouseenter", () => row.style.filter = "brightness(1.25)");
-        row.addEventListener("mouseleave", () => row.style.filter = "");
-      });
-
-      return toHTML(wrap);
-    }
 
         function wireAllObjectsModalClicks() {
       if (!modalWC || !modalWC.shadowRoot) return;
@@ -2058,6 +1879,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
         );
       }
     }, 50);
+  }
 
   bootWhenReady();
 })();
