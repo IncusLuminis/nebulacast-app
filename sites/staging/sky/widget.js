@@ -451,6 +451,9 @@ import * as Popovers from "./widgets/widget.popovers.js";
       cfg.datetimeISO = String(datetimeISO);
       recomputeAll();
       render();
+      // Keep the player scrubber in sync whenever time is set programmatically.
+      // playerSyncUI is declared later in init() but hoisted as a function declaration.
+      if (typeof playerSyncUI === "function") playerSyncUI();
     }
 
     // Bottom toolbar events: toggles for everything
@@ -746,6 +749,29 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
 
+    // True when dec_deg < (lat_deg − 90): the object never rises above the horizon
+    // at the given observer latitude (both in degrees).
+    const neverRisesAt = (dec_deg, lat_deg) =>
+      typeof dec_deg === "number" && typeof lat_deg === "number" &&
+      dec_deg < (lat_deg - 90);
+
+    // Compute the nearest upper-culmination (meridian transit) ISO timestamp for
+    // an object whose Right Ascension is ra_deg.  Uses the live observer LST so
+    // the result is always relative to whatever time the sky is currently showing.
+    //   ha = LST − RA  (in [0, 2π))
+    //   ha ≤ π  → object is west of meridian (recently transited) → use *previous* transit
+    //   ha  > π → object is east  of meridian (hasn't transited yet) → use *next* transit
+    const SIDEREAL_DAY_SEC = 86164.0905;
+    function computeCulminationISO(ra_deg) {
+      if (!Number.isFinite(ra_deg) || !observer) return null;
+      const raRad = ra_deg * Math.PI / 180;
+      const ha = ((observer.lstRad - raRad) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      const deltaSec = ha <= Math.PI
+        ? -(ha / (2 * Math.PI)) * SIDEREAL_DAY_SEC           // previous transit
+        : ((2 * Math.PI - ha) / (2 * Math.PI)) * SIDEREAL_DAY_SEC; // next transit
+      return new Date(observer.date.getTime() + deltaSec * 1000).toISOString();
+    }
+
     // ---------- MODAL: all objects — table layout ----------
     function buildAllObjectsModalContent() {
       const src = Array.isArray(objectsToday)
@@ -800,18 +826,22 @@ import * as Popovers from "./widgets/widget.popovers.js";
         );
         const tISO = bestTimeISO(o);
         // Three-state target:
-        //   null  → no RA/DEC → hide icon
-        //   false → never-rises (max_alt_deg ≤ 0) → dimmed icon
+        //   null  → no RA/DEC or never-rises → hide icon entirely
+        //   false → rises but no culmination time → dimmed icon
         //   true  → rises and has culmination time → active icon
-        const _hasCoords = o?.ra_deg != null && o?.dec_deg != null;
-        const _maxAlt    = Number(o?.vis?.max_alt_deg ?? o?.max_alt_deg ?? NaN);
-        const _neverRises = _hasCoords && Number.isFinite(_maxAlt) && _maxAlt <= 0;
+        const _hasCoords  = o?.ra_deg != null && o?.dec_deg != null;
+        const _maxAlt     = Number(o?.vis?.max_alt_deg ?? o?.max_alt_deg ?? NaN);
+        const _neverRises = _hasCoords && (
+          neverRisesAt(o.dec_deg, cfg.lat) ||
+          (Number.isFinite(_maxAlt) && _maxAlt <= 0)
+        );
         return {
           id:             i,
           _raw:           o,
           _tISO:          tISO,
           _group:         g,
-          _targetEnabled: !_hasCoords ? null : (_neverRises || !tISO) ? false : true,
+          _neverRises:    _neverRises,
+          _targetEnabled: !_hasCoords ? null : _neverRises ? null : true,
           icon:           emojiForItem(o),
           group:          g,
           name:           name,
@@ -886,7 +916,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
         const row = e.detail?.row;
         const o = row?._raw;
         if (!o) return;
-        openHitModal({ kind: "object", data: o });
+        openHitModal({ kind: "object", data: o, neverRisesLat: row._neverRises ? cfg.lat : null });
       });
 
       // ── Target click → jump to culmination ──
@@ -894,11 +924,17 @@ import * as Popovers from "./widgets/widget.popovers.js";
         const row = e.detail?.row;
         const o = row?._raw;
         if (!o) return;
+        // Use pre-computed best time if available, otherwise derive nearest
+        // meridian transit from the object's Right Ascension.
+        const tISO = row._tISO || computeCulminationISO(o?.ra_deg);
+        console.log("[sky target]", o?.name || o?.target_name || o?.id,
+          "RA:", o?.ra_deg, "DEC:", o?.dec_deg, "tISO:", tISO, "neverRises:", row._neverRises);
         const hid = makeHighlightIdFromRaw(o);
-        const tISO = row._tISO;
         try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
+        // Stop any active playback so the player doesn't override the jump.
+        if (typeof playerStop === "function") playerStop();
         if (tISO) setTimeISO(tISO);
-        if (hid) setHighlightById(hid, 3600);
+        if (hid) setHighlightById(hid, 6000);
       });
 
       wrap.append(tabsEl, tableEl);
@@ -970,24 +1006,26 @@ import * as Popovers from "./widgets/widget.popovers.js";
         const scoreN = fmtScoreNorm(it);
         const rawIso = it?.updated_utc || it?.ingested_utc || null;
         const ts = rawIso ? Date.parse(String(rawIso)) : NaN;
+        const _hc = it?.ra_deg != null && it?.dec_deg != null;
+        const _ma = Number(it?.vis?.max_alt_deg ?? it?.meta?.max_alt_deg ?? NaN);
+        const _neverRises = _hc && (
+          neverRisesAt(it.dec_deg, cfg.lat) ||
+          (Number.isFinite(_ma) && _ma <= 0)
+        );
         return {
           id:          i,
           _raw:        it,
           _group:      normG(it?.group),
-          _updatedTs:  Number.isFinite(ts) ? ts : null, // numeric ms for sorting
+          _updatedTs:  Number.isFinite(ts) ? ts : null,
+          _neverRises: _neverRises,
           icon:        groupIcon(it),
           group:       String(it?.group || "other"),
           title:       String(it?.title || it?.id || "Alert"),
           note:        String(it?.note || "").trim(),
-          score:          scoreN != null ? scoreN.toFixed(2) : "—",
-          updated:        fmtDatetime(rawIso),  // display: "YYYY-MM-DD HH:MM" UTC
-          // null → no RA/DEC → hide icon; false → never-rises; true → active
-          _targetEnabled: (() => {
-            const _hc = it?.ra_deg != null && it?.dec_deg != null;
-            if (!_hc) return null;
-            const _ma = Number(it?.vis?.max_alt_deg ?? it?.meta?.max_alt_deg ?? NaN);
-            return (Number.isFinite(_ma) && _ma <= 0) ? false : true;
-          })(),
+          score:       scoreN != null ? scoreN.toFixed(2) : "—",
+          updated:     fmtDatetime(rawIso),
+          // null → no RA/DEC or never-rises → hide icon; true → active
+          _targetEnabled: !_hc ? null : _neverRises ? null : true,
         };
       });
 
@@ -1056,17 +1094,23 @@ import * as Popovers from "./widgets/widget.popovers.js";
         const row = e.detail?.row;
         const it = row?._raw;
         if (!it) return;
-        openHitModal({ kind: "alert", data: it });
+        openHitModal({ kind: "alert", data: it, neverRisesLat: row._neverRises ? cfg.lat : null });
       });
 
-      // ── Target click → jump to object ──
+      // ── Target click → jump to object at its culmination ──
       tableEl.addEventListener("sky-table:target-click", (e) => {
         const row = e.detail?.row;
         const it = row?._raw;
         if (!it) return;
+        const tISO = computeCulminationISO(it?.ra_deg);
+        console.log("[sky target]", it?.title || it?.id,
+          "RA:", it?.ra_deg, "DEC:", it?.dec_deg, "tISO:", tISO, "neverRises:", row._neverRises);
         const hid = makeHighlightIdFromRaw(it) || it?.id;
         try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
-        if (hid) setHighlightById(hid, 3600);
+        // Stop any active playback so the player doesn't override the jump.
+        if (typeof playerStop === "function") playerStop();
+        if (tISO) setTimeISO(tISO);
+        if (hid) setHighlightById(hid, 6000);
       });
 
       wrap.append(tabsEl, tableEl);
@@ -1235,12 +1279,12 @@ import * as Popovers from "./widgets/widget.popovers.js";
         // 1) закрыть модал
         try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
 
-        // 2) повернуть время (если есть)
+        // 2) повернуть время (если есть); stop player so it doesn't override the jump
         const tISO = row.getAttribute("data-time");
-        if (tISO) setTimeISO(tISO);
+        if (tISO) { if (typeof playerStop === "function") playerStop(); setTimeISO(tISO); }
 
         // 3) подсветить
-        setHighlightById(hid, 3600);
+        setHighlightById(hid, 6000);
       };
     }
 
@@ -1575,8 +1619,8 @@ function buildAlertsListContent() {
 
         try { if (typeof pop.close === "function") pop.close(); } catch (_) {}
         const tISO = row.getAttribute("data-time");
-        if (tISO) setTimeISO(tISO);
-        setHighlightById(hid, 3600);
+        if (tISO) { if (typeof playerStop === "function") playerStop(); setTimeISO(tISO); }
+        setHighlightById(hid, 6000);
       };
 
       container.addEventListener("click", pop._skyClickHandler);

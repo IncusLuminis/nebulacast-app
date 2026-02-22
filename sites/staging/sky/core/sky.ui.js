@@ -585,7 +585,13 @@ export function buildCardData(hit) {
     if (!Number.isFinite(v)) return "—";
     return v.toFixed(decimals) + "°";
   };
-  
+
+  // Never-rises display string (passed via hit.neverRisesLat from the observer context)
+  const _nrl = hit.neverRisesLat != null ? Number(hit.neverRisesLat) : null;
+  const _nrlStr = Number.isFinite(_nrl)
+    ? `Never rises at this latitude (${Math.abs(_nrl).toFixed(2)}°${_nrl >= 0 ? "N" : "S"})`
+    : null;
+
   if (hit.kind === "alert") {
     title = d.title || d.id || "Alert";
     note = d.note || "";
@@ -605,6 +611,7 @@ export function buildCardData(hit) {
     if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
     if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
     if (d.constellation) metaParts.push(d.constellation);
+    if (_nrlStr) metaParts.push(_nrlStr);
   } else {
     // STAR
     const proper = (d.name || "").trim();
@@ -671,6 +678,7 @@ export function buildCardData(hit) {
                             : null),
       row("Status",       str(meta.action)),
     ].filter(Boolean);
+    if (_nrlStr) sumRows.push(["Visibility", _nrlStr]);
     alertTabs.push({ id: "summary", label: "Summary", rows: sumRows });
 
     // ── ORBIT & PHYSICS (non-risk) / IMPACT SCENARIOS + ORBIT (risk) ──
