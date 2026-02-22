@@ -123,12 +123,15 @@ export class SkyTable extends HTMLElement {
     if (!this._sortKey) return this._rows;
 
     const col = this._columns.find(c => c.key === this._sortKey);
+    // sortKey on a column definition lets rows use a different field for sorting
+    // (e.g. a numeric timestamp) while displaying a formatted string in the cell.
+    const rowField = col?.sortKey || this._sortKey;
     const numeric = col && (col.type === 'mono' || col.type === 'text');
     const dir = this._sortDir === 'asc' ? 1 : -1;
 
     return [...this._rows].sort((a, b) => {
-      let va = a[this._sortKey];
-      let vb = b[this._sortKey];
+      let va = a[rowField];
+      let vb = b[rowField];
 
       // Treat null/undefined/dash as lowest possible value
       const empty = v => v === null || v === undefined || v === '—' || v === '-' || v === '';
@@ -175,7 +178,7 @@ export class SkyTable extends HTMLElement {
       this._applyCellSize(th, col);
 
       // Make sortable (all columns sortable by default unless sortable === false)
-      const isSortable = col.sortable !== false && col.type !== 'icon';
+      const isSortable = col.sortable !== false && col.type !== 'icon' && col.type !== 'target';
       if (isSortable) {
         th.dataset.sortKey = col.key;
         th.classList.add('is-sortable');
@@ -256,6 +259,9 @@ export class SkyTable extends HTMLElement {
       case 'badge':
         this._renderBadgeCell(td, value);
         break;
+      case 'target':
+        this._renderTargetCell(td, value, row);
+        break;
       default:
         td.textContent = value !== undefined && value !== null ? String(value) : '';
         break;
@@ -291,6 +297,37 @@ export class SkyTable extends HTMLElement {
     badge.className = 'cell-badge';
     badge.textContent = String(value);
     td.appendChild(badge);
+  }
+
+  _renderTargetCell(td, value, row) {
+    // null / undefined → no RA/DEC: hide the icon completely (empty cell)
+    if (value === null || value === undefined) return;
+    // false → never-rises: show dimmed non-clickable icon
+    // true  → enabled:    show active clickable icon
+    const enabled = value === true;
+    const btn = document.createElement('button');
+    btn.className = 'sky-table-target-btn' + (enabled ? '' : ' is-disabled');
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('tabindex', '-1');
+    // Crosshair SVG
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="6" cy="6" r="3.5" stroke="currentColor" stroke-width="1.3"/>
+      <line x1="6" y1="0.5" x2="6" y2="3"   stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      <line x1="6" y1="9"   x2="6" y2="11.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      <line x1="0.5" y1="6" x2="3"   y2="6"  stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      <line x1="9"   y1="6" x2="11.5" y2="6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>`;
+    td.appendChild(btn);
+    if (enabled) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.dispatchEvent(new CustomEvent('sky-table:target-click', {
+          bubbles: true,
+          composed: true,
+          detail: { row },
+        }));
+      });
+    }
   }
 
   /** Apply width to a cell or header element from column definition. */

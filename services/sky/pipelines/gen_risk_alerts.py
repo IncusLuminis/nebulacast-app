@@ -207,7 +207,7 @@ def main() -> None:
             "source": "jpl-sentry",
             "group": "risk",
             "type": "risk",
-            "title": f"Sentry risk object: {des}",
+            "title": des,
             "note": "Sentry impact monitoring (risk layer)",
             "score_raw": score_raw,
             "score_norm": score_norm,

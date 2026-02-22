@@ -14,6 +14,7 @@ import "../ui/components/popover.js";
 import "../ui/components/modal.js";
 import "../ui/components/player.js";
 import "../ui/components/sky_card.js";
+import "../ui/components/sky-table.js";
 
 import { UI_ICONS } from "../ui/shared/icons.js";
 
@@ -745,253 +746,322 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
 
-    // ---------- MODAL: all objects — table layout ----------
+    // ---------- MODAL: all objects — sky-table layout ----------
     function buildAllObjectsModalContent() {
-  const src = Array.isArray(objectsToday)
-    ? objectsToday
-    : (objectsToday?.items || objectsToday?.objects || []);
-  const arr = Array.isArray(src) ? src.slice() : [];
+      const src = Array.isArray(objectsToday)
+        ? objectsToday
+        : (objectsToday?.items || objectsToday?.objects || []);
+      const arr = Array.isArray(src) ? src.slice() : [];
 
-  if (!arr.length) {
-    return '<div class="sky-modal-empty">No objects available</div>';
-  }
+      const groupOf = (o) => {
+        const t = normLower(o?.group || o?.type || o?.kind || o?.subtype || "");
+        if (t.includes("calendar")) return "calendar";
+        if (t.includes("planet") || t.includes("sun") || t.includes("moon")) return "planets";
+        if (normLower(o?.meta?.planet_key || "").length) return "planets";
+        return "dso";
+      };
 
-  // Group + sort
-  const groupOf = (o) => {
-    const t = normLower(o?.group || o?.type || o?.kind || o?.subtype || "");
-    if (t.includes("calendar")) return "calendar";
-    if (t.includes("planet") || t.includes("sun") || t.includes("moon")) return "planets";
-    if (normLower(o?.meta?.planet_key || "").length) return "planets";
-    return "dso";
-  };
-  const byScoreDesc = (a, b) => scoreOf(b) - scoreOf(a);
-  const calendar = [], planetsList = [], dso = [];
-  for (const o of arr) {
-    const g = groupOf(o);
-    if (g === "calendar") calendar.push(o);
-    else if (g === "planets") planetsList.push(o);
-    else dso.push(o);
-  }
-  calendar.sort(byScoreDesc);
-  planetsList.sort(byScoreDesc);
-  dso.sort(byScoreDesc);
-  const sorted = [...calendar, ...planetsList, ...dso];
+      const byScoreDesc = (a, b) => scoreOf(b) - scoreOf(a);
+      const calendar = [], planetsList = [], dso = [];
+      for (const o of arr) {
+        const g = groupOf(o);
+        if (g === "calendar") calendar.push(o);
+        else if (g === "planets") planetsList.push(o);
+        else dso.push(o);
+      }
+      calendar.sort(byScoreDesc);
+      planetsList.sort(byScoreDesc);
+      dso.sort(byScoreDesc);
+      const sorted = [...calendar, ...planetsList, ...dso];
 
-  // Formatters
-  const fmtTimeLocal = (x) => {
-    if (!x) return "—";
-    const m = String(x).match(/T(\d{2}:\d{2})/);
-    return m ? m[1] : String(x);
-  };
-  const fmtMagVal = (o) => {
-    const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 1);
-    return v != null ? String(v) : "—";
-  };
-  const fmtAltVal = (o) => {
-    const v = fmtMaybeNumber(
-      o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ?? 
-      o?.max_alt_deg ?? o?.altDeg ?? o?.alt ?? o?.altitude, 0
-    );
-    return v != null ? `${v}°` : "—";
-  };
+      const fmtTimeLocal = (x) => {
+        if (!x) return "—";
+        const m = String(x).match(/T(\d{2}:\d{2})/);
+        return m ? m[1] : String(x);
+      };
+      const fmtMagVal = (o) => {
+        const v = fmtMaybeNumber(o?.mag ?? o?.vmag ?? o?.magnitude, 1);
+        return v != null ? String(v) : "—";
+      };
+      const fmtAltVal = (o) => {
+        const v = fmtMaybeNumber(
+          o?.vis?.max_alt_deg ?? o?.vis?.max_alt_deg_quality ??
+          o?.max_alt_deg ?? o?.altDeg ?? o?.alt ?? o?.altitude,
+          0
+        );
+        return v != null ? `${v}°` : "—";
+      };
 
-  // Build table HTML with sortable structure
-  let html = '<div class="sky-modal-ranking">';
-  
-  // Header with sortable columns
-  html += '<div class="sky-modal-table-header">';
-  html += '<div data-sort="time">Time</div>';
-  html += '<div data-sort="name">Object</div>';
-  html += '<div data-sort="score">Score</div>';
-  html += '</div>';
+      // Build flat row objects for sky-table (one field per cell)
+      const allRows = sorted.map((o, i) => {
+        const g = groupOf(o);
+        const name = String(
+          (o?.name || o?.target_name) ? (o.name || o.target_name) : pickTitle(o)
+        );
+        const tISO = bestTimeISO(o);
+        return {
+          id:             i,
+          _raw:           o,
+          _tISO:          tISO,
+          _group:         g,
+          // null → no RA/DEC → hide; false → never-rises or no tISO; true → active
+          _targetEnabled: (() => {
+            const _hc = o?.ra_deg != null && o?.dec_deg != null;
+            if (!_hc) return null;
+            const _ma = Number(o?.vis?.max_alt_deg ?? o?.max_alt_deg ?? NaN);
+            return (Number.isFinite(_ma) && _ma <= 0) ? false : (tISO ? true : false);
+          })(),
+          icon:           emojiForItem(o),
+          group:          g,
+          name:           name,
+          note:           String(o?.note || "").trim(),
+          mag:            fmtMagVal(o),
+          alt:            fmtAltVal(o),
+          time:           fmtTimeLocal(tISO),
+          score:          scoreOf(o) ? String(Math.round(scoreOf(o))) : "—",
+        };
+      });
 
-  // Rows
-  for (const o of sorted) {
-    const hid = (makeHighlightIdFromRaw(o) || "").replace(/"/g, "&quot;");
-    const tISO = (bestTimeISO(o) || "").replace(/"/g, "&quot;");
-    const name = ((o?.name || o?.target_name) ? String(o.name || o.target_name) : pickTitle(o)).replace(/</g,"&lt;");
-    const time = fmtTimeLocal(tISO);
-    const mag = fmtMagVal(o);
-    const alt = fmtAltVal(o);
-    const score = Math.round(scoreOf(o));
-    const grade = gradeOf(score);
-    const emoji = emojiForItem(o);
+      // ── Outer wrapper ──
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "display:flex;flex-direction:column;gap:0;";
 
-    html += `<div class="sky-modal-row" data-hid="${hid}" data-time="${tISO}">`;
-    
-    // Time column
-    html += `<div class="sky-modal-time">${time}</div>`;
-    
-    // Center content (name + metadata)
-    html += '<div class="sky-modal-left">';
-    html += '<div class="sky-modal-r1">';
-    html += `<div class="sky-modal-gradeEmoji">${emoji}</div>`;
-    html += `<div class="sky-modal-name">${name}</div>`;
-    html += '</div>';
-    
-    // Note line
-    const noteText = grade;
-    html += `<div class="sky-modal-note"><span class="sky-modal-gradeText">${noteText}</span></div>`;
-    
-    // Metadata chips
-    html += '<div class="sky-modal-meta">';
-    if (mag !== "—") html += `<span class="sky-modal-chip">Mag ${mag}</span>`;
-    if (alt !== "—") html += `<span class="sky-modal-chip">Alt ${alt}</span>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-left
-    
-    // Score column with bar
-    html += '<div class="sky-modal-score">';
-    html += '<div class="sky-modal-bar">';
-    html += `<div class="sky-modal-bar-fill" style="width: ${score}%"></div>`;
-    html += '</div>';
-    html += `<div class="sky-modal-score-value">${score}</div>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-row
-  }
+      // ── Tabs ──
+      const TABS = [
+        { id: "all",      label: "All" },
+        { id: "calendar", label: "Calendar" },
+        { id: "planets",  label: "Planets" },
+        { id: "dso",      label: "DSO" },
+      ];
 
-  html += '</div>'; // .sky-modal-ranking
+      const tabsEl = document.createElement("div");
+      tabsEl.className = "sky-objects-tabs";
+      const tabBtns = {};
+      for (const t of TABS) {
+        const btn = document.createElement("button");
+        btn.className = "sky-objects-tab" + (t.id === "all" ? " active" : "");
+        btn.dataset.tab = t.id;
+        btn.textContent = t.label;
+        tabsEl.appendChild(btn);
+        tabBtns[t.id] = btn;
+      }
 
-  return html;
+      // ── sky-table ──
+      const tableEl = document.createElement("sky-table");
+      tableEl.style.cssText = "height:480px;margin-top:8px;";
+
+      tableEl.setColumns([
+        { key: "icon",           label: "",       width: "28px",  type: "icon" },
+        { key: "group",          label: "Group",  width: "70px",  type: "badge" },
+        { key: "name",           label: "Object", width: "auto",  type: "name" },
+        { key: "note",           label: "Note",   width: "150px", type: "note" },
+        { key: "mag",            label: "Mag",    width: "46px",  type: "mono", align: "right" },
+        { key: "alt",            label: "Alt",    width: "46px",  type: "mono", align: "right" },
+        { key: "time",           label: "Culm.",  width: "52px",  type: "mono" },
+        { key: "score",          label: "Score",  width: "52px",  type: "mono", align: "right" },
+        { key: "_targetEnabled", label: "",       width: "30px",  type: "target", sortable: false },
+      ]);
+
+      tableEl.setRows(allRows);
+
+      // ── Tab filtering ──
+      tabsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-tab]");
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const tabId = btn.dataset.tab || "all";
+        for (const [id, b] of Object.entries(tabBtns)) {
+          b.classList.toggle("active", id === tabId);
+        }
+        const filtered = tabId === "all"
+          ? allRows
+          : allRows.filter((r) => r._group === tabId);
+        tableEl.setRows(filtered);
+      });
+
+      // ── Row click → sky-card detail ──
+      tableEl.addEventListener("sky-table:row-click", (e) => {
+        const row = e.detail?.row;
+        const o = row?._raw;
+        if (!o) return;
+        openHitModal({ kind: "object", data: o });
+      });
+
+      // ── Target click → jump to culmination ──
+      tableEl.addEventListener("sky-table:target-click", (e) => {
+        const row = e.detail?.row;
+        const o = row?._raw;
+        if (!o) return;
+        const hid = makeHighlightIdFromRaw(o);
+        const tISO = row._tISO;
+        try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
+        if (tISO) setTimeISO(tISO);
+        if (hid) setHighlightById(hid, 3600);
+      });
+
+      wrap.append(tabsEl, tableEl);
+      return wrap;
 }
 
     function buildAllAlertsModalContent() {
-  const src = Array.isArray(alertsToday)
-    ? alertsToday
-    : (alertsToday?.items || alertsToday?.alerts || []);
-  const arr = Array.isArray(src) ? src.slice() : [];
+      const src = Array.isArray(alertsToday)
+        ? alertsToday
+        : (alertsToday?.items || alertsToday?.alerts || []);
+      const arr = Array.isArray(src) ? src.slice() : [];
 
-  if (!arr.length) {
-    return '<div class="sky-modal-empty">No alerts available</div>';
-  }
+      const normG = (x) => String(x || "").trim().toLowerCase();
 
-  // Sort: score desc, then updated_utc desc
-  arr.sort((a, b) => {
-    const sa = Number(a?.score_norm ?? a?.score_raw ?? 0);
-    const sb = Number(b?.score_norm ?? b?.score_raw ?? 0);
-    if (sa !== sb) return sb - sa;
-    const ta = Date.parse(a?.updated_utc || "");
-    const tb = Date.parse(b?.updated_utc || "");
-    if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
-    return 0;
-  });
+      function groupIcon(item) {
+        const g = normG(item?.group);
+        if (g === "neo" || g === "neocp") return "🪨";
+        if (g === "risk") return "⚠️";
+        if (g === "pha") return "🟥";
+        if (g === "transient") return "💥";
+        if (g === "grb") return "🚨";
+        if (g === "gcn") return "📡";
+        return "⚠️";
+      }
 
-  // Formatters
-  const pad2 = (n) => String(n).padStart(2, "0");
-  const fmtRA = (ra) => {
-    const v = Number(ra);
-    if (!Number.isFinite(v)) return "—";
-    const totalSec = (v / 15) * 3600;
-    const hh = Math.floor(totalSec / 3600);
-    const mm = Math.floor((totalSec % 3600) / 60);
-    return `${pad2(hh)}h${pad2(mm)}m`;
-  };
-  const fmtDEC = (dec) => {
-    const v = Number(dec);
-    if (!Number.isFinite(v)) return "—";
-    const sign = v >= 0 ? "+" : "−";
-    const a = Math.abs(v);
-    const dd = Math.floor(a);
-    const mm = Math.floor((a - dd) * 60);
-    return `${sign}${dd}°${pad2(mm)}′`;
-  };
-  const fmtScore = (a) => {
-    const s = Number(a?.score_norm ?? a?.score_raw);
-    return Number.isFinite(s) ? Math.round(s * 100) : 0;
-  };
-  const categoryFromSource = (src) => {
-    if (!src) return "Unknown";
-    const s = String(src).toLowerCase();
-    if (s.includes("tocp")) return "Transient";
-    if (s.includes("grb_fermi")) return "GRB";
-    if (s.includes("neocp")) return "Minor Planet";
-    return src.toUpperCase();
-  };
+      function fmtDatetime(iso) {
+        if (!iso) return "—";
+        const t = Date.parse(String(iso));
+        if (!Number.isFinite(t)) return "—";
+        const d = new Date(t);
+        const pad2 = (n) => String(n).padStart(2, "0");
+        return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+      }
 
-  // Build table HTML with sortable structure
-  let html = '<div class="sky-modal-ranking">';
-  
-  // Header with sortable columns
-  html += '<div class="sky-modal-table-header">';
-  html += '<div data-sort="time">Type</div>';
-  html += '<div data-sort="name">Alert</div>';
-  html += '<div data-sort="score">Score</div>';
-  html += '</div>';
+      function fmtScoreNorm(it) {
+        const v = Number(it?.score_norm);
+        if (!Number.isFinite(v)) return null;
+        return Math.max(0, Math.min(1, v));
+      }
 
-  // Rows
-  for (const a of arr) {
-    const hid = (makeHighlightIdFromRaw(a) || "").replace(/"/g, "&quot;");
-    const title = ((a?.meta?.title || a?.id || "Alert")).replace(/</g,"&lt;");
-    const emoji = emojiForAlert(a);
-    const ra = fmtRA(a?.ra_deg);
-    const dec = fmtDEC(a?.dec_deg);
-    const cat = categoryFromSource(a?.source);
-    const score = fmtScore(a);
+      // Sort: score_norm desc, then updated_utc desc
+      arr.sort((a, b) => {
+        const sa = fmtScoreNorm(a) ?? -1;
+        const sb = fmtScoreNorm(b) ?? -1;
+        if (sa !== sb) return sb - sa;
+        const ta = Date.parse(a?.updated_utc || a?.ingested_utc || "");
+        const tb = Date.parse(b?.updated_utc || b?.ingested_utc || "");
+        if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+        return 0;
+      });
 
-    html += `<div class="sky-modal-row" data-hid="${hid}">`;
-    
-    // Type/Time column (using emoji as type indicator)
-    html += `<div class="sky-modal-time">${cat}</div>`;
-    
-    // Center content
-    html += '<div class="sky-modal-left">';
-    html += '<div class="sky-modal-r1">';
-    html += `<div class="sky-modal-gradeEmoji">${emoji}</div>`;
-    html += `<div class="sky-modal-name">${title}</div>`;
-    html += '</div>';
-    
-    // Coordinates as note
-    const coords = (ra !== "—" || dec !== "—") ? `RA ${ra} · DEC ${dec}` : "";
-    if (coords) {
-      html += `<div class="sky-modal-note">${coords}</div>`;
-    }
-    
-    // Metadata
-    html += '<div class="sky-modal-meta">';
-    html += `<span class="sky-modal-chip">${cat}</span>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-left
-    
-    // Score column
-    html += '<div class="sky-modal-score">';
-    html += '<div class="sky-modal-bar">';
-    html += `<div class="sky-modal-bar-fill" style="width: ${score}%"></div>`;
-    html += '</div>';
-    html += `<div class="sky-modal-score-value">${score}</div>`;
-    html += '</div>';
-    
-    html += '</div>'; // .sky-modal-row
-  }
+      // Build flat row objects for sky-table (one field per cell)
+      const allRows = arr.map((it, i) => {
+        const scoreN = fmtScoreNorm(it);
+        const rawIso = it?.updated_utc || it?.ingested_utc || null;
+        const ts = rawIso ? Date.parse(String(rawIso)) : NaN;
+        return {
+          id:          i,
+          _raw:        it,
+          _group:      normG(it?.group),
+          _updatedTs:  Number.isFinite(ts) ? ts : null,
+          icon:        groupIcon(it),
+          group:       String(it?.group || "other"),
+          title:       String(it?.title || it?.id || "Alert"),
+          note:        String(it?.note || "").trim(),
+          score:          scoreN != null ? scoreN.toFixed(2) : "—",
+          updated:        fmtDatetime(rawIso),
+          // null → no RA/DEC → hide; false → never-rises; true → active
+          _targetEnabled: (() => {
+            const _hc = it?.ra_deg != null && it?.dec_deg != null;
+            if (!_hc) return null;
+            const _ma = Number(it?.vis?.max_alt_deg ?? it?.meta?.max_alt_deg ?? NaN);
+            return (Number.isFinite(_ma) && _ma <= 0) ? false : true;
+          })(),
+        };
+      });
 
-  html += '</div>'; // .sky-modal-ranking
+      // ── Outer wrapper ──
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "display:flex;flex-direction:column;gap:0;";
 
-  return html;
-}
+      // ── Tabs ──
+      const TABS = [
+        { id: "all",       label: "All" },
+        { id: "neo",       label: "Neo" },
+        { id: "risk",      label: "Risk" },
+        { id: "neocp",     label: "NeoCP" },
+        { id: "transient", label: "Transient" },
+        { id: "grb",       label: "GRB" },
+        { id: "gcn",       label: "GCN" },
+        { id: "pha",       label: "PHA" },
+      ];
 
+      const tabsEl = document.createElement("div");
+      tabsEl.className = "sky-objects-tabs";
+      const tabBtns = {};
+      for (const t of TABS) {
+        const btn = document.createElement("button");
+        btn.className = "sky-objects-tab" + (t.id === "all" ? " active" : "");
+        btn.dataset.tab = t.id;
+        btn.textContent = t.label;
+        tabsEl.appendChild(btn);
+        tabBtns[t.id] = btn;
+      }
 
+      // ── sky-table ──
+      const tableEl = document.createElement("sky-table");
+      tableEl.style.cssText = "height:480px;margin-top:8px;";
 
-        function wireAllObjectsModalClicks() {
-      if (!modalWC || !modalWC.shadowRoot) return;
-      const host = modalWC.shadowRoot.querySelector(".body");
-      if (!host) return;
+      tableEl.setColumns([
+        { key: "icon",    label: "",            width: "28px",  type: "icon" },
+        { key: "group",   label: "Group",       width: "66px",  type: "badge" },
+        { key: "title",   label: "Event",       width: "auto",  type: "name" },
+        { key: "note",    label: "Note",        width: "150px", type: "note" },
+        { key: "score",          label: "Score",       width: "52px",  type: "mono", align: "right" },
+        { key: "updated",        label: "Updated UTC", width: "110px", type: "mono", sortKey: "_updatedTs" },
+        { key: "_targetEnabled", label: "",             width: "30px",  type: "target", sortable: false },
+      ]);
 
-      host.onclick = (e) => {
-        const row = e.target && e.target.closest ? e.target.closest("[data-hid]") : null;
-        if (!row) return;
+      tableEl.setRows(allRows);
 
-        const hid = row.getAttribute("data-hid");
-        if (!hid) return;
+      // ── Tab filtering ──
+      tabsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-tab]");
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const tabId = btn.dataset.tab || "all";
+        for (const [id, b] of Object.entries(tabBtns)) {
+          b.classList.toggle("active", id === tabId);
+        }
+        const filtered = tabId === "all"
+          ? allRows
+          : allRows.filter((r) => r._group === tabId);
+        tableEl.setRows(filtered);
+      });
 
+      // ── Row click → sky-card detail ──
+      tableEl.addEventListener("sky-table:row-click", (e) => {
+        const row = e.detail?.row;
+        const it = row?._raw;
+        if (!it) return;
+        openHitModal({ kind: "alert", data: it });
+      });
+
+      // ── Target click → jump to object ──
+      tableEl.addEventListener("sky-table:target-click", (e) => {
+        const row = e.detail?.row;
+        const it = row?._raw;
+        if (!it) return;
+        const hid = makeHighlightIdFromRaw(it) || it?.id;
         try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
+        if (hid) setHighlightById(hid, 3600);
+      });
 
-        const tISO = row.getAttribute("data-time");
-        if (tISO) setTimeISO(tISO);
+      wrap.append(tabsEl, tableEl);
+      return wrap;
+    }
 
-        setHighlightById(hid, 3600);
-      };
+
+
+
+    function wireAllObjectsModalClicks() {
+      // Events are wired inside buildAllObjectsModalContent(); nothing to do here.
     }
 
     function openAllObjectsModal() {
@@ -1000,17 +1070,14 @@ import * as Popovers from "./widgets/widget.popovers.js";
         title: "Best Objects this night",
         content: buildAllObjectsModalContent(),
       });
-      requestAnimationFrame(() => wireAllObjectsModalClicks());
     }
 
-    // --------- POPOVER: Ranking (TOP 7) ----------
     function openAllAlertsModal() {
       if (!modalWC) return;
       modalWC.open({
         title: "All Alerts",
         content: buildAllAlertsModalContent(),
       });
-      requestAnimationFrame(() => wireAllObjectsModalClicks());
     }
 
         function buildRankingContent7() {
@@ -1469,8 +1536,8 @@ import * as Popovers from "./widgets/widget.popovers.js";
       sidePop.addEventListener("toolbar:action", (e) => {
         const { id, anchorEl } = e.detail || {};
         if (!id || !anchorEl) return;
-        if (id === "ranking") openRankingPopover(anchorEl);
-        if (id === "alerts")  openAlertsPopover(anchorEl);
+        if (id === "ranking") openAllObjectsModal();
+        if (id === "alerts")  openAllAlertsModal();
       });
     }
 

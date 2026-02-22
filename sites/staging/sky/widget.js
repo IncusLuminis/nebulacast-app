@@ -799,19 +799,27 @@ import * as Popovers from "./widgets/widget.popovers.js";
           (o?.name || o?.target_name) ? (o.name || o.target_name) : pickTitle(o)
         );
         const tISO = bestTimeISO(o);
+        // Three-state target:
+        //   null  → no RA/DEC → hide icon
+        //   false → never-rises (max_alt_deg ≤ 0) → dimmed icon
+        //   true  → rises and has culmination time → active icon
+        const _hasCoords = o?.ra_deg != null && o?.dec_deg != null;
+        const _maxAlt    = Number(o?.vis?.max_alt_deg ?? o?.max_alt_deg ?? NaN);
+        const _neverRises = _hasCoords && Number.isFinite(_maxAlt) && _maxAlt <= 0;
         return {
-          id:     i,
-          _raw:   o,
-          _tISO:  tISO,
-          _group: g,
-          icon:   emojiForItem(o),
-          group:  g,
-          name:   name,
-          note:   String(o?.note || "").trim(),
-          mag:    fmtMagVal(o),
-          alt:    fmtAltVal(o),
-          time:   fmtTimeLocal(tISO),
-          score:  scoreOf(o) ? String(Math.round(scoreOf(o))) : "—",
+          id:             i,
+          _raw:           o,
+          _tISO:          tISO,
+          _group:         g,
+          _targetEnabled: !_hasCoords ? null : (_neverRises || !tISO) ? false : true,
+          icon:           emojiForItem(o),
+          group:          g,
+          name:           name,
+          note:           String(o?.note || "").trim(),
+          mag:            fmtMagVal(o),
+          alt:            fmtAltVal(o),
+          time:           fmtTimeLocal(tISO),
+          score:          scoreOf(o) ? String(Math.round(scoreOf(o))) : "—",
         };
       });
 
@@ -844,14 +852,15 @@ import * as Popovers from "./widgets/widget.popovers.js";
       tableEl.style.cssText = "height:480px;margin-top:8px;";
 
       tableEl.setColumns([
-        { key: "icon",  label: "",       width: "28px",  type: "icon" },
-        { key: "group", label: "Group",  width: "70px",  type: "badge" },
-        { key: "name",  label: "Object", width: "auto",  type: "name" },
-        { key: "note",  label: "Note",   width: "150px", type: "note" },
-        { key: "mag",   label: "Mag",    width: "46px",  type: "mono", align: "right" },
-        { key: "alt",   label: "Alt",    width: "46px",  type: "mono", align: "right" },
-        { key: "time",  label: "Culm.",  width: "52px",  type: "mono" },
-        { key: "score", label: "Score",  width: "52px",  type: "mono", align: "right" },
+        { key: "icon",           label: "",       width: "28px",  type: "icon" },
+        { key: "group",          label: "Group",  width: "70px",  type: "badge" },
+        { key: "name",           label: "Object", width: "auto",  type: "name" },
+        { key: "note",           label: "Note",   width: "150px", type: "note" },
+        { key: "mag",            label: "Mag",    width: "46px",  type: "mono", align: "right" },
+        { key: "alt",            label: "Alt",    width: "46px",  type: "mono", align: "right" },
+        { key: "time",           label: "Culm.",  width: "52px",  type: "mono" },
+        { key: "score",          label: "Score",  width: "52px",  type: "mono", align: "right" },
+        { key: "_targetEnabled", label: "",       width: "30px",  type: "target", sortable: false },
       ]);
 
       tableEl.setRows(allRows);
@@ -872,15 +881,21 @@ import * as Popovers from "./widgets/widget.popovers.js";
         tableEl.setRows(filtered);
       });
 
-      // ── Row click ──
+      // ── Row click → sky-card ──
       tableEl.addEventListener("sky-table:row-click", (e) => {
         const row = e.detail?.row;
         const o = row?._raw;
         if (!o) return;
+        openHitModal({ kind: "object", data: o });
+      });
 
+      // ── Target click → jump to culmination ──
+      tableEl.addEventListener("sky-table:target-click", (e) => {
+        const row = e.detail?.row;
+        const o = row?._raw;
+        if (!o) return;
         const hid = makeHighlightIdFromRaw(o);
         const tISO = row._tISO;
-
         try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
         if (tISO) setTimeISO(tISO);
         if (hid) setHighlightById(hid, 3600);
@@ -902,167 +917,173 @@ import * as Popovers from "./widgets/widget.popovers.js";
       });
     }
 
-    // buildAllAlertsModalContent() - Full implementation matching screenshot
-    // Replace in widget.js
+    // ---- MODAL: all alerts — same visual language as sky-modal-* ----
 
-// ---- MODAL: all alerts — same visual language as sky-modal-* ----
+    function buildAllAlertsModalContent() {
+      const src = Array.isArray(alertsToday)
+        ? alertsToday
+        : (alertsToday?.items || alertsToday?.alerts || []);
+      const arr = Array.isArray(src) ? src.slice() : [];
 
-function buildAllAlertsModalContent() {
-  const src = Array.isArray(alertsToday)
-    ? alertsToday
-    : (alertsToday?.items || alertsToday?.alerts || []);
-  const arr = Array.isArray(src) ? src.slice() : [];
+      const normG = (x) => String(x || "").trim().toLowerCase();
 
-  const normG = (x) => String(x || "").trim().toLowerCase();
+      function groupIcon(item) {
+        const g = normG(item?.group);
+        if (g === "neo" || g === "neocp") return "🪨";
+        if (g === "risk") return "⚠️";
+        if (g === "pha") return "🟥";
+        if (g === "transient") return "💥";
+        if (g === "grb") return "🚨";
+        if (g === "gcn") return "📡";
+        return "⚠️";
+      }
 
-  function groupIcon(item) {
-    const g = normG(item?.group);
-    if (g === "neo" || g === "neocp") return "🪨";
-    if (g === "risk") return "⚠️";
-    if (g === "pha") return "🟥";
-    if (g === "transient") return "💥";
-    if (g === "grb") return "🚨";
-    if (g === "gcn") return "📡";
-    return "⚠️";
-  }
+      function fmtDatetime(iso) {
+        if (!iso) return "—";
+        const t = Date.parse(String(iso));
+        if (!Number.isFinite(t)) return "—";
+        const d = new Date(t);
+        const pad2 = (n) => String(n).padStart(2, "0");
+        // UTC date + time, e.g. "2024-01-15 14:32"
+        return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+      }
 
-  function fmtDate(iso) {
-    if (!iso) return "—";
-    const t = Date.parse(String(iso));
-    if (!Number.isFinite(t)) return "—";
-    const d = new Date(t);
-    const pad2 = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
+      function fmtScoreNorm(it) {
+        const v = Number(it?.score_norm);
+        if (!Number.isFinite(v)) return null;
+        return Math.max(0, Math.min(1, v));
+      }
 
-  function fmtScoreNorm(it) {
-    const v = Number(it?.score_norm);
-    if (!Number.isFinite(v)) return null;
-    return Math.max(0, Math.min(1, v));
-  }
+      // Sort: score_norm desc, then updated_utc desc
+      arr.sort((a, b) => {
+        const sa = fmtScoreNorm(a) ?? -1;
+        const sb = fmtScoreNorm(b) ?? -1;
+        if (sa !== sb) return sb - sa;
+        const ta = Date.parse(a?.updated_utc || a?.ingested_utc || "");
+        const tb = Date.parse(b?.updated_utc || b?.ingested_utc || "");
+        if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
+        return 0;
+      });
 
-  // Sort: score_norm desc, then updated_utc desc
-  arr.sort((a, b) => {
-    const sa = fmtScoreNorm(a) ?? -1;
-    const sb = fmtScoreNorm(b) ?? -1;
-    if (sa !== sb) return sb - sa;
-    const ta = Date.parse(a?.updated_utc || a?.ingested_utc || "");
-    const tb = Date.parse(b?.updated_utc || b?.ingested_utc || "");
-    if (Number.isFinite(ta) && Number.isFinite(tb)) return tb - ta;
-    return 0;
-  });
+      // Build flat row objects for sky-table (one field per cell)
+      const allRows = arr.map((it, i) => {
+        const scoreN = fmtScoreNorm(it);
+        const rawIso = it?.updated_utc || it?.ingested_utc || null;
+        const ts = rawIso ? Date.parse(String(rawIso)) : NaN;
+        return {
+          id:          i,
+          _raw:        it,
+          _group:      normG(it?.group),
+          _updatedTs:  Number.isFinite(ts) ? ts : null, // numeric ms for sorting
+          icon:        groupIcon(it),
+          group:       String(it?.group || "other"),
+          title:       String(it?.title || it?.id || "Alert"),
+          note:        String(it?.note || "").trim(),
+          score:          scoreN != null ? scoreN.toFixed(2) : "—",
+          updated:        fmtDatetime(rawIso),  // display: "YYYY-MM-DD HH:MM" UTC
+          // null → no RA/DEC → hide icon; false → never-rises; true → active
+          _targetEnabled: (() => {
+            const _hc = it?.ra_deg != null && it?.dec_deg != null;
+            if (!_hc) return null;
+            const _ma = Number(it?.vis?.max_alt_deg ?? it?.meta?.max_alt_deg ?? NaN);
+            return (Number.isFinite(_ma) && _ma <= 0) ? false : true;
+          })(),
+        };
+      });
 
-  // Build flat row objects for sky-table (one field per cell)
-  const allRows = arr.map((it, i) => {
-    const scoreN = fmtScoreNorm(it);
-    return {
-      id:      i,
-      _raw:    it,
-      _group:  normG(it?.group),
-      icon:    groupIcon(it),
-      group:   String(it?.group || "other"),
-      title:   String(it?.title || it?.id || "Alert"),
-      note:    String(it?.note || "").trim(),
-      score:   scoreN != null ? scoreN.toFixed(2) : "—",
-      updated: fmtDate(it?.updated_utc || it?.ingested_utc),
-    };
-  });
+      // ── Outer wrapper ──
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "display:flex;flex-direction:column;gap:0;";
 
-  // ── Outer wrapper ──
-  const wrap = document.createElement("div");
-  wrap.style.cssText = "display:flex;flex-direction:column;gap:0;";
+      // ── Tabs ──
+      const TABS = [
+        { id: "all",       label: "All" },
+        { id: "neo",       label: "Neo" },
+        { id: "risk",      label: "Risk" },
+        { id: "neocp",     label: "NeoCP" },
+        { id: "transient", label: "Transient" },
+        { id: "grb",       label: "GRB" },
+        { id: "gcn",       label: "GCN" },
+        { id: "pha",       label: "PHA" },
+      ];
 
-  // ── Tabs ──
-  const TABS = [
-    { id: "all",       label: "All" },
-    { id: "neo",       label: "Neo" },
-    { id: "risk",      label: "Risk" },
-    { id: "neocp",     label: "NeoCP" },
-    { id: "transient", label: "Transient" },
-    { id: "grb",       label: "GRB" },
-    { id: "gcn",       label: "GCN" },
-    { id: "pha",       label: "PHA" },
-  ];
+      const tabsEl = document.createElement("div");
+      tabsEl.className = "sky-objects-tabs";
+      const tabBtns = {};
+      for (const t of TABS) {
+        const btn = document.createElement("button");
+        btn.className = "sky-objects-tab" + (t.id === "all" ? " active" : "");
+        btn.dataset.tab = t.id;
+        btn.textContent = t.label;
+        tabsEl.appendChild(btn);
+        tabBtns[t.id] = btn;
+      }
 
-  const tabsEl = document.createElement("div");
-  tabsEl.className = "sky-objects-tabs";
-  const tabBtns = {};
-  for (const t of TABS) {
-    const btn = document.createElement("button");
-    btn.className = "sky-objects-tab" + (t.id === "all" ? " active" : "");
-    btn.dataset.tab = t.id;
-    btn.textContent = t.label;
-    tabsEl.appendChild(btn);
-    tabBtns[t.id] = btn;
-  }
+      // ── sky-table ──
+      const tableEl = document.createElement("sky-table");
+      tableEl.style.cssText = "height:480px;margin-top:8px;";
 
-  // ── sky-table ──
-  const tableEl = document.createElement("sky-table");
-  tableEl.style.cssText = "height:480px;margin-top:8px;";
+      tableEl.setColumns([
+        { key: "icon",    label: "",       width: "28px",  type: "icon" },
+        { key: "group",   label: "Group",  width: "66px",  type: "badge" },
+        { key: "title",   label: "Event",  width: "auto",  type: "name" },
+        { key: "note",    label: "Note",   width: "150px", type: "note" },
+        { key: "score",          label: "Score",       width: "52px",  type: "mono", align: "right" },
+        { key: "updated",        label: "Updated UTC", width: "110px", type: "mono", sortKey: "_updatedTs" },
+        { key: "_targetEnabled", label: "",             width: "30px",  type: "target", sortable: false },
+      ]);
 
-  tableEl.setColumns([
-    { key: "icon",    label: "",       width: "28px",  type: "icon" },
-    { key: "group",   label: "Group",  width: "66px",  type: "badge" },
-    { key: "title",   label: "Event",  width: "auto",  type: "name" },
-    { key: "note",    label: "Note",   width: "150px", type: "note" },
-    { key: "score",   label: "Score",  width: "52px",  type: "mono", align: "right" },
-    { key: "updated", label: "Date",   width: "82px",  type: "mono" },
-  ]);
+      tableEl.setRows(allRows);
 
-  tableEl.setRows(allRows);
+      // ── Tab filtering ──
+      tabsEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-tab]");
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const tabId = btn.dataset.tab || "all";
+        for (const [id, b] of Object.entries(tabBtns)) {
+          b.classList.toggle("active", id === tabId);
+        }
+        const filtered = tabId === "all"
+          ? allRows
+          : allRows.filter((r) => r._group === tabId);
+        tableEl.setRows(filtered);
+      });
 
-  // ── Tab filtering ──
-  tabsEl.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-tab]");
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const tabId = btn.dataset.tab || "all";
-    for (const [id, b] of Object.entries(tabBtns)) {
-      b.classList.toggle("active", id === tabId);
+      // ── Row click → sky-card detail ──
+      tableEl.addEventListener("sky-table:row-click", (e) => {
+        const row = e.detail?.row;
+        const it = row?._raw;
+        if (!it) return;
+        openHitModal({ kind: "alert", data: it });
+      });
+
+      // ── Target click → jump to object ──
+      tableEl.addEventListener("sky-table:target-click", (e) => {
+        const row = e.detail?.row;
+        const it = row?._raw;
+        if (!it) return;
+        const hid = makeHighlightIdFromRaw(it) || it?.id;
+        try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
+        if (hid) setHighlightById(hid, 3600);
+      });
+
+      wrap.append(tabsEl, tableEl);
+      return wrap;
     }
-    const filtered = tabId === "all"
-      ? allRows
-      : allRows.filter((r) => r._group === tabId);
-    tableEl.setRows(filtered);
-  });
 
-  // ── Row click ──
-  tableEl.addEventListener("sky-table:row-click", (e) => {
-    const row = e.detail?.row;
-    const it = row?._raw;
-    if (!it) return;
-
-    const hasCoords = it?.ra_deg != null && it?.dec_deg != null;
-    const hid = makeHighlightIdFromRaw(it) || it?.id;
-
-    try { if (modalWC && typeof modalWC.close === "function") modalWC.close(); } catch (_) {}
-
-    if (hasCoords && hid) {
-      setHighlightById(hid, 3600);
-      return;
+    function wireAlertsModalClicks() {
+      // Events are wired inside buildAllAlertsModalContent(); nothing to do here.
     }
 
-    try {
-      openHitModal({ kind: "alert", data: it });
-    } catch (_) {}
-  });
-
-  wrap.append(tabsEl, tableEl);
-  return wrap;
-}
-
-function wireAlertsModalClicks() {
-  // Events are wired inside buildAllAlertsModalContent(); nothing to do here.
-}
-
-function openAllAlertsModal() {
-  if (!modalWC) return;
-  modalWC.open({
-    title: "Alerts tonight",
-    content: buildAllAlertsModalContent(),
-  });
-}
+    function openAllAlertsModal() {
+      if (!modalWC) return;
+      modalWC.open({
+        title: "Alerts tonight",
+        content: buildAllAlertsModalContent(),
+      });
+    }
 
 
     function buildRankingContent7() {
@@ -1603,8 +1624,8 @@ function buildAlertsListContent() {
       sidePop.addEventListener("toolbar:action", (e) => {
         const { id, anchorEl } = e.detail || {};
         if (!id || !anchorEl) return;
-        if (id === "ranking") openRankingPopover(anchorEl);
-        if (id === "alerts")  openAlertsPopover(anchorEl);
+        if (id === "ranking") openAllObjectsModal();
+        if (id === "alerts")  openAllAlertsModal();
       });
     }
 

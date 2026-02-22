@@ -428,7 +428,7 @@ def main() -> None:
             "source": "jpl-cad+horizons+sbdb",
             "group": "neo",
             "type": "neo",
-            "title": ("PHA close approach: " if pha else "NEO close approach: ") + des,
+            "title": des,
             "note": "Potentially Hazardous Asteroid (PHA)" if pha else "Close approach within 10 lunar distances",
             "score_raw": score_raw,
             "score_norm": score_norm,

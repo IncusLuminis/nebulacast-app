@@ -191,6 +191,42 @@ export const SKY_TABLE_CSS = `
 }
 
 /* ─────────────────────────────────────────────
+   TARGET BUTTON  (jump-to-object column)
+───────────────────────────────────────────── */
+
+.sky-table-td.type-target {
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.sky-table-target-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(100, 160, 255, 0.55);   /* ← цвет активной иконки */
+  transition: color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+
+.sky-table-target-btn:hover {
+  color: rgba(100, 160, 255, 1.0);
+  background: rgba(100, 160, 255, 0.12);
+}
+
+.sky-table-target-btn.is-disabled {
+  color: rgba(255, 255, 255, 0.12);   /* ← цвет неактивной иконки */
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────
    SORT INDICATORS
 ───────────────────────────────────────────── */
 

@@ -587,7 +587,7 @@ export function buildCardData(hit) {
   };
   
   if (hit.kind === "alert") {
-    title = d.title || "Alert";
+    title = d.title || d.id || "Alert";
     note = d.note || "";
     if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
     if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
@@ -595,6 +595,7 @@ export function buildCardData(hit) {
     if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
     if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
   } else if (hit.kind === "object") {
+    // (alert tab data built below)
     title = d.name || "Object";
     note = d.note || "";
     if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
@@ -618,11 +619,148 @@ export function buildCardData(hit) {
     if (d.constellation) metaParts.push(d.constellation);
   }
   
+  // ── Alert tab data (kind === "alert") ──────────────────────────────────────
+  let alertTabs = null;
+  if (hit.kind === "alert") {
+    const meta   = d.meta   || {};
+    const ssum   = meta.sentry_summary        || {};
+    const srawS  = meta.sentry_object_raw?.summary || {};
+    const group  = String(d.group || "").toLowerCase();
+    const isRisk = group === "risk";
+
+    // ── helpers ──
+    const fmtIso = (iso) => {
+      if (!iso) return null;
+      return String(iso).replace("T", " ").replace(/\.\d+Z?$/, "").replace("Z", "") + " UTC";
+    };
+    const fmtN   = (v, dec = 2) => Number.isFinite(Number(v)) ? Number(v).toFixed(dec) : null;
+    const fmtSci = (v) => (v != null && Number.isFinite(Number(v))) ? Number(v).toExponential(2) : null;
+    const str    = (v) => (v != null && v !== "") ? String(v) : null;
+    // row item: [label, value] — null values are filtered out by the card renderer
+    const row    = (label, value, opts) => (value != null && value !== "") ? [label, value, opts] : null;
+
+    alertTabs = [];
+
+    // ── SUMMARY ──
+    const sumRows = isRisk ? [
+      row("Note",               str(d.note)),
+      row("Impact Probability", meta.ip != null ? Number(meta.ip).toExponential(2) : null),
+      row("Palermo Scale",      fmtN(meta.ps || ssum.ps_max, 2)),
+      row("Torino Scale",       str(meta.ts ?? ssum.ts_max ?? 0)),
+      row("Monitoring Status",  meta.sentry_object_ok ? "Active" : "Inactive"),
+      row("Last Observation",   str(ssum.last_obs || srawS.last_obs)),
+      row("Diameter",           ssum.diameter ? `${ssum.diameter} km` : null),
+      row("Impact Range",       str(ssum.range)),
+      row("N Scenarios",        ssum.n_imp != null ? String(ssum.n_imp) : null),
+      row("Ingested",           fmtIso(d.ingested_utc)),
+    ] : [
+      row("Event Time",   fmtIso(meta.t_utc_iso || meta.t_utc || d.updated_utc)),
+      row("Ingested",     fmtIso(d.ingested_utc)),
+      row("Note",         str(d.note)),
+      row("Coordinates",  fmtRA(d.ra_deg) && fmtDEC(d.dec_deg)
+                            ? `RA ${fmtRA(d.ra_deg)}  DEC ${fmtDEC(d.dec_deg)}` : null),
+      row("Magnitude",    d.mag    != null ? fmtMag(d.mag, 1) : null),
+      row("Altitude",     d.altDeg != null ? fmtDeg(d.altDeg, 0) : null),
+      row("Azimuth",      d.azDeg  != null ? fmtDeg(d.azDeg,  0) : null),
+      row("Distance",     meta.dist_au != null
+                            ? `${Number(meta.dist_au).toFixed(5)} AU  /  ${Number(meta.dist_ld).toFixed(2)} LD`
+                            : null),
+      row("Close approach bucket", str(meta.bucket)),
+      row("Discovery",    d.discovery
+                            ? `${d.discovery.year}-${d.discovery.month}-${Math.floor(Number(d.discovery.day))}`
+                            : null),
+      row("Status",       str(meta.action)),
+    ].filter(Boolean);
+    alertTabs.push({ id: "summary", label: "Summary", rows: sumRows });
+
+    // ── ORBIT & PHYSICS (non-risk) / IMPACT SCENARIOS + ORBIT (risk) ──
+    if (isRisk) {
+      alertTabs.push({ id: "impact", label: "Impact Scenarios", rows: [
+        row("N Scenarios",   ssum.n_imp != null ? String(ssum.n_imp) : null),
+        row("Impact Range",  str(ssum.range)),
+        row("Best V_imp",    meta.sentry_object_raw?.summary?.v_imp
+                               ? `${Number(meta.sentry_object_raw.summary.v_imp).toFixed(2)} km/s` : null),
+        row("V_inf",         ssum.v_inf ? `${Number(ssum.v_inf).toFixed(2)} km/s` : null),
+        row("ps_cum",        fmtN(ssum.ps_cum, 2)),
+      ].filter(Boolean) });
+      alertTabs.push({ id: "orbit", label: "Orbit", rows: [
+        row("H (abs mag)",   fmtN(meta.sb_h || ssum.h, 2)),
+        row("Diameter",      ssum.diameter ? `${ssum.diameter} km` : null),
+        row("V_inf",         ssum.v_inf ? `${Number(ssum.v_inf).toFixed(2)} km/s` : null),
+      ].filter(Boolean) });
+    } else {
+      const orbitRows = [
+        row("Distance",     meta.dist_au != null
+                              ? `${Number(meta.dist_au).toFixed(5)} AU` : null),
+        row("Distance LD",  meta.dist_ld != null
+                              ? `${Number(meta.dist_ld).toFixed(3)} LD` : null),
+        row("V_rel",        meta.v_rel_km_s != null
+                              ? `${Number(meta.v_rel_km_s).toFixed(2)} km/s` : null),
+        row("H (abs mag)",  fmtN(meta.h_cad || ssum.h, 1)),
+        row("Diameter_est", ssum.diameter ? `${ssum.diameter} km` : null),
+      ].filter(Boolean);
+      if (orbitRows.length) alertTabs.push({ id: "orbit", label: "Orbit & Physics", rows: orbitRows });
+    }
+
+    // ── SCORING — bar-chart data + text rows ──
+    // Each bar: { label, norm (0-1 fill), display (string) }
+    // Threat colour: norm=0 → blue (safe), norm=1 → orange-red (dangerous)
+    const scoreChart = [];
+    const _addBar = (label, rawVal, max, min, fmtFn) => {
+      const v = Number(rawVal);
+      if (!Number.isFinite(v)) return;
+      const norm = max === min ? 0 : Math.max(0, Math.min(1, (v - min) / (max - min)));
+      scoreChart.push({ label, norm, display: fmtFn ? fmtFn(v) : v.toFixed(3) });
+    };
+    if (d.score_norm != null)
+      _addBar("Global Score",   d.score_norm,           1,  0, (v) => v.toFixed(3));
+    if (meta.risk_score != null)
+      _addBar("Risk Score",     meta.risk_score,        1,  0, (v) => v.toFixed(3));
+    const _tsVal = parseFloat(ssum.ts_max ?? meta.ts ?? '');
+    if (Number.isFinite(_tsVal) && _tsVal > 0)
+      _addBar("Torino Scale",   _tsVal,                10,  0, (v) => `${v} / 10`);
+    const _psMax = parseFloat(ssum.ps_max ?? meta.ps ?? '');
+    if (Number.isFinite(_psMax))
+      _addBar("Palermo (max)",  _psMax,                 2, -8, (v) => v.toFixed(2));
+    const _psCum = parseFloat(ssum.ps_cum ?? '');
+    if (Number.isFinite(_psCum) && ssum.ps_cum !== undefined)
+      _addBar("Palermo (cum)",  _psCum,                 2, -8, (v) => v.toFixed(2));
+
+    // ── External scoring breakdown — attach to Global Score bar so the ▶ toggle
+    //    sits inline with that row and expands right below it. ──
+    const _ext = meta.scoring?.external || null;
+    if (_ext && _ext.features && scoreChart.length > 0) {
+      scoreChart[0].breakdown = {
+        model:    _ext.model    || null,
+        features: _ext.features,
+        weights:  _ext.weights  || {},
+      };
+    }
+
+    alertTabs.push({ id: "scoring", label: "Scoring", scoreChart, rows: [] });
+
+    // ── PROVENANCE ──
+    alertTabs.push({ id: "provenance", label: "Provenance", rows: [
+      row("Source",        str(d.source)),
+      row("CAD (10 LD)",   str(meta.cad_url_10ld),  { link: true, linkText: "JPL CAD 10LD" }),
+      row("CAD (PHA)",     str(meta.cad_url_pha),    { link: true, linkText: "JPL CAD PHA"  }),
+    ].filter(Boolean) });
+
+    // ── RAW JSON ──
+    alertTabs.push({ id: "raw", label: "Raw JSON", json: JSON.stringify(d, null, 2) });
+  }
+
   return {
     iconHTML,
     title,
     note,
     raDecText: raDec.join(" · "),
-    metaText: metaParts.join(" · ")
+    metaText:  metaParts.join(" · "),
+    // alert-specific extras
+    kind:       hit.kind,
+    group:      String((hit.data || {}).group || "").toLowerCase(),
+    score:      hit.kind === "alert" && hit.data?.score_norm != null
+                  ? Number(hit.data.score_norm).toFixed(2) : null,
+    alertTabs,
   };
 }
