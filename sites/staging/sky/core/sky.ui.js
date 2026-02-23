@@ -530,7 +530,7 @@ export function buildCardData(hit) {
   
   // Determine icon (same logic as tooltip)
   let iconHTML = "";
-  
+
   if (d.type === "sun") {
     iconHTML = '<img src="/sky/assets/images/Sun.png" alt="Sun">';
   } else if (d.type === "moon") {
@@ -538,10 +538,26 @@ export function buildCardData(hit) {
   } else if (d.type === "planet" && d.name) {
     const planetName = d.name.charAt(0).toUpperCase() + d.name.slice(1).toLowerCase();
     iconHTML = `<img src="/sky/assets/images/${planetName}.png" alt="${planetName}">`;
+  } else if (hit.kind === "alert") {
+    // ── Alert group icons ────────────────────────────────────────────────────
+    // sky/core/sky.ui.js → buildCardData → ALERT_GROUP_ICONS
+    // Add / edit entries here to change the 32×32 icon in the sky-card header.
+    // Key = d.group (lowercase).  Groups not listed fall back to the 💥 emoji.
+    const ALERT_GROUP_ICONS = {
+      neo:   "/sky/assets/images/Asteroid.png",
+      neocp: "/sky/assets/images/Asteroid.png",
+      grb:   "/sky/assets/images/Quasar.png",
+      transient:  "/sky/assets/images/Transient.png",
+      pha:       "/sky/assets/images/Asteroid.png",
+    };
+    const _grp = String(d.group || "").toLowerCase();
+    const _src = ALERT_GROUP_ICONS[_grp];
+    iconHTML = _src
+      ? `<img src="${_src}" alt="${_grp}" width="32" height="32">`
+      : `<span>💥</span>`;
   } else {
     let emoji = "⭐";
-    if (hit.kind === "alert") emoji = "💥";
-    else if (hit.kind === "object" || d.type === "dso") emoji = "🌀";
+    if (hit.kind === "object" || d.type === "dso") emoji = "🌀";
     else if (hit.kind === "star") emoji = "⭐";
     else emoji = "🔵";
     iconHTML = `<span>${emoji}</span>`;

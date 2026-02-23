@@ -558,6 +558,28 @@ function prepareAlerts(alertsJson, observer, viewport, options) {
     return (t == null) ? "" : String(t);
   }
 
+  // ── force-include highlighted alert (mirrors prepareObjects logic) ──────────
+  const hidRaw =
+    (options && options.uiHighlightId != null) ? String(options.uiHighlightId) :
+    ((typeof window !== "undefined" && window.__skyHighlight && window.__skyHighlight.id != null)
+      ? String(window.__skyHighlight.id)
+      : null);
+  const hid = hidRaw ? hidRaw.toLowerCase() : null;
+
+  function isHighlightedAlert(id, title, group) {
+    if (!hid) return false;
+    const idL    = String(id    || "").toLowerCase();
+    const titleL = String(title || "").toLowerCase();
+    const groupL = String(group || "").toLowerCase();
+    return [
+      idL,
+      titleL,
+      (groupL && idL)    ? `${groupL}:${idL}`    : null,
+      (groupL && titleL) ? `${groupL}:${titleL}` : null,
+    ].filter(Boolean).includes(hid);
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // 1) collapse raw items -> best per key (ignore updated_utc in key)
   const bestByKey = new Map();
 
@@ -654,7 +676,9 @@ function prepareAlerts(alertsJson, observer, viewport, options) {
       dec_deg: cand.decDeg,
       mag: (num(it.mag) != null) ? num(it.mag) : null,
       note: (typeof it.note === "string" && it.note.trim()) ? it.note.trim() : null,
-      meta: it.meta || null
+      meta: it.meta || null,
+
+      __is_highlight: isHighlightedAlert(cand.idC || it.id, cand.title, it.group),
     });
   }
 
@@ -672,7 +696,22 @@ function prepareAlerts(alertsJson, observer, viewport, options) {
   const maxN = (typeof options?.maxAlerts === "number") ? options.maxAlerts : 8;
   filtered = filtered.slice(0, Math.max(0, maxN));
 
-  for (const a of filtered) delete a._score;
+  // FORCE INCLUDE highlighted alert even if it was pushed out by ranking ──────
+  const forcedAlert = hid ? out.find(a => a.__is_highlight) : null;
+  if (forcedAlert) {
+    const already = filtered.some(a =>
+      (a.group && forcedAlert.group && a.group === forcedAlert.group &&
+       a.id    && forcedAlert.id    && a.id    === forcedAlert.id) ||
+      (a.title && forcedAlert.title && a.title === forcedAlert.title)
+    );
+    if (!already) {
+      if (filtered.length >= maxN && maxN > 0) filtered[filtered.length - 1] = forcedAlert;
+      else filtered.push(forcedAlert);
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  for (const a of filtered) { delete a._score; delete a.__is_highlight; }
 
   return filtered;
 }
