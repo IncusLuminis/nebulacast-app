@@ -401,14 +401,14 @@ export class SkyCard extends HTMLElement {
       row.append(arrowCell, lbl, track, val);
       group.appendChild(row);
 
-      // Tooltip on bar row hover
+      // Tooltip on numeric value hover only
       const _tipKey  = BAR_TOOLTIP_KEY[item.label];
       const _tipText = _tipKey ? SCORE_TOOLTIPS[_tipKey] : null;
       if (_tipText) {
-        row.addEventListener('mouseenter', (e) => this._showTooltip(_tipText, e.clientX, e.clientY));
-        row.addEventListener('mousemove',  (e) => this._moveTooltip(e.clientX, e.clientY));
-        row.addEventListener('mouseleave', ()  => this._hideTooltip());
-        row.style.cursor = 'help';
+        val.addEventListener('mouseenter', (e) => this._showTooltip(_tipText, e.clientX, e.clientY));
+        val.addEventListener('mousemove',  (e) => this._moveTooltip(e.clientX, e.clientY));
+        val.addEventListener('mouseleave', ()  => this._hideTooltip());
+        val.style.cursor = 'help';
       }
 
       // Inline breakdown panel, toggled by clicking the arrow or label
@@ -465,14 +465,7 @@ export class SkyCard extends HTMLElement {
       const row = document.createElement('div');
       row.className = 'sky-breakdown-row';
 
-      // Tooltip for feature rows
-      const _ftip = SCORE_TOOLTIPS[prefix + key];
-      if (_ftip) {
-        row.addEventListener('mouseenter', (e) => this._showTooltip(_ftip, e.clientX, e.clientY));
-        row.addEventListener('mousemove',  (e) => this._moveTooltip(e.clientX, e.clientY));
-        row.addEventListener('mouseleave', ()  => this._hideTooltip());
-        row.style.cursor = 'help';
-      }
+      // Tooltip wired below on the numeric value cell, after val is created
 
       const name = document.createElement('div');
       name.className = 'sky-breakdown-label';
@@ -497,6 +490,15 @@ export class SkyCard extends HTMLElement {
       wgt.className = 'sky-breakdown-weight';
       wgt.textContent = `×${wVal.toFixed(2)}`;
       val.appendChild(wgt);
+
+      // Tooltip on numeric value hover only
+      const _ftip = SCORE_TOOLTIPS[prefix + key];
+      if (_ftip) {
+        val.addEventListener('mouseenter', (e) => this._showTooltip(_ftip, e.clientX, e.clientY));
+        val.addEventListener('mousemove',  (e) => this._moveTooltip(e.clientX, e.clientY));
+        val.addEventListener('mouseleave', ()  => this._hideTooltip());
+        val.style.cursor = 'help';
+      }
 
       track.appendChild(fill);
       row.append(name, track, val);
