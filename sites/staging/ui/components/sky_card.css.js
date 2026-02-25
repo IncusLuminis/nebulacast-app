@@ -516,4 +516,28 @@ export const SKY_CARD_CSS = `
   color: rgba(255, 255, 255, 0.45);
   font-size: 10px;
 }
+
+/* ── Scoring tooltip ── */
+.sky-score-tooltip {
+  position: fixed;
+  z-index: 200000;
+  max-width: 230px;
+  padding: 7px 11px;
+  background: rgba(8, 12, 20, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  white-space: normal;
+  word-break: break-word;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.sky-score-tooltip.is-visible {
+  opacity: 1;
+}
 `;
