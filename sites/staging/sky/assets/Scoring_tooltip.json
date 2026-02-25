@@ -21,5 +21,9 @@
     "urgency.visibility": "Current observability from the selected location. Higher altitude improves score.",
     "urgency.brightness": "Current apparent brightness. Brighter objects are easier to observe.",
     "urgency.action": "Operational relevance. Higher if follow-up observations are desirable.",
-    "urgency.localization": "Positional accuracy for tracking. Higher when coordinates are precise."
+    "urgency.localization": "Positional accuracy for tracking. Higher when coordinates are precise.",
+
+    "torino_scale": "Integer scale (0–10) estimating impact hazard based on probability and kinetic energy. 0 = no concern, 10 = certain global catastrophe.",
+    "palermo_max": "Logarithmic scale comparing impact probability to background impact risk. 0 = equal to background risk; negative values = below background risk.",
+    "palermo_cum": "Cumulative Palermo Scale across all impact scenarios. Logarithmic; 0 = equal to background risk; negative values = below background risk."
   }

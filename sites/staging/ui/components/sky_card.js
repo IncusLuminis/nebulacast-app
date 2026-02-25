@@ -22,13 +22,19 @@ const SCORE_TOOLTIPS = {
   'external.reliability':    'Data confidence level. Higher when orbital and observational data are stable.',
   'external.novelty':        'How recently discovered. Newly discovered objects receive a small boost.',
   'external.localization':   'Sky position precision. Higher if coordinates are well constrained.',
+  'torino_scale':            'Integer scale (0–10) estimating impact hazard based on probability and kinetic energy. 0 = no concern, 10 = certain global catastrophe.',
+  'palermo_max':             'Logarithmic scale comparing impact probability to background impact risk. 0 = equal to background risk; negative values = below background risk.',
+  'palermo_cum':             'Cumulative Palermo Scale across all impact scenarios. Logarithmic; 0 = equal to background risk; negative values = below background risk.',
 };
 
 // Main bar label → SCORE_TOOLTIPS key
 const BAR_TOOLTIP_KEY = {
-  'Global Score': 'global_score',
-  'Hazard':       'hazard',
-  'Urgency':      'urgency',
+  'Global Score':   'global_score',
+  'Hazard':         'hazard',
+  'Urgency':        'urgency',
+  'Torino Scale':   'torino_scale',
+  'Palermo (max)':  'palermo_max',
+  'Palermo (cum)':  'palermo_cum',
 };
 
 // Breakdown model name → feature-key prefix used in SCORE_TOOLTIPS
