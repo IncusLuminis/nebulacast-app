@@ -1,6 +1,43 @@
 // ui/components/sky_card.js
 import { SKY_CARD_CSS } from './sky_card.css.js';
 
+// ── Scoring tooltip texts (source: sky/assets/Scoring_tooltip.json) ──────────
+const SCORE_TOOLTIPS = {
+  'global_score':            'Overall priority of the object. Weighted combination of external importance, hazard and urgency.',
+  'hazard':                  'Physical risk potential based on orbital parameters and approach geometry.',
+  'hazard.moid':             'Minimum Orbit Intersection Distance with Earth. Smaller MOID increases hazard contribution.',
+  'hazard.encounter_dist':   'Predicted closest approach distance. Closer approach raises the score.',
+  'hazard.size':             'Estimated object size. Larger bodies increase potential impact significance.',
+  'hazard.vrel':             'Relative velocity at encounter. Higher velocity slightly increases kinetic risk factor.',
+  'urgency':                 'Current relevance of the object. Combines time proximity and observability.',
+  'urgency.time_proximity':  'Time until closest approach. Sooner events increase urgency.',
+  'urgency.visibility':      'Current observability from the selected location. Higher altitude improves score.',
+  'urgency.brightness':      'Current apparent brightness. Brighter objects are easier to observe.',
+  'urgency.action':          'Operational relevance. Higher if follow-up observations are desirable.',
+  'urgency.localization':    'Positional accuracy for tracking. Higher when coordinates are precise.',
+  'external.urgency':        'Time sensitivity from external context. More recent updates slightly increase the score.',
+  'external.observability':  'General observability potential. Higher if the object is well-positioned in the sky.',
+  'external.brightness':     'Estimated apparent brightness impact. Brighter objects contribute more to priority.',
+  'external.hazard':         'External hazard indication based on published classifications.',
+  'external.reliability':    'Data confidence level. Higher when orbital and observational data are stable.',
+  'external.novelty':        'How recently discovered. Newly discovered objects receive a small boost.',
+  'external.localization':   'Sky position precision. Higher if coordinates are well constrained.',
+};
+
+// Main bar label → SCORE_TOOLTIPS key
+const BAR_TOOLTIP_KEY = {
+  'Global Score': 'global_score',
+  'Hazard':       'hazard',
+  'Urgency':      'urgency',
+};
+
+// Breakdown model name → feature-key prefix used in SCORE_TOOLTIPS
+const MODEL_TOOLTIP_PREFIX = {
+  'external_v1': 'external.',
+  'hazard_v1':   'hazard.',
+  'urgency_v1':  'urgency.',
+};
+
 export class SkyCard extends HTMLElement {
   constructor() {
     super();
@@ -50,6 +87,12 @@ export class SkyCard extends HTMLElement {
       if (e.key === 'Escape' && this._isOpen) this.close();
     };
 
+    // Floating tooltip for scoring bars — lives in shadow root so it can
+    // escape the panel's overflow:hidden without z-index fights.
+    this._tooltipEl = document.createElement('div');
+    this._tooltipEl.className = 'sky-score-tooltip';
+    this.shadowRoot.appendChild(this._tooltipEl);
+
     this._isOpen = false;
   }
 
@@ -95,6 +138,7 @@ export class SkyCard extends HTMLElement {
   close() {
     this._isOpen = false;
     this._overlay.classList.remove('is-visible');
+    this._hideTooltip();
     setTimeout(() => {
       if (!this._isOpen) this.style.display = 'none';
     }, 200);
@@ -273,6 +317,33 @@ export class SkyCard extends HTMLElement {
   }
 
   // ─────────────────────────────────────────────
+  // TOOLTIP
+  // ─────────────────────────────────────────────
+
+  _showTooltip(text, x, y) {
+    this._tooltipEl.textContent = text;
+    this._tooltipEl.classList.add('is-visible');
+    this._moveTooltip(x, y);
+  }
+
+  _moveTooltip(x, y) {
+    const el = this._tooltipEl;
+    // Start right-and-slightly-above the cursor
+    el.style.left = `${x + 14}px`;
+    el.style.top  = `${y - 8}px`;
+    // Clamp to viewport after layout
+    requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect();
+      if (r.right  > window.innerWidth  - 8) el.style.left = `${x - r.width  - 14}px`;
+      if (r.bottom > window.innerHeight - 8) el.style.top  = `${y - r.height -  8}px`;
+    });
+  }
+
+  _hideTooltip() {
+    this._tooltipEl.classList.remove('is-visible');
+  }
+
+  // ─────────────────────────────────────────────
   // SCORE CHART
   // ─────────────────────────────────────────────
 
@@ -330,6 +401,16 @@ export class SkyCard extends HTMLElement {
       row.append(arrowCell, lbl, track, val);
       group.appendChild(row);
 
+      // Tooltip on bar row hover
+      const _tipKey  = BAR_TOOLTIP_KEY[item.label];
+      const _tipText = _tipKey ? SCORE_TOOLTIPS[_tipKey] : null;
+      if (_tipText) {
+        row.addEventListener('mouseenter', (e) => this._showTooltip(_tipText, e.clientX, e.clientY));
+        row.addEventListener('mousemove',  (e) => this._moveTooltip(e.clientX, e.clientY));
+        row.addEventListener('mouseleave', ()  => this._hideTooltip());
+        row.style.cursor = 'help';
+      }
+
       // Inline breakdown panel, toggled by clicking the arrow or label
       if (item.breakdown) {
         const panel = this._buildBreakdownPanel(item.breakdown);
@@ -364,6 +445,7 @@ export class SkyCard extends HTMLElement {
   _buildBreakdownPanel(ext) {
     const features = ext.features || {};
     const weights  = ext.weights  || {};
+    const prefix   = MODEL_TOOLTIP_PREFIX[ext.model] || '';
 
     const panel = document.createElement('div');
     panel.className = 'sky-breakdown-panel';
@@ -382,6 +464,15 @@ export class SkyCard extends HTMLElement {
 
       const row = document.createElement('div');
       row.className = 'sky-breakdown-row';
+
+      // Tooltip for feature rows
+      const _ftip = SCORE_TOOLTIPS[prefix + key];
+      if (_ftip) {
+        row.addEventListener('mouseenter', (e) => this._showTooltip(_ftip, e.clientX, e.clientY));
+        row.addEventListener('mousemove',  (e) => this._moveTooltip(e.clientX, e.clientY));
+        row.addEventListener('mouseleave', ()  => this._hideTooltip());
+        row.style.cursor = 'help';
+      }
 
       const name = document.createElement('div');
       name.className = 'sky-breakdown-label';
