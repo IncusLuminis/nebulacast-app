@@ -817,15 +817,13 @@ export function buildCardData(hit) {
     const _hazard  = _sc?.hazard   || null;
     const _urgency = _sc?.urgency  || null;
 
-    // 1. Global Score — prefer meta.scoring.global, fallback d.score_norm
+    // 1. Global Score — uses meta.scoring.global value (same as external_v1);
+    //    the external model's feature breakdown is attached so the user can
+    //    expand it without a separate redundant "External" bar.
     const _globalNorm = _glob?.score_norm ?? d.score_norm;
-    if (_globalNorm != null)
+    if (_globalNorm != null) {
       _addBar("Global Score", _globalNorm, 1, 0, v => v.toFixed(3));
-
-    // 2. External model bar + breakdown (features × weights)
-    if (_ext?.score_norm != null) {
-      _addBar("External", _ext.score_norm, 1, 0, v => v.toFixed(3));
-      if (_ext.features) {
+      if (_ext?.features) {
         scoreChart[scoreChart.length - 1].breakdown = {
           model:    _ext.model   || "external_v1",
           features: _ext.features,
