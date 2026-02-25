@@ -318,11 +318,24 @@ export const SKY_CARD_CSS = `
   font-size: 11px;
 }
 
+.sky-card-field-value.wrap {
+  white-space: normal;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.70);
+  font-size: 11px;
+}
+
 .sky-card-field-value a {
   color: rgba(100, 160, 255, 0.80);
   text-decoration: none;
 }
 .sky-card-field-value a:hover { text-decoration: underline; }
+
+/* GCN ui_type_html badge rendering */
+.sky-card-field-value strong {
+  color: rgba(255, 255, 255, 0.90);
+  font-weight: 600;
+}
 
 /* ── Section divider ── */
 .sky-card-section-head {

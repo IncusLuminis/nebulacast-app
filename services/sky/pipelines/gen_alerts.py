@@ -215,6 +215,34 @@ def _normalize_item(it: Dict[str, Any], *, default_group: str) -> Dict[str, Any]
     return it2
 
 
+def _gcn_promote_meta_fields(it: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    For GCN-group items: promote enrichment fields from meta to top-level
+    if they are absent at the top level.  These fields are written by the
+    inline enrichment in gen_gcn_alerts.py; this promotion ensures they
+    survive into alerts_now.json even for items ingested before the merge.
+
+    Fields promoted (all additive-only):
+      title        – human-readable event title
+      ui_type      – event-class label  (e.g. "GW alert")
+      ui_type_hint – plain-text description sentence
+      ui_type_html – HTML snippet for richer rendering
+    """
+    grp = str(it.get("group") or "").strip().lower()
+    if grp != "gcn":
+        return it
+
+    meta = it.get("meta")
+    if not isinstance(meta, dict):
+        return it
+
+    it2 = dict(it)
+    for field in ("title", "ui_type", "ui_type_hint", "ui_type_html"):
+        if not it2.get(field) and meta.get(field):
+            it2[field] = meta[field]
+    return it2
+
+
 # -------------------------
 # scoring (delegated to lib/scoring.py)
 # -------------------------
@@ -314,7 +342,9 @@ def main() -> None:
         for it in items:
             if not isinstance(it, dict):
                 continue
-            all_items.append(_normalize_item(it, default_group=spec.default_group))
+            norm = _normalize_item(it, default_group=spec.default_group)
+            norm = _gcn_promote_meta_fields(norm)
+            all_items.append(norm)
 
         print(f"[ok] loaded {spec.filename} items={len(items)}", flush=True)
 
