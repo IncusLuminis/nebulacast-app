@@ -727,7 +727,7 @@ export function buildCardData(hit) {
     }
 
     // ── SCORING — bar-chart data + text rows ──
-    // Each bar: { label, norm (0-1 fill), display (string) }
+    // Each bar: { label, norm (0-1 fill), display (string), breakdown? }
     // Threat colour: norm=0 → blue (safe), norm=1 → orange-red (dangerous)
     const scoreChart = [];
     const _addBar = (label, rawVal, max, min, fmtFn) => {
@@ -736,30 +736,64 @@ export function buildCardData(hit) {
       const norm = max === min ? 0 : Math.max(0, Math.min(1, (v - min) / (max - min)));
       scoreChart.push({ label, norm, display: fmtFn ? fmtFn(v) : v.toFixed(3) });
     };
-    if (d.score_norm != null)
-      _addBar("Global Score",   d.score_norm,           1,  0, (v) => v.toFixed(3));
-    if (meta.risk_score != null)
-      _addBar("Risk Score",     meta.risk_score,        1,  0, (v) => v.toFixed(3));
+
+    const _sc      = meta.scoring  || null;
+    const _glob    = _sc?.global   || null;
+    const _ext     = _sc?.external || null;
+    const _hazard  = _sc?.hazard   || null;
+    const _urgency = _sc?.urgency  || null;
+
+    // 1. Global Score — prefer meta.scoring.global, fallback d.score_norm
+    const _globalNorm = _glob?.score_norm ?? d.score_norm;
+    if (_globalNorm != null)
+      _addBar("Global Score", _globalNorm, 1, 0, v => v.toFixed(3));
+
+    // 2. External model bar + breakdown (features × weights)
+    if (_ext?.score_norm != null) {
+      _addBar("External", _ext.score_norm, 1, 0, v => v.toFixed(3));
+      if (_ext.features) {
+        scoreChart[scoreChart.length - 1].breakdown = {
+          model:    _ext.model   || "external_v1",
+          features: _ext.features,
+          weights:  _ext.weights || {},
+        };
+      }
+    }
+
+    // 3. Hazard model bar + breakdown (components × weights)
+    if (_hazard?.score_norm != null) {
+      _addBar("Hazard", _hazard.score_norm, 1, 0, v => v.toFixed(3));
+      if (_hazard.components && Object.keys(_hazard.components).length > 0) {
+        scoreChart[scoreChart.length - 1].breakdown = {
+          model:    _hazard.model  || "hazard_v1",
+          features: _hazard.components,
+          weights:  _hazard.weights || {},
+        };
+      }
+    }
+
+    // 4. Urgency model bar + breakdown (components × weights)
+    if (_urgency?.score_norm != null) {
+      _addBar("Urgency", _urgency.score_norm, 1, 0, v => v.toFixed(3));
+      if (_urgency.components && Object.keys(_urgency.components).length > 0) {
+        scoreChart[scoreChart.length - 1].breakdown = {
+          model:    _urgency.model  || "urgency_v1",
+          features: _urgency.components,
+          weights:  _urgency.weights || {},
+        };
+      }
+    }
+
+    // 5. Legacy: Torino / Palermo bars (risk group raw data)
     const _tsVal = parseFloat(ssum.ts_max ?? meta.ts ?? '');
     if (Number.isFinite(_tsVal) && _tsVal > 0)
-      _addBar("Torino Scale",   _tsVal,                10,  0, (v) => `${v} / 10`);
+      _addBar("Torino Scale",  _tsVal,  10, 0, v => `${v} / 10`);
     const _psMax = parseFloat(ssum.ps_max ?? meta.ps ?? '');
     if (Number.isFinite(_psMax))
-      _addBar("Palermo (max)",  _psMax,                 2, -8, (v) => v.toFixed(2));
+      _addBar("Palermo (max)", _psMax,   2, -8, v => v.toFixed(2));
     const _psCum = parseFloat(ssum.ps_cum ?? '');
     if (Number.isFinite(_psCum) && ssum.ps_cum !== undefined)
-      _addBar("Palermo (cum)",  _psCum,                 2, -8, (v) => v.toFixed(2));
-
-    // ── External scoring breakdown — attach to Global Score bar so the ▶ toggle
-    //    sits inline with that row and expands right below it. ──
-    const _ext = meta.scoring?.external || null;
-    if (_ext && _ext.features && scoreChart.length > 0) {
-      scoreChart[0].breakdown = {
-        model:    _ext.model    || null,
-        features: _ext.features,
-        weights:  _ext.weights  || {},
-      };
-    }
+      _addBar("Palermo (cum)", _psCum,   2, -8, v => v.toFixed(2));
 
     alertTabs.push({ id: "scoring", label: "Scoring", scoreChart, rows: [] });
 
