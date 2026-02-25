@@ -833,7 +833,10 @@ export function buildCardData(hit) {
     }
 
     // 3. Hazard model bar + breakdown (components × weights)
-    if (_hazard?.score_norm != null) {
+    // Hazard is only meaningful for orbital objects (NEO/PHA/risk).
+    // GCN, GRB and transient events have no orbital hazard context.
+    const _noHazard = ['gcn', 'grb', 'transient'].includes(group);
+    if (!_noHazard && _hazard?.score_norm != null) {
       _addBar("Hazard", _hazard.score_norm, 1, 0, v => v.toFixed(3));
       if (_hazard.components && Object.keys(_hazard.components).length > 0) {
         scoreChart[scoreChart.length - 1].breakdown = {
