@@ -1,0 +1,25 @@
+{
+    "global_score": "Overall priority of the object. Weighted combination of external importance, hazard and urgency.",
+  
+    "external": "How important this object is from external signals. Based on classification and recency of updates.",
+    "external.urgency": "Time sensitivity from external context. More recent updates slightly increase the score.",
+    "external.observability": "General observability potential. Higher if the object is well-positioned in the sky.",
+    "external.brightness": "Estimated apparent brightness impact. Brighter objects contribute more to priority.",
+    "external.hazard": "External hazard indication based on published classifications.",
+    "external.reliability": "Data confidence level. Higher when orbital and observational data are stable.",
+    "external.novelty": "How recently discovered. Newly discovered objects receive a small boost.",
+    "external.localization": "Sky position precision. Higher if coordinates are well constrained.",
+  
+    "hazard": "Physical risk potential based on orbital parameters and approach geometry.",
+    "hazard.moid": "Minimum Orbit Intersection Distance with Earth. Smaller MOID increases hazard contribution.",
+    "hazard.encounter_dist": "Predicted closest approach distance. Closer approach raises the score.",
+    "hazard.size": "Estimated object size. Larger bodies increase potential impact significance.",
+    "hazard.vrel": "Relative velocity at encounter. Higher velocity slightly increases kinetic risk factor.",
+  
+    "urgency": "Current relevance of the object. Combines time proximity and observability.",
+    "urgency.time_proximity": "Time until closest approach. Sooner events increase urgency.",
+    "urgency.visibility": "Current observability from the selected location. Higher altitude improves score.",
+    "urgency.brightness": "Current apparent brightness. Brighter objects are easier to observe.",
+    "urgency.action": "Operational relevance. Higher if follow-up observations are desirable.",
+    "urgency.localization": "Positional accuracy for tracking. Higher when coordinates are precise."
+  }
