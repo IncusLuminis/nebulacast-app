@@ -10,6 +10,10 @@
 # - Additive-only. No legacy changes.
 # - Times: use UTC ISO where we can (updated_utc / ingested_utc).
 # - Store maximum raw payload under meta.* for later parsing/UX improvements.
+#
+# Enrichment (merged from gen_gcn_enrichment_alerts.py):
+# - Each item gets meta.ui_type, meta.ui_type_hint, meta.ui_type_html inline
+#   during ingest (no separate post-processing step required).
 
 from __future__ import annotations
 
@@ -30,6 +34,131 @@ from pipelines.lib.timeutil import utc_now_iso
 
 OUT_FILENAME = "alerts_gcn.json"
 SOURCES_YML = PROJECT_ROOT / "services" / "sky" / "pipelines" / "yml" / "sources.yml"
+
+
+# ---------------------------------------------------------------------------
+# UI-type enrichment helpers (merged from gen_gcn_enrichment_alerts.py)
+# ---------------------------------------------------------------------------
+
+def _norm(s: Any) -> str:
+    return str(s or "").strip().lower()
+
+
+def _infer_ui_type(
+    topic: str,
+    note: Optional[str] = None,
+    title: Optional[str] = None,
+) -> Tuple[str, str, str]:
+    """
+    Returns (ui_type, ui_type_hint, ui_type_html).
+
+    ui_type       – short label, e.g. "GW alert"
+    ui_type_hint  – plain-text sentence describing the event class
+    ui_type_html  – same info as a small HTML snippet for richer rendering
+    """
+    t = _norm(topic)
+    n = _norm(note)
+
+    # 1) Gravitational-wave alerts (IGWN / LIGO-Virgo-KAGRA)
+    if "igwn.gwalert" in t or "gwalert" in t or "cbc" in n or "far" in n:
+        ui_type = "GW alert"
+        hint = (
+            "Gravitational-wave candidate alert (LIGO/Virgo/KAGRA/IGWN). "
+            "Preliminary machine-generated notice; classification and sky "
+            "localization can be updated."
+        )
+        html = (
+            "<strong>Gravitational-wave candidate</strong> (LIGO/Virgo/KAGRA/IGWN). "
+            "Preliminary; classification and sky localization may be revised."
+        )
+        return ui_type, hint, html
+
+    # 2) Gamma-ray burst / high-energy transient
+    if any(k in t for k in ["fermi", "swift", "integral", "konus", "grb", "gamm", "bat", "gbm"]):
+        ui_type = "High-energy transient"
+        hint = (
+            "High-energy transient notice (often GRB-related) distributed via GCN. "
+            "Typically time-critical; localization may be coarse and updated later."
+        )
+        html = (
+            "<strong>High-energy transient</strong> (likely GRB-class). "
+            "Time-critical; localization may be refined in follow-up notices."
+        )
+        return ui_type, hint, html
+
+    # 3) AMON multi-messenger coincidence
+    if "amon" in t:
+        ui_type = "AMON alert"
+        hint = (
+            "AMON multi-messenger alert (coincidence/association candidates "
+            "across instruments). Preliminary; follow-up context matters."
+        )
+        html = (
+            "<strong>AMON multi-messenger alert</strong>. "
+            "Coincidence candidate across instruments; preliminary."
+        )
+        return ui_type, hint, html
+
+    # 4) IceCube neutrino alerts
+    if "icecube" in t or "neutrino" in t:
+        ui_type = "Neutrino alert"
+        hint = (
+            "High-energy neutrino candidate alert (e.g., IceCube via GCN). "
+            "Localization uncertainty can be large; follow-up may refine the "
+            "event context."
+        )
+        html = (
+            "<strong>High-energy neutrino candidate</strong> (IceCube/GCN). "
+            "Localization uncertainty may be large."
+        )
+        return ui_type, hint, html
+
+    # 5) Einstein Probe
+    if "einstein_probe" in t or "ep_wxt" in t or "ep_fet" in t:
+        ui_type = "X-ray transient"
+        hint = (
+            "Einstein Probe X-ray transient alert. "
+            "Wide-field X-ray monitor; localization is typically arcsecond-level."
+        )
+        html = (
+            "<strong>Einstein Probe X-ray transient</strong>. "
+            "Wide-field monitor; arcsecond-class localization."
+        )
+        return ui_type, hint, html
+
+    # 6) Generic fallback
+    ui_type = "GCN notice"
+    hint = (
+        "General GCN notice. The topic identifies the originating stream; "
+        "details and confidence can change as additional data arrives."
+    )
+    html = (
+        "<strong>GCN notice</strong>. "
+        "Details and confidence may change as additional data arrives."
+    )
+    return ui_type, hint, html
+
+
+def _derive_title_from_topic(topic: str) -> str:
+    """Best-effort human-readable title when no structured title is available."""
+    t = topic.lower()
+    if "igwn.gwalert" in t:
+        return "GW Alert"
+    if "einstein_probe" in t:
+        return "Einstein Probe Alert"
+    if "icecube" in t and "lvk" in t:
+        return "IceCube ν-Track Search"
+    if "icecube" in t:
+        return "IceCube Alert"
+    if "swift" in t and "bat" in t:
+        return "Swift BAT Alert"
+    if "fermi" in t and "gbm" in t:
+        return "Fermi GBM Alert"
+    # Humanise the last segments of the topic string
+    parts = topic.split(".")
+    if len(parts) >= 3:
+        return " ".join(p.replace("_", " ").title() for p in parts[2:5])
+    return topic
 
 
 @dataclass(frozen=True)
@@ -310,6 +439,7 @@ def _build_item(
 
     # Topic-specific enrichment (additive). For GW alerts we also sanitize skymap to avoid huge JSON diffs.
     note: Optional[str] = None
+    title: Optional[str] = None
     if topic == "igwn.gwalert":
         title, note, meta_extra, payload_json_sanitized = _igwn_gwalert_enrich(
             payload_text=payload_text,
@@ -332,11 +462,23 @@ def _build_item(
         if meta_extra:
             meta.update(meta_extra)
 
+    # Derive a fallback title from the topic if none was produced above
+    if not title:
+        title = _derive_title_from_topic(topic)
+
+    # Inline UI-type enrichment (replaces the separate gen_gcn_enrichment_alerts.py pass)
+    ui_type, ui_type_hint, ui_type_html = _infer_ui_type(topic, note, title)
+    meta["ui_type"] = ui_type
+    meta["ui_type_hint"] = ui_type_hint
+    meta["ui_type_html"] = ui_type_html
+
     return {
         "id": _id,
         "source": "gcn_kafka",
         "group": cfg_group,
         "type": "gcn",
+        "title": title,   # human-readable title (top-level for frontend)
+        "ui_type": ui_type,  # event-class label (top-level for frontend)
         "note": note,  # previously None; now filled when we can (e.g., GW alerts)
         "score_raw": None,
         "score_norm": 0.5,  # neutral default; later we can specialize by topic family

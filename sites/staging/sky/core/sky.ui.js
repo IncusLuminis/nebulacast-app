@@ -544,11 +544,12 @@ export function buildCardData(hit) {
     // Add / edit entries here to change the 32×32 icon in the sky-card header.
     // Key = d.group (lowercase).  Groups not listed fall back to the 💥 emoji.
     const ALERT_GROUP_ICONS = {
-      neo:   "/sky/assets/images/Asteroid.png",
-      neocp: "/sky/assets/images/Asteroid.png",
-      grb:   "/sky/assets/images/Quasar.png",
-      transient:  "/sky/assets/images/Transient.png",
+      neo:       "/sky/assets/images/Asteroid.png",
+      neocp:     "/sky/assets/images/Asteroid.png",
+      grb:       "/sky/assets/images/Quasar.png",
+      transient: "/sky/assets/images/Transient.png",
       pha:       "/sky/assets/images/Asteroid.png",
+      gcn:       "/sky/assets/images/Gravity.png",
     };
     const _grp = String(d.group || "").toLowerCase();
     const _src = ALERT_GROUP_ICONS[_grp];
@@ -609,8 +610,16 @@ export function buildCardData(hit) {
     : null;
 
   if (hit.kind === "alert") {
-    title = d.title || d.id || "Alert";
-    note = d.note || "";
+    title = d.title || d.meta?.title || d.id || "Alert";
+    // For GCN: prepend ui_type to the note line in the card header so the type
+    // is always visible without opening a tab (e.g. "GW alert · H1,L1 · FAR 9e-14")
+    const _gcnUiType = String(d.group || "").toLowerCase() === "gcn"
+      ? (d.ui_type || d.meta?.ui_type || "")
+      : "";
+    const _rawNote = d.note || "";
+    note = _gcnUiType
+      ? (_rawNote ? `${_gcnUiType} · ${_rawNote}` : _gcnUiType)
+      : _rawNote;
     if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
     if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
     if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
@@ -665,6 +674,7 @@ export function buildCardData(hit) {
     alertTabs = [];
 
     // ── SUMMARY ──
+    const _isGcnEarly = group === "gcn";
     const sumRows = isRisk ? [
       row("Note",               str(d.note)),
       row("Impact Probability", meta.ip != null ? Number(meta.ip).toExponential(2) : null),
@@ -676,6 +686,16 @@ export function buildCardData(hit) {
       row("Impact Range",       str(ssum.range)),
       row("N Scenarios",        ssum.n_imp != null ? String(ssum.n_imp) : null),
       row("Ingested",           fmtIso(d.ingested_utc)),
+    ] : _isGcnEarly ? [
+      // GCN-specific summary: event type + human description + timing
+      row("Event Type",   str(d.ui_type || meta.ui_type)),
+      row("Description",  str(meta.ui_type_html || meta.ui_type_hint), { html: true, wrap: true }),
+      row("Note",         str(d.note)),
+      row("Topic",        str(meta.topic), { mono: true }),
+      row("Event Time",   fmtIso((meta.gw || {}).event_time_utc || d.updated_utc)),
+      row("Ingested",     fmtIso(d.ingested_utc)),
+      row("Coordinates",  fmtRA(d.ra_deg) && fmtDEC(d.dec_deg)
+                            ? `RA ${fmtRA(d.ra_deg)}  DEC ${fmtDEC(d.dec_deg)}` : null),
     ] : [
       row("Event Time",   fmtIso(meta.t_utc_iso || meta.t_utc || d.updated_utc)),
       row("Ingested",     fmtIso(d.ingested_utc)),
@@ -697,6 +717,60 @@ export function buildCardData(hit) {
     if (_nrlStr) sumRows.push(["Visibility", _nrlStr]);
     alertTabs.push({ id: "summary", label: "Summary", rows: sumRows });
 
+    // ── GCN DETAILS (gcn group only) ──────────────────────────────────────────
+    if (_isGcnEarly) {
+      const gw    = meta.gw    || {};
+      const urls  = meta.urls  || {};
+
+      // Classification breakdown: sort by probability desc
+      const classMap = gw.classification || {};
+      const classSorted = Object.entries(classMap)
+        .filter(([, v]) => typeof v === "number" && v > 0)
+        .sort(([, a], [, b]) => b - a)
+        .map(([k, v]) => `${k} ${(v * 100).toFixed(3)}%`)
+        .join("  ·  ");
+
+      const gcnRows = [
+        row("Event Type",    str(d.ui_type || meta.ui_type)),
+        row("Description",   str(meta.ui_type_html || meta.ui_type_hint), { html: true, wrap: true }),
+        "GCN Stream",
+        row("Topic",         str(meta.topic), { mono: true }),
+        row("Kafka Offset",  meta.offset != null ? String(meta.offset) : null, { mono: true }),
+        row("Event Time",    fmtIso(gw.event_time_utc || meta.t_utc_iso)),
+        row("Created",       fmtIso(gw.time_created_utc)),
+      ];
+
+      // GW-specific fields (present only for igwn.gwalert)
+      if (gw.superevent_id) {
+        gcnRows.push("Gravitational Wave");
+        gcnRows.push(row("Alert Type",    str(gw.alert_type)));
+        gcnRows.push(row("Superevent",    str(gw.superevent_id), { mono: true }));
+        gcnRows.push(row("Instruments",   Array.isArray(gw.instruments) ? gw.instruments.join(", ") : str(gw.instruments)));
+        gcnRows.push(row("FAR",           fmtSci(gw.far) ? `${fmtSci(gw.far)} Hz` : null));
+        gcnRows.push(row("Significant",   gw.significant != null ? (gw.significant ? "Yes" : "No") : null));
+        gcnRows.push(row("Top Class",     str(gw.classification_top)));
+        if (classSorted) gcnRows.push(row("Classification", classSorted, { wrap: true }));
+        gcnRows.push(row("Pipeline",      str(gw.pipeline)));
+        gcnRows.push(row("Search",        str(gw.search)));
+        gcnRows.push(row("Group",         str(gw.group)));
+
+        const props = gw.properties || {};
+        if (Object.keys(props).length) {
+          gcnRows.push("Source Properties");
+          for (const [pk, pv] of Object.entries(props)) {
+            gcnRows.push(row(pk, typeof pv === "number" ? pv.toFixed(3) : str(pv)));
+          }
+        }
+
+        if (urls.gracedb) {
+          gcnRows.push("Links");
+          gcnRows.push(row("GraceDB", urls.gracedb, { link: true, linkText: "View in GraceDB ↗" }));
+        }
+      }
+
+      alertTabs.push({ id: "gcn", label: "GCN Event", rows: gcnRows.filter(r => r !== null && r !== undefined) });
+    }
+
     // ── ORBIT & PHYSICS (non-risk) / IMPACT SCENARIOS + ORBIT (risk) ──
     if (isRisk) {
       alertTabs.push({ id: "impact", label: "Impact Scenarios", rows: [
@@ -712,7 +786,7 @@ export function buildCardData(hit) {
         row("Diameter",      ssum.diameter ? `${ssum.diameter} km` : null),
         row("V_inf",         ssum.v_inf ? `${Number(ssum.v_inf).toFixed(2)} km/s` : null),
       ].filter(Boolean) });
-    } else {
+    } else if (!_isGcnEarly) {
       const orbitRows = [
         row("Distance",     meta.dist_au != null
                               ? `${Number(meta.dist_au).toFixed(5)} AU` : null),
@@ -798,11 +872,18 @@ export function buildCardData(hit) {
     alertTabs.push({ id: "scoring", label: "Scoring", scoreChart, rows: [] });
 
     // ── PROVENANCE ──
-    alertTabs.push({ id: "provenance", label: "Provenance", rows: [
+    const _provRows = [
       row("Source",        str(d.source)),
       row("CAD (10 LD)",   str(meta.cad_url_10ld),  { link: true, linkText: "JPL CAD 10LD" }),
       row("CAD (PHA)",     str(meta.cad_url_pha),    { link: true, linkText: "JPL CAD PHA"  }),
-    ].filter(Boolean) });
+    ];
+    if (_isGcnEarly) {
+      const _gwUrls = (meta.urls || {});
+      if (_gwUrls.gracedb) _provRows.push(row("GraceDB", _gwUrls.gracedb, { link: true, linkText: "GraceDB ↗" }));
+      _provRows.push(row("Kafka Topic", str(meta.topic), { mono: true }));
+      _provRows.push(row("Offset",      meta.offset != null ? String(meta.offset) : null, { mono: true }));
+    }
+    alertTabs.push({ id: "provenance", label: "Provenance", rows: _provRows.filter(Boolean) });
 
     // ── RAW JSON ──
     alertTabs.push({ id: "raw", label: "Raw JSON", json: JSON.stringify(d, null, 2) });

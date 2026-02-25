@@ -250,7 +250,7 @@ export class SkyCard extends HTMLElement {
       lEl.textContent = label;
 
       const vEl = document.createElement('div');
-      vEl.className = 'sky-card-field-value' + (opts.mono ? ' mono' : '');
+      vEl.className = 'sky-card-field-value' + (opts.mono ? ' mono' : '') + (opts.wrap ? ' wrap' : '');
 
       if (opts.link && value) {
         const a = document.createElement('a');
@@ -259,6 +259,9 @@ export class SkyCard extends HTMLElement {
         a.rel = 'noopener noreferrer';
         a.textContent = opts.linkText || String(value);
         vEl.appendChild(a);
+      } else if (opts.html) {
+        // Trusted internal HTML snippets only (not user/external content)
+        vEl.innerHTML = String(value);
       } else {
         vEl.textContent = String(value);
       }
