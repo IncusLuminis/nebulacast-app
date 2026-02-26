@@ -58,5 +58,14 @@ const S = (d) =>
     sun_moon: `<svg viewBox="0 0 24 24" fill="none">
       <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
-    </svg>`
+    </svg>`,
+
+    // Statistics dialog — bar chart icon
+    stats: `<svg viewBox="0 0 24 24" fill="none">
+      <path d="M3 20h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M6 20V13"  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M10 20V7"  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M14 20V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M18 20V4"  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`,
   };
