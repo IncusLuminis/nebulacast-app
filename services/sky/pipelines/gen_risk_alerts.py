@@ -130,12 +130,18 @@ def main() -> None:
         ps_min=PS_MIN,
         h_max=H_MAX,
         days=DAYS,
-        limit=LIMIT,
         timeout=25,
         retries=3,
     )
 
     rows = parse_summary_rows(sentry_sum)
+
+    # Sort by Palermo Scale (ps_max) descending: closest to 0 = most dangerous.
+    # This must happen before slicing so LIMIT always captures the highest-risk objects,
+    # not just the first N in Sentry's arbitrary internal order.
+    rows = sorted(rows, key=lambda r: r.ps_max if r.ps_max is not None else -99.0, reverse=True)
+    rows = rows[:LIMIT]
+
     total = len(rows)
 
     items: List[Dict[str, Any]] = []
