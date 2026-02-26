@@ -126,6 +126,7 @@ def hour_angle_deg_at_time_local(
 
     return float(np.asarray(ha.deg, dtype=float)[0])
 
+
 # -----------------------------
 # SIMBAD cache
 # -----------------------------
@@ -231,6 +232,7 @@ def _simbad_name_variants(name: str) -> List[str]:
         return []
 
     variants: List[str] = []
+
     def _add(s: str):
         s2 = " ".join((s or "").strip().split())
         if s2 and s2 not in variants:
@@ -256,15 +258,48 @@ def _simbad_name_variants(name: str) -> List[str]:
     return variants
 
 
+def _simbad_extract_ra_dec(row) -> Optional[Tuple[float, float]]:
+    """
+    astroquery.simbad returns astropy table rows.
+    Depending on version/fields you can see: RA_d/DEC_d, ra/dec (deg), or RA/DEC strings.
+    This function tries the common variants.
+    """
+    # 1) Preferred: numeric degrees if present
+    for ra_key, dec_key in [("RA_d", "DEC_d"), ("ra", "dec"), ("RA_d", "DEC_d")]:
+        try:
+            if ra_key in row.colnames and dec_key in row.colnames:
+                ra = row[ra_key][0]
+                dec = row[dec_key][0]
+                if ra is None or dec is None:
+                    continue
+                return float(ra), float(dec)
+        except Exception:
+            pass
+
+    # 2) Fallback: RA/DEC as sexagesimal strings
+    try:
+        if "RA" in row.colnames and "DEC" in row.colnames:
+            ra_s = row["RA"][0]
+            dec_s = row["DEC"][0]
+            if ra_s is None or dec_s is None:
+                return None
+            c = SkyCoord(ra=str(ra_s), dec=str(dec_s), unit=(u.hourangle, u.deg), frame="icrs")
+            return float(c.ra.deg), float(c.dec.deg)
+    except Exception:
+        pass
+
+    return None
+
+
 def simbad_resolve_ra_dec(name: str, cache: Dict[str, Dict[str, float]]) -> Optional[Tuple[float, float]]:
     """
     Resolve a target name to (ra_deg, dec_deg) using SIMBAD, with cache.
+    Robust against astroquery column renames.
     """
     q0 = (name or "").strip()
     if not q0:
         return None
 
-    # Try exact cache hit first
     key0 = q0.lower()
     if key0 in cache:
         v = cache[key0]
@@ -277,6 +312,7 @@ def simbad_resolve_ra_dec(name: str, cache: Dict[str, Dict[str, float]]) -> Opti
 
     for q in queries:
         key = q.lower()
+
         if key in cache:
             v = cache[key]
             ra = v.get("ra_deg")
@@ -286,22 +322,33 @@ def simbad_resolve_ra_dec(name: str, cache: Dict[str, Dict[str, float]]) -> Opti
 
         try:
             custom = Simbad()
-            custom.add_votable_fields("ra(d)", "dec(d)")
+
+            # Ask for both: numeric degrees if supported, else fallback to RA/DEC strings
+            # Newer astroquery uses 'ra'/'dec'; older had 'ra(d)'/'dec(d)'.
+            # We'll try new first, then old.
+            try:
+                custom.add_votable_fields("ra", "dec")
+            except Exception:
+                custom.add_votable_fields("ra(d)", "dec(d)")
+
             r = custom.query_object(q)
             if r is None or len(r) == 0:
                 continue
-            ra_deg = float(r["RA_d"][0])
-            dec_deg = float(r["DEC_d"][0])
-            cache[key] = {"ra_deg": ra_deg, "dec_deg": dec_deg}
 
-            # also write-through to original key to avoid repeated misses on "Sigma Sagittarii"
-            cache.setdefault(key0, {"ra_deg": ra_deg, "dec_deg": dec_deg})
-            return ra_deg, dec_deg
+            extracted = _simbad_extract_ra_dec(r)
+            if not extracted:
+                continue
+
+            ra_deg, dec_deg = extracted
+
+            cache[key] = {"ra_deg": float(ra_deg), "dec_deg": float(dec_deg)}
+            cache.setdefault(key0, {"ra_deg": float(ra_deg), "dec_deg": float(dec_deg)})
+            return float(ra_deg), float(dec_deg)
+
         except Exception:
             continue
 
     return None
-
 
 # -----------------------------
 # Calendar parsing
@@ -360,17 +407,25 @@ def parse_event_date_from_title(title: str) -> Optional[date]:
         return None
 
 
+_RE_CLOSE_APPROACH_OF = re.compile(r"\bclose approach of\s+(.+?)\s+and\s+(.+?)\s*$", re.IGNORECASE)
+_RE_LUNAR_ECLIPSE = re.compile(r"\b(?:total\s+|partial\s+|penumbral\s+)?lunar\s+eclipse\b", re.IGNORECASE)
+
 def extract_primary_object_name(title: str) -> Optional[str]:
     """
     Heuristic:
-      - occultation of X  -> X
-      - conjunction A with B -> pick the star/object side if exists
+      - occultation of X -> X
+      - conjunction A with B -> pick non-Moon/Sun side if possible
+      - close approach of A and B -> pick non-Moon/Sun side if possible
+      - lunar eclipse -> "moon"
       - else None
     """
     if not title:
         return None
 
     t = title.strip()
+
+    if _RE_LUNAR_ECLIPSE.search(t):
+        return "moon"
 
     m = _RE_OCCULTATION_OF.search(t)
     if m:
@@ -391,7 +446,34 @@ def extract_primary_object_name(title: str) -> Optional[str]:
             return a
         return b or a or None
 
+    m = _RE_CLOSE_APPROACH_OF.search(t)
+    if m:
+        a = re.sub(r"^\s*the\s+", "", m.group(1).strip(), flags=re.IGNORECASE)
+        b = re.sub(r"^\s*the\s+", "", m.group(2).strip(), flags=re.IGNORECASE)
+        bad_exact = {"moon", "sun"}
+        a_l = a.lower()
+        b_l = b.lower()
+        if a_l in bad_exact and b_l not in bad_exact:
+            return b
+        if b_l in bad_exact and a_l not in bad_exact:
+            return a
+        return b or a or None
+
     return None
+
+def _pick_non_moon_side(a: str, b: str) -> Optional[str]:
+    bad = {"moon", "lunar", "sun", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune"}
+    a_l = a.lower()
+    b_l = b.lower()
+
+    # prefer the "other" side when one is Moon/Sun/planet-ish
+    if any(k in a_l for k in bad) and not any(k in b_l for k in bad):
+        return b or None
+    if any(k in b_l for k in bad) and not any(k in a_l for k in bad):
+        return a or None
+
+    # if both "bad" (e.g., Moon and Jupiter) pick the second (stable behavior)
+    return b or a or None
 
 
 def load_calendar_daily_signal(path: Path) -> List[Dict[str, Any]]:
@@ -418,6 +500,13 @@ def calendar_items_for_window(items: List[Dict[str, Any]], start_d: date, days: 
     end_d = start_d + timedelta(days=days)
     out: List[Dict[str, Any]] = []
 
+    dbg_total = 0
+    dbg_in_window = 0
+    dbg_date_from_title = 0
+    dbg_date_from_published = 0
+    dbg_date_none = 0
+    dbg_bad_samples = 0
+
     def _norm_title_for_dedup(title: str) -> str:
         s = (title or "").strip()
         if not s:
@@ -432,19 +521,33 @@ def calendar_items_for_window(items: List[Dict[str, Any]], start_d: date, days: 
         if not isinstance(it, dict):
             continue
 
+        dbg_total += 1
+
         title = str(it.get("title") or "")
         d = parse_event_date_from_title(title)
+        if d is not None:
+            dbg_date_from_title += 1
 
         if d is None:
             pa = str(it.get("published_at") or "").strip()
             if len(pa) >= 10:
                 try:
                     d = datetime.fromisoformat(pa[:10]).date()
+                    dbg_date_from_published += 1
                 except Exception:
                     d = None
 
-        if d is None or not (start_d <= d < end_d):
+        if d is None:
+            dbg_date_none += 1
+            if dbg_bad_samples < 10:
+                print(f"[cal][window] date_parse_failed title={title!r} published_at={it.get('published_at')!r}")
+                dbg_bad_samples += 1
             continue
+
+        if not (start_d <= d < end_d):
+            continue
+
+        dbg_in_window += 1
 
         it2 = dict(it)
         it2["_event_date"] = d.isoformat()
@@ -455,6 +558,12 @@ def calendar_items_for_window(items: List[Dict[str, Any]], start_d: date, days: 
             it2["_primary_object"] = prim.lower().strip()
 
         out.append(it2)
+
+    print(
+        f"[cal][window] total={dbg_total} in_window={dbg_in_window} "
+        f"date_from_title={dbg_date_from_title} date_from_published={dbg_date_from_published} date_none={dbg_date_none} "
+        f"window={start_d.isoformat()}..{end_d.isoformat()}"
+    )
 
     dedup: Dict[tuple, Dict[str, Any]] = {}
     for it in out:
@@ -821,8 +930,6 @@ def altitude_at_time_local(
     return float(np.asarray(alt, dtype=float)[0])
 
 
-
-
 def make_note(
     group: str,
     name: str,
@@ -862,6 +969,33 @@ def make_note(
 # -----------------------------
 # Planets
 # -----------------------------
+
+def resolve_planet_ra_dec_from_json(
+    planets_json: Optional[Dict[str, Any]],
+    when_local: datetime,
+    planet_key: str,
+) -> Optional[Tuple[float, float]]:
+    if not planets_json or not planet_key:
+        return None
+
+    t_ms = int(when_local.timestamp() * 1000)
+    frame = pick_nearest_planets_frame(planets_json, t_ms)
+    if not frame or not isinstance(frame.get("planets"), dict):
+        return None
+
+    b = frame["planets"].get(planet_key)
+    if not isinstance(b, dict):
+        return None
+
+    ra_deg = b.get("ra_deg")
+    dec_deg = b.get("dec_deg")
+    try:
+        if ra_deg is None or dec_deg is None:
+            return None
+        return float(ra_deg), float(dec_deg)
+    except Exception:
+        return None
+
 def pick_nearest_planets_frame(planets_json: Dict[str, Any], t_ms: int) -> Optional[Dict[str, Any]]:
     frames = planets_json.get("frames") if isinstance(planets_json, dict) else None
     if not isinstance(frames, list) or not frames:
@@ -941,6 +1075,74 @@ def planets_candidates_for_night(planets_json: Dict[str, Any], when_local: datet
     return out
 
 
+_PLANET_ALIASES = {
+    "mercury": "mercury",
+    "venus": "venus",
+    "mars": "mars",
+    "jupiter": "jupiter",
+    "saturn": "saturn",
+    "uranus": "uranus",
+    "neptune": "neptune",
+}
+
+def _planet_key_from_name(name: str) -> Optional[str]:
+    s = (name or "").strip().lower()
+    if not s:
+        return None
+    # tolerate "the Jupiter", etc.
+    s = s.replace("the ", "").strip()
+    return _PLANET_ALIASES.get(s)
+
+# -----------------------------
+# Calendar -> candidates
+# -----------------------------
+def _resolve_planet_ra_dec_from_planets_json(
+    planets_json: Optional[Dict[str, Any]],
+    when_local: datetime,
+    target: str,
+) -> Optional[Tuple[float, float]]:
+    if not planets_json or not target:
+        return None
+
+    frame = pick_nearest_planets_frame(planets_json, int(when_local.timestamp() * 1000))
+    if not frame or not isinstance(frame.get("planets"), dict):
+        return None
+
+    t = target.strip().lower()
+    for key, b in frame["planets"].items():
+        if not isinstance(b, dict):
+            continue
+        name = str(b.get("name") or key).strip().lower()
+        if t == str(key).strip().lower() or t == name:
+            ra_deg = b.get("ra_deg")
+            dec_deg = b.get("dec_deg")
+            if ra_deg is None or dec_deg is None:
+                return None
+            try:
+                return float(ra_deg), float(dec_deg)
+            except Exception:
+                return None
+    return None
+
+
+def _resolve_moon_ra_dec(
+    location: EarthLocation,
+    when_local: datetime,
+) -> Optional[Tuple[float, float]]:
+    import zoneinfo
+
+    if when_local.tzinfo is None:
+        return None
+
+    dt_utc = when_local.astimezone(zoneinfo.ZoneInfo("UTC"))
+    t = Time([dt_utc])
+    c = get_body("moon", t, location=location)
+
+    # avoid numpy "array to scalar" deprecation
+    ra = np.asarray(c.ra.deg, dtype=float).reshape(-1)[0]
+    dec = np.asarray(c.dec.deg, dtype=float).reshape(-1)[0]
+    return float(ra), float(dec)
+
 # -----------------------------
 # Calendar -> candidates
 # -----------------------------
@@ -948,57 +1150,187 @@ def calendar_candidates_for_day(
     all_items: List[Dict[str, Any]],
     day_local: date,
     simbad_cache: Dict[str, Dict[str, float]],
+    planets_json: Optional[Dict[str, Any]] = None,
+    dusk_local: Optional[datetime] = None,
+    location: Optional[EarthLocation] = None,
+    tz: Any = None,
 ) -> List[Dict[str, Any]]:
+    """
+    Builds "calendar" candidates for a specific local day.
+
+    Compatibility note:
+      - This function accepts extra args (planets_json/dusk_local/location/tz) because your current
+        gen_objects.py version calls it with them. If some are None, it still works.
+
+    Resolution strategy (in order):
+      1) If title implies a close approach / conjunction with a planet name -> resolve via planets_json at dusk_local
+      2) If title implies an object name (occultation of X, conjunction A with B) -> resolve via SIMBAD
+      3) If eclipse -> use Moon RA/Dec at dusk_local (fallback)
+      4) Otherwise skip (needs RA/Dec for scoring)
+    """
     out: List[Dict[str, Any]] = []
     seen: set = set()
+
+    # ---------- helpers ----------
+    def _norm(s: str) -> str:
+        return " ".join((s or "").strip().lower().split())
+
+    def _planet_ra_dec_by_name(name: str) -> Optional[Tuple[float, float, str]]:
+        """
+        Resolve a planet-like token via planets.json at dusk_local.
+        Returns (ra_deg, dec_deg, planet_key) or None.
+        """
+        if not planets_json or dusk_local is None:
+            return None
+        name_n = _norm(name)
+        if not name_n:
+            return None
+
+        frame = pick_nearest_planets_frame(planets_json, int(dusk_local.timestamp() * 1000))
+        if not frame or not isinstance(frame.get("planets"), dict):
+            return None
+
+        # match by "name" or by key
+        for k, b in frame["planets"].items():
+            if not isinstance(b, dict):
+                continue
+            b_name = _norm(str(b.get("name") or ""))
+            k_n = _norm(str(k))
+            if name_n == b_name or name_n == k_n:
+                try:
+                    ra_deg = float(b.get("ra_deg"))
+                    dec_deg = float(b.get("dec_deg"))
+                except Exception:
+                    return None
+                return ra_deg, dec_deg, str(k)
+
+        # common aliases (minimal)
+        aliases = {
+            "jove": "jupiter",
+            "saturnus": "saturn",
+        }
+        if name_n in aliases:
+            return _planet_ra_dec_by_name(aliases[name_n])
+
+        return None
+
+    def _moon_ra_dec_at_dusk() -> Optional[Tuple[float, float]]:
+        if dusk_local is None:
+            return None
+        import zoneinfo
+        dt_utc = dusk_local.astimezone(zoneinfo.ZoneInfo("UTC"))
+        t = Time([dt_utc])
+        try:
+            c = get_body("moon", t)
+            c_icrs = c.icrs
+            return float(np.asarray(c_icrs.ra.deg, dtype=float)[0]), float(np.asarray(c_icrs.dec.deg, dtype=float)[0])
+        except Exception:
+            return None
+
+    def _extract_other_body_for_close_approach(title: str) -> Optional[str]:
+        """
+        For titles like:
+          "Close approach of the Moon and Jupiter"
+          "Close approach of the Moon and M44"
+        return the "other" body ("Jupiter"/"M44"). Otherwise None.
+        """
+        t = (title or "").strip()
+        m = re.search(r"\bclose approach of the moon and\s+(.+?)\s*$", t, re.IGNORECASE)
+        if not m:
+            return None
+        other = (m.group(1) or "").strip()
+        other = re.sub(r"\s*\(.*?\)\s*$", "", other).strip()
+        return other or None
+
+    def _is_eclipse(title: str) -> bool:
+        t = _norm(title)
+        return ("eclipse" in t)
+
+    # ---------- main loop ----------
+    items_for_day = 0
+    resolved = 0
+    unresolved = 0
 
     for it in all_items:
         d_iso = str(it.get("_event_date") or "")
         if d_iso != day_local.isoformat():
             continue
+        items_for_day += 1
 
         title = str(it.get("title") or "")
-        obj_name = extract_primary_object_name(title)
-        if not obj_name:
-            continue
-
-        resolved = simbad_resolve_ra_dec(obj_name, simbad_cache)
-        if not resolved:
-            continue
-
-        ra_deg, dec_deg = resolved
+        category_raw = str(it.get("category") or "event").strip()
+        category = category_raw.lower()
 
         url = it.get("url")
         url_key = str(url).strip().lower() if url else ""
-        if url_key:
-            dedup_key = ("url", url_key)
-        else:
-            dedup_key = ("t", d_iso, obj_name.strip().lower(), title.strip().lower())
+        dedup_key = ("url", url_key) if url_key else ("t", d_iso, _norm(title))
         if dedup_key in seen:
             continue
         seen.add(dedup_key)
 
-        ev_id = f"cal:{url_key}" if url_key else str(it.get("id") or f"cal:{obj_name}:{d_iso}")
-        category = str(it.get("category") or "event").strip().lower()
+        ra_dec: Optional[Tuple[float, float]] = None
+        target_name: Optional[str] = None
 
-        # --- changed: display name from title; keep target_name for search/linking ---
-        display_name = calendar_display_name_from_title(title) or obj_name
+        # 1) "Close approach of the Moon and X" -> try X as planet via planets.json, else SIMBAD
+        other = _extract_other_body_for_close_approach(title)
+        if other:
+            pr = _planet_ra_dec_by_name(other)
+            if pr is not None:
+                ra_dec = (float(pr[0]), float(pr[1]))
+                target_name = other
+            else:
+                sr = simbad_resolve_ra_dec(other, simbad_cache)
+                if sr is not None:
+                    ra_dec = (float(sr[0]), float(sr[1]))
+                    target_name = other
+
+        # 2) Generic heuristics (occultation of X / conjunction A with B)
+        if ra_dec is None:
+            obj_name = extract_primary_object_name(title)
+            if obj_name:
+                # try planet first (if name matches)
+                pr = _planet_ra_dec_by_name(obj_name)
+                if pr is not None:
+                    ra_dec = (float(pr[0]), float(pr[1]))
+                    target_name = obj_name
+                else:
+                    sr = simbad_resolve_ra_dec(obj_name, simbad_cache)
+                    if sr is not None:
+                        ra_dec = (float(sr[0]), float(sr[1]))
+                        target_name = obj_name
+
+        # 3) Eclipse fallback -> use Moon coords
+        if ra_dec is None and _is_eclipse(title):
+            mr = _moon_ra_dec_at_dusk()
+            if mr is not None:
+                ra_dec = (float(mr[0]), float(mr[1]))
+                target_name = "Moon"
+                category = "eclipse"
+
+        if ra_dec is None:
+            unresolved += 1
+            continue
+
+        resolved += 1
+
+        ev_id = f"cal:{url_key}" if url_key else str(it.get("id") or f"cal:{d_iso}:{_norm(title)}")
+        display_name = calendar_display_name_from_title(title) or (target_name or title)
 
         out.append({
             "id": ev_id,
             "group": "calendar",
             "type": category,
-            "name": display_name,          # was obj_name
+            "name": display_name,
             "title": title,
             "url": url,
             "published_at": it.get("published_at"),
             "summary": it.get("summary"),
-            "ra_deg": float(ra_deg),
-            "dec_deg": float(dec_deg),
+            "ra_deg": float(ra_dec[0]),
+            "dec_deg": float(ra_dec[1]),
 
             "event_date": d_iso,
             "event_kind": category,
-            "target_name": obj_name,       # keep raw target for search
+            "target_name": (target_name or ""),  # keep raw target for search
 
             "meta": {
                 "calendar_source": it.get("source"),
@@ -1007,8 +1339,8 @@ def calendar_candidates_for_day(
             },
         })
 
+    print(f"[cal][cand] day={day_local.isoformat()} items_for_day={items_for_day} resolved={resolved} unresolved={unresolved}")
     return out
-
 
 # -----------------------------
 # Scoring
@@ -1163,6 +1495,9 @@ def score_item(
 # -----------------------------
 # Build one day
 # -----------------------------
+# -----------------------------
+# Build one day
+# -----------------------------
 def build_day_items(
     day_local: date,
     tz_name: str,
@@ -1186,7 +1521,13 @@ def build_day_items(
     tz = zoneinfo.ZoneInfo(tz_name)
     dusk_local = datetime.combine(day_local, time(18, 0), tzinfo=tz)
 
-    cal = calendar_candidates_for_day(calendar_all_week, day_local, simbad_cache)
+    cal = calendar_candidates_for_day(
+        calendar_all_week, day_local, simbad_cache,
+        planets_json=planets_json,
+        dusk_local=dusk_local,
+        location=location,
+        tz=tz,
+    )
     pls = planets_candidates_for_night(planets_json or {}, dusk_local) if planets_json else []
     dso = dso_candidates(messier_items)
 
@@ -1286,11 +1627,10 @@ def build_day_items(
 
         scored_items.append(it2)
 
-    # ---- quotas as-is ----
+    # ---- quotas: calendar always on top, never displaced by leftovers ----
     max_items = int(_safe_get(rules, ["global", "max_items"], 30))
     cal_max = int(_safe_get(rules, ["global", "calendar_max"], 6))
     pls_max = int(_safe_get(rules, ["global", "planets_max"], 6))
-    dso_max = int(_safe_get(rules, ["global", "dso_max"], max(0, max_items - cal_max - pls_max)))
 
     cal_items = [x for x in scored_items if str(x.get("group") or "") == "calendar"]
     pls_items = [x for x in scored_items if str(x.get("group") or "") == "planets"]
@@ -1301,18 +1641,28 @@ def build_day_items(
     dso_items.sort(key=lambda x: -float(x.get("score") or 0.0))
 
     picked: List[Dict[str, Any]] = []
-    picked.extend(cal_items[:max(0, cal_max)])
-    picked.extend(pls_items[:max(0, pls_max)])
 
+    # 1) calendar first (fixed top block)
+    if cal_max > 0:
+        picked.extend(cal_items[:cal_max])
+
+    # 2) planets next
+    remaining = max_items - len(picked)
+    if remaining > 0 and pls_max > 0:
+        picked.extend(pls_items[: min(pls_max, remaining)])
+
+    # 3) fill the rest from DSO
     remaining = max_items - len(picked)
     if remaining > 0:
-        picked.extend(dso_items[:min(remaining, max(0, dso_max))])
+        picked.extend(dso_items[:remaining])
 
-    if len(picked) < max_items:
+    # 4) if still not full (e.g., empty dso), fill from leftovers excluding already picked
+    remaining = max_items - len(picked)
+    if remaining > 0:
         picked_ids = {str(x.get("id") or "") for x in picked}
         leftovers = [x for x in scored_items if str(x.get("id") or "") not in picked_ids]
         leftovers.sort(key=lambda x: -float(x.get("score") or 0.0))
-        picked.extend(leftovers[: (max_items - len(picked))])
+        picked.extend(leftovers[:remaining])
 
     return picked[:max_items]
 
@@ -1340,6 +1690,9 @@ def main() -> None:
     calendar_week = calendar_items_for_window(daily_signal_items, today_local, DAYS)
     print(f"[dbg] daily_signal_items: {len(daily_signal_items)}")
     print(f"[dbg] calendar_week: {len(calendar_week)} window {today_local.isoformat()} -> {(today_local + timedelta(days=DAYS)).isoformat()}")
+
+    for j, it in enumerate(calendar_week[:5], start=1):
+        print(f"[cal][week] #{j} event_date={it.get('_event_date')} title={str(it.get('title') or '')!r}")
 
     SERVICES_DATA_DIR.mkdir(parents=True, exist_ok=True)
     simbad_cache = load_simbad_cache()
@@ -1417,7 +1770,7 @@ def main() -> None:
     print(f"[ok] copied: {today_path_services}")
     print(f"[ok] copied: {week_path_services}")
     print(f"[ok] picked: {len(today_items)} items; group counts: {group_counts}")
-
+    
 
 if __name__ == "__main__":
     main()
