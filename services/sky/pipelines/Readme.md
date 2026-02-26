@@ -208,7 +208,24 @@ Each generator SHOULD ship a pipelines/misc/check_<dataset>.py validator that ch
 	•	ra/dec ranges,
 	•	no NaNs.
 
-PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts.py
+
+-- Alerts --
 PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_neo_alerts.py
-PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts_merge_neo.py
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_neocp_alerts.py
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_risk_alerts.py
+
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_gcn_alerts.py
+
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts.py
 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts.py
+
+-- Objects Today --
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/calendar/pipelines/run_calendar.py
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_objects.py
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_ranking.py
+
+-- Planets and Ranking --
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_planets.py
+
+-- Others --
+PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_sunmoon.py
