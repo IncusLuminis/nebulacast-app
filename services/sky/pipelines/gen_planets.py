@@ -2,7 +2,7 @@
 # services/sky/pipelines/gen_planets.py
 #
 # Generates planetary ephemerides for the next N days as a static JSON
-# using NASA JPL Horizons (online) via astroquery + astropy.
+# using the local DE421 SPICE kernel (offline, no network required).
 # Writes JSON to TWO destinations (services + staging), same style as gen_stars.py / gen_sunmoon.py.
 
 from __future__ import annotations
@@ -29,6 +29,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 SERVICES_DATA_DIR = PROJECT_ROOT / "services" / "sky" / "data" / "generated"
 STAGING_DATA_DIR  = PROJECT_ROOT / "sites" / "staging" / "sky" / "data"
+BSP_PATH          = PROJECT_ROOT / "services" / "sky" / "data" / "raw" / "de421.bsp"
 
 OUT_FILENAME = "planets.json"
 
@@ -39,31 +40,32 @@ OUT_FILENAME = "planets.json"
 DAYS = 7
 STEP_MIN = 10
 
-# Default location (Warsaw). You can later read these from a config file.
+# Default location (Warsaw).
 SITE_LAT_DEG = 52.2297
-SITE_LON_DEG = 21.0122   # East positive (Warsaw is +)
+SITE_LON_DEG = 21.0122   # East positive
 SITE_ELEV_KM = 0.10      # ~100 m
+
+_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
 # -----------------------------
 # Planets list
-# JPL Horizons majorbody IDs:
-# Mercury=199, Venus=299, Mars=499, Jupiter=599, Saturn=699, Uranus=799, Neptune=899
-# (Optionally Pluto=999, but often you may not want it as "planet".)
+# (output key, display label, astropy body name)
 # -----------------------------
 PLANETS: List[Tuple[str, str, str]] = [
-  ("mercury", "Mercury", "199"),
-  ("venus",   "Venus",   "299"),
-  ("mars",    "Mars",    "499"),
-  ("jupiter", "Jupiter", "599"),
-  ("saturn",  "Saturn",  "699"),
-  ("uranus",  "Uranus",  "799"),
-  ("neptune", "Neptune", "899"),
+  ("mercury", "Mercury", "mercury"),
+  ("venus",   "Venus",   "venus"),
+  ("mars",    "Mars",    "mars"),
+  ("jupiter", "Jupiter", "jupiter"),
+  ("saturn",  "Saturn",  "saturn"),
+  ("uranus",  "Uranus",  "uranus"),
+  ("neptune", "Neptune", "neptune"),
 ]
 
 
 # -----------------------------
-# Helpers (same philosophy as your generator)
+# Helpers
 # -----------------------------
 def utc_now_iso() -> str:
   return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -76,12 +78,9 @@ def iso_utc(dt: datetime) -> str:
   dt = dt.astimezone(timezone.utc)
   return dt.isoformat().replace("+00:00", "Z")
 
-def as_float(x: Any) -> Optional[float]:
-  try:
-    v = float(x)
-    return v if (v == v) else None  # NaN check
-  except Exception:
-    return None
+def fmt_tutc(dt: datetime) -> str:
+  """Format as 'YYYY-Mon-DD HH:MMZ' — must match parseHorizonsTUTC() in JS and parse_tutc_ms() in Python."""
+  return f"{dt.year}-{_MONTHS[dt.month - 1]}-{dt.day:02d} {dt.hour:02d}:{dt.minute:02d}Z"
 
 
 @dataclass(frozen=True)
@@ -91,18 +90,14 @@ class Site:
   elev_km: float
 
 
-def horizons_ephemerides(
-  target_id: str,
-  site: Site,
-  start_utc: datetime,
-  stop_utc: datetime,
-  step_min: int,
-  quantities: str,
-):
+def compute_illum_pct(body_xyz: np.ndarray, sun_xyz: np.ndarray) -> np.ndarray:
   """
-  Query JPL Horizons ephemerides (online).
-  location dict: lon/lat in deg, elevation in km.
-  epochs dict: start/stop strings, step like "10m".
+  Illuminated fraction (0–100 %) for each time step.
+
+  body_xyz, sun_xyz: (3, n) arrays in AU in the geocentric (GCRS) frame.
+  Earth is at the GCRS origin, so:
+    planet → sun   = sun_xyz  - body_xyz
+    planet → earth = (0,0,0)  - body_xyz  = -body_xyz
   """
   location = {"lon": site.lon, "lat": site.lat, "elevation": site.elev_km}
   epochs = {
@@ -123,157 +118,94 @@ def horizons_ephemerides(
       else:
         raise
 
+  dot   = np.einsum("ij,ij->j", to_sun, to_earth)
+  mag_s = np.linalg.norm(to_sun,   axis=0)
+  mag_e = np.linalg.norm(to_earth, axis=0)
 
-def get_col(tab, *names: str):
-  for n in names:
-    if n in tab.colnames:
-      return tab[n]
-  return None
+  cos_i = np.clip(dot / (mag_s * mag_e), -1.0, 1.0)
+  return (1.0 + cos_i) / 2.0 * 100.0
 
 
 def main() -> None:
-  # Generate from "now" to now+N days.
+  if not BSP_PATH.exists():
+    raise FileNotFoundError(f"DE421 kernel not found: {BSP_PATH}")
+
   start = datetime.now(timezone.utc).replace(second=0, microsecond=0)
-  stop = start + timedelta(days=DAYS)
+  stop  = start + timedelta(days=DAYS)
 
-  site = Site(lat=SITE_LAT_DEG, lon=SITE_LON_DEG, elev_km=SITE_ELEV_KM)
+  site     = Site(lat=SITE_LAT_DEG, lon=SITE_LON_DEG, elev_km=SITE_ELEV_KM)
+  location = EarthLocation(lat=site.lat * u.deg, lon=site.lon * u.deg, height=site.elev_km * u.km)
 
-  # quantities:
-  # 1  -> RA/DEC (apparent)
-  # 4  -> topocentric Alt/Az (EL/AZ)
-  # 9/10 sometimes expose illumination/phase/magnitude-ish columns depending on target/config.
-  # We'll request a bit broader and then extract columns defensively by name.
-  q = "1,4,9,10"
+  # Time grid
+  total_steps = int((stop - start).total_seconds() / 60 / STEP_MIN) + 1
+  dt_list = [start + timedelta(minutes=i * STEP_MIN) for i in range(total_steps)]
+  times   = Time([dt.strftime("%Y-%m-%dT%H:%M:%S") for dt in dt_list], format="isot", scale="utc")
 
-  # Query all planets
-  tabs: Dict[str, Any] = {}
-  for key, label, hid in PLANETS:
-    tabs[key] = horizons_ephemerides(hid, site, start, stop, STEP_MIN, q)
+  print(f"[sky] {len(times)} steps × {len(PLANETS)} planets, kernel={BSP_PATH.name} …")
 
-  # Validate datetime_str
-  for key, tab in tabs.items():
-    if "datetime_str" not in tab.colnames:
-      raise RuntimeError(f"Horizons response missing datetime_str for {key}. Columns: {tab.colnames}")
+  with solar_system_ephemeris.set(str(BSP_PATH)):
+    altaz_frame = AltAz(obstime=times, location=location)
 
-  # Determine frame count from the first planet
-  first_key = PLANETS[0][0]
-  n = len(tabs[first_key])
+    # Geocentric sun position (needed for phase-angle / illumination)
+    sun_gcrs = get_body("sun", times)
+    sun_xyz  = sun_gcrs.cartesian.xyz.to(u.au).value   # (3, n)
 
-  # Extract common time axis (assume aligned by same epochs/step)
-  frames: List[Dict[str, Any]] = []
+    # Per-planet vectorised queries
+    planet_arrays: Dict[str, Dict[str, np.ndarray]] = {}
+    for key, label, aname in PLANETS:
+      print(f"[sky]   {label} …")
+      topo     = get_body(aname, times, location)        # topocentric apparent -> RA/Dec/Alt/Az
+      altaz    = topo.transform_to(altaz_frame)
+      gcrs     = get_body(aname, times)                  # geocentric -> phase angle
+      body_xyz = gcrs.cartesian.xyz.to(u.au).value       # (3, n)
 
-  # For waxing/waning (illumination increasing/decreasing) we track per-planet
-  prev_illum: Dict[str, Optional[float]] = {k: None for k, _, _ in PLANETS}
-
-  # Pre-resolve columns for each planet tab (avoid repeating name-lookup per row)
-  cols: Dict[str, Dict[str, Any]] = {}
-
-  for key, _, _ in PLANETS:
-    tab = tabs[key]
-    cols[key] = {
-      "ra":   get_col(tab, "RA"),
-      "dec":  get_col(tab, "DEC"),
-      "el":   get_col(tab, "EL", "Alt"),
-      "az":   get_col(tab, "AZ", "Az"),
-
-      # magnitude: Horizons may expose "V" or "VMag" or similar; be tolerant
-      "mag":  get_col(tab, "V", "VMag", "mag", "MAG", "Vmag"),
-
-      # illumination / phase: naming varies wildly; try broad set
-      # Sometimes it's a fraction 0..1 (k), sometimes percent, sometimes missing for outer planets.
-      "illum": get_col(
-        tab,
-        "illum", "Illum", "illumination", "ILLUM",
-        "Illu%", "illu%", "k", "frac_illum", "FracIllum", "FRACTION_ILLUM",
-        "Illumination", "IllumFrac", "ILLUM_FRAC"
-      ),
-
-      # phase angle / related fields (optional)
-      "phase": get_col(tab, "phase", "Phase", "PHASE", "phase_frac", "PhaseFrac"),
-    }
-
-    # Debug if you want (leave commented)
-    # print(f"[sky] {key} columns:", tab.colnames)
-
-  def norm_illum_to_pct(v: float) -> float:
-    # If value is <=1.01 treat as fraction, else treat as percent
-    if v <= 1.01:
-      return max(0.0, min(1.0, v)) * 100.0
-    return max(0.0, min(100.0, v))
-
-  def norm_phase_to_01(v: float) -> float:
-    # If value is >1.01 treat as percent, else as fraction
-    if v > 1.01:
-      v = v / 100.0
-    return max(0.0, min(1.0, v))
-
-  for i in range(n):
-    # Common time stamp
-    # Example format: "2026-Feb-08 18:00"
-    t_str = f"{tabs[first_key]['datetime_str'][i]}Z"
-
-    planets_obj: Dict[str, Any] = {}
-
-    for key, label, _hid in PLANETS:
-      tab = tabs[key]
-      c = cols[key]
-
-      ra  = as_float(c["ra"][i])  if c["ra"]  is not None else None
-      dec = as_float(c["dec"][i]) if c["dec"] is not None else None
-      el  = as_float(c["el"][i])  if c["el"]  is not None else None
-      az  = as_float(c["az"][i])  if c["az"]  is not None else None
-
-      if ra is None or dec is None:
-        # If Horizons fails to provide RA/DEC for some reason, skip this planet for this frame.
-        continue
-
-      p: Dict[str, Any] = {
-        "name": label,
-        "ra_deg": ra,
-        "dec_deg": dec,
-        "alt_deg": el,
-        "az_deg": az,
+      planet_arrays[key] = {
+        "ra":    topo.ra.deg,
+        "dec":   topo.dec.deg,
+        "alt":   altaz.alt.deg,
+        "az":    altaz.az.deg,
+        "illum": compute_illum_pct(body_xyz, sun_xyz),
       }
 
-      mag = as_float(c["mag"][i]) if c["mag"] is not None else None
-      if mag is not None:
-        p["mag"] = round(mag, 2)
+  # Assemble frames
+  prev_illum: Dict[str, Optional[float]] = {k: None for k, _, _ in PLANETS}
+  frames: List[Dict[str, Any]] = []
 
-      illum_raw = as_float(c["illum"][i]) if c["illum"] is not None else None
-      phase_raw = as_float(c["phase"][i]) if c["phase"] is not None else None
+  for i, dt in enumerate(dt_list):
+    planets_obj: Dict[str, Any] = {}
 
-      # If we have illumination, store illum_pct + phase (0..1)
-      if illum_raw is not None:
-        illum_pct = norm_illum_to_pct(illum_raw)
-        p["illum_pct"] = round(illum_pct, 2)
-        p["phase"] = round(illum_pct / 100.0, 4)
+    for key, label, _ in PLANETS:
+      arr = planet_arrays[key]
+      ra  = float(arr["ra"][i])
+      dec = float(arr["dec"][i])
+      alt = float(arr["alt"][i])
+      az  = float(arr["az"][i])
+      ill = float(arr["illum"][i])
 
-        prev = prev_illum.get(key)
-        if prev is None:
-          p["waxing"] = True
-        else:
-          p["waxing"] = (illum_pct >= prev)
-        prev_illum[key] = illum_pct
+      p: Dict[str, Any] = {
+        "name":    label,
+        "ra_deg":  round(ra,  6),
+        "dec_deg": round(dec, 6),
+        "alt_deg": round(alt, 4),
+        "az_deg":  round(az,  4),
+        "illum_pct": round(ill, 2),
+        "phase":     round(ill / 100.0, 4),
+      }
 
-      # If we have a separate phase field, store it too (but do NOT override illum-derived values)
-      if phase_raw is not None and "phase" not in p:
-        ph = norm_phase_to_01(phase_raw)
-        p["phase"] = round(ph, 4)
-        p["illum_pct"] = round(ph * 100.0, 2)
+      prev = prev_illum[key]
+      p["waxing"]    = True if prev is None else (ill >= prev)
+      prev_illum[key] = ill
 
       planets_obj[key] = p
 
-    frames.append({
-      "t_utc": t_str,
-      "planets": planets_obj,
-    })
+    frames.append({"t_utc": fmt_tutc(dt), "planets": planets_obj})
 
   out = {
     "version": 1,
     "epoch": "apparent",
     "generated_at": utc_now_iso(),
-    "source": "NASA JPL Horizons (online) via astroquery.jplhorizons",
-    "params": { "days": DAYS, "step_min": STEP_MIN },
+    "source": "DE421 local kernel via astropy.coordinates",
+    "params": {"days": DAYS, "step_min": STEP_MIN},
     "site": {
       "lat": site.lat,
       "lon": site.lon,
@@ -281,11 +213,11 @@ def main() -> None:
     },
     "window": {
       "start_utc": iso_utc(start),
-      "end_utc": iso_utc(stop),
+      "end_utc":   iso_utc(stop),
     },
     "bodies": [
-      {"key": key, "name": label, "horizons_id": hid}
-      for (key, label, hid) in PLANETS
+      {"key": key, "name": label, "astropy_name": aname}
+      for (key, label, aname) in PLANETS
     ],
     "frames": frames,
   }
