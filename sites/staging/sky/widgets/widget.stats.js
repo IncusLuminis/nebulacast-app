@@ -406,7 +406,7 @@ function computeMagHistogram(items) {
 
 function computeDiameterHistogram(items) {
   const vals = items
-    .map(it => it.meta?.diameter_est_km)
+    .map(it => it.meta?.diameter_est_km ?? it.meta?.sbdb_diameter_est_km)
     .filter(v => v != null && isFinite(Number(v)) && Number(v) > 0)
     .map(v => Math.log10(Number(v)));
   return { ...makeHistogram(vals, 10), n: vals.length };
@@ -647,7 +647,7 @@ export function createStatsDialog() {
             });
         });
       } else {
-        content = makeEmpty('No diameter data (meta.diameter_est_km)');
+        content = makeEmpty('No diameter data (meta.diameter_est_km / sbdb_diameter_est_km)');
       }
       body.appendChild(makeSection('4 · Diameter Distribution (km, log scale)', content));
     }
