@@ -420,11 +420,12 @@ function computeDiameterHistogram(items) {
     return v.toFixed(0);
   }
 
-  // Aggregate: items that share a display label form one bar
+  // Aggregate: items that share a display label form one bar.
+  // Normalise via parseFloat to collapse "0.010" → "0.01" etc.
   const grouped = new Map();
   for (const v of vals) {
-    const lbl = fmtKm(v);
-    grouped.set(lbl, (grouped.get(lbl) || 0) + 1);
+    const key = String(parseFloat(fmtKm(v)));
+    grouped.set(key, (grouped.get(key) || 0) + 1);
   }
 
   // Sort ascending by numeric value
