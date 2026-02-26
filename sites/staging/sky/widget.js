@@ -19,6 +19,7 @@ import "../ui/components/sky-table.js";
 import { UI_ICONS } from "../ui/shared/icons.js";
 
 import { buildAlertsPopoverHTML } from "./widgets/widget.alerts.js";
+import { createStatsDialog }     from "./widgets/widget.stats.js";
 
 import {
   deepMerge,
@@ -262,7 +263,8 @@ import * as Popovers from "./widgets/widget.popovers.js";
       p.style.zIndex = "1000";
     }
 
-    const modalWC = uiEnabled("modal") ? document.createElement("ui-modal") : null;
+    const modalWC  = uiEnabled("modal") ? document.createElement("ui-modal") : null;
+    const statsDlg = createStatsDialog();   // stats dialog (fixed overlay, appended to body)
     const player = uiEnabled("player") ? document.createElement("ui-player") : null;
     const skyCard = document.createElement("sky-card");
     
@@ -383,8 +385,9 @@ import * as Popovers from "./widgets/widget.popovers.js";
     if (sidePop) {
       sidePop.baseUrl = cfg.baseUrl;
       sidePop.items = [
-        { id: "ranking", label: "Ranking", icon: UI_ICONS.ranking, kind: "action" },
-        { id: "alerts",  label: "Alerts",  icon: UI_ICONS.alerts,  kind: "action" },
+        { id: "ranking", label: "Ranking",    icon: UI_ICONS.ranking, kind: "action" },
+        { id: "alerts",  label: "Alerts",     icon: UI_ICONS.alerts,  kind: "action" },
+        { id: "stats",   label: "Statistics", icon: UI_ICONS.stats,   kind: "action" },
       ];
     }
 
@@ -1670,6 +1673,7 @@ function buildAlertsListContent() {
         if (!id || !anchorEl) return;
         if (id === "ranking") openAllObjectsModal();
         if (id === "alerts")  openAllAlertsModal();
+        if (id === "stats")   statsDlg.open(alertsToday);
       });
     }
 
