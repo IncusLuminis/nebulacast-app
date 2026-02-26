@@ -408,8 +408,28 @@ function computeDiameterHistogram(items) {
   const vals = items
     .map(it => it.meta?.diameter_est_km ?? it.meta?.sbdb_diameter_est_km)
     .filter(v => v != null && isFinite(Number(v)) && Number(v) > 0)
-    .map(v => Math.log10(Number(v)));
-  return { ...makeHistogram(vals, 10), n: vals.length };
+    .map(Number);
+  if (!vals.length) return { labels: [], counts: [], n: 0 };
+
+  // Choose display precision from magnitude so labels are human-readable
+  function fmtKm(v) {
+    if (v < 0.001) return v.toExponential(0);
+    if (v < 0.01)  return v.toFixed(3);
+    if (v < 0.1)   return v.toFixed(2);
+    if (v < 1)     return v.toFixed(1);
+    return v.toFixed(0);
+  }
+
+  // Aggregate: items that share a display label form one bar
+  const grouped = new Map();
+  for (const v of vals) {
+    const lbl = fmtKm(v);
+    grouped.set(lbl, (grouped.get(lbl) || 0) + 1);
+  }
+
+  // Sort ascending by numeric value
+  const sorted = [...grouped.entries()].sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
+  return { labels: sorted.map(([l]) => l), counts: sorted.map(([, c]) => c), n: vals.length };
 }
 
 function computeEventTimes(items) {
@@ -635,10 +655,7 @@ export function createStatsDialog() {
         content = makeCanvasWrap(bc);
         requestAnimationFrame(() => {
           drawBars(bc, bctx, w, h,
-            dh.edges.map(e => {
-              const v = Math.pow(10, e);
-              return v < 0.01 ? v.toExponential(0) : v < 1 ? v.toFixed(2) : v.toFixed(1);
-            }),
+            dh.labels,
             dh.counts,
             '#a855f7',
             {
