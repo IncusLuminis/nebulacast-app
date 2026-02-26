@@ -135,6 +135,12 @@ const STATS_CSS = `
   font-size:11px; color:rgba(255,255,255,0.28);
   padding:8px 0; text-align:center;
 }
+
+.sky-stats-row-2col{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
 `;
 
 let _styleInjected = false;
@@ -585,115 +591,108 @@ export function createStatsDialog() {
 
     body.innerHTML = '';
 
-    // ── 1 · Distribution by Group (donut) ──────────────────────────────────
+    // Collect all canvas draw callbacks; fire them in one RAF after the
+    // overlay is shown so every canvas is guaranteed to be in the DOM.
+    const draws = [];
+
+    // ── §1 · Distribution by Group (donut) ─────────────────────────────────
+    let sec1;
     {
       const groups = computeGroupCounts(items);
       const { canvas: dc, ctx: dctx, w: dW, h: dH } = mkCanvas(180, 180);
       const row = document.createElement('div');
       row.className = 'sky-stats-chart-row';
       row.append(makeCanvasWrap(dc, true), makeLegend(groups));
-      body.appendChild(makeSection('1 · Distribution by Group', row));
-      requestAnimationFrame(() => drawDonut(dc, dctx, dW, dH, groups));
+      sec1 = makeSection('1 · Distribution by Group', row);
+      draws.push(() => drawDonut(dc, dctx, dW, dH, groups));
     }
 
-    // ── 2 · Close Approaches (vertical bar) ────────────────────────────────
+    // ── §2 · Close Approaches (vertical bar) ───────────────────────────────
+    let sec2;
     {
       const approaches = computeCloseApproaches(items);
       let content;
       if (approaches.length) {
         const { canvas: bc, ctx: bctx, w, h } = mkCanvas(760, 150, true);
         content = makeCanvasWrap(bc);
-        requestAnimationFrame(() => {
-          drawBars(bc, bctx, w, h,
-            approaches.map(a => a.id),
-            approaches.map(a => a.dist),
-            approaches.map(a => groupColor(a.group)),
-            {
-              yFmt:   v => v.toFixed(3),
-              maxVal: Math.max(...approaches.map(a => a.dist)),
-            });
-        });
+        draws.push(() => drawBars(bc, bctx, w, h,
+          approaches.map(a => a.id),
+          approaches.map(a => a.dist),
+          approaches.map(a => groupColor(a.group)),
+          { yFmt: v => v.toFixed(3), maxVal: Math.max(...approaches.map(a => a.dist)) }
+        ));
       } else {
         content = makeEmpty('No close approach data — NEO · PHA · Risk items with moid_au / dist_au needed');
       }
-      body.appendChild(makeSection('2 · Close Approaches (AU, ascending)', content));
+      sec2 = makeSection('2 · Close Approaches (AU, ascending)', content);
     }
 
-    // ── 3 · Magnitude Distribution (histogram) ─────────────────────────────
+    // ── §3 · Magnitude Distribution (histogram) ────────────────────────────
+    let sec3;
     {
       const mh = computeMagHistogram(items);
       let content;
       if (mh.n) {
-        const { canvas: bc, ctx: bctx, w, h } = mkCanvas(760, 150, true);
+        const { canvas: bc, ctx: bctx, w, h } = mkCanvas(400, 175, true);
         content = makeCanvasWrap(bc);
         const meanFrac = mh.mean != null
           ? (mh.mean - mh.mn) / Math.max(mh.mx - mh.mn, 1e-9)
           : null;
-        requestAnimationFrame(() => {
-          drawBars(bc, bctx, w, h,
-            mh.edges.map(e => e.toFixed(1)),
-            mh.counts,
-            '#3b82f6',
-            {
-              yFmt:      v => String(Math.round(v)),
-              maxVal:    Math.max(...mh.counts),
-              meanFrac,
-              meanLabel: mh.mean != null ? `mean ${mh.mean.toFixed(1)}` : null,
-            });
-        });
+        draws.push(() => drawBars(bc, bctx, w, h,
+          mh.edges.map(e => e.toFixed(1)),
+          mh.counts,
+          '#3b82f6',
+          { yFmt: v => String(Math.round(v)), maxVal: Math.max(...mh.counts), meanFrac,
+            meanLabel: mh.mean != null ? `mean ${mh.mean.toFixed(1)}` : null }
+        ));
       } else {
         content = makeEmpty('No magnitude data (item.mag or meta.mag)');
       }
-      body.appendChild(makeSection('3 · Magnitude Distribution', content));
+      sec3 = makeSection('3 · Magnitude Distribution', content);
     }
 
-    // ── 4 · Diameter Distribution — NEO / PHA (histogram, log km) ──────────
+    // ── §4 · Diameter Distribution — NEO / PHA (histogram, km) ────────────
+    let sec4;
     {
       const dh = computeDiameterHistogram(items);
       let content;
       if (dh.n) {
-        const { canvas: bc, ctx: bctx, w, h } = mkCanvas(760, 150, true);
+        const { canvas: bc, ctx: bctx, w, h } = mkCanvas(400, 175, true);
         content = makeCanvasWrap(bc);
-        requestAnimationFrame(() => {
-          drawBars(bc, bctx, w, h,
-            dh.labels,
-            dh.counts,
-            '#a855f7',
-            {
-              yFmt:   v => String(Math.round(v)),
-              maxVal: Math.max(...dh.counts),
-            });
-        });
+        draws.push(() => drawBars(bc, bctx, w, h,
+          dh.labels,
+          dh.counts,
+          '#a855f7',
+          { yFmt: v => String(Math.round(v)), maxVal: Math.max(...dh.counts) }
+        ));
       } else {
         content = makeEmpty('No diameter data (meta.diameter_est_km / sbdb_diameter_est_km)');
       }
-      body.appendChild(makeSection('4 · Diameter Distribution (km, log scale)', content));
+      sec4 = makeSection('4 · Diameter Distribution (km)', content);
     }
 
-    // ── 5 · Event Time Distribution (daily histogram) ──────────────────────
+    // ── §5 · Event Time Distribution (daily histogram) ─────────────────────
+    let sec5;
     {
       const et = computeEventTimes(items);
       let content;
       if (et.dates.length) {
-        const { canvas: bc, ctx: bctx, w, h } = mkCanvas(760, 150, true);
+        const { canvas: bc, ctx: bctx, w, h } = mkCanvas(400, 175, true);
         content = makeCanvasWrap(bc);
-        requestAnimationFrame(() => {
-          drawBars(bc, bctx, w, h,
-            et.dates.map(d => d.slice(5)),   // MM-DD
-            et.counts,
-            '#06b6d4',
-            {
-              yFmt:   v => String(Math.round(v)),
-              maxVal: Math.max(...et.counts),
-            });
-        });
+        draws.push(() => drawBars(bc, bctx, w, h,
+          et.dates.map(d => d.slice(5)),   // MM-DD
+          et.counts,
+          '#06b6d4',
+          { yFmt: v => String(Math.round(v)), maxVal: Math.max(...et.counts) }
+        ));
       } else {
         content = makeEmpty('No timestamp data (meta.t_utc_iso / updated_utc / ingested_utc)');
       }
-      body.appendChild(makeSection('5 · Event Time Distribution (UTC, by date)', content));
+      sec5 = makeSection('5 · Event Time Distribution (UTC, by date)', content);
     }
 
-    // ── 6 · Risk Monitoring Overview (KPI grid) ────────────────────────────
+    // ── §6 · Risk Monitoring Overview (KPI grid) ───────────────────────────
+    let sec6;
     {
       const kpis = computeRiskKPIs(items);
       const grid  = document.createElement('div');
@@ -713,12 +712,32 @@ export function createStatsDialog() {
       addKPI(grid, 'Max Torino Scale',  kpis.maxTS     != null ? String(kpis.maxTS) : DASH);
       addKPI(grid, 'Max Palermo Scale', kpis.maxPS     != null ? kpis.maxPS.toFixed(2) : DASH);
 
-      body.appendChild(makeSection('6 · Risk Monitoring Overview', grid));
+      sec6 = makeSection('6 · Risk Monitoring Overview', grid);
     }
 
-    // Show
+    // ── Compose layout ──────────────────────────────────────────────────────
+    // Row 1: Risk Monitoring Overview (full width)
+    body.appendChild(sec6);
+
+    // Row 2: Distribution by Group | Event Time Distribution (2 columns)
+    const row2 = document.createElement('div');
+    row2.className = 'sky-stats-row-2col';
+    row2.append(sec1, sec5);
+    body.appendChild(row2);
+
+    // Row 3: Close Approaches (full width)
+    body.appendChild(sec2);
+
+    // Row 4: Magnitude Distribution | Diameter Distribution (2 columns)
+    const row4 = document.createElement('div');
+    row4.className = 'sky-stats-row-2col';
+    row4.append(sec3, sec4);
+    body.appendChild(row4);
+
+    // Show, then draw all canvases in one animation frame
     overlay.style.display = 'block';
     document.addEventListener('keydown', onKey);
+    requestAnimationFrame(() => draws.forEach(fn => fn()));
   }
 
   return { open, close };
