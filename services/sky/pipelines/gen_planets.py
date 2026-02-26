@@ -8,16 +8,15 @@
 from __future__ import annotations
 
 import json
-import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from astroquery.jplhorizons import Horizons
-from astroquery.jplhorizons import conf as horizons_conf
-
-horizons_conf.timeout = 120  # seconds (default 30 is too short)
+import numpy as np
+import astropy.units as u
+from astropy.coordinates import AltAz, EarthLocation, get_body, solar_system_ephemeris
+from astropy.time import Time
 
 
 # -----------------------------
@@ -99,24 +98,8 @@ def compute_illum_pct(body_xyz: np.ndarray, sun_xyz: np.ndarray) -> np.ndarray:
     planet → sun   = sun_xyz  - body_xyz
     planet → earth = (0,0,0)  - body_xyz  = -body_xyz
   """
-  location = {"lon": site.lon, "lat": site.lat, "elevation": site.elev_km}
-  epochs = {
-    "start": iso_utc(start_utc).replace("Z", ""),  # Horizons accepts no trailing Z
-    "stop":  iso_utc(stop_utc).replace("Z", ""),
-    "step":  f"{step_min}m",
-  }
-  obj = Horizons(id=target_id, id_type=None, location=location, epochs=epochs)
-  max_retries = 3
-  for attempt in range(max_retries):
-    try:
-      return obj.ephemerides(quantities=quantities)
-    except Exception as e:
-      if attempt < max_retries - 1:
-        wait = 5 * (2 ** attempt)  # 5s, 10s, 20s
-        print(f"[sky] Horizons error for {target_id} (attempt {attempt + 1}/{max_retries}), retrying in {wait}s: {e}")
-        time.sleep(wait)
-      else:
-        raise
+  to_sun   = sun_xyz - body_xyz
+  to_earth = -body_xyz
 
   dot   = np.einsum("ij,ij->j", to_sun, to_earth)
   mag_s = np.linalg.norm(to_sun,   axis=0)
