@@ -463,7 +463,9 @@ function computeRiskKPIs(items) {
     if (m.ip != null && isFinite(Number(m.ip))) {
       if (maxIP === null || Number(m.ip) > maxIP) maxIP = Number(m.ip);
     }
-    const hs = m.hazard_score ?? null;
+    // score_norm is a top-level normalised 0-1 hazard/priority score present
+    // on every alert; risk_score in meta is a fallback (often 0 for risk items).
+    const hs = it.score_norm ?? m.risk_score ?? null;
     if (hs != null && isFinite(Number(hs))) {
       if (maxHazard === null || Number(hs) > maxHazard) maxHazard = Number(hs);
       sumHazard += Number(hs); nHazard++;
