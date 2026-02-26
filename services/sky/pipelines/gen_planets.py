@@ -8,12 +8,16 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from astroquery.jplhorizons import Horizons
+from astroquery.jplhorizons import conf as horizons_conf
+
+horizons_conf.timeout = 120  # seconds (default 30 is too short)
 
 
 # -----------------------------
@@ -106,8 +110,18 @@ def horizons_ephemerides(
     "stop":  iso_utc(stop_utc).replace("Z", ""),
     "step":  f"{step_min}m",
   }
-  obj = Horizons(id=target_id, id_type="majorbody", location=location, epochs=epochs)
-  return obj.ephemerides(quantities=quantities)
+  obj = Horizons(id=target_id, id_type=None, location=location, epochs=epochs)
+  max_retries = 3
+  for attempt in range(max_retries):
+    try:
+      return obj.ephemerides(quantities=quantities)
+    except Exception as e:
+      if attempt < max_retries - 1:
+        wait = 5 * (2 ** attempt)  # 5s, 10s, 20s
+        print(f"[sky] Horizons error for {target_id} (attempt {attempt + 1}/{max_retries}), retrying in {wait}s: {e}")
+        time.sleep(wait)
+      else:
+        raise
 
 
 def get_col(tab, *names: str):
