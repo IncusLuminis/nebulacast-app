@@ -665,21 +665,11 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
     }
 
     if (isMoon) {
-      // Soft glow halos behind the emoji
-      ctx.beginPath();
-      ctx.arc(o.x, o.y, MOON_EMOJI_R + 8, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(210,230,255,0.07)";
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(o.x, o.y, MOON_EMOJI_R + 4, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(220,240,255,0.10)";
-      ctx.fill();
-
-      // Draw the phase emoji
+      // Font size scales with o.r so it stays proportional if the base radius is changed
+      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 5.2) * 4);
       const emoji = moonPhaseEmoji(o.illum_pct, o.waxing);
       ctx.save();
-      ctx.font = `${MOON_EMOJI_SIZE}px system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif`;
+      ctx.font = `${moonFontSize}px system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(emoji, o.x, o.y);
@@ -687,7 +677,8 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
     }
 
     if (typeof o.altDeg === "number" && o.altDeg >= LABEL_ALT_MIN_SM && o.name) {
-      const labelOffsetX = isMoon ? (MOON_EMOJI_R + 4) : ((typeof o.r === "number") ? o.r : 6.0) + 4;
+      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 5.2) * 4);
+      const labelOffsetX = isMoon ? (moonFontSize * 0.52 + 4) : ((typeof o.r === "number") ? o.r : 6.0) + 4;
       const x0 = o.x + labelOffsetX;
       const y0 = o.y;
 
