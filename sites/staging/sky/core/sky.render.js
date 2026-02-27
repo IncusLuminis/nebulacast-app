@@ -632,6 +632,9 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
   const MOON_EMOJI_SIZE = 22; // px font size for moon emoji
   const MOON_EMOJI_R = MOON_EMOJI_SIZE * 0.52; // approximate visual radius for halo sizing
 
+  // Pre-locate the sun so the moon emoji can be rotated to face it
+  const sunObj = sunMoonPrepared.find(o => o && o.type === "sun" && o.x != null && o.y != null) || null;
+
   for (const o of sunMoonPrepared) {
     if (!o || o.x == null || o.y == null) continue;
     if (o.visible === false || (typeof o.altDeg === "number" && o.altDeg < 0)) continue;
@@ -665,20 +668,36 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
     }
 
     if (isMoon) {
-      // Font size scales with o.r so it stays proportional if the base radius is changed
-      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 5.2) * 4);
+      // Font size matches sun's visual diameter: o.r is 6.0 for both bodies
+      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 6.0) * 2.5);
       const emoji = moonPhaseEmoji(o.illum_pct, o.waxing);
+
       ctx.save();
+      ctx.translate(o.x, o.y);
+
+      // Rotate so the lit limb faces the Sun in screen coordinates.
+      // Waxing glyphs (🌒🌓🌔) are lit on the right → base angle 0
+      // Waning glyphs (🌖🌗🌘) are lit on the left  → base angle π
+      if (sunObj) {
+        const dx = sunObj.x - o.x;
+        const dy = sunObj.y - o.y;
+        if (dx !== 0 || dy !== 0) {
+          const sunAngle = Math.atan2(dy, dx);
+          const litBase  = (o.waxing === false) ? Math.PI : 0;
+          ctx.rotate(sunAngle - litBase);
+        }
+      }
+
       ctx.font = `${moonFontSize}px system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(emoji, o.x, o.y);
+      ctx.fillText(emoji, 0, 0);
       ctx.restore();
     }
 
     if (typeof o.altDeg === "number" && o.altDeg >= LABEL_ALT_MIN_SM && o.name) {
-      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 5.2) * 4);
-      const labelOffsetX = isMoon ? (moonFontSize * 0.52 + 4) : ((typeof o.r === "number") ? o.r : 6.0) + 4;
+      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 6.0) * 2.5);
+      const labelOffsetX = isMoon ? (moonFontSize * 0.5 + 4) : ((typeof o.r === "number") ? o.r : 6.0) + 4;
       const x0 = o.x + labelOffsetX;
       const y0 = o.y;
 

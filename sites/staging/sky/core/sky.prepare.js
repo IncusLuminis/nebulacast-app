@@ -848,7 +848,7 @@ function prepareSunMoon(sunMoonJson, observer, viewport) {
 
   // tweak sizes/colors as you like
   pushBody("sun",  "Sun",  "rgba(255,230,180,0.95)", 6.0);
-  pushBody("moon", "Moon", "rgba(210,230,255,0.85)", 5.2);
+  pushBody("moon", "Moon", "rgba(210,230,255,0.85)", 6.0);
 
   return out;
 }
