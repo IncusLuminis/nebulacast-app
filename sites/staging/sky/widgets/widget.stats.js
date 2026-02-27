@@ -536,12 +536,15 @@ function addKPI(grid, label, value, warnCls = '') {
 }
 
 // ─── Public factory ───────────────────────────────────────────────────────────
-export function createStatsDialog() {
+export function createStatsDialog(container) {
   injectStyles();
 
   const overlay = document.createElement('div');
   overlay.className = 'sky-stats-overlay';
-  document.body.appendChild(overlay);
+  // Append inside the provided container (widget root) so the overlay is a
+  // descendant of the fullscreen element and stays visible in fullscreen mode.
+  // Falls back to document.body for backwards compatibility.
+  (container || document.body).appendChild(overlay);
 
   const panel = document.createElement('div');
   panel.className = 'sky-stats-panel';

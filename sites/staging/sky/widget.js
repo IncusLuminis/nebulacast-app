@@ -264,7 +264,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     const modalWC  = uiEnabled("modal") ? document.createElement("ui-modal") : null;
-    const statsDlg = createStatsDialog();   // stats dialog (fixed overlay, appended to body)
+    const statsDlg = createStatsDialog(root); // stats dialog (overlay appended inside root → visible in fullscreen)
     const player = uiEnabled("player") ? document.createElement("ui-player") : null;
     const skyCard = document.createElement("sky-card");
     
