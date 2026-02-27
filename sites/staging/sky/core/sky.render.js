@@ -598,26 +598,54 @@ function drawObjects(ctx, vp, objectsPrepared) {
 
 
 /**
- * Returns the appropriate moon phase emoji based on illumination % and waxing/waning.
- * Maps to 8 standard phase emojis: 🌑🌒🌓🌔🌕🌖🌗🌘
+ * Draws a geometrically correct moon phase at the canvas origin (0, 0).
+ * The lit limb is always on the RIGHT — caller applies ctx.rotate() first.
+ * k = illumination fraction 0..1 (0 = new moon, 1 = full moon).
+ *
+ * Technique: the day/night terminator projects as a vertical ellipse whose
+ * horizontal semi-axis is r·|1−2k|.  For a crescent (k < 0.5) we fill the
+ * disk dark and overdraw a bright region bounded by the right disk-arc and
+ * the right limb of that ellipse.  For a gibbous (k > 0.5) we do the
+ * inverse: fill bright and overdraw a dark crescent on the left.
  */
-function moonPhaseEmoji(illum_pct, waxing) {
-  const pct = (typeof illum_pct === "number" && isFinite(illum_pct))
-    ? Math.max(0, Math.min(100, illum_pct))
-    : 0;
-  if (pct <= 6)  return "🌑"; // New Moon
-  if (pct >= 94) return "🌕"; // Full Moon
-  if (waxing === false) {
-    // Waning half
-    if (pct >= 55) return "🌖"; // Waning Gibbous
-    if (pct >= 45) return "🌗"; // Last Quarter
-    return "🌘";                // Waning Crescent
+function drawMoonPhaseShape(ctx, r, k, brightColor, shadowColor) {
+  k = Math.max(0, Math.min(1, k));
+  const sx = r * Math.abs(1 - 2 * k); // terminator ellipse horizontal semi-axis
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.clip(); // confine all drawing to the disk
+
+  if (k < 0.5) {
+    // ── Crescent: dark disk, bright sliver on the right ──────────────────
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = shadowColor;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false);          // right arc CW
+    ctx.ellipse(0, 0, sx, r, 0, Math.PI / 2, -Math.PI / 2, true); // right ellipse limb CCW
+    ctx.closePath();
+    ctx.fillStyle = brightColor;
+    ctx.fill();
   } else {
-    // Waxing half (or unknown)
-    if (pct <= 45) return "🌒"; // Waxing Crescent
-    if (pct <= 55) return "🌓"; // First Quarter
-    return "🌔";                // Waxing Gibbous
+    // ── Gibbous: bright disk, dark sliver on the left ────────────────────
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = brightColor;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, true);               // left arc CCW
+    ctx.ellipse(0, 0, sx, r, 0, Math.PI / 2, 3 * Math.PI / 2, false); // left ellipse limb CW
+    ctx.closePath();
+    ctx.fillStyle = shadowColor;
+    ctx.fill();
   }
+
+  ctx.restore();
 }
 
 function drawSunMoon(ctx, vp, sunMoonPrepared) {
@@ -629,10 +657,8 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
   ctx.lineCap = "round";
 
   const LABEL_ALT_MIN_SM = 0;
-  const MOON_EMOJI_SIZE = 22; // px font size for moon emoji
-  const MOON_EMOJI_R = MOON_EMOJI_SIZE * 0.52; // approximate visual radius for halo sizing
 
-  // Pre-locate the sun so the moon emoji can be rotated to face it
+  // Pre-locate the sun so the moon can be rotated to face it
   const sunObj = sunMoonPrepared.find(o => o && o.type === "sun" && o.x != null && o.y != null) || null;
 
   for (const o of sunMoonPrepared) {
@@ -668,58 +694,76 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
     }
 
     if (isMoon) {
-      // Font size matches sun's visual diameter: o.r is 6.0 for both bodies
-      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 6.0) * 2.5);
-      const emoji = moonPhaseEmoji(o.illum_pct, o.waxing);
+      const r = (typeof o.r === "number") ? o.r : 6.0;
+
+      // Illumination fraction 0..1
+      let k = null;
+      if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
+        k = Math.max(0, Math.min(1, o.illum_pct / 100));
+      } else if (typeof o.phase === "number" && isFinite(o.phase)) {
+        const ph = o.phase > 1.01 ? o.phase / 100 : o.phase;
+        k = Math.max(0, Math.min(1, ph));
+      }
+      if (k === null) k = 0.5;
+
+      // Glow halos (same proportions as the Sun)
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r + 7.5, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(210,230,255,0.08)";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r + 3.6, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(220,240,255,0.10)";
+      ctx.fill();
 
       ctx.save();
       ctx.translate(o.x, o.y);
 
-      // Rotate so the lit limb faces the Sun.
-      // Waxing glyphs (🌒🌓🌔) are lit on the right → base angle 0
-      // Waning glyphs (🌖🌗🌘) are lit on the left  → base angle π
+      // Rotate the phase shape so the lit limb (drawn on the right) faces the Sun.
+      // drawMoonPhaseShape always places the bright side on the right, so we only
+      // need to rotate by the screen angle toward the Sun — no waxing/waning offset.
       //
-      // When the Sun is above the horizon we use the screen-space direction
-      // from Moon to Sun (accounts for parallactic rotation naturally).
-      //
-      // When the Sun is below the horizon the stereographic projection diverges
-      // (rr = R·tan(z/2) → ∞), so instead we convert the Sun's azimuth directly
-      // to a screen angle.  On the sky map east=left, north=up, so:
-      //   az=0°(N)→up, az=90°(E)→left, az=180°(S)→down, az=270°(W)→right
-      //   screenAngle = atan2(-cos(azRad), -sin(azRad))
-      // This gives the pure compass direction of the Sun with no positional
-      // distortion — exactly what observers perceive as the "sunset direction".
+      // Sun above horizon → screen-space atan2 from Moon to Sun (handles parallactic
+      //   rotation naturally as both bodies move with the sky).
+      // Sun below horizon → pure azimuth compass bearing; the stereographic projection
+      //   diverges underground (rr = R·tan(z/2) → ∞), so we map azimuth directly:
+      //   N→up, E→left, S→down, W→right  ⟹  atan2(-cos(az), -sin(az))
       if (sunObj) {
         let sunAngle = null;
 
         if (typeof sunObj.altDeg === "number" && sunObj.altDeg < 0 &&
             typeof sunObj.azDeg  === "number") {
-          // Sun below horizon → pure azimuth compass direction on screen
           const azRad = sunObj.azDeg * (Math.PI / 180);
           sunAngle = Math.atan2(-Math.cos(azRad), -Math.sin(azRad));
         } else {
-          // Sun above horizon → screen-space direction from Moon to Sun
           const dx = sunObj.x - o.x;
           const dy = sunObj.y - o.y;
           if (dx !== 0 || dy !== 0) sunAngle = Math.atan2(dy, dx);
         }
 
-        if (sunAngle !== null) {
-          const litBase = (o.waxing === false) ? Math.PI : 0;
-          ctx.rotate(sunAngle - litBase);
-        }
+        if (sunAngle !== null) ctx.rotate(sunAngle);
       }
 
-      ctx.font = `${moonFontSize}px system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(emoji, 0, 0);
+      drawMoonPhaseShape(
+        ctx, r, k,
+        o.color || "rgba(220,235,255,0.88)",
+        "rgba(15,20,40,0.90)"
+      );
+
       ctx.restore();
+
+      // Thin outline ring
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r + 0.6, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
     }
 
     if (typeof o.altDeg === "number" && o.altDeg >= LABEL_ALT_MIN_SM && o.name) {
-      const moonFontSize = Math.round((typeof o.r === "number" ? o.r : 6.0) * 2.5);
-      const labelOffsetX = isMoon ? (moonFontSize * 0.5 + 4) : ((typeof o.r === "number") ? o.r : 6.0) + 4;
+      const r = (typeof o.r === "number") ? o.r : 6.0;
+      const labelOffsetX = r + 4;
       const x0 = o.x + labelOffsetX;
       const y0 = o.y;
 
