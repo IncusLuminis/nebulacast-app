@@ -1,6 +1,10 @@
 // core/sky.render.js
 import { UI } from "./sky.constants.js";
 
+// Last sun azimuth (degrees) while the sun was still above the horizon.
+// Frozen at sunset so the moon's lit limb doesn't rotate as the sun travels underground.
+let _lastSunAzDegAboveHorizon = null;
+
 /* -----------------------------
    Label queue + simple collision resolver + DEDUP KEYS
    - All labels are queued during layer draw.
@@ -661,6 +665,14 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
   // Pre-locate the sun so the moon can be rotated to face it
   const sunObj = sunMoonPrepared.find(o => o && o.type === "sun" && o.x != null && o.y != null) || null;
 
+  // Keep the frozen "sunset azimuth" up to date: as long as the sun is above the
+  // horizon we record its current azimuth; the moment it dips below we stop
+  // updating, so _lastSunAzDegAboveHorizon holds exactly the sunset direction.
+  if (sunObj && typeof sunObj.altDeg === "number" && sunObj.altDeg >= 0 &&
+      typeof sunObj.azDeg === "number") {
+    _lastSunAzDegAboveHorizon = sunObj.azDeg;
+  }
+
   for (const o of sunMoonPrepared) {
     if (!o || o.x == null || o.y == null) continue;
     if (o.visible === false || (typeof o.altDeg === "number" && o.altDeg < 0)) continue;
@@ -726,16 +738,23 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       //
       // Sun above horizon → screen-space atan2 from Moon to Sun (handles parallactic
       //   rotation naturally as both bodies move with the sky).
-      // Sun below horizon → pure azimuth compass bearing; the stereographic projection
-      //   diverges underground (rr = R·tan(z/2) → ∞), so we map azimuth directly:
-      //   N→up, E→left, S→down, W→right  ⟹  atan2(-cos(az), -sin(az))
+      // Sun below horizon → use the FROZEN sunset azimuth (the azimuth at which the
+      //   sun last crossed the horizon going down).  The lit limb stays fixed at that
+      //   compass point for the whole night, matching what an observer actually sees.
+      //   Fallback to current underground azimuth only if we have no frozen value yet
+      //   (e.g. page loaded after sunset with no prior above-horizon frame).
       if (sunObj) {
         let sunAngle = null;
 
-        if (typeof sunObj.altDeg === "number" && sunObj.altDeg < 0 &&
-            typeof sunObj.azDeg  === "number") {
-          const azRad = sunObj.azDeg * (Math.PI / 180);
-          sunAngle = Math.atan2(-Math.cos(azRad), -Math.sin(azRad));
+        if (typeof sunObj.altDeg === "number" && sunObj.altDeg < 0) {
+          // Sun is below horizon — use frozen sunset azimuth
+          const frozenAz = (_lastSunAzDegAboveHorizon !== null)
+            ? _lastSunAzDegAboveHorizon
+            : sunObj.azDeg; // fallback: current underground azimuth
+          if (typeof frozenAz === "number") {
+            const azRad = frozenAz * (Math.PI / 180);
+            sunAngle = Math.atan2(-Math.cos(azRad), -Math.sin(azRad));
+          }
         } else {
           const dx = sunObj.x - o.x;
           const dy = sunObj.y - o.y;
