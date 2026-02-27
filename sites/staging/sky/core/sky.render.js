@@ -678,9 +678,26 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       // Rotate so the lit limb faces the Sun in screen coordinates.
       // Waxing glyphs (🌒🌓🌔) are lit on the right → base angle 0
       // Waning glyphs (🌖🌗🌘) are lit on the left  → base angle π
+      //
+      // When the Sun is below the horizon its stereographic position shoots far
+      // off-screen (rr = R·tan(z/2) diverges for z > 90°), giving a distorted
+      // angle.  Instead we project the Sun's azimuth onto the horizon circle —
+      // the "sunset/sunrise point" — which is what the observer's eye actually
+      // references as the direction of the Sun.
       if (sunObj) {
-        const dx = sunObj.x - o.x;
-        const dy = sunObj.y - o.y;
+        let targetX = sunObj.x;
+        let targetY = sunObj.y;
+
+        if (typeof sunObj.altDeg === "number" && sunObj.altDeg < 0 &&
+            typeof sunObj.azDeg  === "number") {
+          // Horizon intercept: rr = vp.R at alt = 0, same azimuth as Sun
+          const azRad = sunObj.azDeg * (Math.PI / 180);
+          targetX = vp.cx - vp.R * Math.sin(azRad);
+          targetY = vp.cy - vp.R * Math.cos(azRad);
+        }
+
+        const dx = targetX - o.x;
+        const dy = targetY - o.y;
         if (dx !== 0 || dy !== 0) {
           const sunAngle = Math.atan2(dy, dx);
           const litBase  = (o.waxing === false) ? Math.PI : 0;
