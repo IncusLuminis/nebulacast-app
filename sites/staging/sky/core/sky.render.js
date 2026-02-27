@@ -675,32 +675,37 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       ctx.save();
       ctx.translate(o.x, o.y);
 
-      // Rotate so the lit limb faces the Sun in screen coordinates.
+      // Rotate so the lit limb faces the Sun.
       // Waxing glyphs (🌒🌓🌔) are lit on the right → base angle 0
       // Waning glyphs (🌖🌗🌘) are lit on the left  → base angle π
       //
-      // When the Sun is below the horizon its stereographic position shoots far
-      // off-screen (rr = R·tan(z/2) diverges for z > 90°), giving a distorted
-      // angle.  Instead we project the Sun's azimuth onto the horizon circle —
-      // the "sunset/sunrise point" — which is what the observer's eye actually
-      // references as the direction of the Sun.
+      // When the Sun is above the horizon we use the screen-space direction
+      // from Moon to Sun (accounts for parallactic rotation naturally).
+      //
+      // When the Sun is below the horizon the stereographic projection diverges
+      // (rr = R·tan(z/2) → ∞), so instead we convert the Sun's azimuth directly
+      // to a screen angle.  On the sky map east=left, north=up, so:
+      //   az=0°(N)→up, az=90°(E)→left, az=180°(S)→down, az=270°(W)→right
+      //   screenAngle = atan2(-cos(azRad), -sin(azRad))
+      // This gives the pure compass direction of the Sun with no positional
+      // distortion — exactly what observers perceive as the "sunset direction".
       if (sunObj) {
-        let targetX = sunObj.x;
-        let targetY = sunObj.y;
+        let sunAngle = null;
 
         if (typeof sunObj.altDeg === "number" && sunObj.altDeg < 0 &&
             typeof sunObj.azDeg  === "number") {
-          // Horizon intercept: rr = vp.R at alt = 0, same azimuth as Sun
+          // Sun below horizon → pure azimuth compass direction on screen
           const azRad = sunObj.azDeg * (Math.PI / 180);
-          targetX = vp.cx - vp.R * Math.sin(azRad);
-          targetY = vp.cy - vp.R * Math.cos(azRad);
+          sunAngle = Math.atan2(-Math.cos(azRad), -Math.sin(azRad));
+        } else {
+          // Sun above horizon → screen-space direction from Moon to Sun
+          const dx = sunObj.x - o.x;
+          const dy = sunObj.y - o.y;
+          if (dx !== 0 || dy !== 0) sunAngle = Math.atan2(dy, dx);
         }
 
-        const dx = targetX - o.x;
-        const dy = targetY - o.y;
-        if (dx !== 0 || dy !== 0) {
-          const sunAngle = Math.atan2(dy, dx);
-          const litBase  = (o.waxing === false) ? Math.PI : 0;
+        if (sunAngle !== null) {
+          const litBase = (o.waxing === false) ? Math.PI : 0;
           ctx.rotate(sunAngle - litBase);
         }
       }
