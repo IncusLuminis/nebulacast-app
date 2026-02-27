@@ -597,6 +597,29 @@ function drawObjects(ctx, vp, objectsPrepared) {
 }
 
 
+/**
+ * Returns the appropriate moon phase emoji based on illumination % and waxing/waning.
+ * Maps to 8 standard phase emojis: 🌑🌒🌓🌔🌕🌖🌗🌘
+ */
+function moonPhaseEmoji(illum_pct, waxing) {
+  const pct = (typeof illum_pct === "number" && isFinite(illum_pct))
+    ? Math.max(0, Math.min(100, illum_pct))
+    : 0;
+  if (pct <= 6)  return "🌑"; // New Moon
+  if (pct >= 94) return "🌕"; // Full Moon
+  if (waxing === false) {
+    // Waning half
+    if (pct >= 55) return "🌖"; // Waning Gibbous
+    if (pct >= 45) return "🌗"; // Last Quarter
+    return "🌘";                // Waning Crescent
+  } else {
+    // Waxing half (or unknown)
+    if (pct <= 45) return "🌒"; // Waxing Crescent
+    if (pct <= 55) return "🌓"; // First Quarter
+    return "🌔";                // Waxing Gibbous
+  }
+}
+
 function drawSunMoon(ctx, vp, sunMoonPrepared) {
   if (!sunMoonPrepared || !sunMoonPrepared.length) return;
 
@@ -606,6 +629,8 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
   ctx.lineCap = "round";
 
   const LABEL_ALT_MIN_SM = 0;
+  const MOON_EMOJI_SIZE = 22; // px font size for moon emoji
+  const MOON_EMOJI_R = MOON_EMOJI_SIZE * 0.52; // approximate visual radius for halo sizing
 
   for (const o of sunMoonPrepared) {
     if (!o || o.x == null || o.y == null) continue;
@@ -614,68 +639,56 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
     const isSun = (o.type === "sun");
     const isMoon = (o.type === "moon");
 
-    const r = (typeof o.r === "number") ? o.r : (isSun ? 6.0 : 5.2);
+    if (isSun) {
+      const r = (typeof o.r === "number") ? o.r : 6.0;
 
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, r + 7.5, 0, Math.PI * 2);
-    ctx.fillStyle = isSun ? "rgba(255,220,140,0.12)" : "rgba(210,230,255,0.08)";
-    ctx.fill();
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r + 7.5, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,220,140,0.12)";
+      ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, r + 3.6, 0, Math.PI * 2);
-    ctx.fillStyle = isSun ? "rgba(255,235,170,0.16)" : "rgba(220,240,255,0.10)";
-    ctx.fill();
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r + 3.6, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,235,170,0.16)";
+      ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
-    ctx.fillStyle = isSun
-      ? (o.color || "rgba(255,235,185,0.95)")
-      : (o.color || "rgba(220,235,255,0.88)");
-    ctx.fill();
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = o.color || "rgba(255,235,185,0.95)";
+      ctx.fill();
 
-    if (isMoon) {
-      let k = null;
-
-      if (typeof o.phase === "number" && isFinite(o.phase)) {
-        k = (o.phase > 1.01) ? (o.phase / 100) : o.phase;
-      } else if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
-        k = o.illum_pct / 100;
-      }
-
-      if (k != null) {
-        k = Math.max(0, Math.min(1, k));
-        const shift = (1 - k) * r * 2;
-        const dir = (o.waxing === false) ? +1 : -1;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
-        ctx.clip();
-
-        const shadowX = o.x + dir * (shift / 2);
-        ctx.beginPath();
-        ctx.arc(shadowX, o.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0,0,0,0.68)";
-        ctx.fill();
-
-        ctx.restore();
-
-        ctx.beginPath();
-        ctx.arc(o.x, o.y, r + 0.2, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(255,255,255,0.08)";
-        ctx.lineWidth = 1.0;
-        ctx.stroke();
-      }
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r + 0.6, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
     }
 
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, r + 0.6, 0, Math.PI * 2);
-    ctx.strokeStyle = isSun ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.16)";
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
+    if (isMoon) {
+      // Soft glow halos behind the emoji
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, MOON_EMOJI_R + 8, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(210,230,255,0.07)";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, MOON_EMOJI_R + 4, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(220,240,255,0.10)";
+      ctx.fill();
+
+      // Draw the phase emoji
+      const emoji = moonPhaseEmoji(o.illum_pct, o.waxing);
+      ctx.save();
+      ctx.font = `${MOON_EMOJI_SIZE}px system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(emoji, o.x, o.y);
+      ctx.restore();
+    }
 
     if (typeof o.altDeg === "number" && o.altDeg >= LABEL_ALT_MIN_SM && o.name) {
-      const x0 = o.x + 10;
+      const labelOffsetX = isMoon ? (MOON_EMOJI_R + 4) : ((typeof o.r === "number") ? o.r : 6.0) + 4;
+      const x0 = o.x + labelOffsetX;
       const y0 = o.y;
 
       enqueueLabel(ctx, vp, {
