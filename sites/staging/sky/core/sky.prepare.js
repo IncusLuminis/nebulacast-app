@@ -149,9 +149,13 @@ function prepareStars(starCatalog, observer, viewport, options) {
     
     stars.push({
       id: s.id,
+      hip:     s.hip     != null ? s.hip     : null,
+      hd:      s.hd      != null ? s.hd      : null,
       name: s.name || "",
       mag: s.mag,
       designation: s.designation || "",
+      spect:   s.spect   || null,
+      dist_pc: s.dist_pc != null ? s.dist_pc : null,
       ra_deg: s.ra_deg,
       dec_deg: s.dec_deg,
       x, y, r,

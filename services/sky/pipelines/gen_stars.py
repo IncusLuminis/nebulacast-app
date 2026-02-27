@@ -125,14 +125,32 @@ def main() -> None:
 
             designation = format_bayer(bayer, con)
 
+            # HD catalog number
+            hd_raw = (row.get("hd") or "").strip()
+            hd = int(hd_raw) if hd_raw.isdigit() else None
+
+            # Spectral type
+            spect = (row.get("spect") or "").strip() or None
+
+            # Distance in parsecs (HYG stores 0 for Sun; skip zero/missing)
+            dist_raw = (row.get("dist") or "").strip()
+            try:
+                dist_val = float(dist_raw)
+                dist_pc = round(dist_val, 2) if dist_val > 0 else None
+            except (ValueError, TypeError):
+                dist_pc = None
+
             stars.append({
                 "id": star_id,
                 "hip": int(hip) if hip and hip.isdigit() else None,
+                "hd": hd,
                 "name": name,
                 "designation": designation or "",
                 "ra_deg": round(ra_deg, 6),
                 "dec_deg": round(dec_deg, 6),
                 "mag": round(mag, 2),
+                "spect": spect,
+                "dist_pc": dist_pc,
             })
 
     stars.sort(key=lambda s: s["id"])

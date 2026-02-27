@@ -517,6 +517,110 @@ export const SKY_CARD_CSS = `
   font-size: 10px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   STAR CARD  (.sky-card-panel.is-star)
+═══════════════════════════════════════════════════════════════════ */
+
+/* Header: align to top so the multi-line title doesn't get clipped */
+.sky-card-panel.is-star .sky-card-header {
+  align-items: flex-start;
+}
+
+/* Nudge icon down to sit level with the first text line */
+.sky-card-panel.is-star .sky-card-icon {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* The title div acts as a column stack in star mode */
+.sky-card-panel.is-star .sky-card-title {
+  line-height: 1.3;
+}
+
+/* Proper / common name — inherits 20 px / 700 from .sky-card-title */
+.sky-card-star-proper {
+  display: block;
+}
+
+/* Bayer designation — smaller, muted */
+.sky-card-star-bayer {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.60);
+  margin-top: 3px;
+  letter-spacing: 0.2px;
+}
+
+/* Catalog IDs: "HD 197345 · HIP 102098" — tiny, very muted */
+.sky-card-star-catalog-ids {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.30);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+/* Body: sections handle their own padding; allow scrolling for tall content */
+.sky-card-panel.is-star .sky-card-body {
+  padding: 0;
+  gap: 0;
+  overflow-y: auto;
+  max-height: 520px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+.sky-card-panel.is-star .sky-card-body::-webkit-scrollbar       { width: 4px; }
+.sky-card-panel.is-star .sky-card-body::-webkit-scrollbar-track { background: transparent; }
+.sky-card-panel.is-star .sky-card-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+/* Coordinates (RA / Dec) line at the top of the body */
+.sky-card-star-coords {
+  padding: 14px 20px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Field rows section — reuses existing .sky-card-field CSS */
+.sky-card-star-fields {
+  padding: 10px 20px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Aladin Lite preview section */
+.sky-card-aladin-wrap {
+  padding: 14px 20px;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* SIMBAD classification section */
+.sky-card-simbad-section {
+  padding: 10px 20px 14px;
+}
+
+.sky-card-simbad-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sky-card-simbad-item {
+  font-size: 11px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.60);
+}
+
 /* ── Scoring tooltip ── */
 .sky-score-tooltip {
   position: fixed;

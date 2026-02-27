@@ -3,6 +3,37 @@
  * UI (templates + styles + behavior) lives ONLY here.
  */
 
+// ── Sexagesimal coordinate formatters ─────────────────────────────────────────
+// Used by both the tooltip and the sky-card to ensure consistent full-precision
+// sexagesimal formatting (hh mm ss / ±dd ′ ″) across both renderers.
+
+function _fmtRASex(ra_deg) {
+  const v = Number(ra_deg);
+  if (!Number.isFinite(v)) return null;
+  const totalSec = (v / 15) * 3600;
+  const hh  = Math.floor(totalSec / 3600);
+  const rem = totalSec - hh * 3600;
+  const mm  = Math.floor(rem / 60);
+  const ss  = rem - mm * 60;
+  const pad2 = n => String(Math.floor(n)).padStart(2, "0");
+  return `${pad2(hh)}h${pad2(mm)}m${ss.toFixed(0).padStart(2, "0")}s`;
+}
+
+function _fmtDecSex(dec_deg) {
+  const v = Number(dec_deg);
+  if (!Number.isFinite(v)) return null;
+  const sign = v >= 0 ? "+" : "−";
+  const a    = Math.abs(v);
+  const dd   = Math.floor(a);
+  const arm  = (a - dd) * 60;
+  const mm   = Math.floor(arm);
+  const ss   = Math.round((arm - mm) * 60);
+  const pad2 = n => String(Math.floor(n)).padStart(2, "0");
+  return `${sign}${pad2(dd)}°${pad2(mm)}′${pad2(ss)}″`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 let __stylesInjected = false;
 
 function injectStyles() {
@@ -282,26 +313,23 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
     if (d.distance) metaParts.push(d.distance);
 
   } else {
-    // STAR — title priority: "Name · α Con" > "α Con" > "HIP N" > "Star"
-    // Never show a bare numeric ID.
+    // STAR tooltip — single best display name; full sexagesimal coords; mag.
+    // Never show the bare internal numeric id.
     const proper = (d.name || "").trim();
     const bayer  = normalizeDesignation(d.designation || "");
     const hipLabel = Number.isFinite(Number(d.hip)) ? `HIP ${d.hip}`
                    : Number.isFinite(Number(d.id))  ? `HIP ${d.id}`
                    : null;
-    title = (proper && bayer) ? `${proper} · ${bayer}`
-          : proper || bayer || hipLabel || "Star";
+    // Tooltip: one best name only (not "Name · Bayer" combined)
+    title = proper || bayer || hipLabel || "Star";
     note = "";
 
-    // RA/DEC line
-    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
-    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
+    // RA/Dec — full sexagesimal (hh mm ss / ±dd ′ ″)
+    if (d.ra_deg  != null) raDec.push(`RA ${_fmtRASex(d.ra_deg)   || d.ra_deg.toFixed(4)}`);
+    if (d.dec_deg != null) raDec.push(`Dec ${_fmtDecSex(d.dec_deg) || d.dec_deg.toFixed(4)}`);
 
-    // Meta line
-    if (d.mag != null) metaParts.push(`mag ${fmtMag(d.mag, 2)}`);
-    if (d.altDeg != null) metaParts.push(`alt ${fmtDeg(d.altDeg, 0)}`);
-    if (d.azDeg != null) metaParts.push(`az ${fmtDeg(d.azDeg, 0)}`);
-    if (d.constellation) metaParts.push(d.constellation);
+    // Mag (V-band for HYG catalog)
+    if (d.mag != null) metaParts.push(`Mag ${Number(d.mag).toFixed(2)} (V)`);
   }
 
   const raDecText = raDec.join(" · ");
@@ -574,6 +602,8 @@ export function buildCardData(hit) {
   let note = "";
   const raDec = [];
   const metaParts = [];
+  // Extra fields populated only for kind === "star" (passed to _renderStarCard)
+  const starExtras = {};
   
   const fmtRA = (ra) => {
     const v = Number(ra);
@@ -647,18 +677,47 @@ export function buildCardData(hit) {
     // Never show a bare numeric ID.
     const proper = (d.name || "").trim();
     const bayer  = normalizeDesignation(d.designation || "");
-    const hipLabel = Number.isFinite(Number(d.hip)) ? `HIP ${d.hip}`
-                   : Number.isFinite(Number(d.id))  ? `HIP ${d.id}`
-                   : null;
-    title = (proper && bayer) ? `${proper} · ${bayer}`
-          : proper || bayer || hipLabel || "Star";
-    note = "";
-    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
-    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
-    if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 2)}`);
+    const hipNum = Number.isFinite(Number(d.hip)) ? Number(d.hip)
+                 : Number.isFinite(Number(d.id))  ? Number(d.id) : null;
+    const hdNum  = Number.isFinite(Number(d.hd))  ? Number(d.hd)  : null;
+
+    // Card header: proper name as primary title
+    title = proper || bayer || (hipNum != null ? `HIP ${hipNum}` : null) || "Star";
+    note  = "";
+
+    // Subtitle: bayer designation shown below proper name (if different from title)
+    const _subtitle = (bayer && bayer !== title) ? bayer : null;
+
+    // Catalog IDs line: "HD 197345 · HIP 102098"
+    const _catParts = [];
+    if (hdNum  != null) _catParts.push(`HD ${hdNum}`);
+    if (hipNum != null) _catParts.push(`HIP ${hipNum}`);
+    const _catalogIdsLine = _catParts.join(" · ") || null;
+
+    // RA/Dec — full sexagesimal
+    if (d.ra_deg  != null) raDec.push(`RA ${_fmtRASex(d.ra_deg)   || d.ra_deg.toFixed(4)}`);
+    if (d.dec_deg != null) raDec.push(`Dec ${_fmtDecSex(d.dec_deg) || d.dec_deg.toFixed(4)}`);
+
+    // Meta (used in tooltip fallback; card renderer builds its own rows)
+    if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 2)} (V)`);
+    if (d.spect)       metaParts.push(d.spect);
     if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
-    if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
-    if (d.constellation) metaParts.push(d.constellation);
+    if (d.azDeg  != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
+
+    // Attach star-specific extras so _renderStarCard can use them
+    Object.assign(starExtras, {
+      subtitle:       _subtitle,
+      catalogIdsLine: _catalogIdsLine,
+      spect:          d.spect   || null,
+      dist_pc:        d.dist_pc != null ? d.dist_pc : null,
+      hip:            hipNum,
+      hd:             hdNum,
+      ra_deg:         d.ra_deg  != null ? d.ra_deg  : null,
+      dec_deg:        d.dec_deg != null ? d.dec_deg : null,
+      altDeg:         d.altDeg  != null ? d.altDeg  : null,
+      azDeg:          d.azDeg   != null ? d.azDeg   : null,
+      mag:            d.mag     != null ? d.mag      : null,
+    });
   }
   
   // ── Alert tab data (kind === "alert") ──────────────────────────────────────
@@ -912,5 +971,7 @@ export function buildCardData(hit) {
     score:      hit.kind === "alert" && hit.data?.score_norm != null
                   ? Number(hit.data.score_norm).toFixed(2) : null,
     alertTabs,
+    // star-specific extras (populated only when kind === "star")
+    ...starExtras,
   };
 }

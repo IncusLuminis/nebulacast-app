@@ -1,6 +1,55 @@
 // ui/components/sky_card.js
 import { SKY_CARD_CSS } from './sky_card.css.js';
 
+// ── SIMBAD enrichment ─────────────────────────────────────────────────────────
+// Module-level cache survives card close/reopen within the page session.
+// Key format: "HIP:102098" or "HD:197345"
+const _simbadCache = new Map();
+
+// Human-readable labels for common SIMBAD object type codes (otype field).
+const _SIMBAD_OTYPE = {
+  '*':    'Star',        '**':   'Double/Multiple Star',  'V*':  'Variable Star',
+  'PM*':  'High PM Star', 'HB*': 'Horizontal Branch',    'Be*': 'Be Star',
+  'WR*':  'Wolf-Rayet',   'C*':  'Carbon Star',          'S*':  'S Star',
+  'SG*':  'Supergiant',   'sg*': 'Supergiant',           'RG*': 'Red Giant',
+  'WD*':  'White Dwarf',  'HS*': 'Hot Subdwarf',         'BD*': 'Brown Dwarf',
+  'Ce*':  'Cepheid',      'RR*': 'RR Lyrae',             'Mira':'Mira',
+  'LP*':  'Long Period Variable',  'EB*': 'Eclipsing Binary',
+  'Al*':  'Algol Variable',        'bCep':'Beta Cep Variable',
+  'dS*':  'Delta Sct Variable',    'BY*': 'BY Dra Variable',
+};
+
+async function _fetchSimbad(hip, hd) {
+  const cacheKey = hip != null ? `HIP:${hip}` : (hd != null ? `HD:${hd}` : null);
+  if (!cacheKey) return null;
+  if (_simbadCache.has(cacheKey)) return _simbadCache.get(cacheKey);
+
+  // Sentinel prevents duplicate in-flight requests for the same star.
+  _simbadCache.set(cacheKey, null);
+
+  const simbadId = hip != null ? `HIP ${hip}` : `HD ${hd}`;
+  // Minimal TAP query: spectral type + object type.
+  const adql = `SELECT sp_type,otype FROM basic JOIN ident ON basic.oid=ident.oidref WHERE ident.id='${simbadId}'`;
+  const url  = `https://simbad.cds.unistra.fr/simbad/sim-tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=${encodeURIComponent(adql)}`;
+
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!resp.ok) return null;
+    const json  = await resp.json();
+    const cols  = (json?.metadata || []).map(c => c.name);
+    const rows  = json?.data || [];
+    if (!rows.length) return null;
+    const row = rows[0];
+    const get = (name) => { const i = cols.indexOf(name); return (i >= 0 && row[i] != null) ? String(row[i]).trim() : null; };
+    const result = { sp_type: get('sp_type') || null, otype: get('otype') || null };
+    _simbadCache.set(cacheKey, result);
+    return result;
+  } catch {
+    return null;  // network/timeout — keep sentinel null in cache
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Scoring tooltip texts (source: sky/assets/Scoring_tooltip.json) ──────────
 const SCORE_TOOLTIPS = {
   'global_score':            'Overall priority of the object. Weighted combination of external importance, hazard and urgency.',
@@ -122,15 +171,19 @@ export class SkyCard extends HTMLElement {
   open(data) {
     if (!data) return;
 
-    // Clean up alert header extension from previous open
+    // Clean up from any previous render mode
     const prevMeta = this._header.querySelector('.sky-card-header-meta');
     if (prevMeta) this._header.removeChild(prevMeta);
-    this._icon.style.display = '';   // restore if it was hidden
+    this._icon.style.display = '';
     this._title.style.display = '';
+    this._title.textContent = '';    // clear multi-line star title if present
     this._panel.classList.remove('has-tabs');
+    this._panel.classList.remove('is-star');
     this._body.classList.remove('has-tabs');
 
-    if (data.kind === 'alert' && data.alertTabs) {
+    if (data.kind === 'star') {
+      this._renderStarCard(data);
+    } else if (data.kind === 'alert' && data.alertTabs) {
       this._renderAlertCard(data);
     } else {
       this._renderSimpleCard(data);
@@ -152,7 +205,7 @@ export class SkyCard extends HTMLElement {
   }
 
   // ─────────────────────────────────────────────
-  // SIMPLE CARD  (star / object)
+  // SIMPLE CARD  (generic object fallback)
   // ─────────────────────────────────────────────
 
   _renderSimpleCard(data) {
@@ -164,6 +217,129 @@ export class SkyCard extends HTMLElement {
     if (data.raDecText) parts.push(`<div class="sky-card-coords">${data.raDecText}</div>`);
     if (data.metaText)  parts.push(`<div class="sky-card-meta">${data.metaText}</div>`);
     this._body.innerHTML = parts.join('');
+  }
+
+  // ─────────────────────────────────────────────
+  // STAR CARD  (enriched: header + fields + Aladin + SIMBAD)
+  // ─────────────────────────────────────────────
+
+  _renderStarCard(data) {
+    this._panel.classList.add('is-star');
+    this._icon.innerHTML = data.iconHTML || '';
+
+    // ── Multi-line title: Proper name → Bayer designation → Catalog IDs ──────
+    const properEl = document.createElement('span');
+    properEl.className = 'sky-card-star-proper';
+    properEl.textContent = data.title || 'Star';
+    this._title.appendChild(properEl);
+
+    if (data.subtitle) {
+      const bayerEl = document.createElement('div');
+      bayerEl.className = 'sky-card-star-bayer';
+      bayerEl.textContent = data.subtitle;
+      this._title.appendChild(bayerEl);
+    }
+
+    if (data.catalogIdsLine) {
+      const catEl = document.createElement('div');
+      catEl.className = 'sky-card-star-catalog-ids';
+      catEl.textContent = data.catalogIdsLine;
+      this._title.appendChild(catEl);
+    }
+
+    // ── Body ─────────────────────────────────────────────────────────────────
+    this._body.innerHTML = '';
+
+    // Coordinates section
+    if (data.raDecText) {
+      const coordsDiv = document.createElement('div');
+      coordsDiv.className = 'sky-card-star-coords';
+      coordsDiv.textContent = data.raDecText;
+      this._body.appendChild(coordsDiv);
+    }
+
+    // Field rows: Alt/Az, Magnitude, Spectrum, Distance
+    const fieldRows = [];
+    if (data.altDeg != null) {
+      const altStr = `${Number(data.altDeg).toFixed(0)}°`;
+      const azStr  = data.azDeg != null ? `${Number(data.azDeg).toFixed(0)}°` : null;
+      fieldRows.push(['Alt / Az', azStr ? `${altStr}  ·  ${azStr}` : altStr]);
+    }
+    if (data.mag != null) {
+      fieldRows.push(['Magnitude', `${Number(data.mag).toFixed(2)}  V`]);
+    }
+    if (data.spect) {
+      fieldRows.push(['Spectrum', data.spect]);
+    }
+    if (data.dist_pc != null) {
+      const d = Number(data.dist_pc);
+      const distStr = d >= 1000 ? `${(d / 1000).toFixed(2)} kpc`
+                    : d >= 100  ? `${Math.round(d)} pc`
+                    :             `${d.toFixed(1)} pc`;
+      fieldRows.push(['Distance', distStr]);
+    }
+
+    if (fieldRows.length) {
+      const fieldsDiv = document.createElement('div');
+      fieldsDiv.className = 'sky-card-star-fields';
+      this._fillPane(fieldsDiv, { rows: fieldRows });
+      this._body.appendChild(fieldsDiv);
+    }
+
+    // ── Aladin Lite preview (200×200) ─────────────────────────────────────────
+    if (data.ra_deg != null && data.dec_deg != null) {
+      const aladinWrap = document.createElement('div');
+      aladinWrap.className = 'sky-card-aladin-wrap';
+
+      const iframe = document.createElement('iframe');
+      const target = `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`;
+      iframe.src = `https://aladin.cds.unistra.fr/AladinLite/?target=${encodeURIComponent(target)}&fov=0.1&survey=P%2FDSS2%2Fcolor&reticle=false&zoom=false&fullScreen=false&lang=en`;
+      iframe.width  = '200';
+      iframe.height = '200';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('scrolling', 'no');
+      iframe.style.cssText = 'border:none;border-radius:6px;display:block;';
+      // Hide wrapper if the iframe fails (e.g. network offline)
+      iframe.addEventListener('error', () => { aladinWrap.style.display = 'none'; });
+
+      aladinWrap.appendChild(iframe);
+      this._body.appendChild(aladinWrap);
+    }
+
+    // ── SIMBAD Classification (async, non-blocking) ───────────────────────────
+    const simbadSection = document.createElement('div');
+    simbadSection.className = 'sky-card-simbad-section';
+    simbadSection.style.display = 'none';
+    this._body.appendChild(simbadSection);
+
+    const hipId = data.hip != null ? Number(data.hip) : null;
+    const hdId  = data.hd  != null ? Number(data.hd)  : null;
+    if (hipId != null || hdId != null) {
+      _fetchSimbad(hipId, hdId).then(info => {
+        if (!info || (!info.sp_type && !info.otype)) return;
+
+        const label = document.createElement('div');
+        label.className = 'sky-card-simbad-label';
+        label.textContent = 'Classification';
+        simbadSection.appendChild(label);
+
+        if (info.sp_type) {
+          const item = document.createElement('div');
+          item.className = 'sky-card-simbad-item';
+          item.textContent = `Spectral class: ${info.sp_type}`;
+          simbadSection.appendChild(item);
+        }
+        if (info.otype) {
+          const humanType = _SIMBAD_OTYPE[info.otype] || info.otype;
+          const item = document.createElement('div');
+          item.className = 'sky-card-simbad-item';
+          item.textContent = `Type: ${humanType}`;
+          simbadSection.appendChild(item);
+        }
+
+        simbadSection.style.display = '';
+      }).catch(() => { /* SIMBAD failed — section stays hidden */ });
+    }
   }
 
   // ─────────────────────────────────────────────
