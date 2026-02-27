@@ -60,6 +60,19 @@ const S = (d) =>
       <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
     </svg>`,
 
+    // Atmosphere — sun above horizon with haze lines
+    atmosphere: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <circle cx="12" cy="9" r="3"/>
+      <line x1="12" y1="2"   x2="12" y2="4"/>
+      <line x1="12" y1="14"  x2="12" y2="16"/>
+      <line x1="4"  y1="9"   x2="2"  y2="9"/>
+      <line x1="20" y1="9"   x2="22" y2="9"/>
+      <line x1="6.5" y1="5.5" x2="5.1" y2="4.1"/>
+      <line x1="17.5" y1="5.5" x2="18.9" y2="4.1"/>
+      <line x1="3" y1="19"  x2="21" y2="19"/>
+      <line x1="5" y1="22"  x2="19" y2="22"/>
+    </svg>`,
+
     // Statistics dialog — bar chart icon
     stats: `<svg viewBox="0 0 24 24" fill="none">
       <path d="M3 20h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>

@@ -205,10 +205,15 @@ function clear(ctx, vp) {
 
 // --- дальше файл 1:1 как у тебя (без изменений) ---
 
-function drawBackground(ctx, vp) {
+function drawBackground(ctx, vp, atmosphereFactor = 0) {
+  const f = Math.max(0, Math.min(1, atmosphereFactor));
+  // Interpolate: night (dark navy) → day (bright sky-blue)
+  const ci = (night, day) => Math.round(night + (day - night) * f);
+  const inner = `rgba(${ci(10,115)}, ${ci(20,165)}, ${ci(45,235)}, 1)`;
+  const outer  = `rgba(${ci(5,55)},  ${ci(8,120)},  ${ci(18,200)}, 1)`;
   const g = ctx.createRadialGradient(vp.cx, vp.cy, 0, vp.cx, vp.cy, vp.R * 1.2);
-  g.addColorStop(0, "rgba(10, 20, 45, 1)");
-  g.addColorStop(1, "rgba(5, 8, 18, 1)");
+  g.addColorStop(0, inner);
+  g.addColorStop(1, outer);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, vp.w, vp.h);
 }

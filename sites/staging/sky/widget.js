@@ -439,6 +439,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
         { id: "showEcliptic", title: "Ecliptic", kind: "toggle", pressed: !!cfg.options.showEcliptic, icon: UI_ICONS.ecliptic },
         { id: "showMilkyWay", title: "Milky Way", kind: "toggle", pressed: !!cfg.options.showMilkyWay, icon: UI_ICONS.milkyway },
         { id: "showCardinals", title: "Cardinals", kind: "toggle", pressed: cfg.options.showCardinals !== false, icon: UI_ICONS.cardinals },
+        { id: "showAtmosphere", title: "Atmosphere", kind: "toggle", pressed: !!cfg.options.showAtmosphere, icon: UI_ICONS.atmosphere },
       ];
     }
 
@@ -591,51 +592,72 @@ import * as Popovers from "./widgets/widget.popovers.js";
           : [];
     }
 
+    // ── Atmosphere factor ─────────────────────────────────────────────────────
+    // Returns 0 (full night, no effect) → 1 (full daylight, objects hidden).
+    // Twilight boundaries: astronomical −18°, nautical −12°, civil −6°.
+    function calcAtmosphereFactor(sunAltDeg) {
+      const alt = sunAltDeg;
+      if (alt <= -18) return 0;
+      if (alt >=  10) return 1;
+      if (alt >=   0) return 0.75 + (alt / 10) * 0.25; // 0° → +10°: 0.75 → 1.0
+      return ((alt + 18) / 18) * 0.75;                  // −18° → 0°: 0 → 0.75
+    }
+
     function render() {
+      // ── Atmosphere: compute sky brightness factor ─────────────────────────
+      let atmosphereFactor = 0;
+      if (cfg.options?.showAtmosphere) {
+        const sunObj = sunMoonPrepared.find(o => o?.type === "sun");
+        if (sunObj && typeof sunObj.altDeg === "number")
+          atmosphereFactor = calcAtmosphereFactor(sunObj.altDeg);
+      }
+      const skyVisibility = 1 - atmosphereFactor; // 1 = fully visible, 0 = invisible
+
       Render.clear(ctx, viewport);
-      Render.drawBackground(ctx, viewport);
+      Render.drawBackground(ctx, viewport, atmosphereFactor);
 
       ctx.save();
       ctx.beginPath();
       ctx.arc(viewport.cx, viewport.cy, viewport.R, 0, Math.PI * 2);
       ctx.clip();
 
-      if (cfg.options?.showGridAz) Render.drawGridAz(ctx, viewport);
+      // ── Sky layers: dimmed by atmosphere ─────────────────────────────────
+      ctx.save();
+      if (skyVisibility < 0.995) ctx.globalAlpha *= skyVisibility;
 
+      if (cfg.options?.showGridAz) Render.drawGridAz(ctx, viewport);
       if (cfg.options?.showMeridian) Render.drawMeridian(ctx, viewport, meridianPts);
       if (cfg.options?.showEquator) Render.drawEquator(ctx, viewport, equatorPts);
       if (cfg.options?.showEcliptic) Render.drawEcliptic(ctx, viewport, eclipticPts);
-
       if (cfg.options?.showGridEq && eqGridPrepared) Render.drawGridEq(ctx, viewport, eqGridPrepared);
-
       if (cfg.options?.showMilkyWay && mwPrepared) Render.drawMilkyWay(ctx, viewport, mwPrepared);
-
       if (cfg.options?.showConstellations) Render.drawConstellations(ctx, viewport, consPrepared);
 
-      Render.drawStars(ctx, viewport, starsPrepared);
+      // Skip star/object rendering entirely in full daylight (perf + visual)
+      if (skyVisibility > 0.01) {
+        Render.drawStars(ctx, viewport, starsPrepared);
+        if (cfg.options?.showAlerts && alertsPrepared.length) Render.drawAlerts(ctx, viewport, alertsPrepared);
+        if (planetsPrepared && planetsPrepared.length) {
+          if (typeof Render.drawPlanets === "function") Render.drawPlanets(ctx, viewport, planetsPrepared);
+          else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, planetsPrepared);
+        }
+        if (
+          cfg.options?.showMessier &&
+          typeof Render.drawMessier === "function" &&
+          messierPrepared && messierPrepared.length
+        ) {
+          Render.drawMessier(ctx, viewport, messierPrepared);
+        }
+        if (cfg.options?.showObjects && objectsPrepared.length) Render.drawObjects(ctx, viewport, objectsPrepared);
+      }
 
-      if (cfg.options?.showAlerts && alertsPrepared.length) Render.drawAlerts(ctx, viewport, alertsPrepared);
+      ctx.restore(); // end atmosphere dimming
 
+      // ── Sun/Moon: always at full brightness (light sources) ───────────────
       if (sunMoonPrepared && sunMoonPrepared.length) {
         if (typeof Render.drawSunMoon === "function") Render.drawSunMoon(ctx, viewport, sunMoonPrepared);
         else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, sunMoonPrepared);
       }
-
-      if (planetsPrepared && planetsPrepared.length) {
-        if (typeof Render.drawPlanets === "function") Render.drawPlanets(ctx, viewport, planetsPrepared);
-        else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, planetsPrepared);
-      }
-
-      if (
-        cfg.options?.showMessier &&
-        typeof Render.drawMessier === "function" &&
-        messierPrepared &&
-        messierPrepared.length
-      ) {
-        Render.drawMessier(ctx, viewport, messierPrepared);
-      }
-
-      if (cfg.options?.showObjects && objectsPrepared.length) Render.drawObjects(ctx, viewport, objectsPrepared);
 
       Render.flushLabels(ctx, viewport);
 

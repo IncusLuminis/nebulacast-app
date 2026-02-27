@@ -31,6 +31,9 @@ export const DEFAULTS = {
     showMessier: true,
     minAltMessierDeg: 0,
 
+    // atmosphere simulation: dims stars/objects during twilight/daylight
+    showAtmosphere: false,
+
     // grid density
     eqGrid: {
       raStepHours: 2,     // RA lines every 2h
