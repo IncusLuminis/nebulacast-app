@@ -282,16 +282,21 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
     if (d.distance) metaParts.push(d.distance);
 
   } else {
-    // STAR
+    // STAR — title priority: "Name · α Con" > "α Con" > "HIP N" > "Star"
+    // Never show a bare numeric ID.
     const proper = (d.name || "").trim();
-    const bayer = normalizeDesignation(d.designation || "");
-    title = proper || bayer || d.id || "Star";
+    const bayer  = normalizeDesignation(d.designation || "");
+    const hipLabel = Number.isFinite(Number(d.hip)) ? `HIP ${d.hip}`
+                   : Number.isFinite(Number(d.id))  ? `HIP ${d.id}`
+                   : null;
+    title = (proper && bayer) ? `${proper} · ${bayer}`
+          : proper || bayer || hipLabel || "Star";
     note = "";
-    
+
     // RA/DEC line
     if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
     if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
-    
+
     // Meta line
     if (d.mag != null) metaParts.push(`mag ${fmtMag(d.mag, 2)}`);
     if (d.altDeg != null) metaParts.push(`alt ${fmtDeg(d.altDeg, 0)}`);
@@ -638,10 +643,15 @@ export function buildCardData(hit) {
     if (d.constellation) metaParts.push(d.constellation);
     if (_nrlStr) metaParts.push(_nrlStr);
   } else {
-    // STAR
+    // STAR — title priority: "Name · α Con" > "α Con" > "HIP N" > "Star"
+    // Never show a bare numeric ID.
     const proper = (d.name || "").trim();
-    const bayer = (d.designation || "").trim();
-    title = proper || bayer || d.id || "Star";
+    const bayer  = normalizeDesignation(d.designation || "");
+    const hipLabel = Number.isFinite(Number(d.hip)) ? `HIP ${d.hip}`
+                   : Number.isFinite(Number(d.id))  ? `HIP ${d.id}`
+                   : null;
+    title = (proper && bayer) ? `${proper} · ${bayer}`
+          : proper || bayer || hipLabel || "Star";
     note = "";
     if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
     if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
