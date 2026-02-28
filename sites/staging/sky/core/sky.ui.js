@@ -663,8 +663,36 @@ export function buildCardData(hit) {
     if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
     if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
     if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
+  } else if (hit.kind === "object" && (d.type === 'sun' || d.type === 'moon' || d.type === 'planet')) {
+    // ── Solar-system card (Sun / Moon / planets) — no Aladin, show all local data ──
+    note  = "";
+    title = d.name || "Object";
+
+    // RA/Dec — full sexagesimal (planets store ra_deg already in degrees 0–360)
+    if (d.ra_deg  != null) raDec.push(`RA ${_fmtRASex(d.ra_deg)    || d.ra_deg.toFixed(4)}`);
+    if (d.dec_deg != null) raDec.push(`Dec ${_fmtDecSex(d.dec_deg) || d.dec_deg.toFixed(4)}`);
+
+    if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.azDeg  != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
+    if (d.mag    != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
+    if (_nrlStr) metaParts.push(_nrlStr);
+
+    // Attach solar-system extras for _renderSolarSystemCard
+    Object.assign(dsoExtras, {
+      kind:      'solar-system',
+      bodyType:  d.type,                                 // 'sun' | 'moon' | 'planet'
+      ra_deg:    d.ra_deg    != null ? d.ra_deg    : null,
+      dec_deg:   d.dec_deg   != null ? d.dec_deg   : null,
+      altDeg:    d.altDeg    != null ? d.altDeg    : null,
+      azDeg:     d.azDeg     != null ? d.azDeg     : null,
+      mag:       d.mag       != null ? d.mag       : null,
+      illum_pct: d.illum_pct != null ? d.illum_pct : null,
+      phase:     d.phase     != null ? d.phase     : null,
+      waxing:    d.waxing    != null ? d.waxing    : null,
+    });
+
   } else if (hit.kind === "object") {
-    // DSO card data — primary designation (M > NGC > name), sexagesimal coords
+    // ── DSO card data — primary designation (M > NGC > name), sexagesimal coords ──
     note = "";
     const _mNum   = d.messier != null ? Number(d.messier) : null;
     const _ngcNum  = d.ngc    != null ? Number(d.ngc)     : null;
@@ -690,7 +718,7 @@ export function buildCardData(hit) {
 
     // Attach DSO-specific extras for _renderDsoCard
     Object.assign(dsoExtras, {
-      kind:         'dso',            // override kind so card routes to _renderDsoCard
+      kind:         'dso',
       secondaryIds: _secondaryIds,
       type_label:   d.type_label || null,
       messier:      _mNum,

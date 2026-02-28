@@ -673,6 +673,39 @@ export const SKY_CARD_CSS = `
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   SOLAR-SYSTEM CARD  (.sky-card-panel.is-solar-system)
+   Sun / Moon / planets — no Aladin, all local data shown
+═══════════════════════════════════════════════════════════════════ */
+
+.sky-card-panel.is-solar-system .sky-card-body {
+  padding: 0;
+  gap: 0;
+  overflow-y: auto;
+  max-height: 520px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+.sky-card-panel.is-solar-system .sky-card-body::-webkit-scrollbar       { width: 4px; }
+.sky-card-panel.is-solar-system .sky-card-body::-webkit-scrollbar-track { background: transparent; }
+.sky-card-panel.is-solar-system .sky-card-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+/* Coordinates (RA / Dec) */
+.sky-card-ss-coords {
+  padding: 14px 20px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Field rows — reuses .sky-card-field CSS */
+.sky-card-ss-fields {
+  padding: 10px 20px 14px;
+}
+
 /* ── Scoring tooltip ── */
 .sky-score-tooltip {
   position: fixed;

@@ -282,12 +282,15 @@ export class SkyCard extends HTMLElement {
     this._panel.classList.remove('has-tabs');
     this._panel.classList.remove('is-star');
     this._panel.classList.remove('is-dso');
+    this._panel.classList.remove('is-solar-system');
     this._body.classList.remove('has-tabs');
 
     if (data.kind === 'star') {
       this._renderStarCard(data);
     } else if (data.kind === 'dso') {
       this._renderDsoCard(data);
+    } else if (data.kind === 'solar-system') {
+      this._renderSolarSystemCard(data);
     } else if (data.kind === 'alert' && data.alertTabs) {
       this._renderAlertCard(data);
     } else {
@@ -449,6 +452,50 @@ export class SkyCard extends HTMLElement {
         this._fillPane(simbadSection, { rows: simbadRows });
         simbadSection.style.display = '';
       }).catch(() => { /* SIMBAD failed — section stays hidden */ });
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // SOLAR-SYSTEM CARD  (Sun / Moon / planets — no Aladin, all local data)
+  // ─────────────────────────────────────────────
+
+  _renderSolarSystemCard(data) {
+    this._panel.classList.add('is-solar-system');
+    this._icon.innerHTML = data.iconHTML || '';
+    this._title.textContent = data.title || '';
+
+    this._body.innerHTML = '';
+
+    // Coordinates (RA / Dec sexagesimal)
+    if (data.raDecText) {
+      const coordsDiv = document.createElement('div');
+      coordsDiv.className = 'sky-card-ss-coords';
+      coordsDiv.textContent = data.raDecText;
+      this._body.appendChild(coordsDiv);
+    }
+
+    // Field rows — everything available locally
+    const fieldRows = [];
+
+    if (data.altDeg != null) {
+      const altStr = `${Number(data.altDeg).toFixed(0)}°`;
+      const azStr  = data.azDeg != null ? `${Number(data.azDeg).toFixed(0)}°` : null;
+      fieldRows.push(['Alt / Az', azStr ? `${altStr}  ·  ${azStr}` : altStr]);
+    }
+    if (data.mag != null) {
+      fieldRows.push(['Magnitude', Number(data.mag).toFixed(1)]);
+    }
+    // Illumination — Moon and planets (not shown for Sun)
+    if (data.bodyType !== 'sun' && data.illum_pct != null) {
+      const wax = data.waxing != null ? (data.waxing ? '  ↑ waxing' : '  ↓ waning') : '';
+      fieldRows.push(['Illumination', `${Number(data.illum_pct).toFixed(1)}%${wax}`]);
+    }
+
+    if (fieldRows.length) {
+      const fieldsDiv = document.createElement('div');
+      fieldsDiv.className = 'sky-card-ss-fields';
+      this._fillPane(fieldsDiv, { rows: fieldRows });
+      this._body.appendChild(fieldsDiv);
     }
   }
 
