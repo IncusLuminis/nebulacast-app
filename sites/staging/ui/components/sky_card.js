@@ -50,6 +50,26 @@ async function _fetchSimbad(hip, hd) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Aladin Lite v3 JS-API loader ──────────────────────────────────────────────
+// Loads the Aladin script once per page session; subsequent calls reuse the
+// same promise.  Using the JS API (vs iframe) lets us pass show* = false flags
+// which are the only supported way to hide toolbar / catalogue controls.
+let _aladinScriptPromise = null;
+function _loadAladinScript() {
+  if (window.A?.aladin) return Promise.resolve();
+  if (_aladinScriptPromise)  return _aladinScriptPromise;
+  _aladinScriptPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.charset = 'utf-8';
+    s.src = 'https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js';
+    s.onload  = resolve;
+    s.onerror = () => { _aladinScriptPromise = null; reject(); };
+    document.head.appendChild(s);
+  });
+  return _aladinScriptPromise;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Scoring tooltip texts (source: sky/assets/Scoring_tooltip.json) ──────────
 const SCORE_TOOLTIPS = {
   'global_score':            'Overall priority of the object. Weighted combination of external importance, hazard and urgency.',
@@ -286,24 +306,36 @@ export class SkyCard extends HTMLElement {
       this._body.appendChild(fieldsDiv);
     }
 
-    // ── Aladin Lite preview (200×200) ─────────────────────────────────────────
+    // ── Aladin Lite preview (200×200, JS-API embed) ───────────────────────────
+    // We use the JS API instead of an iframe so we can pass show* = false flags
+    // to hide the toolbar and catalogue panel (URL params are not supported for
+    // those options in Aladin Lite v3).
     if (data.ra_deg != null && data.dec_deg != null) {
       const aladinWrap = document.createElement('div');
       aladinWrap.className = 'sky-card-aladin-wrap';
 
-      const iframe = document.createElement('iframe');
-      const target = `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`;
-      iframe.src = `https://aladin.cds.unistra.fr/AladinLite/?target=${encodeURIComponent(target)}&fov=0.1&survey=P%2FDSS2%2Fcolor&reticle=false&zoom=false&fullScreen=false&toolbar=false&catalogue=false&lang=en`;
-      iframe.width  = '200';
-      iframe.height = '200';
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('scrolling', 'no');
-      iframe.style.cssText = 'border:none;border-radius:6px;display:block;';
-      // Hide wrapper if the iframe fails (e.g. network offline)
-      iframe.addEventListener('error', () => { aladinWrap.style.display = 'none'; });
-
-      aladinWrap.appendChild(iframe);
+      const aladinDiv = document.createElement('div');
+      aladinDiv.style.cssText = 'width:200px;height:200px;border-radius:6px;overflow:hidden;position:relative;';
+      aladinWrap.appendChild(aladinDiv);
       this._body.appendChild(aladinWrap);
+
+      const target = `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`;
+      _loadAladinScript().then(() => {
+        window.A.aladin(aladinDiv, {
+          target,
+          fov:                    0.1,
+          survey:                 'P/DSS2/color',
+          showReticle:            false,
+          showZoomControl:        false,
+          showFullscreenControl:  false,
+          showLayersControl:      false,
+          showGotoControl:        false,
+          showProjectionControl:  false,
+          showFrame:              false,
+          showStatusBar:          false,
+          showCooGrid:            false,
+        });
+      }).catch(() => { aladinWrap.style.display = 'none'; });
     }
 
     // ── SIMBAD Classification (async, non-blocking) ───────────────────────────
