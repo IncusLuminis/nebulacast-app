@@ -271,6 +271,11 @@ function prepareMessier(messierJson, observer, viewport, options) {
       type: it.type || "dso",
       name,
 
+      // catalog IDs (top-level for easy access in UI/card layers)
+      messier:    it.messier  != null ? it.messier    : null,
+      ngc:        it.ngc      != null ? it.ngc        : null,
+      type_label: it.type_label || null,
+
       // keep original inputs for debugging
       ra_deg: raVal,
       dec_deg: decDeg,

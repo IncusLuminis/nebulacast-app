@@ -70,6 +70,73 @@ function _loadAladinScript() {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── SIMBAD DSO enrichment ─────────────────────────────────────────────────────
+// Separate cache from stars; key format: "M:45", "NGC:224", etc.
+const _simbadDsoCache = new Map();
+
+// Human-readable labels for SIMBAD otype codes relevant to DSOs
+const _SIMBAD_OTYPE_DSO = {
+  'G':    'Galaxy',         'GiG':  'Galaxy in Group',   'GiC':  'Galaxy in Cluster',
+  'SBG':  'Starburst Galaxy','rG':  'Radio Galaxy',       'AG?':  'AGN Candidate',
+  'AGN':  'Active Nucleus', 'Sy1':  'Seyfert 1',         'Sy2':  'Seyfert 2',
+  'LIN':  'LINER',          'QSO':  'Quasar',
+  'PN':   'Planetary Nebula','HII':  'HII Region',        'SNR':  'Supernova Remnant',
+  'MoC':  'Molecular Cloud','HH':   'Herbig-Haro Obj',   'RNe':  'Reflection Nebula',
+  'ClG':  'Cluster of Galaxies',
+  'GlC':  'Globular Cluster','OpC':  'Open Cluster',     'As*':  'Stellar Assoc.',
+  'C?G':  'Cluster of Galaxies Candidate',
+};
+
+async function _fetchSimbadDso(messier, ngc) {
+  // Build SIMBAD identifier: prefer Messier ("M  45"), fallback to NGC ("NGC 224")
+  const simbadId  = messier != null ? `M  ${messier}` : (ngc != null ? `NGC ${ngc}` : null);
+  const cacheKey  = messier != null ? `M:${messier}`  : (ngc != null ? `NGC:${ngc}`  : null);
+  if (!cacheKey || !simbadId) return null;
+
+  if (_simbadDsoCache.has(cacheKey)) return _simbadDsoCache.get(cacheKey);
+  _simbadDsoCache.set(cacheKey, null); // sentinel
+
+  const adql = `SELECT otype, morph_type, size_maj, size_min, z_value, rvz_radvel `
+             + `FROM basic JOIN ident ON basic.oid=ident.oidref `
+             + `WHERE ident.id='${simbadId}'`;
+  const url  = `https://simbad.cds.unistra.fr/simbad/sim-tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=${encodeURIComponent(adql)}`;
+
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!resp.ok) return null;
+    const json  = await resp.json();
+    const cols  = (json?.metadata || []).map(c => c.name);
+    const rows  = json?.data  || [];
+    if (!rows.length) return null;
+
+    const row = rows[0];
+    const get = (name) => {
+      const i = cols.indexOf(name);
+      return (i >= 0 && row[i] != null) ? String(row[i]).trim() : null;
+    };
+    const getNum = (name) => {
+      const i = cols.indexOf(name);
+      if (i < 0 || row[i] == null) return null;
+      const v = Number(row[i]);
+      return Number.isFinite(v) ? v : null;
+    };
+
+    const result = {
+      otype:      get('otype')     || null,
+      morph_type: get('morph_type')|| null,
+      size_maj:   getNum('size_maj'),  // arcmin
+      size_min:   getNum('size_min'),  // arcmin
+      z_value:    getNum('z_value'),
+      rvz_radvel: getNum('rvz_radvel'), // km/s
+    };
+    _simbadDsoCache.set(cacheKey, result);
+    return result;
+  } catch {
+    return null;
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ── Scoring tooltip texts (source: sky/assets/Scoring_tooltip.json) ──────────
 const SCORE_TOOLTIPS = {
   'global_score':            'Overall priority of the object. Weighted combination of external importance, hazard and urgency.',
@@ -199,10 +266,13 @@ export class SkyCard extends HTMLElement {
     this._title.textContent = '';    // clear multi-line star title if present
     this._panel.classList.remove('has-tabs');
     this._panel.classList.remove('is-star');
+    this._panel.classList.remove('is-dso');
     this._body.classList.remove('has-tabs');
 
     if (data.kind === 'star') {
       this._renderStarCard(data);
+    } else if (data.kind === 'dso') {
+      this._renderDsoCard(data);
     } else if (data.kind === 'alert' && data.alertTabs) {
       this._renderAlertCard(data);
     } else {
@@ -364,6 +434,116 @@ export class SkyCard extends HTMLElement {
         this._fillPane(simbadSection, { rows: simbadRows });
         simbadSection.style.display = '';
       }).catch(() => { /* SIMBAD failed — section stays hidden */ });
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // DSO CARD  (enriched: header + fields + Aladin + SIMBAD)
+  // ─────────────────────────────────────────────
+
+  _renderDsoCard(data) {
+    this._panel.classList.add('is-dso');
+    this._icon.innerHTML = data.iconHTML || '';
+
+    // ── Multi-line title: primary designation → type label → secondary IDs ──
+    const primaryEl = document.createElement('span');
+    primaryEl.className = 'sky-card-dso-primary';
+    primaryEl.textContent = data.title || 'Object';
+    this._title.appendChild(primaryEl);
+
+    if (data.type_label) {
+      const typeEl = document.createElement('div');
+      typeEl.className = 'sky-card-dso-type';
+      typeEl.textContent = data.type_label;
+      this._title.appendChild(typeEl);
+    }
+
+    if (data.secondaryIds) {
+      const secEl = document.createElement('div');
+      secEl.className = 'sky-card-dso-secondary-ids';
+      secEl.textContent = data.secondaryIds;
+      this._title.appendChild(secEl);
+    }
+
+    // ── Body ─────────────────────────────────────────────────────────────────
+    this._body.innerHTML = '';
+
+    // Coordinates (RA / Dec)
+    if (data.raDecText) {
+      const coordsDiv = document.createElement('div');
+      coordsDiv.className = 'sky-card-dso-coords';
+      coordsDiv.textContent = data.raDecText;
+      this._body.appendChild(coordsDiv);
+    }
+
+    // Field rows: Alt/Az, Mag
+    const fieldRows = [];
+    if (data.altDeg != null) {
+      const altStr = `${Number(data.altDeg).toFixed(0)}°`;
+      const azStr  = data.azDeg != null ? `${Number(data.azDeg).toFixed(0)}°` : null;
+      fieldRows.push(['Alt / Az', azStr ? `${altStr}  ·  ${azStr}` : altStr]);
+    }
+    if (data.mag != null) fieldRows.push(['Magnitude', `${Number(data.mag).toFixed(1)}`]);
+
+    if (fieldRows.length) {
+      const fieldsDiv = document.createElement('div');
+      fieldsDiv.className = 'sky-card-dso-fields';
+      this._fillPane(fieldsDiv, { rows: fieldRows });
+      this._body.appendChild(fieldsDiv);
+    }
+
+    // ── Aladin Lite preview (JS-API, edge-to-edge) ────────────────────────────
+    if (data.ra_deg != null && data.dec_deg != null) {
+      const aladinWrap = document.createElement('div');
+      aladinWrap.className = 'sky-card-aladin-wrap';
+
+      const aladinDiv = document.createElement('div');
+      aladinDiv.style.cssText = 'width:100%;height:200px;position:relative;';
+      aladinWrap.appendChild(aladinDiv);
+      this._body.appendChild(aladinWrap);
+
+      const target = `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`;
+      _loadAladinScript().then(() => {
+        window.A.aladin(aladinDiv, {
+          target,
+          fov:                   0.25, // 15 arcmin default for DSOs
+          survey:                'P/DSS2/color',
+          showReticle:           false,
+          showZoomControl:       false,
+          showFullscreenControl: false,
+          showLayersControl:     false,
+          showGotoControl:       false,
+          showProjectionControl: false,
+          showFrame:             false,
+          showStatusBar:         false,
+          showCooGrid:           false,
+        });
+      }).catch(() => { aladinWrap.style.display = 'none'; });
+    }
+
+    // ── SIMBAD Classification (async, non-blocking) ───────────────────────────
+    const simbadSection = document.createElement('div');
+    simbadSection.className = 'sky-card-simbad-section';
+    simbadSection.style.display = 'none';
+    this._body.appendChild(simbadSection);
+
+    const mId  = data.messier != null ? Number(data.messier) : null;
+    const ngcId = data.ngc    != null ? Number(data.ngc)     : null;
+    if (mId != null || ngcId != null) {
+      _fetchSimbadDso(mId, ngcId).then(info => {
+        if (!info) return;
+        const simbadRows = [];
+        if (info.otype) {
+          simbadRows.push(['Object type', _SIMBAD_OTYPE_DSO[info.otype] || info.otype]);
+        }
+        if (info.morph_type) simbadRows.push(['Morphology', info.morph_type]);
+        if (info.z_value    != null) simbadRows.push(['Redshift',       `z = ${info.z_value.toFixed(4)}`]);
+        if (info.rvz_radvel != null) simbadRows.push(['Radial velocity', `${Math.round(info.rvz_radvel)} km/s`]);
+        if (!simbadRows.length) return;
+
+        this._fillPane(simbadSection, { rows: simbadRows });
+        simbadSection.style.display = '';
+      }).catch(() => { /* SIMBAD failed — stays hidden */ });
     }
   }
 

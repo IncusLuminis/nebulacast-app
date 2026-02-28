@@ -602,6 +602,77 @@ export const SKY_CARD_CSS = `
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   DSO CARD  (.sky-card-panel.is-dso)
+═══════════════════════════════════════════════════════════════════ */
+
+.sky-card-panel.is-dso .sky-card-header {
+  align-items: flex-start;
+}
+
+.sky-card-panel.is-dso .sky-card-icon {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.sky-card-panel.is-dso .sky-card-title {
+  line-height: 1.3;
+}
+
+/* Primary designation — inherits 20px / 700 from .sky-card-title */
+.sky-card-dso-primary {
+  display: block;
+}
+
+/* Object type label — e.g. "Spiral Galaxy" */
+.sky-card-dso-type {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.60);
+  margin-top: 3px;
+  letter-spacing: 0.2px;
+}
+
+/* Secondary IDs — e.g. "NGC 224" */
+.sky-card-dso-secondary-ids {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.30);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+/* Body: sections handle their own padding; allow scrolling for tall content */
+.sky-card-panel.is-dso .sky-card-body {
+  padding: 0;
+  gap: 0;
+  overflow-y: auto;
+  max-height: 520px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+.sky-card-panel.is-dso .sky-card-body::-webkit-scrollbar       { width: 4px; }
+.sky-card-panel.is-dso .sky-card-body::-webkit-scrollbar-track { background: transparent; }
+.sky-card-panel.is-dso .sky-card-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+/* Coordinates (RA / Dec) line at the top of the body */
+.sky-card-dso-coords {
+  padding: 14px 20px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Field rows section — reuses existing .sky-card-field CSS */
+.sky-card-dso-fields {
+  padding: 10px 20px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
 /* ── Scoring tooltip ── */
 .sky-score-tooltip {
   position: fixed;

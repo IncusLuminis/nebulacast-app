@@ -78,6 +78,27 @@ def _pick_col(norm_cols: List[str], candidates: List[str]) -> Optional[str]:
     return None
 
 
+# Human-readable labels for Messier catalog object type codes
+_TYPE_LABELS: Dict[str, str] = {
+    "OC":  "Open Cluster",
+    "GC":  "Globular Cluster",
+    "PN":  "Planetary Nebula",
+    "SG":  "Spiral Galaxy",
+    "EG":  "Elliptical Galaxy",
+    "IG":  "Irregular Galaxy",
+    "LG":  "Lenticular Galaxy",
+    "G":   "Galaxy",
+    "EN":  "Emission Nebula",
+    "RN":  "Reflection Nebula",
+    "GN":  "Diffuse Nebula",
+    "DN":  "Dark Nebula",
+    "BN":  "Bright Nebula",
+    "SNR": "Supernova Remnant",
+    "SC":  "Star Cloud",
+    "AS":  "Asterism",
+}
+
+
 def gen_messier_dso_json(
     csv_path: Path,
     out_path: Path,
@@ -207,7 +228,13 @@ def gen_messier_dso_json(
             continue
 
         mag = _as_float(r.get(col_mag)) if col_mag else None
-        ngc = _as_int(r.get(col_ngc)) if col_ngc else None
+        ngc_raw = _as_int(r.get(col_ngc)) if col_ngc else None
+        ngc = ngc_raw if ngc_raw is not None and ngc_raw > 0 else None
+
+        class_code = (str(r.get(col_type)).strip()
+                      if col_type and r.get(col_type) is not None and not pd.isna(r.get(col_type))
+                      else None)
+        type_label = _TYPE_LABELS.get(class_code) if class_code else None
 
         name = f"M{m}"
 
@@ -216,12 +243,15 @@ def gen_messier_dso_json(
             "group": "dso",
             "type": "dso",
             "name": name,
+            "messier": m,          # Messier number as int
+            "ngc": ngc,            # NGC number (null if absent)
+            "type_label": type_label,  # human-readable class (e.g. "Open Cluster")
             "ra_deg": ra,
             "dec_deg": dec,
             "mag": mag,
             "meta": {
-                "ngc": ngc,
-                "class": (str(r.get(col_type)) if col_type and r.get(col_type) is not None and not pd.isna(r.get(col_type)) else None),
+                "ngc": ngc_raw,
+                "class": class_code,
                 "comment": (str(r.get(col_comments)) if col_comments and r.get(col_comments) is not None and not pd.isna(r.get(col_comments)) else None),
                 "ref": (str(r.get(col_ref)) if col_ref and r.get(col_ref) is not None and not pd.isna(r.get(col_ref)) else None),
                 "is_up": (bool(r.get(col_is_up)) if col_is_up and r.get(col_is_up) is not None and not pd.isna(r.get(col_is_up)) else None),

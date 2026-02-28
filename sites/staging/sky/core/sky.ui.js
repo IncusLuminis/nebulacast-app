@@ -296,21 +296,22 @@ function buildInfoCardHTML(hit, mode = "tooltip") {
     if (d.severity != null) metaParts.push(`severity ${d.severity}`);
 
   } else if (hit.kind === "object") {
-    title = d.name || "Object";
-    note = d.note || "";
-    
-    // RA/DEC line
-    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
-    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
-    
-    // Meta line
-    // Skip showing "planet" type for planets (redundant with image)
-    if (d.type && d.type !== "planet" && d.type !== "sun" && d.type !== "moon") metaParts.push(d.type);
-    if (d.mag != null) metaParts.push(`mag ${fmtMag(d.mag, 1)}`);
-    if (d.altDeg != null) metaParts.push(`alt ${fmtDeg(d.altDeg, 0)}`);
-    if (d.azDeg != null) metaParts.push(`az ${fmtDeg(d.azDeg, 0)}`);
-    if (d.constellation) metaParts.push(d.constellation);
-    if (d.distance) metaParts.push(d.distance);
+    // DSO tooltip — primary designation (M > NGC > name), full sexagesimal, Alt, Mag
+    note = "";
+    const _mNum  = d.messier != null ? Number(d.messier) : null;
+    const _ngcNum = d.ngc    != null ? Number(d.ngc)     : null;
+    title = (_mNum  != null ? `M${_mNum}`    : null)
+         || (_ngcNum != null ? `NGC ${_ngcNum}` : null)
+         || d.name || "Object";
+
+    // RA/Dec — full sexagesimal (use ra_deg_norm if RA was stored as hours)
+    const _dsoRa = d.ra_deg_norm != null ? d.ra_deg_norm : d.ra_deg;
+    if (_dsoRa    != null) raDec.push(`RA ${_fmtRASex(_dsoRa)       || _dsoRa.toFixed(4)}`);
+    if (d.dec_deg != null) raDec.push(`Dec ${_fmtDecSex(d.dec_deg)  || d.dec_deg.toFixed(4)}`);
+
+    // Alt and Mag only (no "dso" type string)
+    if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
+    if (d.mag    != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
 
   } else {
     // STAR tooltip — single best display name; full sexagesimal coords; mag.
@@ -604,6 +605,8 @@ export function buildCardData(hit) {
   const metaParts = [];
   // Extra fields populated only for kind === "star" (passed to _renderStarCard)
   const starExtras = {};
+  // Extra fields populated only for kind === "object" / DSO (passed to _renderDsoCard)
+  const dsoExtras  = {};
   
   const fmtRA = (ra) => {
     const v = Number(ra);
@@ -661,17 +664,44 @@ export function buildCardData(hit) {
     if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
     if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
   } else if (hit.kind === "object") {
-    // (alert tab data built below)
-    title = d.name || "Object";
-    note = d.note || "";
-    if (d.ra_deg != null) raDec.push(`RA ${fmtRA(d.ra_deg) || d.ra_deg.toFixed(2)}`);
-    if (d.dec_deg != null) raDec.push(`DEC ${fmtDEC(d.dec_deg) || d.dec_deg.toFixed(2)}`);
-    if (d.type && d.type !== "planet" && d.type !== "sun" && d.type !== "moon") metaParts.push(d.type);
-    if (d.mag != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
+    // DSO card data — primary designation (M > NGC > name), sexagesimal coords
+    note = "";
+    const _mNum   = d.messier != null ? Number(d.messier) : null;
+    const _ngcNum  = d.ngc    != null ? Number(d.ngc)     : null;
+
+    title = (_mNum  != null ? `M${_mNum}`       : null)
+         || (_ngcNum != null ? `NGC ${_ngcNum}` : null)
+         || d.name || "Object";
+
+    // Secondary IDs line shown below the primary designation in the card header
+    const _secParts = [];
+    if (_ngcNum != null && _mNum != null) _secParts.push(`NGC ${_ngcNum}`);
+    const _secondaryIds = _secParts.join(" · ") || null;
+
+    // RA/Dec — full sexagesimal
+    const _dsoRa = d.ra_deg_norm != null ? d.ra_deg_norm : d.ra_deg;
+    if (_dsoRa    != null) raDec.push(`RA ${_fmtRASex(_dsoRa)      || _dsoRa.toFixed(4)}`);
+    if (d.dec_deg != null) raDec.push(`Dec ${_fmtDecSex(d.dec_deg) || d.dec_deg.toFixed(4)}`);
+
+    if (d.mag    != null) metaParts.push(`Mag ${fmtMag(d.mag, 1)}`);
     if (d.altDeg != null) metaParts.push(`Alt ${fmtDeg(d.altDeg, 0)}`);
-    if (d.azDeg != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
-    if (d.constellation) metaParts.push(d.constellation);
+    if (d.azDeg  != null) metaParts.push(`Az ${fmtDeg(d.azDeg, 0)}`);
     if (_nrlStr) metaParts.push(_nrlStr);
+
+    // Attach DSO-specific extras for _renderDsoCard
+    Object.assign(dsoExtras, {
+      kind:         'dso',            // override kind so card routes to _renderDsoCard
+      secondaryIds: _secondaryIds,
+      type_label:   d.type_label || null,
+      messier:      _mNum,
+      ngc:          _ngcNum,
+      ra_deg:       _dsoRa   != null ? _dsoRa   : null,
+      dec_deg:      d.dec_deg != null ? d.dec_deg : null,
+      altDeg:       d.altDeg  != null ? d.altDeg  : null,
+      azDeg:        d.azDeg   != null ? d.azDeg   : null,
+      mag:          d.mag     != null ? d.mag     : null,
+      comment:      d.meta?.comment  || null,
+    });
   } else {
     // STAR — title priority: "Name · α Con" > "α Con" > "HIP N" > "Star"
     // Never show a bare numeric ID.
@@ -973,5 +1003,7 @@ export function buildCardData(hit) {
     alertTabs,
     // star-specific extras (populated only when kind === "star")
     ...starExtras,
+    // dso-specific extras (populated only when kind === "object" / DSO)
+    ...dsoExtras,
   };
 }
