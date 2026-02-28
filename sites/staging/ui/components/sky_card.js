@@ -293,7 +293,7 @@ export class SkyCard extends HTMLElement {
 
       const iframe = document.createElement('iframe');
       const target = `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`;
-      iframe.src = `https://aladin.cds.unistra.fr/AladinLite/?target=${encodeURIComponent(target)}&fov=0.1&survey=P%2FDSS2%2Fcolor&reticle=false&zoom=false&fullScreen=false&lang=en`;
+      iframe.src = `https://aladin.cds.unistra.fr/AladinLite/?target=${encodeURIComponent(target)}&fov=0.1&survey=P%2FDSS2%2Fcolor&reticle=false&zoom=false&fullScreen=false&toolbar=false&catalogue=false&lang=en`;
       iframe.width  = '200';
       iframe.height = '200';
       iframe.setAttribute('frameborder', '0');
