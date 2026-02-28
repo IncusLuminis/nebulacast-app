@@ -96,7 +96,8 @@ async function _fetchSimbadDso(messier, ngc) {
   if (_simbadDsoCache.has(cacheKey)) return _simbadDsoCache.get(cacheKey);
   _simbadDsoCache.set(cacheKey, null); // sentinel
 
-  const adql = `SELECT otype, morph_type, size_maj, size_min, z_value, rvz_radvel `
+  // Correct SIMBAD column names: galdim_majaxis/minaxis (arcmin), rvz_redshift, rvz_radvel
+  const adql = `SELECT otype, morph_type, galdim_majaxis, galdim_minaxis, rvz_redshift, rvz_radvel `
              + `FROM basic JOIN ident ON basic.oid=ident.oidref `
              + `WHERE ident.id='${simbadId}'`;
   const url  = `https://simbad.cds.unistra.fr/simbad/sim-tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=${encodeURIComponent(adql)}`;
@@ -122,12 +123,12 @@ async function _fetchSimbadDso(messier, ngc) {
     };
 
     const result = {
-      otype:      get('otype')     || null,
-      morph_type: get('morph_type')|| null,
-      size_maj:   getNum('size_maj'),  // arcmin
-      size_min:   getNum('size_min'),  // arcmin
-      z_value:    getNum('z_value'),
-      rvz_radvel: getNum('rvz_radvel'), // km/s
+      otype:        get('otype')           || null,
+      morph_type:   get('morph_type')      || null,
+      galdim_maj:   getNum('galdim_majaxis'), // arcmin
+      galdim_min:   getNum('galdim_minaxis'), // arcmin
+      rvz_redshift: getNum('rvz_redshift'),
+      rvz_radvel:   getNum('rvz_radvel'),     // km/s
     };
     _simbadDsoCache.set(cacheKey, result);
     return result;
@@ -493,7 +494,19 @@ export class SkyCard extends HTMLElement {
     }
 
     // ── Aladin Lite preview (JS-API, edge-to-edge) ────────────────────────────
-    if (data.ra_deg != null && data.dec_deg != null) {
+    // Use the catalog name as target (M 31 / NGC 224) — avoids RA hours vs
+    // degrees ambiguity in the Messier CSV. Falls back to decimal coords.
+    const mId   = data.messier != null ? Number(data.messier) : null;
+    const ngcId = data.ngc     != null ? Number(data.ngc)     : null;
+    const aladinTarget = mId   != null ? `M ${mId}`
+                       : ngcId != null ? `NGC ${ngcId}`
+                       : (data.ra_deg != null && data.dec_deg != null)
+                           ? `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`
+                           : null;
+
+    let _aladinInstance = null; // stored so SIMBAD callback can update FOV
+
+    if (aladinTarget) {
       const aladinWrap = document.createElement('div');
       aladinWrap.className = 'sky-card-aladin-wrap';
 
@@ -502,11 +515,10 @@ export class SkyCard extends HTMLElement {
       aladinWrap.appendChild(aladinDiv);
       this._body.appendChild(aladinWrap);
 
-      const target = `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`;
       _loadAladinScript().then(() => {
-        window.A.aladin(aladinDiv, {
-          target,
-          fov:                   0.25, // 15 arcmin default for DSOs
+        _aladinInstance = window.A.aladin(aladinDiv, {
+          target:                aladinTarget,
+          fov:                   0.25, // 15 arcmin default; updated by SIMBAD if size known
           survey:                'P/DSS2/color',
           showReticle:           false,
           showZoomControl:       false,
@@ -527,22 +539,25 @@ export class SkyCard extends HTMLElement {
     simbadSection.style.display = 'none';
     this._body.appendChild(simbadSection);
 
-    const mId  = data.messier != null ? Number(data.messier) : null;
-    const ngcId = data.ngc    != null ? Number(data.ngc)     : null;
     if (mId != null || ngcId != null) {
       _fetchSimbadDso(mId, ngcId).then(info => {
         if (!info) return;
         const simbadRows = [];
-        if (info.otype) {
-          simbadRows.push(['Object type', _SIMBAD_OTYPE_DSO[info.otype] || info.otype]);
-        }
-        if (info.morph_type) simbadRows.push(['Morphology', info.morph_type]);
-        if (info.z_value    != null) simbadRows.push(['Redshift',       `z = ${info.z_value.toFixed(4)}`]);
-        if (info.rvz_radvel != null) simbadRows.push(['Radial velocity', `${Math.round(info.rvz_radvel)} km/s`]);
+        if (info.otype)      simbadRows.push(['Object type',    _SIMBAD_OTYPE_DSO[info.otype] || info.otype]);
+        if (info.morph_type) simbadRows.push(['Morphology',     info.morph_type]);
+        if (info.rvz_redshift != null) simbadRows.push(['Redshift',       `z = ${info.rvz_redshift.toFixed(4)}`]);
+        if (info.rvz_radvel   != null) simbadRows.push(['Radial velocity', `${Math.round(info.rvz_radvel)} km/s`]);
         if (!simbadRows.length) return;
 
         this._fillPane(simbadSection, { rows: simbadRows });
         simbadSection.style.display = '';
+
+        // Update Aladin FOV to 2× the major axis once we know the angular size
+        if (_aladinInstance && info.galdim_maj != null && info.galdim_maj > 0) {
+          // clamp: 0.08° (5′) … 3° to keep the view useful
+          const fovDeg = Math.min(3.0, Math.max(0.08, (info.galdim_maj * 2) / 60));
+          try { _aladinInstance.setFoV(fovDeg); } catch (_) {}
+        }
       }).catch(() => { /* SIMBAD failed — stays hidden */ });
     }
   }
