@@ -591,11 +591,8 @@ export const SKY_CARD_CSS = `
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* Aladin Lite preview section */
+/* Aladin Lite preview section — edge-to-edge, panel overflow:hidden clips corners */
 .sky-card-aladin-wrap {
-  padding: 14px 20px;
-  display: flex;
-  justify-content: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 

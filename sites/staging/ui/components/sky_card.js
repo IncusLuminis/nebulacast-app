@@ -315,7 +315,7 @@ export class SkyCard extends HTMLElement {
       aladinWrap.className = 'sky-card-aladin-wrap';
 
       const aladinDiv = document.createElement('div');
-      aladinDiv.style.cssText = 'width:200px;height:200px;border-radius:6px;overflow:hidden;position:relative;';
+      aladinDiv.style.cssText = 'width:100%;height:200px;position:relative;';
       aladinWrap.appendChild(aladinDiv);
       this._body.appendChild(aladinWrap);
 
@@ -323,7 +323,8 @@ export class SkyCard extends HTMLElement {
       _loadAladinScript().then(() => {
         window.A.aladin(aladinDiv, {
           target,
-          fov:                    0.1,
+          fov:                    0.25, // 15 arcminutes
+
           survey:                 'P/DSS2/color',
           showReticle:            false,
           showZoomControl:        false,
