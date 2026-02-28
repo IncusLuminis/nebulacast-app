@@ -320,10 +320,15 @@ export class SkyCard extends HTMLElement {
       this._body.appendChild(aladinWrap);
 
       const target = `${Number(data.ra_deg).toFixed(5)} ${Number(data.dec_deg).toFixed(5)}`;
+      const mag = data.mag != null ? Number(data.mag) : 3.0;
+      const fov = mag <= 1.0 ? 1.0        // 1°   — very bright stars
+               : mag <= 2.0 ? 0.5         // 30′
+               : mag <= 3.0 ? 0.25        // 15′
+               :              10 / 60;    // 6′   — mag ≤ 4.5
       _loadAladinScript().then(() => {
         window.A.aladin(aladinDiv, {
           target,
-          fov:                    0.25, // 15 arcminutes
+          fov,
 
           survey:                 'P/DSS2/color',
           showReticle:            false,
