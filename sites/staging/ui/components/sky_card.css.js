@@ -599,26 +599,10 @@ export const SKY_CARD_CSS = `
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* SIMBAD classification section */
+/* SIMBAD classification section — same layout as .sky-card-star-fields */
 .sky-card-simbad-section {
-  padding: 10px 20px 14px;
-}
-
-.sky-card-simbad-label {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.25);
-  margin-bottom: 6px;
-  padding-bottom: 4px;
+  padding: 10px 20px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.sky-card-simbad-item {
-  font-size: 11px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.60);
 }
 
 /* ── Scoring tooltip ── */

@@ -318,25 +318,12 @@ export class SkyCard extends HTMLElement {
       _fetchSimbad(hipId, hdId).then(info => {
         if (!info || (!info.sp_type && !info.otype)) return;
 
-        const label = document.createElement('div');
-        label.className = 'sky-card-simbad-label';
-        label.textContent = 'Classification';
-        simbadSection.appendChild(label);
+        const simbadRows = [];
+        if (info.sp_type) simbadRows.push(['Spectral class', info.sp_type]);
+        if (info.otype)   simbadRows.push(['Object type', _SIMBAD_OTYPE[info.otype] || info.otype]);
+        if (!simbadRows.length) return;
 
-        if (info.sp_type) {
-          const item = document.createElement('div');
-          item.className = 'sky-card-simbad-item';
-          item.textContent = `Spectral class: ${info.sp_type}`;
-          simbadSection.appendChild(item);
-        }
-        if (info.otype) {
-          const humanType = _SIMBAD_OTYPE[info.otype] || info.otype;
-          const item = document.createElement('div');
-          item.className = 'sky-card-simbad-item';
-          item.textContent = `Type: ${humanType}`;
-          simbadSection.appendChild(item);
-        }
-
+        this._fillPane(simbadSection, { rows: simbadRows });
         simbadSection.style.display = '';
       }).catch(() => { /* SIMBAD failed — section stays hidden */ });
     }
