@@ -54,6 +54,11 @@ async function _fetchSimbad(hip, hd) {
 // Loads the Aladin script once per page session; subsequent calls reuse the
 // same promise.  Using the JS API (vs iframe) lets us pass show* = false flags
 // which are the only supported way to hide toolbar / catalogue controls.
+//
+// IMPORTANT: Aladin v3 initialises asynchronously after the <script> onload
+// fires (ES-module imports, WebGL setup, etc.).  The library exposes A.init —
+// a Promise that resolves only when the library is truly ready.  We must wait
+// for it; resolving on onload alone causes a race on the first ever call.
 let _aladinScriptPromise = null;
 function _loadAladinScript() {
   if (window.A?.aladin) return Promise.resolve();
@@ -62,7 +67,16 @@ function _loadAladinScript() {
     const s = document.createElement('script');
     s.charset = 'utf-8';
     s.src = 'https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js';
-    s.onload  = resolve;
+    s.onload = () => {
+      // A.init is Aladin v3's own readiness promise; wait for it so that
+      // A.aladin() is safe to call.  Fall back to immediate resolve for any
+      // future version that drops the pattern.
+      if (window.A?.init instanceof Promise) {
+        window.A.init.then(resolve).catch(reject);
+      } else {
+        resolve();
+      }
+    };
     s.onerror = () => { _aladinScriptPromise = null; reject(); };
     document.head.appendChild(s);
   });
