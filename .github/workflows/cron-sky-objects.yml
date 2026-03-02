@@ -67,9 +67,6 @@ jobs:
           git status --porcelain
           git diff --staged --quiet && exit 0
 
-          # rebase safely even if something changed locally
-          git pull --rebase --autostash origin "${{ github.ref_name }}"
-
           git commit -m "chore(sky-objects): update objects"
           git pull --rebase origin "${{ github.ref_name }}"
           git push origin "${{ github.ref_name }}"

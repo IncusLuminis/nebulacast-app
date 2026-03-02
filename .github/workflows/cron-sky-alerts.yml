@@ -76,9 +76,6 @@ jobs:
           # no changes -> exit
           git diff --staged --quiet && exit 0
 
-          # rebase safely if remote moved
-          git pull --rebase --autostash origin "${{ github.ref_name }}"
-
           git commit -m "chore(sky-alerts): update alerts datasets"
           git pull --rebase origin "${{ github.ref_name }}"
           git push origin "${{ github.ref_name }}"
