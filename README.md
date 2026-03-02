@@ -57,7 +57,7 @@ Install dependencies and pytest, then run from repo root:
 ```bash
 pip install -r services/news/requirements.txt
 pip install pytest
-PYTHONPATH=services/news pytest services/news/tests/ -v
+PYTHONPATH=services/news:services pytest services/news/tests/ -v
 ```
 
 - **Unit test:** `test_render_rss_generates_valid_rss` — generates RSS from a minimal record list (no network).

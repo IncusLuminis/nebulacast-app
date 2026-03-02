@@ -61,21 +61,21 @@ Each service is self-contained under `services/<name>/`.
 - **requirements.txt** — Python dependencies for that service.
 - **README.md** — How to run and what the service produces.
 
-Backends are run from the **repo root** with `PYTHONPATH=services/<name>` so that imports like `from pipelines.run_news import …` resolve.
+Backends are run from the **repo root** with `PYTHONPATH=services/<name>` (news/calendar add `:services` for shared RSS helpers) so that imports like `from pipelines.run_news import …` resolve.
 
 ### 4.2 News (`services/news/`)
 
 - **Purpose:** Aggregate astronomy/space RSS feeds, score and filter items, produce a single RSS feed.
 - **Config:** `configs/sources.yaml` (feed URLs), `configs/rules.yaml` (scoring, filters).
 - **Entrypoint:** `pipelines/run_news.py` — runs the pipeline and writes `sites/staging/news/rss.xml` (and optionally other artifacts under `sites/staging/news/`).
-- **Run:** `make news-back` or `PYTHONPATH=services/news python services/news/pipelines/run_news.py`.
+- **Run:** `make news-back` or `PYTHONPATH=services/news:services python services/news/pipelines/run_news.py`.
 
 ### 4.3 Calendar (`services/calendar/`)
 
 - **Purpose:** Process RSS feeds for events (meteors, eclipses, conjunctions, occultations, comets), produce per-stream and unified JSON, and an alerts RSS feed.
 - **Config:** `configs/sources.yaml`, `configs/rules.yaml`.
 - **Entrypoint:** `pipelines/run_calendar.py` — runs the pipeline, writes JSON under `services/calendar/outputs/`, renders RSS to `sites/staging/alerts/rss.xml`, and copies JSON to `sites/staging/calendar/` (e.g. `daily_signal.json`, `daily_meteors.json`).
-- **Run:** `make calendar-back` or `PYTHONPATH=services/calendar python services/calendar/pipelines/run_calendar.py`.
+- **Run:** `make calendar-back` or `PYTHONPATH=services/calendar:services python services/calendar/pipelines/run_calendar.py`.
 
 ### 4.4 Weather (`services/weather/`)
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import re
-import html as html_lib
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -14,45 +13,10 @@ from urllib.parse import urlparse, parse_qs
 import feedparser
 
 from schema.models import NewsRecord
+from shared.rss_helpers import extract_first_image_url, first_paragraph, strip_html_to_text
 
 log = logging.getLogger(__name__)
 
-
-# -----------------------------
-# Helpers (HTML -> text, images)
-# -----------------------------
-
-_IMG_RE = re.compile(r'<img[^>]+src=["\']([^"\']+)["\']', re.IGNORECASE)
-_TAG_RE = re.compile(r"<[^>]+>")
-
-def extract_first_image_url(html: str) -> Optional[str]:
-    if not html:
-        return None
-    m = _IMG_RE.search(html)
-    if not m:
-        return None
-    url = (m.group(1) or "").strip()
-    return url or None
-
-def strip_html_to_text(html: str) -> str:
-    if not html:
-        return ""
-    s = html_lib.unescape(html)
-    s = re.sub(r"</(p|div|br|li|h1|h2|h3|h4|h5|h6)>", "\n", s, flags=re.IGNORECASE)
-    s = re.sub(r"<br\s*/?>", "\n", s, flags=re.IGNORECASE)
-    s = _TAG_RE.sub("", s)
-    s = re.sub(r"[ \t\r\f\v]+", " ", s)
-    s = re.sub(r"\n\s*\n\s*\n+", "\n\n", s)
-    return s.strip()
-
-def first_paragraph(text: str, max_chars: int = 400) -> str:
-    if not text:
-        return ""
-    parts = [p.strip() for p in text.split("\n\n") if p.strip()]
-    s = parts[0] if parts else text.strip()
-    if len(s) > max_chars:
-        s = s[:max_chars].rstrip() + "..."
-    return s
 
 _APOD_RE = re.compile(r"/ap(\d{2})(\d{2})(\d{2})\.html$")
 

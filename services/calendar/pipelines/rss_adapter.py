@@ -3,59 +3,20 @@ RSS adapter for calendar: fetch and normalize RSS (and optional seed YAML) to Ne
 """
 from __future__ import annotations
 
-import re
-import html as html_lib
 import hashlib
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone, date
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse, parse_qs
-from pathlib import Path
 
 import feedparser
 import yaml
 
 from schema.models import NewsRecord
-
-
-_IMG_RE = re.compile(r'<img[^>]+src=["\']([^"\']+)["\']', re.IGNORECASE)
-_TAG_RE = re.compile(r"<[^>]+>")
-
-
-def extract_first_image_url(html: str) -> Optional[str]:
-    if not html:
-        return None
-    m = _IMG_RE.search(html)
-    return (m.group(1) or "").strip() or None if m else None
-
-
-def strip_html_to_text(html: str) -> str:
-    if not html:
-        return ""
-    s = html_lib.unescape(html)
-    s = re.sub(r"</(p|div|br|li|h1|h2|h3|h4|h5|h6)>", "\n", s, flags=re.IGNORECASE)
-    s = re.sub(r"<br\s*/?>", "\n", s, flags=re.IGNORECASE)
-    s = _TAG_RE.sub("", s)
-    s = re.sub(r"[ \t\r\f\v]+", " ", s)
-    s = re.sub(r"\n\s*\n\s*\n+", "\n\n", s)
-    return s.strip()
-
-
-def first_paragraph(text: str, max_chars: int = 260) -> str:
-    if not text:
-        return ""
-    parts = [p.strip() for p in text.split("\n\n") if p.strip()]
-    s = parts[0] if parts else text.strip()
-    s = re.sub(r"\s+", " ", s).strip()
-    if len(s) <= max_chars:
-        return s
-    truncated = s[:max_chars]
-    last_space = truncated.rfind(" ")
-    if last_space > max_chars * 0.6:
-        truncated = truncated[:last_space]
-    return truncated.rstrip(".,;:") + "..."
+from shared.rss_helpers import extract_first_image_url, first_paragraph, strip_html_to_text
 
 
 @dataclass

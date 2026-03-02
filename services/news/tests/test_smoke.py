@@ -11,8 +11,10 @@ from pathlib import Path
 def test_render_rss_generates_valid_rss():
     """Unit test: generate_rss produces XML with <rss and <item> (no network)."""
     service_root = Path(__file__).resolve().parent.parent
-    if str(service_root) not in sys.path:
-        sys.path.insert(0, str(service_root))
+    services_dir = service_root.parent
+    for p in (str(service_root), str(services_dir)):
+        if p not in sys.path:
+            sys.path.insert(0, p)
     from pipelines.render_rss import generate_rss
 
     records = [
@@ -44,7 +46,8 @@ def test_smoke_run_news_produces_rss():
     public_rss = repo_root / "sites" / "staging" / "news" / "rss.xml"
 
     assert run_news.exists(), f"run_news.py not found: {run_news}"
-    env = {"PYTHONPATH": str(service_root)}
+    services_dir = service_root.parent
+    env = {"PYTHONPATH": f"{service_root}:{services_dir}"}
     result = subprocess.run(
         [sys.executable, str(run_news)],
         cwd=str(repo_root),

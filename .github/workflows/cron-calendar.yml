@@ -30,7 +30,7 @@ jobs:
       - name: Run calendar backend
         run: |
           set -e  # Exit on error
-          PYTHONPATH=services/calendar python services/calendar/pipelines/run_calendar.py
+          PYTHONPATH=services/calendar:services python services/calendar/pipelines/run_calendar.py
           echo "Calendar backend completed successfully"
 
       - name: Commit and push outputs

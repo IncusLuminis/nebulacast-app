@@ -11,39 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-
-def clean_snippet(text_or_html: str, limit: int = 220) -> str:
-    if not text_or_html:
-        return ""
-    text = re.sub(r"<[^>]+>", " ", text_or_html)
-    text = html.unescape(text)
-    text = re.sub(r"\s+", " ", text).strip()
-    if len(text) <= limit:
-        return text
-    truncated = text[:limit]
-    last_space = truncated.rfind(" ")
-    if last_space > limit * 0.6:
-        truncated = truncated[:last_space]
-    return truncated.rstrip(".,;:") + "..."
-
-
-def rfc822_date(dt: datetime) -> str:
-    return dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-
-
-def parse_date(date_str: Optional[str]) -> datetime:
-    if not date_str:
-        return datetime.now(timezone.utc)
-    try:
-        if "T" in date_str:
-            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-        else:
-            dt = datetime.fromisoformat(date_str)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone(timezone.utc)
-    except Exception:
-        return datetime.now(timezone.utc)
+from shared.rss_helpers import clean_snippet, parse_date, rfc822_date
 
 
 def find_input_file(outputs_dir: Path) -> Optional[Path]:

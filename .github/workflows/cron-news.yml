@@ -30,7 +30,7 @@ jobs:
       - name: Run news backend
         run: |
           set -e  # Exit on error
-          PYTHONPATH=services/news python services/news/pipelines/run_news.py
+          PYTHONPATH=services/news:services python services/news/pipelines/run_news.py
           echo "News backend completed successfully"
 
       - name: Commit and push outputs
