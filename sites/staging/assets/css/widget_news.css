@@ -8,11 +8,17 @@
 }
 .nrw-root .nrw-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  padding: 4px 0 0 0;
-  border-bottom: none;
-  margin-bottom: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  margin-bottom: 12px;
+}
+.nrw-root .nrw-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #e6f2ff;
+  margin: 0;
 }
 .nrw-root .nrw-meta {
   font-size: 12px;

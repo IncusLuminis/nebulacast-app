@@ -28,9 +28,7 @@
 | `assets/css/index_tabs.css` | то же | |
 | `assets/css/widget_news.css` | генерируется build.py | |
 | `assets/css/widget_calendar.css` | генерируется build.py | |
-| `assets/css/widget_weather_poc.css` | копируется build.py (для старого виджета). Новая погода в iframe свои стили тянет из `/weather/`. | |
 | `assets/js/widget_runtime.js` | копируется build.py | |
-| `assets/js/widget_weather_poc.js` | копируется build.py. На текущем index не используется (погода в iframe). | |
 | `assets/icons/alerts/*` | вручную / не трогается build.py | |
 | `assets/icons/weather/*` | вручную | |
 | `news/` (rss.xml, index.html, widget.js) | build.py + cron-news | |
@@ -112,7 +110,7 @@
 ## 5. Файлы по категориям (краткий список)
 
 **Генерируются build.py (index.html и weather/ не трогаются — preserve list):**  
-`news/`, `calendar/`, `assets/css/*`, `assets/js/widget_runtime.js`, `assets/js/widget_weather_poc.js`.
+`news/`, `calendar/`, `assets/css/*`, `assets/js/widget_runtime.js`.
 
 **Генерируются только пайплайнами (cron):**  
 `news/rss.xml`, `calendar/daily_*.json`, `alerts/rss.xml`, `weather/daily_weather.json` (cron-weather), `data/weather/` (run_weather.py).

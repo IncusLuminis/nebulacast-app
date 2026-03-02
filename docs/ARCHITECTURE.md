@@ -105,9 +105,9 @@ The frontend is **static**: no Node server, no SSR. A single Python script gener
 - **build.py** — Single entrypoint. Reads `config/widgets.yaml` and `templates/`, writes only under `sites/staging/` (and copies assets/icons into `sites/staging/assets/`).
 - **config/widgets.yaml** — Site title, paths, and **widget definitions** (per-widget: enabled, title, data URL such as `rss` or `json`, filters, etc.).
 - **templates/**  
-  - **partials/** — Reusable fragments: widget markup (e.g. `widget_news.html`, `widget_calendar.html`, `widget_weather_poc.html`), widget CSS, and JS logic templates (e.g. `widget_news_logic.js.tmpl`, `widget_calendar_logic.js.tmpl`).  
+  - **partials/** — Reusable fragments: widget markup (e.g. `widget_news.html`, `widget_calendar.html`), widget CSS, and JS logic templates (e.g. `widget_news_logic.js.tmpl`, `widget_calendar_logic.js.tmpl`).  
   - **pages/** — Full pages: `index.html`, `news.html`, `calendar.html`, `weather.html`. They include placeholders that build.py replaces with widget HTML and inline config/scripts.
-- **assets/** — Static CSS and JS (e.g. `base.css`, `widget_weather.css`, `widget_runtime.js`, `widget_weather_poc.js`) that build.py copies to `sites/staging/assets/`.
+- **assets/** — Static CSS and JS (e.g. `base.css`, `widget_weather.css`, `widget_runtime.js`) that build.py copies to `sites/staging/assets/`.
 
 ### 5.2 Build process
 
@@ -124,14 +124,14 @@ The frontend is **static**: no Node server, no SSR. A single Python script gener
 A **widget** is a self-contained UI block that:
 
 - Is configured in `frontend/config/widgets.yaml` (data URL, title, filters, etc.).
-- Has markup and styles in `frontend/templates/partials/` (e.g. `widget_news.html` + `widget_news.css`) and optional JS logic (e.g. `widget_news_logic.js.tmpl` or a static `widget_weather_poc.js`).
+- Has markup and styles in `frontend/templates/partials/` (e.g. `widget_news.html` + `widget_news.css`) and optional JS logic (e.g. `widget_news_logic.js.tmpl`). Weather uses modular SPA at `/weather/` (iframe).
 - Gets its data at runtime from the deploy root: e.g. `/news/rss.xml`, `/calendar/daily_signal.json`, `/weather/daily_weather.json` (paths defined in widgets.yaml and injected into the generated pages).
 
 Widget types:
 
 - **News** — Fetches RSS from `/news/rss.xml`, parses it, renders a filterable list. Used on the main index (News tab) and on the dedicated news page; also available as a standalone `news/widget.js` for embedding.
 - **Calendar (Sky Alerts)** — Fetches JSON from `/calendar/daily_signal.json`, filters by category (METEORS, ECLIPSES, etc.), renders a calendar-style list. Used on the index (Calendar/Alerts tab) and on `calendar/index.html`.
-- **Weather** — Two UIs: (1) Simple block on the index (Weather tab) loading `/weather/daily_weather.json` and showing summary + hours. (2) Full POC-style page at `weather/index.html` (score breakdown, profiles, sparklines) using the same JSON.
+- **Weather** — Modular SPA at `/weather/` (location, controls, weather, map, sun, sky tabs). Index Weather tab embeds it via iframe. Uses `/weather/daily_weather.json` and `/api/astro-weather`.
 
 So: **widgets** are the building blocks of the UI; **widgets.yaml** defines where they get data (RSS or JSON under staging); the **frontend build** assembles pages and scripts from templates and this config.
 

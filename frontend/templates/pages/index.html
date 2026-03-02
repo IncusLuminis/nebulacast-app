@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/base.css">
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_news.css">
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_calendar.css">
-  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_weather_poc.css">
   <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/index_tabs.css">
 </head>
 <body>
@@ -29,18 +28,16 @@
         {{WIDGET_ALERTS_SECTION}}
       </div>
       <div id="panel-weather" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-weather">
-        {{WIDGET_WEATHER_POC_SECTION}}
+        {{WIDGET_WEATHER_SECTION}}
       </div>
     </main>
   </div>
-  {{WEATHER_POC_OVERLAYS}}
   <script src="{{BASE_PATH}}/assets/js/widget_runtime.js"></script>
   <script>
     (function() {
       var base = '{{BASE_PATH}}';
       {{WIDGET_NEWS_INIT}}
       {{WIDGET_ALERTS_INIT}}
-      {{WIDGET_WEATHER_POC_INIT}}
       (function() {
         var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
         var tabs = document.querySelectorAll('.index-tab');
@@ -64,6 +61,5 @@
       })();
     })();
   </script>
-  <script src="{{BASE_PATH}}/assets/js/widget_weather_poc.js"></script>
 </body>
 </html>

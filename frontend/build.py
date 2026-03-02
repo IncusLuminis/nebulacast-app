@@ -283,99 +283,17 @@ def main() -> int:
     print("(Preserved: weather/ — not overwritten)")
     weather_cfg = widgets.get("weather") or {}
     weather_enabled = weather_cfg.get("enabled", True)
-    weather_json = weather_cfg.get("json", "/weather/daily_weather.json")
-    weather_title = weather_cfg.get("title", "Weather")
-    # Template vars for index.html (we do not write index.html when preserved; these are for the template string)
-    weather_poc_partial = read_tmpl("widget_weather_poc.html")
-    weather_poc_config = {
-        "jsonUrl": (base_path or "") + weather_json,
-        "iconBase": (base_path or "") + "/assets/icons/weather",
-        "locationsIndexUrl": (base_path or "") + "/data/weather/locations.json",
-        "locationDataBase": (base_path or "") + "/data/weather/loc",
-        "apiAstroWeatherUrl": (base_path or "") + "/api/astro-weather",
-    }
-
-    # Full POC-style weather widget for index (same as weather/index.html content) — used only for template vars below
+    weather_url = (base_path or "") + "/weather/"
+    # Modular weather: iframe to /weather/ (SPA)
     weather_section_html = (
         '<section class="widget-section weather-widget" id="widget-weather">'
-        + weather_poc_partial
+        + (
+            f'<iframe src="{weather_url}" title="Weather" class="weather-iframe" style="width:100%;min-height:600px;border:none;"></iframe>'
+            if weather_enabled
+            else '<h2>Weather</h2><div class="widget-placeholder">Disabled</div>'
+        )
         + "</section>"
     )
-    weather_poc_overlays_html = """
-  <!-- Bottom sheet modal (legacy parameter details) -->
-  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-sheet">
-      <div class="modal-header">
-        <h3 id="modal-title">Parameter Details</h3>
-        <button class="modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="modal-content" id="modal-content"></div>
-    </div>
-  </div>
-  <!-- Factor tooltip (breakdown (i) icons) -->
-  <div class="factor-tooltip" id="factorTooltip" role="tooltip" aria-hidden="true">
-    <div class="factor-tooltip-title" id="factorTooltipTitle"></div>
-    <div class="factor-tooltip-body" id="factorTooltipBody"></div>
-  </div>
-  <!-- Chip popover (L1 details) -->
-  <div class="chip-overlay" id="chipOverlay" role="dialog" aria-modal="true" aria-labelledby="chipSheetTitle">
-    <div class="chip-sheet" id="chipSheet">
-      <div class="sheet-hdr">
-        <h3 id="chipSheetTitle"></h3>
-      </div>
-      <div class="chip-sheet-body" id="chipSheetBody"></div>
-    </div>
-  </div>
-  <!-- Chart overlay (mini-chart detail view) -->
-  <div class="chart-overlay" id="chartOverlay" role="dialog" aria-modal="true" aria-labelledby="chartOverlayTitle" aria-hidden="true">
-    <div class="chart-overlay-backdrop"></div>
-    <div class="chart-overlay-panel">
-      <div class="chart-overlay-header">
-        <h3 id="chartOverlayTitle">Score • Warsaw</h3>
-        <button class="chart-overlay-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="chart-overlay-subheader" id="chartOverlaySubheader">
-        Horizon: TONIGHT • Profile: Balanced • Updated: —
-      </div>
-      <div class="chart-overlay-canvas-wrapper">
-        <canvas id="chartCanvas" width="800" height="300"></canvas>
-        <div class="chart-tooltip" id="chartTooltip" aria-hidden="true"></div>
-      </div>
-      <div class="chart-overlay-footer">
-        <div class="chart-stat">
-          <span class="chart-stat-label">Now:</span>
-          <span class="chart-stat-value" id="chartStatNow">—</span>
-        </div>
-        <div class="chart-stat">
-          <span class="chart-stat-label">Min:</span>
-          <span class="chart-stat-value" id="chartStatMin">—</span>
-        </div>
-        <div class="chart-stat">
-          <span class="chart-stat-label">Max:</span>
-          <span class="chart-stat-value" id="chartStatMax">—</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Hour Inspector bottom sheet -->
-  <div class="hour-inspector-backdrop" id="hourInspectorBackdrop" aria-hidden="true"></div>
-  <div class="hour-inspector-sheet" id="hourInspectorSheet" role="dialog" aria-modal="true" aria-labelledby="hourInspectorTitle" aria-hidden="true">
-    <div class="hour-inspector-header" id="hourInspectorHeader">
-      <div class="hour-inspector-header-left">
-        <div class="hour-inspector-time" id="hourInspectorTime">—</div>
-        <div class="hour-inspector-score-block">
-          <div class="hour-inspector-score-val" id="hourInspectorScoreVal">—</div>
-          <div class="hour-inspector-score-label" id="hourInspectorScoreLabel">—</div>
-        </div>
-      </div>
-      <button class="hour-inspector-close" aria-label="Close">&times;</button>
-    </div>
-    <div class="hour-inspector-summary" id="hourInspectorSummary">—</div>
-    <div class="hour-inspector-body" id="hourInspectorBody">
-      <!-- Content will be rendered by JavaScript -->
-    </div>
-  </div>"""
-    weather_poc_init = "window.__WEATHER_POC_CONFIG = " + json.dumps(weather_poc_config) + ";"
 
     index_tmpl = read_tmpl("index.html", "pages")
     index_html = (
@@ -384,11 +302,9 @@ def main() -> int:
         .replace("{{BASE_PATH}}", base_path)
         .replace("{{WIDGET_NEWS_SECTION}}", news_section_html if news_enabled else "")
         .replace("{{WIDGET_ALERTS_SECTION}}", calendar_section_wrapped if calendar_enabled else "")
-        .replace("{{WIDGET_WEATHER_POC_SECTION}}", weather_section_html if weather_enabled else "<section class=\"widget-section\" id=\"widget-weather\"><h2>Weather</h2><div class=\"widget-placeholder\">Disabled</div></section>")
-        .replace("{{WEATHER_POC_OVERLAYS}}", weather_poc_overlays_html if weather_enabled else "")
+        .replace("{{WIDGET_WEATHER_SECTION}}", weather_section_html)
         .replace("{{WIDGET_NEWS_INIT}}", news_init)
         .replace("{{WIDGET_ALERTS_INIT}}", calendar_init)
-        .replace("{{WIDGET_WEATHER_POC_INIT}}", weather_poc_init if weather_enabled else "")
     )
     # Ensure base.css is present
     base_css_dst = out_path / "assets" / "css" / "base.css"

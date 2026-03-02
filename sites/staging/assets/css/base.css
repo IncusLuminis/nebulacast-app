@@ -65,19 +65,3 @@ body {
   border: 1px dashed #2a2f3a;
   border-radius: 8px;
 }
-
-/* Weather iframe on index (Weather tab) */
-.weather-iframe-container {
-  margin-top: 8px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #2a2f3a;
-}
-
-.weather-iframe {
-  display: block;
-  width: 100%;
-  min-height: 860px; /* enough to show full widget without clipping */
-  border: none;
-  background: transparent;
-}
