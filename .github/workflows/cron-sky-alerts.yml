@@ -71,7 +71,9 @@ jobs:
             sites/staging/sky/data/alerts_neocp_tocp_grb.json \
             sites/staging/sky/data/alerts_now.json \
             sites/staging/sky/data/alerts_pha.json \
-            sites/staging/sky/data/alerts_risk.json
+            sites/staging/sky/data/alerts_risk.json \
+            services/sky/data/raw/neocp.txt \
+            services/sky/data/raw/tocp.xml
 
           # no changes -> exit
           git diff --staged --quiet && exit 0
