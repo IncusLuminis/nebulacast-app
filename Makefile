@@ -4,7 +4,7 @@
 # make news-front — only frontend (HTML/JS)
 # make server     — local HTTP server :8080
 
-.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front server deps-news deps-calendar deps-weather test-news help functions functions-build
+.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back server deps-news deps-calendar deps-weather deps-sky test-news help functions functions-build
 
 # Python: prefer venv if present
 PYTHON ?= python3
@@ -18,9 +18,11 @@ endif
 SERVICE_NEWS := services/news
 SERVICE_CALENDAR := services/calendar
 SERVICE_WEATHER := services/weather
+SERVICE_SKY := services/sky
 PYTHONPATH_NEWS := $(SERVICE_NEWS):services
 PYTHONPATH_CALENDAR := $(SERVICE_CALENDAR):services
 PYTHONPATH_WEATHER := $(SERVICE_WEATHER)
+PYTHONPATH_SKY := $(SERVICE_SKY)
 
 # Install news deps (run once)
 deps-news:
@@ -83,6 +85,15 @@ weather-front: functions-build
 
 weather: weather-back weather-front
 
+# Sky: all pipelines (stars, constellations, milkyway, messier, sunmoon, planets, alerts, objects, ranking)
+deps-sky:
+	$(RUN) -m pip install -r $(SERVICE_SKY)/requirements.txt
+
+sky-back:
+	PYTHONPATH=$(PYTHONPATH_SKY) $(RUN) $(SERVICE_SKY)/pipelines/gen_all.py
+
+sky: sky-back
+
 help:
 	@echo "Targets:"
 	@echo "  make news       — backend + frontend (full)"
@@ -94,10 +105,13 @@ help:
 	@echo "  make weather   — weather backend + frontend (outputs + sites/staging/weather/daily_weather.json)"
 	@echo "  make weather-back  — weather pipeline only"
 	@echo "  make weather-front — functions-build + frontend build (preserves index.html, weather/)"
+	@echo "  make sky          — sky pipelines (gen_all: stars, constellations, milkyway, messier, sunmoon, planets, alerts, objects, ranking)"
+	@echo "  make sky-back     — sky pipelines only (gen_all.py)"
 	@echo "  make functions    — rebuild Functions only (after editing functions/*.ts, before commit)"
 	@echo "  make functions-build — npm ci + bundle Functions (for CI / first time)"
 	@echo "  make server     — start local HTTP server on :8080"
 	@echo "  make deps-news  — install news deps (run once)"
 	@echo "  make deps-calendar — install calendar deps (run once)"
 	@echo "  make deps-weather  — install weather deps (run once)"
+	@echo "  make deps-sky     — install sky deps (run once)"
 	@echo "  make test-news  — run news tests"
