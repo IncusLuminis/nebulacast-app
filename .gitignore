@@ -33,6 +33,28 @@ services/sky/data/raw/*.tpc
 
 .env
 
-# Generated sky data
+# Generated sky data — ignore by default, but track known outputs
 services/sky/data/generated/*.json
+!services/sky/data/generated/alerts_gcn.json
+!services/sky/data/generated/alerts_neo.json
+!services/sky/data/generated/alerts_neocp_tocp_grb.json
+!services/sky/data/generated/alerts_now.json
+!services/sky/data/generated/alerts_pha.json
+!services/sky/data/generated/alerts_risk.json
+!services/sky/data/generated/planets.json
+!services/sky/data/generated/ranking.json
+!services/sky/data/generated/sun_moon.json
+!services/sky/data/generated/objects_today.json
+!services/sky/data/generated/objects_week.json
 sites/staging/sky/data/*.json
+!sites/staging/sky/data/alerts_gcn.json
+!sites/staging/sky/data/alerts_neo.json
+!sites/staging/sky/data/alerts_neocp_tocp_grb.json
+!sites/staging/sky/data/alerts_now.json
+!sites/staging/sky/data/alerts_pha.json
+!sites/staging/sky/data/alerts_risk.json
+!sites/staging/sky/data/planets.json
+!sites/staging/sky/data/ranking.json
+!sites/staging/sky/data/sun_moon.json
+!sites/staging/sky/data/objects_today.json
+!sites/staging/sky/data/objects_week.json
