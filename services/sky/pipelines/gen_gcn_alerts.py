@@ -514,7 +514,11 @@ def main() -> None:
     if not isinstance(heartbeat_sec, (int, float)) or heartbeat_sec <= 0:
         heartbeat_sec = 15
 
-    consumer = Consumer(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+    consumer = Consumer(
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        **{"broker.address.family": "v4"},  # GitHub Actions runners have no IPv6
+    )
     consumer.subscribe(cfg.topics)
 
     ingested_utc = utc_now_iso()
