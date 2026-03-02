@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-03-02T06:45:07.553603+00:00",
+  "generated_at": "2026-03-02T07:37:48.391551+00:00",
   "location": {
     "id": "loc_52.2297_21.0122",
     "name": "Warsaw",
@@ -18,43 +18,43 @@
     }
   },
   "now": {
-    "time": "2026-03-02T08:00:00+01:00",
-    "cloud_total": 73.0,
-    "cloud_low": 73.0,
+    "time": "2026-03-02T09:00:00+01:00",
+    "cloud_total": 55.0,
+    "cloud_low": 36.0,
     "cloud_mid": 0.0,
-    "cloud_high": 0.0,
+    "cloud_high": 29.0,
     "precip_mm": 0.0,
     "precip_prob": 0.0,
     "precip_type": 0,
     "rain_mm": 0.0,
     "snow_mm": 0.0,
-    "pressure_hpa": 1026.8,
-    "wind_m_s": 2.2,
-    "wind_gust_m_s": 4.3,
-    "wind_dir_deg": 256.0,
-    "visibility_m": 4160.0,
-    "temp_c": 2.2,
-    "feels_like_c": -0.8,
-    "humidity_pct": 95.0,
-    "dewpoint_c": 1.5,
+    "pressure_hpa": 1027.1,
+    "wind_m_s": 1.8,
+    "wind_gust_m_s": 4.2,
+    "wind_dir_deg": 260.0,
+    "visibility_m": 50000.0,
+    "temp_c": 3.2,
+    "feels_like_c": 0.4,
+    "humidity_pct": 92.0,
+    "dewpoint_c": 2.0,
     "cape_j_kg": 0.0,
     "seeing": -9999,
     "transparency": -9999,
-    "wind_kmh": 7.9,
-    "visibility_km": 4.16,
-    "dewpoint_spread_c": 0.7,
-    "pressure_trend_6h_hpa": -0.1,
-    "fog_risk": "HIGH",
-    "score": 65,
+    "wind_kmh": 6.5,
+    "visibility_km": 50.0,
+    "dewpoint_spread_c": 1.2,
+    "pressure_trend_6h_hpa": -0.4,
+    "fog_risk": "MED",
+    "score": 81,
     "score_profile": "default",
     "score_breakdown": [
       {
         "key": "cloud_total",
         "label": "Clouds",
         "max": 35,
-        "raw": 73,
-        "normalized": 0.27,
-        "earned": 9,
+        "raw": 55,
+        "normalized": 0.45,
+        "earned": 16,
         "note": null
       },
       {
@@ -79,7 +79,7 @@
         "key": "wind_m_s",
         "label": "Wind",
         "max": 15,
-        "raw": 2.2,
+        "raw": 1.8,
         "normalized": 1.0,
         "earned": 15,
         "note": null
@@ -88,9 +88,9 @@
         "key": "visibility_m",
         "label": "Visibility",
         "max": 10,
-        "raw": 4160,
-        "normalized": 0.109,
-        "earned": 1,
+        "raw": 50000,
+        "normalized": 1.0,
+        "earned": 10,
         "note": null
       },
       {
@@ -114,9 +114,9 @@
     ],
     "score_explain": [
       {
-        "line": "Clouds: 73% → +9",
+        "line": "Clouds: 55% → +16",
         "key": "cloud_total",
-        "earned": 9,
+        "earned": 16,
         "max": 35
       },
       {
@@ -132,15 +132,15 @@
         "max": 5
       },
       {
-        "line": "Wind: 2.2 m/s → +15",
+        "line": "Wind: 1.8 m/s → +15",
         "key": "wind_m_s",
         "earned": 15,
         "max": 15
       },
       {
-        "line": "Visibility: 4160 m → +1",
+        "line": "Visibility: 50000 m → +10",
         "key": "visibility_m",
-        "earned": 1,
+        "earned": 10,
         "max": 10
       },
       {
@@ -157,10 +157,10 @@
       }
     ],
     "profile_scores": {
-      "visual": 67,
+      "visual": 78,
       "photography": 85,
       "broadband": 85,
-      "planetary": 85
+      "planetary": 89
     },
     "score_breakdown_by_profile": {
       "visual": [
@@ -168,9 +168,9 @@
           "key": "cloud_total",
           "label": "Clouds",
           "max": 40,
-          "raw": 73,
-          "normalized": 0.27,
-          "earned": 11,
+          "raw": 55,
+          "normalized": 0.45,
+          "earned": 18,
           "note": null
         },
         {
@@ -204,7 +204,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 10,
-          "raw": 2.2,
+          "raw": 1.8,
           "normalized": 1.0,
           "earned": 10,
           "note": null
@@ -213,9 +213,9 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 5,
-          "raw": 4160,
-          "normalized": 0.109,
-          "earned": 1,
+          "raw": 50000,
+          "normalized": 1.0,
+          "earned": 5,
           "note": null
         },
         {
@@ -242,25 +242,25 @@
           "key": "cloud_high",
           "label": "High clouds",
           "max": 25,
-          "raw": 0,
-          "normalized": 1.0,
-          "earned": 25,
+          "raw": 29,
+          "normalized": 0.71,
+          "earned": 18,
           "note": null
         },
         {
           "key": "cloud_total",
           "label": "Clouds total",
           "max": 15,
-          "raw": 73,
-          "normalized": 0.27,
-          "earned": 4,
+          "raw": 55,
+          "normalized": 0.45,
+          "earned": 7,
           "note": null
         },
         {
           "key": "wind_m_s",
           "label": "Wind",
           "max": 10,
-          "raw": 2.2,
+          "raw": 1.8,
           "normalized": 1.0,
           "earned": 10,
           "note": null
@@ -287,9 +287,9 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 5,
-          "raw": 4160,
-          "normalized": 0.109,
-          "earned": 1,
+          "raw": 50000,
+          "normalized": 1.0,
+          "earned": 5,
           "note": null
         }
       ],
@@ -307,25 +307,25 @@
           "key": "cloud_high",
           "label": "High clouds",
           "max": 25,
-          "raw": 0,
-          "normalized": 1.0,
-          "earned": 25,
+          "raw": 29,
+          "normalized": 0.71,
+          "earned": 18,
           "note": null
         },
         {
           "key": "cloud_total",
           "label": "Clouds total",
           "max": 15,
-          "raw": 73,
-          "normalized": 0.27,
-          "earned": 4,
+          "raw": 55,
+          "normalized": 0.45,
+          "earned": 7,
           "note": null
         },
         {
           "key": "wind_m_s",
           "label": "Wind",
           "max": 10,
-          "raw": 2.2,
+          "raw": 1.8,
           "normalized": 1.0,
           "earned": 10,
           "note": null
@@ -352,9 +352,9 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 5,
-          "raw": 4160,
-          "normalized": 0.109,
-          "earned": 1,
+          "raw": 50000,
+          "normalized": 1.0,
+          "earned": 5,
           "note": null
         }
       ],
@@ -372,7 +372,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 25,
-          "raw": 2.2,
+          "raw": 1.8,
           "normalized": 1.0,
           "earned": 25,
           "note": null
@@ -381,9 +381,9 @@
           "key": "cloud_total",
           "label": "Clouds",
           "max": 20,
-          "raw": 73,
-          "normalized": 0.27,
-          "earned": 5,
+          "raw": 55,
+          "normalized": 0.45,
+          "earned": 9,
           "note": null
         },
         {
@@ -417,19 +417,19 @@
           "key": "visibility_m",
           "label": "Visibility",
           "max": 0,
-          "raw": 4160,
-          "normalized": 0.109,
+          "raw": 50000,
+          "normalized": 1.0,
           "earned": 0,
           "note": null
         }
       ]
     },
-    "temperature_c": 2.2,
+    "temperature_c": 3.2,
     "score_profiles": {
-      "balanced": 65,
-      "visual": 67,
+      "balanced": 81,
+      "visual": 78,
       "photography": 85,
-      "planetary": 85
+      "planetary": 89
     }
   },
   "trends": {
@@ -25769,9 +25769,9 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1027.6,
-      "wind_m_s": 3.08,
+      "wind_m_s": 3.14,
       "wind_gust_m_s": 7.12,
-      "wind_dir_deg": 303.0,
+      "wind_dir_deg": 307.0,
       "visibility_m": 30045.0,
       "temp_c": 8.8,
       "feels_like_c": 4.8,
@@ -25780,7 +25780,7 @@
       "cape_j_kg": 0.0,
       "seeing": 3,
       "transparency": 2,
-      "wind_kmh": 11.1,
+      "wind_kmh": 11.3,
       "visibility_km": 30.05,
       "dewpoint_spread_c": 10.7,
       "pressure_trend_6h_hpa": -1.5,
@@ -25819,7 +25819,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 3.08,
+          "raw": 3.14,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -25872,7 +25872,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 3.08 m/s → +15",
+          "line": "Wind: 3.14 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -25900,7 +25900,7 @@
         "visual": 90,
         "photography": 88,
         "broadband": 88,
-        "planetary": 84
+        "planetary": 83
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -25944,7 +25944,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.08,
+            "raw": 3.14,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26000,7 +26000,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.08,
+            "raw": 3.14,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26065,7 +26065,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.08,
+            "raw": 3.14,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26112,9 +26112,9 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 3.08,
-            "normalized": 0.989,
-            "earned": 25,
+            "raw": 3.14,
+            "normalized": 0.98,
+            "earned": 24,
             "note": null
           },
           {
@@ -26169,7 +26169,7 @@
         "balanced": 92,
         "visual": 90,
         "photography": 88,
-        "planetary": 84
+        "planetary": 83
       }
     },
     {
@@ -26184,9 +26184,9 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1026.8,
-      "wind_m_s": 3.29,
+      "wind_m_s": 3.43,
       "wind_gust_m_s": 7.55,
-      "wind_dir_deg": 295.0,
+      "wind_dir_deg": 302.0,
       "visibility_m": 46860.0,
       "temp_c": 9.3,
       "feels_like_c": 5.1,
@@ -26195,7 +26195,7 @@
       "cape_j_kg": 0.0,
       "seeing": 3,
       "transparency": 2,
-      "wind_kmh": 11.8,
+      "wind_kmh": 12.3,
       "visibility_km": 46.86,
       "dewpoint_spread_c": 11.2,
       "pressure_trend_6h_hpa": -0.6,
@@ -26234,7 +26234,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 3.29,
+          "raw": 3.43,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -26287,7 +26287,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 3.29 m/s → +15",
+          "line": "Wind: 3.43 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -26315,7 +26315,7 @@
         "visual": 90,
         "photography": 88,
         "broadband": 88,
-        "planetary": 83
+        "planetary": 82
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -26359,7 +26359,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.29,
+            "raw": 3.43,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26415,7 +26415,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.29,
+            "raw": 3.43,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26480,7 +26480,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.29,
+            "raw": 3.43,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26527,9 +26527,9 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 3.29,
-            "normalized": 0.959,
-            "earned": 24,
+            "raw": 3.43,
+            "normalized": 0.939,
+            "earned": 23,
             "note": null
           },
           {
@@ -26584,7 +26584,7 @@
         "balanced": 92,
         "visual": 90,
         "photography": 88,
-        "planetary": 83
+        "planetary": 82
       }
     },
     {
@@ -26599,9 +26599,9 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1026.2,
-      "wind_m_s": 3.44,
+      "wind_m_s": 3.48,
       "wind_gust_m_s": 7.75,
-      "wind_dir_deg": 299.0,
+      "wind_dir_deg": 301.0,
       "visibility_m": 45275.0,
       "temp_c": 9.2,
       "feels_like_c": 5.0,
@@ -26610,7 +26610,7 @@
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 2,
-      "wind_kmh": 12.4,
+      "wind_kmh": 12.5,
       "visibility_km": 45.27,
       "dewpoint_spread_c": 10.9,
       "pressure_trend_6h_hpa": 0.4,
@@ -26649,7 +26649,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 3.44,
+          "raw": 3.48,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -26702,7 +26702,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 3.44 m/s → +15",
+          "line": "Wind: 3.48 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -26774,7 +26774,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.44,
+            "raw": 3.48,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26830,7 +26830,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.44,
+            "raw": 3.48,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26895,7 +26895,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.44,
+            "raw": 3.48,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -26942,8 +26942,8 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 3.44,
-            "normalized": 0.937,
+            "raw": 3.48,
+            "normalized": 0.931,
             "earned": 23,
             "note": null
           },
@@ -27014,18 +27014,18 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1025.6,
-      "wind_m_s": 3.11,
+      "wind_m_s": 3.02,
       "wind_gust_m_s": 7.5,
-      "wind_dir_deg": 300.0,
+      "wind_dir_deg": 297.0,
       "visibility_m": 43680.0,
       "temp_c": 8.5,
-      "feels_like_c": 4.6,
+      "feels_like_c": 4.7,
       "humidity_pct": 52.0,
       "dewpoint_c": -0.9,
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 2,
-      "wind_kmh": 11.2,
+      "wind_kmh": 10.9,
       "visibility_km": 43.68,
       "dewpoint_spread_c": 9.4,
       "pressure_trend_6h_hpa": 1.5,
@@ -27064,7 +27064,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 3.11,
+          "raw": 3.02,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -27117,7 +27117,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 3.11 m/s → +15",
+          "line": "Wind: 3.02 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -27189,7 +27189,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.11,
+            "raw": 3.02,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -27245,7 +27245,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.11,
+            "raw": 3.02,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -27310,7 +27310,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 3.11,
+            "raw": 3.02,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -27357,8 +27357,8 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 3.11,
-            "normalized": 0.984,
+            "raw": 3.02,
+            "normalized": 0.997,
             "earned": 25,
             "note": null
           },
@@ -27429,9 +27429,9 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1025.7,
-      "wind_m_s": 2.57,
+      "wind_m_s": 2.48,
       "wind_gust_m_s": 7.1,
-      "wind_dir_deg": 299.0,
+      "wind_dir_deg": 295.0,
       "visibility_m": 41760.0,
       "temp_c": 6.8,
       "feels_like_c": 3.3,
@@ -27440,7 +27440,7 @@
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 2,
-      "wind_kmh": 9.3,
+      "wind_kmh": 8.9,
       "visibility_km": 41.76,
       "dewpoint_spread_c": 7.4,
       "pressure_trend_6h_hpa": 1.5,
@@ -27479,7 +27479,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 2.57,
+          "raw": 2.48,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -27532,7 +27532,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 2.57 m/s → +15",
+          "line": "Wind: 2.48 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -27604,7 +27604,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.57,
+            "raw": 2.48,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -27660,7 +27660,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.57,
+            "raw": 2.48,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -27725,7 +27725,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.57,
+            "raw": 2.48,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -27772,7 +27772,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 2.57,
+            "raw": 2.48,
             "normalized": 1.0,
             "earned": 25,
             "note": null
@@ -27844,9 +27844,9 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1025.9,
-      "wind_m_s": 2.44,
+      "wind_m_s": 2.28,
       "wind_gust_m_s": 5.5,
-      "wind_dir_deg": 301.0,
+      "wind_dir_deg": 293.0,
       "visibility_m": 39540.0,
       "temp_c": 5.2,
       "feels_like_c": 1.7,
@@ -27855,7 +27855,7 @@
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 3,
-      "wind_kmh": 8.8,
+      "wind_kmh": 8.2,
       "visibility_km": 39.54,
       "dewpoint_spread_c": 5.8,
       "pressure_trend_6h_hpa": null,
@@ -27894,7 +27894,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 2.44,
+          "raw": 2.28,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -27947,7 +27947,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 2.44 m/s → +15",
+          "line": "Wind: 2.28 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -28019,7 +28019,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.44,
+            "raw": 2.28,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28075,7 +28075,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.44,
+            "raw": 2.28,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28140,7 +28140,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.44,
+            "raw": 2.28,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28187,7 +28187,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 2.44,
+            "raw": 2.28,
             "normalized": 1.0,
             "earned": 25,
             "note": null
@@ -28259,9 +28259,9 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1026.1,
-      "wind_m_s": 2.22,
+      "wind_m_s": 2.27,
       "wind_gust_m_s": 3.8,
-      "wind_dir_deg": 301.0,
+      "wind_dir_deg": 303.0,
       "visibility_m": 39520.0,
       "temp_c": 4.0,
       "feels_like_c": 0.6,
@@ -28270,7 +28270,7 @@
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 3,
-      "wind_kmh": 8.0,
+      "wind_kmh": 8.2,
       "visibility_km": 39.52,
       "dewpoint_spread_c": 4.6,
       "pressure_trend_6h_hpa": null,
@@ -28309,7 +28309,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 2.22,
+          "raw": 2.27,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -28362,7 +28362,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 2.22 m/s → +15",
+          "line": "Wind: 2.27 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -28434,7 +28434,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.22,
+            "raw": 2.27,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28490,7 +28490,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.22,
+            "raw": 2.27,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28555,7 +28555,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.22,
+            "raw": 2.27,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28602,7 +28602,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 2.22,
+            "raw": 2.27,
             "normalized": 1.0,
             "earned": 25,
             "note": null
@@ -28674,9 +28674,9 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1026.2,
-      "wind_m_s": 2.49,
+      "wind_m_s": 2.59,
       "wind_gust_m_s": 3.3,
-      "wind_dir_deg": 300.0,
+      "wind_dir_deg": 304.0,
       "visibility_m": 36820.0,
       "temp_c": 3.0,
       "feels_like_c": -0.6,
@@ -28685,7 +28685,7 @@
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 3,
-      "wind_kmh": 9.0,
+      "wind_kmh": 9.3,
       "visibility_km": 36.82,
       "dewpoint_spread_c": 3.8,
       "pressure_trend_6h_hpa": null,
@@ -28724,7 +28724,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 2.49,
+          "raw": 2.59,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -28777,7 +28777,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 2.49 m/s → +15",
+          "line": "Wind: 2.59 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -28849,7 +28849,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.49,
+            "raw": 2.59,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28905,7 +28905,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.49,
+            "raw": 2.59,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -28970,7 +28970,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.49,
+            "raw": 2.59,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -29017,7 +29017,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 2.49,
+            "raw": 2.59,
             "normalized": 1.0,
             "earned": 25,
             "note": null
@@ -29089,18 +29089,18 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1026.6,
-      "wind_m_s": 2.39,
+      "wind_m_s": 2.64,
       "wind_gust_m_s": 2.9,
-      "wind_dir_deg": 299.0,
+      "wind_dir_deg": 307.0,
       "visibility_m": 36800.0,
       "temp_c": 2.2,
-      "feels_like_c": -1.3,
+      "feels_like_c": -1.4,
       "humidity_pct": 81.0,
       "dewpoint_c": -0.7,
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 3,
-      "wind_kmh": 8.6,
+      "wind_kmh": 9.5,
       "visibility_km": 36.8,
       "dewpoint_spread_c": 2.9,
       "pressure_trend_6h_hpa": null,
@@ -29139,7 +29139,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 2.39,
+          "raw": 2.64,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -29192,7 +29192,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 2.39 m/s → +15",
+          "line": "Wind: 2.64 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -29264,7 +29264,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.39,
+            "raw": 2.64,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -29320,7 +29320,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.39,
+            "raw": 2.64,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -29385,7 +29385,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.39,
+            "raw": 2.64,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -29432,7 +29432,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 2.39,
+            "raw": 2.64,
             "normalized": 1.0,
             "earned": 25,
             "note": null
@@ -29504,18 +29504,18 @@
       "rain_mm": 0.0,
       "snow_mm": 0.0,
       "pressure_hpa": 1027.1,
-      "wind_m_s": 2.49,
+      "wind_m_s": 2.54,
       "wind_gust_m_s": 2.6,
-      "wind_dir_deg": 300.0,
+      "wind_dir_deg": 302.0,
       "visibility_m": 32780.0,
       "temp_c": 1.5,
-      "feels_like_c": -2.0,
+      "feels_like_c": -2.1,
       "humidity_pct": 85.0,
       "dewpoint_c": -0.8,
       "cape_j_kg": 0.0,
       "seeing": 6,
       "transparency": 3,
-      "wind_kmh": 9.0,
+      "wind_kmh": 9.1,
       "visibility_km": 32.78,
       "dewpoint_spread_c": 2.3,
       "pressure_trend_6h_hpa": null,
@@ -29554,7 +29554,7 @@
           "key": "wind_m_s",
           "label": "Wind",
           "max": 15,
-          "raw": 2.49,
+          "raw": 2.54,
           "normalized": 1.0,
           "earned": 15,
           "note": null
@@ -29607,7 +29607,7 @@
           "max": 5
         },
         {
-          "line": "Wind: 2.49 m/s → +15",
+          "line": "Wind: 2.54 m/s → +15",
           "key": "wind_m_s",
           "earned": 15,
           "max": 15
@@ -29679,7 +29679,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.49,
+            "raw": 2.54,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -29735,7 +29735,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.49,
+            "raw": 2.54,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -29800,7 +29800,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 10,
-            "raw": 2.49,
+            "raw": 2.54,
             "normalized": 1.0,
             "earned": 10,
             "note": null
@@ -29847,7 +29847,7 @@
             "key": "wind_m_s",
             "label": "Wind",
             "max": 25,
-            "raw": 2.49,
+            "raw": 2.54,
             "normalized": 1.0,
             "earned": 25,
             "note": null
