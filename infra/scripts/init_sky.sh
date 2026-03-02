@@ -14,7 +14,6 @@ mkdir -p services/sky/data/raw
 mkdir -p services/sky/data/generated
 mkdir -p services/sky/tests
 
-touch services/sky/pipelines/run_sky.py
 touch services/sky/README.md
 touch services/sky/requirements.txt
 

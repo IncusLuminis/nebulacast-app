@@ -24,7 +24,8 @@ nebulacast-app/
 ├── .github/workflows/     # GitHub Actions: cron jobs for news, calendar, weather backends
 ├── docs/                  # Architecture (this file), data contracts
 ├── frontend/              # Frontend build inputs (templates, assets, config)
-├── infra/scripts/         # Local dev scripts (e.g. serve_local.sh)
+├── infra/scripts/         # Dev/infra scripts (serve_local.sh, dev_api_server.py, init_sky.sh, run-api-astro-weather.js)
+│   └── debug/             # Debug/experimental (heasarc_*, debug_grb_heasarc)
 ├── Makefile               # Top-level targets: news, calendar, weather, server, deps-*
 ├── services/              # Backend services (news, calendar, weather)
 └── sites/

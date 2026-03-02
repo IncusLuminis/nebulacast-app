@@ -75,7 +75,7 @@ async function handleAstroWeather(req, res, url, corsHeaders) {
   // Try to use tsx to run TypeScript directly
   try {
     const { execSync } = require('child_process');
-    const scriptPath = path.join(__dirname, '../../scripts/run-api-astro-weather.js');
+    const scriptPath = path.join(__dirname, 'run-api-astro-weather.js');
     
     // For now, return a simple response indicating API is available
     // but suggest using wrangler for full functionality

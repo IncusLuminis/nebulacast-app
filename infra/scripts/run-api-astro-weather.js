@@ -7,4 +7,4 @@
 // 2. Or use wrangler pages dev (recommended)
 
 console.log('Use "wrangler pages dev" for full API functionality');
-console.log('Or use the dev-server.js which proxies to Nominatim for geocode/revgeo');
+console.log('Or use infra/scripts/dev-server.js which proxies to Nominatim for geocode/revgeo');

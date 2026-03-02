@@ -209,14 +209,18 @@ Each generator SHOULD ship a pipelines/misc/check_<dataset>.py validator that ch
 	•	no NaNs.
 
 
--- Alerts --
+-- All sky pipelines --
+PYTHONPATH=services/sky python -u services/sky/pipelines/gen_all.py
+
+(gen_objects needs calendar/daily_signal.json — run calendar-back first.)
+
+-- Alerts (individual) --
 PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_neo_alerts.py
 PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_neocp_alerts.py
 PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_risk_alerts.py
 
 PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_gcn_alerts.py
 
-PYTHONUNBUFFERED=1 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts.py
 PYTHONPATH=services/sky python -u services/sky/pipelines/gen_alerts.py
 
 -- Objects Today --

@@ -2,18 +2,21 @@
 # -*- coding: utf-8 -*-
 
 """
-Run all SKY data pipelines:
-  1) stars (Hipparcos)
-  2) constellations (Stellarium western, HIP ids)
-  3) milkyway band (synthetic, GAL plane)
+Run all SKY data pipelines in dependency order.
 
-Assumes these scripts exist in the same folder:
-  - gen_stars.py
-  - gen_constellations.py
-  - gen_milkyway.py
+Order:
+  1) stars, constellations, milkyway (foundation)
+  2) messier (dso_messier.json for gen_objects)
+  3) sunmoon, planets (ephemerides)
+  4) alerts (neo, neocp, risk, gcn, then gen_alerts aggregate)
+  5) objects (needs calendar/daily_signal.json, planets, sun_moon, dso_messier)
+  6) ranking (needs objects_today.json)
+
+Note: gen_objects requires calendar pipeline output (sites/staging/calendar/daily_signal.json).
+Run calendar-back first for full objects/ranking.
 
 Usage:
-  python services/pipelines/sky/gen_all.py
+  PYTHONPATH=services/sky python services/sky/pipelines/gen_all.py
 """
 
 from __future__ import annotations
@@ -25,6 +28,22 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 
+PIPELINES = [
+    "gen_stars.py",
+    "gen_constellations.py",
+    "gen_milkyway.py",
+    "gen_messier.py",
+    "gen_sunmoon.py",
+    "gen_planets.py",
+    "gen_neo_alerts.py",
+    "gen_neocp_alerts.py",
+    "gen_risk_alerts.py",
+    "gen_gcn_alerts.py",
+    "gen_alerts.py",
+    "gen_objects.py",
+    "gen_ranking.py",
+]
+
 
 def run_script(filename: str) -> None:
     path = HERE / filename
@@ -32,16 +51,12 @@ def run_script(filename: str) -> None:
         raise FileNotFoundError(f"[sky] pipeline script not found: {path}")
 
     print(f"\n[sky] === running {filename} ===")
-    # run as if "python filename", with __name__ == "__main__"
     runpy.run_path(str(path), run_name="__main__")
 
 
 def main() -> None:
-    # Keep explicit order:
-    # constellations needs stars JSON to compute label positions
-    run_script("gen_stars.py")
-    run_script("gen_constellations.py")
-    run_script("gen_milkyway.py")
+    for script in PIPELINES:
+        run_script(script)
 
     print("\n[sky] ✅ all pipelines completed")
 
