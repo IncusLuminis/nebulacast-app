@@ -80,4 +80,5 @@ jobs:
           git pull --rebase --autostash origin "${{ github.ref_name }}"
 
           git commit -m "chore(sky-alerts): update alerts datasets"
+          git pull --rebase origin "${{ github.ref_name }}"
           git push origin "${{ github.ref_name }}"

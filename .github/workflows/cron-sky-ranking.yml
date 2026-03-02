@@ -47,6 +47,6 @@ jobs:
 
           git diff --staged --quiet && exit 0
 
-          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
           git commit -m "chore(sky): update ranking"
-          git push
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"

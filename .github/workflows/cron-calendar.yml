@@ -47,4 +47,5 @@ jobs:
 
           git diff --staged --quiet && exit 0
           git commit -m "chore(calendar): update backend outputs"
-          git push
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"
