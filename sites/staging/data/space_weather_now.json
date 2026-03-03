@@ -1,19 +1,11 @@
 {
-  "generated_utc": "2026-03-03T12:37:06Z",
+  "generated_utc": "2026-03-03T18:36:28Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-03T09:00:00Z",
-      "value": 2.33
+      "timestamp_utc": "2026-03-03T15:00:00Z",
+      "value": 3.33
     },
     "forecast_3h": [
-      {
-        "timestamp_utc": "2026-03-03T12:00:00Z",
-        "value": 2.0
-      },
-      {
-        "timestamp_utc": "2026-03-03T15:00:00Z",
-        "value": 2.33
-      },
       {
         "timestamp_utc": "2026-03-03T18:00:00Z",
         "value": 3.33
@@ -37,21 +29,36 @@
       {
         "timestamp_utc": "2026-03-04T09:00:00Z",
         "value": 2.0
+      },
+      {
+        "timestamp_utc": "2026-03-04T12:00:00Z",
+        "value": 1.33
+      },
+      {
+        "timestamp_utc": "2026-03-04T15:00:00Z",
+        "value": 2.0
       }
     ],
     "activity_label": "quiet"
   },
   "solar_wind": {
-    "timestamp_utc": "2026-03-03T12:34:00Z",
-    "speed_kms": 407.5,
-    "density_protons_cm3": 4.19
+    "timestamp_utc": "2026-03-03T18:34:00Z",
+    "speed_kms": 379.1,
+    "density_protons_cm3": 2.21
   },
   "xray": {
-    "timestamp_utc": "2026-03-03T12:33:00Z",
-    "flux_wm2": 7.016835184003867e-07,
+    "timestamp_utc": "2026-03-03T18:32:00Z",
+    "flux_wm2": 6.643799679295626e-07,
     "class": "B"
   },
   "alerts": [
+    {
+      "id": "EF3A",
+      "timestamp_utc": "2026-03-03T13:41:47Z",
+      "title": "Space Weather Message Code: ALTEF3",
+      "level": "info",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "EF3A",
       "timestamp_utc": "2026-03-02T05:00:13Z",
@@ -896,41 +903,6 @@
       "id": "XM5A",
       "timestamp_utc": "2026-02-01T23:56:50Z",
       "title": "Space Weather Message Code: ALTXMF",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5S",
-      "timestamp_utc": "2026-02-01T16:29:40Z",
-      "title": "Space Weather Message Code: SUMXM5",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5A",
-      "timestamp_utc": "2026-02-01T16:08:28Z",
-      "title": "Space Weather Message Code: ALTXMF",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5S",
-      "timestamp_utc": "2026-02-01T13:13:49Z",
-      "title": "Space Weather Message Code: SUMXM5",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5A",
-      "timestamp_utc": "2026-02-01T12:55:00Z",
-      "title": "Space Weather Message Code: ALTXMF",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XX0S",
-      "timestamp_utc": "2026-02-01T12:53:26Z",
-      "title": "Space Weather Message Code: SUMX01",
       "level": "info",
       "source": "NOAA SWPC"
     }
