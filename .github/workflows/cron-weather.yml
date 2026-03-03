@@ -33,6 +33,12 @@ jobs:
           PYTHONPATH=services/weather python services/weather/pipelines/run_weather.py
           echo "Weather backend completed successfully"
 
+      - name: Run Phase 1 pipeline (observer + space weather)
+        run: |
+          set -e
+          PYTHONPATH=services/weather python services/weather/pipelines/run_phase1.py
+          echo "Phase 1 pipeline completed successfully"
+
       - name: Validate generated JSON files
         run: |
           echo "Validating daily_weather.json..."
@@ -86,6 +92,34 @@ jobs:
                   print("\nValidation failed for outputs file - aborting commit")
                   sys.exit(1)
 
+          # Validate Phase 1 outputs
+          def validate_phase1_json(file_path, required_key):
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      data = json.load(f)
+                  if 'generated_utc' not in data:
+                      print(f"ERROR: {file_path} missing 'generated_utc'")
+                      return False
+                  if required_key not in data:
+                      print(f"ERROR: {file_path} missing '{required_key}'")
+                      return False
+                  print(f"✓ {file_path} valid")
+                  return True
+              except Exception as e:
+                  print(f"ERROR: {file_path} validation failed: {e}")
+                  return False
+
+          observer_file = Path("sites/staging/data/observer_weather_now.json")
+          space_file = Path("sites/staging/data/space_weather_now.json")
+          if observer_file.exists():
+              if not validate_phase1_json(observer_file, 'hourly'):
+                  print("\nValidation failed for observer_weather_now.json - aborting")
+                  sys.exit(1)
+          if space_file.exists():
+              if not validate_phase1_json(space_file, 'kp'):
+                  print("\nValidation failed for space_weather_now.json - aborting")
+                  sys.exit(1)
+
           print("\nAll JSON files validated successfully")
           EOF
 
@@ -99,7 +133,7 @@ jobs:
           git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
 
           # stage only expected output paths (including deletions inside them)
-          git add -A sites/staging/weather/daily_weather.json sites/staging/data/weather/ services/weather/outputs/ 2>/dev/null || true
+          git add -A sites/staging/weather/daily_weather.json sites/staging/data/weather/ services/weather/outputs/ sites/staging/data/observer_weather_now.json sites/staging/data/space_weather_now.json 2>/dev/null || true
 
           git diff --staged --quiet && exit 0
           git commit -m "chore(weather): update backend outputs"

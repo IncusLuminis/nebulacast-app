@@ -196,6 +196,8 @@
       <button type="button" class="nebulacast-tab" data-tab="sun" title="Sun">☀️</button>
       <button type="button" class="nebulacast-tab" data-tab="sky" title="Sky">🌌</button>
       <button type="button" class="nebulacast-tab" data-tab="news" title="News">📰</button>
+      <button type="button" class="nebulacast-tab" data-tab="observer-weather" title="Observer Weather">🔭</button>
+      <button type="button" class="nebulacast-tab" data-tab="space-weather" title="Space Weather">🌞</button>
     </nav>
 
     <!-- Main content -->
@@ -251,6 +253,16 @@
           <div id="w-sky" class="widget-container">
             <div id="skyMount"></div>
           </div>
+        </div>
+
+        <!-- Observer Weather panel -->
+        <div id="panel-observer-weather" class="nebulacast-panel">
+          <div id="w-observer-weather" class="widget-container"></div>
+        </div>
+
+        <!-- Space Weather panel -->
+        <div id="panel-space-weather" class="nebulacast-panel">
+          <div id="w-space-weather" class="widget-container"></div>
         </div>
 
         <!-- News panel -->
@@ -354,6 +366,9 @@
 
   <!-- News/Calendar widgets -->
   <script src="/assets/js/widget_runtime.js"></script>
+  <!-- Phase 1: observer + space weather panels -->
+  <script src="/assets/js/widget_observer_weather.js"></script>
+  <script src="/assets/js/widget_space_weather.js"></script>
 
   <!-- Weather app state and widgets -->
   <script type="module">
@@ -429,9 +444,18 @@
       });
     }
 
-    // Initialize news/calendar widgets
-    window.runCalendarWidget({ 
-      rootId: 'nrc-main', 
+    // Phase 1: Observer Weather + Space Weather panels
+    const obsWeatherEl = document.getElementById('w-observer-weather');
+    if (obsWeatherEl && window.runObserverWeatherPanel) {
+      window.runObserverWeatherPanel(obsWeatherEl, { jsonUrl: '/data/observer_weather_now.json' });
+    }
+    const spaceWeatherEl = document.getElementById('w-space-weather');
+    if (spaceWeatherEl && window.runSpaceWeatherPanel) {
+      window.runSpaceWeatherPanel(spaceWeatherEl, { jsonUrl: '/data/space_weather_now.json' });
+    }
+
+    window.runCalendarWidget({
+      rootId: 'nrc-main',
       jsonUrl: '/calendar/daily_signal.json', 
       maxItems: 20, 
       filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], 
@@ -582,7 +606,9 @@
           map: 'Map',
           sun: 'Sun',
           sky: 'Sky',
-          news: 'News'
+          news: 'News',
+          'observer-weather': 'Observer Weather',
+          'space-weather': 'Space Weather',
         };
         document.title = `Nebulacast — ${titles[targetTab] || 'Weather'}`;
       });
