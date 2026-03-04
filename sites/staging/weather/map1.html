@@ -1370,7 +1370,10 @@
    */
   function probeGibsTile(dateStr, centerLat, centerLon, zoom) {
     if (!map) return Promise.resolve(false);
-    zoom = zoom || 5;
+    // Use the current map zoom (clamped to GIBS native max) so we check tiles
+    // that will actually be requested — lower zoom overviews may be available
+    // earlier than the high-res tiles the map actually loads.
+    zoom = zoom || Math.min(map.getZoom(), 9);
     // Получаем координаты тайла из lat/lon используя стандартную формулу Leaflet
     var centerPoint = L.latLng(centerLat, centerLon);
     var n = Math.pow(2, zoom);
@@ -1395,7 +1398,8 @@
         clearTimeout(timeout);
         resolve(false);
       };
-      img.crossOrigin = "anonymous";
+      // No crossOrigin: Image 404s without crossOrigin are silent in the browser
+      // console (appear only in Network tab). With crossOrigin Chrome logs them.
       img.src = url;
     });
   }
