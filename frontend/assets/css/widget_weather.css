@@ -44,3 +44,12 @@
 .astro-hour-score.good { color: #4ade80; }
 .astro-hour-score.fair { color: #fbbf24; }
 .astro-hour-score.poor { color: #f87171; }
+
+/* ── Observer Weather decision card overrides (supplement inline styles) ── */
+.owp-decision-card {
+  border-top: 1px solid rgba(143, 182, 255, 0.12);
+}
+.owp-badge--high   { background: #e05c5c !important; }
+.owp-badge--medium { background: #e0a84a !important; }
+.owp-badge--low    { background: #5cce8c !important; }
+.owp-badge--unknown { background: #555 !important; color: #aaa !important; }
