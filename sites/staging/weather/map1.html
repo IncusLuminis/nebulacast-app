@@ -1490,76 +1490,74 @@
         return;
       }
       var dateStr = candidates[i];
-      var layer = makeGibsLayer(dateStr);
-      var loadedTiles = 0;
-      var fallbackTimer = setTimeout(function () {
-        if (attemptId !== gibsAttemptId) return;
-        if (loadedTiles === 0) {
-          if (map.hasLayer(layer)) {
-            map.removeLayer(layer);
+      // Probe first via Image (silent in console) before loading Leaflet tiles.
+      // Leaflet tile 404s appear as console errors; Image 404s do not.
+      probeGibsTile(dateStr, currentCenter[0], currentCenter[1], 5)
+        .then(function(probeOk) {
+          if (attemptId !== gibsAttemptId) return;
+          if (!probeOk) {
+            tryIndex(i + 1);
+            return;
           }
-          // Не скрываем spinner здесь, т.к. переходим к следующей дате
-          tryIndex(i + 1);
-        }
-      }, 2500);
-      // Таймаут для гарантированного скрытия spinner через 10 секунд
-      var spinnerTimeout = setTimeout(function() {
-        if (attemptId === gibsAttemptId) {
-          setMapLoading("gibs", false);
-        }
-      }, 10000);
-      var tileLoadCount = 0;
-      var tileErrorCount = 0;
-      var spinnerHidden = false;
-      function hideSpinnerIfReady() {
-        if (spinnerHidden || attemptId !== gibsAttemptId) return;
-        // Скрываем spinner если загрузилось хотя бы несколько тайлов или прошло достаточно времени
-        if (tileLoadCount >= 3 || (tileLoadCount > 0 && tileErrorCount > 0 && tileLoadCount + tileErrorCount >= 10)) {
-          spinnerHidden = true;
-          clearTimeout(spinnerTimeout);
-          setMapLoading("gibs", false);
-        }
-      }
-      layer.on("tileload", function () {
-        loadedTiles += 1;
-        tileLoadCount += 1;
-        hideSpinnerIfReady();
-      });
-      layer.on("tileerror", function() {
-        tileErrorCount += 1;
-        hideSpinnerIfReady();
-      });
-      layer.addTo(map);
-      layer.setZIndex(500);
-      layer.bringToFront();
-      // Сразу устанавливаем gibsLayer и показываем слой (до завершения probe)
-      gibsLayer = layer;
-      observedAvailable = true; // Предполагаем доступность до проверки
-      updateCloudSourceDisplay();
-      layer.on("load", function () {
-        if (attemptId !== gibsAttemptId) return;
-        if (!map.hasLayer(layer)) return;
-        clearTimeout(fallbackTimer);
-        clearTimeout(spinnerTimeout);
-        spinnerHidden = true;
-        var isFallback = dateStr !== baseDateStr;
-        updateGibsLegend(dateStr, isFallback);
-        updateGibsDateSelector();
-        setMapLoading("gibs", false);
-        // Probe для более точного определения (но не блокируем показ)
-        probeGibsTile(dateStr, currentCenter[0], currentCenter[1], 5)
-          .then(function (available) {
-            if (attemptId === gibsAttemptId) {
-              observedAvailable = available;
-              updateCloudSourceDisplay();
+          var layer = makeGibsLayer(dateStr);
+          var loadedTiles = 0;
+          var fallbackTimer = setTimeout(function () {
+            if (attemptId !== gibsAttemptId) return;
+            if (loadedTiles === 0) {
+              if (map.hasLayer(layer)) {
+                map.removeLayer(layer);
+              }
+              // Не скрываем spinner здесь, т.к. переходим к следующей дате
+              tryIndex(i + 1);
             }
-          })
-          .catch(function () {
-            // Не меняем observedAvailable, если probe упал - оставляем true, т.к. слой уже загрузился
+          }, 2500);
+          // Таймаут для гарантированного скрытия spinner через 10 секунд
+          var spinnerTimeout = setTimeout(function() {
+            if (attemptId === gibsAttemptId) {
+              setMapLoading("gibs", false);
+            }
+          }, 10000);
+          var tileLoadCount = 0;
+          var tileErrorCount = 0;
+          var spinnerHidden = false;
+          function hideSpinnerIfReady() {
+            if (spinnerHidden || attemptId !== gibsAttemptId) return;
+            // Скрываем spinner если загрузилось хотя бы несколько тайлов или прошло достаточно времени
+            if (tileLoadCount >= 3 || (tileLoadCount > 0 && tileErrorCount > 0 && tileLoadCount + tileErrorCount >= 10)) {
+              spinnerHidden = true;
+              clearTimeout(spinnerTimeout);
+              setMapLoading("gibs", false);
+            }
+          }
+          layer.on("tileload", function () {
+            loadedTiles += 1;
+            tileLoadCount += 1;
+            hideSpinnerIfReady();
           });
-        setStatus("OK");
-        updateStatusIndicator(); // Обновляем индикатор после успешной загрузки GIBS
-      });
+          layer.on("tileerror", function() {
+            tileErrorCount += 1;
+            hideSpinnerIfReady();
+          });
+          layer.addTo(map);
+          layer.setZIndex(500);
+          layer.bringToFront();
+          gibsLayer = layer;
+          observedAvailable = true;
+          updateCloudSourceDisplay();
+          layer.on("load", function () {
+            if (attemptId !== gibsAttemptId) return;
+            if (!map.hasLayer(layer)) return;
+            clearTimeout(fallbackTimer);
+            clearTimeout(spinnerTimeout);
+            spinnerHidden = true;
+            var isFallback = dateStr !== baseDateStr;
+            updateGibsLegend(dateStr, isFallback);
+            updateGibsDateSelector();
+            setMapLoading("gibs", false);
+            setStatus("OK");
+            updateStatusIndicator(); // Обновляем индикатор после успешной загрузки GIBS
+          });
+        });
     }
     tryIndex(0);
   }
