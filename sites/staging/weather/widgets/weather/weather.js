@@ -324,7 +324,7 @@ function kmFromM(m) {
 
 // L1 chips: Cloud, Temp (when present), Wind, Vis, Precip, Seeing, Trans
 const L1_CHIPS = [
-  { ico: "☁️", label: "Cloud", key: "cloud" },
+  { ico: "☁️", label: "Clouds", key: "cloud" },
   { ico: "🌡", label: "Temp", key: "temp" },
   { ico: "💨", label: "Wind", key: "wind" },
   { ico: "👁️", label: "Vis", key: "vis" },
@@ -2107,7 +2107,7 @@ function renderChart(paramKey) {
   // Update title and subheader
   const paramTitles = {
     score: "Score",
-    cloud: "Cloud",
+    cloud: "Clouds",
     pressure: "Pressure",
     seeing: "Seeing",
     trans: "Transparency"
@@ -2309,29 +2309,38 @@ function renderChart(paramKey) {
     ctx.fillText("NOW", xNow, padding.top - 4);
   }
   
-  // Draw line chart
-  ctx.strokeStyle = "rgba(143,182,255,0.8)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  let hasStart = false;
-  
-  values.forEach((val, i) => {
-    if (val == null) {
-      hasStart = false;
-      return;
-    }
-    const x = padding.left + (chartWidth * i / (values.length - 1 || 1));
-    const y = padding.top + chartHeight - ((val - yMin) / yRange * chartHeight);
-    
-    if (!hasStart) {
-      ctx.moveTo(x, y);
-      hasStart = true;
-    } else {
-      ctx.lineTo(x, y);
-    }
-  });
-  ctx.stroke();
-  
+  // Helper to draw a single data series line
+  function drawSeriesLine(seriesValues, color, lineWidth, dashed) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    if (dashed) ctx.setLineDash([4, 3]);
+    else ctx.setLineDash([]);
+    ctx.beginPath();
+    let started = false;
+    seriesValues.forEach((val, i) => {
+      if (val == null) { started = false; return; }
+      const x = padding.left + (chartWidth * i / (seriesValues.length - 1 || 1));
+      const y = padding.top + chartHeight - ((val - yMin) / yRange * chartHeight);
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // For cloud chart, draw Low/Mid/High layers first (behind the total line)
+  if (paramKey === "cloud") {
+    const lowVals = hours.map(h => h.cloud_low != null ? h.cloud_low : null);
+    const midVals = hours.map(h => h.cloud_mid != null ? h.cloud_mid : null);
+    const highVals = hours.map(h => h.cloud_high != null ? h.cloud_high : null);
+    drawSeriesLine(lowVals, "rgba(255, 180, 80, 0.7)", 1.5, true);
+    drawSeriesLine(midVals, "rgba(100, 220, 130, 0.7)", 1.5, true);
+    drawSeriesLine(highVals, "rgba(200, 150, 255, 0.7)", 1.5, true);
+  }
+
+  // Draw line chart (total / main series)
+  drawSeriesLine(values, "rgba(143,182,255,0.8)", 2, false);
+
   // Draw points
   ctx.fillStyle = "rgba(143,182,255,0.9)";
   values.forEach((val, i) => {
@@ -2342,6 +2351,43 @@ function renderChart(paramKey) {
     ctx.arc(x, y, 3, 0, Math.PI * 2);
     ctx.fill();
   });
+
+  // Draw cloud layer legend
+  if (paramKey === "cloud") {
+    const legend = [
+      { label: "Total", color: "rgba(143, 182, 255, 0.9)", dashed: false },
+      { label: "Low",   color: "rgba(255, 180, 80, 0.9)",  dashed: true },
+      { label: "Mid",   color: "rgba(100, 220, 130, 0.9)", dashed: true },
+      { label: "High",  color: "rgba(200, 150, 255, 0.9)", dashed: true },
+    ];
+    const lineLen = 18;
+    const gap = 5;
+    const rowH = 15;
+    const legendPad = 8;
+    ctx.font = "10px sans-serif";
+    ctx.textBaseline = "middle";
+    // Measure widest label
+    const maxLabelW = Math.max(...legend.map(l => ctx.measureText(l.label).width));
+    const entryW = lineLen + gap + maxLabelW;
+    const legendX = padding.left + chartWidth - legendPad - entryW;
+    const legendY = padding.top + legendPad;
+    legend.forEach((item, idx) => {
+      const y = legendY + idx * rowH + rowH / 2;
+      ctx.strokeStyle = item.color;
+      ctx.lineWidth = item.dashed ? 1.5 : 2;
+      if (item.dashed) ctx.setLineDash([4, 3]);
+      else ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(legendX, y);
+      ctx.lineTo(legendX + lineLen, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = item.color;
+      ctx.textAlign = "left";
+      ctx.fillText(item.label, legendX + lineLen + gap, y);
+    });
+    ctx.textAlign = "center";
+  }
   
   // Draw axis labels AFTER graph (so they're visible on top)
   // Y axis labels (VALUES with units)
@@ -3005,7 +3051,7 @@ function renderWeatherHTML(rootEl) {
           <div class="now" data-role="now-score">Now —</div>
         </div>
         <div class="mini" data-role="mini-cloud" data-chart="cloud" aria-label="Open chart: Cloud" tabindex="0">
-          <div class="t">Cloud</div>
+          <div class="t">Clouds</div>
           <div class="bar" data-role="spark-cloud"></div>
           <div class="now" data-role="now-cloud">Now —%</div>
         </div>
