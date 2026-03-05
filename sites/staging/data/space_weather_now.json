@@ -1,34 +1,18 @@
 {
-  "generated_utc": "2026-03-05T06:39:43Z",
+  "generated_utc": "2026-03-05T19:09:53Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-05T03:00:00Z",
-      "value": 0.67
+      "timestamp_utc": "2026-03-05T15:00:00Z",
+      "value": 0.33
     },
     "forecast_3h": [
       {
-        "timestamp_utc": "2026-03-05T06:00:00Z",
-        "value": 1.0
-      },
-      {
-        "timestamp_utc": "2026-03-05T09:00:00Z",
-        "value": 1.33
-      },
-      {
-        "timestamp_utc": "2026-03-05T12:00:00Z",
-        "value": 1.0
-      },
-      {
-        "timestamp_utc": "2026-03-05T15:00:00Z",
-        "value": 2.33
-      },
-      {
         "timestamp_utc": "2026-03-05T18:00:00Z",
-        "value": 2.33
+        "value": 1.67
       },
       {
         "timestamp_utc": "2026-03-05T21:00:00Z",
-        "value": 3.33
+        "value": 2.0
       },
       {
         "timestamp_utc": "2026-03-06T00:00:00Z",
@@ -37,18 +21,34 @@
       {
         "timestamp_utc": "2026-03-06T03:00:00Z",
         "value": 3.33
+      },
+      {
+        "timestamp_utc": "2026-03-06T06:00:00Z",
+        "value": 3.0
+      },
+      {
+        "timestamp_utc": "2026-03-06T09:00:00Z",
+        "value": 2.67
+      },
+      {
+        "timestamp_utc": "2026-03-06T12:00:00Z",
+        "value": 3.0
+      },
+      {
+        "timestamp_utc": "2026-03-06T15:00:00Z",
+        "value": 4.0
       }
     ],
     "activity_label": "quiet"
   },
   "solar_wind": {
-    "timestamp_utc": "2026-03-05T06:38:00Z",
-    "speed_kms": 389.1,
-    "density_protons_cm3": 2.37
+    "timestamp_utc": "2026-03-05T19:07:00Z",
+    "speed_kms": 349.3,
+    "density_protons_cm3": 1.94
   },
   "xray": {
-    "timestamp_utc": "2026-03-05T06:36:00Z",
-    "flux_wm2": 6.863705834803113e-07,
+    "timestamp_utc": "2026-03-05T19:06:00Z",
+    "flux_wm2": 7.26959342500777e-07,
     "class": "B"
   },
   "alerts": [
@@ -812,55 +812,6 @@
       "id": "EF3A",
       "timestamp_utc": "2026-02-04T09:27:17Z",
       "title": "Space Weather Message Code: ALTEF3",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "A20F",
-      "timestamp_utc": "2026-02-03T16:46:38Z",
-      "title": "Space Weather Message Code: WATA20",
-      "level": "watch",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5S",
-      "timestamp_utc": "2026-02-03T15:10:43Z",
-      "title": "Space Weather Message Code: SUMXM5",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5A",
-      "timestamp_utc": "2026-02-03T14:58:28Z",
-      "title": "Space Weather Message Code: ALTXMF",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XX0S",
-      "timestamp_utc": "2026-02-03T14:28:00Z",
-      "title": "Space Weather Message Code: SUMX01",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5A",
-      "timestamp_utc": "2026-02-03T14:11:30Z",
-      "title": "Space Weather Message Code: ALTXMF",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5S",
-      "timestamp_utc": "2026-02-03T07:25:39Z",
-      "title": "Space Weather Message Code: SUMXM5",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "XM5A",
-      "timestamp_utc": "2026-02-03T07:02:06Z",
-      "title": "Space Weather Message Code: ALTXMF",
       "level": "info",
       "source": "NOAA SWPC"
     }
