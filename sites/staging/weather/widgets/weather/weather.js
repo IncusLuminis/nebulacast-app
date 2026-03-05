@@ -1227,10 +1227,13 @@ function renderNow(rootEl, nowHour) {
     }
     if (scoreList) {
       if (isV2Breakdown && breakdown.length > 0) {
+        ensureFbStyles();
         scoreList.innerHTML = breakdown.map(b => {
           const textPart = (b.label || b.key) + (b.raw != null && b.raw !== "" ? ": " + formatBreakdownRawForV2(b.key, b.raw) : "");
           const hasTip = (TOOLTIPS && TOOLTIPS[b.key]);
-          return `<div class="breakdown-line"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(b.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span><span class="breakdown-text">${escapeHtml(textPart)}</span><span class="contrib">→ +${b.earned ?? 0}</span></div>`;
+          const fs2 = b.factor_score != null ? b.factor_score : Math.round(100 * (b.normalized || 0));
+          const fc2 = _fbColor(fs2);
+          return `<div class="breakdown-line"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(b.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span><span class="breakdown-text">${escapeHtml(textPart)}</span><div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${fs2}%;background:${fc2}"></div></div><span class="contrib">→ +${b.earned ?? 0}</span></div>`;
         }).join("");
       } else if (hasPenaltyBreakdown && breakdown.penalties) {
         const order = PENALTY_ORDER.filter(k => breakdown.penalties[k] != null);
@@ -2381,11 +2384,66 @@ function closeHourInspector() {
   els.sheet.style.transform = "";
 }
 
+// ── Explainable factor bars (#88) ─────────────────────────────────────────
+function _fbColor(score) {
+  if (score == null) return '#555';
+  if (score >= 70) return '#4ade80';
+  if (score >= 40) return '#fbbf24';
+  return '#f87171';
+}
+
+function renderFactorBarsHTML(breakdown) {
+  if (!Array.isArray(breakdown) || !breakdown.length) {
+    return '<div style="color:#666;font-size:10px;padding:4px 0">No breakdown data</div>';
+  }
+  return breakdown.filter(function(b) { return b.max > 0; }).map(function(b) {
+    var fs = b.factor_score != null ? b.factor_score : Math.round(100 * (b.normalized || 0));
+    var color = _fbColor(fs);
+    var label = escapeHtml(b.label || b.key);
+    var pts = (b.earned != null ? b.earned : 0) + '/' + b.max;
+    return '<div class="fb-row">' +
+      '<span class="fb-label" title="' + label + '">' + label + '</span>' +
+      '<div class="fb-track"><div class="fb-fill" style="width:' + fs + '%;background:' + color + '"></div></div>' +
+      '<span class="fb-val" style="color:' + color + '">' + fs + '</span>' +
+      '<span class="fb-pts">' + pts + 'pt</span>' +
+      '</div>';
+  }).join('');
+}
+
+var _fbStylesInjected = false;
+function ensureFbStyles() {
+  if (_fbStylesInjected) return;
+  _fbStylesInjected = true;
+  var s = document.createElement('style');
+  s.id = 'fb-styles';
+  s.textContent = [
+    '.fb-row{display:flex;align-items:center;gap:5px;margin:3px 0;min-height:18px}',
+    '.fb-label{width:78px;font-size:10px;color:#9aa3b2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}',
+    '.fb-track{flex:1;height:5px;background:#1e2330;border-radius:3px;overflow:hidden;min-width:30px}',
+    '.fb-fill{height:100%;border-radius:3px;transition:width .15s}',
+    '.fb-val{width:24px;font-size:10px;font-weight:700;text-align:right;flex-shrink:0}',
+    '.fb-pts{width:36px;font-size:9px;color:#555;text-align:right;flex-shrink:0}',
+    '.hi-tab-row{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}',
+    '.hi-tab{background:none;border:1px solid #2a2f3a;border-radius:4px;color:#9aa3b2;font-size:9px;font-weight:600;padding:2px 7px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;line-height:1.6}',
+    '.hi-tab.active{background:#1a2235;border-color:#8fb6ff;color:#8fb6ff}',
+    '.hi-tab-panel{display:none}.hi-tab-panel.active{display:block}',
+    '.fwhm-row{display:flex;align-items:center;gap:10px;margin-top:8px;padding:6px 0;border-top:1px solid #1e2330}',
+    '.fwhm-val{font-size:13px;font-weight:700;color:#8fb6ff}',
+    '.fwhm-label{font-size:10px;color:#9aa3b2}',
+    '.fwhm-conf{font-size:9px;color:#555}',
+    '.bd-bar-wrap{flex:1;min-width:20px;height:4px;background:#1e2330;border-radius:2px;overflow:hidden;margin:0 4px}',
+    '.bd-bar-fill{height:100%;border-radius:2px}',
+  ].join('');
+  document.head.appendChild(s);
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 function renderHourInspector(hourIdx) {
   if (!weatherData || !weatherData.hours || hourIdx < 0 || hourIdx >= weatherData.hours.length) return;
-  
+
   const els = getHourInspectorElements();
   if (!els.time || !els.scoreVal || !els.scoreLabel || !els.summary || !els.body) return;
+  ensureFbStyles();
   
   const hour = weatherData.hours[hourIdx];
   const hours = weatherData.hours;
@@ -2512,19 +2570,62 @@ function renderHourInspector(hourIdx) {
     bodyHTML += '</ul></div>';
   }
   
-  // Profile recommendations (compact one line)
-  const profileScores = computeProfileScores(hour);
-  const getProfileStatus = (s) => s >= 70 ? "good" : s >= 50 ? "fair" : "poor";
-  const getProfileStatusLabel = (s) => s >= 70 ? "Good" : s >= 50 ? "Fair" : "Poor";
-  
+  // Score breakdown by profile — explainable factor bars (#88)
+  const _profBDs = {
+    balanced:  hour.score_breakdown,
+    visual:    hour.score_breakdown_by_profile && hour.score_breakdown_by_profile.visual,
+    photo:     hour.score_breakdown_by_profile && hour.score_breakdown_by_profile.photography,
+    planetary: hour.score_breakdown_by_profile && hour.score_breakdown_by_profile.planetary,
+  };
+  const _profTabs = [['balanced','Balanced'],['visual','Visual'],['photo','Photo'],['planetary','Planetary']];
+
   bodyHTML += '<div class="hour-inspector-section">';
-  bodyHTML += '<div class="hour-inspector-profile-grid">';
-  bodyHTML += '<div class="hour-inspector-profile-item"><span class="hour-inspector-profile-label">Visual:</span><span class="hour-inspector-profile-status ' + getProfileStatus(profileScores.visual) + '">' + getProfileStatusLabel(profileScores.visual) + '</span></div>';
-  bodyHTML += '<div class="hour-inspector-profile-item"><span class="hour-inspector-profile-label">Photo:</span><span class="hour-inspector-profile-status ' + getProfileStatus(profileScores.broadband) + '">' + getProfileStatusLabel(profileScores.broadband) + '</span></div>';
-  bodyHTML += '<div class="hour-inspector-profile-item"><span class="hour-inspector-profile-label">Planetary:</span><span class="hour-inspector-profile-status ' + getProfileStatus(profileScores.planetary) + '">' + getProfileStatusLabel(profileScores.planetary) + '</span></div>';
-  bodyHTML += '</div></div>';
-  
+  bodyHTML += '<div class="hi-tab-row">';
+  _profTabs.forEach(function(t) {
+    bodyHTML += '<button class="hi-tab' + (t[0] === 'balanced' ? ' active' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>';
+  });
+  bodyHTML += '</div>';
+  _profTabs.forEach(function(t) {
+    bodyHTML += '<div class="hi-tab-panel' + (t[0] === 'balanced' ? ' active' : '') + '" data-panel="' + t[0] + '">';
+    bodyHTML += renderFactorBarsHTML(_profBDs[t[0]]);
+    bodyHTML += '</div>';
+  });
+
+  // FWHM blur disk (if 7Timer seeing estimate is available)
+  if (hour.seeing_fwhm_arcsec_est != null) {
+    const _fwhm  = hour.seeing_fwhm_arcsec_est;
+    const _fconf = hour.seeing_fwhm_confidence || '';
+    const _fr    = Math.min(33, Math.round(_fwhm * 10));
+    const _fclr  = _fwhm <= 1.0 ? '#4ade80' : _fwhm <= 2.0 ? '#fbbf24' : '#f87171';
+    bodyHTML += '<div class="fwhm-row">' +
+      '<svg width="72" height="72" viewBox="-36 -36 72 72" style="flex-shrink:0">' +
+        '<circle r="10" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>' +
+        '<text y="-12" text-anchor="middle" font-size="6" fill="#555" font-family="monospace">1.0"</text>' +
+        '<circle r="' + _fr + '" fill="rgba(143,182,255,0.10)" stroke="' + _fclr + '" stroke-width="1.5"/>' +
+      '</svg>' +
+      '<div>' +
+        '<div class="fwhm-val">' + _fwhm + '"</div>' +
+        '<div class="fwhm-label">est. FWHM seeing</div>' +
+        '<div class="fwhm-conf">' + escapeHtml(_fconf) + ' confidence</div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  bodyHTML += '</div>';
+
   els.body.innerHTML = bodyHTML;
+
+  // Wire profile-mode tabs
+  const _hiTabs = els.body.querySelectorAll('.hi-tab');
+  _hiTabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      _hiTabs.forEach(function(t) { t.classList.remove('active'); });
+      els.body.querySelectorAll('.hi-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      var panel = els.body.querySelector('[data-panel="' + tab.dataset.tab + '"]');
+      if (panel) panel.classList.add('active');
+    });
+  });
 }
 
 // Hour Inspector event handlers (initialize after DOM ready)

@@ -201,6 +201,7 @@ def compute_score(
             "max": max_pts,
             "raw": raw_display,
             "normalized": normalized,
+            "factor_score": round(100 * normalized),
             "earned": earned,
             "note": None,
         })

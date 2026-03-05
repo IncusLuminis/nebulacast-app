@@ -425,6 +425,31 @@ def add_derived_per_hour(hours: List[Dict[str, Any]]) -> None:
             h["fog_risk"] = "LOW"
 
 
+# 7Timer seeing index (1=best, 7=worst) → (FWHM arcsec midpoint, confidence)
+_SEEING_FWHM: Dict[int, tuple] = {
+    1: (0.35, "high"),    # <0.5"  excellent
+    2: (0.63, "high"),    # 0.5–0.75"
+    3: (0.88, "high"),    # 0.75–1.0"
+    4: (1.13, "medium"),  # 1.0–1.25"
+    5: (1.63, "medium"),  # 1.25–2.0"
+    6: (2.50, "low"),     # 2.0–3.0"
+    7: (3.50, "low"),     # >3.0"
+}
+
+
+def estimate_fwhm(seeing_int: Any) -> tuple:
+    """Return (fwhm_arcsec, confidence) for 7Timer seeing index 1-7, or (None, None)."""
+    if seeing_int is None:
+        return None, None
+    try:
+        v = _SEEING_FWHM.get(int(seeing_int))
+    except (TypeError, ValueError):
+        return None, None
+    if v is None:
+        return None, None
+    return v  # (float, str)
+
+
 def compute_derived_aggregates(hours: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Compute next24 and next72 aggregates."""
     def agg(window: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -504,6 +529,9 @@ def build_weather_payload(
             hour["score_profile"] = result["profile"]
             hour["score_breakdown"] = result["breakdown"]
             hour["score_explain"] = result["explain"]
+            fwhm_arcsec, fwhm_conf = estimate_fwhm(hour.get("seeing"))
+            hour["seeing_fwhm_arcsec_est"] = fwhm_arcsec
+            hour["seeing_fwhm_confidence"] = fwhm_conf
             hour["profile_scores"] = {}
             hour["score_breakdown_by_profile"] = {}
             for pname, prof in loaded_profiles.items():
@@ -532,6 +560,9 @@ def build_weather_payload(
             hour["profile_scores"] = {"visual": score_v, "broadband": score_b, "planetary": score_p}
             hour["score_profile"] = "default"
             hour["score_explain"] = []
+            fwhm_arcsec, fwhm_conf = estimate_fwhm(hour.get("seeing"))
+            hour["seeing_fwhm_arcsec_est"] = fwhm_arcsec
+            hour["seeing_fwhm_confidence"] = fwhm_conf
 
     derived = compute_derived_aggregates(hours)
     if _SCORE_ENGINE_AVAILABLE and hours:
