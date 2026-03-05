@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "generated_at": "2026-03-05T06:39:39.472713+00:00",
+  "generated_at": "2026-03-05T09:03:59.976870+00:00",
   "meta": {
-    "generated_at": "2026-03-05T06:39:39.472713+00:00",
+    "generated_at": "2026-03-05T09:03:59.976870+00:00",
     "location": {
       "name": "Warsaw",
       "lat": 52.2297,
@@ -65,14 +65,26 @@
       "humidity_pct": 88.0,
       "dewpoint_c": 1.6,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 14
+        }
+      },
       "transparency": 3,
       "wind_kmh": 8.6,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.8,
       "pressure_trend_6h_hpa": 1.0,
       "fog_risk": "MED",
-      "score": 81,
+      "moon_illum_pct": 96.83,
+      "moon_alt_deg": 10.6881,
+      "sun_alt_deg": -9.1492,
+      "score": 66,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -193,10 +205,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 79,
-        "photography": 77,
-        "broadband": 77,
-        "planetary": 60
+        "visual": 68,
+        "photography": 68,
+        "broadband": 68,
+        "planetary": 57,
+        "balanced": 66
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -487,6 +500,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 76,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 71.0
+        }
       }
     },
     {
@@ -510,14 +541,26 @@
       "humidity_pct": 88.0,
       "dewpoint_c": 1.0,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 14
+        }
+      },
       "transparency": 3,
       "wind_kmh": 9.7,
       "visibility_km": 7.9,
       "dewpoint_spread_c": 1.8,
       "pressure_trend_6h_hpa": 1.2,
       "fog_risk": "MED",
-      "score": 73,
+      "moon_illum_pct": 96.83,
+      "moon_alt_deg": 10.6881,
+      "sun_alt_deg": -9.1492,
+      "score": 66,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -638,10 +681,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 75,
-        "photography": 73,
-        "broadband": 73,
-        "planetary": 60
+        "visual": 68,
+        "photography": 68,
+        "broadband": 68,
+        "planetary": 57,
+        "balanced": 66
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -932,6 +976,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 76,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 71.0
+        }
       }
     },
     {
@@ -955,14 +1017,26 @@
       "humidity_pct": 88.0,
       "dewpoint_c": 0.7,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 14
+        }
+      },
       "transparency": 3,
       "wind_kmh": 10.1,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.8,
       "pressure_trend_6h_hpa": 1.7,
       "fog_risk": "MED",
-      "score": 81,
+      "moon_illum_pct": 96.83,
+      "moon_alt_deg": 10.6881,
+      "sun_alt_deg": -9.1492,
+      "score": 66,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -1083,10 +1157,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 79,
-        "photography": 77,
-        "broadband": 77,
-        "planetary": 60
+        "visual": 68,
+        "photography": 68,
+        "broadband": 68,
+        "planetary": 57,
+        "balanced": 66
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -1377,6 +1452,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 76,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 71.0
+        }
       }
     },
     {
@@ -1400,14 +1493,26 @@
       "humidity_pct": 89.0,
       "dewpoint_c": 0.2,
       "cape_j_kg": 0.0,
-      "seeing": 5,
+      "seeing": {
+        "score": 60,
+        "class": "GOOD",
+        "fwhm_arcsec": 1.63,
+        "breakdown": {
+          "seeing_q": 55,
+          "thermal_q": 100,
+          "humidity_q": 12
+        }
+      },
       "transparency": 4,
       "wind_kmh": 10.8,
       "visibility_km": 7.2,
       "dewpoint_spread_c": 1.7,
       "pressure_trend_6h_hpa": 1.3,
       "fog_risk": "MED",
-      "score": 54,
+      "moon_illum_pct": 96.83,
+      "moon_alt_deg": 10.6881,
+      "sun_alt_deg": -9.1492,
+      "score": 62,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -1528,10 +1633,11 @@
       "seeing_fwhm_arcsec_est": 1.63,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 47,
-        "photography": 40,
-        "broadband": 40,
-        "planetary": 53
+        "visual": 60,
+        "photography": 59,
+        "broadband": 59,
+        "planetary": 62,
+        "balanced": 62
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -1822,6 +1928,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 63,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 5.2,
+          "cloud_q": 94.8,
+          "trans_q": 0.0,
+          "wind_q": 100,
+          "moon_q": 71.0
+        }
       }
     },
     {
@@ -1845,14 +1969,26 @@
       "humidity_pct": 92.0,
       "dewpoint_c": -0.2,
       "cape_j_kg": 0.0,
-      "seeing": 5,
+      "seeing": {
+        "score": 59,
+        "class": "FAIR",
+        "fwhm_arcsec": 1.63,
+        "breakdown": {
+          "seeing_q": 55,
+          "thermal_q": 100,
+          "humidity_q": 8
+        }
+      },
       "transparency": 4,
       "wind_kmh": 11.5,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.2,
       "pressure_trend_6h_hpa": 1.2,
       "fog_risk": "MED",
-      "score": 78,
+      "moon_illum_pct": 96.83,
+      "moon_alt_deg": 10.6881,
+      "sun_alt_deg": -9.1492,
+      "score": 60,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -1973,10 +2109,11 @@
       "seeing_fwhm_arcsec_est": 1.63,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 70,
-        "photography": 64,
-        "broadband": 64,
-        "planetary": 61
+        "visual": 58,
+        "photography": 57,
+        "broadband": 57,
+        "planetary": 61,
+        "balanced": 60
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -2267,6 +2404,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 61,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 3.6,
+          "cloud_q": 96.4,
+          "trans_q": 0.0,
+          "wind_q": 70,
+          "moon_q": 71.0
+        }
       }
     },
     {
@@ -2290,14 +2445,26 @@
       "humidity_pct": 96.0,
       "dewpoint_c": -0.6,
       "cape_j_kg": 0.0,
-      "seeing": 5,
+      "seeing": {
+        "score": 59,
+        "class": "FAIR",
+        "fwhm_arcsec": 1.63,
+        "breakdown": {
+          "seeing_q": 55,
+          "thermal_q": 100,
+          "humidity_q": 4
+        }
+      },
       "transparency": 4,
       "wind_kmh": 9.7,
       "visibility_km": 3.4,
       "dewpoint_spread_c": 0.5,
       "pressure_trend_6h_hpa": 0.8,
       "fog_risk": "HIGH",
-      "score": 36,
+      "moon_illum_pct": 96.73,
+      "moon_alt_deg": 4.9083,
+      "sun_alt_deg": -3.0236,
+      "score": 11,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -2418,10 +2585,11 @@
       "seeing_fwhm_arcsec_est": 1.63,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 27,
-        "photography": 29,
-        "broadband": 29,
-        "planetary": 43
+        "visual": 11,
+        "photography": 11,
+        "broadband": 11,
+        "planetary": 11,
+        "balanced": 11
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -2712,6 +2880,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CLOSED",
+        "score": 11,
+        "reasons": [
+          "Low cloud 100%"
+        ]
+      },
+      "weather": {
+        "score": 36,
+        "class": "POOR",
+        "breakdown": {
+          "effective_cloud": 66.4,
+          "cloud_q": 33.6,
+          "trans_q": 0.0,
+          "wind_q": 100,
+          "moon_q": 71.0
+        }
       }
     },
     {
@@ -2735,14 +2921,26 @@
       "humidity_pct": 96.0,
       "dewpoint_c": -0.8,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 4
+        }
+      },
       "transparency": 3,
       "wind_kmh": 10.4,
       "visibility_km": 0.58,
       "dewpoint_spread_c": 0.6,
       "pressure_trend_6h_hpa": 0.7,
       "fog_risk": "HIGH",
-      "score": 43,
+      "moon_illum_pct": 96.57,
+      "moon_alt_deg": -4.09,
+      "sun_alt_deg": 5.9638,
+      "score": 7,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -2863,10 +3061,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 36,
-        "photography": 33,
-        "broadband": 33,
-        "planetary": 60
+        "visual": 7,
+        "photography": 7,
+        "broadband": 7,
+        "planetary": 7,
+        "balanced": 7
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -3157,6 +3356,25 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CLOSED",
+        "score": 7,
+        "reasons": [
+          "Low cloud 100%",
+          "Visibility 0.6km"
+        ]
+      },
+      "weather": {
+        "score": 49,
+        "class": "FAIR",
+        "breakdown": {
+          "effective_cloud": 69.6,
+          "cloud_q": 30.4,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -3180,14 +3398,26 @@
       "humidity_pct": 96.0,
       "dewpoint_c": -1.0,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 4
+        }
+      },
       "transparency": 3,
       "wind_kmh": 10.1,
       "visibility_km": 0.72,
       "dewpoint_spread_c": 0.6,
       "pressure_trend_6h_hpa": -0.1,
       "fog_risk": "HIGH",
-      "score": 43,
+      "moon_illum_pct": 96.42,
+      "moon_alt_deg": -13.1666,
+      "sun_alt_deg": 14.3476,
+      "score": 7,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -3308,10 +3538,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 36,
-        "photography": 34,
-        "broadband": 34,
-        "planetary": 60
+        "visual": 7,
+        "photography": 7,
+        "broadband": 7,
+        "planetary": 7,
+        "balanced": 7
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -3602,6 +3833,25 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CLOSED",
+        "score": 7,
+        "reasons": [
+          "Low cloud 100%",
+          "Visibility 0.7km"
+        ]
+      },
+      "weather": {
+        "score": 49,
+        "class": "FAIR",
+        "breakdown": {
+          "effective_cloud": 69.0,
+          "cloud_q": 31.0,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -3625,14 +3875,26 @@
       "humidity_pct": 95.0,
       "dewpoint_c": -0.8,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 5
+        }
+      },
       "transparency": 3,
       "wind_kmh": 10.1,
       "visibility_km": 3.8,
       "dewpoint_spread_c": 0.7,
       "pressure_trend_6h_hpa": 0.0,
       "fog_risk": "HIGH",
-      "score": 44,
+      "moon_illum_pct": 96.25,
+      "moon_alt_deg": -21.9657,
+      "sun_alt_deg": 21.6644,
+      "score": 11,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -3753,10 +4015,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 36,
-        "photography": 32,
-        "broadband": 32,
-        "planetary": 60
+        "visual": 11,
+        "photography": 11,
+        "broadband": 11,
+        "planetary": 11,
+        "balanced": 11
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -4047,6 +4310,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CLOSED",
+        "score": 11,
+        "reasons": [
+          "Low cloud 100%"
+        ]
+      },
+      "weather": {
+        "score": 49,
+        "class": "FAIR",
+        "breakdown": {
+          "effective_cloud": 69.9,
+          "cloud_q": 30.1,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -4070,14 +4351,26 @@
       "humidity_pct": 94.0,
       "dewpoint_c": -0.3,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 6
+        }
+      },
       "transparency": 2,
       "wind_kmh": 10.4,
       "visibility_km": 5.12,
       "dewpoint_spread_c": 0.9,
       "pressure_trend_6h_hpa": -0.5,
       "fog_risk": "HIGH",
-      "score": 48,
+      "moon_illum_pct": 96.09,
+      "moon_alt_deg": -30.076,
+      "sun_alt_deg": 27.37,
+      "score": 11,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -4198,10 +4491,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 46,
-        "photography": 44,
-        "broadband": 44,
-        "planetary": 64
+        "visual": 11,
+        "photography": 11,
+        "broadband": 11,
+        "planetary": 11,
+        "balanced": 11
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -4492,6 +4786,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CLOSED",
+        "score": 11,
+        "reasons": [
+          "Low cloud 100%"
+        ]
+      },
+      "weather": {
+        "score": 59,
+        "class": "FAIR",
+        "breakdown": {
+          "effective_cloud": 70.0,
+          "cloud_q": 30.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -4515,14 +4827,26 @@
       "humidity_pct": 91.0,
       "dewpoint_c": -0.0,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 9
+        }
+      },
       "transparency": 2,
       "wind_kmh": 10.8,
       "visibility_km": 6.3,
       "dewpoint_spread_c": 1.3,
       "pressure_trend_6h_hpa": -1.2,
       "fog_risk": "MED",
-      "score": 49,
+      "moon_illum_pct": 95.92,
+      "moon_alt_deg": -36.9709,
+      "sun_alt_deg": 30.8864,
+      "score": 11,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -4643,10 +4967,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 46,
-        "photography": 44,
-        "broadband": 44,
-        "planetary": 64
+        "visual": 11,
+        "photography": 11,
+        "broadband": 11,
+        "planetary": 11,
+        "balanced": 11
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -4937,6 +5262,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CLOSED",
+        "score": 11,
+        "reasons": [
+          "Low cloud 100%"
+        ]
+      },
+      "weather": {
+        "score": 59,
+        "class": "FAIR",
+        "breakdown": {
+          "effective_cloud": 70.0,
+          "cloud_q": 30.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -4960,14 +5303,26 @@
       "humidity_pct": 88.0,
       "dewpoint_c": 0.5,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 81,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 14
+        }
+      },
       "transparency": 2,
       "wind_kmh": 10.1,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.8,
       "pressure_trend_6h_hpa": -1.1,
       "fog_risk": "MED",
-      "score": 57,
+      "moon_illum_pct": 95.75,
+      "moon_alt_deg": -41.9828,
+      "sun_alt_deg": 31.7582,
+      "score": 11,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -5088,10 +5443,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 50,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 64
+        "visual": 11,
+        "photography": 11,
+        "broadband": 11,
+        "planetary": 11,
+        "balanced": 11
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -5382,6 +5738,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CLOSED",
+        "score": 11,
+        "reasons": [
+          "Low cloud 100%"
+        ]
+      },
+      "weather": {
+        "score": 59,
+        "class": "FAIR",
+        "breakdown": {
+          "effective_cloud": 70.0,
+          "cloud_q": 30.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -5405,14 +5779,26 @@
       "humidity_pct": 86.0,
       "dewpoint_c": 1.2,
       "cape_j_kg": 0.0,
-      "seeing": 4,
+      "seeing": {
+        "score": 74,
+        "class": "GOOD",
+        "fwhm_arcsec": 1.13,
+        "breakdown": {
+          "seeing_q": 75,
+          "thermal_q": 100,
+          "humidity_q": 18
+        }
+      },
       "transparency": 2,
       "wind_kmh": 11.2,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 2.1,
       "pressure_trend_6h_hpa": -0.7,
       "fog_risk": "MED",
-      "score": 55,
+      "moon_illum_pct": 95.58,
+      "moon_alt_deg": -44.4083,
+      "sun_alt_deg": 29.8584,
+      "score": 69,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -5533,10 +5919,11 @@
       "seeing_fwhm_arcsec_est": 1.13,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 49,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 57
+        "visual": 68,
+        "photography": 68,
+        "broadband": 68,
+        "planetary": 71,
+        "balanced": 69
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -5827,6 +6214,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 100%"
+        ]
+      },
+      "weather": {
+        "score": 67,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 45.4,
+          "cloud_q": 54.6,
+          "trans_q": 66.7,
+          "wind_q": 70,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -5850,14 +6255,26 @@
       "humidity_pct": 82.0,
       "dewpoint_c": 1.6,
       "cape_j_kg": 0.0,
-      "seeing": 4,
+      "seeing": {
+        "score": 75,
+        "class": "GOOD",
+        "fwhm_arcsec": 1.13,
+        "breakdown": {
+          "seeing_q": 75,
+          "thermal_q": 100,
+          "humidity_q": 26
+        }
+      },
       "transparency": 2,
       "wind_kmh": 11.2,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 2.8,
       "pressure_trend_6h_hpa": -0.2,
       "fog_risk": "LOW",
-      "score": 55,
+      "moon_illum_pct": 95.4,
+      "moon_alt_deg": -43.8171,
+      "sun_alt_deg": 25.4584,
+      "score": 80,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -5978,10 +6395,11 @@
       "seeing_fwhm_arcsec_est": 1.13,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 49,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 57
+        "visual": 81,
+        "photography": 81,
+        "broadband": 81,
+        "planetary": 78,
+        "balanced": 80
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -6272,6 +6690,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 100%"
+        ]
+      },
+      "weather": {
+        "score": 82,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 11.2,
+          "cloud_q": 88.8,
+          "trans_q": 66.7,
+          "wind_q": 70,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -6295,14 +6731,26 @@
       "humidity_pct": 78.0,
       "dewpoint_c": 2.2,
       "cape_j_kg": 0.0,
-      "seeing": 4,
+      "seeing": {
+        "score": 76,
+        "class": "GOOD",
+        "fwhm_arcsec": 1.13,
+        "breakdown": {
+          "seeing_q": 75,
+          "thermal_q": 100,
+          "humidity_q": 34
+        }
+      },
       "transparency": 2,
       "wind_kmh": 10.4,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 3.5,
       "pressure_trend_6h_hpa": -0.3,
       "fog_risk": "LOW",
-      "score": 55,
+      "moon_illum_pct": 95.22,
+      "moon_alt_deg": -40.3444,
+      "sun_alt_deg": 19.0856,
+      "score": 83,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -6423,10 +6871,11 @@
       "seeing_fwhm_arcsec_est": 1.13,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 49,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 57
+        "visual": 84,
+        "photography": 85,
+        "broadband": 85,
+        "planetary": 80,
+        "balanced": 83
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -6717,6 +7166,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 100%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 10.0,
+          "cloud_q": 90.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -6740,14 +7207,26 @@
       "humidity_pct": 72.0,
       "dewpoint_c": 2.2,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 46,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 46
+        }
+      },
       "transparency": 2,
       "wind_kmh": 8.6,
       "visibility_km": 14.7,
       "dewpoint_spread_c": 4.7,
       "pressure_trend_6h_hpa": 0.2,
       "fog_risk": "LOW",
-      "score": 46,
+      "moon_illum_pct": 95.04,
+      "moon_alt_deg": -34.5983,
+      "sun_alt_deg": 11.3182,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -6868,10 +7347,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 46,
-        "photography": 46,
-        "broadband": 46,
-        "planetary": 45
+        "visual": 80,
+        "photography": 82,
+        "broadband": 82,
+        "planetary": 62,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -7162,6 +7642,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 97%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.7,
+          "cloud_q": 90.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -7185,14 +7683,26 @@
       "humidity_pct": 73.0,
       "dewpoint_c": 2.5,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 44
+        }
+      },
       "transparency": 2,
       "wind_kmh": 9.0,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 4.5,
       "pressure_trend_6h_hpa": 0.8,
       "fog_risk": "LOW",
-      "score": 53,
+      "moon_illum_pct": 94.85,
+      "moon_alt_deg": -27.3096,
+      "sun_alt_deg": 2.6718,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -7313,10 +7823,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 51,
-        "photography": 51,
-        "broadband": 51,
-        "planetary": 46
+        "visual": 80,
+        "photography": 82,
+        "broadband": 82,
+        "planetary": 61,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -7607,6 +8118,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 92%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.2,
+          "cloud_q": 90.8,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -7630,14 +8159,26 @@
       "humidity_pct": 78.0,
       "dewpoint_c": 2.8,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 44,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 34
+        }
+      },
       "transparency": 2,
       "wind_kmh": 9.0,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 3.5,
       "pressure_trend_6h_hpa": 0.7,
       "fog_risk": "LOW",
-      "score": 53,
+      "moon_illum_pct": 94.66,
+      "moon_alt_deg": -19.1051,
+      "sun_alt_deg": -6.4153,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -7758,10 +8299,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 51,
-        "photography": 51,
-        "broadband": 51,
-        "planetary": 46
+        "visual": 80,
+        "photography": 82,
+        "broadband": 82,
+        "planetary": 61,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -8052,6 +8594,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 92%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.2,
+          "cloud_q": 90.8,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -8075,14 +8635,26 @@
       "humidity_pct": 84.0,
       "dewpoint_c": 2.6,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 43,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 22
+        }
+      },
       "transparency": 2,
       "wind_kmh": 9.4,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 2.5,
       "pressure_trend_6h_hpa": 0.4,
       "fog_risk": "LOW",
-      "score": 50,
+      "moon_illum_pct": 94.47,
+      "moon_alt_deg": -10.4746,
+      "sun_alt_deg": -15.544,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -8203,10 +8775,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 48,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 44
+        "visual": 80,
+        "photography": 82,
+        "broadband": 82,
+        "planetary": 60,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -8497,6 +9070,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 99%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.9,
+          "cloud_q": 90.1,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -8520,14 +9111,26 @@
       "humidity_pct": 87.0,
       "dewpoint_c": 2.6,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 43,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 16
+        }
+      },
       "transparency": 2,
       "wind_kmh": 10.4,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 2.0,
       "pressure_trend_6h_hpa": 0.2,
       "fog_risk": "MED",
-      "score": 50,
+      "moon_illum_pct": 94.28,
+      "moon_alt_deg": -1.8193,
+      "sun_alt_deg": -24.296,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -8648,10 +9251,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 48,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 44
+        "visual": 80,
+        "photography": 82,
+        "broadband": 82,
+        "planetary": 60,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -8942,6 +9546,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 99%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.9,
+          "cloud_q": 90.1,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -8965,14 +9587,26 @@
       "humidity_pct": 89.0,
       "dewpoint_c": 2.6,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 12
+        }
+      },
       "transparency": 2,
       "wind_kmh": 10.4,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.6,
       "pressure_trend_6h_hpa": 0.2,
       "fog_risk": "MED",
-      "score": 51,
+      "moon_illum_pct": 94.08,
+      "moon_alt_deg": 6.4868,
+      "sun_alt_deg": -32.1648,
+      "score": 69,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -9093,10 +9727,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 49,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 44
+        "visual": 73,
+        "photography": 74,
+        "broadband": 74,
+        "planetary": 59,
+        "balanced": 69
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -9387,6 +10022,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 98%"
+        ]
+      },
+      "weather": {
+        "score": 81,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.8,
+          "cloud_q": 90.2,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 71.8
+        }
       }
     },
     {
@@ -9410,14 +10063,26 @@
       "humidity_pct": 90.0,
       "dewpoint_c": 2.2,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 10
+        }
+      },
       "transparency": 2,
       "wind_kmh": 9.7,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.5,
       "pressure_trend_6h_hpa": 0.3,
       "fog_risk": "MED",
-      "score": 51,
+      "moon_illum_pct": 93.88,
+      "moon_alt_deg": 14.0467,
+      "sun_alt_deg": -38.4943,
+      "score": 69,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -9538,10 +10203,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 50,
-        "photography": 50,
-        "broadband": 50,
-        "planetary": 45
+        "visual": 73,
+        "photography": 74,
+        "broadband": 74,
+        "planetary": 59,
+        "balanced": 69
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -9832,6 +10498,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 96%"
+        ]
+      },
+      "weather": {
+        "score": 81,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.6,
+          "cloud_q": 90.4,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 71.8
+        }
       }
     },
     {
@@ -9855,14 +10539,26 @@
       "humidity_pct": 90.0,
       "dewpoint_c": 1.8,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 10
+        }
+      },
       "transparency": 2,
       "wind_kmh": 9.0,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.5,
       "pressure_trend_6h_hpa": 0.3,
       "fog_risk": "MED",
-      "score": 52,
+      "moon_illum_pct": 93.67,
+      "moon_alt_deg": 20.4069,
+      "sun_alt_deg": -42.4957,
+      "score": 70,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -9983,10 +10679,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 50,
-        "photography": 50,
-        "broadband": 50,
-        "planetary": 45
+        "visual": 73,
+        "photography": 74,
+        "broadband": 74,
+        "planetary": 59,
+        "balanced": 70
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -10277,6 +10974,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 95%"
+        ]
+      },
+      "weather": {
+        "score": 82,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.5,
+          "cloud_q": 90.5,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 71.9
+        }
       }
     },
     {
@@ -10300,14 +11015,26 @@
       "humidity_pct": 90.0,
       "dewpoint_c": 1.2,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 10
+        }
+      },
       "transparency": 2,
       "wind_kmh": 8.6,
       "visibility_km": 6.76,
       "dewpoint_spread_c": 1.5,
       "pressure_trend_6h_hpa": 0.6,
       "fog_risk": "MED",
-      "score": 47,
+      "moon_illum_pct": 93.46,
+      "moon_alt_deg": 25.0631,
+      "sun_alt_deg": -43.4732,
+      "score": 70,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -10428,10 +11155,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 49,
-        "photography": 49,
-        "broadband": 49,
-        "planetary": 47
+        "visual": 73,
+        "photography": 74,
+        "broadband": 74,
+        "planetary": 59,
+        "balanced": 70
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -10722,6 +11450,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 87%"
+        ]
+      },
+      "weather": {
+        "score": 82,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 8.7,
+          "cloud_q": 91.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 72.0
+        }
       }
     },
     {
@@ -10745,14 +11491,26 @@
       "humidity_pct": 91.0,
       "dewpoint_c": 1.2,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 9
+        }
+      },
       "transparency": 3,
       "wind_kmh": 9.4,
       "visibility_km": 6.4,
       "dewpoint_spread_c": 1.3,
       "pressure_trend_6h_hpa": 1.4,
       "fog_risk": "MED",
-      "score": 41,
+      "moon_illum_pct": 93.25,
+      "moon_alt_deg": 27.5341,
+      "sun_alt_deg": -41.2243,
+      "score": 63,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -10873,10 +11631,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 39,
-        "photography": 36,
-        "broadband": 36,
-        "planetary": 42
+        "visual": 65,
+        "photography": 65,
+        "broadband": 65,
+        "planetary": 55,
+        "balanced": 63
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -11167,6 +11926,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 91%"
+        ]
+      },
+      "weather": {
+        "score": 72,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 9.1,
+          "cloud_q": 90.9,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 72.0
+        }
       }
     },
     {
@@ -11190,14 +11967,26 @@
       "humidity_pct": 91.0,
       "dewpoint_c": 1.0,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 9
+        }
+      },
       "transparency": 3,
       "wind_kmh": 9.0,
       "visibility_km": 6.18,
       "dewpoint_spread_c": 1.3,
       "pressure_trend_6h_hpa": 1.9,
       "fog_risk": "MED",
-      "score": 43,
+      "moon_illum_pct": 93.04,
+      "moon_alt_deg": 27.5081,
+      "sun_alt_deg": -36.1906,
+      "score": 63,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -11318,10 +12107,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 41,
-        "photography": 39,
-        "broadband": 39,
-        "planetary": 43
+        "visual": 65,
+        "photography": 65,
+        "broadband": 65,
+        "planetary": 55,
+        "balanced": 63
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -11612,6 +12402,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 86%"
+        ]
+      },
+      "weather": {
+        "score": 72,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 8.6,
+          "cloud_q": 91.4,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 72.1
+        }
       }
     },
     {
@@ -11635,14 +12443,26 @@
       "humidity_pct": 92.0,
       "dewpoint_c": 0.6,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 8
+        }
+      },
       "transparency": 3,
       "wind_kmh": 9.0,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.1,
       "pressure_trend_6h_hpa": 1.9,
       "fog_risk": "MED",
-      "score": 62,
+      "moon_illum_pct": 92.83,
+      "moon_alt_deg": 24.9788,
+      "sun_alt_deg": -29.148,
+      "score": 64,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -11763,10 +12583,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 58,
-        "photography": 56,
-        "broadband": 56,
-        "planetary": 49
+        "visual": 67,
+        "photography": 66,
+        "broadband": 66,
+        "planetary": 56,
+        "balanced": 64
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -12057,6 +12878,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 73,
+        "class": "GOOD",
+        "breakdown": {
+          "effective_cloud": 5.3,
+          "cloud_q": 94.7,
+          "trans_q": 33.3,
+          "wind_q": 100,
+          "moon_q": 72.2
+        }
       }
     },
     {
@@ -12080,14 +12919,26 @@
       "humidity_pct": 92.0,
       "dewpoint_c": 0.1,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 8
+        }
+      },
       "transparency": 2,
       "wind_kmh": 9.0,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.1,
       "pressure_trend_6h_hpa": 2.0,
       "fog_risk": "MED",
-      "score": 72,
+      "moon_illum_pct": 92.61,
+      "moon_alt_deg": 20.2449,
+      "sun_alt_deg": -20.8436,
+      "score": 71,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -12208,10 +13059,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 73,
-        "photography": 73,
-        "broadband": 73,
-        "planetary": 56
+        "visual": 75,
+        "photography": 76,
+        "broadband": 76,
+        "planetary": 60,
+        "balanced": 71
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -12502,6 +13354,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 84,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 3.8,
+          "cloud_q": 96.2,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 72.2
+        }
       }
     },
     {
@@ -12525,14 +13395,26 @@
       "humidity_pct": 92.0,
       "dewpoint_c": -0.3,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 8
+        }
+      },
       "transparency": 2,
       "wind_kmh": 7.6,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.2,
       "pressure_trend_6h_hpa": 2.0,
       "fog_risk": "MED",
-      "score": 83,
+      "moon_illum_pct": 92.39,
+      "moon_alt_deg": 13.7759,
+      "sun_alt_deg": -11.8681,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -12653,10 +13535,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 63
+        "visual": 77,
+        "photography": 77,
+        "broadband": 77,
+        "planetary": 60,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -12947,6 +13830,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.7,
+          "cloud_q": 99.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 72.3
+        }
       }
     },
     {
@@ -12970,14 +13871,26 @@
       "humidity_pct": 91.0,
       "dewpoint_c": -0.8,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 42,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 9
+        }
+      },
       "transparency": 2,
       "wind_kmh": 6.8,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 1.3,
       "pressure_trend_6h_hpa": 1.8,
       "fog_risk": "MED",
-      "score": 75,
+      "moon_illum_pct": 92.16,
+      "moon_alt_deg": 6.063,
+      "sun_alt_deg": -2.6829,
+      "score": 72,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -13098,10 +14011,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 77,
-        "photography": 77,
-        "broadband": 77,
-        "planetary": 58
+        "visual": 76,
+        "photography": 76,
+        "broadband": 76,
+        "planetary": 60,
+        "balanced": 72
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -13392,6 +14306,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 85,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 2.8,
+          "cloud_q": 97.2,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 72.4
+        }
       }
     },
     {
@@ -13415,14 +14347,26 @@
       "humidity_pct": 90.0,
       "dewpoint_c": -1.3,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 10
+        }
+      },
       "transparency": 2,
       "wind_kmh": 8.3,
       "visibility_km": 6.76,
       "dewpoint_spread_c": 1.4,
       "pressure_trend_6h_hpa": 1.2,
       "fog_risk": "MED",
-      "score": 51,
+      "moon_illum_pct": 91.94,
+      "moon_alt_deg": -2.457,
+      "sun_alt_deg": 6.3107,
+      "score": 84,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -13543,10 +14487,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 49,
-        "photography": 47,
-        "broadband": 47,
-        "planetary": 65
+        "visual": 85,
+        "photography": 85,
+        "broadband": 85,
+        "planetary": 82,
+        "balanced": 84
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -13837,6 +14782,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 93%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.3,
+          "cloud_q": 90.7,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -13860,14 +14823,26 @@
       "humidity_pct": 90.0,
       "dewpoint_c": -1.4,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 10
+        }
+      },
       "transparency": 2,
       "wind_kmh": 7.6,
       "visibility_km": 7.08,
       "dewpoint_spread_c": 1.5,
       "pressure_trend_6h_hpa": 0.5,
       "fog_risk": "MED",
-      "score": 57,
+      "moon_illum_pct": 91.71,
+      "moon_alt_deg": -11.4095,
+      "sun_alt_deg": 14.7059,
+      "score": 85,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -13988,10 +14963,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 55,
-        "photography": 53,
-        "broadband": 53,
-        "planetary": 69
+        "visual": 86,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 83,
+        "balanced": 85
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -14282,6 +15258,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 87,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 7.7,
+          "cloud_q": 92.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -14305,14 +15299,26 @@
       "humidity_pct": 86.0,
       "dewpoint_c": -0.2,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 81,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 18
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.6,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 2.1,
       "pressure_trend_6h_hpa": 0.1,
       "fog_risk": "MED",
-      "score": 85,
+      "moon_illum_pct": 91.47,
+      "moon_alt_deg": -20.4529,
+      "sun_alt_deg": 22.0369,
+      "score": 87,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -14433,10 +15439,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 82,
-        "photography": 80,
-        "broadband": 80,
-        "planetary": 80
+        "visual": 88,
+        "photography": 88,
+        "broadband": 88,
+        "planetary": 84,
+        "balanced": 87
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -14727,6 +15734,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 89,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 2.1,
+          "cloud_q": 97.9,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -14750,14 +15775,26 @@
       "humidity_pct": 80.0,
       "dewpoint_c": 0.4,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 82,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 30
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.0,
       "visibility_km": 11.18,
       "dewpoint_spread_c": 3.1,
       "pressure_trend_6h_hpa": -0.2,
       "fog_risk": "LOW",
-      "score": 73,
+      "moon_illum_pct": 91.24,
+      "moon_alt_deg": -29.2288,
+      "sun_alt_deg": 27.7555,
+      "score": 86,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -14878,10 +15915,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 72,
-        "photography": 70,
-        "broadband": 70,
-        "planetary": 76
+        "visual": 87,
+        "photography": 87,
+        "broadband": 87,
+        "planetary": 84,
+        "balanced": 86
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -15172,6 +16210,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 88,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 3.8,
+          "cloud_q": 96.2,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -15195,14 +16251,26 @@
       "humidity_pct": 75.0,
       "dewpoint_c": 1.0,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 84,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 40
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.7,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 4.1,
       "pressure_trend_6h_hpa": -0.6,
       "fog_risk": "LOW",
-      "score": 59,
+      "moon_illum_pct": 91.0,
+      "moon_alt_deg": -37.2948,
+      "sun_alt_deg": 31.2778,
+      "score": 85,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -15323,10 +16391,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 52,
-        "photography": 50,
-        "broadband": 50,
-        "planetary": 65
+        "visual": 86,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 85,
+        "balanced": 85
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -15617,6 +16686,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 95%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.5,
+          "cloud_q": 90.5,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -15640,14 +16727,26 @@
       "humidity_pct": 68.0,
       "dewpoint_c": 0.9,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 85,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 52
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.4,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 5.5,
       "pressure_trend_6h_hpa": -0.7,
       "fog_risk": "LOW",
-      "score": 65,
+      "moon_illum_pct": 90.76,
+      "moon_alt_deg": -44.0463,
+      "sun_alt_deg": 32.1431,
+      "score": 86,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -15768,10 +16867,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 59,
-        "photography": 57,
-        "broadband": 57,
-        "planetary": 69
+        "visual": 87,
+        "photography": 87,
+        "broadband": 87,
+        "planetary": 86,
+        "balanced": 86
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -16062,6 +17162,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 87,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 7.7,
+          "cloud_q": 92.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -16085,14 +17203,26 @@
       "humidity_pct": 62.0,
       "dewpoint_c": 0.8,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 60
+        }
+      },
       "transparency": 2,
       "wind_kmh": 6.8,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 6.8,
       "pressure_trend_6h_hpa": -0.3,
       "fog_risk": "LOW",
-      "score": 90,
+      "moon_illum_pct": 90.52,
+      "moon_alt_deg": -48.6799,
+      "sun_alt_deg": 30.2239,
+      "score": 89,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -16213,10 +17343,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 87,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 83
+        "visual": 89,
+        "photography": 90,
+        "broadband": 90,
+        "planetary": 88,
+        "balanced": 89
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -16507,6 +17638,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.7,
+          "cloud_q": 99.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -16530,13 +17679,25 @@
       "humidity_pct": 54.0,
       "dewpoint_c": -0.2,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 70
+        }
+      },
       "transparency": 2,
       "wind_kmh": 7.2,
       "visibility_km": 22.34,
       "dewpoint_spread_c": 8.8,
       "pressure_trend_6h_hpa": 0.0,
       "fog_risk": "LOW",
+      "moon_illum_pct": 90.27,
+      "moon_alt_deg": -50.367,
+      "sun_alt_deg": 25.7972,
       "score": 89,
       "score_profile": "default",
       "score_breakdown": [
@@ -16659,9 +17820,10 @@
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
         "visual": 89,
-        "photography": 87,
-        "broadband": 87,
-        "planetary": 84
+        "photography": 90,
+        "broadband": 90,
+        "planetary": 88,
+        "balanced": 89
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -16952,6 +18114,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -16975,14 +18155,26 @@
       "humidity_pct": 50.0,
       "dewpoint_c": -0.6,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 87,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 75
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.7,
       "visibility_km": 24.38,
       "dewpoint_spread_c": 9.9,
       "pressure_trend_6h_hpa": 0.5,
       "fog_risk": "LOW",
-      "score": 90,
+      "moon_illum_pct": 90.03,
+      "moon_alt_deg": -48.7355,
+      "sun_alt_deg": 19.3974,
+      "score": 89,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -17103,10 +18295,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 89,
-        "photography": 87,
-        "broadband": 87,
-        "planetary": 84
+        "visual": 90,
+        "photography": 90,
+        "broadband": 90,
+        "planetary": 88,
+        "balanced": 89
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -17397,6 +18590,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -17420,14 +18631,26 @@
       "humidity_pct": 48.0,
       "dewpoint_c": -0.7,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 49,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 78
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.0,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 10.5,
       "pressure_trend_6h_hpa": 0.7,
       "fog_risk": "LOW",
-      "score": 83,
+      "moon_illum_pct": 89.78,
+      "moon_alt_deg": -44.1863,
+      "sun_alt_deg": 11.6081,
+      "score": 78,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -17548,10 +18771,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 63
+        "visual": 84,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 65,
+        "balanced": 78
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -17842,6 +19066,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.7,
+          "cloud_q": 99.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -17865,14 +19107,26 @@
       "humidity_pct": 47.0,
       "dewpoint_c": -0.9,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 49,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 79
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.6,
       "visibility_km": 25.9,
       "dewpoint_spread_c": 10.8,
       "pressure_trend_6h_hpa": 1.4,
       "fog_risk": "LOW",
-      "score": 84,
+      "moon_illum_pct": 89.52,
+      "moon_alt_deg": -37.5678,
+      "sun_alt_deg": 2.9473,
+      "score": 78,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -17993,10 +19247,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 87,
-        "photography": 87,
-        "broadband": 87,
-        "planetary": 64
+        "visual": 84,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 65,
+        "balanced": 78
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -18287,6 +19542,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -18310,14 +19583,26 @@
       "humidity_pct": 51.0,
       "dewpoint_c": -0.5,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 48,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 74
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.4,
       "visibility_km": 23.76,
       "dewpoint_spread_c": 9.6,
       "pressure_trend_6h_hpa": 1.8,
       "fog_risk": "LOW",
-      "score": 83,
+      "moon_illum_pct": 89.27,
+      "moon_alt_deg": -29.6962,
+      "sun_alt_deg": -6.1453,
+      "score": 77,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -18438,10 +19723,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 87,
-        "photography": 87,
-        "broadband": 87,
-        "planetary": 64
+        "visual": 84,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 65,
+        "balanced": 77
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -18732,6 +20018,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -18755,14 +20059,26 @@
       "humidity_pct": 61.0,
       "dewpoint_c": -0.2,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 47,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 61
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.4,
       "visibility_km": 19.14,
       "dewpoint_spread_c": 7.0,
       "pressure_trend_6h_hpa": 1.2,
       "fog_risk": "LOW",
-      "score": 81,
+      "moon_illum_pct": 89.01,
+      "moon_alt_deg": -21.1879,
+      "sun_alt_deg": -15.2701,
+      "score": 77,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -18883,10 +20199,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 86,
+        "visual": 84,
         "photography": 86,
         "broadband": 86,
-        "planetary": 64
+        "planetary": 64,
+        "balanced": 77
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -19177,6 +20494,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -19200,14 +20535,26 @@
       "humidity_pct": 77.0,
       "dewpoint_c": 1.7,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 36
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.0,
       "visibility_km": 12.54,
       "dewpoint_spread_c": 3.7,
       "pressure_trend_6h_hpa": 1.0,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 88.75,
+      "moon_alt_deg": -12.4986,
+      "sun_alt_deg": -24.0083,
+      "score": 76,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -19328,10 +20675,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 83,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 63,
+        "balanced": 76
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -19622,6 +20970,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -19645,14 +21011,26 @@
       "humidity_pct": 77.0,
       "dewpoint_c": 0.8,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 36
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.4,
       "visibility_km": 12.52,
       "dewpoint_spread_c": 3.7,
       "pressure_trend_6h_hpa": 0.4,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 88.49,
+      "moon_alt_deg": -4.0027,
+      "sun_alt_deg": -31.8535,
+      "score": 76,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -19773,10 +21151,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 83,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 63,
+        "balanced": 76
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -20067,6 +21446,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -20090,14 +21487,26 @@
       "humidity_pct": 75.0,
       "dewpoint_c": 0.1,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 40
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.2,
       "visibility_km": 13.36,
       "dewpoint_spread_c": 4.1,
       "pressure_trend_6h_hpa": 0.1,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 88.22,
+      "moon_alt_deg": 3.9426,
+      "sun_alt_deg": -38.1524,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -20218,10 +21627,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 77,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 63,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -20512,6 +21922,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 73.5
+        }
       }
     },
     {
@@ -20535,14 +21963,26 @@
       "humidity_pct": 75.0,
       "dewpoint_c": -0.5,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 40
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.2,
       "visibility_km": 13.5,
       "dewpoint_spread_c": 4.0,
       "pressure_trend_6h_hpa": -0.5,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 87.95,
+      "moon_alt_deg": 10.9547,
+      "sun_alt_deg": -42.1238,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -20663,10 +22103,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 77,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 63,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -20957,6 +22398,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 73.6
+        }
       }
     },
     {
@@ -20980,14 +22439,26 @@
       "humidity_pct": 77.0,
       "dewpoint_c": -0.5,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 36
+        }
+      },
       "transparency": 2,
       "wind_kmh": 2.2,
       "visibility_km": 12.56,
       "dewpoint_spread_c": 3.7,
       "pressure_trend_6h_hpa": -0.8,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 87.68,
+      "moon_alt_deg": 16.6088,
+      "sun_alt_deg": -43.0831,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -21108,10 +22579,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 77,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 63,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -21402,6 +22874,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 73.7
+        }
       }
     },
     {
@@ -21425,14 +22915,26 @@
       "humidity_pct": 78.0,
       "dewpoint_c": -0.8,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 44,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 34
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.0,
       "visibility_km": 12.38,
       "dewpoint_spread_c": 3.5,
       "pressure_trend_6h_hpa": -0.7,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 87.41,
+      "moon_alt_deg": 20.464,
+      "sun_alt_deg": -40.8341,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -21553,10 +23055,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 77,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 62,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -21847,6 +23350,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 73.8
+        }
       }
     },
     {
@@ -21870,14 +23391,26 @@
       "humidity_pct": 80.0,
       "dewpoint_c": -0.6,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 44,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 30
+        }
+      },
       "transparency": 2,
       "wind_kmh": 6.1,
       "visibility_km": 11.58,
       "dewpoint_spread_c": 3.1,
       "pressure_trend_6h_hpa": -0.2,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 87.14,
+      "moon_alt_deg": 22.1457,
+      "sun_alt_deg": -35.813,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -21998,10 +23531,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 77,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 62,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -22292,6 +23826,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 73.9
+        }
       }
     },
     {
@@ -22315,14 +23867,26 @@
       "humidity_pct": 78.0,
       "dewpoint_c": -1.2,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 44,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 34
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.8,
       "visibility_km": 12.22,
       "dewpoint_spread_c": 3.5,
       "pressure_trend_6h_hpa": 0.4,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 86.86,
+      "moon_alt_deg": 21.4633,
+      "sun_alt_deg": -28.7861,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -22443,10 +24007,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 78,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 62,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -22737,6 +24302,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 73.9
+        }
       }
     },
     {
@@ -22760,14 +24343,26 @@
       "humidity_pct": 78.0,
       "dewpoint_c": -1.7,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 44,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 34
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.4,
       "visibility_km": 12.32,
       "dewpoint_spread_c": 3.5,
       "pressure_trend_6h_hpa": 0.7,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 86.58,
+      "moon_alt_deg": 18.4871,
+      "sun_alt_deg": -20.4942,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -22888,10 +24483,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 78,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 62,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -23182,6 +24778,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 74.0
+        }
       }
     },
     {
@@ -23205,14 +24819,26 @@
       "humidity_pct": 78.0,
       "dewpoint_c": -2.2,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 44,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 34
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.7,
       "visibility_km": 12.04,
       "dewpoint_spread_c": 3.4,
       "pressure_trend_6h_hpa": 0.6,
       "fog_risk": "LOW",
-      "score": 79,
+      "moon_illum_pct": 86.3,
+      "moon_alt_deg": 13.5159,
+      "sun_alt_deg": -11.5252,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -23333,10 +24959,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 64
+        "visual": 78,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 62,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -23627,6 +25254,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 74.1
+        }
       }
     },
     {
@@ -23650,14 +25295,26 @@
       "humidity_pct": 81.0,
       "dewpoint_c": -2.4,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 44,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 28
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.8,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 2.9,
       "pressure_trend_6h_hpa": 0.5,
       "fog_risk": "LOW",
-      "score": 85,
+      "moon_illum_pct": 86.02,
+      "moon_alt_deg": 6.9656,
+      "sun_alt_deg": -2.34,
+      "score": 73,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -23778,10 +25435,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 88,
-        "photography": 88,
-        "broadband": 88,
-        "planetary": 64
+        "visual": 78,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 62,
+        "balanced": 73
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -24072,6 +25730,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 74.2
+        }
       }
     },
     {
@@ -24095,14 +25771,26 @@
       "humidity_pct": 82.0,
       "dewpoint_c": -2.5,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 82,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 26
+        }
+      },
       "transparency": 2,
       "wind_kmh": 5.8,
       "visibility_km": 10.36,
       "dewpoint_spread_c": 2.7,
       "pressure_trend_6h_hpa": 0.2,
       "fog_risk": "LOW",
-      "score": 85,
+      "moon_illum_pct": 85.73,
+      "moon_alt_deg": -0.7374,
+      "sun_alt_deg": 6.6597,
+      "score": 88,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -24223,10 +25911,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 87,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 84
+        "visual": 89,
+        "photography": 89,
+        "broadband": 89,
+        "planetary": 85,
+        "balanced": 88
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -24517,6 +26206,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -24540,14 +26247,26 @@
       "humidity_pct": 80.0,
       "dewpoint_c": -2.2,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 82,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 30
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.3,
       "visibility_km": 11.3,
       "dewpoint_spread_c": 3.1,
       "pressure_trend_6h_hpa": -0.5,
       "fog_risk": "LOW",
-      "score": 86,
+      "moon_illum_pct": 85.45,
+      "moon_alt_deg": -9.2078,
+      "sun_alt_deg": 15.066,
+      "score": 88,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -24668,10 +26387,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 87,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 84
+        "visual": 89,
+        "photography": 89,
+        "broadband": 89,
+        "planetary": 85,
+        "balanced": 88
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -24962,6 +26682,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -24985,14 +26723,26 @@
       "humidity_pct": 75.0,
       "dewpoint_c": -1.2,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 84,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 40
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.3,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 4.0,
       "pressure_trend_6h_hpa": -1.1,
       "fog_risk": "LOW",
-      "score": 92,
+      "moon_illum_pct": 85.16,
+      "moon_alt_deg": -18.1049,
+      "sun_alt_deg": 22.4112,
+      "score": 88,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -25113,10 +26863,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 90,
-        "photography": 88,
-        "broadband": 88,
-        "planetary": 84
+        "visual": 89,
+        "photography": 89,
+        "broadband": 89,
+        "planetary": 86,
+        "balanced": 88
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -25407,6 +27158,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -25430,14 +27199,26 @@
       "humidity_pct": 70.0,
       "dewpoint_c": -0.4,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 84,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 50
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.6,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 5.0,
       "pressure_trend_6h_hpa": -1.5,
       "fog_risk": "LOW",
-      "score": 87,
+      "moon_illum_pct": 84.87,
+      "moon_alt_deg": -27.1038,
+      "sun_alt_deg": 28.1427,
+      "score": 88,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -25558,10 +27339,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 84,
-        "photography": 83,
-        "broadband": 83,
-        "planetary": 81
+        "visual": 88,
+        "photography": 89,
+        "broadband": 89,
+        "planetary": 86,
+        "balanced": 88
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -25852,6 +27634,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 89,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 1.4,
+          "cloud_q": 98.6,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -25875,14 +27675,26 @@
       "humidity_pct": 64.0,
       "dewpoint_c": 0.6,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 85,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 58
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.6,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 6.3,
       "pressure_trend_6h_hpa": -1.3,
       "fog_risk": "LOW",
-      "score": 62,
+      "moon_illum_pct": 84.57,
+      "moon_alt_deg": -35.8446,
+      "sun_alt_deg": 31.6707,
+      "score": 86,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -26003,10 +27815,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 56,
-        "photography": 54,
-        "broadband": 54,
-        "planetary": 67
+        "visual": 86,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 85,
+        "balanced": 86
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -26297,6 +28110,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 85%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 8.5,
+          "cloud_q": 91.5,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -26320,14 +28151,26 @@
       "humidity_pct": 61.0,
       "dewpoint_c": 1.5,
       "cape_j_kg": 0.0,
-      "seeing": 3,
+      "seeing": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 0.88,
+        "breakdown": {
+          "seeing_q": 85,
+          "thermal_q": 100,
+          "humidity_q": 61
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.2,
       "visibility_km": 50.0,
       "dewpoint_spread_c": 7.1,
       "pressure_trend_6h_hpa": -1.2,
       "fog_risk": "LOW",
-      "score": 87,
+      "moon_illum_pct": 84.28,
+      "moon_alt_deg": -43.8527,
+      "sun_alt_deg": 32.5291,
+      "score": 88,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -26448,10 +28291,11 @@
       "seeing_fwhm_arcsec_est": 0.88,
       "seeing_fwhm_confidence": "high",
       "profile_scores": {
-        "visual": 84,
-        "photography": 82,
-        "broadband": 82,
-        "planetary": 81
+        "visual": 89,
+        "photography": 89,
+        "broadband": 89,
+        "planetary": 87,
+        "balanced": 88
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -26742,6 +28586,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 89,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 1.5,
+          "cloud_q": 98.5,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -26765,14 +28627,26 @@
       "humidity_pct": 54.0,
       "dewpoint_c": 1.3,
       "cape_j_kg": 0.0,
-      "seeing": 4,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 1.13,
+        "breakdown": {
+          "seeing_q": 75,
+          "thermal_q": 100,
+          "humidity_q": 70
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.3,
       "visibility_km": 22.2,
       "dewpoint_spread_c": 8.9,
       "pressure_trend_6h_hpa": -0.7,
       "fog_risk": "LOW",
-      "score": 78,
+      "moon_illum_pct": 83.98,
+      "moon_alt_deg": -50.4314,
+      "sun_alt_deg": 30.59,
+      "score": 86,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -26893,10 +28767,11 @@
       "seeing_fwhm_arcsec_est": 1.13,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 78,
-        "photography": 76,
-        "broadband": 76,
-        "planetary": 72
+        "visual": 88,
+        "photography": 88,
+        "broadband": 88,
+        "planetary": 84,
+        "balanced": 86
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -27187,6 +29062,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 89,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 2.6,
+          "cloud_q": 97.4,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -27210,14 +29103,26 @@
       "humidity_pct": 48.0,
       "dewpoint_c": 0.7,
       "cape_j_kg": 0.0,
-      "seeing": 4,
+      "seeing": {
+        "score": 80,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 1.13,
+        "breakdown": {
+          "seeing_q": 75,
+          "thermal_q": 100,
+          "humidity_q": 78
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.8,
       "visibility_km": 48.12,
       "dewpoint_spread_c": 10.5,
       "pressure_trend_6h_hpa": -0.3,
       "fog_risk": "LOW",
-      "score": 90,
+      "moon_illum_pct": 83.68,
+      "moon_alt_deg": -54.6081,
+      "sun_alt_deg": 26.1361,
+      "score": 87,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -27338,10 +29243,11 @@
       "seeing_fwhm_arcsec_est": 1.13,
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
-        "visual": 89,
-        "photography": 88,
-        "broadband": 88,
-        "planetary": 77
+        "visual": 88,
+        "photography": 89,
+        "broadband": 89,
+        "planetary": 84,
+        "balanced": 87
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -27632,6 +29538,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.1,
+          "cloud_q": 99.9,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -27655,14 +29579,26 @@
       "humidity_pct": 44.0,
       "dewpoint_c": -0.2,
       "cape_j_kg": 0.0,
-      "seeing": 4,
+      "seeing": {
+        "score": 81,
+        "class": "EXCELLENT",
+        "fwhm_arcsec": 1.13,
+        "breakdown": {
+          "seeing_q": 75,
+          "thermal_q": 100,
+          "humidity_q": 82
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.0,
       "visibility_km": 36.57,
       "dewpoint_spread_c": 12.0,
       "pressure_trend_6h_hpa": 0.4,
       "fog_risk": "LOW",
-      "score": 90,
+      "moon_illum_pct": 83.38,
+      "moon_alt_deg": -55.4258,
+      "sun_alt_deg": 19.7091,
+      "score": 87,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -27784,9 +29720,10 @@
       "seeing_fwhm_confidence": "medium",
       "profile_scores": {
         "visual": 89,
-        "photography": 88,
-        "broadband": 88,
-        "planetary": 77
+        "photography": 89,
+        "broadband": 89,
+        "planetary": 85,
+        "balanced": 87
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -28077,6 +30014,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -28100,14 +30055,26 @@
       "humidity_pct": 42.0,
       "dewpoint_c": -1.0,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 50,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 85
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.0,
       "visibility_km": 41.87,
       "dewpoint_spread_c": 12.7,
       "pressure_trend_6h_hpa": 0.9,
       "fog_risk": "LOW",
-      "score": 85,
+      "moon_illum_pct": 83.07,
+      "moon_alt_deg": -52.67,
+      "sun_alt_deg": 11.8977,
+      "score": 78,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -28228,10 +30195,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 88,
-        "photography": 88,
-        "broadband": 88,
-        "planetary": 64
+        "visual": 84,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 66,
+        "balanced": 78
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -28522,6 +30490,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.0,
+          "cloud_q": 100.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -28545,14 +30531,26 @@
       "humidity_pct": 48.0,
       "dewpoint_c": 0.6,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 49,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 78
+        }
+      },
       "transparency": 2,
       "wind_kmh": 1.3,
       "visibility_km": 47.46,
       "dewpoint_spread_c": 10.5,
       "pressure_trend_6h_hpa": 1.3,
       "fog_risk": "LOW",
-      "score": 78,
+      "moon_illum_pct": 82.77,
+      "moon_alt_deg": -47.0934,
+      "sun_alt_deg": 3.2227,
+      "score": 77,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -28673,10 +30671,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 80,
-        "photography": 80,
-        "broadband": 80,
-        "planetary": 60
+        "visual": 83,
+        "photography": 85,
+        "broadband": 85,
+        "planetary": 65,
+        "balanced": 77
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -28967,6 +30966,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 89,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 2.0,
+          "cloud_q": 98.0,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -28990,14 +31007,26 @@
       "humidity_pct": 53.0,
       "dewpoint_c": -0.1,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 48,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 71
+        }
+      },
       "transparency": 2,
       "wind_kmh": 1.8,
       "visibility_km": 47.44,
       "dewpoint_spread_c": 9.0,
       "pressure_trend_6h_hpa": 1.6,
       "fog_risk": "LOW",
-      "score": 81,
+      "moon_illum_pct": 82.46,
+      "moon_alt_deg": -39.7459,
+      "sun_alt_deg": -5.8753,
+      "score": 77,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -29119,9 +31148,10 @@
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
         "visual": 83,
-        "photography": 83,
-        "broadband": 83,
-        "planetary": 62
+        "photography": 85,
+        "broadband": 85,
+        "planetary": 64,
+        "balanced": 77
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -29412,6 +31442,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 89,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 1.2,
+          "cloud_q": 98.8,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -29435,14 +31483,26 @@
       "humidity_pct": 58.0,
       "dewpoint_c": -0.9,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 48,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 65
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.1,
       "visibility_km": 42.38,
       "dewpoint_spread_c": 7.7,
       "pressure_trend_6h_hpa": null,
       "fog_risk": "LOW",
-      "score": 84,
+      "moon_illum_pct": 82.15,
+      "moon_alt_deg": -31.4577,
+      "sun_alt_deg": -14.996,
+      "score": 77,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -29563,10 +31623,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 87,
-        "photography": 87,
-        "broadband": 87,
-        "planetary": 64
+        "visual": 84,
+        "photography": 86,
+        "broadband": 86,
+        "planetary": 65,
+        "balanced": 77
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -29857,6 +31918,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 90,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.2,
+          "cloud_q": 99.8,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -29880,14 +31959,26 @@
       "humidity_pct": 65.0,
       "dewpoint_c": -0.8,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 47,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 56
+        }
+      },
       "transparency": 2,
       "wind_kmh": 3.5,
       "visibility_km": 40.46,
       "dewpoint_spread_c": 6.1,
       "pressure_trend_6h_hpa": null,
       "fog_risk": "LOW",
-      "score": 53,
+      "moon_illum_pct": 81.84,
+      "moon_alt_deg": -22.7951,
+      "sun_alt_deg": -23.72,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -30008,10 +32099,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 51,
-        "photography": 51,
-        "broadband": 51,
-        "planetary": 46
+        "visual": 80,
+        "photography": 82,
+        "broadband": 82,
+        "planetary": 63,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -30302,6 +32394,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 92%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.2,
+          "cloud_q": 90.8,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -30325,14 +32435,26 @@
       "humidity_pct": 72.0,
       "dewpoint_c": -0.8,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 46,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 46
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.5,
       "visibility_km": 38.28,
       "dewpoint_spread_c": 4.6,
       "pressure_trend_6h_hpa": null,
       "fog_risk": "LOW",
-      "score": 72,
+      "moon_illum_pct": 81.53,
+      "moon_alt_deg": -14.1666,
+      "sun_alt_deg": -31.5414,
+      "score": 75,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -30453,10 +32575,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 74,
-        "photography": 74,
-        "broadband": 74,
-        "planetary": 57
+        "visual": 82,
+        "photography": 84,
+        "broadband": 84,
+        "planetary": 63,
+        "balanced": 75
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -30747,6 +32870,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 88,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 3.6,
+          "cloud_q": 96.4,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -30770,14 +32911,26 @@
       "humidity_pct": 77.0,
       "dewpoint_c": -0.9,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 36
+        }
+      },
       "transparency": 2,
       "wind_kmh": 4.9,
       "visibility_km": 38.26,
       "dewpoint_spread_c": 3.6,
       "pressure_trend_6h_hpa": null,
       "fog_risk": "LOW",
-      "score": 51,
+      "moon_illum_pct": 81.21,
+      "moon_alt_deg": -5.9149,
+      "sun_alt_deg": -37.8094,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -30898,10 +33051,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 49,
-        "photography": 48,
-        "broadband": 48,
-        "planetary": 44
+        "visual": 80,
+        "photography": 82,
+        "broadband": 82,
+        "planetary": 61,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -31192,6 +33346,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "CAUTION",
+        "score": 60,
+        "reasons": [
+          "High cirrus 98%"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 9.8,
+          "cloud_q": 90.2,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 100.0
+        }
       }
     },
     {
@@ -31215,14 +33387,26 @@
       "humidity_pct": 77.0,
       "dewpoint_c": -1.4,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 36
+        }
+      },
       "transparency": 2,
       "wind_kmh": 6.2,
       "visibility_km": 35.6,
       "dewpoint_spread_c": 3.6,
       "pressure_trend_6h_hpa": null,
       "fog_risk": "LOW",
-      "score": 83,
+      "moon_illum_pct": 80.89,
+      "moon_alt_deg": 1.6235,
+      "sun_alt_deg": -41.7507,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -31343,10 +33527,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 85,
-        "photography": 85,
-        "broadband": 85,
-        "planetary": 63
+        "visual": 78,
+        "photography": 78,
+        "broadband": 78,
+        "planetary": 62,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -31637,6 +33822,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.7,
+          "cloud_q": 99.3,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 75.7
+        }
       }
     },
     {
@@ -31660,14 +33863,26 @@
       "humidity_pct": 76.0,
       "dewpoint_c": -1.9,
       "cape_j_kg": 0.0,
-      "seeing": 6,
+      "seeing": {
+        "score": 45,
+        "class": "FAIR",
+        "fwhm_arcsec": 2.5,
+        "breakdown": {
+          "seeing_q": 30,
+          "thermal_q": 100,
+          "humidity_q": 38
+        }
+      },
       "transparency": 2,
       "wind_kmh": 7.5,
       "visibility_km": 35.58,
       "dewpoint_spread_c": 3.7,
       "pressure_trend_6h_hpa": null,
       "fog_risk": "LOW",
-      "score": 84,
+      "moon_illum_pct": 80.58,
+      "moon_alt_deg": 8.0871,
+      "sun_alt_deg": -42.6917,
+      "score": 74,
       "score_profile": "default",
       "score_breakdown": [
         {
@@ -31788,10 +34003,11 @@
       "seeing_fwhm_arcsec_est": 2.5,
       "seeing_fwhm_confidence": "low",
       "profile_scores": {
-        "visual": 87,
-        "photography": 87,
-        "broadband": 87,
-        "planetary": 63
+        "visual": 78,
+        "photography": 79,
+        "broadband": 79,
+        "planetary": 63,
+        "balanced": 74
       },
       "score_breakdown_by_profile": {
         "visual": [
@@ -32082,6 +34298,24 @@
             "note": null
           }
         ]
+      },
+      "gate": {
+        "status": "OPEN",
+        "score": 100,
+        "reasons": [
+          "Clear sky"
+        ]
+      },
+      "weather": {
+        "score": 86,
+        "class": "EXCELLENT",
+        "breakdown": {
+          "effective_cloud": 0.3,
+          "cloud_q": 99.7,
+          "trans_q": 66.7,
+          "wind_q": 100,
+          "moon_q": 75.8
+        }
       }
     }
   ],
@@ -32093,8 +34327,8 @@
       "cloud_peak_time": "2026-03-05T06:00:00+01:00",
       "precip_prob_peak_pct": 0.0,
       "precip_peak_time": "2026-03-05T01:00:00+01:00",
-      "best_score": 81,
-      "best_score_time": "2026-03-05T01:00:00+01:00"
+      "best_score": 83,
+      "best_score_time": "2026-03-05T15:00:00+01:00"
     },
     "next72": {
       "wind_peak_m_s": 3.2,
@@ -32103,8 +34337,8 @@
       "cloud_peak_time": "2026-03-05T06:00:00+01:00",
       "precip_prob_peak_pct": 0.0,
       "precip_peak_time": "2026-03-05T01:00:00+01:00",
-      "best_score": 92,
-      "best_score_time": "2026-03-07T09:00:00+01:00"
+      "best_score": 89,
+      "best_score_time": "2026-03-06T13:00:00+01:00"
     },
     "now": {
       "pressure_trend_6h": 1.0,
@@ -32120,34 +34354,16 @@
   "summary": {
     "best_windows": [
       {
-        "start": "2026-03-07T23:00:00+01:00",
+        "start": "2026-03-05T13:00:00+01:00",
         "end": "2026-03-08T00:00:00+01:00",
-        "score_avg": 83.5,
-        "label": "Good"
-      },
-      {
-        "start": "2026-03-06T12:00:00+01:00",
-        "end": "2026-03-07T19:00:00+01:00",
-        "score_avg": 82.0,
-        "label": "Good"
-      },
-      {
-        "start": "2026-03-06T09:00:00+01:00",
-        "end": "2026-03-06T10:00:00+01:00",
-        "score_avg": 79.0,
+        "score_avg": 77.5,
         "label": "Good"
       },
       {
         "start": "2026-03-05T01:00:00+01:00",
-        "end": "2026-03-05T03:00:00+01:00",
-        "score_avg": 78.3,
-        "label": "Good"
-      },
-      {
-        "start": "2026-03-06T03:00:00+01:00",
-        "end": "2026-03-06T06:00:00+01:00",
-        "score_avg": 73.0,
-        "label": "Good"
+        "end": "2026-03-05T05:00:00+01:00",
+        "score_avg": 64.0,
+        "label": "Fair"
       }
     ]
   },

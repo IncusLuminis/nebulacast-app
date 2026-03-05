@@ -136,28 +136,48 @@ def compute_weather_quality(hour: dict, profile: str = "balanced") -> dict:
     }
 
 
+def _piecewise(x: float, pts: list) -> float:
+    """Linear interpolation through (x, y) breakpoints. Clamps at edges."""
+    if x <= pts[0][0]:  return pts[0][1]
+    if x >= pts[-1][0]: return pts[-1][1]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if x0 <= x <= x1:
+            return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
+    return pts[-1][1]
+
+
 def compute_seeing_quality(hour: dict) -> dict:
-    """Level 3 — Seeing Quality (0-100). Returns {score, class, fwhm_arcsec}."""
+    """Level 3 — Seeing Quality (0-100). Returns {score, class, fwhm_arcsec, breakdown}."""
     fwhm = hour.get("seeing_fwhm_arcsec_est")
-    ss: int
+
+    # Factor 1: seeing_q — atmospheric turbulence (main driver, weight 0.70)
     if fwhm is not None:
-        if fwhm <= 0.5:
-            ss = 100
-        elif fwhm >= 3.0:
-            ss = 20
-        else:
-            ss = 50
-            for (f0, s0), (f1, s1) in zip(_FWHM_PTS, _FWHM_PTS[1:]):
-                if f0 <= fwhm <= f1:
-                    ss = round(s0 + (fwhm - f0) / (f1 - f0) * (s1 - s0))
-                    break
+        seeing_q = round(_piecewise(fwhm, _FWHM_PTS))
     else:
         idx = hour.get("seeing")           # 7Timer 1–7
-        ss  = round(max(5, min(95, 95 - (idx - 1) * 15))) if idx else 50
+        seeing_q = round(max(5, min(95, 95 - (idx - 1) * 15))) if idx else 50
 
+    # Factor 2: thermal_q — CAPE-based convective stability (weight 0.20)
+    # Low CAPE = stable = good seeing; high CAPE = convective turbulence = bad
+    cape = hour.get("cape_j_kg") or 0
+    thermal_q = round(_piecewise(cape, [(0, 100), (500, 60), (1000, 30), (2000, 0)]))
+
+    # Factor 3: humidity_q — relative humidity (weight 0.10)
+    # Low humidity = better optical conditions; very high = micro-turbulence
+    humidity = hour.get("humidity_pct") or 50
+    humidity_q = round(_piecewise(humidity, [(30, 100), (70, 50), (90, 10), (100, 0)]))
+
+    ss = round(0.70 * seeing_q + 0.20 * thermal_q + 0.10 * humidity_q)
     cls = ("EXCELLENT" if ss >= 80 else "GOOD" if ss >= 60
            else "FAIR" if ss >= 40 else "BAD")
-    return {"score": ss, "class": cls, "fwhm_arcsec": fwhm}
+    return {
+        "score": ss, "class": cls, "fwhm_arcsec": fwhm,
+        "breakdown": {
+            "seeing_q":  seeing_q,
+            "thermal_q": thermal_q,
+            "humidity_q": humidity_q,
+        },
+    }
 
 
 def compute_hour_score(gate: dict, weather_score: int, seeing_score: int,

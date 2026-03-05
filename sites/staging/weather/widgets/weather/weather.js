@@ -2598,7 +2598,7 @@ function renderHourInspector(hourIdx) {
     bodyHTML += '</div>';
   }
 
-  // Section 3 — Seeing Quality + FWHM disk (#97, visible if gate != CLOSED)
+  // Section 3 — Seeing Quality + factor bars + FWHM disk (#97)
   if (!isGateClosed) {
     var sq    = hour.seeing || null;
     var fwhm  = sq ? sq.fwhm_arcsec : (hour.seeing_fwhm_arcsec_est != null ? hour.seeing_fwhm_arcsec_est : null);
@@ -2611,8 +2611,23 @@ function renderHourInspector(hourIdx) {
         bodyHTML += '<div class="hi-section-title">Seeing Quality '
           + '<span class="weather-class-badge">' + escapeHtml(sCls || '') + '</span>'
           + '<span style="font-size:12px;font-weight:700;color:' + sclr + ';margin-left:6px">' + sScore + '</span></div>';
-        bodyHTML += '<div class="seeing-bar-wrap">'
-          + '<div class="seeing-bar-fill" style="width:' + sScore + '%;background:' + sclr + '"></div></div>';
+        // Factor bars for seeing breakdown
+        var sb = (sq && sq.breakdown) ? sq.breakdown : null;
+        if (sb) {
+          [['Atmosphere', sb.seeing_q], ['Thermal stab.', sb.thermal_q], ['Humidity', sb.humidity_q]].forEach(function(pair) {
+            var pct = pair[1] != null ? Math.round(pair[1]) : 0;
+            var clr = _fbColor(pct);
+            bodyHTML += '<div class="fb-row">'
+              + '<span class="fb-label">' + escapeHtml(pair[0]) + '</span>'
+              + '<div class="fb-track"><div class="fb-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
+              + '<span class="fb-val" style="color:' + clr + '">' + pct + '</span>'
+              + '</div>';
+          });
+        } else {
+          // Fallback: single overall bar when no breakdown available
+          bodyHTML += '<div class="seeing-bar-wrap">'
+            + '<div class="seeing-bar-fill" style="width:' + sScore + '%;background:' + sclr + '"></div></div>';
+        }
       }
       if (fwhm != null) {
         var _fr   = Math.min(33, Math.round(fwhm * 10));
