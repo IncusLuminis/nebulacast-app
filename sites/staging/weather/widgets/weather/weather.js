@@ -2655,7 +2655,8 @@ function ensureFbStyles() {
     '.gate-reasons li.neg{color:#f87171}',
     '.gate-reasons li.cau{color:#fbbf24}',
     '.hi-closed-msg{font-size:11px;color:#f87171;padding:8px 0;font-style:italic}',
-    '.hi-section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#555;margin:10px 0 4px}',
+    '.hi-section-title{font-size:12px;font-weight:600;color:#9aa3b2;margin:10px 0 6px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}',
+    '.hi-toggle-btn{font-size:10px;flex-shrink:0;line-height:1}',
     '.weather-class-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:#1e2330;color:#9aa3b2}',
     '.seeing-bar-wrap{height:6px;background:#1e2330;border-radius:3px;overflow:hidden;margin:4px 0}',
     '.seeing-bar-fill{height:100%;border-radius:3px}',
@@ -2704,17 +2705,26 @@ function renderHourInspector(hourIdx) {
   const hour = weatherData.hours[hourIdx];
   const hours = weatherData.hours;
   
+  // Determine gate status early (drives score visibility and body sections)
+  const gate = hour.gate || { status: "OPEN", score: 100, reasons: [] };
+  const gateStatus = gate.status || "OPEN";
+  const isGateClosed  = gateStatus === "CLOSED";
+  const isGateCaution = gateStatus === "CAUTION";
+
   // Header: time and score (compact single row)
   const timeStr = formatTime(hour.time);
   const score = formatScore(getHourScore(hour));
   const rank = scoreRank(score);
-  
+
   // Update header structure: time + score + label in one row
   els.time.textContent = timeStr;
-  els.scoreVal.textContent = score;
-  els.scoreVal.style.color = "var(--" + scoreClass(score) + ")";
-  els.scoreLabel.textContent = rank;
-  els.scoreLabel.style.color = "var(--" + scoreClass(score) + ")";
+  if (isGateClosed) {
+    if (els.scoreVal)   { els.scoreVal.textContent = '';   els.scoreVal.style.visibility   = 'hidden'; }
+    if (els.scoreLabel) { els.scoreLabel.textContent = ''; els.scoreLabel.style.visibility = 'hidden'; }
+  } else {
+    if (els.scoreVal)   { els.scoreVal.style.visibility = '';   els.scoreVal.textContent = score;   els.scoreVal.style.color = 'var(--' + scoreClass(score) + ')'; }
+    if (els.scoreLabel) { els.scoreLabel.style.visibility = ''; els.scoreLabel.textContent = rank;  els.scoreLabel.style.color = 'var(--' + scoreClass(score) + ')'; }
+  }
   
   // Summary line (below header, smaller font)
   const summaryParts = [];
@@ -2741,11 +2751,6 @@ function renderHourInspector(hourIdx) {
   let bodyHTML = "";
 
   // Section 1 — Observability Gate (#97)
-  const gate = hour.gate || { status: "OPEN", score: 100, reasons: [] };
-  const gateStatus = gate.status || "OPEN";
-  const isGateClosed  = gateStatus === "CLOSED";
-  const isGateCaution = gateStatus === "CAUTION";
-
   bodyHTML += '<div class="hour-inspector-section">';
   bodyHTML += '<span class="gate-badge gate-' + gateStatus + '">● ' + gateStatus + '</span>';
   if (gate.reasons && gate.reasons.length) {
@@ -2779,40 +2784,33 @@ function renderHourInspector(hourIdx) {
   });
   bodyHTML += '</div></div>';
   
-  // Primary metrics grid (compact two-column list)
+  // Pre-compute seeing/FWHM for metric grid and Seeing Quality section
+  const sq = hour.seeing || null;
+  const fwhm = sq ? sq.fwhm_arcsec : (hour.seeing_fwhm_arcsec_est != null ? hour.seeing_fwhm_arcsec_est : null);
+  const seeingClass = (sq && sq.class) ? sq.class : null;
+  const seeingDisplay = seeingClass != null ? seeingClass : '—';
+  const prob = formatPrecipProb(hour.precip_prob);
+  const pressure = hour.pressure_hpa != null && isValidValue(hour.pressure_hpa) ? Math.round(hour.pressure_hpa) : null;
+  const trans = formatTransparency(hour.transparency);
+  const transLabel = trans !== '—' ? (trans <= 1 ? 'Excellent' : trans <= 2 ? 'Fair' : 'Poor') : '—';
+
+  // Primary metrics grid — 2 columns: [Visibility, Transparency, Seeing, FWHM] / [Clouds, Wind, Pressure, Precip]
   bodyHTML += '<div class="hour-inspector-section">';
   bodyHTML += '<div class="hour-inspector-metric-grid">';
-  
-  // Clouds
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">☁ Clouds</span><span class="hour-inspector-metric-value">' + cloud + '%</span></div>';
-  
-  // Wind
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌬 Wind</span><span class="hour-inspector-metric-value">' + (wind != null ? wind + ' m/s' : '—') + '</span></div>';
-  
-  // Visibility
+
+  // Row 1
   bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">👁 Visibility</span><span class="hour-inspector-metric-value">' + (visKm != null ? visKm + ' km' : '—') + '</span></div>';
-  
-  // Precip
-  const prob = formatPrecipProb(hour.precip_prob);
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌧 Precip</span><span class="hour-inspector-metric-value">' + prob + '%</span></div>';
-  
-  // Pressure
-  const pressure = hour.pressure_hpa != null && isValidValue(hour.pressure_hpa) ? Math.round(hour.pressure_hpa) : null;
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">☁ Clouds</span><span class="hour-inspector-metric-value">' + cloud + '%</span></div>';
+  // Row 2
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">✨ Transparency</span><span class="hour-inspector-metric-value">' + trans + (transLabel !== '—' ? ' (' + transLabel + ')' : '') + '</span></div>';
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌬 Wind</span><span class="hour-inspector-metric-value">' + (wind != null ? wind + ' m/s' : '—') + '</span></div>';
+  // Row 3
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🔭 Seeing</span><span class="hour-inspector-metric-value">' + seeingDisplay + '</span></div>';
   bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🧭 Pressure</span><span class="hour-inspector-metric-value">' + (pressure != null ? pressure + ' hPa' : '—') + '</span></div>';
-  
-  // Seeing
-  const seeing = formatSeeing(hour.seeing);
-  const seeingLabel = seeing !== "—" ? (seeing <= 2 ? "Excellent" : seeing <= 4 ? "Fair" : "Poor") : "—";
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🔭 Seeing</span><span class="hour-inspector-metric-value">' + seeing + (seeingLabel !== "—" ? ' (' + seeingLabel + ')' : '') + '</span></div>';
-  
-  // Transparency
-  const trans = formatTransparency(hour.transparency);
-  const transLabel = trans !== "—" ? (trans <= 1 ? "Excellent" : trans <= 2 ? "Fair" : "Poor") : "—";
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">✨ Transparency</span><span class="hour-inspector-metric-value">' + trans + (transLabel !== "—" ? ' (' + transLabel + ')' : '') + '</span></div>';
-  
-  // Temperature
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌡 Temp</span><span class="hour-inspector-metric-value">' + (tempStr || '—') + '</span></div>';
-  
+  // Row 4
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌟 FWHM</span><span class="hour-inspector-metric-value">' + (fwhm != null ? fwhm.toFixed(1) + '"' : '—') + '</span></div>';
+  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌧 Precip</span><span class="hour-inspector-metric-value">' + prob + '%</span></div>';
+
   bodyHTML += '</div></div>';
   
   // Section 2 — Weather Quality (#97, visible if gate != CLOSED)
@@ -2820,9 +2818,13 @@ function renderHourInspector(hourIdx) {
     var wq = hour.weather, wb = wq.breakdown;
     var wqScore = wq.score != null ? Math.round(wq.score) : 0;
     bodyHTML += '<div class="hour-inspector-section">';
-    bodyHTML += '<div class="hi-section-title">Weather Quality '
+    bodyHTML += '<div class="hi-section-title" data-panel="hi-panel-wq">'
+      + '<span class="hi-toggle-btn">▼</span>'
+      + 'Weather Quality '
       + '<span class="weather-class-badge">' + escapeHtml(wq.class || '') + '</span>'
-      + '<span style="font-size:12px;font-weight:700;color:#8fb6ff;margin-left:6px">' + wqScore + '</span></div>';
+      + '<span style="font-size:12px;font-weight:700;color:#8fb6ff;margin-left:6px">' + wqScore + '</span>'
+      + '</div>';
+    bodyHTML += '<div id="hi-panel-wq">';
     [['Cloud cover', wb.cloud_q], ['Transparency', wb.trans_q],
      ['Moon', wb.moon_q], ['Wind', wb.wind_q]].forEach(function(pair) {
       var pct = pair[1] != null ? Math.round(pair[1]) : 0;
@@ -2834,21 +2836,24 @@ function renderHourInspector(hourIdx) {
         + '</div>';
     });
     bodyHTML += '</div>';
+    bodyHTML += '</div>';
   }
 
   // Section 3 — Seeing Quality + factor bars + FWHM disk (#97)
   if (!isGateClosed) {
-    var sq    = hour.seeing || null;
-    var fwhm  = sq ? sq.fwhm_arcsec : (hour.seeing_fwhm_arcsec_est != null ? hour.seeing_fwhm_arcsec_est : null);
     var sScore = sq && sq.score != null ? Math.round(sq.score) : null;
     var sCls   = sq && sq.class ? sq.class : null;
     if (sScore != null || fwhm != null) {
       bodyHTML += '<div class="hour-inspector-section">';
       if (sScore != null) {
         var sclr = _fbColor(sScore);
-        bodyHTML += '<div class="hi-section-title">Seeing Quality '
+        bodyHTML += '<div class="hi-section-title" data-panel="hi-panel-sq">'
+          + '<span class="hi-toggle-btn">▼</span>'
+          + 'Seeing Quality '
           + '<span class="weather-class-badge">' + escapeHtml(sCls || '') + '</span>'
-          + '<span style="font-size:12px;font-weight:700;color:' + sclr + ';margin-left:6px">' + sScore + '</span></div>';
+          + '<span style="font-size:12px;font-weight:700;color:' + sclr + ';margin-left:6px">' + sScore + '</span>'
+          + '</div>';
+        bodyHTML += '<div id="hi-panel-sq">';
         // Factor bars for seeing breakdown
         var sb = (sq && sq.breakdown) ? sq.breakdown : null;
         if (sb) {
@@ -2866,8 +2871,25 @@ function renderHourInspector(hourIdx) {
           bodyHTML += '<div class="seeing-bar-wrap">'
             + '<div class="seeing-bar-fill" style="width:' + sScore + '%;background:' + sclr + '"></div></div>';
         }
-      }
-      if (fwhm != null) {
+        if (fwhm != null) {
+          var _fr   = Math.min(33, Math.round(fwhm * 10));
+          var _fclr = fwhm <= 1.0 ? '#4ade80' : fwhm <= 2.0 ? '#fbbf24' : '#f87171';
+          var _fconf = (sq && sq.confidence) ? sq.confidence : (hour.seeing_fwhm_confidence || '');
+          bodyHTML += '<div class="fwhm-row">'
+            + '<svg width="72" height="72" viewBox="-36 -36 72 72" style="flex-shrink:0">'
+            + '<circle r="10" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>'
+            + '<text y="-12" text-anchor="middle" font-size="6" fill="#555" font-family="monospace">1.0"</text>'
+            + '<circle r="' + _fr + '" fill="rgba(143,182,255,0.10)" stroke="' + _fclr + '" stroke-width="1.5"/>'
+            + '</svg>'
+            + '<div>'
+            + '<div class="fwhm-val">' + fwhm + '"</div>'
+            + '<div class="fwhm-label">est. FWHM seeing</div>'
+            + (_fconf ? '<div class="fwhm-conf">' + escapeHtml(_fconf) + ' confidence</div>' : '')
+            + '</div></div>';
+        }
+        bodyHTML += '</div>'; // close hi-panel-sq
+      } else if (fwhm != null) {
+        // Only FWHM available — show circle directly without toggle
         var _fr   = Math.min(33, Math.round(fwhm * 10));
         var _fclr = fwhm <= 1.0 ? '#4ade80' : fwhm <= 2.0 ? '#fbbf24' : '#f87171';
         var _fconf = (sq && sq.confidence) ? sq.confidence : (hour.seeing_fwhm_confidence || '');
@@ -2915,6 +2937,20 @@ function initHourInspector() {
       closeHourInspector();
     }
   });
+
+  // Delegated toggle for collapsible sections (Weather Quality / Seeing Quality)
+  if (els.body) {
+    els.body.addEventListener('click', function(e) {
+      const title = e.target.closest('.hi-section-title[data-panel]');
+      if (!title) return;
+      const panel = document.getElementById(title.dataset.panel);
+      const btn   = title.querySelector('.hi-toggle-btn');
+      if (!panel) return;
+      const isOpen = panel.style.display !== 'none';
+      panel.style.display = isOpen ? 'none' : '';
+      if (btn) btn.textContent = isOpen ? '▶' : '▼';
+    });
+  }
 }
 
 // Initialize hour inspector handlers
