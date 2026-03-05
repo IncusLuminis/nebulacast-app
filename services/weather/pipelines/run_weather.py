@@ -305,6 +305,17 @@ def _build_location_payload(location: LocationConfig, base_payload: Dict[str, An
     trends = _compute_trends(hours)
     best_tonight = _find_best_tonight_window(hours, twilight)
 
+    # Night score (#97) — rolling 3h mean over astronomical night (sun_alt < -6°)
+    night_h = [h for h in hours if (h.get("sun_alt_deg") or 0) < -6]
+    if len(night_h) >= 3:
+        sc      = [h.get("score", 0) for h in night_h]
+        rolling = [sum(sc[i:i + 3]) / 3 for i in range(len(sc) - 2)]
+        night_score: Optional[int] = round(max(rolling))
+    elif night_h:
+        night_score = round(max(h.get("score", 0) for h in night_h))
+    else:
+        night_score = None
+
     loc_payload: Dict[str, Any] = {
         "schema_version": 1,
         "generated_at": generated_at,
@@ -324,6 +335,7 @@ def _build_location_payload(location: LocationConfig, base_payload: Dict[str, An
         "now": now_hour,
         "trends": trends,
         "best_windows": {"tonight": best_tonight},
+        "night_score": night_score,
         "hours": hours,
     }
     return loc_payload

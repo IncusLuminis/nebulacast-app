@@ -19,6 +19,155 @@ _service_root = Path(__file__).resolve().parent.parent
 if str(_service_root) not in sys.path:
     sys.path.insert(0, str(_service_root))
 
+# ── Three-level scoring constants (#97) ───────────────────────────────────────
+_SUN_MOON_PATH = Path(__file__).resolve().parents[3] / "sites/staging/sky/data/sun_moon.json"
+_MOON_W  = {"balanced": 0.3, "visual": 0.5, "photography": 0.6, "planetary": 0.1}
+_PROF_W  = {
+    "balanced":    (0.70, 0.30),
+    "visual":      (0.85, 0.15),
+    "photography": (0.90, 0.10),
+    "planetary":   (0.40, 0.60),
+}
+_FWHM_PTS = [(0.5, 100), (1.0, 80), (1.5, 60), (2.0, 40), (3.0, 20)]
+
+
+def _load_sun_moon_frames() -> list:
+    """Load sun/moon 10-min frames from sun_moon.json. Returns [] on any error."""
+    try:
+        with open(_SUN_MOON_PATH, encoding="utf-8") as f:
+            return json.load(f).get("frames", [])
+    except Exception:
+        return []
+
+
+def _merge_moon_data(hours: list, frames: list) -> None:
+    """Add moon_illum_pct, moon_alt_deg, sun_alt_deg to each hourly record."""
+    if not frames:
+        for h in hours:
+            h.update(moon_illum_pct=None, moon_alt_deg=None, sun_alt_deg=None)
+        return
+    # Parse "2026-Mar-04 04:16Z" → epoch seconds once
+    def _pts(s: str) -> float:
+        return datetime.strptime(s, "%Y-%b-%d %H:%MZ").replace(tzinfo=timezone.utc).timestamp()
+    frame_ts = [_pts(f["t_utc"]) for f in frames]
+    for h in hours:
+        try:
+            hour_ts = datetime.fromisoformat(h["time"]).timestamp()
+        except Exception:
+            h.update(moon_illum_pct=None, moon_alt_deg=None, sun_alt_deg=None)
+            continue
+        i = min(range(len(frame_ts)), key=lambda i: abs(frame_ts[i] - hour_ts))
+        h["moon_illum_pct"] = frames[i]["moon"]["illum_pct"]
+        h["moon_alt_deg"]   = frames[i]["moon"]["alt_deg"]
+        h["sun_alt_deg"]    = frames[i]["sun"]["alt_deg"]
+
+
+def compute_gate(hour: dict) -> dict:
+    """Level 1 — Observability Gate. Returns {status, score, reasons}."""
+    low    = hour.get("cloud_low",  0) or 0
+    mid    = hour.get("cloud_mid",  0) or 0
+    high   = hour.get("cloud_high", 0) or 0
+    vis_m  = hour.get("visibility_m") or 0
+    vis_km = vis_m / 1000 if vis_m else (hour.get("visibility_km") or 0)
+    precip = hour.get("precip_mm", 0) or 0
+    pprob  = hour.get("precip_prob", 0) or 0
+
+    reasons: list = []
+    closed = False
+    if low >= 95:                reasons.append(f"Low cloud {low:.0f}%");        closed = True
+    if mid >= 95:                reasons.append(f"Mid cloud {mid:.0f}%");         closed = True
+    if precip > 0:               reasons.append(f"Precipitation {precip:.1f}mm"); closed = True
+    if vis_km and vis_km <= 1.0: reasons.append(f"Visibility {vis_km:.1f}km");    closed = True
+    if closed:
+        return {"status": "CLOSED", "score": max(0, 15 - len(reasons) * 4), "reasons": reasons}
+
+    caution = False
+    if 70 <= low < 95:               reasons.append(f"Broken low cloud {low:.0f}%");    caution = True
+    if 70 <= mid < 95:               reasons.append(f"Broken mid cloud {mid:.0f}%");    caution = True
+    if high >= 80:                   reasons.append(f"High cirrus {high:.0f}%");         caution = True
+    if vis_km and 1.0 < vis_km <= 3: reasons.append(f"Low visibility {vis_km:.1f}km");  caution = True
+    if pprob >= 10:                  reasons.append(f"Precip prob {pprob:.0f}%");        caution = True
+    if caution:
+        return {"status": "CAUTION", "score": max(30, 70 - len(reasons) * 10), "reasons": reasons}
+
+    if not reasons:
+        reasons.append("Clear sky")
+    return {"status": "OPEN", "score": 100, "reasons": reasons}
+
+
+def compute_weather_quality(hour: dict, profile: str = "balanced") -> dict:
+    """Level 2 — Weather Quality (0-100). Returns {score, class, breakdown}."""
+    low  = hour.get("cloud_low",  0) or 0
+    mid  = hour.get("cloud_mid",  0) or 0
+    high = hour.get("cloud_high", 0) or 0
+    eff  = low * 0.6 + mid * 0.3 + high * 0.1
+    cloud_q = round(max(0.0, 100.0 - eff), 1)
+
+    trans = hour.get("transparency")          # 7Timer 1(best)–4(worst)
+    if trans is not None and 1 <= trans <= 4:
+        trans_q = round(max(0.0, (4 - trans) / 3.0 * 100), 1)
+    else:
+        vis_km  = hour.get("visibility_km") or ((hour.get("visibility_m") or 0) / 1000)
+        trans_q = round(min(100.0, vis_km / 10.0 * 100), 1)
+
+    wind   = hour.get("wind_m_s") or 0
+    wind_q = 100 if wind <= 3 else 70 if wind <= 7 else 40 if wind <= 12 else 20
+
+    illum = hour.get("moon_illum_pct")
+    alt   = hour.get("moon_alt_deg")
+    mw    = _MOON_W.get(profile, 0.3)
+    if illum is not None and alt is not None and alt > 0:
+        moon_q = round(max(0.0, 100.0 - illum * mw), 1)
+    else:
+        moon_q = 100.0
+
+    score = round(0.45 * cloud_q + 0.30 * trans_q + 0.15 * moon_q + 0.10 * wind_q)
+    cls   = ("EXCELLENT" if score >= 80 else "GOOD" if score >= 60
+             else "FAIR" if score >= 40 else "POOR")
+    return {
+        "score": score, "class": cls,
+        "breakdown": {
+            "effective_cloud": round(eff, 1),
+            "cloud_q":  cloud_q,
+            "trans_q":  trans_q,
+            "wind_q":   wind_q,
+            "moon_q":   moon_q,
+        },
+    }
+
+
+def compute_seeing_quality(hour: dict) -> dict:
+    """Level 3 — Seeing Quality (0-100). Returns {score, class, fwhm_arcsec}."""
+    fwhm = hour.get("seeing_fwhm_arcsec_est")
+    ss: int
+    if fwhm is not None:
+        if fwhm <= 0.5:
+            ss = 100
+        elif fwhm >= 3.0:
+            ss = 20
+        else:
+            ss = 50
+            for (f0, s0), (f1, s1) in zip(_FWHM_PTS, _FWHM_PTS[1:]):
+                if f0 <= fwhm <= f1:
+                    ss = round(s0 + (fwhm - f0) / (f1 - f0) * (s1 - s0))
+                    break
+    else:
+        idx = hour.get("seeing")           # 7Timer 1–7
+        ss  = round(max(5, min(95, 95 - (idx - 1) * 15))) if idx else 50
+
+    cls = ("EXCELLENT" if ss >= 80 else "GOOD" if ss >= 60
+           else "FAIR" if ss >= 40 else "BAD")
+    return {"score": ss, "class": cls, "fwhm_arcsec": fwhm}
+
+
+def compute_hour_score(gate: dict, weather_score: int, seeing_score: int,
+                       profile: str = "balanced") -> int:
+    """Combine gate + weather + seeing into a single hour score."""
+    if gate["status"] == "CLOSED":
+        return gate["score"]   # 0–20
+    ww, sw = _PROF_W.get(profile, (0.70, 0.30))
+    return max(0, min(100, round(ww * weather_score + sw * seeing_score)))
+
 try:
     from engine.score_engine import (
         load_profile,
@@ -506,6 +655,7 @@ def build_weather_payload(
     print(f"[weather] Merging data...")
     hours = merge_to_hourly(open_meteo, seven_timer, tz, horizon_hours)
     add_derived_per_hour(hours)
+    _merge_moon_data(hours, _load_sun_moon_frames())
 
     default_profile = None
     if _SCORE_ENGINE_AVAILABLE:
@@ -563,6 +713,29 @@ def build_weather_payload(
             fwhm_arcsec, fwhm_conf = estimate_fwhm(hour.get("seeing"))
             hour["seeing_fwhm_arcsec_est"] = fwhm_arcsec
             hour["seeing_fwhm_confidence"] = fwhm_conf
+
+    # ── Three-level scoring (#97) — overrides hour["score"] ───────────────────
+    print(f"[weather] Computing three-level scores (gate/weather/seeing)...")
+    for hour in hours:
+        gate   = compute_gate(hour)
+        seeing = compute_seeing_quality(hour)
+        wbal   = compute_weather_quality(hour, "balanced")
+
+        hour["gate"]    = gate
+        hour["seeing"]  = seeing
+        hour["weather"] = wbal        # balanced — used in inspector Section 2
+
+        ws_bal = wbal["score"]
+        ss     = seeing["score"]
+        hour["score"] = compute_hour_score(gate, ws_bal, ss, "balanced")
+
+        ps = hour.setdefault("profile_scores", {})
+        ps["balanced"] = hour["score"]
+        for pname in ("visual", "photography", "planetary"):
+            w = compute_weather_quality(hour, pname)
+            ps[pname] = compute_hour_score(gate, w["score"], ss, pname)
+        ps["broadband"] = ps["photography"]
+    # ──────────────────────────────────────────────────────────────────────────
 
     derived = compute_derived_aggregates(hours)
     if _SCORE_ENGINE_AVAILABLE and hours:
