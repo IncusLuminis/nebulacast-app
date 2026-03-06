@@ -2517,6 +2517,8 @@ function getHourInspectorElements() {
     scoreVal: document.getElementById("hourInspectorScoreVal"),
     scoreLabel: document.getElementById("hourInspectorScoreLabel"),
     summary: document.getElementById("hourInspectorSummary"),
+    fwhmSlot: document.getElementById("hourInspectorFwhmSlot"),
+    chartSlot: document.getElementById("hourInspectorChartSlot"),
     body: document.getElementById("hourInspectorBody")
   };
 }
@@ -2537,8 +2539,8 @@ function openHourInspector(hourIdx) {
     // Calculate left and right positions
     const leftPos = Math.max(minPadding, widgetRect.left + padding);
     const rightPos = Math.max(minPadding, window.innerWidth - widgetRect.right + padding);
-    const maxWidth = Math.min(widgetRect.width - padding * 2, window.innerWidth - leftPos - rightPos);
-    
+    const maxWidth = Math.min(480, widgetRect.width - padding * 2, window.innerWidth - leftPos - rightPos);
+
     // Calculate max height - centered but constrained by widget and viewport
     const verticalPadding = padding * 2; // Padding top and bottom
     const maxHeight = Math.min(
@@ -2695,6 +2697,52 @@ function ensureFbStyles() {
 }
 // ──────────────────────────────────────────────────────────────────────────
 
+function drawHiCloudsChart(canvas, contextHours, selectedIdx, contextStart) {
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.parentElement ? Math.round(canvas.parentElement.clientWidth) : 120;
+  if (w < 4) w = 120;
+  var h = 24;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  var n = contextHours.length;
+  if (n < 2) return;
+  function xOf(i) { return (i / (n - 1)) * (w - 2) + 1; }
+  function yOf(v) { return (h - 2) - (v / 100) * (h - 4) + 1; }
+  function drawLine(vals, color, dashed) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash(dashed ? [3, 2] : []);
+    ctx.beginPath();
+    var started = false;
+    for (var i = 0; i < n; i++) {
+      var v = vals[i];
+      if (v == null) { started = false; continue; }
+      if (!started) { ctx.moveTo(xOf(i), yOf(v)); started = true; }
+      else ctx.lineTo(xOf(i), yOf(v));
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  drawLine(contextHours.map(function(h) { return h.cloud_high != null ? h.cloud_high : null; }), 'rgba(200,150,255,0.55)', true);
+  drawLine(contextHours.map(function(h) { return h.cloud_mid  != null ? h.cloud_mid  : null; }), 'rgba(100,220,130,0.55)', true);
+  drawLine(contextHours.map(function(h) { return h.cloud_low  != null ? h.cloud_low  : null; }), 'rgba(255,180,80,0.55)',  true);
+  drawLine(contextHours.map(function(h) { return h.cloud_total != null ? h.cloud_total : null; }), 'rgba(143,182,255,0.9)', false);
+  // Selected hour marker
+  var localSel = selectedIdx - contextStart;
+  if (localSel >= 0 && localSel < n) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(xOf(localSel), 0);
+    ctx.lineTo(xOf(localSel), h);
+    ctx.stroke();
+  }
+}
+
 function renderHourInspector(hourIdx) {
   if (!weatherData || !weatherData.hours || hourIdx < 0 || hourIdx >= weatherData.hours.length) return;
 
@@ -2751,38 +2799,38 @@ function renderHourInspector(hourIdx) {
   let bodyHTML = "";
 
   // Section 1 — Observability Gate (#97)
-  bodyHTML += '<div class="hour-inspector-section">';
+  bodyHTML += '<div class="hour-inspector-section"><div class="hi-gate-row">';
   bodyHTML += '<span class="gate-badge gate-' + gateStatus + '">● ' + gateStatus + '</span>';
   if (gate.reasons && gate.reasons.length) {
-    bodyHTML += '<ul class="gate-reasons">';
-    gate.reasons.forEach(function(r) {
-      var cls = isGateClosed ? ' class="neg"' : isGateCaution ? ' class="cau"' : '';
-      bodyHTML += '<li' + cls + '>' + escapeHtml(r) + '</li>';
-    });
-    bodyHTML += '</ul>';
+    var reasonCls = isGateClosed ? ' neg' : isGateCaution ? ' cau' : '';
+    bodyHTML += '<span class="hi-gate-reasons' + reasonCls + '">'
+      + gate.reasons.map(function(r) { return escapeHtml(r); }).join(' · ')
+      + '</span>';
   }
+  bodyHTML += '</div>';
   if (isGateClosed) {
     bodyHTML += '<div class="hi-closed-msg">Observing not recommended.</div>';
   }
   bodyHTML += '</div>';
 
-  // Context mini-chart (±4 hours, compact)
-  const contextStart = Math.max(0, hourIdx - 4);
-  const contextEnd = Math.min(hours.length - 1, hourIdx + 4);
+  // Clouds bar chart (±3 hours) — render into header slot
+  const contextStart = Math.max(0, hourIdx - 3);
+  const contextEnd = Math.min(hours.length - 1, hourIdx + 3);
   const contextHours = hours.slice(contextStart, contextEnd + 1);
-  
-  bodyHTML += '<div class="hour-inspector-section">';
-  bodyHTML += '<div class="hour-inspector-mini-chart">';
-  contextHours.forEach((h, i) => {
-    const ctxIdx = contextStart + i;
-    const ctxScore = formatScore(getHourScore(h));
-    // Container height is 24px, so calculate pixel height (min 6px, max 20px)
-    const barHeightPx = Math.max(6, Math.min(20, (ctxScore / 100) * 20));
-    const isSelected = ctxIdx === hourIdx;
-    const isMissing = ctxScore === 0 || h.score == null;
-    bodyHTML += '<div class="hour-inspector-mini-bar' + (isSelected ? ' selected' : '') + (isMissing ? ' missing' : '') + '" style="height:' + barHeightPx + 'px" title="' + escapeHtml(formatTime(h.time)) + ': ' + ctxScore + '"></div>';
-  });
-  bodyHTML += '</div></div>';
+
+  if (els.chartSlot) {
+    var chartHTML = '<div class="hour-inspector-mini-chart">';
+    contextHours.forEach((h, i) => {
+      const ctxIdx = contextStart + i;
+      const cloudPct = h.cloud_total != null ? Math.round(h.cloud_total) : null;
+      const barHeightPx = cloudPct != null ? Math.max(3, Math.min(60, (cloudPct / 100) * 60)) : 3;
+      const isSelected = ctxIdx === hourIdx;
+      const isMissing = cloudPct == null;
+      chartHTML += '<div class="hour-inspector-mini-bar' + (isSelected ? ' selected' : '') + (isMissing ? ' missing' : '') + '" style="height:' + barHeightPx + 'px" title="' + escapeHtml(formatTime(h.time)) + ': ' + (cloudPct != null ? cloudPct + '%' : '—') + '"></div>';
+    });
+    chartHTML += '</div>';
+    els.chartSlot.innerHTML = chartHTML;
+  }
   
   // Pre-compute seeing/FWHM for metric grid and Seeing Quality section
   const sq = hour.seeing || null;
@@ -2839,72 +2887,41 @@ function renderHourInspector(hourIdx) {
     bodyHTML += '</div>';
   }
 
-  // Section 3 — Seeing Quality + factor bars + FWHM disk (#97)
+  // FWHM slot removed from header — clear if element still exists
+  if (els.fwhmSlot) {
+    els.fwhmSlot.innerHTML = '';
+  }
+
+  // Section 3 — Seeing Quality + factor bars (#97)
   if (!isGateClosed) {
     var sScore = sq && sq.score != null ? Math.round(sq.score) : null;
     var sCls   = sq && sq.class ? sq.class : null;
-    if (sScore != null || fwhm != null) {
+    if (sScore != null) {
+      var sclr = _fbColor(sScore);
       bodyHTML += '<div class="hour-inspector-section">';
-      if (sScore != null) {
-        var sclr = _fbColor(sScore);
-        bodyHTML += '<div class="hi-section-title" data-panel="hi-panel-sq">'
-          + '<span class="hi-toggle-btn">▼</span>'
-          + 'Seeing Quality '
-          + '<span class="weather-class-badge">' + escapeHtml(sCls || '') + '</span>'
-          + '<span style="font-size:12px;font-weight:700;color:' + sclr + ';margin-left:6px">' + sScore + '</span>'
-          + '</div>';
-        bodyHTML += '<div id="hi-panel-sq">';
-        // Factor bars for seeing breakdown
-        var sb = (sq && sq.breakdown) ? sq.breakdown : null;
-        if (sb) {
-          [['Atmosphere', sb.seeing_q], ['Thermal stab.', sb.thermal_q], ['Humidity', sb.humidity_q]].forEach(function(pair) {
-            var pct = pair[1] != null ? Math.round(pair[1]) : 0;
-            var clr = _fbColor(pct);
-            bodyHTML += '<div class="fb-row">'
-              + '<span class="fb-label">' + escapeHtml(pair[0]) + '</span>'
-              + '<div class="fb-track"><div class="fb-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
-              + '<span class="fb-val" style="color:' + clr + '">' + pct + '</span>'
-              + '</div>';
-          });
-        } else {
-          // Fallback: single overall bar when no breakdown available
-          bodyHTML += '<div class="seeing-bar-wrap">'
-            + '<div class="seeing-bar-fill" style="width:' + sScore + '%;background:' + sclr + '"></div></div>';
-        }
-        if (fwhm != null) {
-          var _fr   = Math.min(33, Math.round(fwhm * 10));
-          var _fclr = fwhm <= 1.0 ? '#4ade80' : fwhm <= 2.0 ? '#fbbf24' : '#f87171';
-          var _fconf = (sq && sq.confidence) ? sq.confidence : (hour.seeing_fwhm_confidence || '');
-          bodyHTML += '<div class="fwhm-row">'
-            + '<svg width="72" height="72" viewBox="-36 -36 72 72" style="flex-shrink:0">'
-            + '<circle r="10" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>'
-            + '<text y="-12" text-anchor="middle" font-size="6" fill="#555" font-family="monospace">1.0"</text>'
-            + '<circle r="' + _fr + '" fill="rgba(143,182,255,0.10)" stroke="' + _fclr + '" stroke-width="1.5"/>'
-            + '</svg>'
-            + '<div>'
-            + '<div class="fwhm-val">' + fwhm + '"</div>'
-            + '<div class="fwhm-label">est. FWHM seeing</div>'
-            + (_fconf ? '<div class="fwhm-conf">' + escapeHtml(_fconf) + ' confidence</div>' : '')
-            + '</div></div>';
-        }
-        bodyHTML += '</div>'; // close hi-panel-sq
-      } else if (fwhm != null) {
-        // Only FWHM available — show circle directly without toggle
-        var _fr   = Math.min(33, Math.round(fwhm * 10));
-        var _fclr = fwhm <= 1.0 ? '#4ade80' : fwhm <= 2.0 ? '#fbbf24' : '#f87171';
-        var _fconf = (sq && sq.confidence) ? sq.confidence : (hour.seeing_fwhm_confidence || '');
-        bodyHTML += '<div class="fwhm-row">'
-          + '<svg width="72" height="72" viewBox="-36 -36 72 72" style="flex-shrink:0">'
-          + '<circle r="10" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="3,2"/>'
-          + '<text y="-12" text-anchor="middle" font-size="6" fill="#555" font-family="monospace">1.0"</text>'
-          + '<circle r="' + _fr + '" fill="rgba(143,182,255,0.10)" stroke="' + _fclr + '" stroke-width="1.5"/>'
-          + '</svg>'
-          + '<div>'
-          + '<div class="fwhm-val">' + fwhm + '"</div>'
-          + '<div class="fwhm-label">est. FWHM seeing</div>'
-          + (_fconf ? '<div class="fwhm-conf">' + escapeHtml(_fconf) + ' confidence</div>' : '')
-          + '</div></div>';
+      bodyHTML += '<div class="hi-section-title" data-panel="hi-panel-sq">'
+        + '<span class="hi-toggle-btn">▼</span>'
+        + 'Seeing Quality '
+        + '<span class="weather-class-badge">' + escapeHtml(sCls || '') + '</span>'
+        + '<span style="font-size:12px;font-weight:700;color:' + sclr + ';margin-left:6px">' + sScore + '</span>'
+        + '</div>';
+      bodyHTML += '<div id="hi-panel-sq">';
+      var sb = (sq && sq.breakdown) ? sq.breakdown : null;
+      if (sb) {
+        [['Atmosphere', sb.seeing_q], ['Thermal stab.', sb.thermal_q], ['Humidity', sb.humidity_q]].forEach(function(pair) {
+          var pct = pair[1] != null ? Math.round(pair[1]) : 0;
+          var clr = _fbColor(pct);
+          bodyHTML += '<div class="fb-row">'
+            + '<span class="fb-label">' + escapeHtml(pair[0]) + '</span>'
+            + '<div class="fb-track"><div class="fb-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
+            + '<span class="fb-val" style="color:' + clr + '">' + pct + '</span>'
+            + '</div>';
+        });
+      } else {
+        bodyHTML += '<div class="seeing-bar-wrap">'
+          + '<div class="seeing-bar-fill" style="width:' + sScore + '%;background:' + sclr + '"></div></div>';
       }
+      bodyHTML += '</div>'; // close hi-panel-sq
       bodyHTML += '</div>';
     }
   }
