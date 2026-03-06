@@ -7,7 +7,6 @@
 
   <link rel="stylesheet" href="./assets/weather.css">
   <link rel="stylesheet" href="./widgets/location/location.css">
-  <link rel="stylesheet" href="./widgets/controls/controls.css">
   <link rel="stylesheet" href="./widgets/weather/weather.css">
   <link rel="stylesheet" href="./widgets/map/map.css">
   <link rel="stylesheet" href="./widgets/astro/astro.css">
@@ -19,9 +18,6 @@
     <main>
       <!-- Location widget (always visible) -->
       <div id="w-location" class="widget-container"></div>
-
-      <!-- Controls: Profile + Time range (below Location) -->
-      <div id="w-controls" class="widget-container"></div>
 
       <!-- Tabs for Weather/Map/Astro/Sky -->
       <div class="widget-tabs">
@@ -131,7 +127,6 @@
   <script type="module">
     import { initState, getState, setState, subscribe } from "./core/state.js";
     import { mountLocation } from "./widgets/location/location.js";
-    import { mountControls } from "./widgets/controls/controls.js";
     import { mountWeather } from "./widgets/weather/weather.js";
     import { mountMap } from "./widgets/map/map.js";
     import { mountSunMoon } from "./widgets/sun_moon/sun_moon.js";
@@ -146,9 +141,6 @@
     // Mount location widget (always visible)
     const locationEl = document.getElementById("w-location");
     if (locationEl) mountLocation(locationEl, storeApi);
-
-    const controlsEl = document.getElementById("w-controls");
-    if (controlsEl) mountControls(controlsEl, storeApi);
 
     // Mount tab widgets
     const weatherEl = document.getElementById("w-weather");

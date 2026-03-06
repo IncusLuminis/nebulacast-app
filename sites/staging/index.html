@@ -228,7 +228,6 @@
 
         <!-- Weather panel -->
         <div id="panel-weather" class="nebulacast-panel is-active">
-          <div id="w-controls" class="widget-container"></div>
           <div id="w-weather" class="widget-container"></div>
         </div>
 
@@ -375,7 +374,6 @@
   <script type="module">
     import { initState, getState, setState, subscribe } from "/weather/core/state.js";
     import { mountLocation } from "/weather/widgets/location/location.js";
-    import { mountControls } from "/weather/widgets/controls/controls.js";
     import { mountWeather } from "/weather/widgets/weather/weather.js";
     import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js";
 
@@ -386,10 +384,6 @@
     // Mount location widget (always visible in topbar)
     const locationEl = document.getElementById("w-location");
     if (locationEl) mountLocation(locationEl, storeApi);
-
-    // Mount controls widget (for Map panel)
-    const controlsEl = document.getElementById("w-controls");
-    if (controlsEl) mountControls(controlsEl, storeApi);
 
     // Mount weather widgets
     const weatherEl = document.getElementById("w-weather");

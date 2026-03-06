@@ -1447,6 +1447,55 @@ function renderNow(rootEl, nowHour) {
   }
 
   // Removed Cloud cover and Seeing/Transparency boxes - only chips remain
+
+  // Bortle badge + profile switcher (issue #99)
+  renderBortleBadge(rootEl);
+  renderProfileSwitcher(rootEl);
+}
+
+// Render Bortle sky-quality badge from weatherData.bortle (issue #99)
+function renderBortleBadge(rootEl) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+  const badge = weatherCard.querySelector('[data-role="bortle-badge"]');
+  if (!badge) return;
+  const bortle = weatherData && weatherData.bortle;
+  if (!bortle || !bortle.class) {
+    badge.style.display = "none";
+    return;
+  }
+  const cls = Math.min(9, Math.max(1, parseInt(bortle.class, 10) || 5));
+  const hint = bortle.hint || "Suburban sky";
+  badge.textContent = "B" + cls;
+  badge.className = "bortle-badge bortle-" + cls;
+  badge.title = "Bortle " + cls + ": " + hint;
+  badge.style.display = "";
+}
+
+// Render profile switcher pills below score (issue #99)
+function renderProfileSwitcher(rootEl) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+  const switcher = weatherCard.querySelector('[data-role="profile-switcher"]');
+  if (!switcher) return;
+  const profileLabels = { default: "Balanced", visual: "Visual", broadband: "Broadband", planetary: "Planetary" };
+  const allProfiles = Array.isArray(weatherData && weatherData.profiles) && weatherData.profiles.length
+    ? ["default"].concat(weatherData.profiles.filter(function(p) { return p !== "default"; }))
+    : ["default", "visual", "broadband", "planetary"];
+  switcher.innerHTML = allProfiles.map(function(p) {
+    const label = profileLabels[p] || p;
+    const active = p === activeProfile ? " data-active=\"true\"" : "";
+    return "<button type=\"button\" class=\"profile-pill\" data-profile=\"" + escapeHtml(p) + "\"" + active + ">" + escapeHtml(label) + "</button>";
+  }).join("");
+  if (!switcher._profileBound) {
+    switcher._profileBound = true;
+    switcher.addEventListener("click", function(e) {
+      const pill = e.target.closest(".profile-pill[data-profile]");
+      if (!pill) return;
+      activeProfile = pill.dataset.profile;
+      const r = findNearestHour(weatherData && weatherData.hours || []);
+      renderNow(rootEl, r.hour);
+      renderHourly(rootEl, weatherData && weatherData.hours || []);
+    });
+  }
 }
 
 // Step 5: Render mini charts (compact sparklines)
@@ -1968,7 +2017,7 @@ async function loadWeather(rootEl, state, forceRefresh) {
     }
     var def = typeof data.default_profile === "string" ? data.default_profile : "default";
     activeProfile = (state && state.profile) || (profileList.length > 0 ? (profileList.indexOf(def) >= 0 ? def : profileList[0]) : "default");
-    currentMode = (state && state.range) || "today";
+    currentMode = "7d"; // Always show full 7D view (issue #99)
     data.hours.sort(function(a,b){ var da=parseISO(a.time),db=parseISO(b.time); if(!da||!db)return 0; return da.getTime()-db.getTime(); });
     var nowHourResult = findNearestHour(data.hours || []);
     var nowHour = nowHourResult.hour;
@@ -3046,30 +3095,35 @@ function renderWeatherHTML(rootEl) {
     <section class="card" id="poc-weather">
       <div class="kpi">
         <div class="box wide">
-          <div class="overall-score-label">Overall score</div>
-          <div class="overall-top">
-            <div class="overall-left">
-              <div class="overall-score-block">
-                <div class="val" data-role="score-val">—</div>
-                <div class="score-rank" data-role="score-rank">—</div>
-              </div>
-            </div>
-            <div class="overall-right" data-role="heads-up" aria-live="polite">Heads-up: —</div>
-            <div class="overall-bar-row">
-              <div class="overall-bar-full">
-                <div class="score-bar" data-role="score-bar">
-                  <div class="score-bar-fill" style="width:0%"></div>
+          <!-- KPI: left=Profiles(vertical)+Score | right=Heads-up+Bar+BestWindow+Chips -->
+          <div class="overall-kpi-row">
+            <div class="overall-kpi-left">
+              <div class="overall-score-main">
+                <div class="profile-switcher" data-role="profile-switcher"></div>
+                <div class="overall-score-block">
+                  <div class="val" data-role="score-val">—</div>
+                  <div class="score-rank" data-role="score-rank">—</div>
                 </div>
               </div>
-              <span class="score-bar-suffix" data-role="score-label">0 / 100</span>
             </div>
-            <div class="overall-best-window" data-role="best-window" aria-live="polite"></div>
+            <div class="overall-kpi-right">
+              <div class="overall-right" data-role="heads-up" aria-live="polite">Heads-up: —</div>
+              <div class="overall-bar-row">
+                <div class="overall-bar-full">
+                  <div class="score-bar" data-role="score-bar">
+                    <div class="score-bar-fill" style="width:0%"></div>
+                  </div>
+                </div>
+                <span class="score-bar-suffix" data-role="score-label">0 / 100</span>
+              </div>
+              <div class="overall-best-window" data-role="best-window" aria-live="polite"></div>
+              <div class="disclosure-row chips-row">
+                <button type="button" class="explain-toggle-chip" data-role="explain-toggle" aria-expanded="false" aria-label="Expand score explanation">▶</button>
+                <div class="now-factors" data-role="now-factors"></div>
+              </div>
+            </div>
           </div>
           <div class="overall-explain-wrap">
-            <div class="disclosure-row chips-row">
-              <button type="button" class="explain-toggle-chip" data-role="explain-toggle" aria-expanded="false" aria-label="Expand score explanation">▶</button>
-              <div class="now-factors" data-role="now-factors"></div>
-            </div>
             <div class="explain-panel score-breakdown" data-role="explain-panel" aria-hidden="true">
               <div class="score-breakdown-panel">
                 <div class="explain-panel-grid">
@@ -3127,10 +3181,6 @@ function renderWeatherHTML(rootEl) {
 
       <div class="hourly-header">
         <span class="sectionTitle">Hourly</span>
-        <div class="hourly-tabs">
-          <button class="htab" data-hmode="observing" data-active="true">Observing</button>
-          <button class="htab" data-hmode="weather">Weather</button>
-        </div>
       </div>
       <div class="hourly" aria-label="hourly forecast" data-role="hourly">
         <!-- Will be populated by renderHourly -->
@@ -3173,17 +3223,8 @@ export function mountWeather(rootEl, storeApi) {
     });
   }
   
-  // Hourly mode tab (Observing / Weather) handlers
-  weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(b) { b.removeAttribute("data-active"); });
-      btn.setAttribute("data-active", "true");
-      hourlyMode = btn.dataset.hmode;
-      if (weatherData && weatherData.hours) {
-        renderHourly(rootEl, weatherData.hours);
-      }
-    });
-  });
+  // Hourly always shows observing mode (tabs removed per issue #99)
+  hourlyMode = "observing";
 
   // Subscribe to state changes (profile + range from Controls; location from Location widget)
   let lastLocKey = "";
@@ -3193,7 +3234,7 @@ export function mountWeather(rootEl, storeApi) {
     const locationChanged = lastLocKey !== locKey;
     lastLocKey = locKey;
     activeProfile = state.profile || "default";
-    currentMode = state.range || "today";
+    currentMode = "7d"; // Always show full 7D view (issue #99)
     if (locationChanged) {
       await loadWeather(rootEl, state);
     } else if (weatherData && weatherData.hours) {

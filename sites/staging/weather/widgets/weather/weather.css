@@ -159,7 +159,20 @@ a:hover{text-decoration:underline}
   margin-bottom:6px;
   font-weight:400;
 }
-.box.wide .overall-top .val{ color:#fff; }
+.box.wide .overall-top .val{ color:#fff; } /* legacy */
+/* KPI left column: score val + rank styled like the hour inspector */
+.box.wide .overall-kpi-left .val{
+  color:#fff;
+  font-size:80px;
+  font-weight:700;
+  line-height:1;
+}
+.overall-kpi-left .score-rank{
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.06em;
+  margin-top:2px;
+}
 /* Overall score: row1 left=val+rank, right=Heads-up; row2 bar + xx/100 on right */
 .overall-top{
   display:grid;
@@ -188,23 +201,14 @@ a:hover{text-decoration:underline}
   letter-spacing:.04em;
 }
 .overall-right{
-  grid-column:2;
-  grid-row:1;
   min-width:0;
-  font-size:13px;
+  font-size:15px;
+  font-weight:600;
   color:#fff;
-  line-height:1.4;
+  line-height:1.35;
   word-wrap:break-word;
-  align-self:center;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
 }
 .overall-bar-row{
-  grid-column:1 / -1;
-  grid-row:2;
   display:flex;
   align-items:center;
   gap:10px;
@@ -273,6 +277,116 @@ a:hover{text-decoration:underline}
   align-items:center;
 }
 .overall-explain-wrap{ width:100%; box-sizing:border-box; background:transparent; }
+
+/* Issue #99 — KPI 2-column layout: Bortle+Score | Heads-up+Chips */
+.overall-kpi-row{
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  margin-bottom:4px;
+}
+.overall-kpi-left{
+  display:flex;
+  flex-direction:column;
+  flex-shrink:0;
+  align-items:flex-end;
+  padding-right:10px;
+  margin-right:24px;
+  border-right:1px solid var(--line);
+}
+/* Profile pills (vertical) + score number side by side */
+.overall-score-main{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+/* Profile switcher: vertical stack in left column */
+.overall-kpi-left .profile-switcher{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin-top:0;
+  align-items:stretch;
+}
+.overall-kpi-left .profile-pill{
+  text-align:center;
+  padding:4px 12px;
+}
+/* Score block: right-align val + rank */
+.overall-score-block{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+}
+/* legacy */
+.overall-score-pair{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+}
+.overall-kpi-right{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  justify-content:center;
+}
+/* Bortle badge */
+.bortle-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.06em;
+  flex-shrink:0;
+  align-self:center;
+  margin-bottom:10px;
+  cursor:default;
+}
+.bortle-1{background:#1c1e2a;color:#8090b0}
+.bortle-2{background:#22253a;color:#7080a8}
+.bortle-3{background:#162840;color:#4890d8}
+.bortle-4{background:#163828;color:#40b060}
+.bortle-5{background:#30300e;color:#a8a830}
+.bortle-6{background:#341e08;color:#cc7020}
+.bortle-7{background:#320c0c;color:#cc3838}
+.bortle-8{background:#252525;color:#aaaaaa}
+.bortle-9{background:#2c2c2c;color:#c0c0c0}
+/* Profile switcher pills (inside overall-kpi-left, under score) */
+.profile-switcher{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
+.profile-pill{
+  padding:3px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:transparent;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:600;
+  cursor:pointer;
+  line-height:1.5;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.profile-pill:hover{border-color:rgba(255,255,255,.25);color:var(--text)}
+.profile-pill[data-active]{
+  background:rgba(255,255,255,.1);
+  color:var(--title);
+  border-color:rgba(255,255,255,.28);
+}
+/* chips-row in right column: no top margin on now-factors */
+.overall-kpi-right .now-factors{ margin-top:0; }
+/* ▶ inside chips-row: standard size, flex-shrink:0 */
+.overall-kpi-right .chips-row .explain-toggle-chip{ flex-shrink:0; }
+
 .disclosure-row{
   display:flex;
   align-items:center;
