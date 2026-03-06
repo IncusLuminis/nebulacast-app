@@ -439,8 +439,8 @@ class APIHandler(BaseHTTPRequestHandler):
         """Serve static files from sites/staging directory."""
         import os
         from pathlib import Path
-        
-        staging_dir = Path(__file__).resolve().parent.parent.parent / "sites" / "staging"
+
+        staging_dir = APIHandler._staging_dir
         
         # Security: prevent directory traversal
         if ".." in path:
@@ -491,8 +491,12 @@ class APIHandler(BaseHTTPRequestHandler):
 
 def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+    default_staging = Path(__file__).resolve().parent.parent.parent / "sites" / "staging"
+    staging_dir = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else default_staging
+    APIHandler._staging_dir = staging_dir
     server = HTTPServer(("localhost", port), APIHandler)
     print(f"API dev server running at http://localhost:{port}")
+    print(f"Serving static files from: {staging_dir}")
     print("Endpoints: /api/astro-weather, /api/geocode, /api/revgeo")
     try:
         server.serve_forever()
