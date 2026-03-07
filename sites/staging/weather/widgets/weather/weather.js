@@ -13,6 +13,7 @@ let currentLocationCoords = null; // {lat, lon, tz} for API mode
 let isFetchingWeather = false;
 let lastWeatherFetchTime = 0;
 const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let sunMoonEventsCache = null; // null = not loaded yet; [] = loaded (may be empty)
 
 // Helper: escape HTML
 function escapeHtml(s) {
@@ -1302,7 +1303,6 @@ function renderHourly(rootEl, hours) {
 
   if (futureHours.length === 0) {
     hourlyEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">No forecast hours</div>';
-    renderObservabilityTimeline(rootEl, []);
     return;
   }
 
@@ -1325,92 +1325,6 @@ function renderHourly(rootEl, hours) {
     });
   });
 
-  renderObservabilityTimeline(rootEl, futureHours);
-}
-
-// Observability Timeline component — bar below hourly cards
-function renderObservabilityTimeline(rootEl, futureHours) {
-  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
-  const container = weatherCard.querySelector("[data-role=obs-timeline]");
-  if (!container) return;
-
-  if (!futureHours || futureHours.length === 0) {
-    container.innerHTML = "";
-    return;
-  }
-
-  function segClass(hour) {
-    const gate = (hour.gate && hour.gate.status) ? hour.gate.status : "OPEN";
-    if (gate === "CLOSED") return "obs-closed";
-    const score = formatScore(getHourScore(hour));
-    if (score >= 70) return "obs-excellent";
-    if (score >= 40) return "obs-fair";
-    return "obs-poor";
-  }
-
-  // Best window: longest contiguous run of non-CLOSED hours with score >= 40
-  let bestStart = -1, bestLen = 0, curStart = -1, curLen = 0;
-  futureHours.forEach(function(hour, i) {
-    const gate = (hour.gate && hour.gate.status) ? hour.gate.status : "OPEN";
-    const score = formatScore(getHourScore(hour));
-    if (gate !== "CLOSED" && score >= 40) {
-      if (curStart === -1) { curStart = i; curLen = 1; }
-      else curLen++;
-      if (curLen > bestLen) { bestLen = curLen; bestStart = curStart; }
-    } else {
-      curStart = -1; curLen = 0;
-    }
-  });
-
-  const n = futureHours.length;
-  const hasBest = bestStart >= 0 && bestLen > 0;
-  const bestLeftPct = hasBest ? (bestStart / n * 100).toFixed(2) : 0;
-  const bestWidthPct = hasBest ? (bestLen / n * 100).toFixed(2) : 0;
-
-  // Tick labels: every 2h for today, 3h for 48h, 6h for 7d
-  const tickStep = currentMode === "7d" ? 6 : currentMode === "48h" ? 3 : 2;
-  const ticks = futureHours
-    .map(function(hour, i) { return { i: i, label: formatTime(hour.time) }; })
-    .filter(function(t) { return t.i % tickStep === 0; });
-
-  const segs = futureHours.map(function(hour) {
-    return `<div class="obs-seg ${segClass(hour)}" title="${escapeHtml(formatTime(hour.time))}"></div>`;
-  }).join("");
-
-  const solarSegs = futureHours.map(function(hour) {
-    const state = getSolarState(hour);
-    return `<div class="obs-seg sol-${state}" title="${escapeHtml(formatTime(hour.time))}"></div>`;
-  }).join("");
-
-  const bestOverlay = hasBest
-    ? `<div class="obs-best-overlay" style="left:${bestLeftPct}%;width:${bestWidthPct}%"></div>`
-    : "";
-
-  const tickHtml = ticks.map(function(t) {
-    return `<span>${escapeHtml(t.label)}</span>`;
-  }).join("");
-
-  let bestWindowText = "";
-  if (hasBest) {
-    const startLabel = formatTime(futureHours[bestStart].time);
-    const endHour = futureHours[Math.min(bestStart + bestLen, futureHours.length - 1)];
-    const endLabel = formatTime(endHour.time);
-    bestWindowText = `<div class="obs-tl-best">Best window: ${escapeHtml(startLabel)}–${escapeHtml(endLabel)}</div>`;
-  }
-
-  container.innerHTML = `
-    <div class="obs-timeline">
-      <div class="obs-tl-label">Solar</div>
-      <div class="obs-tl-bar">${solarSegs}</div>
-      <div class="obs-tl-label" style="margin-top:6px">Observability</div>
-      <div class="obs-tl-bar">
-        ${segs}
-        ${bestOverlay}
-      </div>
-      <div class="obs-tl-ticks">${tickHtml}</div>
-      ${bestWindowText}
-    </div>
-  `;
 }
 
 // Helper: check if value is invalid (-9999 or null)
@@ -1770,6 +1684,378 @@ function renderMiniCharts(rootEl, hours, mode, nowHour) {
   if (transNow && nowHour) {
     const trans = formatTransparency(nowHour.transparency);
     transNow.textContent = `Now ${trans}`;
+  }
+}
+
+// ── Sun/Moon precise rise-set events from sun_moon.json ─────────────────────
+
+const _SM_MONTHS = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+function parseSunMoonTimeUTC(t) {
+  // "2026-Mar-07 05:17Z" → Date (UTC)
+  const m = t.match(/(\d{4})-(\w{3})-(\d{2}) (\d{2}):(\d{2})Z/);
+  if (!m) return null;
+  return new Date(Date.UTC(+m[1], _SM_MONTHS[m[2]], +m[3], +m[4], +m[5]));
+}
+
+function computeSunMoonEvents(frames) {
+  const events = [];
+  for (let i = 1; i < frames.length; i++) {
+    for (const body of ["sun", "moon"]) {
+      const pa = frames[i - 1][body].alt_deg;
+      const ca = frames[i][body].alt_deg;
+      if (pa === ca || pa * ca >= 0) continue; // no sign change
+      const frac = Math.abs(pa) / (Math.abs(pa) + Math.abs(ca));
+      const t0 = parseSunMoonTimeUTC(frames[i - 1].t_utc);
+      const t1 = parseSunMoonTimeUTC(frames[i].t_utc);
+      if (!t0 || !t1) continue;
+      const exactMs = t0.getTime() + (t1.getTime() - t0.getTime()) * frac;
+      const kind = pa < 0
+        ? (body === "sun" ? "sunrise" : "moonrise")
+        : (body === "sun" ? "sunset"  : "moonset");
+      events.push({ kind, ms: exactMs });
+    }
+  }
+  return events;
+}
+
+async function fetchSunMoonEvents() {
+  try {
+    const res = await fetch("/sky/data/sun_moon.json");
+    if (!res.ok) { sunMoonEventsCache = []; return; }
+    const data = await res.json();
+    sunMoonEventsCache = computeSunMoonEvents(data.frames || []);
+  } catch (e) {
+    console.warn("[weather] sun_moon.json load failed:", e.message);
+    sunMoonEventsCache = [];
+  }
+}
+
+// Return "HH:MM" in the location's timezone for a horizon crossing event
+function getPreciseEventTime(kind, prevHour, curHour) {
+  const tz = (weatherData && weatherData.location && weatherData.location.tz) || "UTC";
+  const fmt = (ms) => new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false
+  }).format(new Date(ms));
+
+  // Try precise lookup in sun_moon events
+  if (sunMoonEventsCache && sunMoonEventsCache.length) {
+    const prevT = new Date(prevHour.time).getTime();
+    const curT  = new Date(curHour.time).getTime();
+    const ev = sunMoonEventsCache.find(e =>
+      e.kind === kind && e.ms >= prevT && e.ms <= curT
+    );
+    if (ev) return fmt(ev.ms);
+  }
+
+  // Fallback: linear interpolation from hourly altitudes
+  const altKey = (kind === "sunrise" || kind === "sunset") ? "sun_alt_deg" : "moon_alt_deg";
+  const pa = prevHour[altKey], ca = curHour[altKey];
+  if (pa != null && ca != null && (Math.abs(pa) + Math.abs(ca)) > 0) {
+    const frac = Math.abs(pa) / (Math.abs(pa) + Math.abs(ca));
+    const prevT = new Date(prevHour.time).getTime();
+    const curT  = new Date(curHour.time).getTime();
+    return fmt(prevT + (curT - prevT) * frac);
+  }
+  return formatTime(curHour.time);
+}
+
+// ── Forecast Matrix ─────────────────────────────────────────────────────────
+
+// Sun altitude → CSS class for matrix row
+function sunAltClass(alt) {
+  if (alt == null) return "sun-night";
+  if (alt > 0)     return "sun-day";
+  if (alt > -6)    return "sun-civil";
+  if (alt > -12)   return "sun-nautical";
+  if (alt > -18)   return "sun-astro";
+  return "sun-night";
+}
+
+// Color style for a 0-100 quality value (higher = better)
+function matrixQualityStyle(quality100) {
+  if (quality100 >= 70) return "background:rgba(125,255,154,0.18);color:var(--good)";
+  if (quality100 >= 40) return "background:rgba(255,211,107,0.18);color:var(--mid)";
+  return "background:rgba(255,107,107,0.15);color:var(--bad)";
+}
+
+// Color style for score (0-100)
+function matrixScoreStyle(score) {
+  if (score >= 65) return "background:rgba(125,255,154,0.15);color:var(--good)";
+  if (score >= 45) return "background:rgba(255,211,107,0.15);color:var(--mid)";
+  return "background:rgba(255,107,107,0.12);color:var(--bad)";
+}
+
+// Render a single matrix row's cells HTML
+function matrixRowCells(hours, nowIdx, getCellData) {
+  return hours.map((hour, i) => {
+    const { cls, style, text, title } = getCellData(hour, i);
+    const nowCls = i === nowIdx ? " matrix-now" : "";
+    const escapedTitle = title ? escapeHtml(title) : "";
+    return `<div class="matrix-cell${nowCls}${cls ? " " + cls : ""}" data-hour-idx="${i}" style="${style || ""}" title="${escapedTitle}">${text || ""}</div>`;
+  }).join("");
+}
+
+// Render the full forecast matrix into #forecastMatrix
+function renderForecastMatrix(rootEl, hours) {
+  const wrap = (rootEl.querySelector("#poc-weather") || rootEl).querySelector("#forecastMatrix");
+  if (!wrap || !hours || !hours.length) return;
+
+  const { idx: nowIdx } = findNearestHour(hours);
+
+  // ── Horizon event SVG icons ───────────────────────────────────────────────
+  // Sunrise: golden semicircle above horizon line + 3 rays
+  const sunriseIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="13" viewBox="0 0 18 13" fill="none">'
+    + '<line x1="0" y1="9" x2="18" y2="9" stroke="#fbbf24" stroke-width="1.3" stroke-linecap="round"/>'
+    + '<path d="M3.5 9 A5.5 5.5 0 0 1 14.5 9" fill="#fbbf24"/>'
+    + '<line x1="9" y1="1" x2="9" y2="3.5" stroke="#fbbf24" stroke-width="1.3" stroke-linecap="round"/>'
+    + '<line x1="2.5" y1="3.5" x2="4" y2="5.2" stroke="#fbbf24" stroke-width="1.1" stroke-linecap="round"/>'
+    + '<line x1="15.5" y1="3.5" x2="14" y2="5.2" stroke="#fbbf24" stroke-width="1.1" stroke-linecap="round"/>'
+    + '</svg>';
+  // Sunset: orange semicircle above horizon + two dusk lines below
+  const sunsetIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="13" viewBox="0 0 18 13" fill="none">'
+    + '<path d="M3.5 7 A5.5 5.5 0 0 1 14.5 7" fill="#f97316"/>'
+    + '<line x1="0" y1="7" x2="18" y2="7" stroke="#f97316" stroke-width="1.3" stroke-linecap="round"/>'
+    + '<line x1="2" y1="10" x2="6.5" y2="10" stroke="#f97316" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/>'
+    + '<line x1="11.5" y1="10" x2="16" y2="10" stroke="#f97316" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/>'
+    + '<line x1="3" y1="12.5" x2="15" y2="12.5" stroke="#f97316" stroke-width="1" stroke-linecap="round" opacity="0.3"/>'
+    + '</svg>';
+  // Moonrise: silver-blue semicircle above horizon
+  const moonriseIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 16 12" fill="none">'
+    + '<line x1="0" y1="8" x2="16" y2="8" stroke="#8fb6ff" stroke-width="1.2" stroke-linecap="round"/>'
+    + '<path d="M2.5 8 A5.5 5.5 0 0 1 13.5 8" fill="#8fb6ff" opacity="0.85"/>'
+    + '</svg>';
+  // Moonset: faded semicircle with lower half hint (sinking)
+  const moonsetIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 16 12" fill="none">'
+    + '<path d="M2.5 6 A5.5 5.5 0 0 1 13.5 6" fill="#8fb6ff" opacity="0.45"/>'
+    + '<line x1="0" y1="6" x2="16" y2="6" stroke="#8fb6ff" stroke-width="1.2" stroke-linecap="round" opacity="0.65"/>'
+    + '<path d="M2.5 6 A5.5 5.5 0 0 0 13.5 6" fill="#8fb6ff" opacity="0.18"/>'
+    + '</svg>';
+
+  // Row definitions: [label, getCellData(hour, i) → {cls, style, text, title}]
+  const rows = [
+    // ── Sun ──────────────────────────────────────────
+    ["Sun", (hour, i) => {
+      const alt = hour.sun_alt_deg;
+      const cls = sunAltClass(alt);
+      const prevAlt = i > 0 ? hours[i - 1].sun_alt_deg : null;
+      const isSunrise = prevAlt != null && prevAlt <= 0 && alt != null && alt > 0;
+      const isSunset  = prevAlt != null && prevAlt > 0  && alt != null && alt <= 0;
+      const stateLabel = isSunrise ? "Sunrise" : isSunset ? "Sunset"
+        : cls === "sun-day" ? "Day" : cls === "sun-civil" ? "Civil twilight"
+        : cls === "sun-nautical" ? "Nautical twilight" : cls === "sun-astro" ? "Astronomical twilight" : "Night";
+      const eventColor = isSunrise ? "#fbbf24" : "#f97316";
+      let text;
+      if (isSunrise || isSunset) {
+        text = `<span style="display:flex;align-items:center;gap:2px">${isSunrise ? sunriseIcon : sunsetIcon}<span style="font-size:8px;color:${eventColor};font-weight:600;line-height:1">${getPreciseEventTime(isSunrise ? "sunrise" : "sunset", hours[i - 1], hour)}</span></span>`;
+      } else if (cls === "sun-day" && alt != null) {
+        text = `<span style="display:flex;align-items:center;gap:1px;line-height:1"><span style="font-size:11px">☀</span><span style="font-size:8px;color:#fde68a;font-weight:600">${Math.round(alt)}°</span></span>`;
+      } else {
+        text = "";
+      }
+      return { cls, style: "", text, title: alt != null ? `${stateLabel} (${Math.round(alt)}°)` : stateLabel };
+    }],
+
+    // ── Moon ─────────────────────────────────────────
+    ["Moon", (hour, i) => {
+      const alt = hour.moon_alt_deg;
+      const above = alt != null && alt > 0;
+      const prevAlt = i > 0 ? hours[i - 1].moon_alt_deg : null;
+      const isMoonrise = prevAlt != null && prevAlt <= 0 && alt != null && alt > 0;
+      const isMoonset  = prevAlt != null && prevAlt > 0  && alt != null && alt <= 0;
+      const illum = hour.moon_illum_pct != null ? (hour.moon_illum_pct > 1 ? hour.moon_illum_pct : hour.moon_illum_pct * 100) : null;
+      const illumStr = illum != null ? Math.round(illum) + "%" : "—";
+      const altStr = alt != null ? Math.round(alt) + "°" : "—";
+      const phaseName = moonPhaseName(hour.moon_illum_pct, hour.moon_waxing);
+      if (isMoonrise) {
+        const timeStr = getPreciseEventTime("moonrise", hours[i - 1], hour);
+        return { cls: "moon-event", style: "",
+          text: `<span style="display:flex;align-items:center;gap:2px">${moonriseIcon}<span style="font-size:8px;color:#8fb6ff;font-weight:600;line-height:1">${timeStr}</span></span>`,
+          title: `Moonrise\nPhase: ${phaseName}\nIllumination: ${illumStr}` };
+      }
+      if (isMoonset) {
+        const timeStr = getPreciseEventTime("moonset", hours[i - 1], hour);
+        return { cls: "moon-event", style: "",
+          text: `<span style="display:flex;align-items:center;gap:2px">${moonsetIcon}<span style="font-size:8px;color:#8fb6ff;font-weight:600;opacity:0.65;line-height:1">${timeStr}</span></span>`,
+          title: `Moonset\nPhase: ${phaseName}\nIllumination: ${illumStr}` };
+      }
+      const opacity = above && illum != null ? 0.4 + 0.6 * (illum / 100) : 1;
+      const emoji = above ? moonPhaseEmoji(hour.moon_illum_pct, hour.moon_waxing) : "";
+      const titleStr = above
+        ? `Moon above horizon\nPhase: ${phaseName}\nAltitude: ${altStr}\nIllumination: ${illumStr}`
+        : `Moon below horizon\nPhase: ${phaseName}\nIllumination: ${illumStr}`;
+      const moonText = above && alt != null
+        ? `<span style="display:flex;align-items:center;gap:1px;line-height:1"><span style="font-size:13px">${emoji}</span><span style="font-size:8px;color:#8fb6ff;font-weight:600">${Math.round(alt)}°</span></span>`
+        : emoji;
+      return {
+        cls: above ? "moon-above" : "moon-below",
+        style: above ? `opacity:${opacity.toFixed(2)}` : "opacity:0.25",
+        text: moonText,
+        title: titleStr
+      };
+    }],
+
+    // ── Score ─────────────────────────────────────────
+    ["Score", (hour) => {
+      const score = formatScore(getHourScore(hour));
+      const label = scoreRank(score);
+      return {
+        cls: "",
+        style: matrixScoreStyle(score),
+        text: String(score),
+        title: `Score: ${score} (${label})`
+      };
+    }],
+
+    // ── Clouds ────────────────────────────────────────
+    ["Clouds", (hour) => {
+      const cloud = hour.cloud_total != null ? Math.round(hour.cloud_total > 1 ? hour.cloud_total : hour.cloud_total * 100) : null;
+      if (cloud == null) return { cls: "", style: "", text: "—", title: "Clouds: —" };
+      const q = Math.max(0, 100 - cloud); // higher cloud = lower quality
+      return {
+        cls: "",
+        style: matrixQualityStyle(q),
+        text: cloud + "%",
+        title: `Clouds: ${cloud}%\nLow: ${hour.cloud_low != null ? Math.round(hour.cloud_low > 1 ? hour.cloud_low : hour.cloud_low * 100) : "—"}%  Mid: ${hour.cloud_mid != null ? Math.round(hour.cloud_mid > 1 ? hour.cloud_mid : hour.cloud_mid * 100) : "—"}%  High: ${hour.cloud_high != null ? Math.round(hour.cloud_high > 1 ? hour.cloud_high : hour.cloud_high * 100) : "—"}%`
+      };
+    }],
+
+    // ── Seeing ────────────────────────────────────────
+    ["Seeing", (hour) => {
+      const sq = hour.seeing;
+      const fwhm = (sq && sq.fwhm_arcsec != null) ? sq.fwhm_arcsec : (hour.seeing_fwhm_arcsec_est != null ? hour.seeing_fwhm_arcsec_est : null);
+      if (fwhm == null || !isValidValue(fwhm)) return { cls: "", style: "color:var(--muted)", text: "—", title: "Seeing: no data" };
+      let q;
+      if (fwhm <= 1.0)      q = 85;
+      else if (fwhm <= 1.5) q = 70;
+      else if (fwhm <= 2.5) q = 45;
+      else                  q = 15;
+      return {
+        cls: "",
+        style: matrixQualityStyle(q),
+        text: fwhm.toFixed(1) + "\u2033",
+        title: `Seeing FWHM: ${fwhm.toFixed(2)}\u2033\n${q >= 70 ? "Good" : q >= 45 ? "Fair" : "Poor"}`
+      };
+    }],
+
+    // ── Transparency ──────────────────────────────────
+    ["Trans.", (hour) => {
+      const t = hour.transparency;
+      if (t == null || !isValidValue(t)) return { cls: "", style: "color:var(--muted)", text: "—", title: "Transparency: no data" };
+      // 7Timer scale: 1=very poor, 7=excellent. Or 1-4 where 4=best.
+      // Normalise: treat both scales — detect by range
+      let q;
+      const tn = Number(t);
+      if (tn <= 4) {
+        // 1-4 scale (4 = best): map to 0-100
+        q = Math.round((tn - 1) / 3 * 100);
+      } else {
+        // 1-7 scale (7 = best)
+        q = Math.round((tn - 1) / 6 * 100);
+      }
+      const labels4 = ["—", "Very poor", "Poor", "Average", "Good", "Excellent", "Excellent", "Excellent"];
+      const label = labels4[Math.min(Math.round(tn), labels4.length - 1)] || String(tn);
+      return {
+        cls: "",
+        style: matrixQualityStyle(q),
+        text: String(Math.round(tn)),
+        title: `Transparency: ${label} (${Math.round(tn)})`
+      };
+    }],
+
+    // ── Wind ──────────────────────────────────────────
+    ["Wind", (hour) => {
+      const w = hour.wind_m_s;
+      if (w == null || !isValidValue(w)) return { cls: "", style: "color:var(--muted)", text: "—", title: "Wind: no data" };
+      const wn = Math.round(Number(w) * 10) / 10;
+      let q;
+      if (wn <= 3)  q = 90;
+      else if (wn <= 6)  q = 65;
+      else if (wn <= 10) q = 35;
+      else               q = 10;
+      return {
+        cls: "",
+        style: matrixQualityStyle(q),
+        text: wn + "m/s",
+        title: `Wind: ${wn} m/s${hour.wind_gust_m_s != null ? "\nGusts: " + Math.round(Number(hour.wind_gust_m_s) * 10) / 10 + " m/s" : ""}`
+      };
+    }],
+
+    // ── Temperature ───────────────────────────────────
+    ["Temp.", (hour) => {
+      const temp = hour.temp_c;
+      if (temp == null || !isValidValue(temp)) return { cls: "", style: "color:var(--muted)", text: "—", title: "Temperature: no data" };
+      const tn = Math.round(Number(temp));
+      // Colour: comfortable range ~10-20°C → neutral; extremes tinted
+      const absT = Math.abs(tn);
+      const col = absT < 5 ? "color:#6ec6ff" : tn > 25 ? "color:#ffa07a" : "color:var(--text)";
+      return {
+        cls: "",
+        style: col,
+        text: tn + "\u00b0",
+        title: `Temperature: ${tn}\u00b0C${hour.dewpoint_c != null ? "\nDewpoint: " + Math.round(Number(hour.dewpoint_c)) + "\u00b0C" : ""}${hour.feels_like_c != null ? "\nFeels like: " + Math.round(Number(hour.feels_like_c)) + "\u00b0C" : ""}`
+      };
+    }],
+
+    // ── Humidity ──────────────────────────────────────
+    ["Humid.", (hour) => {
+      const h = hour.humidity_pct;
+      if (h == null || !isValidValue(h)) return { cls: "", style: "color:var(--muted)", text: "—", title: "Humidity: no data" };
+      const hn = Math.round(Number(h));
+      let q;
+      if (hn < 60)  q = 85;
+      else if (hn < 80) q = 50;
+      else              q = 15;
+      return {
+        cls: "",
+        style: matrixQualityStyle(q),
+        text: hn + "%",
+        title: `Humidity: ${hn}%\n${hn >= 80 ? "Dew risk" : hn >= 60 ? "Caution" : "Safe"}`
+      };
+    }],
+
+    // ── Pressure ──────────────────────────────────────
+    ["Pressure", (hour) => {
+      const p = hour.pressure_hpa;
+      if (p == null || !isValidValue(p)) return { cls: "", style: "color:var(--muted)", text: "—", title: "Pressure: no data" };
+      const pn = Math.round(Number(p));
+      return {
+        cls: "",
+        style: "color:var(--text)",
+        text: pn + "",
+        title: `Pressure: ${pn} hPa${hour.pressure_trend_6h_hpa != null ? "\n6h trend: " + (Number(hour.pressure_trend_6h_hpa) > 0 ? "+" : "") + Math.round(Number(hour.pressure_trend_6h_hpa) * 10) / 10 + " hPa" : ""}`
+      };
+    }],
+  ];
+
+  // Build time-header row
+  const timeHeaderCells = hours.map((hour, i) => {
+    const nowCls = i === nowIdx ? " matrix-now" : "";
+    const timeStr = formatTime(hour.time);
+    return `<div class="matrix-cell matrix-time-cell${nowCls}" data-hour-idx="${i}">${timeStr}</div>`;
+  }).join("");
+
+  // Build all row HTML
+  const rowsHTML = rows.map(([label, getCellData]) => {
+    return `<div class="matrix-row"><div class="matrix-label">${escapeHtml(label)}</div><div class="matrix-cells">${matrixRowCells(hours, nowIdx, getCellData)}</div></div>`;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div class="matrix-inner">
+      <div class="matrix-row matrix-header-row">
+        <div class="matrix-label"></div>
+        <div class="matrix-cells">${timeHeaderCells}</div>
+      </div>
+      ${rowsHTML}
+    </div>
+  `;
+
+  // Scroll to now column
+  const nowCell = wrap.querySelector(`.matrix-cell[data-hour-idx="${nowIdx}"]`);
+  if (nowCell) {
+    requestAnimationFrame(() => {
+      const labelW = 80;
+      wrap.scrollLeft = Math.max(0, nowCell.offsetLeft - labelW - 84);
+    });
   }
 }
 
@@ -2211,6 +2497,7 @@ async function loadWeather(rootEl, state, forceRefresh) {
     else renderBestWindows(rootEl, null, data.hours);
     renderNow(rootEl, nowHour);
     renderHourly(rootEl, data.hours);
+    if (hourlyMode === "matrix") renderForecastMatrix(rootEl, data.hours);
     renderMiniCharts(rootEl, data.hours, currentMode, nowHour);
     lastWeatherFetchTime = Date.now();
   } catch (err) {
@@ -2888,10 +3175,6 @@ function ensureFbStyles() {
     '.cq-fair{background:#fbbf24}',
     '.cq-poor{background:#f87171}',
     '.cq-none{background:#374151}',
-    // Solar timeline bar segments (#114)
-    '.sol-night{background:#131e2e}',
-    '.sol-twilight{background:#2d4a7a}',
-    '.sol-day{background:#8892a0}',
     '.gate-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.05em;margin-bottom:6px}',
     '.gate-badge.gate-OPEN{background:#14532d;color:#4ade80}',
     '.gate-badge.gate-MARGINAL{background:#422006;color:#fbbf24}',
@@ -2928,16 +3211,6 @@ function ensureFbStyles() {
     // Weather mode card elements (#102)
     '.wx-temp{font-size:22px;font-weight:800;margin-top:4px;color:var(--title)}',
     '.obs-score-small{font-size:10px;color:var(--muted);margin-top:6px}',
-    // Observability Timeline (#102)
-    '.obs-timeline{margin-top:12px;padding:0 2px}',
-    '.obs-tl-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px}',
-    '.obs-tl-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;position:relative;gap:1px}',
-    '.obs-seg{flex:1;border-radius:2px;min-width:4px}',
-    '.obs-excellent{background:#4ade80}.obs-fair{background:#fbbf24}.obs-poor{background:#f87171}.obs-closed{background:rgba(255,255,255,.1)}',
-    '.obs-best-overlay{position:absolute;top:-2px;bottom:-2px;border:2px solid rgba(255,255,255,.45);border-radius:6px;pointer-events:none}',
-    '.obs-tl-ticks{display:flex;justify-content:space-between;margin-top:3px}',
-    '.obs-tl-ticks span{font-size:9px;color:var(--muted)}',
-    '.obs-tl-best{font-size:10px;color:var(--muted);margin-top:4px}',
   ].join('');
   document.head.appendChild(s);
 }
@@ -3380,13 +3653,14 @@ function renderWeatherHTML(rootEl) {
         <span class="sectionTitle">Hourly</span>
         <div class="hourly-tabs">
           <button class="htab" data-hmode="observing" data-active="true">Observing</button>
+          <button class="htab" data-hmode="matrix">Matrix</button>
           <button class="htab" data-hmode="weather">Weather</button>
         </div>
       </div>
       <div class="hourly" aria-label="hourly forecast" data-role="hourly">
         <!-- Will be populated by renderHourly -->
       </div>
-      <div data-role="obs-timeline"></div>
+      <div class="forecast-matrix-wrap" id="forecastMatrix" style="display:none" aria-label="Forecast matrix"></div>
 
       <div class="legend">
         <span><span class="dot" style="background:var(--good)"></span>good</span>
@@ -3399,6 +3673,9 @@ function renderWeatherHTML(rootEl) {
 }
 
 export function mountWeather(rootEl, storeApi) {
+  // Prefetch precise rise/set times (fire-and-forget, used by Matrix)
+  fetchSunMoonEvents();
+
   // Render HTML structure
   renderWeatherHTML(rootEl);
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
@@ -3424,18 +3701,41 @@ export function mountWeather(rootEl, storeApi) {
     });
   }
   
-  // Hourly mode tab (Observing / Weather) handlers
+  // Hourly mode tab (Observing / Matrix / Weather) handlers
   hourlyMode = "observing";
   weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(btn) {
     btn.addEventListener("click", function() {
       weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(b) { b.removeAttribute("data-active"); });
       btn.setAttribute("data-active", "true");
       hourlyMode = btn.dataset.hmode;
-      if (weatherData && weatherData.hours) {
-        renderHourly(rootEl, weatherData.hours);
+      const hourlyEl = weatherCard.querySelector("[data-role=hourly]");
+      const matrixWrap = weatherCard.querySelector("#forecastMatrix");
+      if (hourlyMode === "matrix") {
+        if (hourlyEl) hourlyEl.style.display = "none";
+        if (matrixWrap) matrixWrap.style.display = "";
+        if (weatherData && weatherData.hours) {
+          renderForecastMatrix(rootEl, weatherData.hours);
+        }
+      } else {
+        if (hourlyEl) hourlyEl.style.display = "";
+        if (matrixWrap) matrixWrap.style.display = "none";
+        if (weatherData && weatherData.hours) {
+          renderHourly(rootEl, weatherData.hours);
+        }
       }
     });
   });
+
+  // Matrix click → open Hour Inspector
+  const matrixWrapEl = weatherCard.querySelector("#forecastMatrix");
+  if (matrixWrapEl) {
+    matrixWrapEl.addEventListener("click", function(e) {
+      const cell = e.target.closest(".matrix-cell[data-hour-idx]");
+      if (!cell || cell.classList.contains("matrix-time-cell")) return;
+      const idx = parseInt(cell.dataset.hourIdx, 10);
+      if (!isNaN(idx)) openHourInspector(idx);
+    });
+  }
 
   // Subscribe to state changes (profile + range from Controls; location from Location widget)
   let lastLocKey = "";
@@ -3452,6 +3752,7 @@ export function mountWeather(rootEl, storeApi) {
       var r = findNearestHour(weatherData.hours);
       renderNow(rootEl, r.hour);
       renderHourly(rootEl, weatherData.hours);
+      if (hourlyMode === "matrix") renderForecastMatrix(rootEl, weatherData.hours);
       renderMiniCharts(rootEl, weatherData.hours, currentMode, r.hour);
       renderBestWindows(rootEl, null, weatherData.hours);
       const chartEls = getChartElements();

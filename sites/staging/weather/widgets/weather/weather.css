@@ -1276,3 +1276,94 @@ a:hover{text-decoration:underline}
 .hour-inspector-profile-status.poor{
   color:var(--bad);
 }
+
+/* ── Forecast Matrix ──────────────────────────────────────────── */
+.forecast-matrix-wrap{
+  overflow-x:auto;
+  overflow-y:visible;
+  -webkit-overflow-scrolling:touch;
+  margin:0 0 4px;
+}
+.matrix-inner{
+  display:inline-block;
+  min-width:100%;
+}
+.matrix-row{
+  display:flex;
+  align-items:stretch;
+  min-height:26px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.matrix-row:first-child{
+  border-top:1px solid rgba(255,255,255,0.05);
+}
+.matrix-header-row{
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.matrix-label{
+  position:sticky;
+  left:0;
+  width:72px;
+  min-width:72px;
+  font-size:10px;
+  font-weight:500;
+  color:var(--muted);
+  background:var(--panel);
+  z-index:2;
+  display:flex;
+  align-items:center;
+  padding-right:6px;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.matrix-cells{
+  display:flex;
+  flex:1;
+}
+.matrix-cell{
+  width:84px;
+  min-width:84px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:9px;
+  font-variant-numeric:tabular-nums;
+  cursor:pointer;
+  border-right:1px solid rgba(255,255,255,0.03);
+  user-select:none;
+  transition:outline 0.08s;
+  color:var(--text);
+  box-sizing:border-box;
+}
+.matrix-cell:hover{
+  outline:1px solid rgba(255,255,255,0.2);
+  z-index:1;
+}
+.matrix-cell.selected{
+  outline:2px solid var(--text);
+  z-index:2;
+}
+.matrix-cell.matrix-now{
+  border-left:2px solid var(--link);
+}
+.matrix-time-cell{
+  font-size:9px;
+  color:var(--muted);
+  cursor:default;
+  min-height:20px;
+}
+.matrix-time-cell:hover{
+  outline:none;
+}
+
+/* Sun state colours */
+.sun-day     { background:#6b7d98; }
+.sun-civil   { background:#3a5470; }
+.sun-nautical{ background:#1f3452; }
+.sun-astro   { background:#101d35; }
+.sun-night   { background:#070b12; }
+
+/* Moon */
+.moon-above{ font-size:14px; }
+.moon-below{ font-size:12px; }
+.moon-event{ display:flex; align-items:center; justify-content:center; }
