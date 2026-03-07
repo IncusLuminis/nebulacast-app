@@ -19,16 +19,22 @@ _service_root = Path(__file__).resolve().parent.parent
 if str(_service_root) not in sys.path:
     sys.path.insert(0, str(_service_root))
 
-# ── Three-level scoring constants (#97) ───────────────────────────────────────
+# ── Scoring v2 constants (#118) ───────────────────────────────────────────────
 _SUN_MOON_PATH = Path(__file__).resolve().parents[3] / "sites/staging/sky/data/sun_moon.json"
-_MOON_W  = {"balanced": 0.3, "visual": 0.5, "photography": 0.6, "planetary": 0.1}
+
+# Profile weights: (weather_weight, seeing_weight)
 _PROF_W  = {
     "balanced":    (0.70, 0.30),
     "visual":      (0.85, 0.15),
     "photography": (0.90, 0.10),
-    "planetary":   (0.40, 0.60),
+    "planetary":   (0.45, 0.55),
 }
-_FWHM_PTS = [(0.5, 100), (1.0, 80), (1.5, 60), (2.0, 40), (3.0, 20)]
+
+# FWHM → seeing quality breakpoints (linear interp), spec §5.1
+_FWHM_PTS = [(0.5, 100), (1.0, 90), (1.5, 75), (2.0, 60), (2.5, 45), (3.0, 30), (4.0, 15)]
+
+# Solar state → score multiplier, spec §6
+_SOLAR_FACTOR = {"night": 1.00, "twilight": 0.75, "day": 0.20}
 
 
 def _load_sun_moon_frames() -> list:
@@ -41,10 +47,10 @@ def _load_sun_moon_frames() -> list:
 
 
 def _merge_moon_data(hours: list, frames: list) -> None:
-    """Add moon_illum_pct, moon_alt_deg, sun_alt_deg to each hourly record."""
+    """Add moon_illum_pct, moon_alt_deg, moon_waxing, sun_alt_deg to each hourly record."""
     if not frames:
         for h in hours:
-            h.update(moon_illum_pct=None, moon_alt_deg=None, sun_alt_deg=None)
+            h.update(moon_illum_pct=None, moon_alt_deg=None, moon_waxing=None, sun_alt_deg=None)
         return
     # Parse "2026-Mar-04 04:16Z" → epoch seconds once
     def _pts(s: str) -> float:
@@ -54,41 +60,67 @@ def _merge_moon_data(hours: list, frames: list) -> None:
         try:
             hour_ts = datetime.fromisoformat(h["time"]).timestamp()
         except Exception:
-            h.update(moon_illum_pct=None, moon_alt_deg=None, sun_alt_deg=None)
+            h.update(moon_illum_pct=None, moon_alt_deg=None, moon_waxing=None, sun_alt_deg=None)
             continue
         i = min(range(len(frame_ts)), key=lambda i: abs(frame_ts[i] - hour_ts))
         h["moon_illum_pct"] = frames[i]["moon"]["illum_pct"]
         h["moon_alt_deg"]   = frames[i]["moon"]["alt_deg"]
+        h["moon_waxing"]    = frames[i]["moon"]["waxing"]
         h["sun_alt_deg"]    = frames[i]["sun"]["alt_deg"]
 
 
+def _compute_solar_state(alt_deg) -> str:
+    """Classify solar illumination: day / twilight / night based on sun altitude."""
+    if alt_deg is None:
+        return "night"
+    if alt_deg > 0:
+        return "day"
+    if alt_deg >= -18:
+        return "twilight"
+    return "night"
+
+
 def compute_gate(hour: dict) -> dict:
-    """Level 1 — Observability Gate. Returns {status, score, reasons}."""
+    """Scoring v2 (#118) — Observability Gate. States: OPEN / MARGINAL / CLOSED."""
     low    = hour.get("cloud_low",  0) or 0
     mid    = hour.get("cloud_mid",  0) or 0
     high   = hour.get("cloud_high", 0) or 0
     vis_m  = hour.get("visibility_m") or 0
     vis_km = vis_m / 1000 if vis_m else (hour.get("visibility_km") or 0)
-    precip = hour.get("precip_mm", 0) or 0
-    pprob  = hour.get("precip_prob", 0) or 0
+    rain   = hour.get("rain_mm",   0) or 0
+    snow   = hour.get("snow_mm",   0) or 0
 
     reasons: list = []
-    closed = False
-    if low >= 95:                reasons.append(f"Low cloud {low:.0f}%");        closed = True
-    if mid >= 95:                reasons.append(f"Mid cloud {mid:.0f}%");         closed = True
-    if precip > 0:               reasons.append(f"Precipitation {precip:.1f}mm"); closed = True
-    if vis_km and vis_km <= 1.0: reasons.append(f"Visibility {vis_km:.1f}km");    closed = True
-    if closed:
+
+    # ── CLOSED ────────────────────────────────────────────────────────────────
+    if rain > 0:
+        reasons.append(f"Rain {rain:.1f}mm")
+    elif snow > 0:
+        reasons.append(f"Snow {snow:.1f}mm")
+    if low >= 95:
+        reasons.append(f"Low cloud {low:.0f}%")
+    if mid >= 95:
+        reasons.append(f"Mid cloud {mid:.0f}%")
+    if vis_km and vis_km <= 1.0:
+        reasons.append(f"Visibility {vis_km:.1f}km")
+
+    if rain > 0 or snow > 0:
+        return {"status": "CLOSED", "score": max(0, 10 - len(reasons) * 3), "reasons": reasons}
+    if low >= 95 or mid >= 95 or (vis_km and vis_km <= 1.0):
         return {"status": "CLOSED", "score": max(0, 15 - len(reasons) * 4), "reasons": reasons}
 
-    caution = False
-    if 70 <= low < 95:               reasons.append(f"Broken low cloud {low:.0f}%");    caution = True
-    if 70 <= mid < 95:               reasons.append(f"Broken mid cloud {mid:.0f}%");    caution = True
-    if high >= 80:                   reasons.append(f"High cirrus {high:.0f}%");         caution = True
-    if vis_km and 1.0 < vis_km <= 3: reasons.append(f"Low visibility {vis_km:.1f}km");  caution = True
-    if pprob >= 10:                  reasons.append(f"Precip prob {pprob:.0f}%");        caution = True
-    if caution:
-        return {"status": "CAUTION", "score": max(30, 70 - len(reasons) * 10), "reasons": reasons}
+    # ── MARGINAL ──────────────────────────────────────────────────────────────
+    marginal = False
+    if low >= 70:
+        reasons.append(f"Broken low cloud {low:.0f}%");  marginal = True
+    if mid >= 70:
+        reasons.append(f"Broken mid cloud {mid:.0f}%");  marginal = True
+    if high >= 80:
+        reasons.append(f"High cirrus {high:.0f}%");      marginal = True
+    if vis_km and vis_km <= 5.0:
+        reasons.append(f"Visibility {vis_km:.1f}km");    marginal = True
+    if marginal:
+        return {"status": "MARGINAL", "score": max(30, 69 - len(reasons) * 8), "reasons": reasons}
 
     if not reasons:
         reasons.append("Clear sky")
@@ -96,42 +128,62 @@ def compute_gate(hour: dict) -> dict:
 
 
 def compute_weather_quality(hour: dict, profile: str = "balanced") -> dict:
-    """Level 2 — Weather Quality (0-100). Returns {score, class, breakdown}."""
+    """Scoring v2 (#118) — Weather Quality (0-100). Returns {score, class, breakdown}."""
     low  = hour.get("cloud_low",  0) or 0
     mid  = hour.get("cloud_mid",  0) or 0
     high = hour.get("cloud_high", 0) or 0
-    eff  = low * 0.6 + mid * 0.3 + high * 0.1
-    cloud_q = round(max(0.0, 100.0 - eff), 1)
 
-    trans = hour.get("transparency")          # 7Timer 1(best)–4(worst)
-    if trans is not None and 1 <= trans <= 4:
-        trans_q = round(max(0.0, (4 - trans) / 3.0 * 100), 1)
-    else:
-        vis_km  = hour.get("visibility_km") or ((hour.get("visibility_m") or 0) / 1000)
-        trans_q = round(min(100.0, vis_km / 10.0 * 100), 1)
+    # Effective cloud — layer-weighted model (spec §3.1)
+    eff     = 0.65 * low + 0.25 * mid + 0.10 * high
+    cloud_q = max(0.0, 100.0 - eff)
 
-    wind   = hour.get("wind_m_s") or 0
-    wind_q = 100 if wind <= 3 else 70 if wind <= 7 else 40 if wind <= 12 else 20
+    # Cirrus blanket penalty (spec §3.2)
+    if high >= 95:   cirrus_penalty = 20
+    elif high >= 85: cirrus_penalty = 15
+    elif high >= 70: cirrus_penalty = 10
+    elif high >= 50: cirrus_penalty = 5
+    else:            cirrus_penalty = 0
 
-    illum = hour.get("moon_illum_pct")
+    # Visibility quality piecewise (spec §4.2)
+    vis_km = hour.get("visibility_km") or ((hour.get("visibility_m") or 0) / 1000)
+    if vis_km >= 20:   vis_q = 100
+    elif vis_km >= 10: vis_q = 80
+    elif vis_km >= 5:  vis_q = 60
+    elif vis_km >= 2:  vis_q = 35
+    else:              vis_q = 10
+
+    # Wind quality (spec §4.3)
+    wind = hour.get("wind_m_s") or 0
+    if wind <= 3:   wind_q = 100
+    elif wind <= 6: wind_q = 80
+    elif wind <= 10: wind_q = 55
+    else:           wind_q = 30
+
+    # Moon brightness factor (spec §4.4) — steeper curve, higher weight
+    # moon_q = 0 at illum≥91%, penalises gibbous/full moon strongly
+    illum = hour.get("moon_illum_pct") or 0
     alt   = hour.get("moon_alt_deg")
-    mw    = _MOON_W.get(profile, 0.3)
-    if illum is not None and alt is not None and alt > 0:
-        moon_q = round(max(0.0, 100.0 - illum * mw), 1)
+    if alt is not None and alt > 0:
+        moon_q = max(0.0, 100.0 - 1.1 * illum)
     else:
         moon_q = 100.0
 
-    score = round(0.45 * cloud_q + 0.30 * trans_q + 0.15 * moon_q + 0.10 * wind_q)
-    cls   = ("EXCELLENT" if score >= 80 else "GOOD" if score >= 60
-             else "FAIR" if score >= 40 else "POOR")
+    # Base weather score (spec §4.5) + cirrus penalty (spec §4.6)
+    # Moon weight raised 20%→33%; cloud/vis/wind adjusted proportionally
+    weather_base = 0.38 * cloud_q + 0.17 * vis_q + 0.12 * wind_q + 0.33 * moon_q
+    score = round(max(0.0, min(100.0, weather_base - cirrus_penalty)))
+
+    cls = ("EXCELLENT" if score >= 80 else "GOOD" if score >= 60
+           else "FAIR" if score >= 40 else "POOR")
     return {
         "score": score, "class": cls,
         "breakdown": {
             "effective_cloud": round(eff, 1),
-            "cloud_q":  cloud_q,
-            "trans_q":  trans_q,
-            "wind_q":   wind_q,
-            "moon_q":   moon_q,
+            "cloud_q":       round(cloud_q, 1),
+            "cirrus_penalty": cirrus_penalty,
+            "vis_q":          vis_q,
+            "wind_q":         wind_q,
+            "moon_q":         round(moon_q, 1),
         },
     }
 
@@ -181,12 +233,140 @@ def compute_seeing_quality(hour: dict) -> dict:
 
 
 def compute_hour_score(gate: dict, weather_score: int, seeing_score: int,
-                       profile: str = "balanced") -> int:
-    """Combine gate + weather + seeing into a single hour score."""
+                       profile: str = "balanced", solar_state: str = "night",
+                       cloud_high: float = 0) -> int:
+    """Scoring v2 (#118): gate + weather + seeing + solar factor + caps."""
     if gate["status"] == "CLOSED":
-        return gate["score"]   # 0–20
+        return max(0, min(20, gate["score"]))
+
+    ww, sw   = _PROF_W.get(profile, (0.70, 0.30))
+    hour_raw = ww * weather_score + sw * seeing_score
+
+    # Solar factor (spec §6)
+    solar_factor = _SOLAR_FACTOR.get(solar_state, 1.0)
+    score = round(hour_raw * solar_factor)
+
+    # Score caps (spec §9)
+    if gate["status"] == "MARGINAL":
+        score = min(score, 69)
+    if cloud_high >= 95:
+        score = min(score, 60)
+
+    return max(0, min(100, score))
+
+
+def _build_v2_score_breakdown(hour: dict, gate: dict, wbal: dict, seeing_result: dict,
+                               solar_state: str, cloud_high: float,
+                               profile: str = "balanced") -> list:
+    """Build score_breakdown Array for v2 model (used by inspector 'How this score was calculated')."""
     ww, sw = _PROF_W.get(profile, (0.70, 0.30))
-    return max(0, min(100, round(ww * weather_score + sw * seeing_score)))
+    sf = _SOLAR_FACTOR.get(solar_state, 1.0)
+
+    if gate["status"] == "CLOSED":
+        reasons = gate.get("reasons") or ["Unfavorable conditions"]
+        score = max(0, min(20, gate.get("score", 10)))
+        return [
+            {"key": "gate_closed", "label": f"Gate CLOSED — {reasons[0]}",
+             "factor_score": 0, "earned": score},
+            {"key": "_total", "_final_score": score, "is_info": True},
+        ]
+
+    wb     = wbal.get("breakdown", {})
+    cloud_q = wb.get("cloud_q",        0)
+    cirrus  = wb.get("cirrus_penalty",  0)
+    vis_q   = wb.get("vis_q",          0)
+    wind_q  = wb.get("wind_q",         0)
+    moon_q  = wb.get("moon_q",        100)
+    eff     = wb.get("effective_cloud", 0)
+    ss      = (seeing_result or {}).get("score", 50)
+
+    # Weighted contribution × solar_factor (rounded)
+    def earn(c: float) -> int:
+        return round(c * sf)
+
+    items = []
+
+    # Clouds (effective cloud model)
+    items.append({
+        "key": "clouds",
+        "label": f"Clouds: {round(eff)}% (eff.)",
+        "raw": round(eff),
+        "factor_score": round(cloud_q),
+        "earned": earn(0.38 * cloud_q * ww),
+    })
+
+    # Cirrus penalty (shown only when non-zero)
+    if cirrus > 0:
+        high = hour.get("cloud_high", 0) or 0
+        items.append({
+            "key": "cirrus",
+            "label": f"Cirrus penalty ({round(high)}% high cloud)",
+            "raw": round(high),
+            "factor_score": max(0, 100 - round(high)),
+            "earned": -earn(cirrus * ww),
+        })
+
+    # Visibility
+    vis_m  = hour.get("visibility_m")
+    vis_km = (vis_m / 1000.0) if vis_m else (hour.get("visibility_km") or 0)
+    items.append({
+        "key": "visibility",
+        "label": f"Visibility: {round(vis_km, 1)} km",
+        "raw": round(vis_km, 1),
+        "factor_score": round(vis_q),
+        "earned": earn(0.17 * vis_q * ww),
+    })
+
+    # Wind
+    wind = hour.get("wind_m_s") or 0
+    items.append({
+        "key": "wind",
+        "label": f"Wind: {round(wind, 1)} m/s",
+        "raw": round(wind, 1),
+        "factor_score": round(wind_q),
+        "earned": earn(0.12 * wind_q * ww),
+    })
+
+    # Moon
+    illum = hour.get("moon_illum_pct") or 0
+    alt   = hour.get("moon_alt_deg")
+    moon_label = (f"Moon: {round(illum)}% illum."
+                  if (alt is not None and alt > 0) else "Moon: below horizon")
+    items.append({
+        "key": "moon",
+        "label": moon_label,
+        "raw": round(illum),
+        "factor_score": round(moon_q),
+        "earned": earn(0.33 * moon_q * ww),
+    })
+
+    # Seeing
+    fwhm = hour.get("seeing_fwhm_arcsec_est")
+    seeing_label = f'Seeing: {fwhm:.1f}"' if fwhm else "Seeing"
+    items.append({
+        "key": "seeing",
+        "label": seeing_label,
+        "raw": (round(fwhm, 1) if fwhm else None),
+        "factor_score": round(ss),
+        "earned": earn(ss * sw),
+    })
+
+    # Solar factor row — only when not night (informational, earned=0)
+    if solar_state != "night":
+        items.append({
+            "key": "solar_factor",
+            "label": f"Solar factor: {solar_state} (\u00d7{sf})",
+            "raw": solar_state,
+            "factor_score": round(sf * 100),
+            "earned": 0,
+            "is_multiplier": True,
+        })
+
+    # Sentinel: actual final score (after caps) for frontend
+    items.append({"key": "_total", "_final_score": hour.get("score", 0), "is_info": True})
+
+    return items
+
 
 try:
     from engine.score_engine import (
@@ -215,6 +395,7 @@ def fetch_open_meteo(lat: float, lon: float, tz: str, hours: int = 72) -> Dict[s
         "temperature_2m", "apparent_temperature",
         "relativehumidity_2m", "dewpoint_2m",
         "cape",
+        "weathercode",
     ]
 
     params = {
@@ -311,6 +492,7 @@ def merge_to_hourly(
     om_humidity = om_hourly.get("relativehumidity_2m", []) or []
     om_dewpoint = om_hourly.get("dewpoint_2m", []) or []
     om_cape = om_hourly.get("cape", []) or []
+    om_weather_code = om_hourly.get("weathercode", []) or []
 
     st_dataseries = seven_timer.get("dataseries", []) or []
     tz_obj = ZoneInfo(tz)
@@ -355,6 +537,7 @@ def merge_to_hourly(
                 "humidity_pct": _at(om_humidity, i),
                 "dewpoint_c": _at(om_dewpoint, i),
                 "cape_j_kg": _at(om_cape, i),
+                "weather_code": _at_int(om_weather_code, i),
                 "seeing": seeing,
                 "transparency": transparency,
             }
@@ -676,6 +859,8 @@ def build_weather_payload(
     hours = merge_to_hourly(open_meteo, seven_timer, tz, horizon_hours)
     add_derived_per_hour(hours)
     _merge_moon_data(hours, _load_sun_moon_frames())
+    for h in hours:
+        h["solar_state"] = _compute_solar_state(h.get("sun_alt_deg"))
 
     default_profile = None
     if _SCORE_ENGINE_AVAILABLE:
@@ -734,26 +919,32 @@ def build_weather_payload(
             hour["seeing_fwhm_arcsec_est"] = fwhm_arcsec
             hour["seeing_fwhm_confidence"] = fwhm_conf
 
-    # ── Three-level scoring (#97) — overrides hour["score"] ───────────────────
-    print(f"[weather] Computing three-level scores (gate/weather/seeing)...")
+    # ── Scoring v2 (#118) — gate / weather / seeing / solar ──────────────────
+    print(f"[weather] Computing scoring v2 (gate/weather/seeing/solar)...")
     for hour in hours:
-        gate   = compute_gate(hour)
-        seeing = compute_seeing_quality(hour)
-        wbal   = compute_weather_quality(hour, "balanced")
+        gate         = compute_gate(hour)
+        seeing       = compute_seeing_quality(hour)
+        wbal         = compute_weather_quality(hour, "balanced")
+        solar_state  = hour.get("solar_state", "night")
+        cloud_high   = hour.get("cloud_high", 0) or 0
 
         hour["gate"]    = gate
         hour["seeing"]  = seeing
-        hour["weather"] = wbal        # balanced — used in inspector Section 2
+        hour["weather"] = wbal
 
         ws_bal = wbal["score"]
         ss     = seeing["score"]
-        hour["score"] = compute_hour_score(gate, ws_bal, ss, "balanced")
+        hour["score"] = compute_hour_score(gate, ws_bal, ss, "balanced", solar_state, cloud_high)
+        # Overwrite score_breakdown with v2 format for inspector display
+        hour["score_breakdown"] = _build_v2_score_breakdown(
+            hour, gate, wbal, seeing, solar_state, cloud_high, "balanced"
+        )
 
         ps = hour.setdefault("profile_scores", {})
         ps["balanced"] = hour["score"]
         for pname in ("visual", "photography", "planetary"):
             w = compute_weather_quality(hour, pname)
-            ps[pname] = compute_hour_score(gate, w["score"], ss, pname)
+            ps[pname] = compute_hour_score(gate, w["score"], ss, pname, solar_state, cloud_high)
         ps["broadband"] = ps["photography"]
     # ──────────────────────────────────────────────────────────────────────────
 
