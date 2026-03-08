@@ -83,7 +83,19 @@ def _compute_solar_state(alt_deg) -> str:
 
 
 def compute_gate(hour: dict) -> dict:
-    """Scoring v2 (#118) — Observability Gate. States: OPEN / MARGINAL / CLOSED."""
+    """v5.1 Observability Gate. States: OPEN / MARGINAL / CLOSED.
+
+    Sun-altitude rule (spec §4):
+      sun > −6°    → CLOSED immediately (daytime / bright twilight)
+      sun −6°..−12° → MARGINAL (civil/nautical twilight)
+      sun < −12°   → OPEN (darkness check passes; cloud/rain still apply)
+    """
+    # ── Sun-altitude check (highest priority) ─────────────────────────────────
+    sun_alt = hour.get("sun_alt_deg")
+    if sun_alt is not None and sun_alt > -6:
+        label = "Daytime" if sun_alt > 0 else "Bright twilight"
+        return {"status": "CLOSED", "score": 0, "reasons": [label]}
+
     low    = hour.get("cloud_low",  0) or 0
     mid    = hour.get("cloud_mid",  0) or 0
     high   = hour.get("cloud_high", 0) or 0
@@ -94,7 +106,7 @@ def compute_gate(hour: dict) -> dict:
 
     reasons: list = []
 
-    # ── CLOSED ────────────────────────────────────────────────────────────────
+    # ── CLOSED — precipitation / heavy overcast / fog ─────────────────────────
     if rain > 0:
         reasons.append(f"Rain {rain:.1f}mm")
     elif snow > 0:
@@ -111,8 +123,10 @@ def compute_gate(hour: dict) -> dict:
     if low >= 95 or mid >= 95 or (vis_km and vis_km <= 1.0):
         return {"status": "CLOSED", "score": max(0, 15 - len(reasons) * 4), "reasons": reasons}
 
-    # ── MARGINAL ──────────────────────────────────────────────────────────────
+    # ── MARGINAL — twilight and/or broken cloud / haze ────────────────────────
     marginal = False
+    if sun_alt is not None and -12 < sun_alt <= -6:
+        reasons.append("Civil/Nautical twilight"); marginal = True
     if low >= 70:
         reasons.append(f"Broken low cloud {low:.0f}%");  marginal = True
     if mid >= 70:
@@ -345,7 +359,7 @@ _BORTLE_HINTS: Dict[int, str] = {
     7: "Suburban/urban transition", 8: "City sky", 9: "Inner-city sky",
 }
 
-_BORTLE_BASE = {1: 100, 2: 95, 3: 90, 4: 80, 5: 70, 6: 55, 7: 40, 8: 25, 9: 10}
+_BORTLE_BASE = {1: 100, 2: 95, 3: 90, 4: 80, 5: 65, 6: 50, 7: 35, 8: 20, 9: 10}  # v5.1 §5.2.3
 
 # v5 profile weights: (atmosphere, sky_darkness, dew_safety, stability)
 _V5_PROF_W = {
@@ -355,16 +369,20 @@ _V5_PROF_W = {
     "planetary": (0.55, 0.10, 0.20, 0.15),
 }
 
-# v5: 7Timer index → FWHM arcsec
+# v5.1: 7Timer index → FWHM arcsec (unchanged)
 _V5_SEEING_FWHM = [(1, 0.7), (2, 0.9), (3, 1.1), (4, 1.4), (5, 1.8), (6, 2.5), (7, 3.5)]
-# v5: FWHM → seeing quality
-_V5_FWHM_Q = [(0.7, 100), (1.0, 90), (1.3, 80), (1.6, 70), (2.0, 60), (2.5, 45), (3.0, 30), (3.5, 15)]
-# v5: dew spread → score
-_V5_DEW_TABLE = [(0, 5), (1, 20), (2, 40), (3, 60), (4, 80), (6, 100)]
-# v5: wind km/h → stability score
-_V5_WIND_STAB = [(0, 100), (5, 100), (10, 85), (15, 70), (20, 50), (30, 30), (50, 10)]
-# v5: humidity % → stability score
-_V5_HUM_STAB  = [(0, 100), (50, 100), (60, 90), (70, 80), (80, 60), (90, 40), (100, 20)]
+# v5.1: FWHM arcsec → seeing quality  (spec §5.1.2)
+_V5_FWHM_Q = [(0.7, 100), (1.0, 95), (1.3, 90), (1.6, 85), (2.0, 75), (2.5, 60), (3.0, 40), (3.5, 20)]
+# v5.1: dew spread °C → DewSpread_score  (spec §5.3.1)
+_V5_DEW_TABLE = [(0, 5), (1, 25), (2, 50), (3, 70), (4, 85), (6, 100)]
+# v5.1: wind km/h → DewWind_score  (non-monotonic peak at 9-15 km/h, spec §5.3.2)
+_V5_DEW_WIND = [(0, 60), (2, 60), (3, 85), (8, 85), (9, 100), (15, 100), (16, 85), (30, 85)]
+# v5.1: wind km/h → WindStability_score  (spec §5.4.1)
+_V5_WIND_STAB = [(0, 100), (5, 90), (10, 80), (15, 65), (20, 40), (30, 15), (50, 15)]
+# v5.1: humidity % → HumidityStability_score  (spec §5.4.2)
+_V5_HUM_STAB  = [(0, 100), (50, 100), (60, 90), (70, 80), (80, 65), (90, 40), (100, 20)]
+# v5.1: visibility km → Transparency_score  (spec §5.1.3)
+_V5_TRANS_VIS = [(0, 10), (5, 25), (10, 45), (20, 65), (30, 80), (40, 90), (50, 100)]
 
 
 def _load_bortle_class() -> int:
@@ -379,50 +397,56 @@ def _load_bortle_class() -> int:
 
 
 def compute_atmosphere_score(hour: dict) -> dict:
-    """v5 Category 1 — Atmosphere (clouds + seeing + transparency proxy)."""
+    """v5.1 Category 1 — Atmosphere.
+
+    Formula: 0.40 × Clouds + 0.30 × Seeing + 0.30 × Transparency
+    All sub-scores normalised 0..100; each parameter carries score + weight + points.
+    """
     low  = hour.get("cloud_low",  0) or 0
     mid  = hour.get("cloud_mid",  0) or 0
     high = hour.get("cloud_high", 0) or 0
 
-    clouds_q = max(0.0, min(100.0, 100 - 0.6 * low - 0.3 * mid - 0.1 * high))
+    # Clouds: weighted layer penalty (spec §5.1.1)
+    clouds_q = max(0.0, min(100.0, 100 - 0.60 * low - 0.30 * mid - 0.10 * high))
 
-    # v5 seeing: 7Timer → FWHM → quality
+    # Seeing: 7Timer index → FWHM → quality  (spec §5.1.2, updated _V5_FWHM_Q)
     fwhm = hour.get("seeing_fwhm_arcsec_est")
     if fwhm is not None:
         seeing_q = _piecewise(fwhm, _V5_FWHM_Q)
+        seeing_label = f"Seeing {fwhm:.1f}\""
     else:
         idx = hour.get("seeing")
         if idx is not None:
             fwhm_est = _piecewise(float(idx), _V5_SEEING_FWHM)
             seeing_q = _piecewise(fwhm_est, _V5_FWHM_Q)
+            seeing_label = f"Seeing ~{fwhm_est:.1f}\""
         else:
             seeing_q = 50.0
+            seeing_label = "Seeing"
 
-    # Transparency proxy: deduction from humidity + visibility
-    trans_q = 100.0
-    hum = hour.get("humidity_pct")
-    if hum is not None:
-        if hum > 90:   trans_q -= 25
-        elif hum > 80: trans_q -= 15
-        elif hum > 70: trans_q -= 5
+    # Transparency: visibility-only table  (spec §5.1.3)
     vis_m = hour.get("visibility_m")
     if vis_m is None:
-        vis_km_val = (hour.get("visibility_km") or 0)
+        vis_km_val = float(hour.get("visibility_km") or 0)
     else:
-        vis_km_val = vis_m / 1000
+        vis_km_val = vis_m / 1000.0
     if vis_km_val > 0:
-        if vis_km_val < 5:   trans_q -= 30
-        elif vis_km_val < 10: trans_q -= 15
-        elif vis_km_val < 20: trans_q -= 5
-    trans_q = max(0.0, min(100.0, trans_q))
+        trans_q = max(0.0, min(100.0, _piecewise(vis_km_val, _V5_TRANS_VIS)))
+        trans_label = f"Visibility {vis_km_val:.0f} km"
+    else:
+        trans_q = 65.0  # unknown → neutral
+        trans_label = "Transparency"
 
-    score = round(max(0.0, min(100.0, 0.40 * clouds_q + 0.35 * seeing_q + 0.25 * trans_q)))
+    score = max(0, min(100, round(0.40 * clouds_q + 0.30 * seeing_q + 0.30 * trans_q)))
     return {
         "score": score,
         "parameters": [
-            {"key": "clouds",       "label": f"Clouds ({round(low)}/{round(mid)}/{round(high)}%)", "value": round(clouds_q), "points": round(0.40 * clouds_q)},
-            {"key": "seeing",       "label": "Seeing",        "value": round(seeing_q), "points": round(0.35 * seeing_q)},
-            {"key": "transparency", "label": "Transparency",  "value": round(trans_q),  "points": round(0.25 * trans_q)},
+            {"key": "clouds",       "label": f"Clouds ({round(low)}/{round(mid)}/{round(high)}%)",
+             "value": round(clouds_q), "score": round(clouds_q), "weight": 0.40, "points": round(0.40 * clouds_q)},
+            {"key": "seeing",       "label": seeing_label,
+             "value": round(seeing_q), "score": round(seeing_q), "weight": 0.30, "points": round(0.30 * seeing_q)},
+            {"key": "transparency", "label": trans_label,
+             "value": round(trans_q),  "score": round(trans_q),  "weight": 0.30, "points": round(0.30 * trans_q)},
         ],
     }
 
@@ -474,7 +498,7 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
     bortle_score = _BORTLE_BASE.get(bc, 70)
     bortle_label = f"Bortle {bc}"
 
-    # ── 3. Moon darkness sub-score ───────────────────────────────────────────
+    # ── 3. Moon darkness sub-score  (spec §5.2.2) ───────────────────────────
     moon_alt   = hour.get("moon_alt_deg")
     moon_illum = hour.get("moon_illum_pct")
     if moon_alt is None or moon_alt <= 0:
@@ -482,10 +506,12 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
         moon_label = "Moon below horizon"
     else:
         illum = moon_illum or 0
-        if   moon_alt > 60 and illum > 75: moon_score = 40
-        elif moon_alt > 40 and illum > 50: moon_score = 60
-        elif moon_alt > 20 and illum > 25: moon_score = 75
-        else:                              moon_score = 90
+        if   moon_alt > 60 and illum > 75: moon_score = 20
+        elif moon_alt > 40 and illum > 50: moon_score = 45
+        elif moon_alt > 20 and illum > 50: moon_score = 45
+        elif moon_alt > 20 and illum > 25: moon_score = 70
+        elif illum > 50:                   moon_score = 70
+        else:                              moon_score = 85
         moon_label = f"Moon {moon_alt:.0f}° / {illum:.0f}%"
 
     # ── Weighted combination ─────────────────────────────────────────────────
@@ -497,58 +523,75 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
     return {
         "score": score,
         "parameters": [
-            {"key": "twilight", "label": sun_label,    "value": round(sun_alt or 0),    "score": solar_score,  "points": round(W_SOLAR  * solar_score)},
-            {"key": "moon",     "label": moon_label,   "value": round(moon_illum or 0), "score": moon_score,   "points": round(W_MOON   * moon_score)},
-            {"key": "bortle",   "label": bortle_label, "value": bc,                     "score": bortle_score, "points": round(W_BORTLE * bortle_score)},
+            {"key": "twilight", "label": sun_label,    "value": round(sun_alt or 0),    "score": solar_score,  "weight": W_SOLAR,  "points": round(W_SOLAR  * solar_score)},
+            {"key": "moon",     "label": moon_label,   "value": round(moon_illum or 0), "score": moon_score,   "weight": W_MOON,   "points": round(W_MOON   * moon_score)},
+            {"key": "bortle",   "label": bortle_label, "value": bc,                     "score": bortle_score, "weight": W_BORTLE, "points": round(W_BORTLE * bortle_score)},
         ],
     }
 
 
 def compute_dew_safety_score(hour: dict) -> dict:
-    """v5 Category 3 — Dew Safety (dew spread + wind modifier)."""
+    """v5.1 Category 3 — Dew Safety.
+
+    Formula: 0.80 × DewSpread_score + 0.20 × DewWind_score
+    Both sub-scores normalised 0..100 (spec §5.3).
+    """
     temp = hour.get("temp_c")
     dew  = hour.get("dewpoint_c")
     spread = (temp - dew) if temp is not None and dew is not None else None
 
-    spread_score = round(_piecewise(spread, _V5_DEW_TABLE)) if spread is not None else 60
-    wind_kmh = (hour.get("wind_m_s") or 0) * 3.6
-    wind_mod = 5 if wind_kmh > 10 else (-5 if wind_kmh < 2 else 0)
-    score = max(0, min(100, spread_score + wind_mod))
-
+    spread_score = round(_piecewise(spread, _V5_DEW_TABLE)) if spread is not None else 50
     spread_label = f"Spread {spread:.1f}°C" if spread is not None else "Spread unknown"
+
+    wind_kmh  = (hour.get("wind_m_s") or 0) * 3.6
+    wind_score = round(_piecewise(wind_kmh, _V5_DEW_WIND))
+
+    score = max(0, min(100, round(0.80 * spread_score + 0.20 * wind_score)))
     return {
         "score": score,
         "parameters": [
-            {"key": "dew_spread",    "label": spread_label,                          "value": round(spread, 1) if spread else 0, "points": spread_score},
-            {"key": "wind_modifier", "label": f"Wind ({wind_kmh:.0f} km/h)",         "value": round(wind_kmh), "points": wind_mod},
+            {"key": "dew_spread", "label": spread_label,
+             "value": round(spread, 1) if spread is not None else 0,
+             "score": spread_score, "weight": 0.80, "points": round(0.80 * spread_score)},
+            {"key": "dew_wind",   "label": f"Wind {wind_kmh:.0f} km/h",
+             "value": round(wind_kmh),
+             "score": wind_score,   "weight": 0.20, "points": round(0.20 * wind_score)},
         ],
     }
 
 
 def compute_stability_score(hour: dict) -> dict:
-    """v5 Category 4 — Stability (wind + humidity + pressure trend)."""
+    """v5.1 Category 4 — Stability.
+
+    Formula: 0.45 × Wind + 0.35 × Humidity + 0.20 × PressureTrend
+    All sub-scores normalised 0..100 (spec §5.4).
+    """
     wind_kmh = (hour.get("wind_m_s") or 0) * 3.6
     wq = _piecewise(wind_kmh, _V5_WIND_STAB)
     hq = _piecewise(hour.get("humidity_pct") or 65, _V5_HUM_STAB)
 
+    # Pressure trend  (spec §5.4.3 — 4-tier by absolute change per 6h)
     trend = hour.get("pressure_trend_6h_hpa")
     if trend is None:         pq = 70
-    elif -1 <= trend <= 1:    pq = 100
-    elif 1 < trend <= 3:      pq = 80
-    elif -3 <= trend < -1:    pq = 80
-    elif 3 < trend <= 6:      pq = 60
-    elif -6 <= trend < -3:    pq = 50
-    else:                     pq = 30
+    elif abs(trend) <= 0.5:   pq = 100
+    elif abs(trend) <= 1.5:   pq = 85
+    elif abs(trend) <= 3.0:   pq = 65
+    else:                     pq = 40
 
     score = max(0, min(100, round(0.45 * wq + 0.35 * hq + 0.20 * pq)))
     trend_label = (f"Pressure {'+' if trend >= 0 else ''}{trend:.1f} hPa/6h"
                    if trend is not None else "Pressure unknown")
+    hum_val = hour.get("humidity_pct")
     return {
         "score": score,
         "parameters": [
-            {"key": "wind",           "label": f"Wind {wind_kmh:.0f} km/h",    "value": round(wq), "points": round(0.45 * wq)},
-            {"key": "humidity",       "label": f"Humidity {hour.get('humidity_pct','?')}%", "value": round(hq), "points": round(0.35 * hq)},
-            {"key": "pressure_trend", "label": trend_label,                     "value": round(pq), "points": round(0.20 * pq)},
+            {"key": "wind",           "label": f"Wind {wind_kmh:.0f} km/h",
+             "value": round(wind_kmh), "score": round(wq), "weight": 0.45, "points": round(0.45 * wq)},
+            {"key": "humidity",       "label": f"Humidity {hum_val}%" if hum_val is not None else "Humidity",
+             "value": hum_val or 65,  "score": round(hq), "weight": 0.35, "points": round(0.35 * hq)},
+            {"key": "pressure_trend", "label": trend_label,
+             "value": round(trend, 1) if trend is not None else 0,
+             "score": round(pq), "weight": 0.20, "points": round(0.20 * pq)},
         ],
     }
 
