@@ -428,50 +428,78 @@ def compute_atmosphere_score(hour: dict) -> dict:
 
 
 def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
-    """v5 Category 2 — Sky Darkness (bortle + twilight + moon)."""
+    """v5 Category 2 — Sky Darkness.
+
+    All three sub-scores live in 0..100 — no negative penalties.
+    Final score = 0.55 * solar + 0.25 * moon + 0.20 * bortle.
+
+    Solar darkness:
+      day (sun > 0°)          →   0
+      civil twilight (>−6°)   →  25
+      nautical twilight (>−12°)→  50
+      astro twilight (>−18°)  →  75
+      dark night (< −18°)     → 100
+
+    Moon darkness (100 = no interference):
+      below horizon           → 100
+      barely up               →  90
+      up + moderate illum     →  75
+      up + bright             →  60
+      high + very bright      →  40
+    """
     bc = max(1, min(9, bortle))
-    base = _BORTLE_BASE.get(bc, 70)
 
+    # ── 1. Solar darkness sub-score ─────────────────────────────────────────
     sun_alt = hour.get("sun_alt_deg")
+    if sun_alt is None:
+        solar_score = 0
+        sun_label   = "Sun unknown"
+    elif sun_alt > 0:
+        solar_score = 0
+        sun_label   = "Daylight"
+    elif sun_alt > -6:
+        solar_score = 25
+        sun_label   = f"Civil twilight ({sun_alt:.1f}°)"
+    elif sun_alt > -12:
+        solar_score = 50
+        sun_label   = f"Nautical twilight ({sun_alt:.1f}°)"
+    elif sun_alt > -18:
+        solar_score = 75
+        sun_label   = f"Astro twilight ({sun_alt:.1f}°)"
+    else:
+        solar_score = 100
+        sun_label   = f"Dark night ({sun_alt:.1f}°)"
 
-    # Daytime
-    if sun_alt is not None and sun_alt > 0:
-        return {
-            "score": 0,
-            "parameters": [
-                {"key": "bortle",   "label": f"Bortle {bc}", "value": bc,            "points": 0},
-                {"key": "twilight", "label": "Daylight",      "value": round(sun_alt), "points": -base},
-                {"key": "moon",     "label": "Moon",           "value": 0,             "points": 0},
-            ],
-        }
+    # ── 2. Bortle darkness sub-score (already 0..100) ───────────────────────
+    bortle_score = _BORTLE_BASE.get(bc, 70)
+    bortle_label = f"Bortle {bc}"
 
-    # Twilight penalty
-    twilight_penalty = 0
-    if sun_alt is not None:
-        if sun_alt > -6:        twilight_penalty = 70
-        elif sun_alt > -12:     twilight_penalty = 40
-        elif sun_alt > -18:     twilight_penalty = 20
-
-    # Moon penalty
-    moon_penalty = 0
+    # ── 3. Moon darkness sub-score ───────────────────────────────────────────
     moon_alt   = hour.get("moon_alt_deg")
     moon_illum = hour.get("moon_illum_pct")
-    if moon_alt is not None and moon_alt > 0 and moon_illum is not None:
-        if   moon_alt > 60 and moon_illum > 75: moon_penalty = 45
-        elif moon_alt > 40 and moon_illum > 50: moon_penalty = 30
-        elif moon_alt > 20 and moon_illum > 25: moon_penalty = 15
-        elif moon_alt <= 10:                    moon_penalty = 5
+    if moon_alt is None or moon_alt <= 0:
+        moon_score = 100
+        moon_label = "Moon below horizon"
+    else:
+        illum = moon_illum or 0
+        if   moon_alt > 60 and illum > 75: moon_score = 40
+        elif moon_alt > 40 and illum > 50: moon_score = 60
+        elif moon_alt > 20 and illum > 25: moon_score = 75
+        else:                              moon_score = 90
+        moon_label = f"Moon {moon_alt:.0f}° / {illum:.0f}%"
 
-    score = max(0, min(100, round(base - twilight_penalty - moon_penalty)))
-    sun_label = f"Sun {sun_alt:.1f}°" if sun_alt is not None else "Sun unknown"
-    moon_label = (f"Moon {moon_alt:.0f}° / {moon_illum:.0f}%"
-                  if moon_alt is not None and moon_alt > 0 else "Moon below horizon")
+    # ── Weighted combination ─────────────────────────────────────────────────
+    W_SOLAR  = 0.55
+    W_MOON   = 0.25
+    W_BORTLE = 0.20
+    score = max(0, min(100, round(W_SOLAR * solar_score + W_MOON * moon_score + W_BORTLE * bortle_score)))
+
     return {
         "score": score,
         "parameters": [
-            {"key": "bortle",   "label": f"Bortle {bc}", "value": bc,                     "points": base},
-            {"key": "twilight", "label": sun_label,        "value": round(sun_alt or -90),  "points": -twilight_penalty},
-            {"key": "moon",     "label": moon_label,        "value": round(moon_illum or 0), "points": -moon_penalty},
+            {"key": "twilight", "label": sun_label,    "value": round(sun_alt or 0),    "score": solar_score,  "points": round(W_SOLAR  * solar_score)},
+            {"key": "moon",     "label": moon_label,   "value": round(moon_illum or 0), "score": moon_score,   "points": round(W_MOON   * moon_score)},
+            {"key": "bortle",   "label": bortle_label, "value": bc,                     "score": bortle_score, "points": round(W_BORTLE * bortle_score)},
         ],
     }
 
