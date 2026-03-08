@@ -1505,29 +1505,70 @@ function renderExplainPanel(rootEl, nowHour, hours) {
         return `<div class="breakdown-line">${infoIcon}<span class="breakdown-text">${escapeHtml(label)}: ${escapeHtml(valueStr)}</span><span class="contrib negative">→ ${penaltyStr}</span></div>`;
       }).join("");
     } else if (breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0) {
-      // v5 breakdown: categories array with { key, label, score, weight, points, parameters[] }
+      // v5.1 — inspector-style category cards with collapsible param rows
+      ensureFbStyles();
       const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
-      scoreList.innerHTML = breakdown.categories.map(cat => {
-        const catScore = Math.round(cat.score);
+      const CAT_ICO = { atmosphere:'🌫', sky_darkness:'🌌', dew_safety:'💧', stability:'🧭' };
+      // Preserve CATS display order (sky_darkness first)
+      const CAT_ORDER = ['sky_darkness','atmosphere','dew_safety','stability'];
+      const orderedCats = [...breakdown.categories].sort((a,b) => {
+        const ai = CAT_ORDER.indexOf(a.key); const bi = CAT_ORDER.indexOf(b.key);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      const cards = orderedCats.map(cat => {
+        const catScore  = Math.round(cat.score);
         const catWeight = (w[cat.key] != null ? w[cat.key] : cat.weight) || 0;
-        const contribution = Math.round(catScore * catWeight);
-        const fc = _fbColor(catScore);
-        const hasTip = TOOLTIPS && TOOLTIPS[cat.key];
-        let paramLines = "";
+        const catPts    = Math.round(catScore * catWeight);
+        const fc        = _fbColor(catScore);
+        const ico       = CAT_ICO[cat.key] || '';
+        const panelId   = 'tp-cat-' + cat.key;
+        let paramsHTML  = '';
         if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
-          paramLines = cat.parameters.map(p => {
-            const pSign = p.points >= 0 ? "+" : "";
-            return `<div class="breakdown-line breakdown-sub"><span class="breakdown-text bd-param">${escapeHtml(p.label)}</span><span class="contrib${p.points < 0 ? " negative" : ""}">${pSign}${Math.round(p.points)}</span></div>`;
-          }).join("");
+          paramsHTML = cat.parameters.map(p => {
+            const label    = escapeHtml(p.label || '');
+            const pts      = p.points != null ? Math.round(p.points)  : null;
+            const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
+            const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
+            const paramClr = paramPct != null ? _fbColor(paramPct) : '#555';
+            const wt       = p.weight != null ? p.weight.toFixed(2) : null;
+            const wtStr    = wt != null
+              ? '<span class="hi-param-weight">×' + wt + '</span>'
+              : '<span class="hi-param-weight"></span>';
+            const ptsStr   = pts != null
+              ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+pts+'</span>'
+              : '<span class="hi-param-pts hi-param-pts-na">—</span>';
+            return '<div class="hi-param-row">'
+              + '<span class="hi-param-label">' + label + '</span>'
+              + '<div class="hi-param-bar-wrap">'
+              + (paramPct != null
+                  ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
+                    + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
+                  : '')
+              + '</div>'
+              + wtStr + ptsStr
+              + '</div>';
+          }).join('');
+        } else {
+          paramsHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
         }
-        return `<div class="breakdown-category">` +
-          `<div class="breakdown-line breakdown-cat-header"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(cat.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span>` +
-          `<span class="breakdown-text"><strong>${escapeHtml(cat.label)}</strong></span>` +
-          `<div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${catScore}%;background:${fc}"></div></div>` +
-          `<span class="contrib">+${contribution}</span></div>` +
-          paramLines +
-          `</div>`;
-      }).join("");
+        return '<div class="hi-cat-card">'
+          + '<div class="hi-cat-header" data-panel="' + panelId + '">'
+          +   '<span class="hi-toggle-btn">▶</span>'
+          +   '<span class="hi-cat-ico">' + ico + '</span>'
+          +   '<span class="hi-cat-name">' + escapeHtml(cat.label) + '</span>'
+          +   '<div class="hi-cat-bar-wrap"><div class="hi-cat-bar-fill" style="width:' + catScore + '%;background:' + fc + '"></div></div>'
+          +   '<span class="hi-cat-formula">'
+          +     '<span class="hi-cat-score" style="color:' + fc + '">' + catScore + '</span>'
+          +     '<span class="hi-cat-weight">×' + catWeight.toFixed(2) + '</span>'
+          +     '<span class="hi-cat-pts" style="color:' + fc + '">='+catPts+'</span>'
+          +   '</span>'
+          + '</div>'
+          + '<div class="hi-cat-params" id="' + panelId + '" style="display:none">'
+          + paramsHTML
+          + '</div>'
+          + '</div>';
+      });
+      scoreList.innerHTML = '<div class="hi-cat-section">' + cards.join('') + '</div>';
     } else {
       scoreList.innerHTML = '<div class="breakdown-unavailable">Breakdown not available in this build.</div>';
     }
@@ -1546,18 +1587,31 @@ function renderExplainPanel(rootEl, nowHour, hours) {
   if (!weatherCard._explainToggleBound) {
     weatherCard._explainToggleBound = true;
     weatherCard.addEventListener("click", function(e) {
+      // Main "Details" expand/collapse toggle
       const toggleBtn = e.target.closest('[data-role="explain-toggle"]');
-      if (!toggleBtn) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const expanded = toggleBtn.getAttribute("aria-expanded") === "true";
-      const next = !expanded;
-      toggleBtn.setAttribute("aria-expanded", String(next));
-      toggleBtn.textContent = next ? "Details ▼" : "Details ▶";
-      const panel = weatherCard.querySelector('[data-role="explain-panel"]');
-      if (panel) {
-        panel.classList.toggle("expanded", next);
-        panel.setAttribute("aria-hidden", String(!next));
+      if (toggleBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const expanded = toggleBtn.getAttribute("aria-expanded") === "true";
+        const next = !expanded;
+        toggleBtn.setAttribute("aria-expanded", String(next));
+        toggleBtn.textContent = next ? "Details ▼" : "Details ▶";
+        const panel = weatherCard.querySelector('[data-role="explain-panel"]');
+        if (panel) {
+          panel.classList.toggle("expanded", next);
+          panel.setAttribute("aria-hidden", String(!next));
+        }
+        return;
+      }
+      // Category card expand/collapse inside breakdown panel (tp-cat-*)
+      const catHeader = e.target.closest('.hi-cat-header[data-panel]');
+      if (catHeader) {
+        const panel = document.getElementById(catHeader.dataset.panel);
+        const btn   = catHeader.querySelector('.hi-toggle-btn');
+        if (!panel) return;
+        const isOpen = panel.style.display !== 'none';
+        panel.style.display = isOpen ? 'none' : '';
+        if (btn) btn.textContent = isOpen ? '▶' : '▼';
       }
     });
   }
