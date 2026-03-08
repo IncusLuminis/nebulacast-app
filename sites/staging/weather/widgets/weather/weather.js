@@ -1675,7 +1675,17 @@ function renderTpQuality(rootEl, nowHour) {
     return;
   }
 
-  const score = formatScore(getHourScore(nowHour));
+  // For CLOSED gate hours, show the actual conditions score (breakdown total),
+  // not the gate-penalised hour.score (capped ≤20). The CLOSED badge makes
+  // the gate state clear; the score reflects underlying sky quality.
+  const gateRaw    = nowHour?.gate || { status: "OPEN" };
+  const gateStatus = typeof gateRaw === "string" ? gateRaw : (gateRaw.status || "OPEN");
+  const isGateClosed = gateStatus === "CLOSED";
+  const profile    = getActiveProfile();
+  const bd         = nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
+  const score = isGateClosed && bd?.total != null
+    ? Math.max(0, Math.min(100, Math.round(bd.total)))
+    : formatScore(getHourScore(nowHour));
   const rank = scoreRank(score);
 
   const scoreValEl = weatherCard.querySelector('[data-role="score-val"]');
@@ -1686,9 +1696,8 @@ function renderTpQuality(rootEl, nowHour) {
   // Gate badge
   const gateBadge = weatherCard.querySelector('[data-role="gate-badge"]');
   if (gateBadge) {
-    const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
-    gateBadge.textContent = "Gate: " + gate;
-    gateBadge.className = "gate-badge " + (gate === "OPEN" ? "gate-open" : gate === "MARGINAL" ? "gate-marginal" : "gate-closed");
+    gateBadge.textContent = "Gate: " + gateStatus;
+    gateBadge.className = "gate-badge " + (gateStatus === "OPEN" ? "gate-open" : gateStatus === "MARGINAL" ? "gate-marginal" : "gate-closed");
   }
 
   // Score bar
@@ -3828,25 +3837,30 @@ function renderHourInspector(hourIdx) {
   // ── Header: time ────────────────────────────────────────────────────────────
   els.time.textContent = formatTime(hour.time);
 
-  // Score + rank
-  const score = formatScore(getHourScore(hour));
+  // Score + rank — for CLOSED gate use breakdown.total (actual sky quality)
+  const hiProfile = getActiveProfile();
+  const hiBd      = hour.score_breakdown_by_profile?.[hiProfile] || hour.score_breakdown;
+  const score = isGateClosed && hiBd?.total != null
+    ? Math.max(0, Math.min(100, Math.round(hiBd.total)))
+    : formatScore(getHourScore(hour));
   const rank  = scoreRank(score);
+  const scoreClr = _fbColor(score);
   if (els.scoreVal) {
-    els.scoreVal.textContent   = isGateClosed ? "" : score;
-    els.scoreVal.style.color   = isGateClosed ? "" : _fbColor(score);
-    els.scoreVal.style.visibility = isGateClosed ? "hidden" : "";
+    els.scoreVal.textContent      = score;
+    els.scoreVal.style.color      = scoreClr;
+    els.scoreVal.style.visibility = "";
   }
   if (els.scoreLabel) {
-    els.scoreLabel.textContent = isGateClosed ? "" : rank;
-    els.scoreLabel.style.visibility = isGateClosed ? "hidden" : "";
+    els.scoreLabel.textContent      = rank;
+    els.scoreLabel.style.visibility = "";
   }
 
-  // Score bar (new element)
+  // Score bar
   if (els.scoreBar) {
     const fill = els.scoreBar.querySelector(".hour-inspector-score-bar-fill");
     if (fill) {
-      fill.style.width      = isGateClosed ? "0%" : Math.max(0, Math.min(100, score)) + "%";
-      fill.style.background = isGateClosed ? "" : _fbColor(score);
+      fill.style.width      = Math.max(0, Math.min(100, score)) + "%";
+      fill.style.background = scoreClr;
     }
   }
 
