@@ -88,8 +88,8 @@ async function testAstroWeatherAPI() {
               `Hour ${i}: score_breakdown.clamped_total (${bd.clamped_total}) != score (${hour.score})`
             );
           }
-          if (!Array.isArray(bd.components) || bd.components.length === 0) {
-            errors.push(`Hour ${i}: missing or empty score_breakdown.components`);
+          if (!Array.isArray(bd.categories) || bd.categories.length === 0) {
+            errors.push(`Hour ${i}: missing or empty score_breakdown.categories`);
           }
         }
       }

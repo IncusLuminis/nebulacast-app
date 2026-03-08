@@ -115,8 +115,8 @@
       + '</div>';
 
     // ── Mode scores
-    var modeOrder = ['balanced','visual','photography','planetary'];
-    var modeLabels = { balanced:'Balanced', visual:'Visual', photography:'Photo', planetary:'Planetary' };
+    var modeOrder = ['balanced','visual','broadband','planetary'];
+    var modeLabels = { balanced:'Balanced', visual:'Visual', broadband:'Broadband', planetary:'Planetary' };
     var modeHtml = '<div class="owp-decision-section">'
       + '<div class="owp-section-label">Mode scores (best 3h / next 24h)</div>'
       + '<div class="owp-modes-row">';

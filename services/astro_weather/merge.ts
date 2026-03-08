@@ -3,12 +3,15 @@
 import type { HourRecord } from "./types";
 import type { OpenMeteoResponse } from "./providers/open_meteo";
 import type { SevenTimerResponse } from "./providers/seven_timer";
+import { sunAltitudeDeg, moonPositionDeg } from "./ephemeris";
 
 export function mergeHourlyData(
   omData: OpenMeteoResponse,
   stData: SevenTimerResponse | null,
   tz: string,
-  hours: number
+  hours: number,
+  lat: number,
+  lon: number,
 ): HourRecord[] {
   const hourly = omData.hourly;
   if (!hourly || !hourly.time || hourly.time.length === 0) {
@@ -66,6 +69,10 @@ export function mergeHourlyData(
       const stIndex = Math.floor(i / 3);
       const stPoint = stMap.get(stIndex * 3) || { seeing: null, transparency: null };
 
+      // Ephemeris — compute sun & moon position for this hour at the location
+      const sunAlt = sunAltitudeDeg(dt, lat, lon);
+      const moon = moonPositionDeg(dt, lat, lon);
+
       records.push({
         time: dt.toISOString(),
         cloud_total: cloudTotal[i] ?? null,
@@ -85,13 +92,22 @@ export function mergeHourlyData(
         snowfall_mm: snowfall[i] ?? null,
         seeing: stPoint.seeing,
         transparency: stPoint.transparency,
-        gate: "OPEN", // Will be computed in scoring
-        score: 0, // Will be computed later
+        // Ephemeris fields
+        sun_alt_deg: sunAlt,
+        moon_alt_deg: moon.altDeg,
+        moon_illum_pct: moon.illumPct,
+        // Scoring (computed later in astro-weather.ts)
+        gate: "OPEN",
+        score: 0,
         score_breakdown: {
-          components: [],
+          categories: [],
           total: 0,
           clamped_total: 0,
         },
+        atmosphere_score: 0,
+        sky_darkness_score: 0,
+        dew_safety_score: 0,
+        stability_score: 0,
       });
     } catch (e) {
       console.warn(`Failed to process hour ${i}:`, e);

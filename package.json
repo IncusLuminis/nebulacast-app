@@ -6,6 +6,8 @@
     "build:functions": "node scripts/build-functions.mjs"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0"
+    "@cloudflare/workers-types": "^4.20260307.1",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.9.3"
   }
 }

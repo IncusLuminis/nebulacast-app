@@ -21,6 +21,7 @@ function parseQueryParams(url: URL): {
   tz: string;
   hours: number;
   profile: Profile;
+  bortle: number;
   name?: string;
 } {
   const lat = parseFloat(url.searchParams.get("lat") ?? "");
@@ -30,6 +31,8 @@ function parseQueryParams(url: URL): {
   const hoursRaw = parseInt(url.searchParams.get("hours") ?? "72", 10);
   const hours = Math.min(Math.max(Number.isFinite(hoursRaw) ? hoursRaw : 72, HOURS_MIN), HOURS_MAX);
   const profile = (url.searchParams.get("profile") ?? "balanced") as Profile;
+  const bortleRaw = parseInt(url.searchParams.get("bortle") ?? "5", 10);
+  const bortle = Math.min(9, Math.max(1, Number.isFinite(bortleRaw) ? bortleRaw : 5));
   const name = url.searchParams.get("name") ?? undefined;
 
   if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
@@ -42,7 +45,7 @@ function parseQueryParams(url: URL): {
     throw new Error(`Invalid profile: must be one of ${VALID_PROFILES.join(", ")}`);
   }
 
-  return { lat, lon, tz, hours, profile, name };
+  return { lat, lon, tz, hours, profile, bortle, name };
 }
 
 function jsonHeaders(cfRay?: string): Record<string, string> {
@@ -118,7 +121,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
   try {
     const url = new URL(request.url);
     const parsed = parseQueryParams(url);
-    const { lat, lon, tz, hours, profile, name } = parsed;
+    const { lat, lon, tz, hours, profile, bortle, name } = parsed;
     reqParams = { lat, lon, tz, hours, profile, name };
 
     const cache = caches.default;
@@ -168,7 +171,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
     }
 
     const stData = await fetchSevenTimer(lat, lon);
-    let hourRecords = mergeHourlyData(omResult.data, stData, tz, hours);
+    let hourRecords = mergeHourlyData(omResult.data, stData, tz, hours, lat, lon);
 
     if (!hourRecords || hourRecords.length === 0) {
       console.error("[astro-weather] mergeHourlyData returned empty array", {
@@ -186,10 +189,17 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
         i + 6 < hourRecords.length
           ? (hourRecords[i + 6].pressure_hpa ?? null) - (hour.pressure_hpa ?? 0)
           : null;
-      const { score, breakdown, gate } = computeScore(hour, pressureTrend, profile);
+      const {
+        score, breakdown, gate,
+        atmosphere_score, sky_darkness_score, dew_safety_score, stability_score,
+      } = computeScore(hour, pressureTrend, profile, bortle);
       hour.score = score;
       hour.score_breakdown = breakdown;
       hour.gate = gate;
+      hour.atmosphere_score = atmosphere_score;
+      hour.sky_darkness_score = sky_darkness_score;
+      hour.dew_safety_score = dew_safety_score;
+      hour.stability_score = stability_score;
     }
 
     const derived = computeDerived(hourRecords);
@@ -201,6 +211,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       location,
       horizon_hours: hourRecords.length,
       profile,
+      bortle,
       hours: hourRecords,
       derived,
     };

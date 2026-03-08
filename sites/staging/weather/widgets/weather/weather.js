@@ -892,28 +892,36 @@ function computeProfileScores(hour) {
   return { visual: toScore(visual01), broadband: toScore(broadband01), planetary: toScore(planetary01) };
 }
 
-// v4 profile weights (mirrors backend score.ts)
-const V4_PROFILE_WEIGHTS = {
-  balanced:  { clouds:0.35, seeing:0.25, transparency:0.20, wind:0.10, humidity:0.05, pressure_trend:0.03, thermal:0.02 },
-  visual:    { clouds:0.40, seeing:0.10, transparency:0.25, wind:0.10, humidity:0.08, pressure_trend:0.04, thermal:0.03 },
-  broadband: { clouds:0.30, seeing:0.15, transparency:0.30, wind:0.10, humidity:0.07, pressure_trend:0.05, thermal:0.03 },
-  planetary: { clouds:0.20, seeing:0.40, transparency:0.10, wind:0.20, humidity:0.05, pressure_trend:0.03, thermal:0.02 },
+// v5 category weights (mirrors backend score.ts) — profile_weight × category_score
+const V5_CATEGORY_WEIGHTS = {
+  balanced:  { atmosphere:0.35, sky_darkness:0.30, dew_safety:0.20, stability:0.15 },
+  visual:    { atmosphere:0.40, sky_darkness:0.25, dew_safety:0.20, stability:0.15 },
+  broadband: { atmosphere:0.30, sky_darkness:0.45, dew_safety:0.15, stability:0.10 },
+  planetary: { atmosphere:0.55, sky_darkness:0.10, dew_safety:0.20, stability:0.15 },
 };
 
 function getHourScore(hour) {
   if (!hour) return 0;
   const profile = getActiveProfile();
 
-  // If this hour's breakdown has v4 components (7 quality values), compute for any profile
-  const bd = hour.score_breakdown;
-  if (bd && Array.isArray(bd.components) && bd.components.length === 7) {
-    const w = V4_PROFILE_WEIGHTS[profile] || V4_PROFILE_WEIGHTS.balanced;
-    let sum = 0;
-    for (const c of bd.components) {
-      const weight = w[c.key];
-      if (weight != null) sum += c.value * weight;
-    }
-    return Math.max(0, Math.min(100, Math.round(sum)));
+  // v5: recompute from the 4 category scores stored on each hour
+  if (
+    hour.atmosphere_score != null &&
+    hour.sky_darkness_score != null &&
+    hour.dew_safety_score != null &&
+    hour.stability_score != null
+  ) {
+    const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
+    const raw =
+      w.atmosphere    * hour.atmosphere_score   +
+      w.sky_darkness  * hour.sky_darkness_score +
+      w.dew_safety    * hour.dew_safety_score   +
+      w.stability     * hour.stability_score;
+    const gate = typeof hour.gate === "string" ? hour.gate : (hour.gate && hour.gate.status ? hour.gate.status : "OPEN");
+    let score = raw;
+    if (gate === "CLOSED")   score = Math.min(score, 20);
+    if (gate === "MARGINAL") score = Math.min(score, 69);
+    return Math.max(0, Math.min(100, Math.round(score)));
   }
 
   // Fallback: for "balanced" profile use API score directly
@@ -1465,16 +1473,24 @@ function renderNow(rootEl, nowHour) {
     const totalLine = overallBox.querySelector('[data-role="breakdown-total"]');
     const currentDetailsTbody = overallBox.querySelector('[data-role="current-details-table"] tbody');
     const warningsList = overallBox.querySelector('[data-role="warnings-list"]');
-    if (scoreTitle) scoreTitle.textContent = "How this score was calculated" + (weatherData?.scoring_version === "v2" ? " (additive v2)" : weatherData?.scoring_version === "v1" ? " (legacy)" : "");
+    if (scoreTitle) scoreTitle.textContent = "How this score was calculated" + (weatherData?.scoring_version === "v5" ? " (v5)" : weatherData?.scoring_version === "v2" ? " (additive v2)" : weatherData?.scoring_version === "v1" ? " (legacy)" : "");
     const profile = getActiveProfile();
     const profileKey = profile === "balanced" ? "balanced" : (profile === "broadband" ? "broadband" : profile);
     const breakdown = nowHour?.score_breakdown_by_profile?.[profileKey] || nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
     const isV2Breakdown = Array.isArray(breakdown);
+    const isV5Breakdown = breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0;
     const explainLines = nowHour?.score_explain;
     const hasPenaltyBreakdown = breakdown && typeof breakdown.penalties === "object";
 
     if (totalLine) {
-      if (isV2Breakdown && breakdown.length > 0) {
+      if (isV5Breakdown) {
+        // v5: show weighted total and gate info
+        const finalScore = breakdown.clamped_total ?? getHourScore(nowHour);
+        const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
+        const gateInfo = gate !== "OPEN" ? ` (gate: ${gate})` : "";
+        totalLine.textContent = `Score: ${finalScore}${gateInfo}`;
+        totalLine.style.display = "block";
+      } else if (isV2Breakdown && breakdown.length > 0) {
         // v2 model: use _final_score sentinel if present (accounts for caps/multipliers)
         const sentinelItem = breakdown.find(b => b._final_score != null);
         if (sentinelItem) {
@@ -1522,16 +1538,29 @@ function renderNow(rootEl, nowHour) {
           const infoIcon = `<span class="factor-info breakdown-ii" data-tooltip-key="${tooltipKey}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span>`;
           return `<div class="breakdown-line">${infoIcon}<span class="breakdown-text">${escapeHtml(label)}: ${escapeHtml(valueStr)}</span><span class="contrib negative">→ ${penaltyStr}</span></div>`;
         }).join("");
-      } else if (breakdown && Array.isArray(breakdown.components) && breakdown.components.length > 0) {
-        // v4 breakdown: components array with { key, label, value (quality 0-100), points }
-        const w = V4_PROFILE_WEIGHTS[profile] || V4_PROFILE_WEIGHTS.balanced;
-        scoreList.innerHTML = breakdown.components.map(c => {
-          const qualityPct = Math.round(c.value);
-          const weight = (w[c.key] != null ? w[c.key] * 100 : 0);
-          const contribution = Math.round(c.value * (w[c.key] || 0));
-          const fc = _fbColor(qualityPct);
-          const hasTip = TOOLTIPS && TOOLTIPS[c.key];
-          return `<div class="breakdown-line"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(c.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span><span class="breakdown-text">${escapeHtml(c.label)}</span><div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${qualityPct}%;background:${fc}"></div></div><span class="contrib">+${contribution}</span></div>`;
+      } else if (breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0) {
+        // v5 breakdown: categories array with { key, label, score, weight, points, parameters[] }
+        const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
+        scoreList.innerHTML = breakdown.categories.map(cat => {
+          const catScore = Math.round(cat.score);
+          const catWeight = (w[cat.key] != null ? w[cat.key] : cat.weight) || 0;
+          const contribution = Math.round(catScore * catWeight);
+          const fc = _fbColor(catScore);
+          const hasTip = TOOLTIPS && TOOLTIPS[cat.key];
+          let paramLines = "";
+          if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
+            paramLines = cat.parameters.map(p => {
+              const pSign = p.points >= 0 ? "+" : "";
+              return `<div class="breakdown-line breakdown-sub"><span class="breakdown-text bd-param">${escapeHtml(p.label)}</span><span class="contrib${p.points < 0 ? " negative" : ""}">${pSign}${Math.round(p.points)}</span></div>`;
+            }).join("");
+          }
+          return `<div class="breakdown-category">` +
+            `<div class="breakdown-line breakdown-cat-header"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(cat.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span>` +
+            `<span class="breakdown-text"><strong>${escapeHtml(cat.label)}</strong></span>` +
+            `<div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${catScore}%;background:${fc}"></div></div>` +
+            `<span class="contrib">+${contribution}</span></div>` +
+            paramLines +
+            `</div>`;
         }).join("");
       } else {
         scoreList.innerHTML = '<div class="breakdown-unavailable">Breakdown not available in this build.</div>';
@@ -2551,12 +2580,14 @@ async function loadWeather(rootEl, state, forceRefresh) {
     
     // Use state location for API mode
     if (state && state.location && state.location.lat && state.location.lon && API_ASTRO_WEATHER_URL) {
+      var bortleVal = (weatherData && typeof weatherData.bortle === "number") ? weatherData.bortle : 5;
       var params = new URLSearchParams({
         lat: String(state.location.lat),
         lon: String(state.location.lon),
         tz: state.location.tz || "Europe/Warsaw",
         hours: "72",
         profile: state.profile || activeProfile || "balanced",
+        bortle: String(bortleVal),
       });
       if (state.location.name) {
         params.append("name", state.location.name);

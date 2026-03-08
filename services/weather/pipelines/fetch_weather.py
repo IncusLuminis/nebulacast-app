@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Fetch weather data from Open-Meteo and 7Timer.
-Uses additive (bonus) scoring engine (v2) when profiles are available; falls back to legacy penalties otherwise.
+Scoring v5: hierarchical category model (Atmosphere / Sky Darkness / Dew Safety / Stability).
+Falls back to legacy penalties when score engine is unavailable.
 """
 
 from __future__ import annotations
@@ -332,6 +333,225 @@ def _build_v2_score_breakdown(hour: dict, gate: dict, wbal: dict, seeing_result:
     items.append({"key": "_total", "_final_score": hour.get("score", 0), "is_info": True})
 
     return items
+
+
+# ── Scoring v5 — Category model ───────────────────────────────────────────────
+
+_RULES_PATH = Path(__file__).resolve().parents[3] / "services/weather/configs/rules.yaml"
+
+_BORTLE_HINTS: Dict[int, str] = {
+    1: "Excellent dark sky", 2: "Typical dark site", 3: "Rural sky",
+    4: "Rural/suburban transition", 5: "Suburban sky", 6: "Bright suburban sky",
+    7: "Suburban/urban transition", 8: "City sky", 9: "Inner-city sky",
+}
+
+_BORTLE_BASE = {1: 100, 2: 95, 3: 90, 4: 80, 5: 70, 6: 55, 7: 40, 8: 25, 9: 10}
+
+# v5 profile weights: (atmosphere, sky_darkness, dew_safety, stability)
+_V5_PROF_W = {
+    "balanced":  (0.35, 0.30, 0.20, 0.15),
+    "visual":    (0.40, 0.25, 0.20, 0.15),
+    "broadband": (0.30, 0.45, 0.15, 0.10),
+    "planetary": (0.55, 0.10, 0.20, 0.15),
+}
+
+# v5: 7Timer index → FWHM arcsec
+_V5_SEEING_FWHM = [(1, 0.7), (2, 0.9), (3, 1.1), (4, 1.4), (5, 1.8), (6, 2.5), (7, 3.5)]
+# v5: FWHM → seeing quality
+_V5_FWHM_Q = [(0.7, 100), (1.0, 90), (1.3, 80), (1.6, 70), (2.0, 60), (2.5, 45), (3.0, 30), (3.5, 15)]
+# v5: dew spread → score
+_V5_DEW_TABLE = [(0, 5), (1, 20), (2, 40), (3, 60), (4, 80), (6, 100)]
+# v5: wind km/h → stability score
+_V5_WIND_STAB = [(0, 100), (5, 100), (10, 85), (15, 70), (20, 50), (30, 30), (50, 10)]
+# v5: humidity % → stability score
+_V5_HUM_STAB  = [(0, 100), (50, 100), (60, 90), (70, 80), (80, 60), (90, 40), (100, 20)]
+
+
+def _load_bortle_class() -> int:
+    """Load bortle_class from rules.yaml. Default: 5."""
+    try:
+        import yaml  # type: ignore
+        with open(_RULES_PATH, encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+        return int(cfg.get("weather", {}).get("bortle_class", 5))
+    except Exception:
+        return 5
+
+
+def compute_atmosphere_score(hour: dict) -> dict:
+    """v5 Category 1 — Atmosphere (clouds + seeing + transparency proxy)."""
+    low  = hour.get("cloud_low",  0) or 0
+    mid  = hour.get("cloud_mid",  0) or 0
+    high = hour.get("cloud_high", 0) or 0
+
+    clouds_q = max(0.0, min(100.0, 100 - 0.6 * low - 0.3 * mid - 0.1 * high))
+
+    # v5 seeing: 7Timer → FWHM → quality
+    fwhm = hour.get("seeing_fwhm_arcsec_est")
+    if fwhm is not None:
+        seeing_q = _piecewise(fwhm, _V5_FWHM_Q)
+    else:
+        idx = hour.get("seeing")
+        if idx is not None:
+            fwhm_est = _piecewise(float(idx), _V5_SEEING_FWHM)
+            seeing_q = _piecewise(fwhm_est, _V5_FWHM_Q)
+        else:
+            seeing_q = 50.0
+
+    # Transparency proxy: deduction from humidity + visibility
+    trans_q = 100.0
+    hum = hour.get("humidity_pct")
+    if hum is not None:
+        if hum > 90:   trans_q -= 25
+        elif hum > 80: trans_q -= 15
+        elif hum > 70: trans_q -= 5
+    vis_m = hour.get("visibility_m")
+    if vis_m is None:
+        vis_km_val = (hour.get("visibility_km") or 0)
+    else:
+        vis_km_val = vis_m / 1000
+    if vis_km_val > 0:
+        if vis_km_val < 5:   trans_q -= 30
+        elif vis_km_val < 10: trans_q -= 15
+        elif vis_km_val < 20: trans_q -= 5
+    trans_q = max(0.0, min(100.0, trans_q))
+
+    score = round(max(0.0, min(100.0, 0.40 * clouds_q + 0.35 * seeing_q + 0.25 * trans_q)))
+    return {
+        "score": score,
+        "parameters": [
+            {"key": "clouds",       "label": f"Clouds ({round(low)}/{round(mid)}/{round(high)}%)", "value": round(clouds_q), "points": round(0.40 * clouds_q)},
+            {"key": "seeing",       "label": "Seeing",        "value": round(seeing_q), "points": round(0.35 * seeing_q)},
+            {"key": "transparency", "label": "Transparency",  "value": round(trans_q),  "points": round(0.25 * trans_q)},
+        ],
+    }
+
+
+def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
+    """v5 Category 2 — Sky Darkness (bortle + twilight + moon)."""
+    bc = max(1, min(9, bortle))
+    base = _BORTLE_BASE.get(bc, 70)
+
+    sun_alt = hour.get("sun_alt_deg")
+
+    # Daytime
+    if sun_alt is not None and sun_alt > 0:
+        return {
+            "score": 0,
+            "parameters": [
+                {"key": "bortle",   "label": f"Bortle {bc}", "value": bc,            "points": 0},
+                {"key": "twilight", "label": "Daylight",      "value": round(sun_alt), "points": -base},
+                {"key": "moon",     "label": "Moon",           "value": 0,             "points": 0},
+            ],
+        }
+
+    # Twilight penalty
+    twilight_penalty = 0
+    if sun_alt is not None:
+        if sun_alt > -6:        twilight_penalty = 70
+        elif sun_alt > -12:     twilight_penalty = 40
+        elif sun_alt > -18:     twilight_penalty = 20
+
+    # Moon penalty
+    moon_penalty = 0
+    moon_alt   = hour.get("moon_alt_deg")
+    moon_illum = hour.get("moon_illum_pct")
+    if moon_alt is not None and moon_alt > 0 and moon_illum is not None:
+        if   moon_alt > 60 and moon_illum > 75: moon_penalty = 45
+        elif moon_alt > 40 and moon_illum > 50: moon_penalty = 30
+        elif moon_alt > 20 and moon_illum > 25: moon_penalty = 15
+        elif moon_alt <= 10:                    moon_penalty = 5
+
+    score = max(0, min(100, round(base - twilight_penalty - moon_penalty)))
+    sun_label = f"Sun {sun_alt:.1f}°" if sun_alt is not None else "Sun unknown"
+    moon_label = (f"Moon {moon_alt:.0f}° / {moon_illum:.0f}%"
+                  if moon_alt is not None and moon_alt > 0 else "Moon below horizon")
+    return {
+        "score": score,
+        "parameters": [
+            {"key": "bortle",   "label": f"Bortle {bc}", "value": bc,                     "points": base},
+            {"key": "twilight", "label": sun_label,        "value": round(sun_alt or -90),  "points": -twilight_penalty},
+            {"key": "moon",     "label": moon_label,        "value": round(moon_illum or 0), "points": -moon_penalty},
+        ],
+    }
+
+
+def compute_dew_safety_score(hour: dict) -> dict:
+    """v5 Category 3 — Dew Safety (dew spread + wind modifier)."""
+    temp = hour.get("temp_c")
+    dew  = hour.get("dewpoint_c")
+    spread = (temp - dew) if temp is not None and dew is not None else None
+
+    spread_score = round(_piecewise(spread, _V5_DEW_TABLE)) if spread is not None else 60
+    wind_kmh = (hour.get("wind_m_s") or 0) * 3.6
+    wind_mod = 5 if wind_kmh > 10 else (-5 if wind_kmh < 2 else 0)
+    score = max(0, min(100, spread_score + wind_mod))
+
+    spread_label = f"Spread {spread:.1f}°C" if spread is not None else "Spread unknown"
+    return {
+        "score": score,
+        "parameters": [
+            {"key": "dew_spread",    "label": spread_label,                          "value": round(spread, 1) if spread else 0, "points": spread_score},
+            {"key": "wind_modifier", "label": f"Wind ({wind_kmh:.0f} km/h)",         "value": round(wind_kmh), "points": wind_mod},
+        ],
+    }
+
+
+def compute_stability_score(hour: dict) -> dict:
+    """v5 Category 4 — Stability (wind + humidity + pressure trend)."""
+    wind_kmh = (hour.get("wind_m_s") or 0) * 3.6
+    wq = _piecewise(wind_kmh, _V5_WIND_STAB)
+    hq = _piecewise(hour.get("humidity_pct") or 65, _V5_HUM_STAB)
+
+    trend = hour.get("pressure_trend_6h_hpa")
+    if trend is None:         pq = 70
+    elif -1 <= trend <= 1:    pq = 100
+    elif 1 < trend <= 3:      pq = 80
+    elif -3 <= trend < -1:    pq = 80
+    elif 3 < trend <= 6:      pq = 60
+    elif -6 <= trend < -3:    pq = 50
+    else:                     pq = 30
+
+    score = max(0, min(100, round(0.45 * wq + 0.35 * hq + 0.20 * pq)))
+    trend_label = (f"Pressure {'+' if trend >= 0 else ''}{trend:.1f} hPa/6h"
+                   if trend is not None else "Pressure unknown")
+    return {
+        "score": score,
+        "parameters": [
+            {"key": "wind",           "label": f"Wind {wind_kmh:.0f} km/h",    "value": round(wq), "points": round(0.45 * wq)},
+            {"key": "humidity",       "label": f"Humidity {hour.get('humidity_pct','?')}%", "value": round(hq), "points": round(0.35 * hq)},
+            {"key": "pressure_trend", "label": trend_label,                     "value": round(pq), "points": round(0.20 * pq)},
+        ],
+    }
+
+
+def _build_v5_score_breakdown(
+    hour: dict, gate: dict,
+    atm: dict, sky: dict, dew: dict, stab: dict,
+    profile: str = "balanced",
+) -> dict:
+    """Build v5 score_breakdown {categories, total, clamped_total} for inspector."""
+    w = _V5_PROF_W.get(profile, _V5_PROF_W["balanced"])
+    wa, ws, wd, wst = w
+
+    if gate.get("status") == "CLOSED":
+        reasons = gate.get("reasons") or ["Unfavorable conditions"]
+        final = max(0, min(20, gate.get("score", 10)))
+        return {
+            "categories": [{"key": "gate_closed", "label": f"Gate CLOSED — {reasons[0]}", "score": 0, "weight": 1.0, "points": 0, "parameters": []}],
+            "total": 0, "clamped_total": final,
+        }
+
+    total = wa * atm["score"] + ws * sky["score"] + wd * dew["score"] + wst * stab["score"]
+    final = hour.get("score", round(max(0, min(100, total))))
+
+    cats = [
+        {"key": "atmosphere",   "label": "Atmosphere",   "score": atm["score"],  "weight": wa,  "points": round(atm["score"]  * wa, 1), "parameters": atm["parameters"]},
+        {"key": "sky_darkness", "label": "Sky Darkness", "score": sky["score"],  "weight": ws,  "points": round(sky["score"]  * ws, 1), "parameters": sky["parameters"]},
+        {"key": "dew_safety",   "label": "Dew Safety",   "score": dew["score"],  "weight": wd,  "points": round(dew["score"]  * wd, 1), "parameters": dew["parameters"]},
+        {"key": "stability",    "label": "Stability",    "score": stab["score"], "weight": wst, "points": round(stab["score"] * wst, 1), "parameters": stab["parameters"]},
+    ]
+    return {"categories": cats, "total": round(total, 1), "clamped_total": final}
 
 
 try:
@@ -885,33 +1105,45 @@ def build_weather_payload(
             hour["seeing_fwhm_arcsec_est"] = fwhm_arcsec
             hour["seeing_fwhm_confidence"] = fwhm_conf
 
-    # ── Scoring v2 (#118) — gate / weather / seeing / solar ──────────────────
-    print(f"[weather] Computing scoring v2 (gate/weather/seeing/solar)...")
+    # ── Scoring v5 — hierarchical category model ─────────────────────────────
+    print(f"[weather] Computing scoring v5 (atmosphere/sky_darkness/dew_safety/stability)...")
+    bortle = _load_bortle_class()
     for hour in hours:
-        gate         = compute_gate(hour)
-        seeing       = compute_seeing_quality(hour)
-        wbal         = compute_weather_quality(hour, "balanced")
-        solar_state  = hour.get("solar_state", "night")
-        cloud_high   = hour.get("cloud_high", 0) or 0
+        gate = compute_gate(hour)
 
-        hour["gate"]    = gate
-        hour["seeing"]  = seeing
-        hour["weather"] = wbal
+        # Compute FWHM estimate from 7Timer index (needed by compute_atmosphere_score)
+        if hour.get("seeing_fwhm_arcsec_est") is None:
+            fwhm_est, _ = estimate_fwhm(hour.get("seeing"))
+            hour["seeing_fwhm_arcsec_est"] = fwhm_est
 
-        ws_bal = wbal["score"]
-        ss     = seeing["score"]
-        hour["score"] = compute_hour_score(gate, ws_bal, ss, "balanced", solar_state, cloud_high)
-        # Overwrite score_breakdown with v2 format for inspector display
-        hour["score_breakdown"] = _build_v2_score_breakdown(
-            hour, gate, wbal, seeing, solar_state, cloud_high, "balanced"
-        )
+        atm  = compute_atmosphere_score(hour)
+        sky  = compute_sky_darkness_score(hour, bortle)
+        dew  = compute_dew_safety_score(hour)
+        stab = compute_stability_score(hour)
 
+        hour["gate"]              = gate
+        hour["atmosphere_score"]  = atm["score"]
+        hour["sky_darkness_score"]= sky["score"]
+        hour["dew_safety_score"]  = dew["score"]
+        hour["stability_score"]   = stab["score"]
+
+        # Final score: balanced profile weighted sum, gate-capped
+        wa, ws, wd, wst = _V5_PROF_W["balanced"]
+        raw = wa * atm["score"] + ws * sky["score"] + wd * dew["score"] + wst * stab["score"]
+        if gate["status"] == "CLOSED":   raw = min(raw, 20)
+        elif gate["status"] == "MARGINAL": raw = min(raw, 69)
+        hour["score"] = max(0, min(100, round(raw)))
+
+        hour["score_breakdown"] = _build_v5_score_breakdown(hour, gate, atm, sky, dew, stab, "balanced")
+
+        # Profile scores for all profiles
         ps = hour.setdefault("profile_scores", {})
-        ps["balanced"] = hour["score"]
-        for pname in ("visual", "photography", "planetary"):
-            w = compute_weather_quality(hour, pname)
-            ps[pname] = compute_hour_score(gate, w["score"], ss, pname, solar_state, cloud_high)
-        ps["broadband"] = ps["photography"]
+        for pname, (pwa, pws, pwd, pwst) in _V5_PROF_W.items():
+            prof_raw = pwa * atm["score"] + pws * sky["score"] + pwd * dew["score"] + pwst * stab["score"]
+            if gate["status"] == "CLOSED":   prof_raw = min(prof_raw, 20)
+            elif gate["status"] == "MARGINAL": prof_raw = min(prof_raw, 69)
+            ps[pname] = max(0, min(100, round(prof_raw)))
+        ps["broadband"] = ps.get("broadband", ps.get("balanced", 0))
     # ──────────────────────────────────────────────────────────────────────────
 
     derived = compute_derived_aggregates(hours)
@@ -940,9 +1172,10 @@ def build_weather_payload(
         "summary": {"best_windows": best_windows[:5]},
         "profiles": ["balanced", "visual", "broadband", "planetary"],
         "profiles_available": ["balanced", "visual", "broadband", "planetary"],
-        "scoring_version": "v2" if default_profile is not None else "v1",
+        "scoring_version": "v5",
         "default_profile": "balanced",
-        "moon_available": False,
+        "bortle": bortle,
+        "moon_available": True,
     }
 
     print(f"[weather] Generated {len(hours)} hourly records, {len(best_windows)} windows")
