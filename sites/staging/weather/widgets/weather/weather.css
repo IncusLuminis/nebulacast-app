@@ -1115,6 +1115,36 @@ a:hover{text-decoration:underline}
   opacity:0.2;
   background:rgba(143,182,255,.2);
 }
+/* Chart parameter chips */
+.hi-chart-chips{
+  display:flex;
+  gap:4px;
+  margin-top:5px;
+}
+.hi-chart-chip{
+  flex:1;
+  padding:5px 0;
+  font-size:14px;
+  line-height:1;
+  text-align:center;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:8px;
+  cursor:pointer;
+  color:inherit;
+  opacity:.45;
+  transition:opacity .15s, background .15s, border-color .15s;
+}
+.hi-chart-chip:hover{
+  opacity:.75;
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.18);
+}
+.hi-chart-chip.active{
+  opacity:1;
+  background:rgba(143,182,255,.10);
+  border-color:rgba(143,182,255,.28);
+}
 .hour-inspector-metric-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);

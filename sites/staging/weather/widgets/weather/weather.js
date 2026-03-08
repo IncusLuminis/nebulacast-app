@@ -3817,6 +3817,72 @@ const HI_FALLBACK_PARAMS = {
   ],
 };
 
+// ── Hour Inspector — mini-chart parameter switcher ───────────────────────────
+const HI_CHART_PARAMS = [
+  { key: 'clouds',   ico: '☁',  label: 'Clouds',
+    get: h => h.cloud_total,         fmt: v => Math.round(v) + '%',
+    color: 'rgba(143,182,255,.45)',   colorSel: 'rgba(143,182,255,.95)' },
+  { key: 'temp',     ico: '🌡', label: 'Temperature',
+    get: h => h.temp_c,              fmt: v => Math.round(v) + '°C',
+    color: 'rgba(255,160,80,.5)',     colorSel: 'rgba(255,160,80,.95)' },
+  { key: 'pressure', ico: '⬆',  label: 'Pressure',
+    get: h => h.pressure_hpa,        fmt: v => Math.round(v) + ' hPa',
+    color: 'rgba(100,210,130,.5)',   colorSel: 'rgba(100,210,130,.95)' },
+  { key: 'dew',      ico: '💧', label: 'Dew spread',
+    get: h => h.dewpoint_spread_c,   fmt: v => (Math.round(v * 10) / 10) + '°',
+    color: 'rgba(80,210,220,.5)',    colorSel: 'rgba(80,210,220,.95)' },
+  { key: 'wind',     ico: '💨', label: 'Wind',
+    get: h => h.wind_m_s,            fmt: v => (Math.round(v * 10) / 10) + ' m/s',
+    color: 'rgba(190,150,255,.5)',   colorSel: 'rgba(190,150,255,.95)' },
+];
+
+function renderHiChart(els, hours, hourIdx, paramKey) {
+  if (!els.chartSlot) return;
+  if (els.sheet) els.sheet.dataset.activeChartParam = paramKey;
+
+  const param    = HI_CHART_PARAMS.find(p => p.key === paramKey) || HI_CHART_PARAMS[0];
+  const ctxStart = Math.max(0, hourIdx - 3);
+  const ctxEnd   = Math.min(hours.length - 1, hourIdx + 3);
+  const slice    = hours.slice(ctxStart, ctxEnd + 1);
+
+  // Collect values for relative normalisation within the window
+  const vals    = slice.map(h => param.get(h));
+  const defined = vals.filter(v => v != null && isFinite(v));
+  let minV = defined.length ? Math.min(...defined) : 0;
+  let maxV = defined.length ? Math.max(...defined) : 1;
+  if (param.key === 'clouds') { minV = 0; maxV = 100; }   // clouds: fixed 0-100%
+  if (maxV - minV < 0.5) { minV -= 0.5; maxV += 0.5; }    // avoid zero-range
+
+  // Chart bars
+  let chartHTML = '<div class="hour-inspector-mini-chart">';
+  slice.forEach((h, i) => {
+    const ctxIdx   = ctxStart + i;
+    const val      = param.get(h);
+    const norm     = (val != null && isFinite(val)) ? (val - minV) / (maxV - minV) : null;
+    const heightPx = norm != null ? Math.max(3, Math.min(60, norm * 60)) : 3;
+    const isSel    = ctxIdx === hourIdx;
+    const isMissing = val == null || !isFinite(val);
+    const bg       = isMissing ? '' : (isSel ? param.colorSel : param.color);
+    const tip      = escapeHtml(formatTime(h.time)) + ': ' + (val != null ? param.fmt(val) : '—');
+    chartHTML += '<div class="hour-inspector-mini-bar'
+      + (isSel ? ' selected' : '') + (isMissing ? ' missing' : '')
+      + '" style="height:' + heightPx + 'px' + (bg ? ';background:' + bg : '') + '"'
+      + ' title="' + tip + '"></div>';
+  });
+  chartHTML += '</div>';
+
+  // Chips (icon buttons) — below the chart
+  let chipsHTML = '<div class="hi-chart-chips">';
+  HI_CHART_PARAMS.forEach(p => {
+    chipsHTML += '<button class="hi-chart-chip' + (p.key === paramKey ? ' active' : '')
+      + '" data-chart-param="' + p.key + '" title="' + p.label + '">'
+      + p.ico + '</button>';
+  });
+  chipsHTML += '</div>';
+
+  els.chartSlot.innerHTML = chartHTML + chipsHTML;
+}
+
 function renderHourInspector(hourIdx) {
   if (!weatherData || !weatherData.hours || hourIdx < 0 || hourIdx >= weatherData.hours.length) return;
 
@@ -3901,25 +3967,10 @@ function renderHourInspector(hourIdx) {
     els.moonLine.textContent = moonParts.join(" · ");
   }
 
-  // ── Cloud mini-chart (±3 h) ──────────────────────────────────────────────────
-  if (els.chartSlot) {
-    const ctxStart = Math.max(0, hourIdx - 3);
-    const ctxEnd   = Math.min(hours.length - 1, hourIdx + 3);
-    let chartHTML  = '<div class="hour-inspector-mini-chart">';
-    hours.slice(ctxStart, ctxEnd + 1).forEach((h, i) => {
-      const ctxIdx    = ctxStart + i;
-      const cloudPct  = h.cloud_total != null ? Math.round(h.cloud_total) : null;
-      const heightPx  = cloudPct != null ? Math.max(3, Math.min(60, cloudPct / 100 * 60)) : 3;
-      const isSel     = ctxIdx === hourIdx;
-      const isMissing = cloudPct == null;
-      chartHTML += '<div class="hour-inspector-mini-bar'
-        + (isSel ? ' selected' : '') + (isMissing ? ' missing' : '')
-        + '" style="height:' + heightPx + 'px" title="'
-        + escapeHtml(formatTime(h.time)) + ': ' + (cloudPct != null ? cloudPct + '%' : '—') + '"></div>';
-    });
-    chartHTML += '</div>';
-    els.chartSlot.innerHTML = chartHTML;
-  }
+  // ── Mini-chart (±3 h) — param switchable via icon chips ──────────────────────
+  if (els.sheet) els.sheet.dataset.currentHourIdx = hourIdx;
+  const activeChartParam = els.sheet?.dataset.activeChartParam || 'clouds';
+  renderHiChart(els, hours, hourIdx, activeChartParam);
 
   // ── Body ────────────────────────────────────────────────────────────────────
   let bodyHTML = "";
@@ -4079,6 +4130,18 @@ function initHourInspector() {
       closeHourInspector();
     }
   });
+
+  // Chart param chip switcher — delegated on the full sheet
+  if (els.sheet) {
+    els.sheet.addEventListener('click', function(e) {
+      const chip = e.target.closest('[data-chart-param]');
+      if (!chip) return;
+      const paramKey = chip.dataset.chartParam;
+      const idx      = parseInt(els.sheet.dataset.currentHourIdx || '0', 10);
+      const hrs      = weatherData?.hours;
+      if (hrs) renderHiChart(els, hrs, idx, paramKey);
+    });
+  }
 
   // Delegated toggle for collapsible sections (v5 category cards + legacy panels)
   if (els.body) {
