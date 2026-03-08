@@ -946,23 +946,23 @@ a:hover{text-decoration:underline}
   z-index:1;
 }
 .hour-inspector-header-left{
-  /* scoring column — 60% width */
+  /* chart + date/conditions column — 60% width */
   flex:3;
   min-width:0;
   display:flex;
   flex-direction:column;
-  gap:2px;
+  gap:6px;
   padding-right:14px;
   margin-right:14px;
   border-right:1px solid var(--line);
 }
 .hour-inspector-header-right{
-  /* chart + date/conditions column — 40% width */
+  /* scoring column — 40% width */
   flex:2;
   min-width:0;
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:2px;
 }
 .hour-inspector-header-toprow{
   display:flex;
