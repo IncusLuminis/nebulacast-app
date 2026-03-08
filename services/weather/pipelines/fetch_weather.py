@@ -605,16 +605,11 @@ def _build_v5_score_breakdown(
     w = _V5_PROF_W.get(profile, _V5_PROF_W["balanced"])
     wa, ws, wd, wst = w
 
-    if gate.get("status") == "CLOSED":
-        reasons = gate.get("reasons") or ["Unfavorable conditions"]
-        final = max(0, min(20, gate.get("score", 10)))
-        return {
-            "categories": [{"key": "gate_closed", "label": f"Gate CLOSED — {reasons[0]}", "score": 0, "weight": 1.0, "points": 0, "parameters": []}],
-            "total": 0, "clamped_total": final,
-        }
-
     total = wa * atm["score"] + ws * sky["score"] + wd * dew["score"] + wst * stab["score"]
-    final = hour.get("score", round(max(0, min(100, total))))
+    if gate.get("status") == "CLOSED":
+        final = max(0, min(20, gate.get("score", 10)))
+    else:
+        final = hour.get("score", round(max(0, min(100, total))))
 
     cats = [
         {"key": "atmosphere",   "label": "Atmosphere",   "score": atm["score"],  "weight": wa,  "points": round(atm["score"]  * wa, 1), "parameters": atm["parameters"]},
