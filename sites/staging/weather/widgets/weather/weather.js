@@ -3918,29 +3918,36 @@ function renderHourInspector(hourIdx) {
     bodyHTML += '<div class="hi-cat-params" id="' + panelId + '" style="display:none">';
     if (params.length > 0) {
       params.forEach(p => {
-        // label already contains the physical value (e.g. "Spread 8.8°C", "Dark night (−22°)")
-        // p.score = 0-100 sub-score for bar (preferred); p.points = weighted contribution shown on right
+        // label carries the absolute physical value (e.g. "Spread 8.8°C", "Dark night (−22°)")
+        // p.score = 0-100 sub-score for bar; p.weight = param weight; p.points = score × weight
         const label    = escapeHtml(p.label || "");
         const pts      = p.points != null ? Math.round(p.points)  : null;
-        // Prefer p.score (normalised 0-100 sub-score) for bar width; fall back to p.points
+        // Bar: prefer p.score (normalised 0-100); fall back to p.points
         const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
         const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
         const paramClr = paramPct != null ? _fbColor(paramPct) : "#555";
+        // Weight column:  ×0.30
+        const wt       = p.weight != null ? p.weight.toFixed(2) : null;
+        const wtStr    = wt != null
+          ? '<span class="hi-param-weight">×' + wt + '</span>'
+          : '<span class="hi-param-weight"></span>';
+        // Points column:  =26  (formula result, not addend)
         const ptsStr   = pts != null
-          ? '<span class="hi-param-pts" style="color:' + paramClr + '">' + (pts >= 0 ? "+" : "") + pts + '</span>'
+          ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+  pts + '</span>'
           : '<span class="hi-param-pts hi-param-pts-na">—</span>';
 
         bodyHTML += '<div class="hi-param-row">'
           // left: label with embedded absolute value
           + '<span class="hi-param-label">' + label + '</span>'
-          // centre: bar showing score%, with % text overlay
+          // centre: bar showing normalised score %, text centred inside
           + '<div class="hi-param-bar-wrap">'
           + (paramPct != null
               ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
                 + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
               : '')
           + '</div>'
-          // right: earned points
+          // weight × and formula result
+          + wtStr
           + ptsStr
           + '</div>';
       });
