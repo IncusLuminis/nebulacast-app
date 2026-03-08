@@ -1039,15 +1039,31 @@ a:hover{text-decoration:underline}
   opacity:0.85;
   line-height:1.4;
 }
-.hi-gate-row{
+/* Gate section — collapsible header containing all category cards */
+.hi-gate-section{
+  margin-bottom:4px;
+}
+.hi-gate-header{
   display:flex;
   align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
+  gap:8px;
+  padding:6px 2px;
+  cursor:pointer;
+  user-select:none;
 }
-.hi-gate-reasons{
+.hi-gate-header:hover{ opacity:.85; }
+.hi-gate-title{
   font-size:11px;
+  font-weight:600;
+  color:var(--muted);
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+.hi-gate-spacer{ flex:1; }
+.hi-gate-reasons{
+  font-size:10px;
   color:#9aa3b2;
+  padding:0 2px 6px;
 }
 .hi-gate-reasons.cau{color:#fbbf24}
 .hi-gate-reasons.neg{color:#f87171}

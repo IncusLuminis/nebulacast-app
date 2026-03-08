@@ -1698,8 +1698,8 @@ function renderTpBestWindow(rootEl, hours) {
 }
 
 const CATS = [
-  { key: "atmosphere_score",   label: "Atmosphere",   ico: "🌫" },
   { key: "sky_darkness_score", label: "Sky Darkness", ico: "🌌" },
+  { key: "atmosphere_score",   label: "Atmosphere",   ico: "🌫" },
   { key: "dew_safety_score",   label: "Dew Safety",   ico: "💧" },
   { key: "stability_score",    label: "Stability",    ico: "🧭" },
 ];
@@ -3849,19 +3849,7 @@ function renderHourInspector(hourIdx) {
   // ── Body ────────────────────────────────────────────────────────────────────
   let bodyHTML = "";
 
-  // Section 1 — Gate
-  bodyHTML += '<div class="hour-inspector-section"><div class="hi-gate-row">';
-  bodyHTML += '<span class="gate-badge gate-' + gateStatus + '">● ' + gateStatus + '</span>';
-  if (gateReasons.length) {
-    const reasonCls = isGateClosed ? ' neg' : isGateCaution ? ' cau' : '';
-    bodyHTML += '<span class="hi-gate-reasons' + reasonCls + '">'
-      + gateReasons.map(escapeHtml).join(' · ') + '</span>';
-  }
-  bodyHTML += '</div>';
-  if (isGateClosed) bodyHTML += '<div class="hi-closed-msg">Observing not recommended.</div>';
-  bodyHTML += '</div>';
-
-  // ── Section 2 — v5 Category Cards ──────────────────────────────────────────
+  // ── Section — Gate header (collapsible) + Category Cards inside ────────────
   const profile = getActiveProfile();
   const bd      = hour.score_breakdown_by_profile?.[profile] || hour.score_breakdown;
   const bdCats  = (bd && Array.isArray(bd.categories)) ? bd.categories : [];
@@ -3873,7 +3861,24 @@ function renderHourInspector(hourIdx) {
   const maxScore  = validScores.length ? Math.max(...validScores.map(c => c.score)) : null;
   const isLimiting = (cat) => minScore != null && cat.score === minScore && (maxScore - minScore) >= 10;
 
-  bodyHTML += '<div class="hour-inspector-section hi-cat-section">';
+  // Gate header row (toggle collapses the whole category list)
+  const gateCls = 'gate-badge gate-' + gateStatus;
+  bodyHTML += '<div class="hour-inspector-section hi-gate-section">';
+  bodyHTML += '<div class="hi-gate-header" data-panel="hi-gate-body">'
+    + '<span class="hi-toggle-btn">▼</span>'
+    + '<span class="hi-gate-title">Observation GATE:</span>'
+    + '<span class="hi-gate-spacer"></span>'
+    + '<span class="' + gateCls + '">' + gateStatus + '</span>'
+    + '</div>';
+  // Gate reasons sub-line (shown when CLOSED or MARGINAL)
+  if (gateReasons.length) {
+    const reasonCls = isGateClosed ? ' neg' : isGateCaution ? ' cau' : '';
+    bodyHTML += '<div class="hi-gate-reasons' + reasonCls + '">'
+      + gateReasons.map(escapeHtml).join(' · ') + '</div>';
+  }
+
+  // Category cards — inside the collapsible gate body
+  bodyHTML += '<div id="hi-gate-body" class="hi-cat-section">';
 
   const profileWeights = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
 
@@ -3965,7 +3970,8 @@ function renderHourInspector(hourIdx) {
       + escapeHtml(lim.label) + '</strong> (' + minScore + ')</div>';
   }
 
-  bodyHTML += '</div>'; // hi-cat-section
+  bodyHTML += '</div>'; // hi-gate-body (category cards)
+  bodyHTML += '</div>'; // hi-gate-section
 
   // Clear legacy FWHM slot if exists
   if (els.fwhmSlot) els.fwhmSlot.innerHTML = '';
@@ -4002,7 +4008,7 @@ function initHourInspector() {
   // Delegated toggle for collapsible sections (v5 category cards + legacy panels)
   if (els.body) {
     els.body.addEventListener('click', function(e) {
-      const title = e.target.closest('.hi-section-title[data-panel], .hi-cat-header[data-panel]');
+      const title = e.target.closest('.hi-section-title[data-panel], .hi-cat-header[data-panel], .hi-gate-header[data-panel]');
       if (!title) return;
       const panel = document.getElementById(title.dataset.panel);
       const btn   = title.querySelector('.hi-toggle-btn');
