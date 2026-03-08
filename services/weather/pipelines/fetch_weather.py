@@ -33,8 +33,9 @@ _PROF_W  = {
 # FWHM → seeing quality breakpoints (linear interp), spec §5.1
 _FWHM_PTS = [(0.5, 100), (1.0, 90), (1.5, 75), (2.0, 60), (2.5, 45), (3.0, 30), (4.0, 15)]
 
-# Solar state → score multiplier, spec §6
-_SOLAR_FACTOR = {"night": 1.00, "twilight": 0.75, "day": 0.20}
+# Solar state → score multiplier.
+# v4: Sun/Moon removed from score — atmosphere-only model.
+_SOLAR_FACTOR = {"night": 1.00, "twilight": 1.00, "day": 1.00}
 
 
 def _load_sun_moon_frames() -> list:
@@ -159,22 +160,13 @@ def compute_weather_quality(hour: dict, profile: str = "balanced") -> dict:
     elif wind <= 10: wind_q = 55
     else:           wind_q = 30
 
-    # Moon brightness factor (spec §4.4) — steeper curve, higher weight
-    # moon_q = 0 at illum≥91%, penalises gibbous/full moon strongly
-    illum = hour.get("moon_illum_pct") or 0
-    alt   = hour.get("moon_alt_deg")
-    if alt is not None and alt > 0:
-        moon_q = max(0.0, 100.0 - 1.1 * illum)
-    else:
-        moon_q = 100.0
-
-    # Base weather score (spec §4.5) + cirrus penalty (spec §4.6)
-    # Moon weight raised 20%→33%; cloud/vis/wind adjusted proportionally
-    weather_base = 0.38 * cloud_q + 0.17 * vis_q + 0.12 * wind_q + 0.33 * moon_q
+    # v4: Moon removed from atmosphere score — it is a context layer only.
+    # Weights redistributed: cloud 0.60, vis 0.25, wind 0.15 (sum = 1.00)
+    weather_base = 0.60 * cloud_q + 0.25 * vis_q + 0.15 * wind_q
     score = round(max(0.0, min(100.0, weather_base - cirrus_penalty)))
 
-    cls = ("EXCELLENT" if score >= 80 else "GOOD" if score >= 60
-           else "FAIR" if score >= 40 else "POOR")
+    cls = ("EXCELLENT" if score >= 75 else "GOOD" if score >= 50
+           else "FAIR" if score >= 30 else "POOR")
     return {
         "score": score, "class": cls,
         "breakdown": {
@@ -183,7 +175,6 @@ def compute_weather_quality(hour: dict, profile: str = "balanced") -> dict:
             "cirrus_penalty": cirrus_penalty,
             "vis_q":          vis_q,
             "wind_q":         wind_q,
-            "moon_q":         round(moon_q, 1),
         },
     }
 
@@ -271,18 +262,17 @@ def _build_v2_score_breakdown(hour: dict, gate: dict, wbal: dict, seeing_result:
             {"key": "_total", "_final_score": score, "is_info": True},
         ]
 
-    wb     = wbal.get("breakdown", {})
+    wb      = wbal.get("breakdown", {})
     cloud_q = wb.get("cloud_q",        0)
     cirrus  = wb.get("cirrus_penalty",  0)
     vis_q   = wb.get("vis_q",          0)
     wind_q  = wb.get("wind_q",         0)
-    moon_q  = wb.get("moon_q",        100)
     eff     = wb.get("effective_cloud", 0)
     ss      = (seeing_result or {}).get("score", 50)
 
-    # Weighted contribution × solar_factor (rounded)
+    # v4: no solar multiplier, no moon — pure atmosphere
     def earn(c: float) -> int:
-        return round(c * sf)
+        return round(c)
 
     items = []
 
@@ -292,7 +282,7 @@ def _build_v2_score_breakdown(hour: dict, gate: dict, wbal: dict, seeing_result:
         "label": f"Clouds: {round(eff)}% (eff.)",
         "raw": round(eff),
         "factor_score": round(cloud_q),
-        "earned": earn(0.38 * cloud_q * ww),
+        "earned": earn(0.60 * cloud_q * ww),
     })
 
     # Cirrus penalty (shown only when non-zero)
@@ -314,7 +304,7 @@ def _build_v2_score_breakdown(hour: dict, gate: dict, wbal: dict, seeing_result:
         "label": f"Visibility: {round(vis_km, 1)} km",
         "raw": round(vis_km, 1),
         "factor_score": round(vis_q),
-        "earned": earn(0.17 * vis_q * ww),
+        "earned": earn(0.25 * vis_q * ww),
     })
 
     # Wind
@@ -324,20 +314,7 @@ def _build_v2_score_breakdown(hour: dict, gate: dict, wbal: dict, seeing_result:
         "label": f"Wind: {round(wind, 1)} m/s",
         "raw": round(wind, 1),
         "factor_score": round(wind_q),
-        "earned": earn(0.12 * wind_q * ww),
-    })
-
-    # Moon
-    illum = hour.get("moon_illum_pct") or 0
-    alt   = hour.get("moon_alt_deg")
-    moon_label = (f"Moon: {round(illum)}% illum."
-                  if (alt is not None and alt > 0) else "Moon: below horizon")
-    items.append({
-        "key": "moon",
-        "label": moon_label,
-        "raw": round(illum),
-        "factor_score": round(moon_q),
-        "earned": earn(0.33 * moon_q * ww),
+        "earned": earn(0.15 * wind_q * ww),
     })
 
     # Seeing
@@ -350,17 +327,6 @@ def _build_v2_score_breakdown(hour: dict, gate: dict, wbal: dict, seeing_result:
         "factor_score": round(ss),
         "earned": earn(ss * sw),
     })
-
-    # Solar factor row — only when not night (informational, earned=0)
-    if solar_state != "night":
-        items.append({
-            "key": "solar_factor",
-            "label": f"Solar factor: {solar_state} (\u00d7{sf})",
-            "raw": solar_state,
-            "factor_score": round(sf * 100),
-            "earned": 0,
-            "is_multiplier": True,
-        })
 
     # Sentinel: actual final score (after caps) for frontend
     items.append({"key": "_total", "_final_score": hour.get("score", 0), "is_info": True})
@@ -549,7 +515,7 @@ def merge_to_hourly(
 
 
 PROFILE_PENALTY_CONFIG: Dict[str, Dict[str, Any]] = {
-    "default": {
+    "balanced": {
         "cloud_coef": 0.9,
         "precip_coef": 80.0,
         "wind_thresh": 4.0,
@@ -588,7 +554,7 @@ def compute_observing_score_for_profile(
     hour_record: Dict[str, Any], thresholds: Dict[str, Any], profile: str
 ) -> tuple[int, Dict[str, Any]]:
     """Compute observing score 0..100 (penalty-based) for a given profile. Returns (score_int, breakdown_dict)."""
-    cfg = PROFILE_PENALTY_CONFIG.get(profile, PROFILE_PENALTY_CONFIG["default"])
+    cfg = PROFILE_PENALTY_CONFIG.get(profile, PROFILE_PENALTY_CONFIG["balanced"])
     raw_start = 100.0
     penalties_dict: Dict[str, Dict[str, Any]] = {}
 
@@ -688,8 +654,8 @@ def compute_observing_score_for_profile(
 
 
 def compute_observing_score(hour_record: Dict[str, Any], thresholds: Dict[str, Any]) -> tuple[int, Dict[str, Any]]:
-    """Default (Balanced) profile: penalty-based score and breakdown."""
-    return compute_observing_score_for_profile(hour_record, thresholds, "default")
+    """Balanced profile: penalty-based score and breakdown."""
+    return compute_observing_score_for_profile(hour_record, thresholds, "balanced")
 
 
 def _clamp01(value: Optional[float]) -> float:
@@ -913,7 +879,7 @@ def build_weather_payload(
                 "planetary": breakdown_p,
             }
             hour["profile_scores"] = {"visual": score_v, "broadband": score_b, "planetary": score_p}
-            hour["score_profile"] = "default"
+            hour["score_profile"] = "balanced"
             hour["score_explain"] = []
             fwhm_arcsec, fwhm_conf = estimate_fwhm(hour.get("seeing"))
             hour["seeing_fwhm_arcsec_est"] = fwhm_arcsec
@@ -972,10 +938,10 @@ def build_weather_payload(
         "hours": hours,
         "derived": derived,
         "summary": {"best_windows": best_windows[:5]},
-        "profiles": ["visual", "broadband", "planetary"],
-        "profiles_available": ["default", "visual", "photography", "planetary"],
+        "profiles": ["balanced", "visual", "broadband", "planetary"],
+        "profiles_available": ["balanced", "visual", "broadband", "planetary"],
         "scoring_version": "v2" if default_profile is not None else "v1",
-        "default_profile": "default" if default_profile is not None else "default",
+        "default_profile": "balanced",
         "moon_available": False,
     }
 
