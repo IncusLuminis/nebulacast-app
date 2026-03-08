@@ -3796,7 +3796,7 @@ function renderHourInspector(hourIdx) {
     }
   }
 
-  // Summary line
+  // Summary line (above chart): date · conditions · temp
   const summaryParts = [];
   const cloud  = formatCloud(hour.cloud_total);
   const wind   = formatWind(hour.wind_m_s);
@@ -3810,17 +3810,24 @@ function renderHourInspector(hourIdx) {
     else summaryParts.push(wind + " m/s");
   }
   if (tempStr) summaryParts.push(tempStr);
-  if (els.summary) els.summary.textContent = summaryParts.join(" · ") || "—";
+  // Prepend date (e.g. "Mar 10")
+  const hourDate = parseISO(hour.time);
+  const dateStr  = hourDate
+    ? hourDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null;
+  const summaryFull = [dateStr].concat(summaryParts).filter(Boolean).join(" · ");
+  if (els.summary) els.summary.textContent = summaryFull || "—";
 
-  // Moon/twilight sub-line (new element)
+  // Moon/twilight sub-line (below score label in scoring column)
   if (els.moonLine) {
     const sunAlt    = hour.sun_alt_deg;
     const moonAlt   = hour.moon_alt_deg  != null ? Math.round(hour.moon_alt_deg)   : null;
     const moonPhase = hour.moon_phase_pct != null ? Math.round(hour.moon_phase_pct) : null;
     const moonParts = [];
-    if (sunAlt != null && sunAlt > 0)        moonParts.push("☀ Daytime");
-    else if (sunAlt != null && sunAlt > -6)  moonParts.push("🌆 Twilight");
-    else                                      moonParts.push("🌙 Night");
+    // True night only below astronomical twilight (−18°); everything above is some form of twilight
+    if (sunAlt != null && sunAlt > 0)          moonParts.push("☀ Daytime");
+    else if (sunAlt != null && sunAlt > -18)   moonParts.push("🌆 Twilight");
+    else                                        moonParts.push("🌙 Night");
     if (moonAlt != null)   moonParts.push("Moon " + moonAlt + "°");
     if (moonPhase != null) moonParts.push(moonPhase + "% phase");
     els.moonLine.textContent = moonParts.join(" · ");
@@ -3870,9 +3877,9 @@ function renderHourInspector(hourIdx) {
     + '<span class="hi-gate-spacer"></span>'
     + '<span class="' + gateCls + '">' + gateStatus + '</span>'
     + '</div>';
-  // Gate reasons sub-line (shown when CLOSED or MARGINAL)
-  if (gateReasons.length) {
-    const reasonCls = isGateClosed ? ' neg' : isGateCaution ? ' cau' : '';
+  // Gate reasons sub-line — only for CLOSED or MARGINAL (OPEN reasons are shown in summary)
+  if (gateReasons.length && (isGateClosed || isGateCaution)) {
+    const reasonCls = isGateClosed ? ' neg' : ' cau';
     bodyHTML += '<div class="hi-gate-reasons' + reasonCls + '">'
       + gateReasons.map(escapeHtml).join(' · ') + '</div>';
   }
