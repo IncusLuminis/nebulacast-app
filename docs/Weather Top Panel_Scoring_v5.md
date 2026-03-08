@@ -1,300 +1,639 @@
-# Top Information Panels — Specification (v1)
+
+Weather Top Panel — Update for Scoring v5
+
 Observer Console
 
-## Purpose
+Version: v5 adaptation
 
-The top section of the page provides a **compact operational overview** of the current observing context.
+⸻
 
-Instead of one large banner, the interface uses **four compact information panels** arranged in a single row.
+Purpose
 
-Each panel answers a different primary question:
+Top panels must reflect the hierarchical scoring model introduced in Scoring v5.
 
-| Panel | Question |
-|------|----------|
-| Time & Location | Where and when am I observing? |
-| Atmosphere Score | How good is the atmosphere right now? |
-| Best Observing Window | When is the best time to observe? |
-| Sky Conditions | What are the current sky and weather conditions? |
+The previous design mixed raw weather parameters and derived indicators.
+In v5 the interface must clearly distinguish between:
 
-This structure increases **information density**, reduces vertical space usage, and makes the UI behave more like an **observing cockpit**.
+Level 1 — Final Observing Score
+Level 2 — Category Scores
+Level 3 — Physical Parameters
 
----
+The top panel must therefore:
+	1.	show Observing Quality (final score)
+	2.	show four category scores
+	3.	show a minimal diagnostic subset of physical parameters
 
-# 1. Layout
+This ensures:
+	•	fast decision making
+	•	transparency of the scoring model
+	•	consistency with the scoring hierarchy
 
-The panels are arranged in a single horizontal row.
+⸻
 
-[ TIME & LOCATION ] [ SCORE ] [ OBSERVING WINDOW ] [ SKY CONDITIONS ]
+Updated Top Panel Layout
 
-Layout rules:
+The row layout remains unchanged.
 
-- 4 panels of equal width
-- fixed row height
-- responsive collapse on smaller screens
+[ TIME & LOCATION ] [ OBSERVING QUALITY ] [ BEST WINDOW ] [ SKY STATUS ]
+
+Panel widths remain equal.
 
 Recommended height:
 
-90–110 px
+100 px
 
-Panels must remain visually compact and not dominate the page.
+⸻
 
----
+Panel 1 — Time & Location
 
-# 2. Panel 1 — Time & Location
+Unchanged.
 
-## Purpose
+Purpose: contextual information.
 
-Provides contextual information about **where and when the forecast applies**.
-
-This panel anchors the entire interface in space and time.
-
-## Content
-
-Required fields:
+Fields:
 
 Location name
 Latitude / Longitude
-Local date
 Local time
+Date
 Bortle class
 
-Example:
-
-Warsaw, Poland
-52.23°N 21.01°E
-
-Local Time
-13:42 — Mar 7
-
-Bortle 6
-
-## Compact version
-
-A condensed layout may be used:
-
-📍 Warsaw
-🕒 13:42
-📅 Mar 7
-🌌 Bortle 6
-
-Optional additional fields:
+Optional:
 
 Elevation
 Timezone
 
-## Interaction
+Example:
 
-Click action:
+Warsaw
+52.23°N 21.01°E
 
-Open location selector
+13:42 — Mar 7
+Bortle 6
 
----
+Interaction:
 
-# 3. Panel 2 — Observational Opportunity Score
+Open location selector.
 
-## Purpose
+⸻
 
-Displays the **current observational opportunity score** using the Scoring v5 model.
+Panel 2 — Observing Quality (Scoring v5)
 
-## Content
+This panel now reflects Level 1 of the scoring hierarchy.
+
+Previously:
+
+Observational Opportunity Score
+
+Now:
+
+Observing Quality
+
+⸻
+
+Content
 
 Required elements:
 
-Score value
-Score category
-Active scoring mode
-Score progress bar
+Final score
+Score label
+Observability Gate state
+Active profile
+Score bar
 
 Example:
 
-18
-POOR
-Balanced
+Observing Quality
 
-Score bar:
+82
+GOOD
 
-██████░░░░░░░░░░
+Gate: OPEN
+Profile: Balanced
 
-Scoring modes available:
+██████████░░░░
+
+
+⸻
+
+Score Labels
+
+Score ranges:
+
+Score	Label
+90–100	Excellent
+75–89	Good
+60–74	Fair
+40–59	Poor
+<40	Very Poor
+
+
+⸻
+
+Gate Indicator
+
+The panel must show gate state.
+
+States:
+
+OPEN
+MARGINAL
+CLOSED
+
+Example:
+
+Gate: MARGINAL
+
+Meaning:
+
+score may be capped even if categories are good.
+
+⸻
+
+Profiles
+
+User may switch scoring profile.
+
+Available:
 
 Balanced
 Visual
-Planetary
 Broadband
+Planetary
 
-These modes adjust the weight of parameters in the scoring model.
+Interaction:
 
-## Interaction
+Click → cycle profile.
 
-Click action:
+⸻
 
-Switch scoring mode
+Panel 3 — Best Observing Window
 
----
+Minor adjustment for v5.
 
-# 4. Panel 3 — Best Observing Window
+Previously window was derived from mixed metrics.
 
-## Purpose
+Now it must be derived from:
 
-Identifies the **best upcoming time interval for observing** based on forecast conditions.
+ObservingQuality(t)
 
-This panel answers the practical question:
+Window selection algorithm:
+	1.	compute score curve
+	2.	find continuous segments where
 
-When should I observe tonight?
+score ≥ 70
+AND gate != CLOSED
 
-## Content
+	3.	choose longest segment.
 
-Required fields:
+Display:
 
-Best observing interval
-Score range during the interval
-Suggested observing type
+Best Window
 
-Example:
+21:15 — 02:40
 
-Best window
-20:00 — 01:00
-
-Score 82–88
+Score 78–88
 Deep Sky
 
-Optional visual timeline:
+Optional mini timeline.
 
-░░░░██████░░░░
+⸻
 
-The filled segment represents the best observing window.
+Panel 4 — Sky Status (Category Scores)
 
-## Computation
+This panel is the main change in v5.
 
-The best window is derived from:
+Instead of listing weather variables directly, it now shows:
 
-score(t)
-cloud coverage
-seeing
-transparency
-moon altitude
+Category Scores (Level 2)
 
-The algorithm searches for **continuous time segments with high atmospheric score**.
+⸻
 
-## Interaction
+Category Indicators
 
-Click action:
+The panel must show four category scores.
 
-Open extended nightly forecast
+Atmosphere
+Sky Darkness
+Dew Risk
+Stability
 
----
+Example layout:
 
-# 5. Panel 4 — Sky Conditions
+Atmosphere   86
+Sky Dark     74
+Dew Safe     91
+Stability    65
 
-## Purpose
+These values come directly from the v5 scoring model
+￼.
 
-Summarizes **current atmospheric and sky conditions** in a compact format.
+⸻
 
-This panel acts as a quick diagnostic view.
+Category Icons
 
-## Content
+Recommended icons:
 
-The panel displays three groups of parameters.
-
-### Atmosphere
-
-☁ Cloud cover
-🔭 Seeing
-🌫 Transparency
-
-Example:
-
-☁ 12%
-🔭 1.1”
-🌫 45 km
-
-### Weather
-
-🌬 Wind speed
-🌡 Temperature
-💧 Humidity
+Atmosphere → 🌫
+Sky Darkness → 🌌
+Dew Risk → 💧
+Stability → 🧭
 
 Example:
 
-🌬 1.8 m/s
-🌡 3°C
-💧 72%
+🌫 86
+🌌 74
+💧 91
+🧭 65
 
-### Sky
 
-🌙 Moon altitude
-Moon phase
+⸻
+
+Diagnostic Parameters (Minimal)
+
+Below category scores a small diagnostic line may show key physical parameters.
+
+Purpose:
+
+quick interpretation.
+
+Recommended parameters:
+
+Clouds
+Seeing
+Wind
+Humidity
+Temperature
+Moon altitude
 
 Example:
 
-🌙 14°
-35% phase
+☁ 12%   🔭 1.1"
+🌬 2 m/s  💧 72%
+🌡 3°C    🌙 14°
 
-## Trend indicator (optional)
 
-Atmospheric trend may be shown:
+⸻
 
-Atmosphere trend
-↑ improving
+Removed Parameters
 
-Trend is calculated using:
+The following elements from the old design should no longer appear as primary indicators:
 
-score(t + 3h) − score(now)
+Removed:
 
-Possible states:
+Transparency
+Visibility distance
+Raw humidity score
+Raw wind score
+Raw cloud score
+
+Reason:
+
+these are now internal inputs to category scores.
+
+They remain visible only in advanced panel / inspector.
+
+⸻
+
+Trend Indicator
+
+Trend is now computed using final score, not atmosphere only.
+
+Formula:
+
+trend = ObservingQuality(t+3h) - ObservingQuality(now)
+
+States:
 
 ↑ improving
 → stable
 ↓ deteriorating
 
-## Interaction
+Displayed in panel 4.
 
-Click action:
+⸻
 
-Open detailed weather panel
+Responsive Behaviour
 
----
+Mobile layout remains:
 
-# 6. Responsive Behavior
+[ TIME ] [ SCORE ]
+[ WINDOW ] [ SKY ]
 
-On smaller screens:
+Category scores must remain visible even in compact mode.
 
-4 panels → 2 rows
+Diagnostic parameters may collapse.
 
-Layout:
+⸻
 
-[ TIME & LOCATION ] [ SCORE ]
-[ OBSERVING WINDOW ] [ SKY CONDITIONS ]
+Interaction Behaviour
 
-If necessary, the least critical elements may be hidden.
+Panel interactions:
 
----
+Panel	Action
+Time & Location	open location selector
+Observing Quality	change scoring profile
+Best Window	open nightly forecast
+Sky Status	open weather breakdown panel
 
-# 7. Design Principles
 
-The top panels must follow these rules:
+⸻
 
-Compact
-Information-dense
-Operational
-Non-intrusive
+Data Dependencies
 
-They should not replicate detailed forecast information already shown in the matrix.
+Top panel requires the following computed values:
 
-Instead, they provide **quick orientation and decision support**.
+ObservingQuality
+GateState
+CategoryScores
+BestWindow
+SelectedProfile
 
----
+CategoryScores include:
 
-# 8. Relationship to Forecast Matrix
+AtmosphereScore
+SkyDarknessScore
+DewSafetyScore
+StabilityScore
 
-The panels summarize information derived from the same forecast dataset used by the matrix.
+⸻
 
-They provide **high-level insights**, while the matrix provides **hour-by-hour analysis**.
+Data Sources
 
-Workflow:
+No new data sources required.
 
-Top panels → overview
-Forecast matrix → detailed analysis
-Overlay graphs → parameter trends
+Inputs remain:
 
-This layered structure enables both **quick interpretation** and **deep analysis**.
+cloud layers
+seeing index
+humidity
+wind
+temperature
+pressure
+sun altitude
+moon altitude
+moon illumination
+bortle class
+
+As defined in Scoring v5
+￼.
+
+⸻
+
+Design Principles
+
+The v5 top panel follows three principles.
+
+1. Hierarchical clarity
+
+UI must reflect scoring structure.
+
+Final score
+→ category scores
+→ raw parameters.
+
+⸻
+
+2. Operational focus
+
+The observer should answer three questions instantly:
+
+Can I observe?
+How good will it be?
+When is the best time?
+
+⸻
+
+3. Parameter transparency
+
+Raw weather data is still accessible but does not dominate the UI.
+
+⸻
+
+Result
+
+Compared with the previous version:
+
+Old Top Panel → weather dashboard
+New Top Panel → observing decision console
+
+The user now sees:
+
+Can I observe?
+How good is it?
+Why?
+
+within a single compact row.
+
+-----
+# WIREFRAME
+
+Ниже wireframe для Weather Top Panel — Scoring v5. Он отражает структуру панели после перехода на иерархию скоринга (Final Score → Category Scores → Diagnostics), описанную в Scoring v5  ￼ и адаптированную для Top Panel  ￼.
+
+Wireframe ориентирован на Observer Console / Cockpit-style UI, чтобы панель работала как оперативный центр наблюдателя.
+
+⸻
+
+Top Panel Wireframe — Scoring v5
+
+Desktop layout
+
+┌────────────────────────┬────────────────────────┬────────────────────────┬────────────────────────┐
+│ TIME & LOCATION        │ OBSERVING QUALITY      │ BEST OBSERVING WINDOW  │ SKY STATUS             │
+│                        │                        │                        │                        │
+│ 📍 Warsaw              │        82              │ Best Window            │ 🌫 Atmosphere     86   │
+│ 52.23°N 21.01°E        │       GOOD             │ 21:15 — 02:40          │ 🌌 Sky Darkness   74   │
+│                        │                        │                        │ 💧 Dew Safety     91   │
+│ 🕒 13:42               │ Gate: OPEN             │ Score 78–88            │ 🧭 Stability      65   │
+│ 📅 Mar 8               │ Profile: Balanced      │ Deep Sky               │                        │
+│ 🌌 Bortle 6            │                        │                        │ ☁ 12%  🔭 1.1"        │
+│                        │ ██████████░░░░         │ ░░██████░░░░           │ 🌬 2 m/s  💧 72%      │
+│                        │                        │                        │ 🌡 3°C    🌙 14°      │
+└────────────────────────┴────────────────────────┴────────────────────────┴────────────────────────┘
+
+Высота панели:
+
+~100 px
+
+Ширина:
+
+4 равных блока
+
+
+⸻
+
+Panel 1 — Time & Location
+
+📍 Warsaw
+52.23°N 21.01°E
+
+🕒 13:42
+📅 Mar 8
+🌌 Bortle 6
+
+Click:
+
+open location selector
+
+
+⸻
+
+Panel 2 — Observing Quality
+
+Центральный элемент интерфейса.
+
+82
+GOOD
+
+Дополнительная информация:
+
+Gate: OPEN
+Profile: Balanced
+
+Progress bar:
+
+██████████░░░░
+
+Interaction:
+
+click → change profile
+
+Profiles:
+
+Balanced
+Visual
+Broadband
+Planetary
+
+
+⸻
+
+Panel 3 — Best Observing Window
+
+Best Window
+
+21:15 — 02:40
+
+Score 78–88
+Deep Sky
+
+Мини-таймлайн:
+
+░░░░██████░░░░
+
+Interaction:
+
+click → open nightly forecast
+
+
+⸻
+
+Panel 4 — Sky Status
+
+Основная диагностическая панель.
+
+Category scores
+
+🌫 Atmosphere      86
+🌌 Sky Darkness    74
+💧 Dew Safety      91
+🧭 Stability       65
+
+Diagnostic parameters
+
+☁ 12%      cloud cover
+🔭 1.1"     seeing
+🌬 2 m/s    wind
+💧 72%      humidity
+🌡 3°C      temperature
+🌙 14°      moon altitude
+
+Trend indicator:
+
+↑ improving
+
+
+⸻
+
+Visual Hierarchy
+
+LEVEL 1
+Observing Quality
+
+LEVEL 2
+Atmosphere
+Sky Darkness
+Dew Safety
+Stability
+
+LEVEL 3
+Weather parameters
+
+Это полностью соответствует структуре Scoring v5  ￼.
+
+⸻
+
+Compact Tablet Layout
+
+┌───────────────────────┬───────────────────────┐
+│ TIME & LOCATION       │ OBSERVING QUALITY     │
+│                       │                       │
+│ Warsaw                │ 82 GOOD               │
+│ 13:42                 │ Gate: OPEN            │
+│ Bortle 6              │ ██████████░░░░        │
+└───────────────────────┴───────────────────────┘
+
+┌───────────────────────┬───────────────────────┐
+│ BEST WINDOW           │ SKY STATUS            │
+│                       │                       │
+│ 21:15 — 02:40         │ 🌫 86  🌌 74           │
+│ Score 78–88           │ 💧 91  🧭 65           │
+│ Deep Sky              │ ☁12% 🔭1.1"           │
+└───────────────────────┴───────────────────────┘
+
+
+⸻
+
+Mobile Layout
+
+[ TIME ]
+Warsaw
+13:42
+
+[ SCORE ]
+82 GOOD
+Gate OPEN
+
+[ WINDOW ]
+21:15 — 02:40
+
+[ SKY ]
+🌫 86
+🌌 74
+💧 91
+🧭 65
+
+
+⸻
+
+UI Principles
+
+Cockpit philosophy
+
+Top panel работает как instrument panel:
+
+Score  → decision
+Window → planning
+Sky    → diagnosis
+
+
+⸻
+
+Information density
+
+Все ключевые ответы пользователь получает за 1 секунду:
+
+Can I observe?
+How good?
+When?
+Why?
