@@ -2276,16 +2276,17 @@ function renderForecastMatrix(rootEl, hours) {
     ["Sun", (hour, i) => {
       const alt = hour.sun_alt_deg;
       const cls = sunAltClass(alt);
-      const prevAlt = i > 0 ? hours[i - 1].sun_alt_deg : null;
-      const isSunrise = prevAlt != null && prevAlt <= 0 && alt != null && alt > 0;
-      const isSunset  = prevAlt != null && prevAlt > 0  && alt != null && alt <= 0;
+      // Look AHEAD: event happened between this hour and the next → icon in current column
+      const nextAlt = i < hours.length - 1 ? hours[i + 1].sun_alt_deg : null;
+      const isSunrise = alt != null && alt <= 0 && nextAlt != null && nextAlt > 0;
+      const isSunset  = alt != null && alt > 0  && nextAlt != null && nextAlt <= 0;
       const stateLabel = isSunrise ? "Sunrise" : isSunset ? "Sunset"
         : cls === "sun-day" ? "Day" : cls === "sun-civil" ? "Civil twilight"
         : cls === "sun-nautical" ? "Nautical twilight" : cls === "sun-astro" ? "Astronomical twilight" : "Night";
       const eventColor = isSunrise ? "#fbbf24" : "#f97316";
       let text;
       if (isSunrise || isSunset) {
-        text = `<span style="display:flex;align-items:center;gap:2px">${isSunrise ? sunriseIcon : sunsetIcon}<span style="font-size:8px;color:${eventColor};font-weight:600;line-height:1">${getPreciseEventTime(isSunrise ? "sunrise" : "sunset", hours[i - 1], hour)}</span></span>`;
+        text = `<span style="display:flex;align-items:center;gap:2px">${isSunrise ? sunriseIcon : sunsetIcon}<span style="font-size:8px;color:${eventColor};font-weight:600;line-height:1">${getPreciseEventTime(isSunrise ? "sunrise" : "sunset", hour, hours[i + 1])}</span></span>`;
       } else if (cls === "sun-day" && alt != null) {
         text = `<span style="display:flex;align-items:center;gap:1px;line-height:1"><span style="font-size:11px">☀</span><span style="font-size:8px;color:#fde68a;font-weight:600">${Math.round(alt)}°</span></span>`;
       } else {
@@ -2298,21 +2299,22 @@ function renderForecastMatrix(rootEl, hours) {
     ["Moon", (hour, i) => {
       const alt = hour.moon_alt_deg;
       const above = alt != null && alt > 0;
-      const prevAlt = i > 0 ? hours[i - 1].moon_alt_deg : null;
-      const isMoonrise = prevAlt != null && prevAlt <= 0 && alt != null && alt > 0;
-      const isMoonset  = prevAlt != null && prevAlt > 0  && alt != null && alt <= 0;
+      // Look AHEAD: event happened between this hour and the next → icon in current column
+      const nextAlt = i < hours.length - 1 ? hours[i + 1].moon_alt_deg : null;
+      const isMoonrise = alt != null && alt <= 0 && nextAlt != null && nextAlt > 0;
+      const isMoonset  = alt != null && alt > 0  && nextAlt != null && nextAlt <= 0;
       const illum = hour.moon_illum_pct != null ? (hour.moon_illum_pct > 1 ? hour.moon_illum_pct : hour.moon_illum_pct * 100) : null;
       const illumStr = illum != null ? Math.round(illum) + "%" : "—";
       const altStr = alt != null ? Math.round(alt) + "°" : "—";
       const phaseName = moonPhaseName(hour.moon_illum_pct, hour.moon_waxing);
       if (isMoonrise) {
-        const timeStr = getPreciseEventTime("moonrise", hours[i - 1], hour);
+        const timeStr = getPreciseEventTime("moonrise", hour, hours[i + 1]);
         return { cls: "moon-event", style: "",
           text: `<span style="display:flex;align-items:center;gap:2px">${moonriseIcon}<span style="font-size:8px;color:#8fb6ff;font-weight:600;line-height:1">${timeStr}</span></span>`,
           title: `Moonrise\nPhase: ${phaseName}\nIllumination: ${illumStr}` };
       }
       if (isMoonset) {
-        const timeStr = getPreciseEventTime("moonset", hours[i - 1], hour);
+        const timeStr = getPreciseEventTime("moonset", hour, hours[i + 1]);
         return { cls: "moon-event", style: "",
           text: `<span style="display:flex;align-items:center;gap:2px">${moonsetIcon}<span style="font-size:8px;color:#8fb6ff;font-weight:600;opacity:0.65;line-height:1">${timeStr}</span></span>`,
           title: `Moonset\nPhase: ${phaseName}\nIllumination: ${illumStr}` };
