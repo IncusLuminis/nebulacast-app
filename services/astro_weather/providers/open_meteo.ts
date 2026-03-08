@@ -13,6 +13,10 @@ export interface OpenMeteoHourly {
   winddirection_10m?: (number | null)[];
   visibility?: (number | null)[];
   temperature_2m?: (number | null)[];
+  relativehumidity_2m?: (number | null)[];
+  dewpoint_2m?: (number | null)[];
+  rain?: (number | null)[];
+  snowfall?: (number | null)[];
 }
 
 export interface OpenMeteoResponse {
@@ -47,6 +51,10 @@ export async function fetchOpenMeteo(
       "winddirection_10m",
       "visibility",
       "temperature_2m",
+      "relativehumidity_2m",
+      "dewpoint_2m",
+      "rain",
+      "snowfall",
     ].join(","),
     timezone: tz,
     forecast_days: String(forecastDays),

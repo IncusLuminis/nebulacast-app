@@ -27,6 +27,10 @@ export function mergeHourlyData(
   const windDir = hourly.winddirection_10m || [];
   const visibility = hourly.visibility || [];
   const temp = hourly.temperature_2m || [];
+  const humidity = hourly.relativehumidity_2m || [];
+  const dewpoint = hourly.dewpoint_2m || [];
+  const rain = hourly.rain || [];
+  const snowfall = hourly.snowfall || [];
 
   // Build 7Timer timepoint map
   const stMap = new Map<number, { seeing: number | null; transparency: number | null }>();
@@ -75,8 +79,13 @@ export function mergeHourlyData(
         wind_dir_deg: windDir[i] ?? null,
         temp_c: temp[i] ?? null,
         visibility_m: visibility[i] ?? null,
+        humidity_pct: humidity[i] ?? null,
+        dewpoint_c: dewpoint[i] ?? null,
+        rain_mm: rain[i] ?? null,
+        snowfall_mm: snowfall[i] ?? null,
         seeing: stPoint.seeing,
         transparency: stPoint.transparency,
+        gate: "OPEN", // Will be computed in scoring
         score: 0, // Will be computed later
         score_breakdown: {
           components: [],

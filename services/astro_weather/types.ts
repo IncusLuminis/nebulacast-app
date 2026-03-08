@@ -7,6 +7,8 @@ export interface Location {
   tz: string;
 }
 
+export type ObservabilityGate = "OPEN" | "MARGINAL" | "CLOSED";
+
 export interface HourRecord {
   time: string; // ISO string in location tz
   cloud_total: number | null;
@@ -20,8 +22,13 @@ export interface HourRecord {
   wind_dir_deg: number | null;
   temp_c: number | null;
   visibility_m: number | null;
+  humidity_pct: number | null;
+  dewpoint_c: number | null;
+  rain_mm: number | null;
+  snowfall_mm: number | null;
   seeing: number | null;
   transparency: number | null;
+  gate: ObservabilityGate;
   score: number;
   score_breakdown: ScoreBreakdown;
 }
@@ -56,15 +63,14 @@ export interface AstroWeatherResponse {
   derived: DerivedMetrics;
 }
 
-export type Profile = "default" | "visual" | "broadband" | "planetary";
+export type Profile = "balanced" | "visual" | "broadband" | "planetary";
 
 export interface ProfileWeights {
   clouds: number;
-  wind: number;
   seeing: number;
   transparency: number;
-  visibility: number;
+  wind: number;
+  humidity: number;
   pressure_trend: number;
-  precip_risk: number;
-  temp: number;
+  thermal: number;
 }

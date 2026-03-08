@@ -11,7 +11,7 @@ interface Env {
   // Cloudflare Pages Functions environment
 }
 
-const VALID_PROFILES: Profile[] = ["default", "visual", "broadband", "planetary"];
+const VALID_PROFILES: Profile[] = ["balanced", "visual", "broadband", "planetary"];
 const HOURS_MIN = 1;
 const HOURS_MAX = 168;
 
@@ -29,7 +29,7 @@ function parseQueryParams(url: URL): {
   const tz = typeof tzRaw === "string" && tzRaw.length > 0 ? tzRaw : "Europe/Warsaw";
   const hoursRaw = parseInt(url.searchParams.get("hours") ?? "72", 10);
   const hours = Math.min(Math.max(Number.isFinite(hoursRaw) ? hoursRaw : 72, HOURS_MIN), HOURS_MAX);
-  const profile = (url.searchParams.get("profile") ?? "default") as Profile;
+  const profile = (url.searchParams.get("profile") ?? "balanced") as Profile;
   const name = url.searchParams.get("name") ?? undefined;
 
   if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
@@ -186,9 +186,10 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
         i + 6 < hourRecords.length
           ? (hourRecords[i + 6].pressure_hpa ?? null) - (hour.pressure_hpa ?? 0)
           : null;
-      const { score, breakdown } = computeScore(hour, pressureTrend, profile);
+      const { score, breakdown, gate } = computeScore(hour, pressureTrend, profile);
       hour.score = score;
       hour.score_breakdown = breakdown;
+      hour.gate = gate;
     }
 
     const derived = computeDerived(hourRecords);

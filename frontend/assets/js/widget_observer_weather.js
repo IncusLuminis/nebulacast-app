@@ -25,8 +25,8 @@
   // ── Score badge colour ───────────────────────────────────────────────────
   function scoreColor(score) {
     if (score == null) return '#888';
-    if (score >= 70) return '#5cce8c';
-    if (score >= 45) return '#e0a84a';
+    if (score >= 75) return '#5cce8c';
+    if (score >= 50) return '#e0a84a';
     return '#e05c5c';
   }
 
