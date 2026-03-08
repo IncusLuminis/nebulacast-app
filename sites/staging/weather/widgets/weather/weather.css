@@ -735,85 +735,6 @@ a:hover{text-decoration:underline}
   text-align:center;
 }
 
-/* Compact mini-charts: 3 on row1, 2 on row2 (mobile) */
-.miniCharts{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:10px;
-  margin-top:10px;
-}
-@media(min-width:480px){
-  .miniCharts{
-    grid-template-columns:repeat(5, 1fr);
-  }
-}
-.mini{
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:rgba(255,255,255,.02);
-  padding:10px;
-  min-width:0;
-  overflow:hidden;
-  box-sizing:border-box;
-  cursor:pointer;
-  transition:border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
-}
-.mini:hover{
-  border-color:rgba(143,182,255,.4);
-  box-shadow:0 0 8px rgba(143,182,255,.15);
-  transform:translateY(-1px);
-}
-.mini:active{
-  transform:translateY(0);
-  box-shadow:0 0 4px rgba(143,182,255,.2);
-}
-.mini[data-chart]:focus{
-  outline:2px solid rgba(143,182,255,.5);
-  outline-offset:2px;
-}
-.mini .t{
-  font-size:10px;
-  color:var(--muted);
-  margin-bottom:6px;
-  line-height:1.2;
-}
-.mini .now{
-  font-size:9px;
-  color:var(--muted);
-  margin-top:4px;
-  opacity:0.8;
-}
-.mini .bar{
-  height:18px;
-  border-radius:4px;
-  background:rgba(255,255,255,.02);
-  position:relative;
-  overflow-x:auto;
-  overflow-y:hidden;
-  overflow:auto;
-  display:flex;
-  align-items:flex-end;
-  gap:1px;
-  padding:2px;
-  width:100%;
-  max-width:100%;
-  box-sizing:border-box;
-  scrollbar-width:thin;
-  scrollbar-color:rgba(143,182,255,.3) transparent;
-}
-.mini .bar > * {
-  flex-shrink:0;
-}
-.mini .bar::-webkit-scrollbar{
-  height:4px;
-}
-.mini .bar::-webkit-scrollbar-track{
-  background:transparent;
-}
-.mini .bar::-webkit-scrollbar-thumb{
-  background:rgba(143,182,255,.3);
-  border-radius:2px;
-}
 .sparkline-container{
   display:flex;align-items:flex-end;gap:1px;height:100%;padding:2px;
   width:100%;
@@ -1367,3 +1288,64 @@ a:hover{text-decoration:underline}
 .moon-above{ font-size:14px; }
 .moon-below{ font-size:12px; }
 .moon-event{ display:flex; align-items:center; justify-content:center; }
+
+/* ── Matrix overlay ──────────────────────────────────────────────── */
+.matrix-inner{ position:relative; }
+
+.matrix-label[data-overlay-key]{
+  cursor:pointer;
+  user-select:none;
+}
+.matrix-label[data-overlay-key]:hover .label-text{
+  color:var(--text);
+}
+.matrix-label.overlay-active .label-text{
+  color:var(--link);
+}
+
+/* Eye icon — always in DOM, dimmed when inactive */
+.overlay-eye{
+  margin-left:auto;
+  flex-shrink:0;
+  opacity:0.18;
+  transition:opacity 0.15s, color 0.15s;
+  color:var(--muted);
+}
+.matrix-label[data-overlay-key]:hover .overlay-eye{
+  opacity:0.5;
+}
+.matrix-label.overlay-active .overlay-eye{
+  opacity:1;
+  color:var(--link);
+}
+
+/* Graph-point value tooltip shown on hover when overlay is active */
+.matrix-overlay-tip{
+  position:fixed;
+  pointer-events:none;
+  z-index:1001;
+  display:none;
+  background:rgba(15,17,21,0.93);
+  color:var(--text);
+  font-size:11px;
+  font-weight:400;
+  font-variant-numeric:tabular-nums;
+  line-height:1.6;
+  padding:3px 8px;
+  border-radius:5px;
+  border:1px solid rgba(255,255,255,0.13);
+  white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* Vertical time cursor: position:fixed, follows mouse X */
+.matrix-cursor-line{
+  position:fixed;
+  top:0;
+  width:1px;
+  height:100vh;
+  background:rgba(255,255,255,0.18);
+  pointer-events:none;
+  z-index:1000;
+  display:none;
+}

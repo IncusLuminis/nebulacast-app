@@ -1145,6 +1145,7 @@ function formatBreakdownRawForV2(key, raw) {
 // Step 4: Render hourly list with mode support
 let currentMode = "today";
 let hourlyMode = "observing"; // "observing" | "weather"
+let matrixOverlayParams = new Set(["sun", "moon"]); // active overlay keys (multi)
 
 // Helper: FWHM seeing indicator for observing mode cards
 function seingIndicator(hour) {
@@ -1795,6 +1796,171 @@ function matrixRowCells(hours, nowIdx, getCellData) {
   }).join("");
 }
 
+// Format a raw overlay value for the hover tooltip
+function formatOverlayValue(key, v) {
+  if (v == null || isNaN(v)) return "—";
+  const n = Number(v);
+  switch (key) {
+    case "sun":
+    case "moon":     return Math.round(n) + "°";
+    case "score":    return Math.round(n) + " pts";
+    case "clouds":   return Math.round(n) + "%";
+    case "seeing":   return n.toFixed(1) + "\u2033";
+    case "trans":    return String(Math.round(n));
+    case "wind":     return n.toFixed(1) + " m/s";
+    case "temp":     return Math.round(n) + "\u00b0C";
+    case "humidity": return Math.round(n) + "%";
+    case "pressure": return Math.round(n) + " hPa";
+    default:         return String(Math.round(n));
+  }
+}
+
+// ── Matrix overlay configuration ────────────────────────────────────────────
+// Each entry: label, getValue(hour)→number|null, min/max (null=auto), invert (lower=better=top), color
+const MATRIX_OVERLAY_CONFIGS = {
+  sun:      { label: "Sun",      getValue: h => h.sun_alt_deg,                                                                                                                          min: -18,  max: 90,   invert: false, color: "#fdd835" },
+  moon:     { label: "Moon",     getValue: h => h.moon_alt_deg,                                                                                                                         min: -10,  max: 90,   invert: false, color: "#e0e0e0" },
+  score:    { label: "Score",    getValue: h => getHourScore(h),                                                                                                                        min: 0,    max: 100,  invert: false, color: "#66bb6a" },
+  clouds:   { label: "Clouds",   getValue: h => h.cloud_total,                                                                                                                          min: 0,    max: 100,  invert: true,  color: "#90a4ae" },
+  seeing:   { label: "Seeing",   getValue: h => (h.seeing && h.seeing.fwhm_arcsec_est != null) ? h.seeing.fwhm_arcsec_est : (h.seeing && h.seeing.fwhm_arcsec != null ? h.seeing.fwhm_arcsec : null), min: 0.5, max: 4, invert: true, color: "#ce93d8" },
+  trans:    { label: "Trans.",   getValue: h => h.transparency,                                                                                                                         min: 1,    max: 4,    invert: true,  color: "#4dd0e1" },
+  wind:     { label: "Wind",     getValue: h => h.wind_m_s,                                                                                                                             min: 0,    max: 15,   invert: true,  color: "#ef9a9a" },
+  temp:     { label: "Temp.",    getValue: h => h.temp_c,                                                                                                                               min: null, max: null, invert: false, color: "#ffa726" },
+  humidity: { label: "Humid.",   getValue: h => h.humidity_pct,                                                                                                                         min: 0,    max: 100,  invert: true,  color: "#42a5f5" },
+  pressure: { label: "Pressure", getValue: h => h.pressure_hpa,                                                                                                                        min: null, max: null, invert: false, color: "#ba68c8" },
+};
+
+// ── Matrix overlay functions (multi-layer) ───────────────────────────────────
+
+// Toggle a single overlay layer on/off; redraw all active layers
+function toggleMatrixOverlay(key, hours, wrapEl) {
+  if (matrixOverlayParams.has(key)) {
+    matrixOverlayParams.delete(key);
+  } else {
+    matrixOverlayParams.add(key);
+  }
+  applyMatrixOverlayState(hours, wrapEl);
+}
+
+// Clear all overlay layers (called on Esc)
+function clearAllMatrixOverlays(wrapEl) {
+  matrixOverlayParams.clear();
+  applyMatrixOverlayState([], wrapEl);
+}
+
+// Sync DOM + canvas to current matrixOverlayParams state
+function applyMatrixOverlayState(hours, wrapEl) {
+  const active = matrixOverlayParams;
+
+  // Update eye-icon active class on labels
+  wrapEl.querySelectorAll(".matrix-label[data-overlay-key]").forEach(el => {
+    el.classList.toggle("overlay-active", active.has(el.dataset.overlayKey));
+  });
+
+  const canvas = wrapEl.querySelector("#matrixOverlayCanvas");
+  if (!canvas) return;
+
+  if (active.size === 0) {
+    canvas.style.display = "none";
+    if (wrapEl._matrixTipEl) wrapEl._matrixTipEl.style.display = "none";
+    // Restore native cell tooltips
+    wrapEl.querySelectorAll(".matrix-cell[data-title-saved]").forEach(c => {
+      c.title = c.dataset.titleSaved || "";
+      delete c.dataset.titleSaved;
+    });
+    if (document._matrixOverlayEsc) {
+      document.removeEventListener("keydown", document._matrixOverlayEsc);
+      document._matrixOverlayEsc = null;
+    }
+    return;
+  }
+
+  // Suppress native cell tooltips (idempotent)
+  wrapEl.querySelectorAll(".matrix-cell:not([data-title-saved])").forEach(c => {
+    c.dataset.titleSaved = c.title || "";
+    c.title = "";
+  });
+
+  canvas.style.display = "";
+  const inner = canvas.closest(".matrix-inner");
+  redrawAllMatrixOverlays(canvas, hours, inner ? inner.offsetHeight : 260);
+
+  // Register Esc handler once
+  if (!document._matrixOverlayEsc) {
+    document._matrixOverlayEsc = e => {
+      if (e.key !== "Escape") return;
+      const w = document.querySelector("#forecastMatrix");
+      if (w) clearAllMatrixOverlays(w);
+    };
+    document.addEventListener("keydown", document._matrixOverlayEsc);
+  }
+}
+
+// Redraw all active overlay layers onto the canvas (clears first)
+function redrawAllMatrixOverlays(canvas, hours, totalH) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = hours.length * 84;
+  const H = totalH;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  matrixOverlayParams.forEach(key => drawMatrixOverlayLayer(ctx, key, hours, W, H));
+}
+
+// Draw a single overlay layer onto an already-configured ctx (no clear)
+function drawMatrixOverlayLayer(ctx, key, hours, W, H) {
+  const cfg = MATRIX_OVERLAY_CONFIGS[key];
+  if (!cfg) return;
+
+  const vals = hours.map(h => { const v = cfg.getValue(h); return (v == null || isNaN(v)) ? null : Number(v); });
+
+  let lo = cfg.min, hi = cfg.max;
+  if (lo == null || hi == null) {
+    const nonNull = vals.filter(v => v != null);
+    if (!nonNull.length) return;
+    lo = Math.min(...nonNull);
+    hi = Math.max(...nonNull);
+    const pad = (hi - lo) * 0.1 || 1;
+    lo -= pad; hi += pad;
+  }
+  const range = hi - lo || 1;
+  const cellW = 84;
+  const toY = v => { const norm = (v - lo) / range; return cfg.invert ? norm * H : (1 - norm) * H; };
+
+  const pts = vals.map((v, i) => v != null ? [i * cellW + cellW / 2, toY(v)] : null);
+  const valid = pts.filter(Boolean);
+  if (!valid.length) return;
+
+  // Area fill
+  const baseline = cfg.invert ? 0 : H;
+  ctx.beginPath();
+  let first = true;
+  pts.forEach(p => {
+    if (!p) return;
+    if (first) { ctx.moveTo(p[0], baseline); ctx.lineTo(p[0], p[1]); first = false; }
+    else ctx.lineTo(p[0], p[1]);
+  });
+  ctx.lineTo(valid[valid.length - 1][0], baseline);
+  ctx.closePath();
+  ctx.fillStyle = cfg.color + "33"; // ~20% opacity per layer
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  first = true;
+  pts.forEach(p => {
+    if (!p) return;
+    if (first) { ctx.moveTo(p[0], p[1]); first = false; }
+    else ctx.lineTo(p[0], p[1]);
+  });
+  ctx.strokeStyle = cfg.color;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+}
+
 // Render the full forecast matrix into #forecastMatrix
 function renderForecastMatrix(rootEl, hours) {
   const wrap = (rootEl.querySelector("#poc-weather") || rootEl).querySelector("#forecastMatrix");
@@ -1831,7 +1997,7 @@ function renderForecastMatrix(rootEl, hours) {
     + '<path d="M2.5 6 A5.5 5.5 0 0 0 13.5 6" fill="#8fb6ff" opacity="0.18"/>'
     + '</svg>';
 
-  // Row definitions: [label, getCellData(hour, i) → {cls, style, text, title}]
+  // Row definitions: [label, getCellData(hour, i) → {cls, style, text, title}, overlayKey]
   const rows = [
     // ── Sun ──────────────────────────────────────────
     ["Sun", (hour, i) => {
@@ -1853,7 +2019,7 @@ function renderForecastMatrix(rootEl, hours) {
         text = "";
       }
       return { cls, style: "", text, title: alt != null ? `${stateLabel} (${Math.round(alt)}°)` : stateLabel };
-    }],
+    }, "sun"],
 
     // ── Moon ─────────────────────────────────────────
     ["Moon", (hour, i) => {
@@ -1892,7 +2058,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: moonText,
         title: titleStr
       };
-    }],
+    }, "moon"],
 
     // ── Score ─────────────────────────────────────────
     ["Score", (hour) => {
@@ -1904,7 +2070,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: String(score),
         title: `Score: ${score} (${label})`
       };
-    }],
+    }, "score"],
 
     // ── Clouds ────────────────────────────────────────
     ["Clouds", (hour) => {
@@ -1917,7 +2083,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: cloud + "%",
         title: `Clouds: ${cloud}%\nLow: ${hour.cloud_low != null ? Math.round(hour.cloud_low > 1 ? hour.cloud_low : hour.cloud_low * 100) : "—"}%  Mid: ${hour.cloud_mid != null ? Math.round(hour.cloud_mid > 1 ? hour.cloud_mid : hour.cloud_mid * 100) : "—"}%  High: ${hour.cloud_high != null ? Math.round(hour.cloud_high > 1 ? hour.cloud_high : hour.cloud_high * 100) : "—"}%`
       };
-    }],
+    }, "clouds"],
 
     // ── Seeing ────────────────────────────────────────
     ["Seeing", (hour) => {
@@ -1935,7 +2101,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: fwhm.toFixed(1) + "\u2033",
         title: `Seeing FWHM: ${fwhm.toFixed(2)}\u2033\n${q >= 70 ? "Good" : q >= 45 ? "Fair" : "Poor"}`
       };
-    }],
+    }, "seeing"],
 
     // ── Transparency ──────────────────────────────────
     ["Trans.", (hour) => {
@@ -1960,7 +2126,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: String(Math.round(tn)),
         title: `Transparency: ${label} (${Math.round(tn)})`
       };
-    }],
+    }, "trans"],
 
     // ── Wind ──────────────────────────────────────────
     ["Wind", (hour) => {
@@ -1978,7 +2144,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: wn + "m/s",
         title: `Wind: ${wn} m/s${hour.wind_gust_m_s != null ? "\nGusts: " + Math.round(Number(hour.wind_gust_m_s) * 10) / 10 + " m/s" : ""}`
       };
-    }],
+    }, "wind"],
 
     // ── Temperature ───────────────────────────────────
     ["Temp.", (hour) => {
@@ -1994,7 +2160,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: tn + "\u00b0",
         title: `Temperature: ${tn}\u00b0C${hour.dewpoint_c != null ? "\nDewpoint: " + Math.round(Number(hour.dewpoint_c)) + "\u00b0C" : ""}${hour.feels_like_c != null ? "\nFeels like: " + Math.round(Number(hour.feels_like_c)) + "\u00b0C" : ""}`
       };
-    }],
+    }, "temp"],
 
     // ── Humidity ──────────────────────────────────────
     ["Humid.", (hour) => {
@@ -2011,7 +2177,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: hn + "%",
         title: `Humidity: ${hn}%\n${hn >= 80 ? "Dew risk" : hn >= 60 ? "Caution" : "Safe"}`
       };
-    }],
+    }, "humidity"],
 
     // ── Pressure ──────────────────────────────────────
     ["Pressure", (hour) => {
@@ -2024,7 +2190,7 @@ function renderForecastMatrix(rootEl, hours) {
         text: pn + "",
         title: `Pressure: ${pn} hPa${hour.pressure_trend_6h_hpa != null ? "\n6h trend: " + (Number(hour.pressure_trend_6h_hpa) > 0 ? "+" : "") + Math.round(Number(hour.pressure_trend_6h_hpa) * 10) / 10 + " hPa" : ""}`
       };
-    }],
+    }, "pressure"],
   ];
 
   // Build time-header row
@@ -2034,9 +2200,20 @@ function renderForecastMatrix(rootEl, hours) {
     return `<div class="matrix-cell matrix-time-cell${nowCls}" data-hour-idx="${i}">${timeStr}</div>`;
   }).join("");
 
+  // Clean up any previous cursor / tooltip elements from a previous render
+  const prevCursor = document.querySelector(".matrix-cursor-line");
+  if (prevCursor) prevCursor.remove();
+  const prevTip = document.querySelector(".matrix-overlay-tip");
+  if (prevTip) prevTip.remove();
+
+  // SVG eye icon — always in label DOM; CSS dims it when inactive
+  const eyeSvg = `<svg class="overlay-eye" xmlns="http://www.w3.org/2000/svg" width="11" height="8" viewBox="0 0 11 8" fill="none" aria-hidden="true"><ellipse cx="5.5" cy="4" rx="4.8" ry="3.2" stroke="currentColor" stroke-width="1"/><circle cx="5.5" cy="4" r="1.5" fill="currentColor"/></svg>`;
+
   // Build all row HTML
-  const rowsHTML = rows.map(([label, getCellData]) => {
-    return `<div class="matrix-row"><div class="matrix-label">${escapeHtml(label)}</div><div class="matrix-cells">${matrixRowCells(hours, nowIdx, getCellData)}</div></div>`;
+  const rowsHTML = rows.map(([label, getCellData, overlayKey]) => {
+    const keyAttr = overlayKey ? ` data-overlay-key="${overlayKey}"` : "";
+    const eye = overlayKey ? eyeSvg : "";
+    return `<div class="matrix-row"><div class="matrix-label"${keyAttr}><span class="label-text">${escapeHtml(label)}</span>${eye}</div><div class="matrix-cells">${matrixRowCells(hours, nowIdx, getCellData)}</div></div>`;
   }).join("");
 
   wrap.innerHTML = `
@@ -2048,6 +2225,85 @@ function renderForecastMatrix(rootEl, hours) {
       ${rowsHTML}
     </div>
   `;
+
+  // Append overlay canvas to .matrix-inner
+  const inner = wrap.querySelector(".matrix-inner");
+  if (inner) {
+    inner.style.position = "relative";
+    const overlayCanvas = document.createElement("canvas");
+    overlayCanvas.id = "matrixOverlayCanvas";
+    overlayCanvas.style.cssText = [
+      "position:absolute",
+      "top:0",
+      "left:72px",
+      `width:${hours.length * 84}px`,
+      "height:100%",
+      "pointer-events:none",
+      "z-index:3",
+      "display:none",
+    ].join(";");
+    inner.appendChild(overlayCanvas);
+  }
+
+  // Apply initial overlay state (draws Sun + Moon by default, or whatever is in matrixOverlayParams)
+  // Deferred one frame so the inner element has its final height
+  requestAnimationFrame(() => applyMatrixOverlayState(hours, wrap));
+
+  // Mouse cursor line (position:fixed, follows viewport X while overlay is active)
+  const cursorEl = document.createElement("div");
+  cursorEl.className = "matrix-cursor-line";
+  document.body.appendChild(cursorEl);
+
+  // Hover tooltip showing overlay graph value
+  const tipEl = document.createElement("div");
+  tipEl.className = "matrix-overlay-tip";
+  document.body.appendChild(tipEl);
+  wrap._matrixTipEl = tipEl;
+  wrap._matrixHours = hours;
+
+  // Remove any previously attached handlers (avoid accumulation on re-renders)
+  if (wrap._matrixClickHandler) wrap.removeEventListener("click", wrap._matrixClickHandler);
+  if (wrap._matrixMoveHandler)  wrap.removeEventListener("mousemove", wrap._matrixMoveHandler);
+  if (wrap._matrixLeaveHandler) wrap.removeEventListener("mouseleave", wrap._matrixLeaveHandler);
+
+  wrap._matrixMoveHandler = e => {
+    if (matrixOverlayParams.size === 0) { cursorEl.style.display = "none"; tipEl.style.display = "none"; return; }
+    cursorEl.style.cssText = `display:block;left:${e.clientX}px;`;
+    // Show tooltip with values of all active overlays for the hovered hour
+    const cell = e.target.closest(".matrix-cell[data-hour-idx]");
+    if (cell) {
+      const idx = parseInt(cell.dataset.hourIdx, 10);
+      const h = wrap._matrixHours && wrap._matrixHours[idx];
+      if (h) {
+        const lines = Array.from(matrixOverlayParams).map(key => {
+          const cfg = MATRIX_OVERLAY_CONFIGS[key];
+          const raw = cfg ? cfg.getValue(h) : null;
+          const val = (raw != null && !isNaN(raw)) ? Number(raw) : null;
+          return `<span style="color:${cfg ? cfg.color : "var(--text)"}">${escapeHtml(cfg ? cfg.label : key)}: <b>${escapeHtml(formatOverlayValue(key, val))}</b></span>`;
+        });
+        tipEl.innerHTML = lines.join("<br>");
+        tipEl.style.cssText = `display:block;left:${e.clientX + 14}px;top:${e.clientY - 32}px;`;
+      }
+    } else {
+      tipEl.style.display = "none";
+    }
+  };
+  wrap._matrixLeaveHandler = () => { cursorEl.style.display = "none"; tipEl.style.display = "none"; };
+
+  // Unified click handler: label → toggle overlay, cell → hour inspector
+  wrap._matrixClickHandler = e => {
+    const labelEl = e.target.closest(".matrix-label[data-overlay-key]");
+    if (labelEl) {
+      toggleMatrixOverlay(labelEl.dataset.overlayKey, hours, wrap);
+      return;
+    }
+    const cell = e.target.closest(".matrix-cell[data-hour-idx]");
+    if (cell) openHourInspector(parseInt(cell.dataset.hourIdx, 10));
+  };
+
+  wrap.addEventListener("mousemove", wrap._matrixMoveHandler);
+  wrap.addEventListener("mouseleave", wrap._matrixLeaveHandler);
+  wrap.addEventListener("click", wrap._matrixClickHandler);
 
   // Scroll to now column
   const nowCell = wrap.querySelector(`.matrix-cell[data-hour-idx="${nowIdx}"]`);
@@ -2498,7 +2754,6 @@ async function loadWeather(rootEl, state, forceRefresh) {
     renderNow(rootEl, nowHour);
     renderHourly(rootEl, data.hours);
     if (hourlyMode === "matrix") renderForecastMatrix(rootEl, data.hours);
-    renderMiniCharts(rootEl, data.hours, currentMode, nowHour);
     lastWeatherFetchTime = Date.now();
   } catch (err) {
     console.error("[weather] Weather load failed:", err);
@@ -3621,34 +3876,6 @@ function renderWeatherHTML(rootEl) {
         </div>
       </div>
 
-      <div class="miniCharts" aria-label="mini trends" id="miniChartsContainer">
-        <div class="mini" data-role="mini-score" data-chart="score" aria-label="Open chart: Score" tabindex="0">
-          <div class="t">Score</div>
-          <div class="bar" data-role="spark-score"></div>
-          <div class="now" data-role="now-score">Now —</div>
-        </div>
-        <div class="mini" data-role="mini-cloud" data-chart="cloud" aria-label="Open chart: Cloud" tabindex="0">
-          <div class="t">Clouds</div>
-          <div class="bar" data-role="spark-cloud"></div>
-          <div class="now" data-role="now-cloud">Now —%</div>
-        </div>
-        <div class="mini" data-role="mini-pressure" data-chart="pressure" aria-label="Open chart: Pressure" tabindex="0">
-          <div class="t">Pressure</div>
-          <div class="bar" data-role="spark-pressure"></div>
-          <div class="now" data-role="now-pressure">Now — hPa</div>
-        </div>
-        <div class="mini" data-role="mini-seeing" data-chart="seeing" aria-label="Open chart: Seeing" tabindex="0">
-          <div class="t">Seeing</div>
-          <div class="bar" data-role="spark-seeing"></div>
-          <div class="now" data-role="now-seeing">Now —</div>
-        </div>
-        <div class="mini" data-role="mini-transparency" data-chart="trans" aria-label="Open chart: Transparency" tabindex="0">
-          <div class="t">Trans</div>
-          <div class="bar" data-role="spark-transparency"></div>
-          <div class="now" data-role="now-transparency">Now —</div>
-        </div>
-      </div>
-
       <div class="hourly-header">
         <span class="sectionTitle">Hourly</span>
         <div class="hourly-tabs">
@@ -3679,27 +3906,6 @@ export function mountWeather(rootEl, storeApi) {
   // Render HTML structure
   renderWeatherHTML(rootEl);
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
-  
-  // Set up event handlers for mini charts
-  const miniChartsContainer = weatherCard.querySelector("#miniChartsContainer");
-  if (miniChartsContainer) {
-    miniChartsContainer.addEventListener("click", function(e) {
-      const mini = e.target.closest(".mini[data-chart]");
-      if (!mini) return;
-      const paramKey = mini.dataset.chart;
-      openChartOverlay(paramKey);
-    });
-    
-    // Keyboard support
-    miniChartsContainer.addEventListener("keydown", function(e) {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const mini = e.target.closest(".mini[data-chart]");
-      if (!mini) return;
-      e.preventDefault();
-      const paramKey = mini.dataset.chart;
-      openChartOverlay(paramKey);
-    });
-  }
   
   // Hourly mode tab (Observing / Matrix / Weather) handlers
   hourlyMode = "observing";
@@ -3753,7 +3959,6 @@ export function mountWeather(rootEl, storeApi) {
       renderNow(rootEl, r.hour);
       renderHourly(rootEl, weatherData.hours);
       if (hourlyMode === "matrix") renderForecastMatrix(rootEl, weatherData.hours);
-      renderMiniCharts(rootEl, weatherData.hours, currentMode, r.hour);
       renderBestWindows(rootEl, null, weatherData.hours);
       const chartEls = getChartElements();
       if (currentChartParam && chartEls.overlay && chartEls.overlay.getAttribute("aria-hidden") === "false") {
