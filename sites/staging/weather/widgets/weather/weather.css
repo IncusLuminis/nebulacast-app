@@ -1349,3 +1349,407 @@ a:hover{text-decoration:underline}
   z-index:1000;
   display:none;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Top Panel v2 — 4-panel cockpit layout (issue #125)
+   ═══════════════════════════════════════════════════════════ */
+
+.top-panel-v2{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:10px 0 12px;
+}
+
+.tp-panel{
+  border:1px solid var(--line);
+  background:var(--panel);
+  border-radius:12px;
+  padding:12px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-height:110px;
+}
+
+/* Panel header label */
+.tp-label{
+  font-size:10px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:2px;
+}
+
+/* ── Panel 1: Time & Location ── */
+.tp-location-name{
+  font-size:15px;
+  font-weight:700;
+  color:var(--title);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.tp-coords{
+  font-size:11px;
+  color:var(--muted);
+}
+.tp-time-row{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+}
+.tp-time{
+  font-size:22px;
+  font-weight:800;
+  color:var(--title);
+  font-variant-numeric:tabular-nums;
+}
+.tp-date{
+  font-size:12px;
+  color:var(--muted);
+}
+.tp-time-location .bortle-badge{
+  align-self:flex-start;
+  margin-top:auto;
+  font-size:11px;
+}
+
+/* ── Panel 2: Quality ── */
+.tp-profiles.profile-switcher{
+  flex-direction:row;
+  flex-wrap:wrap;
+  margin-top:0;
+}
+.tp-score-row{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+}
+.tp-score-val{
+  font-size:38px;
+  font-weight:800;
+  color:var(--title);
+  line-height:1;
+}
+.tp-score-rank{
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.tp-gate-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.gate-badge{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.gate-open{background:rgba(72,199,116,.15);color:#48c774;border:1px solid rgba(72,199,116,.3);}
+.gate-marginal{background:rgba(255,183,0,.12);color:#ffb700;border:1px solid rgba(255,183,0,.3);}
+.gate-closed{background:rgba(255,80,80,.15);color:#ff5050;border:1px solid rgba(255,80,80,.3);}
+
+.tp-score-bar{
+  height:6px;
+  border-radius:999px;
+}
+.tp-explain-toggle{
+  align-self:flex-start;
+  margin-top:auto;
+  background:transparent;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:6px;
+  color:var(--muted);
+  font-size:11px;
+  padding:2px 8px;
+  cursor:pointer;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.tp-explain-toggle:hover{color:var(--text);border-color:rgba(255,255,255,.25);}
+
+/* ── Panel 3: Best Window ── */
+.tp-window-range{
+  font-size:18px;
+  font-weight:700;
+  color:var(--title);
+}
+.tp-window-score{
+  font-size:12px;
+  color:var(--muted);
+}
+.tp-window-bar-wrap{
+  position:relative;
+  height:6px;
+  background:rgba(255,255,255,.08);
+  border-radius:999px;
+  margin-top:auto;
+  overflow:hidden;
+}
+.tp-window-bar{
+  height:100%;
+  border-radius:999px;
+  background:var(--good);
+  width:0%;
+  transition:width .4s ease;
+}
+
+/* ── Panel 4: Sky Status ── */
+.tp-trend{
+  font-size:11px;
+  font-weight:700;
+  margin-left:4px;
+}
+.trend-up{color:#48c774;}
+.trend-stable{color:var(--muted);}
+.trend-down{color:#ff5050;}
+
+.tp-categories{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.cat-score-row{
+  display:grid;
+  grid-template-columns:16px 80px 1fr 32px;
+  align-items:center;
+  gap:5px;
+  font-size:11px;
+}
+.cat-ico{ font-size:12px; text-align:center; }
+.cat-label{ color:var(--muted); }
+.cat-bar-wrap{
+  height:5px;
+  background:rgba(255,255,255,.08);
+  border-radius:999px;
+  overflow:hidden;
+}
+.cat-bar-fill{
+  height:100%;
+  border-radius:999px;
+  transition:width .3s ease;
+}
+.cat-val{
+  text-align:right;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+
+.tp-diag-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:auto;
+}
+.tp-diag-row span{
+  font-size:10px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+/* ── Responsive breakpoints ── */
+@media(max-width:900px){
+  .top-panel-v2{ grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:500px){
+  .top-panel-v2{ grid-template-columns:1fr; }
+  .tp-panel{ min-height:unset; }
+}
+
+/* Ensure old .kpi styles don't bleed into new panels */
+.top-panel-v2 .kpi{ display:none; }
+
+/* ═══════════════════════════════════════════════════════════
+   Hour Inspector v5 — Category Cards (issue #143)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Moon/twilight sub-line */
+.hour-inspector-moon-line{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:1px;
+}
+
+/* Score bar in header */
+.hour-inspector-score-bar{
+  height:4px;
+  background:rgba(255,255,255,.08);
+  border-radius:999px;
+  overflow:hidden;
+  margin:4px 0 2px;
+  width:100%;
+}
+.hour-inspector-score-bar-fill{
+  height:100%;
+  border-radius:999px;
+  transition:width .3s ease;
+}
+
+/* Category section container */
+.hi-cat-section{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+/* Individual category card */
+.hi-cat-card{
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+  background:rgba(255,255,255,.02);
+}
+.hi-cat-card.hi-limiting{
+  border-color:#f59e0b;
+}
+
+/* Category header row (clickable) */
+.hi-cat-header{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  cursor:pointer;
+  user-select:none;
+}
+.hi-cat-header:hover{
+  background:rgba(255,255,255,.04);
+}
+.hi-cat-ico{
+  font-size:13px;
+  flex-shrink:0;
+  width:18px;
+  text-align:center;
+}
+.hi-cat-name{
+  font-size:12px;
+  font-weight:600;
+  flex-shrink:0;
+  min-width:82px;
+  color:var(--text);
+}
+.hi-cat-bar-wrap{
+  flex:1;
+  height:5px;
+  background:rgba(255,255,255,.08);
+  border-radius:3px;
+  overflow:hidden;
+}
+.hi-cat-bar-fill{
+  height:100%;
+  border-radius:3px;
+  transition:width .3s ease;
+}
+/* score × weight% = pts formula in category header */
+.hi-cat-formula{
+  display:flex;
+  align-items:baseline;
+  gap:2px;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.hi-cat-score{
+  font-size:13px;
+  font-weight:700;
+  min-width:22px;
+  text-align:right;
+}
+.hi-cat-weight{
+  font-size:10px;
+  color:var(--muted);
+  flex-shrink:0;
+}
+.hi-cat-pts{
+  font-size:13px;
+  font-weight:700;
+  min-width:24px;
+  text-align:right;
+}
+.hi-cat-header .hi-toggle-btn{
+  font-size:10px;
+  color:var(--muted);
+  flex-shrink:0;
+  width:12px;
+  text-align:center;
+}
+
+/* Expanded parameter list */
+.hi-cat-params{
+  padding:2px 10px 8px;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.hi-param-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 0;
+}
+.hi-param-label{
+  font-size:11px;
+  color:var(--muted);
+  flex-shrink:0;
+  width:120px;        /* fixed — all bars identical length */
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.hi-param-bar-wrap{
+  flex:1;
+  position:relative;
+  height:14px;
+  background:rgba(255,255,255,.06);
+  border-radius:4px;
+  overflow:hidden;
+}
+.hi-param-bar-fill{
+  position:absolute;
+  left:0;top:0;
+  height:100%;
+  transition:width .3s ease;
+}
+.hi-param-bar-text{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translateX(-50%) translateY(-50%);  /* centred in bar */
+  font-size:9px;
+  font-weight:700;
+  color:rgba(255,255,255,.85);
+  pointer-events:none;
+  line-height:1;
+  white-space:nowrap;
+}
+/* pts column — fixed width, right-aligned, colour set inline */
+.hi-param-pts{
+  font-size:11px;
+  font-weight:700;
+  width:36px;         /* fixed — mirrors label fixed width rule */
+  text-align:right;
+  flex-shrink:0;
+}
+.hi-param-pts-na{
+  color:var(--muted);
+}
+
+/* Limiting factor banner */
+.hi-limiting-banner{
+  margin-top:4px;
+  padding:5px 10px;
+  border-radius:7px;
+  background:rgba(245,158,11,.10);
+  border:1px solid rgba(245,158,11,.30);
+  font-size:11px;
+  color:#f59e0b;
+}

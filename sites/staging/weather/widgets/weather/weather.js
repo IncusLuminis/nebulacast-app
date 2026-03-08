@@ -99,13 +99,13 @@ function formatScore(score) {
 }
 
 function scoreRank(score) {
-  if (score == null || score === undefined) return "—";
   const n = Number(score);
-  if (Number.isNaN(n)) return "—";
-  if (n >= 75) return "EXCELLENT";
-  if (n >= 50) return "GOOD";
-  if (n >= 30) return "FAIR";
-  return "POOR";
+  if (!Number.isFinite(n)) return "—";
+  if (n >= 90) return "EXCELLENT";
+  if (n >= 75) return "GOOD";
+  if (n >= 60) return "FAIR";
+  if (n >= 40) return "POOR";
+  return "VERY POOR";
 }
 
 function formatCloud(v) {
@@ -912,11 +912,22 @@ function getHourScore(hour) {
     hour.stability_score != null
   ) {
     const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
+    // During daylight, redistribute sky_darkness weight to the other 3 categories
+    // so the score reflects conditions quality without a daylight penalty.
+    const isDaylight = hour.sun_alt_deg != null && hour.sun_alt_deg > 0;
+    let atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
+    if (isDaylight) {
+      const rest = w.atmosphere + w.dew_safety + w.stability;
+      atmW  = w.atmosphere + w.sky_darkness * (w.atmosphere / rest);
+      skyW  = 0;
+      dewW  = w.dew_safety + w.sky_darkness * (w.dew_safety / rest);
+      stabW = w.stability  + w.sky_darkness * (w.stability  / rest);
+    }
     const raw =
-      w.atmosphere    * hour.atmosphere_score   +
-      w.sky_darkness  * hour.sky_darkness_score +
-      w.dew_safety    * hour.dew_safety_score   +
-      w.stability     * hour.stability_score;
+      atmW  * hour.atmosphere_score   +
+      skyW  * hour.sky_darkness_score +
+      dewW  * hour.dew_safety_score   +
+      stabW * hour.stability_score;
     const gate = typeof hour.gate === "string" ? hour.gate : (hour.gate && hour.gate.status ? hour.gate.status : "OPEN");
     let score = raw;
     if (gate === "CLOSED")   score = Math.min(score, 20);
@@ -1410,199 +1421,335 @@ function formatWhyString(nowHour) {
 
 // Step 3: Render "Now" KPI
 function renderNow(rootEl, nowHour) {
-  // Find the weather card inside rootEl
+  const hours = weatherData?.hours || [];
+  renderTpTimeLocation(rootEl, nowHour);
+  renderTpQuality(rootEl, nowHour);
+  renderTpBestWindow(rootEl, hours);
+  renderTpSkyStatus(rootEl, nowHour, hours);
+  renderExplainPanel(rootEl, nowHour, hours);
+}
+
+function renderExplainPanel(rootEl, nowHour, hours) {
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
-  const overallBox = weatherCard.querySelector(".kpi .box.wide");
-  const scoreValEl = overallBox?.querySelector('[data-role="score-val"]');
-  const scoreRankEl = overallBox?.querySelector('[data-role="score-rank"]');
-  const scoreLabelEl = overallBox?.querySelector('[data-role="score-label"]');
-  const scoreBar = overallBox?.querySelector('[data-role="score-bar"]');
+  const { idx: i0 } = findNearestHour(hours);
+  const scoreTitle = weatherCard.querySelector('[data-role="explain-score-title"]');
+  const scoreList = weatherCard.querySelector('[data-role="score-breakdown"]');
+  const totalLine = weatherCard.querySelector('[data-role="breakdown-total"]');
+  const currentDetailsTbody = weatherCard.querySelector('[data-role="current-details-table"] tbody');
+  const warningsList = weatherCard.querySelector('[data-role="warnings-list"]');
+
+  if (!nowHour) return;
+
+  if (scoreTitle) scoreTitle.textContent = "How this score was calculated" + (weatherData?.scoring_version === "v5" ? " (v5)" : weatherData?.scoring_version === "v2" ? " (additive v2)" : weatherData?.scoring_version === "v1" ? " (legacy)" : "");
+  const profile = getActiveProfile();
+  const profileKey = profile === "balanced" ? "balanced" : (profile === "broadband" ? "broadband" : profile);
+  const breakdown = nowHour?.score_breakdown_by_profile?.[profileKey] || nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
+  const isV2Breakdown = Array.isArray(breakdown);
+  const isV5Breakdown = breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0;
+  const hasPenaltyBreakdown = breakdown && typeof breakdown.penalties === "object";
+
+  if (totalLine) {
+    if (isV5Breakdown) {
+      // v5: show weighted total and gate info
+      const finalScore = breakdown.clamped_total ?? getHourScore(nowHour);
+      const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
+      const gateInfo = gate !== "OPEN" ? ` (gate: ${gate})` : "";
+      totalLine.textContent = `Score: ${finalScore}${gateInfo}`;
+      totalLine.style.display = "block";
+    } else if (isV2Breakdown && breakdown.length > 0) {
+      // v2 model: use _final_score sentinel if present (accounts for caps/multipliers)
+      const sentinelItem = breakdown.find(b => b._final_score != null);
+      if (sentinelItem) {
+        totalLine.textContent = "Score: " + sentinelItem._final_score;
+      } else {
+        const sum = breakdown.filter(b => !b.is_info).reduce((s, b) => s + (b.earned || 0), 0);
+        totalLine.textContent = "Score: " + sum;
+      }
+      totalLine.style.display = "block";
+    } else if (hasPenaltyBreakdown) {
+      const breakdownScore = breakdown.score != null ? breakdown.score : formatScore(getHourScore(nowHour));
+      totalLine.innerHTML = "Sum penalties: " + (breakdown.total_penalty ?? 0) + "<br>Score = 100 − " + (breakdown.total_penalty ?? 0) + " = " + breakdownScore;
+      totalLine.style.display = "block";
+    } else {
+      totalLine.textContent = "";
+      totalLine.style.display = "none";
+    }
+  }
+  if (scoreList) {
+    if (isV2Breakdown && breakdown.length > 0) {
+      ensureFbStyles();
+      // Filter out hidden sentinel items; render multiplier rows differently
+      scoreList.innerHTML = breakdown.filter(b => !b.is_info).map(b => {
+        const textPart = (b.label || b.key);
+        const hasTip = (TOOLTIPS && TOOLTIPS[b.key]);
+        const fs2 = b.factor_score != null ? b.factor_score : Math.round(100 * (b.normalized || 0));
+        const fc2 = _fbColor(fs2);
+        if (b.is_multiplier) {
+          // Solar factor row: show ×N multiplier instead of → +X
+          return `<div class="breakdown-line breakdown-multiplier"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(b.key)}" aria-label="Info">(i)</span><span class="breakdown-text">${escapeHtml(textPart)}</span><div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${fs2}%;background:${fc2}"></div></div><span class="contrib contrib-mult">×${b.raw ?? fs2 / 100}</span></div>`;
+        }
+        const contribSign = (b.earned < 0) ? "" : "+";
+        return `<div class="breakdown-line"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(b.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span><span class="breakdown-text">${escapeHtml(textPart)}</span><div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${fs2}%;background:${fc2}"></div></div><span class="contrib${b.earned < 0 ? ' negative' : ''}">${contribSign}${b.earned ?? 0}</span></div>`;
+      }).join("");
+    } else if (hasPenaltyBreakdown && breakdown.penalties) {
+      const order = PENALTY_ORDER.filter(k => breakdown.penalties[k] != null);
+      scoreList.innerHTML = order.map(key => {
+        const p = breakdown.penalties[key];
+        const label = PENALTY_LABELS[key] || key;
+        const valueStr = formatPenaltyValue(key, p.value);
+        const penaltyNum = p.penalty != null ? p.penalty : 0;
+        const penaltyStr = "-" + (Number(penaltyNum) === Math.round(penaltyNum) ? Math.round(penaltyNum) : Number(penaltyNum));
+        const tooltipKey = escapeHtml(key);
+        const hasTip = TOOLTIPS && TOOLTIPS[key];
+        const infoIcon = `<span class="factor-info breakdown-ii" data-tooltip-key="${tooltipKey}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span>`;
+        return `<div class="breakdown-line">${infoIcon}<span class="breakdown-text">${escapeHtml(label)}: ${escapeHtml(valueStr)}</span><span class="contrib negative">→ ${penaltyStr}</span></div>`;
+      }).join("");
+    } else if (breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0) {
+      // v5 breakdown: categories array with { key, label, score, weight, points, parameters[] }
+      const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
+      scoreList.innerHTML = breakdown.categories.map(cat => {
+        const catScore = Math.round(cat.score);
+        const catWeight = (w[cat.key] != null ? w[cat.key] : cat.weight) || 0;
+        const contribution = Math.round(catScore * catWeight);
+        const fc = _fbColor(catScore);
+        const hasTip = TOOLTIPS && TOOLTIPS[cat.key];
+        let paramLines = "";
+        if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
+          paramLines = cat.parameters.map(p => {
+            const pSign = p.points >= 0 ? "+" : "";
+            return `<div class="breakdown-line breakdown-sub"><span class="breakdown-text bd-param">${escapeHtml(p.label)}</span><span class="contrib${p.points < 0 ? " negative" : ""}">${pSign}${Math.round(p.points)}</span></div>`;
+          }).join("");
+        }
+        return `<div class="breakdown-category">` +
+          `<div class="breakdown-line breakdown-cat-header"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(cat.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span>` +
+          `<span class="breakdown-text"><strong>${escapeHtml(cat.label)}</strong></span>` +
+          `<div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${catScore}%;background:${fc}"></div></div>` +
+          `<span class="contrib">+${contribution}</span></div>` +
+          paramLines +
+          `</div>`;
+      }).join("");
+    } else {
+      scoreList.innerHTML = '<div class="breakdown-unavailable">Breakdown not available in this build.</div>';
+    }
+  }
+  if (currentDetailsTbody) {
+    const details = buildCurrentDetails(nowHour, hours, i0);
+    currentDetailsTbody.innerHTML = details.map(d => `<tr${d.sub ? ' class="sub-row"' : ''}><th>${escapeHtml(d.label)}</th><td>${escapeHtml(String(d.value))}</td></tr>`).join("");
+  }
+  if (warningsList) {
+    const headsUpArr = weatherData?.derived?.now?.heads_up;
+    const fallback = buildHeadsUpMessages(hours, i0);
+    const list = Array.isArray(headsUpArr) && headsUpArr.length > 0 ? headsUpArr : fallback.slice(0, 5);
+    warningsList.innerHTML = list.length ? list.map(w => `<li>${escapeHtml(w)}</li>`).join("") : "<li>No major changes expected.</li>";
+  }
+
+  if (!weatherCard._explainToggleBound) {
+    weatherCard._explainToggleBound = true;
+    weatherCard.addEventListener("click", function(e) {
+      const toggleBtn = e.target.closest('[data-role="explain-toggle"]');
+      if (!toggleBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const expanded = toggleBtn.getAttribute("aria-expanded") === "true";
+      const next = !expanded;
+      toggleBtn.setAttribute("aria-expanded", String(next));
+      toggleBtn.textContent = next ? "Details ▼" : "Details ▶";
+      const panel = weatherCard.querySelector('[data-role="explain-panel"]');
+      if (panel) {
+        panel.classList.toggle("expanded", next);
+        panel.setAttribute("aria-hidden", String(!next));
+      }
+    });
+  }
+}
+
+// ── Top Panel v2 renderers (issue #125) ─────────────────────────────────────
+
+function renderTpTimeLocation(rootEl, nowHour) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+
+  // Location name
+  const nameEl = weatherCard.querySelector('[data-role="tp-location-name"]');
+  if (nameEl) {
+    const loc = weatherData?.location;
+    nameEl.textContent = loc?.name || (loc ? `${loc.lat?.toFixed(2)}, ${loc.lon?.toFixed(2)}` : "—");
+  }
+
+  // Coordinates
+  const coordsEl = weatherCard.querySelector('[data-role="tp-coords"]');
+  if (coordsEl) {
+    const loc = weatherData?.location;
+    if (loc?.lat != null && loc?.lon != null) {
+      const latDir = loc.lat >= 0 ? "N" : "S";
+      const lonDir = loc.lon >= 0 ? "E" : "W";
+      coordsEl.textContent = `${Math.abs(loc.lat).toFixed(2)}°${latDir} ${Math.abs(loc.lon).toFixed(2)}°${lonDir}`;
+    } else {
+      coordsEl.textContent = "—";
+    }
+  }
+
+  // Live clock
+  const timeEl = weatherCard.querySelector('[data-role="tp-time"]');
+  const dateEl = weatherCard.querySelector('[data-role="tp-date"]');
+  if (timeEl) {
+    const tz = weatherData?.location?.tz || "UTC";
+    const updateClock = () => {
+      const now = new Date();
+      timeEl.textContent = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz }).format(now);
+      if (dateEl) dateEl.textContent = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: tz }).format(now);
+    };
+    updateClock();
+    if (rootEl._clockTimer) clearInterval(rootEl._clockTimer);
+    rootEl._clockTimer = setInterval(updateClock, 60000);
+  }
+
+  // Bortle badge
+  renderBortleBadge(rootEl);
+}
+
+function renderTpQuality(rootEl, nowHour) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+
+  // Profile switcher (horizontal pills via CSS)
+  renderProfileSwitcher(rootEl);
 
   if (!nowHour) {
+    const scoreValEl = weatherCard.querySelector('[data-role="score-val"]');
+    const scoreRankEl = weatherCard.querySelector('[data-role="score-rank"]');
     if (scoreValEl) scoreValEl.textContent = "—";
     if (scoreRankEl) scoreRankEl.textContent = "—";
-    if (scoreLabelEl) scoreLabelEl.textContent = "No data";
-    if (scoreBar) {
-      const fillEl = scoreBar.querySelector(".score-bar-fill");
-      if (fillEl) {
-        fillEl.className = "score-bar-fill poor";
-        fillEl.style.width = "0%";
-      }
-    }
     return;
   }
 
   const score = formatScore(getHourScore(nowHour));
   const rank = scoreRank(score);
 
+  const scoreValEl = weatherCard.querySelector('[data-role="score-val"]');
+  const scoreRankEl = weatherCard.querySelector('[data-role="score-rank"]');
   if (scoreValEl) scoreValEl.textContent = score;
   if (scoreRankEl) scoreRankEl.textContent = rank;
-  if (scoreLabelEl) scoreLabelEl.textContent = score + " / 100";
 
-  if (overallBox) {
-    const nf = overallBox.querySelector('[data-role="now-factors"]');
-    if (nf) renderNowFactors(nf, nowHour, weatherData?.hours || []);
-
-    if (scoreBar) {
-      let barClass = "poor";
-      if (score >= 75) barClass = "good";
-      else if (score >= 50) barClass = "fair";
-      let fillEl = scoreBar.querySelector(".score-bar-fill");
-      if (!fillEl) {
-        fillEl = document.createElement("div");
-        fillEl.className = "score-bar-fill";
-        scoreBar.appendChild(fillEl);
-      }
-      fillEl.className = "score-bar-fill " + barClass;
-      fillEl.style.width = Math.max(0, Math.min(100, score)) + "%";
-    }
-
-    const hours = weatherData?.hours || [];
-    const { idx: i0 } = findNearestHour(hours);
-    const headsUpEl = overallBox.querySelector('[data-role="heads-up"]');
-    if (headsUpEl) {
-      const headsUpArr = weatherData?.derived?.now?.heads_up;
-      const fallback = buildHeadsUpMessages(hours, i0);
-      const firstLine = (Array.isArray(headsUpArr) && headsUpArr[0]) ? headsUpArr[0] : (fallback[0] || "—");
-      headsUpEl.textContent = "Heads-up: " + firstLine;
-    }
-
-    const explainPanel = overallBox.querySelector('[data-role="explain-panel"]');
-    const scoreTitle = overallBox.querySelector('[data-role="explain-score-title"]');
-    const scoreList = overallBox.querySelector('[data-role="score-breakdown"]');
-    const totalLine = overallBox.querySelector('[data-role="breakdown-total"]');
-    const currentDetailsTbody = overallBox.querySelector('[data-role="current-details-table"] tbody');
-    const warningsList = overallBox.querySelector('[data-role="warnings-list"]');
-    if (scoreTitle) scoreTitle.textContent = "How this score was calculated" + (weatherData?.scoring_version === "v5" ? " (v5)" : weatherData?.scoring_version === "v2" ? " (additive v2)" : weatherData?.scoring_version === "v1" ? " (legacy)" : "");
-    const profile = getActiveProfile();
-    const profileKey = profile === "balanced" ? "balanced" : (profile === "broadband" ? "broadband" : profile);
-    const breakdown = nowHour?.score_breakdown_by_profile?.[profileKey] || nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
-    const isV2Breakdown = Array.isArray(breakdown);
-    const isV5Breakdown = breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0;
-    const explainLines = nowHour?.score_explain;
-    const hasPenaltyBreakdown = breakdown && typeof breakdown.penalties === "object";
-
-    if (totalLine) {
-      if (isV5Breakdown) {
-        // v5: show weighted total and gate info
-        const finalScore = breakdown.clamped_total ?? getHourScore(nowHour);
-        const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
-        const gateInfo = gate !== "OPEN" ? ` (gate: ${gate})` : "";
-        totalLine.textContent = `Score: ${finalScore}${gateInfo}`;
-        totalLine.style.display = "block";
-      } else if (isV2Breakdown && breakdown.length > 0) {
-        // v2 model: use _final_score sentinel if present (accounts for caps/multipliers)
-        const sentinelItem = breakdown.find(b => b._final_score != null);
-        if (sentinelItem) {
-          totalLine.textContent = "Score: " + sentinelItem._final_score;
-        } else {
-          const sum = breakdown.filter(b => !b.is_info).reduce((s, b) => s + (b.earned || 0), 0);
-          totalLine.textContent = "Score: " + sum;
-        }
-        totalLine.style.display = "block";
-      } else if (hasPenaltyBreakdown) {
-        const breakdownScore = breakdown.score != null ? breakdown.score : formatScore(getHourScore(nowHour));
-        totalLine.innerHTML = "Sum penalties: " + (breakdown.total_penalty ?? 0) + "<br>Score = 100 − " + (breakdown.total_penalty ?? 0) + " = " + breakdownScore;
-        totalLine.style.display = "block";
-      } else {
-        totalLine.textContent = "";
-        totalLine.style.display = "none";
-      }
-    }
-    if (scoreList) {
-      if (isV2Breakdown && breakdown.length > 0) {
-        ensureFbStyles();
-        // Filter out hidden sentinel items; render multiplier rows differently
-        scoreList.innerHTML = breakdown.filter(b => !b.is_info).map(b => {
-          const textPart = (b.label || b.key);
-          const hasTip = (TOOLTIPS && TOOLTIPS[b.key]);
-          const fs2 = b.factor_score != null ? b.factor_score : Math.round(100 * (b.normalized || 0));
-          const fc2 = _fbColor(fs2);
-          if (b.is_multiplier) {
-            // Solar factor row: show ×N multiplier instead of → +X
-            return `<div class="breakdown-line breakdown-multiplier"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(b.key)}" aria-label="Info">(i)</span><span class="breakdown-text">${escapeHtml(textPart)}</span><div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${fs2}%;background:${fc2}"></div></div><span class="contrib contrib-mult">×${b.raw ?? fs2 / 100}</span></div>`;
-          }
-          const contribSign = (b.earned < 0) ? "" : "+";
-          return `<div class="breakdown-line"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(b.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span><span class="breakdown-text">${escapeHtml(textPart)}</span><div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${fs2}%;background:${fc2}"></div></div><span class="contrib${b.earned < 0 ? ' negative' : ''}">${contribSign}${b.earned ?? 0}</span></div>`;
-        }).join("");
-      } else if (hasPenaltyBreakdown && breakdown.penalties) {
-        const order = PENALTY_ORDER.filter(k => breakdown.penalties[k] != null);
-        scoreList.innerHTML = order.map(key => {
-          const p = breakdown.penalties[key];
-          const label = PENALTY_LABELS[key] || key;
-          const valueStr = formatPenaltyValue(key, p.value);
-          const penaltyNum = p.penalty != null ? p.penalty : 0;
-          const penaltyStr = "-" + (Number(penaltyNum) === Math.round(penaltyNum) ? Math.round(penaltyNum) : Number(penaltyNum));
-          const tooltipKey = escapeHtml(key);
-          const hasTip = TOOLTIPS && TOOLTIPS[key];
-          const infoIcon = `<span class="factor-info breakdown-ii" data-tooltip-key="${tooltipKey}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span>`;
-          return `<div class="breakdown-line">${infoIcon}<span class="breakdown-text">${escapeHtml(label)}: ${escapeHtml(valueStr)}</span><span class="contrib negative">→ ${penaltyStr}</span></div>`;
-        }).join("");
-      } else if (breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0) {
-        // v5 breakdown: categories array with { key, label, score, weight, points, parameters[] }
-        const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
-        scoreList.innerHTML = breakdown.categories.map(cat => {
-          const catScore = Math.round(cat.score);
-          const catWeight = (w[cat.key] != null ? w[cat.key] : cat.weight) || 0;
-          const contribution = Math.round(catScore * catWeight);
-          const fc = _fbColor(catScore);
-          const hasTip = TOOLTIPS && TOOLTIPS[cat.key];
-          let paramLines = "";
-          if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
-            paramLines = cat.parameters.map(p => {
-              const pSign = p.points >= 0 ? "+" : "";
-              return `<div class="breakdown-line breakdown-sub"><span class="breakdown-text bd-param">${escapeHtml(p.label)}</span><span class="contrib${p.points < 0 ? " negative" : ""}">${pSign}${Math.round(p.points)}</span></div>`;
-            }).join("");
-          }
-          return `<div class="breakdown-category">` +
-            `<div class="breakdown-line breakdown-cat-header"><span class="factor-info breakdown-ii" data-tooltip-key="${escapeHtml(cat.key)}" aria-label="Info" title="${hasTip ? "More info" : ""}">(i)</span>` +
-            `<span class="breakdown-text"><strong>${escapeHtml(cat.label)}</strong></span>` +
-            `<div class="bd-bar-wrap"><div class="bd-bar-fill" style="width:${catScore}%;background:${fc}"></div></div>` +
-            `<span class="contrib">+${contribution}</span></div>` +
-            paramLines +
-            `</div>`;
-        }).join("");
-      } else {
-        scoreList.innerHTML = '<div class="breakdown-unavailable">Breakdown not available in this build.</div>';
-      }
-    }
-    if (currentDetailsTbody) {
-      const details = buildCurrentDetails(nowHour, hours, i0);
-      currentDetailsTbody.innerHTML = details.map(d => `<tr${d.sub ? ' class="sub-row"' : ''}><th>${escapeHtml(d.label)}</th><td>${escapeHtml(String(d.value))}</td></tr>`).join("");
-    }
-    if (warningsList) {
-      const headsUpArr = weatherData?.derived?.now?.heads_up;
-      const fallback = buildHeadsUpMessages(hours, i0);
-      const list = Array.isArray(headsUpArr) && headsUpArr.length > 0 ? headsUpArr : fallback.slice(0, 5);
-      warningsList.innerHTML = list.length ? list.map(w => `<li>${escapeHtml(w)}</li>`).join("") : "<li>No major changes expected.</li>";
-    }
-
-    if (overallBox && !overallBox._explainToggleBound) {
-      overallBox._explainToggleBound = true;
-      overallBox.addEventListener("click", function (e) {
-        const toggleBtn = e.target.closest("[data-role=\"explain-toggle\"]");
-        if (!toggleBtn) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const expanded = toggleBtn.getAttribute("aria-expanded") === "true";
-        const next = !expanded;
-        toggleBtn.setAttribute("aria-expanded", String(next));
-        toggleBtn.textContent = next ? "▼" : "▶";
-        const panel = overallBox.querySelector('[data-role="explain-panel"]');
-        if (panel) {
-          panel.classList.toggle("expanded", next);
-          panel.setAttribute("aria-hidden", String(!next));
-        }
-      });
-    }
+  // Gate badge
+  const gateBadge = weatherCard.querySelector('[data-role="gate-badge"]');
+  if (gateBadge) {
+    const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
+    gateBadge.textContent = "Gate: " + gate;
+    gateBadge.className = "gate-badge " + (gate === "OPEN" ? "gate-open" : gate === "MARGINAL" ? "gate-marginal" : "gate-closed");
   }
 
-  // Removed Cloud cover and Seeing/Transparency boxes - only chips remain
-
-  // Bortle badge + profile switcher (issue #99)
-  renderBortleBadge(rootEl);
-  renderProfileSwitcher(rootEl);
+  // Score bar
+  const scoreBar = weatherCard.querySelector('[data-role="score-bar"]');
+  if (scoreBar) {
+    let barClass = "poor";
+    if (score >= 75) barClass = "good";
+    else if (score >= 60) barClass = "fair";
+    let fillEl = scoreBar.querySelector(".score-bar-fill");
+    if (!fillEl) {
+      fillEl = document.createElement("div");
+      fillEl.className = "score-bar-fill";
+      scoreBar.appendChild(fillEl);
+    }
+    fillEl.className = "score-bar-fill " + barClass;
+    fillEl.style.width = Math.max(0, Math.min(100, score)) + "%";
+  }
 }
+
+function findBestObservingWindow(hours, fromIdx) {
+  const MAX_LOOK = 48;
+  const MIN_SCORE = 70;
+  const segments = [];
+  let seg = null;
+
+  for (let i = fromIdx; i < Math.min(hours.length, fromIdx + MAX_LOOK); i++) {
+    const h = hours[i];
+    const gate = typeof h.gate === "string" ? h.gate : (h.gate?.status ?? "OPEN");
+    const sc = getHourScore(h);
+    if (gate !== "CLOSED" && sc >= MIN_SCORE) {
+      if (!seg) seg = { start: h.time, end: h.time, scores: [sc] };
+      else { seg.end = h.time; seg.scores.push(sc); }
+    } else {
+      if (seg) { segments.push(seg); seg = null; }
+    }
+  }
+  if (seg) segments.push(seg);
+  if (!segments.length) return null;
+
+  // longest segment wins (ties: highest avg score)
+  segments.sort((a, b) => b.scores.length - a.scores.length ||
+    (b.scores.reduce((s, x) => s + x, 0) / b.scores.length) - (a.scores.reduce((s, x) => s + x, 0) / a.scores.length));
+  const w = segments[0];
+  return { start: w.start, end: w.end, scoreMin: Math.min(...w.scores), scoreMax: Math.max(...w.scores) };
+}
+
+function renderTpBestWindow(rootEl, hours) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+  const { idx } = findNearestHour(hours);
+  const win = findBestObservingWindow(hours, idx);
+  const rangeEl = weatherCard.querySelector('[data-role="tp-window-range"]');
+  const scoreEl = weatherCard.querySelector('[data-role="tp-window-score"]');
+
+  if (!win) {
+    if (rangeEl) rangeEl.textContent = "No clear window";
+    if (scoreEl) scoreEl.textContent = "score < 70 or gate closed";
+    return;
+  }
+  if (rangeEl) rangeEl.textContent = formatTimeShort(win.start) + " – " + formatTimeShort(win.end);
+  if (scoreEl) scoreEl.textContent = "Score " + win.scoreMin + "–" + win.scoreMax;
+}
+
+const CATS = [
+  { key: "atmosphere_score",   label: "Atmosphere",   ico: "🌫" },
+  { key: "sky_darkness_score", label: "Sky Darkness", ico: "🌌" },
+  { key: "dew_safety_score",   label: "Dew Safety",   ico: "💧" },
+  { key: "stability_score",    label: "Stability",    ico: "🧭" },
+];
+
+function renderTpSkyStatus(rootEl, nowHour, hours) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+
+  // Trend: score delta at t+3h
+  const { idx } = findNearestHour(hours);
+  const h3 = hours[idx + 3];
+  const delta = h3 ? Math.round(getHourScore(h3) - getHourScore(nowHour)) : null;
+  const trendEl = weatherCard.querySelector('[data-role="tp-trend"]');
+  if (trendEl) {
+    const cls = delta == null ? "" : delta >= 5 ? "trend-up" : delta <= -5 ? "trend-down" : "trend-stable";
+    const txt = delta == null ? "" : delta >= 5 ? `↑${delta}` : delta <= -5 ? `↓${Math.abs(delta)}` : "→";
+    trendEl.textContent = txt;
+    trendEl.className = "tp-trend " + cls;
+  }
+
+  // Category mini-bars
+  const catsEl = weatherCard.querySelector('[data-role="tp-categories"]');
+  if (catsEl) {
+    catsEl.innerHTML = CATS.map(c => {
+      const sc = nowHour?.[c.key] ?? null;
+      const pct = sc ?? 0;
+      return `<div class="cat-score-row">
+        <span class="cat-ico">${c.ico}</span>
+        <span class="cat-label">${c.label}</span>
+        <div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:${pct}%;background:${_fbColor(pct)}"></div></div>
+        <span class="cat-val">${sc != null ? sc : "—"}</span>
+      </div>`;
+    }).join("");
+  }
+
+  // Diagnostic sub-row
+  const h = nowHour;
+  const diagEl = weatherCard.querySelector('[data-role="tp-diag-row"]');
+  if (diagEl) {
+    diagEl.innerHTML = [
+      `☁ ${h?.cloud_total != null ? Math.round(h.cloud_total) + "%" : "—"}`,
+      `🔭 ${seeingLabel(h?.seeing)}`,
+      `🌬 ${h?.wind_m_s != null ? Math.round(h.wind_m_s) + " m/s" : "—"}`,
+      `💧 ${h?.humidity_pct != null ? Math.round(h.humidity_pct) + "%" : "—"}`,
+      `🌡 ${h?.temp_c != null ? Math.round(h.temp_c) + "°C" : "—"}`,
+      `🌙 ${h?.moon_alt_deg != null ? Math.round(h.moon_alt_deg) + "°" : "—"}`,
+    ].map(s => `<span>${s}</span>`).join("");
+  }
+}
+
+// ── End Top Panel v2 renderers ───────────────────────────────────────────────
 
 // Render Bortle sky-quality badge from weatherData.bortle (issue #99)
 function renderBortleBadge(rootEl) {
@@ -2814,8 +2961,6 @@ async function loadWeather(rootEl, state, forceRefresh) {
     } else if (data.best_windows && data.best_windows.tonight) {
       bestWindowsArr = [data.best_windows.tonight];
     }
-    if (bestWindowsArr) renderBestWindows(rootEl, bestWindowsArr, data.hours);
-    else renderBestWindows(rootEl, null, data.hours);
     renderNow(rootEl, nowHour);
     renderHourly(rootEl, data.hours);
     if (hourlyMode === "matrix") renderForecastMatrix(rootEl, data.hours);
@@ -3340,15 +3485,17 @@ let hourInspectorOpen = false;
 
 function getHourInspectorElements() {
   return {
-    backdrop: document.getElementById("hourInspectorBackdrop"),
-    sheet: document.getElementById("hourInspectorSheet"),
-    time: document.getElementById("hourInspectorTime"),
-    scoreVal: document.getElementById("hourInspectorScoreVal"),
-    scoreLabel: document.getElementById("hourInspectorScoreLabel"),
-    summary: document.getElementById("hourInspectorSummary"),
-    fwhmSlot: document.getElementById("hourInspectorFwhmSlot"),
+    backdrop:  document.getElementById("hourInspectorBackdrop"),
+    sheet:     document.getElementById("hourInspectorSheet"),
+    time:      document.getElementById("hourInspectorTime"),
+    scoreVal:  document.getElementById("hourInspectorScoreVal"),
+    scoreLabel:document.getElementById("hourInspectorScoreLabel"),
+    summary:   document.getElementById("hourInspectorSummary"),
+    moonLine:  document.getElementById("hourInspectorMoonLine"),
+    scoreBar:  document.getElementById("hourInspectorScoreBar"),
+    fwhmSlot:  document.getElementById("hourInspectorFwhmSlot"),
     chartSlot: document.getElementById("hourInspectorChartSlot"),
-    body: document.getElementById("hourInspectorBody")
+    body:      document.getElementById("hourInspectorBody")
   };
 }
 
@@ -3582,188 +3729,239 @@ function drawHiCloudsChart(canvas, contextHours, selectedIdx, contextStart) {
   }
 }
 
+// Static fallback parameters per category (used when score_breakdown absent)
+const HI_FALLBACK_PARAMS = {
+  atmosphere: (h) => [
+    { label: "Cloud Cover",   val: h.cloud_total != null   ? Math.round(h.cloud_total) + "%" : "—",   pts: null },
+    { label: "Transparency",  val: formatTransparency(h.transparency),                                pts: null },
+    { label: "Seeing",        val: seeingLabel(h.seeing_fwhm_arcsec_est || (h.seeing && h.seeing.fwhm_arcsec)), pts: null },
+    { label: "Visibility",    val: formatVisibility(h.visibility_m) != null ? formatVisibility(h.visibility_m) + " km" : "—", pts: null },
+  ],
+  sky_darkness: (h) => [
+    { label: "Sun Altitude",  val: h.sun_alt_deg  != null ? Math.round(h.sun_alt_deg)  + "°" : "—",  pts: null },
+    { label: "Moon Altitude", val: h.moon_alt_deg != null ? Math.round(h.moon_alt_deg) + "°" : "—",  pts: null },
+    { label: "Moon Phase",    val: h.moon_phase_pct != null ? Math.round(h.moon_phase_pct) + "%" : "—", pts: null },
+  ],
+  dew_safety: (h) => [
+    { label: "Humidity",  val: h.humidity_pct  != null ? Math.round(h.humidity_pct)  + "%" : "—",  pts: null },
+    { label: "Temp",      val: h.temp_c        != null ? Math.round(h.temp_c)        + "°C" : "—", pts: null },
+    { label: "Dew Point", val: h.dew_point_c   != null ? Math.round(h.dew_point_c)   + "°C" : "—", pts: null },
+  ],
+  stability: (h) => [
+    { label: "Wind Speed", val: h.wind_m_s      != null ? Math.round(h.wind_m_s)      + " m/s" : "—",  pts: null },
+    { label: "Wind Gust",  val: h.wind_gust_m_s != null ? Math.round(h.wind_gust_m_s) + " m/s" : "—",  pts: null },
+    { label: "Pressure",   val: h.pressure_hpa  != null ? Math.round(h.pressure_hpa)  + " hPa" : "—",  pts: null },
+  ],
+};
+
 function renderHourInspector(hourIdx) {
   if (!weatherData || !weatherData.hours || hourIdx < 0 || hourIdx >= weatherData.hours.length) return;
 
   const els = getHourInspectorElements();
-  if (!els.time || !els.scoreVal || !els.scoreLabel || !els.summary || !els.body) return;
+  if (!els.time || !els.body) return;
   ensureFbStyles();
-  
-  const hour = weatherData.hours[hourIdx];
+
+  const hour  = weatherData.hours[hourIdx];
   const hours = weatherData.hours;
-  
-  // Determine gate status early (drives score visibility and body sections)
-  const gate = hour.gate || { status: "OPEN", score: 100, reasons: [] };
-  const gateStatus = gate.status || "OPEN";
+
+  // ── Gate ────────────────────────────────────────────────────────────────────
+  const gateRaw    = hour.gate || { status: "OPEN", reasons: [] };
+  const gateStatus = typeof gateRaw === "string" ? gateRaw : (gateRaw.status || "OPEN");
+  const gateReasons= Array.isArray(gateRaw.reasons) ? gateRaw.reasons : [];
   const isGateClosed  = gateStatus === "CLOSED";
   const isGateCaution = gateStatus === "MARGINAL";
 
-  // Header: time and score (compact single row)
-  const timeStr = formatTime(hour.time);
-  const score = formatScore(getHourScore(hour));
-  const rank = scoreRank(score);
+  // ── Header: time ────────────────────────────────────────────────────────────
+  els.time.textContent = formatTime(hour.time);
 
-  // Update header structure: time + score + label in one row
-  els.time.textContent = timeStr;
-  if (isGateClosed) {
-    if (els.scoreVal)   { els.scoreVal.textContent = '';   els.scoreVal.style.visibility   = 'hidden'; }
-    if (els.scoreLabel) { els.scoreLabel.textContent = ''; els.scoreLabel.style.visibility = 'hidden'; }
-  } else {
-    if (els.scoreVal)   { els.scoreVal.style.visibility = '';   els.scoreVal.textContent = score;   els.scoreVal.style.color = 'var(--' + scoreClass(score) + ')'; }
-    if (els.scoreLabel) { els.scoreLabel.style.visibility = ''; els.scoreLabel.textContent = rank;  els.scoreLabel.style.color = 'var(--' + scoreClass(score) + ')'; }
+  // Score + rank
+  const score = formatScore(getHourScore(hour));
+  const rank  = scoreRank(score);
+  if (els.scoreVal) {
+    els.scoreVal.textContent   = isGateClosed ? "" : score;
+    els.scoreVal.style.color   = isGateClosed ? "" : _fbColor(score);
+    els.scoreVal.style.visibility = isGateClosed ? "hidden" : "";
   }
-  
-  // Summary line (below header, smaller font)
+  if (els.scoreLabel) {
+    els.scoreLabel.textContent = isGateClosed ? "" : rank;
+    els.scoreLabel.style.visibility = isGateClosed ? "hidden" : "";
+  }
+
+  // Score bar (new element)
+  if (els.scoreBar) {
+    const fill = els.scoreBar.querySelector(".hour-inspector-score-bar-fill");
+    if (fill) {
+      fill.style.width      = isGateClosed ? "0%" : Math.max(0, Math.min(100, score)) + "%";
+      fill.style.background = isGateClosed ? "" : _fbColor(score);
+    }
+  }
+
+  // Summary line
   const summaryParts = [];
-  const cloud = formatCloud(hour.cloud_total);
+  const cloud  = formatCloud(hour.cloud_total);
+  const wind   = formatWind(hour.wind_m_s);
+  const visKm  = formatVisibility(hour.visibility_m);
+  const tempStr = hour.temp_c != null && isValidValue(hour.temp_c) ? Math.round(Number(hour.temp_c)) + "°C" : null;
   if (cloud <= 20) summaryParts.push("Clear sky");
   else if (cloud >= 60) summaryParts.push("Cloudy");
-  
-  const wind = formatWind(hour.wind_m_s);
   if (wind != null) {
-    if (wind <= 4) summaryParts.push("Calm wind");
-    else if (wind >= 8) summaryParts.push("Windy");
-    else summaryParts.push(wind + " m/s wind");
+    if (wind <= 4) summaryParts.push("Calm");
+    else if (wind >= 8) summaryParts.push(wind + " m/s wind");
+    else summaryParts.push(wind + " m/s");
   }
-  
-  const visKm = formatVisibility(hour.visibility_m);
-  if (visKm != null) summaryParts.push("Visibility " + visKm + " km");
-  
-  const tempStr = hour.temp_c != null && isValidValue(hour.temp_c) ? Math.round(Number(hour.temp_c)) + "°C" : null;
   if (tempStr) summaryParts.push(tempStr);
-  
-  els.summary.textContent = summaryParts.length > 0 ? summaryParts.join(" · ") : "—";
-  
-  // Body content
-  let bodyHTML = "";
+  if (els.summary) els.summary.textContent = summaryParts.join(" · ") || "—";
 
-  // Section 1 — Observability Gate (#97)
-  bodyHTML += '<div class="hour-inspector-section"><div class="hi-gate-row">';
-  bodyHTML += '<span class="gate-badge gate-' + gateStatus + '">● ' + gateStatus + '</span>';
-  if (gate.reasons && gate.reasons.length) {
-    var reasonCls = isGateClosed ? ' neg' : isGateCaution ? ' cau' : '';
-    bodyHTML += '<span class="hi-gate-reasons' + reasonCls + '">'
-      + gate.reasons.map(function(r) { return escapeHtml(r); }).join(' · ')
-      + '</span>';
+  // Moon/twilight sub-line (new element)
+  if (els.moonLine) {
+    const sunAlt    = hour.sun_alt_deg;
+    const moonAlt   = hour.moon_alt_deg  != null ? Math.round(hour.moon_alt_deg)   : null;
+    const moonPhase = hour.moon_phase_pct != null ? Math.round(hour.moon_phase_pct) : null;
+    const moonParts = [];
+    if (sunAlt != null && sunAlt > 0)        moonParts.push("☀ Daytime");
+    else if (sunAlt != null && sunAlt > -6)  moonParts.push("🌆 Twilight");
+    else                                      moonParts.push("🌙 Night");
+    if (moonAlt != null)   moonParts.push("Moon " + moonAlt + "°");
+    if (moonPhase != null) moonParts.push(moonPhase + "% phase");
+    els.moonLine.textContent = moonParts.join(" · ");
   }
-  bodyHTML += '</div>';
-  if (isGateClosed) {
-    bodyHTML += '<div class="hi-closed-msg">Observing not recommended.</div>';
-  }
-  bodyHTML += '</div>';
 
-  // Clouds bar chart (±3 hours) — render into header slot
-  const contextStart = Math.max(0, hourIdx - 3);
-  const contextEnd = Math.min(hours.length - 1, hourIdx + 3);
-  const contextHours = hours.slice(contextStart, contextEnd + 1);
-
+  // ── Cloud mini-chart (±3 h) ──────────────────────────────────────────────────
   if (els.chartSlot) {
-    var chartHTML = '<div class="hour-inspector-mini-chart">';
-    contextHours.forEach((h, i) => {
-      const ctxIdx = contextStart + i;
-      const cloudPct = h.cloud_total != null ? Math.round(h.cloud_total) : null;
-      const barHeightPx = cloudPct != null ? Math.max(3, Math.min(60, (cloudPct / 100) * 60)) : 3;
-      const isSelected = ctxIdx === hourIdx;
+    const ctxStart = Math.max(0, hourIdx - 3);
+    const ctxEnd   = Math.min(hours.length - 1, hourIdx + 3);
+    let chartHTML  = '<div class="hour-inspector-mini-chart">';
+    hours.slice(ctxStart, ctxEnd + 1).forEach((h, i) => {
+      const ctxIdx    = ctxStart + i;
+      const cloudPct  = h.cloud_total != null ? Math.round(h.cloud_total) : null;
+      const heightPx  = cloudPct != null ? Math.max(3, Math.min(60, cloudPct / 100 * 60)) : 3;
+      const isSel     = ctxIdx === hourIdx;
       const isMissing = cloudPct == null;
-      chartHTML += '<div class="hour-inspector-mini-bar' + (isSelected ? ' selected' : '') + (isMissing ? ' missing' : '') + '" style="height:' + barHeightPx + 'px" title="' + escapeHtml(formatTime(h.time)) + ': ' + (cloudPct != null ? cloudPct + '%' : '—') + '"></div>';
+      chartHTML += '<div class="hour-inspector-mini-bar'
+        + (isSel ? ' selected' : '') + (isMissing ? ' missing' : '')
+        + '" style="height:' + heightPx + 'px" title="'
+        + escapeHtml(formatTime(h.time)) + ': ' + (cloudPct != null ? cloudPct + '%' : '—') + '"></div>';
     });
     chartHTML += '</div>';
     els.chartSlot.innerHTML = chartHTML;
   }
-  
-  // Pre-compute seeing/FWHM for metric grid and Seeing Quality section
-  const sq = hour.seeing || null;
-  const fwhm = sq ? sq.fwhm_arcsec : (hour.seeing_fwhm_arcsec_est != null ? hour.seeing_fwhm_arcsec_est : null);
-  const seeingClass = (sq && sq.class) ? sq.class : null;
-  const seeingDisplay = seeingClass != null ? seeingClass : '—';
-  const prob = formatPrecipProb(hour.precip_prob);
-  const pressure = hour.pressure_hpa != null && isValidValue(hour.pressure_hpa) ? Math.round(hour.pressure_hpa) : null;
-  const trans = formatTransparency(hour.transparency);
-  const transLabel = trans !== '—' ? (trans <= 1 ? 'Excellent' : trans <= 2 ? 'Fair' : 'Poor') : '—';
 
-  // Primary metrics grid — 2 columns: [Visibility, Transparency, Seeing, FWHM] / [Clouds, Wind, Pressure, Precip]
-  bodyHTML += '<div class="hour-inspector-section">';
-  bodyHTML += '<div class="hour-inspector-metric-grid">';
+  // ── Body ────────────────────────────────────────────────────────────────────
+  let bodyHTML = "";
 
-  // Row 1
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">👁 Visibility</span><span class="hour-inspector-metric-value">' + (visKm != null ? visKm + ' km' : '—') + '</span></div>';
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">☁ Clouds</span><span class="hour-inspector-metric-value">' + cloud + '%</span></div>';
-  // Row 2
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">✨ Transparency</span><span class="hour-inspector-metric-value">' + trans + (transLabel !== '—' ? ' (' + transLabel + ')' : '') + '</span></div>';
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌬 Wind</span><span class="hour-inspector-metric-value">' + (wind != null ? wind + ' m/s' : '—') + '</span></div>';
-  // Row 3
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🔭 Seeing</span><span class="hour-inspector-metric-value">' + seeingDisplay + '</span></div>';
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🧭 Pressure</span><span class="hour-inspector-metric-value">' + (pressure != null ? pressure + ' hPa' : '—') + '</span></div>';
-  // Row 4
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌟 FWHM</span><span class="hour-inspector-metric-value">' + (fwhm != null ? fwhm.toFixed(1) + '"' : '—') + '</span></div>';
-  bodyHTML += '<div class="hour-inspector-metric-row"><span class="hour-inspector-metric-label">🌧 Precip</span><span class="hour-inspector-metric-value">' + prob + '%</span></div>';
-
-  bodyHTML += '</div></div>';
-  
-  // Section 2 — Weather Quality (#97, visible if gate != CLOSED)
-  if (!isGateClosed && hour.weather && hour.weather.breakdown) {
-    var wq = hour.weather, wb = wq.breakdown;
-    var wqScore = wq.score != null ? Math.round(wq.score) : 0;
-    bodyHTML += '<div class="hour-inspector-section">';
-    bodyHTML += '<div class="hi-section-title" data-panel="hi-panel-wq">'
-      + '<span class="hi-toggle-btn">▼</span>'
-      + 'Weather Quality '
-      + '<span class="weather-class-badge">' + escapeHtml(wq.class || '') + '</span>'
-      + '<span style="font-size:12px;font-weight:700;color:#8fb6ff;margin-left:6px">' + wqScore + '</span>'
-      + '</div>';
-    bodyHTML += '<div id="hi-panel-wq">';
-    [['Cloud cover', wb.cloud_q], ['Transparency', wb.trans_q],
-     ['Moon', wb.moon_q], ['Wind', wb.wind_q]].forEach(function(pair) {
-      var pct = pair[1] != null ? Math.round(pair[1]) : 0;
-      var clr = _fbColor(pct);
-      bodyHTML += '<div class="fb-row">'
-        + '<span class="fb-label">' + escapeHtml(pair[0]) + '</span>'
-        + '<div class="fb-track"><div class="fb-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
-        + '<span class="fb-val" style="color:' + clr + '">' + pct + '</span>'
-        + '</div>';
-    });
-    bodyHTML += '</div>';
-    bodyHTML += '</div>';
+  // Section 1 — Gate
+  bodyHTML += '<div class="hour-inspector-section"><div class="hi-gate-row">';
+  bodyHTML += '<span class="gate-badge gate-' + gateStatus + '">● ' + gateStatus + '</span>';
+  if (gateReasons.length) {
+    const reasonCls = isGateClosed ? ' neg' : isGateCaution ? ' cau' : '';
+    bodyHTML += '<span class="hi-gate-reasons' + reasonCls + '">'
+      + gateReasons.map(escapeHtml).join(' · ') + '</span>';
   }
+  bodyHTML += '</div>';
+  if (isGateClosed) bodyHTML += '<div class="hi-closed-msg">Observing not recommended.</div>';
+  bodyHTML += '</div>';
 
-  // FWHM slot removed from header — clear if element still exists
-  if (els.fwhmSlot) {
-    els.fwhmSlot.innerHTML = '';
-  }
+  // ── Section 2 — v5 Category Cards ──────────────────────────────────────────
+  const profile = getActiveProfile();
+  const bd      = hour.score_breakdown_by_profile?.[profile] || hour.score_breakdown;
+  const bdCats  = (bd && Array.isArray(bd.categories)) ? bd.categories : [];
 
-  // Section 3 — Seeing Quality + factor bars (#97)
-  if (!isGateClosed) {
-    var sScore = sq && sq.score != null ? Math.round(sq.score) : null;
-    var sCls   = sq && sq.class ? sq.class : null;
-    if (sScore != null) {
-      var sclr = _fbColor(sScore);
-      bodyHTML += '<div class="hour-inspector-section">';
-      bodyHTML += '<div class="hi-section-title" data-panel="hi-panel-sq">'
-        + '<span class="hi-toggle-btn">▼</span>'
-        + 'Seeing Quality '
-        + '<span class="weather-class-badge">' + escapeHtml(sCls || '') + '</span>'
-        + '<span style="font-size:12px;font-weight:700;color:' + sclr + ';margin-left:6px">' + sScore + '</span>'
-        + '</div>';
-      bodyHTML += '<div id="hi-panel-sq">';
-      var sb = (sq && sq.breakdown) ? sq.breakdown : null;
-      if (sb) {
-        [['Atmosphere', sb.seeing_q], ['Thermal stab.', sb.thermal_q], ['Humidity', sb.humidity_q]].forEach(function(pair) {
-          var pct = pair[1] != null ? Math.round(pair[1]) : 0;
-          var clr = _fbColor(pct);
-          bodyHTML += '<div class="fb-row">'
-            + '<span class="fb-label">' + escapeHtml(pair[0]) + '</span>'
-            + '<div class="fb-track"><div class="fb-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
-            + '<span class="fb-val" style="color:' + clr + '">' + pct + '</span>'
-            + '</div>';
-        });
-      } else {
-        bodyHTML += '<div class="seeing-bar-wrap">'
-          + '<div class="seeing-bar-fill" style="width:' + sScore + '%;background:' + sclr + '"></div></div>';
-      }
-      bodyHTML += '</div>'; // close hi-panel-sq
-      bodyHTML += '</div>';
+  // Compute category scores for limiting factor detection
+  const catScores = CATS.map(c => ({ key: c.key, bdKey: c.bdKey || c.key.replace("_score",""), label: c.label, ico: c.ico, score: hour[c.key] ?? null }));
+  const validScores = catScores.filter(c => c.score != null);
+  const minScore  = validScores.length ? Math.min(...validScores.map(c => c.score)) : null;
+  const maxScore  = validScores.length ? Math.max(...validScores.map(c => c.score)) : null;
+  const isLimiting = (cat) => minScore != null && cat.score === minScore && (maxScore - minScore) >= 10;
+
+  bodyHTML += '<div class="hour-inspector-section hi-cat-section">';
+
+  const profileWeights = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
+
+  catScores.forEach((cat) => {
+    const catScore  = cat.score;
+    const pct       = catScore != null ? Math.max(0, Math.min(100, catScore)) : 0;
+    const clr       = _fbColor(pct);
+    const limiting  = isLimiting(cat);
+    const panelId   = "hi-cat-" + cat.bdKey;
+
+    // Get params from breakdown or fallback
+    const bdCat = bdCats.find(c => c.key === cat.bdKey);
+    let params  = [];
+    if (bdCat && Array.isArray(bdCat.parameters) && bdCat.parameters.length > 0) {
+      params = bdCat.parameters;
+    } else if (HI_FALLBACK_PARAMS[cat.bdKey]) {
+      params = HI_FALLBACK_PARAMS[cat.bdKey](hour);
     }
+
+    // Weighted contribution: use breakdown data (has daylight-corrected weights) or profile fallback
+    const effWeight  = bdCat?.weight  ?? profileWeights[cat.bdKey] ?? 0;
+    const contribution = bdCat?.points != null
+      ? Math.round(bdCat.points)
+      : (catScore != null ? Math.round(catScore * effWeight) : null);
+    const weightFmt  = effWeight.toFixed(2);
+
+    bodyHTML += '<div class="hi-cat-card' + (limiting ? ' hi-limiting' : '') + '">';
+    bodyHTML += '<div class="hi-cat-header" data-panel="' + panelId + '">'
+      + '<span class="hi-toggle-btn">▶</span>'
+      + '<span class="hi-cat-ico">' + cat.ico + '</span>'
+      + '<span class="hi-cat-name">' + escapeHtml(cat.label) + '</span>'
+      + '<div class="hi-cat-bar-wrap"><div class="hi-cat-bar-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
+      + '<span class="hi-cat-formula">'
+      +   '<span class="hi-cat-score" style="color:' + clr + '">' + (catScore != null ? catScore : "—") + '</span>'
+      +   '<span class="hi-cat-weight">×' + weightFmt + '</span>'
+      +   '<span class="hi-cat-pts" style="color:' + clr + '">'
+      +     (contribution != null ? '=' + contribution : '') + '</span>'
+      + '</span>'
+      + '</div>';
+
+    // Params (collapsed by default)
+    bodyHTML += '<div class="hi-cat-params" id="' + panelId + '" style="display:none">';
+    if (params.length > 0) {
+      params.forEach(p => {
+        // label already contains the physical value (e.g. "Spread 8.8°C", "Dark night (−22°)")
+        // p.score = 0-100 sub-score for bar (preferred); p.points = weighted contribution shown on right
+        const label    = escapeHtml(p.label || "");
+        const pts      = p.points != null ? Math.round(p.points)  : null;
+        // Prefer p.score (normalised 0-100 sub-score) for bar width; fall back to p.points
+        const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
+        const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
+        const paramClr = paramPct != null ? _fbColor(paramPct) : "#555";
+        const ptsStr   = pts != null
+          ? '<span class="hi-param-pts" style="color:' + paramClr + '">' + (pts >= 0 ? "+" : "") + pts + '</span>'
+          : '<span class="hi-param-pts hi-param-pts-na">—</span>';
+
+        bodyHTML += '<div class="hi-param-row">'
+          // left: label with embedded absolute value
+          + '<span class="hi-param-label">' + label + '</span>'
+          // centre: bar showing score%, with % text overlay
+          + '<div class="hi-param-bar-wrap">'
+          + (paramPct != null
+              ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
+                + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
+              : '')
+          + '</div>'
+          // right: earned points
+          + ptsStr
+          + '</div>';
+      });
+    } else {
+      bodyHTML += '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
+    }
+    bodyHTML += '</div>'; // hi-cat-params
+    bodyHTML += '</div>'; // hi-cat-card
+  });
+
+  // Limiting factor banner
+  if (minScore != null && maxScore - minScore >= 10) {
+    const lim = catScores.find(c => c.score === minScore);
+    bodyHTML += '<div class="hi-limiting-banner">⚠ Limiting factor: <strong>'
+      + escapeHtml(lim.label) + '</strong> (' + minScore + ')</div>';
   }
+
+  bodyHTML += '</div>'; // hi-cat-section
+
+  // Clear legacy FWHM slot if exists
+  if (els.fwhmSlot) els.fwhmSlot.innerHTML = '';
 
   els.body.innerHTML = bodyHTML;
 }
@@ -3794,10 +3992,10 @@ function initHourInspector() {
     }
   });
 
-  // Delegated toggle for collapsible sections (Weather Quality / Seeing Quality)
+  // Delegated toggle for collapsible sections (v5 category cards + legacy panels)
   if (els.body) {
     els.body.addEventListener('click', function(e) {
-      const title = e.target.closest('.hi-section-title[data-panel]');
+      const title = e.target.closest('.hi-section-title[data-panel], .hi-cat-header[data-panel]');
       if (!title) return;
       const panel = document.getElementById(title.dataset.panel);
       const btn   = title.querySelector('.hi-toggle-btn');
@@ -3883,59 +4081,79 @@ document.addEventListener("DOMContentLoaded", function() {
 function renderWeatherHTML(rootEl) {
   rootEl.innerHTML = `
     <section class="card" id="poc-weather">
-      <div class="kpi">
-        <div class="box wide">
-          <!-- KPI: left=Profiles(vertical)+Score | right=Heads-up+Bar+BestWindow+Chips -->
-          <div class="overall-kpi-row">
-            <div class="overall-kpi-left">
-              <div class="overall-score-main">
-                <div class="profile-switcher" data-role="profile-switcher"></div>
-                <div class="overall-score-block">
-                  <div class="val" data-role="score-val">—</div>
-                  <div class="score-rank" data-role="score-rank">—</div>
-                </div>
-              </div>
-            </div>
-            <div class="overall-kpi-right">
-              <div class="overall-right" data-role="heads-up" aria-live="polite">Heads-up: —</div>
-              <div class="overall-bar-row">
-                <div class="overall-bar-full">
-                  <div class="score-bar" data-role="score-bar">
-                    <div class="score-bar-fill" style="width:0%"></div>
-                  </div>
-                </div>
-                <span class="score-bar-suffix" data-role="score-label">0 / 100</span>
-              </div>
-              <div class="overall-best-window" data-role="best-window" aria-live="polite"></div>
-              <div class="disclosure-row chips-row">
-                <button type="button" class="explain-toggle-chip" data-role="explain-toggle" aria-expanded="false" aria-label="Expand score explanation">▶</button>
-                <div class="now-factors" data-role="now-factors"></div>
-              </div>
-            </div>
+      <div class="top-panel-v2">
+
+        <!-- Panel 1: Time & Location -->
+        <div class="tp-panel tp-time-location" data-role="tp-time-location">
+          <div class="tp-label">Time &amp; Location</div>
+          <div class="tp-location-name" data-role="tp-location-name">—</div>
+          <div class="tp-coords"        data-role="tp-coords">—</div>
+          <div class="tp-time-row">
+            <span class="tp-time" data-role="tp-time">—</span>
+            <span class="tp-date" data-role="tp-date">—</span>
           </div>
-          <div class="overall-explain-wrap">
-            <div class="explain-panel score-breakdown" data-role="explain-panel" aria-hidden="true">
-              <div class="score-breakdown-panel">
-                <div class="explain-panel-grid">
-                  <div class="explain-column-left">
-                    <h4 class="explain-title" data-role="explain-score-title">How this score was calculated</h4>
-                    <div class="breakdown-lines" data-role="score-breakdown"></div>
-                    <div class="breakdown-sum-wrap">
-                      <div class="breakdown-sum" data-role="breakdown-total">Sum: —</div>
-                    </div>
-                  </div>
-                  <div class="explain-column-right current-details-block">
-                    <h4 class="explain-title">Current details</h4>
-                    <table class="current-details-table" data-role="current-details-table">
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-                <div class="expect-banner">
-                  <h4 class="expect-banner-title">What to expect the next few hours:</h4>
-                  <ul class="expect-banner-list" data-role="warnings-list"></ul>
+          <div class="tp-bortle" data-role="bortle-badge">—</div>
+        </div>
+
+        <!-- Panel 2: Observing Quality -->
+        <div class="tp-panel tp-quality" data-role="tp-quality">
+          <div class="tp-label">Observing Quality</div>
+          <div class="profile-switcher tp-profiles" data-role="profile-switcher"></div>
+          <div class="tp-score-row">
+            <span class="tp-score-val"  data-role="score-val">—</span>
+            <span class="tp-score-rank" data-role="score-rank">—</span>
+          </div>
+          <div class="tp-gate-row">
+            <span class="gate-badge" data-role="gate-badge">—</span>
+          </div>
+          <div class="score-bar tp-score-bar" data-role="score-bar">
+            <div class="score-bar-fill" style="width:0%"></div>
+          </div>
+          <button type="button" class="tp-explain-toggle"
+                  data-role="explain-toggle" aria-expanded="false">Details ▶</button>
+        </div>
+
+        <!-- Panel 3: Best Observing Window -->
+        <div class="tp-panel tp-best-window" data-role="tp-best-window">
+          <div class="tp-label">Best Observing Window</div>
+          <div class="tp-window-range" data-role="tp-window-range">—</div>
+          <div class="tp-window-score" data-role="tp-window-score"></div>
+          <div class="tp-window-bar-wrap">
+            <div class="tp-window-bar" data-role="tp-window-bar"></div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Sky Status -->
+        <div class="tp-panel tp-sky-status" data-role="tp-sky-status">
+          <div class="tp-label">Sky Status
+            <span class="tp-trend" data-role="tp-trend"></span>
+          </div>
+          <div class="tp-categories" data-role="tp-categories"></div>
+          <div class="tp-diag-row"   data-role="tp-diag-row"></div>
+        </div>
+
+      </div>
+
+      <!-- Collapsible breakdown panel -->
+      <div class="overall-explain-wrap">
+        <div class="explain-panel score-breakdown" data-role="explain-panel" aria-hidden="true">
+          <div class="score-breakdown-panel">
+            <div class="explain-panel-grid">
+              <div class="explain-column-left">
+                <h4 class="explain-title" data-role="explain-score-title">How this score was calculated</h4>
+                <div class="breakdown-lines" data-role="score-breakdown"></div>
+                <div class="breakdown-sum-wrap">
+                  <div class="breakdown-sum" data-role="breakdown-total">Sum: —</div>
                 </div>
               </div>
+              <div class="explain-column-right current-details-block">
+                <h4 class="explain-title">Current details</h4>
+                <table class="current-details-table" data-role="current-details-table"><tbody></tbody></table>
+              </div>
+            </div>
+            <div class="expect-banner">
+              <h4 class="expect-banner-title">What to expect the next few hours:</h4>
+              <ul class="expect-banner-list" data-role="warnings-list"></ul>
             </div>
           </div>
         </div>
@@ -4024,7 +4242,6 @@ export function mountWeather(rootEl, storeApi) {
       renderNow(rootEl, r.hour);
       renderHourly(rootEl, weatherData.hours);
       if (hourlyMode === "matrix") renderForecastMatrix(rootEl, weatherData.hours);
-      renderBestWindows(rootEl, null, weatherData.hours);
       const chartEls = getChartElements();
       if (currentChartParam && chartEls.overlay && chartEls.overlay.getAttribute("aria-hidden") === "false") {
         renderChart(currentChartParam);
