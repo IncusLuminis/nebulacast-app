@@ -790,6 +790,20 @@ function renderMoonBadge(hour) {
   return `<div class="moon-badge" title="${escapeHtml(tip)}">${emoji}${altRounded}°</div>`;
 }
 
+function renderSunBadge(hour) {
+  const alt = hour.sun_alt_deg;
+  if (alt == null || alt <= 0) return "";
+  const altRounded = Math.round(alt);
+  return `<div class="sun-badge" title="Sun altitude: ${altRounded}°">☀${altRounded}°</div>`;
+}
+
+function renderCelestialBadges(hour) {
+  const sun  = renderSunBadge(hour);
+  const moon = renderMoonBadge(hour);
+  if (!sun && !moon) return "";
+  return `<div class="celestial-badges">${sun}${moon}</div>`;
+}
+
 // Condition marker quality class from 0-100 score or null (#115)
 function _markerClass(quality) {
   if (quality == null) return "cq-none";
@@ -928,11 +942,7 @@ function getHourScore(hour) {
       skyW  * hour.sky_darkness_score +
       dewW  * hour.dew_safety_score   +
       stabW * hour.stability_score;
-    const gate = typeof hour.gate === "string" ? hour.gate : (hour.gate && hour.gate.status ? hour.gate.status : "OPEN");
-    let score = raw;
-    if (gate === "CLOSED")   score = Math.min(score, 20);
-    if (gate === "MARGINAL") score = Math.min(score, 69);
-    return Math.max(0, Math.min(100, Math.round(score)));
+    return Math.max(0, Math.min(100, Math.round(raw)));
   }
 
   // Fallback: for "balanced" profile use API score directly
@@ -1229,36 +1239,13 @@ function renderObservingCard(hour, hourIdx) {
   ].filter(Boolean);
   if (paramLines.length === 0) paramLines.push("—");
 
-  if (gateStatus === "CLOSED") {
-    const closedCond = weatherConditionLabel(hour);
-    const closedReason = closedCond ? `<div class="closed-reason">${closedCond.icon} ${escapeHtml(closedCond.label.toUpperCase())}</div>` : "";
-    return `
-      <div class="hour gate-CLOSED ${solarCls}" data-hour-idx="${hourIdx}" style="cursor:pointer">
-        <div class="hour-top-row">
-          <div class="t">${escapeHtml(timeStr)}</div>
-        </div>
-        <div class="closed-icon">✕</div>
-        <div class="closed-label">CLOSED</div>
-        ${closedReason}
-        <div class="hour-params">
-          ${paramLines.map(line => `<div class="b">${escapeHtml(line)}</div>`).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  const cautionBadge = gateStatus === "MARGINAL"
-    ? `<span class="marginal-badge">⚠ MARGINAL</span>`
-    : "";
-
   return `
     <div class="hour gate-${gateStatus} ${solarCls}" data-hour-idx="${hourIdx}" style="cursor:pointer">
       <div class="hour-top-row">
         <div class="t">${escapeHtml(timeStr)}</div>
-        ${renderMoonBadge(hour)}
+        ${renderCelestialBadges(hour)}
       </div>
       ${renderConditionMarkers(hour)}
-      ${cautionBadge}
       <div class="obs-score" style="color:var(--${sc})">${score}</div>
       <div class="score-label ${sc}">${scoreLabelText(sc, score)}</div>
       ${seingIndicator(hour)}
@@ -1450,8 +1437,8 @@ function renderExplainPanel(rootEl, nowHour, hours) {
 
   if (totalLine) {
     if (isV5Breakdown) {
-      // v5: show weighted total and gate info
-      const finalScore = breakdown.clamped_total ?? getHourScore(nowHour);
+      // v5: show weighted total using same profile weights as the category bars
+      const finalScore = formatScore(getHourScore(nowHour));
       const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
       const gateInfo = gate !== "OPEN" ? ` (gate: ${gate})` : "";
       totalLine.textContent = `Score: ${finalScore}${gateInfo}`;
@@ -1621,44 +1608,35 @@ function renderExplainPanel(rootEl, nowHour, hours) {
 
 function renderTpTimeLocation(rootEl, nowHour) {
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+  const loc = weatherData?.location;
 
-  // Location name
-  const nameEl = weatherCard.querySelector('[data-role="tp-location-name"]');
-  if (nameEl) {
-    const loc = weatherData?.location;
-    nameEl.textContent = loc?.name || (loc ? `${loc.lat?.toFixed(2)}, ${loc.lon?.toFixed(2)}` : "—");
-  }
-
-  // Coordinates
-  const coordsEl = weatherCard.querySelector('[data-role="tp-coords"]');
-  if (coordsEl) {
-    const loc = weatherData?.location;
+  // Location name + coordinates on one line
+  const locLineEl = weatherCard.querySelector('[data-role="tp-loc-line"]');
+  if (locLineEl) {
+    const name = loc?.name || "";
+    let coords = "";
     if (loc?.lat != null && loc?.lon != null) {
       const latDir = loc.lat >= 0 ? "N" : "S";
       const lonDir = loc.lon >= 0 ? "E" : "W";
-      coordsEl.textContent = `${Math.abs(loc.lat).toFixed(2)}°${latDir} ${Math.abs(loc.lon).toFixed(2)}°${lonDir}`;
-    } else {
-      coordsEl.textContent = "—";
+      coords = `${Math.abs(loc.lat).toFixed(2)}°${latDir} ${Math.abs(loc.lon).toFixed(2)}°${lonDir}`;
     }
+    locLineEl.textContent = [name, coords].filter(Boolean).join("  ") || "—";
   }
 
-  // Live clock
-  const timeEl = weatherCard.querySelector('[data-role="tp-time"]');
-  const dateEl = weatherCard.querySelector('[data-role="tp-date"]');
-  if (timeEl) {
-    const tz = weatherData?.location?.tz || "UTC";
+  // Live clock: "9 Mar 03:46" on one line
+  const datetimeEl = weatherCard.querySelector('[data-role="tp-datetime-line"]');
+  if (datetimeEl) {
+    const tz = loc?.tz || "UTC";
     const updateClock = () => {
       const now = new Date();
-      timeEl.textContent = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz }).format(now);
-      if (dateEl) dateEl.textContent = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: tz }).format(now);
+      const date = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: tz }).format(now);
+      const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz }).format(now);
+      datetimeEl.textContent = date + "  " + time;
     };
     updateClock();
     if (rootEl._clockTimer) clearInterval(rootEl._clockTimer);
     rootEl._clockTimer = setInterval(updateClock, 60000);
   }
-
-  // Bortle badge
-  renderBortleBadge(rootEl);
 }
 
 function renderTpQuality(rootEl, nowHour) {
@@ -1675,17 +1653,22 @@ function renderTpQuality(rootEl, nowHour) {
     return;
   }
 
-  // For CLOSED gate hours, show the actual conditions score (breakdown total),
-  // not the gate-penalised hour.score (capped ≤20). The CLOSED badge makes
-  // the gate state clear; the score reflects underlying sky quality.
   const gateRaw    = nowHour?.gate || { status: "OPEN" };
   const gateStatus = typeof gateRaw === "string" ? gateRaw : (gateRaw.status || "OPEN");
-  const isGateClosed = gateStatus === "CLOSED";
+  // Use the same score source as the Details panel: v2 final/sum when breakdown is v2, otherwise getHourScore
   const profile    = getActiveProfile();
   const bd         = nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
-  const score = isGateClosed && bd?.total != null
-    ? Math.max(0, Math.min(100, Math.round(bd.total)))
-    : formatScore(getHourScore(nowHour));
+  const isV2       = Array.isArray(bd);
+  const isV5       = bd && Array.isArray(bd.categories) && bd.categories.length > 0;
+  let score;
+  if (isV5) {
+    score = formatScore(getHourScore(nowHour));
+  } else if (isV2 && bd.length > 0) {
+    const sentinel = bd.find(b => b._final_score != null);
+    score = sentinel ? sentinel._final_score : bd.filter(b => !b.is_info).reduce((s, b) => s + (b.earned || 0), 0);
+  } else {
+    score = formatScore(getHourScore(nowHour));
+  }
   const rank = scoreRank(score);
 
   const scoreValEl = weatherCard.querySelector('[data-role="score-val"]');
@@ -1841,9 +1824,10 @@ function renderProfileSwitcher(rootEl) {
   const allProfiles = Array.isArray(weatherData && weatherData.profiles) && weatherData.profiles.length
     ? ["balanced"].concat(weatherData.profiles.filter(function(p) { return p !== "balanced"; }))
     : ["balanced", "visual", "broadband", "planetary"];
+  const currentProfile = getActiveProfile();
   switcher.innerHTML = allProfiles.map(function(p) {
     const label = profileLabels[p] || p;
-    const active = p === activeProfile ? " data-active=\"true\"" : "";
+    const active = p === currentProfile ? " data-active=\"true\"" : "";
     return "<button type=\"button\" class=\"profile-pill\" data-profile=\"" + escapeHtml(p) + "\"" + active + ">" + escapeHtml(label) + "</button>";
   }).join("");
   if (!switcher._profileBound) {
@@ -2095,7 +2079,7 @@ const MATRIX_OVERLAY_CONFIGS = {
   moon:     { label: "Moon",     getValue: h => h.moon_alt_deg,                                                                                                                         min: -10,  max: 90,   invert: false, color: "#e0e0e0" },
   score:    { label: "Score",    getValue: h => getHourScore(h),                                                                                                                        min: 0,    max: 100,  invert: false, color: "#66bb6a" },
   clouds:   { label: "Clouds",   getValue: h => h.cloud_total,                                                                                                                          min: 0,    max: 100,  invert: true,  color: "#90a4ae" },
-  seeing:   { label: "Seeing",   getValue: h => (h.seeing && h.seeing.fwhm_arcsec_est != null) ? h.seeing.fwhm_arcsec_est : (h.seeing && h.seeing.fwhm_arcsec != null ? h.seeing.fwhm_arcsec : null), min: 0.5, max: 4, invert: true, color: "#ce93d8" },
+  seeing:   { label: "Seeing",   getValue: h => (h.seeing && h.seeing.fwhm_arcsec_est != null) ? h.seeing.fwhm_arcsec_est : (h.seeing && h.seeing.fwhm_arcsec != null ? h.seeing.fwhm_arcsec : (h.seeing_fwhm_arcsec_est != null ? h.seeing_fwhm_arcsec_est : null)), min: 0.5, max: 4, invert: true, color: "#ce93d8" },
   trans:    { label: "Trans.",   getValue: h => h.transparency,                                                                                                                         min: 1,    max: 4,    invert: true,  color: "#4dd0e1" },
   wind:     { label: "Wind",     getValue: h => h.wind_m_s,                                                                                                                             min: 0,    max: 15,   invert: true,  color: "#ef9a9a" },
   temp:     { label: "Temp.",    getValue: h => h.temp_c,                                                                                                                               min: null, max: null, invert: false, color: "#ffa726" },
@@ -3008,7 +2992,7 @@ async function loadWeather(rootEl, state, forceRefresh) {
       profileList = ["balanced", "visual", "broadband", "planetary"];
     }
     var def = typeof data.default_profile === "string" ? data.default_profile : "balanced";
-    activeProfile = (state && state.profile) || (profileList.length > 0 ? (profileList.indexOf(def) >= 0 ? def : profileList[0]) : "balanced");
+    activeProfile = (state && state.profile && state.profile !== "default") ? state.profile : "balanced";
     currentMode = "7d"; // Always show full 7D view (issue #99)
     data.hours.sort(function(a,b){ var da=parseISO(a.time),db=parseISO(b.time); if(!da||!db)return 0; return da.getTime()-db.getTime(); });
     var nowHourResult = findNearestHour(data.hours || []);
@@ -3687,17 +3671,19 @@ function ensureFbStyles() {
     '.bd-bar-fill{height:100%;border-radius:2px}',
     '.breakdown-multiplier{opacity:.75;border-top:1px solid #1e2330;margin-top:4px;padding-top:4px}',
     '.contrib-mult{color:#8fb6ff!important;font-style:italic}',
-    // Gate status styles (#97)
-    '.hour.gate-CLOSED{opacity:.55;border-left:3px solid #f87171}',
-    '.hour.gate-MARGINAL{border-left:3px solid #fbbf24}',
-    '.hour.gate-OPEN{border-left:3px solid transparent}',
+    // Gate status styles (#97, #146)
+    '.hour.gate-CLOSED{border-left:3px solid #F85149}',
+    '.hour.gate-MARGINAL{border-left:3px solid #F2CC60}',
+    '.hour.gate-OPEN{border-left:3px solid #3FB950}',
     // Solar state card backgrounds (#114)
     '.hour.night{background:#0b0f14}',
     '.hour.twilight{background:#1b2230}',
     '.hour.day{background:#273040}',
     // Moon badge + condition markers (#115)
     '.hour-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}',
-    '.moon-badge{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;line-height:1.4}',
+    '.celestial-badges{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0}',
+    '.moon-badge{font-size:10px;color:var(--muted);white-space:nowrap;line-height:1.4}',
+    '.sun-badge{font-size:12px;color:#facc15;white-space:nowrap;line-height:1.4}',
     '.cond-markers{display:flex;gap:2px;margin-top:5px}',
     '.cond-mark{flex:1;height:4px;border-radius:2px}',
     '.cond-icons{display:flex;gap:2px;margin-top:2px;margin-bottom:2px}',
@@ -3708,9 +3694,9 @@ function ensureFbStyles() {
     '.cq-poor{background:#f87171}',
     '.cq-none{background:#374151}',
     '.gate-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.05em;margin-bottom:6px}',
-    '.gate-badge.gate-OPEN{background:#14532d;color:#4ade80}',
-    '.gate-badge.gate-MARGINAL{background:#422006;color:#fbbf24}',
-    '.gate-badge.gate-CLOSED{background:#450a0a;color:#f87171}',
+    '.gate-badge.gate-OPEN{background:#0d3320;color:#3FB950}',
+    '.gate-badge.gate-MARGINAL{background:#3d2e00;color:#F2CC60}',
+    '.gate-badge.gate-CLOSED{background:#3d0a08;color:#F85149}',
     '.gate-reasons{list-style:none;margin:4px 0 0;padding:0;font-size:10px}',
     '.gate-reasons li{padding:1px 0;color:#9aa3b2}',
     '.gate-reasons li.neg{color:#f87171}',
@@ -3736,10 +3722,8 @@ function ensureFbStyles() {
     '.seeing-ind{font-size:12px;margin-top:6px;color:var(--muted)}',
     '.seeing-ind span{font-size:10px}',
     '.seeing-excellent{color:#4ade80}.seeing-good{color:#a3e635}.seeing-fair{color:#fbbf24}.seeing-poor{color:#f87171;opacity:.7}',
-    // Closed card (#102)
-    '.hour.gate-CLOSED .closed-icon{font-size:22px;font-weight:900;color:#f87171;margin-top:9px}',
-    '.hour.gate-CLOSED .closed-label{font-size:10px;font-weight:700;color:#f87171;letter-spacing:.06em}',
-    '.hour.gate-CLOSED .closed-reason{font-size:10px;font-weight:600;color:#f87171;margin-top:2px}',
+    // Inspector gate sun altitude line (#146)
+    '.hi-gate-sunalt{font-size:11px;color:#9aa3b2;margin-top:2px;padding-bottom:4px}',
     // Weather mode card elements (#102)
     '.wx-temp{font-size:22px;font-weight:800;margin-top:4px;color:var(--title)}',
     '.obs-score-small{font-size:10px;color:var(--muted);margin-top:6px}',
@@ -3882,7 +3866,8 @@ function renderHiChart(els, hours, hourIdx, paramKey) {
   });
   chipsHTML += '</div>';
 
-  els.chartSlot.innerHTML = chartHTML + chipsHTML;
+  const labelHTML = '<div class="hi-chart-param-label">' + escapeHtml(param.label) + '</div>';
+  els.chartSlot.innerHTML = labelHTML + chartHTML + chipsHTML;
 }
 
 function renderHourInspector(hourIdx) {
@@ -3902,15 +3887,17 @@ function renderHourInspector(hourIdx) {
   const isGateClosed  = gateStatus === "CLOSED";
   const isGateCaution = gateStatus === "MARGINAL";
 
-  // ── Header: time ────────────────────────────────────────────────────────────
-  els.time.textContent = formatTime(hour.time);
+  // ── Header: date + time ─────────────────────────────────────────────────────
+  const hourDate = parseISO(hour.time);
+  const dateStr  = hourDate
+    ? hourDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null;
+  els.time.textContent = (dateStr ? dateStr + "  " : "") + formatTime(hour.time);
 
   // Score + rank — for CLOSED gate use breakdown.total (actual sky quality)
   const hiProfile = getActiveProfile();
   const hiBd      = hour.score_breakdown_by_profile?.[hiProfile] || hour.score_breakdown;
-  const score = isGateClosed && hiBd?.total != null
-    ? Math.max(0, Math.min(100, Math.round(hiBd.total)))
-    : formatScore(getHourScore(hour));
+  const score = formatScore(getHourScore(hour));
   const rank  = scoreRank(score);
   const scoreClr = _fbColor(score);
   if (els.scoreVal) {
@@ -3932,7 +3919,7 @@ function renderHourInspector(hourIdx) {
     }
   }
 
-  // Summary line (above chart): date · conditions · temp
+  // Summary line (conditions): sky · wind · temp
   const summaryParts = [];
   const cloud  = formatCloud(hour.cloud_total);
   const wind   = formatWind(hour.wind_m_s);
@@ -3946,27 +3933,24 @@ function renderHourInspector(hourIdx) {
     else summaryParts.push(wind + " m/s");
   }
   if (tempStr) summaryParts.push(tempStr);
-  // Prepend date (e.g. "Mar 10")
-  const hourDate = parseISO(hour.time);
-  const dateStr  = hourDate
-    ? hourDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : null;
-  const summaryFull = [dateStr].concat(summaryParts).filter(Boolean).join(" · ");
+  const summaryFull = summaryParts.filter(Boolean).join(" · ");
   if (els.summary) els.summary.textContent = summaryFull || "—";
 
-  // Moon/twilight sub-line (below score label in scoring column)
+  // Moon/twilight sub-line: sun state + moon altitude, then sun altitude on second line
   if (els.moonLine) {
-    const sunAlt    = hour.sun_alt_deg;
-    const moonAlt   = hour.moon_alt_deg  != null ? Math.round(hour.moon_alt_deg)   : null;
-    const moonPhase = hour.moon_phase_pct != null ? Math.round(hour.moon_phase_pct) : null;
+    const sunAlt  = hour.sun_alt_deg;
+    const moonAlt = hour.moon_alt_deg != null ? Math.round(hour.moon_alt_deg) : null;
     const moonParts = [];
-    // True night only below astronomical twilight (−18°); everything above is some form of twilight
-    if (sunAlt != null && sunAlt > 0)          moonParts.push("☀ Daytime");
-    else if (sunAlt != null && sunAlt > -18)   moonParts.push("🌆 Twilight");
-    else                                        moonParts.push("🌙 Night");
-    if (moonAlt != null)   moonParts.push("Moon " + moonAlt + "°");
-    if (moonPhase != null) moonParts.push(moonPhase + "% phase");
-    els.moonLine.textContent = moonParts.join(" · ");
+    if (sunAlt != null && sunAlt > 0)        moonParts.push("☀ Daytime");
+    else if (sunAlt != null && sunAlt > -18) moonParts.push("🌆 Twilight");
+    else                                     moonParts.push("🌙 Night");
+    if (moonAlt != null) moonParts.push("Moon " + moonAlt + "°");
+    let moonHTML = escapeHtml(moonParts.join(" · "));
+    if (sunAlt != null) {
+      const sign = sunAlt >= 0 ? '+' : '';
+      moonHTML += '<br><span class="hi-moon-sunalt">☀ Sun altitude: ' + sign + Math.round(sunAlt) + '°</span>';
+    }
+    els.moonLine.innerHTML = moonHTML;
   }
 
   // ── Mini-chart (±3 h) — param switchable via icon chips ──────────────────────
@@ -3998,13 +3982,6 @@ function renderHourInspector(hourIdx) {
     + '<span class="hi-gate-spacer"></span>'
     + '<span class="' + gateCls + '">' + gateStatus + '</span>'
     + '</div>';
-  // Gate reasons sub-line — only for CLOSED or MARGINAL (OPEN reasons are shown in summary)
-  if (gateReasons.length && (isGateClosed || isGateCaution)) {
-    const reasonCls = isGateClosed ? ' neg' : ' cau';
-    bodyHTML += '<div class="hi-gate-reasons' + reasonCls + '">'
-      + gateReasons.map(escapeHtml).join(' · ') + '</div>';
-  }
-
   // Category cards — inside the collapsible gate body
   bodyHTML += '<div id="hi-gate-body" class="hi-cat-section">';
 
@@ -4239,31 +4216,30 @@ function renderWeatherHTML(rootEl) {
         <!-- Panel 1: Time & Location -->
         <div class="tp-panel tp-time-location" data-role="tp-time-location">
           <div class="tp-label">Time &amp; Location</div>
-          <div class="tp-location-name" data-role="tp-location-name">—</div>
-          <div class="tp-coords"        data-role="tp-coords">—</div>
-          <div class="tp-time-row">
-            <span class="tp-time" data-role="tp-time">—</span>
-            <span class="tp-date" data-role="tp-date">—</span>
-          </div>
-          <div class="tp-bortle" data-role="bortle-badge">—</div>
+          <div class="tp-loc-line"      data-role="tp-loc-line">—</div>
+          <div class="tp-datetime-line" data-role="tp-datetime-line">—</div>
         </div>
 
         <!-- Panel 2: Observing Quality -->
         <div class="tp-panel tp-quality" data-role="tp-quality">
           <div class="tp-label">Observing Quality</div>
-          <div class="profile-switcher tp-profiles" data-role="profile-switcher"></div>
-          <div class="tp-score-row">
-            <span class="tp-score-val"  data-role="score-val">—</span>
-            <span class="tp-score-rank" data-role="score-rank">—</span>
+          <div class="tp-quality-body">
+            <div class="tp-quality-main">
+              <div class="tp-gate-row">
+                <span class="gate-badge" data-role="gate-badge">—</span>
+              </div>
+              <div class="tp-score-row">
+                <span class="tp-score-val"  data-role="score-val">—</span>
+                <span class="tp-score-rank" data-role="score-rank">—</span>
+              </div>
+              <div class="score-bar tp-score-bar" data-role="score-bar">
+                <div class="score-bar-fill" style="width:0%"></div>
+              </div>
+              <button type="button" class="tp-explain-toggle"
+                      data-role="explain-toggle" aria-expanded="false">Details ▶</button>
+            </div>
+            <div class="profile-switcher tp-profiles" data-role="profile-switcher"></div>
           </div>
-          <div class="tp-gate-row">
-            <span class="gate-badge" data-role="gate-badge">—</span>
-          </div>
-          <div class="score-bar tp-score-bar" data-role="score-bar">
-            <div class="score-bar-fill" style="width:0%"></div>
-          </div>
-          <button type="button" class="tp-explain-toggle"
-                  data-role="explain-toggle" aria-expanded="false">Details ▶</button>
         </div>
 
         <!-- Panel 3: Best Observing Window -->
@@ -4326,9 +4302,10 @@ function renderWeatherHTML(rootEl) {
       <div class="forecast-matrix-wrap" id="forecastMatrix" style="display:none" aria-label="Forecast matrix"></div>
 
       <div class="legend">
-        <span><span class="dot" style="background:var(--good)"></span>good</span>
-        <span><span class="dot" style="background:var(--mid)"></span>fair</span>
-        <span><span class="dot" style="background:var(--bad)"></span>poor</span>
+        <span>Observation Gate:</span>
+        <span><span class="dot" style="background:#3FB950"></span>Open</span>
+        <span><span class="dot" style="background:#F2CC60"></span>Marginal</span>
+        <span><span class="dot" style="background:#F85149"></span>Closed</span>
       </div>
       <div class="weather-meta" data-role="weather-meta" aria-live="polite">—</div>
     </section>
@@ -4341,6 +4318,7 @@ export function mountWeather(rootEl, storeApi) {
 
   // Render HTML structure
   renderWeatherHTML(rootEl);
+  renderProfileSwitcher(rootEl);
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
   
   // Hourly mode tab (Observing / Matrix / Weather) handlers
@@ -4386,7 +4364,7 @@ export function mountWeather(rootEl, storeApi) {
     const locKey = state.location.lat + "," + state.location.lon;
     const locationChanged = lastLocKey !== locKey;
     lastLocKey = locKey;
-    activeProfile = state.profile || "balanced";
+    activeProfile = (state.profile && state.profile !== "default") ? state.profile : "balanced";
     currentMode = "7d"; // Always show full 7D view (issue #99)
     if (locationChanged) {
       await loadWeather(rootEl, state);
