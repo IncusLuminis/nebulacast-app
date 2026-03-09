@@ -17,10 +17,6 @@
   font-weight:600;
   color:var(--title);
 }
-.sunmoon-moon{
-  font-size:12px;
-  color:var(--muted);
-}
 .sunmoon-controls{
   display:flex;
   flex-wrap:wrap;
@@ -53,37 +49,54 @@
   border-radius:10px;
   background:#05060a;
 }
-.sunmoon-events{
-  font-size:11px;
-  color:var(--muted);
-  margin-bottom:4px;
-  display:flex;
-  flex-wrap:wrap;
-  gap:4px 14px;
-}
-.sunmoon-event-label{
-  font-weight:500;
-  margin-right:2px;
-}
+
+/* ── 4-column summary grid ────────────────────────────────────────── */
 .sunmoon-summary{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px 16px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px 4px;
   font-size:11px;
   color:var(--muted);
 }
 .sunmoon-summary-item{
-  min-width:120px;
+  min-width:0; /* allow grid cells to shrink */
 }
 .sunmoon-summary-label{
   display:block;
+  font-size:10px;
   margin-bottom:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .sunmoon-summary-value{
+  display:block;
   color:var(--text);
+  font-size:12px;
+  font-weight:500;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .sunmoon-hourline{
   font-size:11px;
-  margin-top:6px;
   color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
+.sunmoon-tooltip{
+  position:absolute;
+  background:rgba(8,10,22,0.90);
+  color:rgba(200,212,235,0.95);
+  font-size:11px;
+  padding:4px 9px;
+  border-radius:6px;
+  border:1px solid rgba(70,85,120,0.55);
+  pointer-events:none;
+  white-space:nowrap;
+  display:none;
+  z-index:10;
+  backdrop-filter:blur(4px);
 }
