@@ -466,9 +466,9 @@ function drawSunMoonCanvas(canvas, data, selectedHour) {
     const ySun = yForAlt(s.sunAlt);
     ctx.shadowColor = "rgba(255, 200, 30, 1.0)";
     ctx.shadowBlur  = 22;
-    ctx.fillText("☀️", x, ySun);
+    ctx.fillText("🌞", x, ySun);
     ctx.shadowBlur  = 0;
-    ctx.fillText("☀️", x, ySun);
+    ctx.fillText("🌞", x, ySun);
 
     if (data.moonInfo) {
       const yMoon = yForAlt(s.moonAlt);
