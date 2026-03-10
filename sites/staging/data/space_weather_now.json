@@ -1,19 +1,11 @@
 {
-  "generated_utc": "2026-03-10T12:39:23Z",
+  "generated_utc": "2026-03-10T18:39:41Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-10T09:00:00Z",
-      "value": 3.0
+      "timestamp_utc": "2026-03-10T15:00:00Z",
+      "value": 3.67
     },
     "forecast_3h": [
-      {
-        "timestamp_utc": "2026-03-10T12:00:00Z",
-        "value": 1.0
-      },
-      {
-        "timestamp_utc": "2026-03-10T15:00:00Z",
-        "value": 1.0
-      },
       {
         "timestamp_utc": "2026-03-10T18:00:00Z",
         "value": 1.67
@@ -37,21 +29,50 @@
       {
         "timestamp_utc": "2026-03-11T09:00:00Z",
         "value": 1.0
+      },
+      {
+        "timestamp_utc": "2026-03-11T12:00:00Z",
+        "value": 1.33
+      },
+      {
+        "timestamp_utc": "2026-03-11T15:00:00Z",
+        "value": 1.33
       }
     ],
     "activity_label": "quiet"
   },
   "solar_wind": {
-    "timestamp_utc": "2026-03-10T12:35:00Z",
-    "speed_kms": 422.8,
-    "density_protons_cm3": 0.06
+    "timestamp_utc": "2026-03-10T18:37:00Z",
+    "speed_kms": 464.9,
+    "density_protons_cm3": 0.05
   },
   "xray": {
-    "timestamp_utc": "2026-03-10T12:36:00Z",
-    "flux_wm2": 1.370079189655371e-06,
-    "class": "C"
+    "timestamp_utc": "2026-03-10T18:36:00Z",
+    "flux_wm2": 7.350596433752798e-07,
+    "class": "B"
   },
   "alerts": [
+    {
+      "id": "K04A",
+      "timestamp_utc": "2026-03-10T18:01:18Z",
+      "title": "Space Weather Message Code: ALTK04",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K04W",
+      "timestamp_utc": "2026-03-10T17:52:31Z",
+      "title": "Space Weather Message Code: WARK04",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "EF3A",
+      "timestamp_utc": "2026-03-10T17:16:14Z",
+      "title": "Space Weather Message Code: ALTEF3",
+      "level": "info",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "K04W",
       "timestamp_utc": "2026-03-10T01:09:50Z",
@@ -735,13 +756,6 @@
       "id": "EF3A",
       "timestamp_utc": "2026-02-09T12:11:51Z",
       "title": "Space Weather Message Code: ALTEF3",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "BHIS",
-      "timestamp_utc": "2026-02-08T14:02:58Z",
-      "title": "Space Weather Message Code: SUM10R",
       "level": "info",
       "source": "NOAA SWPC"
     }
