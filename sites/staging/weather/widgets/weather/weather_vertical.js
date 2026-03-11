@@ -27,7 +27,7 @@ export const WeatherWidget = {
       tz: options.timezone ?? "Europe/Warsaw",
       name: options.name ?? "Weather"
     };
-    let state = { location, profile: "default", range: "today", source: "user" };
+    let state = { location, profile: "balanced", range: "today", source: "user" };
     const subscribers = new Set();
     const storeApi = {
       getState: () => JSON.parse(JSON.stringify(state)),

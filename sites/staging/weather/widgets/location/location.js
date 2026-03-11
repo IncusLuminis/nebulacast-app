@@ -408,7 +408,7 @@ async function shareLocation() {
  */
 async function checkAPIStatus() {
   try {
-    const res = await fetch(API_BASE + "/api/astro-weather?lat=52.2297&lon=21.0122&tz=Europe/Warsaw&hours=1&profile=default");
+    const res = await fetch(API_BASE + "/api/astro-weather?lat=52.2297&lon=21.0122&tz=Europe/Warsaw&hours=1&profile=balanced");
     apiAvailable = res.ok;
   } catch (e) {
     apiAvailable = false;

@@ -2778,12 +2778,14 @@ async function loadWeather(rootEl, state, forceRefresh) {
     // Use state location for API mode
     if (state && state.location && state.location.lat && state.location.lon && API_ASTRO_WEATHER_URL) {
       var bortleVal = (weatherData && typeof weatherData.bortle === "number") ? weatherData.bortle : 5;
+      var rawProfile = state.profile || activeProfile || "balanced";
+      var apiProfile = ["balanced", "visual", "broadband", "planetary"].includes(rawProfile) ? rawProfile : "balanced";
       var params = new URLSearchParams({
         lat: String(state.location.lat),
         lon: String(state.location.lon),
         tz: state.location.tz || "Europe/Warsaw",
         hours: "72",
-        profile: state.profile || activeProfile || "balanced",
+        profile: apiProfile,
         bortle: String(bortleVal),
       });
       if (state.location.name) {
