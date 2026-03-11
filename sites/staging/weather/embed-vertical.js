@@ -47,9 +47,16 @@
     iframe.style.border = "none";
     iframe.style.display = "block";
     iframe.title = "Nebulacast Weather Forecast";
-    if (width === "100%" || width.indexOf("%") >= 0) {
-      iframe.style.width = width;
+    var fullWidth = width === "100%" || width.indexOf("%") >= 0;
+    if (fullWidth) {
+      var style = document.createElement("style");
+      style.textContent = "#" + mountId + "{width:100%!important;max-width:100%!important;display:block!important;box-sizing:border-box!important}" +
+        "#" + mountId + " iframe{width:100%!important;max-width:100%!important;min-width:0!important;display:block!important;box-sizing:border-box!important}";
+      (document.head || document.documentElement).appendChild(style);
+      iframe.style.width = "100%";
+      iframe.style.maxWidth = "100%";
       el.style.width = "100%";
+      el.style.maxWidth = "100%";
     } else {
       iframe.width = width;
     }

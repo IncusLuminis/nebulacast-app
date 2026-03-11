@@ -84,6 +84,21 @@ Example with location preset:
         data-height="600"></script>
 ```
 
+**Blogger / full-width column:** Use a wrapper to force full width of the sidebar or content area:
+
+```html
+<div style="width:100%;max-width:100%;margin:0;padding:0;overflow:hidden;">
+  <div id="nc-weather-widget"></div>
+  <script src="https://staging.nebulacast.app/weather/embed-vertical.js"
+          data-lat="52.2297"
+          data-lon="21.0122"
+          data-tz="Europe/Warsaw"
+          data-name="Warsaw"
+          data-width="100%"
+          data-height="600"></script>
+</div>
+```
+
 ### Option 2: Raw iframe
 
 Embed the standalone page directly:
