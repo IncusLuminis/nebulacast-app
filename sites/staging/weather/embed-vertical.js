@@ -45,12 +45,14 @@
     var tz = (script && script.getAttribute("data-tz")) || "Europe/Warsaw";
     var name = script && script.getAttribute("data-name");
     var stored = getStoredState();
+    var debug = script && script.getAttribute("data-debug") === "true";
     if (stored) {
       if (lat == null && stored.lat != null) lat = String(stored.lat);
       if (lon == null && stored.lon != null) lon = String(stored.lon);
       if (stored.tz) tz = stored.tz;
       if (stored.name) name = stored.name;
       if (stored.tab === "observing" || stored.tab === "weather") params.set("tab", stored.tab);
+      if (debug) console.log("[Nebulacast] Restoring state:", stored);
     }
     if (lat) params.set("lat", lat);
     if (lon) params.set("lon", lon);
@@ -103,7 +105,12 @@
         if (tab === "observing" || tab === "weather") toStore.tab = tab;
         if (Object.keys(toStore).length) {
           var existing = getStoredState() || {};
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, ...toStore }));
+          var merged = { ...existing, ...toStore };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          var script = document.querySelector('script[src*="embed-vertical.js"]');
+          if (script && script.getAttribute("data-debug") === "true") {
+            console.log("[Nebulacast] Saved state:", merged);
+          }
         }
       } catch (err) {}
     });

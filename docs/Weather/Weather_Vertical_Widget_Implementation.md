@@ -52,12 +52,18 @@ Requires a container: `<div id="weatherVerticalMount"></div>`
 
 ### Option 1: Embed script (recommended for external sites)
 
+**Важно:** Для сохранения локации и вкладки (Observing/Weather) при обновлении страницы **обязательно** используйте embed-скрипт, а не просто iframe. Простой iframe не сохраняет состояние.
+
 Add a mount point and load the embed script. Works on any site; the widget runs inside an iframe from the widget origin.
 
 ```html
 <div id="nc-weather-widget"></div>
-<script src="https://staging.nebulacast.app/weather/embed-vertical.js"></script>
+<script src="https://staging.nebulacast.app/weather/embed-vertical.js"
+        data-width="100%"
+        data-height="600"></script>
 ```
+
+**Отладка сохранения (Blogger):** Добавьте `data-debug="true"` к тегу script. Откройте DevTools (F12) → Console. При смене локации/вкладки должно появиться `[Nebulacast] Saved state: {...}`. При загрузке — `[Nebulacast] Restoring state: {...}`. Если сообщений нет — возможно, используется простой iframe вместо скрипта.
 
 Optional attributes on the script tag:
 
