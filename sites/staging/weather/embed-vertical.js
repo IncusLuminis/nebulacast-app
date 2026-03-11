@@ -17,6 +17,18 @@
 (function () {
   var WIDGET_ORIGIN = "https://staging.nebulacast.app";
   var WIDGET_PATH = "/weather/weather-vertical";
+  var STORAGE_KEY = "nc-weather-embed-state";
+
+  function getStoredState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && (s.lat != null || s.lon != null || s.tab)) return s;
+      }
+    } catch (e) {}
+    return null;
+  }
 
   function mount() {
     var script = document.currentScript;
@@ -32,7 +44,14 @@
     var lon = script && script.getAttribute("data-lon");
     var tz = (script && script.getAttribute("data-tz")) || "Europe/Warsaw";
     var name = script && script.getAttribute("data-name");
-
+    var stored = getStoredState();
+    if (stored) {
+      if (lat == null && stored.lat != null) lat = String(stored.lat);
+      if (lon == null && stored.lon != null) lon = String(stored.lon);
+      if (stored.tz) tz = stored.tz;
+      if (stored.name) name = stored.name;
+      if (stored.tab === "observing" || stored.tab === "weather") params.set("tab", stored.tab);
+    }
     if (lat) params.set("lat", lat);
     if (lon) params.set("lon", lon);
     if (tz) params.set("tz", tz);
@@ -67,6 +86,27 @@
     }
 
     el.appendChild(iframe);
+
+    window.addEventListener("message", function (e) {
+      if (e.origin !== WIDGET_ORIGIN) return;
+      if (!e.data || e.data.type !== "nc-weather-state") return;
+      try {
+        var loc = e.data.location;
+        var tab = e.data.tab;
+        var toStore = {};
+        if (loc && typeof loc.lat === "number" && typeof loc.lon === "number") {
+          toStore.lat = loc.lat;
+          toStore.lon = loc.lon;
+          toStore.tz = loc.tz || "Europe/Warsaw";
+          toStore.name = loc.name || "";
+        }
+        if (tab === "observing" || tab === "weather") toStore.tab = tab;
+        if (Object.keys(toStore).length) {
+          var existing = getStoredState() || {};
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, ...toStore }));
+        }
+      } catch (err) {}
+    });
   }
 
   if (document.readyState === "loading") {

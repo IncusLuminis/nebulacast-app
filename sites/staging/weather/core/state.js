@@ -111,7 +111,24 @@ function emit() {
   
   // Dispatch custom event for external listeners
   window.dispatchEvent(new CustomEvent("nc:state", { detail: currentState }));
-  
+
+  // When in iframe (e.g. Blogger embed), notify parent so it can persist state (parent's localStorage works)
+  if (typeof window !== "undefined" && window.self !== window.top && currentState.location) {
+    try {
+      window.parent.postMessage({
+        type: "nc-weather-state",
+        location: {
+          lat: currentState.location.lat,
+          lon: currentState.location.lon,
+          tz: currentState.location.tz,
+          name: currentState.location.name
+        }
+      }, "*");
+    } catch (e) {
+      if (DEBUG) console.warn("[state] postMessage failed:", e);
+    }
+  }
+
   if (DEBUG) {
     console.log("[state] emitted:", currentState);
   }

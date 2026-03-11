@@ -4563,12 +4563,16 @@ export function mountWeather(rootEl, storeApi, options) {
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
 
   if (layoutMode === "vertical") {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY_VERTICAL_TAB);
-      if (stored === "observing" || stored === "weather") {
-        hourlyMode = stored;
-      }
-    } catch (e) {}
+    var tabParam = typeof window !== "undefined" && window.location.search
+      ? new URLSearchParams(window.location.search).get("tab") : null;
+    if (tabParam === "observing" || tabParam === "weather") {
+      hourlyMode = tabParam;
+    } else {
+      try {
+        var stored = localStorage.getItem(STORAGE_KEY_VERTICAL_TAB);
+        if (stored === "observing" || stored === "weather") hourlyMode = stored;
+      } catch (e) {}
+    }
   } else {
     hourlyMode = "observing";
   }
@@ -4583,6 +4587,11 @@ export function mountWeather(rootEl, storeApi, options) {
         try {
           localStorage.setItem(STORAGE_KEY_VERTICAL_TAB, hourlyMode);
         } catch (e) {}
+        if (typeof window !== "undefined" && window.self !== window.top) {
+          try {
+            window.parent.postMessage({ type: "nc-weather-state", tab: hourlyMode }, "*");
+          } catch (e2) {}
+        }
       }
       if (layoutMode === "vertical") {
         if (weatherData && weatherData.hours) {
