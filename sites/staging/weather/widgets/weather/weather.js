@@ -14,6 +14,7 @@ let isFetchingWeather = false;
 let lastWeatherFetchTime = 0;
 const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 let sunMoonEventsCache = null; // null = not loaded yet; [] = loaded (may be empty)
+let layoutMode = "default"; // "default" | "vertical"
 
 // Helper: escape HTML
 function escapeHtml(s) {
@@ -3010,9 +3011,14 @@ async function loadWeather(rootEl, state, forceRefresh) {
     } else if (data.best_windows && data.best_windows.tonight) {
       bestWindowsArr = [data.best_windows.tonight];
     }
-    renderNow(rootEl, nowHour);
-    renderHourly(rootEl, data.hours);
-    if (hourlyMode === "matrix") renderForecastMatrix(rootEl, data.hours);
+    if (layoutMode === "vertical") {
+      renderNowVertical(rootEl, nowHour);
+      renderVerticalCardStack(rootEl, data.hours);
+    } else {
+      renderNow(rootEl, nowHour);
+      renderHourly(rootEl, data.hours);
+      if (hourlyMode === "matrix") renderForecastMatrix(rootEl, data.hours);
+    }
     lastWeatherFetchTime = Date.now();
   } catch (err) {
     console.error("[weather] Weather load failed:", err);
@@ -3870,11 +3876,12 @@ function renderHiChart(els, hours, hourIdx, paramKey) {
   els.chartSlot.innerHTML = labelHTML + chartHTML + chipsHTML;
 }
 
-function renderHourInspector(hourIdx) {
+function renderHourInspector(hourIdx, overrideEls) {
   if (!weatherData || !weatherData.hours || hourIdx < 0 || hourIdx >= weatherData.hours.length) return;
 
-  const els = getHourInspectorElements();
+  const els = overrideEls || getHourInspectorElements();
   if (!els.time || !els.body) return;
+  const idPrefix = overrideEls ? "v-emb-" : "";
   ensureFbStyles();
 
   const hour  = weatherData.hours[hourIdx];
@@ -3975,15 +3982,17 @@ function renderHourInspector(hourIdx) {
 
   // Gate header row (toggle collapses the whole category list)
   const gateCls = 'gate-badge gate-' + gateStatus;
+  const gateBodyId = idPrefix + "hi-gate-body";
+  const gateCollapsed = !!idPrefix;
   bodyHTML += '<div class="hour-inspector-section hi-gate-section">';
-  bodyHTML += '<div class="hi-gate-header" data-panel="hi-gate-body">'
-    + '<span class="hi-toggle-btn">▼</span>'
-    + '<span class="hi-gate-title">Observation GATE:</span>'
+  bodyHTML += '<div class="hi-gate-header" data-panel="' + gateBodyId + '">'
+    + '<span class="hi-toggle-btn">' + (gateCollapsed ? '▶' : '▼') + '</span>'
+    + '<span class="hi-gate-title">Observation Gate</span>'
     + '<span class="hi-gate-spacer"></span>'
     + '<span class="' + gateCls + '">' + gateStatus + '</span>'
     + '</div>';
-  // Category cards — inside the collapsible gate body
-  bodyHTML += '<div id="hi-gate-body" class="hi-cat-section">';
+  // Category cards — inside the collapsible gate body (collapsed by default for embedded)
+  bodyHTML += '<div id="' + gateBodyId + '" class="hi-cat-section" style="display:' + (gateCollapsed ? 'none' : '') + '">';
 
   const profileWeights = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
 
@@ -3992,7 +4001,7 @@ function renderHourInspector(hourIdx) {
     const pct       = catScore != null ? Math.max(0, Math.min(100, catScore)) : 0;
     const clr       = _fbColor(pct);
     const limiting  = isLimiting(cat);
-    const panelId   = "hi-cat-" + cat.bdKey;
+    const panelId   = idPrefix + "hi-cat-" + cat.bdKey;
 
     // Get params from breakdown or fallback
     const bdCat = bdCats.find(c => c.key === cat.bdKey);
@@ -4207,6 +4216,232 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
+// ── Vertical layout (sidebar variant) ─────────────────────────────────────────
+
+function renderWeatherHTMLVertical(rootEl) {
+  rootEl.innerHTML = `
+    <section class="card weather-vertical" id="poc-weather">
+      <div class="v-inspector-embedded" data-role="v-inspector-embedded">
+        <div class="v-inspector-header">
+          <div class="v-inspector-left">
+            <div class="v-inspector-time" data-role="v-hi-time">—</div>
+            <div class="v-inspector-score" data-role="v-hi-score">—</div>
+            <div class="v-inspector-label" data-role="v-hi-label">—</div>
+          </div>
+        </div>
+        <div class="v-metrics-line" data-role="v-metrics-line">—</div>
+        <div class="v-inspector-section v-charts-section">
+          <div class="hi-gate-header" data-panel="v-emb-clouds">
+            <span class="hi-toggle-btn">▶</span>
+            <span class="hi-gate-title">Charts</span>
+            <span class="hi-gate-spacer"></span>
+          </div>
+          <div id="v-emb-clouds" class="v-section-body" style="display:none">
+            <div class="v-inspector-chart" data-role="v-hi-chart"></div>
+          </div>
+        </div>
+        <div class="v-inspector-body" data-role="v-hi-body"></div>
+      </div>
+      <div class="v-mode-switch">
+        <button class="htab" data-hmode="observing" data-active="true">Observing</button>
+        <button class="htab" data-hmode="weather">Weather</button>
+      </div>
+      <div class="v-cards-roll" data-role="v-hourly" aria-label="hourly forecast"></div>
+      <div class="legend">
+        <span>Observation Gate:</span>
+        <span><span class="dot" style="background:#3FB950"></span>Open</span>
+        <span><span class="dot" style="background:#F2CC60"></span>Marginal</span>
+        <span><span class="dot" style="background:#F85149"></span>Closed</span>
+      </div>
+      <div class="weather-meta" data-role="weather-meta" aria-live="polite">—</div>
+    </section>
+  `;
+}
+
+function setupEmbeddedInspectorToggles(weatherCard) {
+  const container = weatherCard.querySelector("[data-role=v-inspector-embedded]");
+  if (!container || container.dataset.togglesSetup === "true") return;
+  container.dataset.togglesSetup = "true";
+  container.addEventListener("click", function(e) {
+    const title = e.target.closest(".hi-section-title[data-panel], .hi-cat-header[data-panel], .hi-gate-header[data-panel]");
+    if (!title) return;
+    const panel = document.getElementById(title.dataset.panel);
+    const btn = title.querySelector(".hi-toggle-btn");
+    if (!panel) return;
+    const isOpen = panel.style.display !== "none";
+    panel.style.display = isOpen ? "none" : "";
+    if (btn) btn.textContent = isOpen ? "▶" : "▼";
+  });
+  const chartSlot = container.querySelector("[data-role=v-hi-chart]");
+  if (chartSlot) {
+    container.addEventListener("click", function(e) {
+      const chip = e.target.closest("[data-chart-param]");
+      if (!chip) return;
+      const paramKey = chip.dataset.chartParam;
+      const idx = parseInt(container.dataset.currentHourIdx || "0", 10);
+      const hrs = weatherData?.hours;
+      const card = container.closest("#poc-weather");
+      if (hrs && card) {
+        const els = getEmbeddedInspectorElements(card);
+        if (els) {
+          els.sheet.dataset.activeChartParam = paramKey;
+          renderHiChart(els, hrs, idx, paramKey);
+        }
+      }
+    });
+  }
+}
+
+function getEmbeddedInspectorElements(weatherCard) {
+  const container = weatherCard.querySelector("[data-role=v-inspector-embedded]");
+  if (!container) return null;
+  const sheet = { dataset: {} };
+  return {
+    time: container.querySelector("[data-role=v-hi-time]"),
+    scoreVal: container.querySelector("[data-role=v-hi-score]"),
+    scoreLabel: container.querySelector("[data-role=v-hi-label]"),
+    summary: container.querySelector("[data-role=v-hi-summary]"),
+    moonLine: container.querySelector("[data-role=v-hi-moon]"),
+    scoreBar: container.querySelector("[data-role=v-hi-score-bar]"),
+    chartSlot: container.querySelector("[data-role=v-hi-chart]"),
+    body: container.querySelector("[data-role=v-hi-body]"),
+    sheet
+  };
+}
+
+function renderNowVertical(rootEl, nowHour) {
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+  const embeddedEls = getEmbeddedInspectorElements(weatherCard);
+  if (embeddedEls && weatherData && weatherData.hours) {
+    const r = findNearestHour(weatherData.hours);
+    if (r.hour != null && embeddedEls.body) {
+      const container = weatherCard.querySelector("[data-role=v-inspector-embedded]");
+      if (container) {
+        container.dataset.currentHourIdx = r.idx;
+        container.dataset.activeChartParam = "clouds";
+      }
+      embeddedEls.sheet.dataset.currentHourIdx = r.idx;
+      embeddedEls.sheet.dataset.activeChartParam = "clouds";
+      renderHourInspector(r.idx, embeddedEls);
+      setupEmbeddedInspectorToggles(weatherCard);
+    }
+  }
+  const metricsEl = weatherCard.querySelector("[data-role=v-metrics-line]");
+  if (!metricsEl) return;
+  if (!nowHour) {
+    metricsEl.textContent = "—";
+    return;
+  }
+  const cloud = formatCloud(nowHour.cloud_total);
+  const score = getHourScore(nowHour);
+  const obsLabel = score >= 75 ? "Good" : score >= 50 ? "Fair" : score >= 30 ? "Poor" : "Bad";
+  const wind = formatWind(nowHour.wind_m_s);
+  const windStr = wind != null ? wind + " m/s" : "—";
+  const humRaw = nowHour.humidity_pct ?? nowHour.relative_humidity;
+  const humidity = humRaw != null && isValidValue(humRaw)
+    ? Math.round(humRaw > 1 ? humRaw : humRaw * 100) + "%"
+    : "—";
+  const tempStr = nowHour.temp_c != null && isValidValue(nowHour.temp_c)
+    ? Math.round(Number(nowHour.temp_c)) + "°C"
+    : "—";
+  const moonAlt = nowHour.moon_alt_deg;
+  const moonStr = moonAlt != null && isValidValue(moonAlt) ? Math.round(moonAlt) + "°" : "—";
+  const parts = [
+    "☁ " + cloud + "%",
+    "🔭 " + obsLabel,
+    "🌬 " + windStr,
+    "💧 " + humidity,
+    "🌡 " + tempStr,
+    "🌙 " + moonStr
+  ];
+  metricsEl.textContent = parts.join(" ");
+}
+
+function renderVerticalHourCard(hour, hourIdx) {
+  const timeStr = formatTime(hour.time);
+  const score = formatScore(getHourScore(hour));
+  const sc = scoreClass(score);
+  const gateStatus = typeof hour.gate === "string" ? hour.gate : ((hour.gate && hour.gate.status) ? hour.gate.status : "OPEN");
+  const solarCls = getSolarState(hour);
+  const rank = scoreLabelText(sc, score);
+
+  const cloud = formatCloud(hour.cloud_total);
+  const tempStr = hour.temp_c != null && isValidValue(hour.temp_c) ? Math.round(Number(hour.temp_c)) + "°C" : null;
+  const wind = formatWind(hour.wind_m_s);
+  const visKm = formatVisibility(hour.visibility_m);
+  const prob = formatPrecipProb(hour.precip_prob);
+
+  const iconName = pickIcon(hour);
+  const iconBase = (window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.iconBase) ? window.__WEATHER_POC_CONFIG.iconBase : "/assets/icons/weather";
+  const iconPath = (iconBase.charAt(iconBase.length - 1) === "/" ? iconBase : iconBase + "/") + iconName;
+  const wxTempStr = hour.temp_c != null && isValidValue(hour.temp_c) ? Math.round(Number(hour.temp_c)) + "°C" : "—";
+
+  let leftContent, rightContent;
+  if (hourlyMode === "weather") {
+    const paramParts = [
+      wxTempStr,
+      `☁️ ${cloud}%`,
+      wind != null ? `💨 ${wind}m/s` : null,
+      visKm != null ? `👁️ ${visKm}km` : null,
+      "Obs: " + score
+    ].filter(Boolean);
+    const paramsLine = paramParts.length > 0 ? paramParts.join(" ") : "—";
+    leftContent = `
+        <div class="v-hour-time">${escapeHtml(timeStr)}</div>
+        <img class="wx-ico v-hour-wx-ico" src="${escapeHtml(iconPath)}" alt="" aria-hidden="true">
+      `;
+    rightContent = `<div class="v-hour-params v-hour-params-inline">${escapeHtml(paramsLine)}</div>`;
+  } else {
+    const paramParts = [
+      `☁️ ${cloud}%`,
+      tempStr ? `🌡 ${tempStr}` : null,
+      prob > 0 ? `🌧️ ${prob}%` : null,
+      wind != null ? `💨 ${wind}m/s` : null,
+      visKm != null ? `👁️ ${visKm}km` : null
+    ].filter(Boolean);
+    const paramsLine = paramParts.length > 0 ? paramParts.join(" ") : "—";
+    leftContent = `
+        <div class="v-hour-time">${escapeHtml(timeStr)}</div>
+        <div class="v-hour-score" style="color:var(--${sc})">${score}</div>
+        <div class="v-hour-label ${sc}">${escapeHtml(rank)}</div>
+      `;
+    rightContent = `
+        ${renderConditionMarkers(hour)}
+        <div class="v-hour-params">${escapeHtml(paramsLine)}</div>
+      `;
+  }
+
+  const cardClass = hourlyMode === "weather" ? "v-hour-card v-hour-card-weather" : "v-hour-card";
+  return `
+    <div class="hour ${cardClass} gate-${gateStatus} ${solarCls}" data-hour-idx="${hourIdx}">
+      <div class="v-hour-left">${leftContent}</div>
+      <div class="v-hour-right">${rightContent}</div>
+    </div>
+  `;
+}
+
+function renderVerticalCardStack(rootEl, hours) {
+  ensureFbStyles();
+  const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
+  const hourlyEl = weatherCard.querySelector("[data-role=v-hourly]");
+  if (!hourlyEl) return;
+  const now = Date.now();
+  const end72 = now + 72 * 60 * 60 * 1000;
+  const futureHours = (hours || []).filter(h => {
+    const dt = parseISO(h.time);
+    return dt && dt.getTime() > now && dt.getTime() <= end72;
+  });
+  if (futureHours.length === 0) {
+    hourlyEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">No forecast hours</div>';
+    return;
+  }
+  hourlyEl.innerHTML = futureHours.map((hour, futureIdx) => {
+    const fullIdx = hours.findIndex(h => h.time === hour.time);
+    const hourIdx = fullIdx >= 0 ? fullIdx : futureIdx;
+    return renderVerticalHourCard(hour, hourIdx);
+  }).join("");
+}
+
 // Render weather widget HTML structure (location-agnostic; no city, profile, or time-range controls)
 function renderWeatherHTML(rootEl) {
   rootEl.innerHTML = `
@@ -4312,52 +4547,60 @@ function renderWeatherHTML(rootEl) {
   `;
 }
 
-export function mountWeather(rootEl, storeApi) {
-  // Prefetch precise rise/set times (fire-and-forget, used by Matrix)
+export function mountWeather(rootEl, storeApi, options) {
+  layoutMode = (options && options.layout === "vertical") ? "vertical" : "default";
   fetchSunMoonEvents();
 
-  // Render HTML structure
-  renderWeatherHTML(rootEl);
-  renderProfileSwitcher(rootEl);
+  if (layoutMode === "vertical") {
+    renderWeatherHTMLVertical(rootEl);
+  } else {
+    renderWeatherHTML(rootEl);
+    renderProfileSwitcher(rootEl);
+  }
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
-  
-  // Hourly mode tab (Observing / Matrix / Weather) handlers
+
   hourlyMode = "observing";
   weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(btn) {
     btn.addEventListener("click", function() {
       weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(b) { b.removeAttribute("data-active"); });
       btn.setAttribute("data-active", "true");
       hourlyMode = btn.dataset.hmode;
-      const hourlyEl = weatherCard.querySelector("[data-role=hourly]");
-      const matrixWrap = weatherCard.querySelector("#forecastMatrix");
-      if (hourlyMode === "matrix") {
-        if (hourlyEl) hourlyEl.style.display = "none";
-        if (matrixWrap) matrixWrap.style.display = "";
+      if (layoutMode === "vertical") {
         if (weatherData && weatherData.hours) {
-          renderForecastMatrix(rootEl, weatherData.hours);
+          renderVerticalCardStack(rootEl, weatherData.hours);
         }
       } else {
-        if (hourlyEl) hourlyEl.style.display = "";
-        if (matrixWrap) matrixWrap.style.display = "none";
-        if (weatherData && weatherData.hours) {
-          renderHourly(rootEl, weatherData.hours);
+        const hourlyEl = weatherCard.querySelector("[data-role=hourly]");
+        const matrixWrap = weatherCard.querySelector("#forecastMatrix");
+        if (hourlyMode === "matrix") {
+          if (hourlyEl) hourlyEl.style.display = "none";
+          if (matrixWrap) matrixWrap.style.display = "";
+          if (weatherData && weatherData.hours) {
+            renderForecastMatrix(rootEl, weatherData.hours);
+          }
+        } else {
+          if (hourlyEl) hourlyEl.style.display = "";
+          if (matrixWrap) matrixWrap.style.display = "none";
+          if (weatherData && weatherData.hours) {
+            renderHourly(rootEl, weatherData.hours);
+          }
         }
       }
     });
   });
 
-  // Matrix click → open Hour Inspector
-  const matrixWrapEl = weatherCard.querySelector("#forecastMatrix");
-  if (matrixWrapEl) {
-    matrixWrapEl.addEventListener("click", function(e) {
-      const cell = e.target.closest(".matrix-cell[data-hour-idx]");
-      if (!cell || cell.classList.contains("matrix-time-cell")) return;
-      const idx = parseInt(cell.dataset.hourIdx, 10);
-      if (!isNaN(idx)) openHourInspector(idx);
-    });
+  if (layoutMode !== "vertical") {
+    const matrixWrapEl = weatherCard.querySelector("#forecastMatrix");
+    if (matrixWrapEl) {
+      matrixWrapEl.addEventListener("click", function(e) {
+        const cell = e.target.closest(".matrix-cell[data-hour-idx]");
+        if (!cell || cell.classList.contains("matrix-time-cell")) return;
+        const idx = parseInt(cell.dataset.hourIdx, 10);
+        if (!isNaN(idx)) openHourInspector(idx);
+      });
+    }
   }
 
-  // Subscribe to state changes (profile + range from Controls; location from Location widget)
   let lastLocKey = "";
   const unsubscribe = storeApi.subscribe(async (state) => {
     if (!state.location || !state.location.lat || !state.location.lon) return;
@@ -4365,17 +4608,22 @@ export function mountWeather(rootEl, storeApi) {
     const locationChanged = lastLocKey !== locKey;
     lastLocKey = locKey;
     activeProfile = (state.profile && state.profile !== "default") ? state.profile : "balanced";
-    currentMode = "7d"; // Always show full 7D view (issue #99)
+    currentMode = "7d";
     if (locationChanged) {
       await loadWeather(rootEl, state);
     } else if (weatherData && weatherData.hours) {
       var r = findNearestHour(weatherData.hours);
-      renderNow(rootEl, r.hour);
-      renderHourly(rootEl, weatherData.hours);
-      if (hourlyMode === "matrix") renderForecastMatrix(rootEl, weatherData.hours);
-      const chartEls = getChartElements();
-      if (currentChartParam && chartEls.overlay && chartEls.overlay.getAttribute("aria-hidden") === "false") {
-        renderChart(currentChartParam);
+      if (layoutMode === "vertical") {
+        renderNowVertical(rootEl, r.hour);
+        renderVerticalCardStack(rootEl, weatherData.hours);
+      } else {
+        renderNow(rootEl, r.hour);
+        renderHourly(rootEl, weatherData.hours);
+        if (hourlyMode === "matrix") renderForecastMatrix(rootEl, weatherData.hours);
+        const chartEls = getChartElements();
+        if (currentChartParam && chartEls.overlay && chartEls.overlay.getAttribute("aria-hidden") === "false") {
+          renderChart(currentChartParam);
+        }
       }
     }
   });
