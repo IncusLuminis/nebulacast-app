@@ -11,8 +11,8 @@
  *   data-lon="21.0122"              — Initial longitude
  *   data-tz="Europe/Warsaw"         — Timezone
  *   data-name="Warsaw"               — Location name
- *   data-width="360"                — Iframe width (default: 360)
- *   data-height="600"               — Iframe height (default: 600)
+ *   data-width="360" or "100%"      — Iframe width (default: 360)
+ *   data-height="600" or "100%"     — Iframe height (default: 600)
  */
 (function () {
   var WIDGET_ORIGIN = "https://staging.nebulacast.app";
@@ -44,11 +44,20 @@
     var url = WIDGET_ORIGIN + WIDGET_PATH + (params.toString() ? "?" + params.toString() : "");
     var iframe = document.createElement("iframe");
     iframe.src = url;
-    iframe.width = width;
-    iframe.height = height;
     iframe.style.border = "none";
     iframe.style.display = "block";
     iframe.title = "Nebulacast Weather Forecast";
+    if (width === "100%" || width.indexOf("%") >= 0) {
+      iframe.style.width = width;
+      el.style.width = "100%";
+    } else {
+      iframe.width = width;
+    }
+    if (height === "100%" || height.indexOf("%") >= 0) {
+      iframe.style.height = height;
+    } else {
+      iframe.height = height;
+    }
 
     el.appendChild(iframe);
   }
