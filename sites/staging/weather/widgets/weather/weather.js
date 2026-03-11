@@ -1,8 +1,8 @@
 // URL from config (set by weather/index.html)
-const ASTRO_WEATHER_URL = "/weather/daily_weather.json";
+const ASTRO_WEATHER_URL = (window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.fallbackLegacyUrl) || "/weather/daily_weather.json";
 const LOCATIONS_INDEX_URL = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.locationsIndexUrl;
 const LOCATION_DATA_BASE = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.locationDataBase;
-const API_ASTRO_WEATHER_URL = "/api/astro-weather";
+const API_ASTRO_WEATHER_URL = (window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.apiAstroWeatherUrl) || "/api/astro-weather";
 
 
 let weatherData = null;
