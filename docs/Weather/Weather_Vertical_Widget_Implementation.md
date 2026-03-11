@@ -50,23 +50,57 @@ Requires a container: `<div id="weatherVerticalMount"></div>`
 
 ## Embedding into a site
 
-### Option 1: Iframe (simplest)
+### Option 1: Embed script (recommended for external sites)
 
-Embed the standalone page in an iframe. The widget and API must be on the same origin (or CORS-enabled).
+Add a mount point and load the embed script. Works on any site; the widget runs inside an iframe from the widget origin.
+
+```html
+<div id="nc-weather-widget"></div>
+<script src="https://staging.nebulacast.app/weather/embed-vertical.js"></script>
+```
+
+Optional attributes on the script tag:
+
+| Attribute | Default | Description |
+|----------|---------|-------------|
+| `data-mount` | `nc-weather-widget` | ID of the mount element |
+| `data-lat` | — | Initial latitude |
+| `data-lon` | — | Initial longitude |
+| `data-tz` | `Europe/Warsaw` | Timezone |
+| `data-name` | — | Location name |
+| `data-width` | `360` | Iframe width |
+| `data-height` | `600` | Iframe height |
+
+Example with location preset:
+
+```html
+<div id="nc-weather-widget"></div>
+<script src="https://staging.nebulacast.app/weather/embed-vertical.js"
+        data-lat="52.2297"
+        data-lon="21.0122"
+        data-tz="Europe/Warsaw"
+        data-name="Warsaw"
+        data-width="360"
+        data-height="600"></script>
+```
+
+### Option 2: Raw iframe
+
+Embed the standalone page directly:
 
 ```html
 <iframe
-  src="https://your-domain.com/weather/weather-vertical.html"
+  src="https://staging.nebulacast.app/weather/weather-vertical"
   width="360"
   height="600"
-  frameborder="0"
-  title="Weather forecast"
+  style="border:none"
+  title="Nebulacast Weather Forecast"
 ></iframe>
 ```
 
-Adjust `width` and `height` to fit your layout. The page includes the location picker and weather widget.
+With URL params for initial location: `?lat=52.23&lon=21.01&tz=Europe/Warsaw&name=Warsaw`
 
-### Option 2: Script-based embed (same origin)
+### Option 3: Script-based embed (same origin)
 
 For embedding directly into your page (same origin as the API):
 
