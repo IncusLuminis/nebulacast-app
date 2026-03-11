@@ -1,8 +1,12 @@
 @import "./weather.css";
 
-/* Vertical page: align top line with location widget by width */
+/* Vertical page: full-width layout for embed */
 .weather-vertical-page .page-wrap {
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 12px 16px;
 }
 
 .weather-vertical-page .widget-container {
@@ -19,6 +23,7 @@
   margin-top: 8px;
   margin-bottom: 4px;
   min-width: 0;
+  width: 100%;
 }
 
 .weather-vertical-page .loc-action-label {
@@ -58,11 +63,13 @@
 }
 
 .weather-vertical {
-  max-width: 420px;
+  width: 100%;
+  max-width: 100%;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-sizing: border-box;
 }
 
 /* Embedded Inspector */
@@ -74,6 +81,8 @@
   margin-bottom: 4px;
   max-height: 320px;
   overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .weather-vertical .v-inspector-header {
@@ -139,6 +148,7 @@
 .weather-vertical .v-mode-switch {
   display: flex;
   gap: 6px;
+  width: 100%;
 }
 
 .weather-vertical .v-mode-switch .htab {
@@ -160,6 +170,7 @@
 .weather-vertical .legend {
   margin-top: 12px;
   font-size: 10px;
+  width: 100%;
 }
 
 /* Vertical card stack */
@@ -170,6 +181,8 @@
   padding: 8px 0;
   max-height: 400px;
   overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .weather-vertical .v-cards-roll .hour.v-hour-card {
@@ -179,6 +192,8 @@
   gap: 8px;
   padding: 8px;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .weather-vertical .v-cards-roll .hour.v-hour-card .v-hour-left {
@@ -215,6 +230,7 @@
 .weather-vertical .v-cards-roll .hour.v-hour-card .v-hour-right {
   flex: 1;
   min-width: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -224,6 +240,17 @@
 .weather-vertical .v-cards-roll .hour.v-hour-card .v-hour-right .cond-icons {
   margin-top: 2px;
   margin-bottom: 0;
+  width: 100%;
+}
+
+.weather-vertical .v-cards-roll .hour.v-hour-card .v-hour-right .cond-markers {
+  display: flex;
+  gap: 2px;
+}
+
+.weather-vertical .v-cards-roll .hour.v-hour-card .v-hour-right .cond-mark {
+  flex: 1;
+  min-width: 0;
 }
 
 .weather-vertical .v-cards-roll .hour.v-hour-card .v-hour-params {
@@ -256,4 +283,5 @@
   padding-top: 8px;
   border-top: 1px solid var(--line);
   font-size: 10px;
+  width: 100%;
 }
