@@ -1,5 +1,19 @@
 @import "./weather.css";
 
+/* Container: 300px standalone, 100% when embedded in iframe */
+.weather-vertical-page .weather-vertical-container {
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+.weather-vertical-page:not(.weather-vertical-embed) .weather-vertical-container {
+  width: 300px;
+  max-width: 100%;
+}
+.weather-vertical-page.weather-vertical-embed .weather-vertical-container {
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Vertical page: full-width layout for embed */
 .weather-vertical-page .page-wrap {
   box-sizing: border-box;
