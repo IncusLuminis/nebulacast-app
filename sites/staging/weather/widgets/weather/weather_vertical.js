@@ -21,12 +21,23 @@ export const WeatherWidget = {
       console.error("[WeatherWidget] Element not found:", mountId);
       return null;
     }
-    const location = {
+    let location = {
       lat: options.lat ?? 52.2297,
       lon: options.lon ?? 21.0122,
       tz: options.timezone ?? "Europe/Warsaw",
       name: options.name ?? "Weather"
     };
+    if (options.lat == null && options.lon == null) {
+      try {
+        const stored = localStorage.getItem("nc-weather-location");
+        if (stored) {
+          const loc = JSON.parse(stored);
+          if (loc && typeof loc.lat === "number" && typeof loc.lon === "number") {
+            location = { ...location, ...loc };
+          }
+        }
+      } catch (e) {}
+    }
     let state = { location, profile: "balanced", range: "today", source: "user" };
     const subscribers = new Set();
     const storeApi = {

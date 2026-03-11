@@ -1198,6 +1198,7 @@ function formatBreakdownRawForV2(key, raw) {
 // Step 4: Render hourly list with mode support
 let currentMode = "today";
 let hourlyMode = "observing"; // "observing" | "weather"
+const STORAGE_KEY_VERTICAL_TAB = "nc-weather-vertical-tab";
 let matrixOverlayParams = new Set(["sun", "moon"]); // active overlay keys (multi)
 
 // Helper: FWHM seeing indicator for observing mode cards
@@ -4245,7 +4246,7 @@ function renderWeatherHTMLVertical(rootEl) {
         <div class="v-inspector-body" data-role="v-hi-body"></div>
       </div>
       <div class="v-mode-switch">
-        <button class="htab" data-hmode="observing" data-active="true">Observing</button>
+        <button class="htab" data-hmode="observing">Observing</button>
         <button class="htab" data-hmode="weather">Weather</button>
       </div>
       <div class="v-cards-roll" data-role="v-hourly" aria-label="hourly forecast"></div>
@@ -4561,12 +4562,28 @@ export function mountWeather(rootEl, storeApi, options) {
   }
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
 
-  hourlyMode = "observing";
+  if (layoutMode === "vertical") {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_VERTICAL_TAB);
+      if (stored === "observing" || stored === "weather") {
+        hourlyMode = stored;
+      }
+    } catch (e) {}
+  } else {
+    hourlyMode = "observing";
+  }
   weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(btn) {
+    btn.removeAttribute("data-active");
+    if (btn.dataset.hmode === hourlyMode) btn.setAttribute("data-active", "true");
     btn.addEventListener("click", function() {
       weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(b) { b.removeAttribute("data-active"); });
       btn.setAttribute("data-active", "true");
       hourlyMode = btn.dataset.hmode;
+      if (layoutMode === "vertical") {
+        try {
+          localStorage.setItem(STORAGE_KEY_VERTICAL_TAB, hourlyMode);
+        } catch (e) {}
+      }
       if (layoutMode === "vertical") {
         if (weatherData && weatherData.hours) {
           renderVerticalCardStack(rootEl, weatherData.hours);

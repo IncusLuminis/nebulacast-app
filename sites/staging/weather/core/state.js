@@ -3,6 +3,7 @@
  */
 
 const DEBUG = false; // Set to true for console logging
+const STORAGE_KEY_LOCATION = "nc-weather-location";
 
 const DEFAULT_STATE = {
   location: {
@@ -60,6 +61,20 @@ export function setState(partial, meta = {}) {
     console.log("[state] setState:", { partial, meta, newState: state });
   }
   
+  // Persist location to localStorage
+  try {
+    if (state.location && typeof state.location.lat === "number" && typeof state.location.lon === "number") {
+      localStorage.setItem(STORAGE_KEY_LOCATION, JSON.stringify({
+        lat: state.location.lat,
+        lon: state.location.lon,
+        tz: state.location.tz || "Europe/Warsaw",
+        name: state.location.name || ""
+      }));
+    }
+  } catch (e) {
+    if (DEBUG) console.warn("[state] localStorage save failed:", e);
+  }
+
   // Notify subscribers
   emit();
   
@@ -216,9 +231,30 @@ export function initState() {
   // Initialize from URL or use defaults
   initFromUrl();
   
-  // If URL was empty, use default Warsaw location
+  // If URL was empty, try localStorage, then defaults
   if (!window.location.search) {
-    state = { ...DEFAULT_STATE };
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_LOCATION);
+      if (stored) {
+        const loc = JSON.parse(stored);
+        if (loc && typeof loc.lat === "number" && typeof loc.lon === "number" &&
+            loc.lat >= -90 && loc.lat <= 90 && loc.lon >= -180 && loc.lon <= 180) {
+          state.location = {
+            ...DEFAULT_STATE.location,
+            lat: loc.lat,
+            lon: loc.lon,
+            tz: loc.tz || DEFAULT_STATE.location.tz,
+            name: loc.name || DEFAULT_STATE.location.name
+          };
+          state.source = "user";
+        }
+      }
+    } catch (e) {
+      if (DEBUG) console.warn("[state] localStorage restore failed:", e);
+    }
+    if (!state.location.lat || !state.location.lon) {
+      state = { ...DEFAULT_STATE };
+    }
   }
   
   // Listen to browser navigation
