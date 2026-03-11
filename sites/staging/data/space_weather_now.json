@@ -1,22 +1,14 @@
 {
-  "generated_utc": "2026-03-11T01:13:19Z",
+  "generated_utc": "2026-03-11T06:40:47Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-10T21:00:00Z",
-      "value": 1.67
+      "timestamp_utc": "2026-03-11T03:00:00Z",
+      "value": 3.67
     },
     "forecast_3h": [
       {
-        "timestamp_utc": "2026-03-11T00:00:00Z",
-        "value": 2.67
-      },
-      {
-        "timestamp_utc": "2026-03-11T03:00:00Z",
-        "value": 2.33
-      },
-      {
         "timestamp_utc": "2026-03-11T06:00:00Z",
-        "value": 2.0
+        "value": 3.67
       },
       {
         "timestamp_utc": "2026-03-11T09:00:00Z",
@@ -37,17 +29,36 @@
       {
         "timestamp_utc": "2026-03-11T21:00:00Z",
         "value": 1.67
+      },
+      {
+        "timestamp_utc": "2026-03-12T00:00:00Z",
+        "value": 1.67
+      },
+      {
+        "timestamp_utc": "2026-03-12T03:00:00Z",
+        "value": 1.33
       }
     ],
     "activity_label": "quiet"
   },
-  "solar_wind": null,
+  "solar_wind": {
+    "timestamp_utc": "2026-03-11T06:38:00Z",
+    "speed_kms": 545.5,
+    "density_protons_cm3": 0.26
+  },
   "xray": {
-    "timestamp_utc": "2026-03-11T01:10:00Z",
-    "flux_wm2": 1.0243599035675288e-06,
-    "class": "C"
+    "timestamp_utc": "2026-03-11T06:37:00Z",
+    "flux_wm2": 5.795277502329554e-07,
+    "class": "B"
   },
   "alerts": [
+    {
+      "id": "K04W",
+      "timestamp_utc": "2026-03-11T02:57:03Z",
+      "title": "Space Weather Message Code: WARK04",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "K04A",
       "timestamp_utc": "2026-03-10T18:01:18Z",
