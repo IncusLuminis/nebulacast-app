@@ -3897,12 +3897,36 @@ function renderHourInspector(hourIdx, overrideEls) {
   const isGateClosed  = gateStatus === "CLOSED";
   const isGateCaution = gateStatus === "MARGINAL";
 
-  // ── Header: date + time ─────────────────────────────────────────────────────
+  // ── Header: date + time (in location timezone) ───────────────────────────────
   const hourDate = parseISO(hour.time);
-  const dateStr  = hourDate
-    ? hourDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : null;
-  els.time.textContent = (dateStr ? dateStr + "  " : "") + formatTime(hour.time);
+  const loc = weatherData?.location || {};
+  const tz = loc.tz || "UTC";
+  const use12h = (typeof loc.lon === "number" && loc.lon < -30) || (tz && typeof tz === "string" && tz.indexOf("America/") === 0);
+  let dateStr = null;
+  let timeStr = null;
+  if (hourDate && typeof Intl !== "undefined") {
+    try {
+      dateStr = new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        timeZone: tz
+      }).format(hourDate);
+      timeStr = new Intl.DateTimeFormat(use12h ? "en-US" : "en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: use12h,
+        timeZone: tz
+      }).format(hourDate);
+    } catch (e) {
+      dateStr = hourDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      timeStr = formatTime(hour.time);
+    }
+  } else {
+    dateStr = hourDate ? hourDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
+    timeStr = formatTime(hour.time);
+  }
+  const timeContent = (dateStr ? dateStr + "  " : "") + (timeStr || formatTime(hour.time));
+  els.time.textContent = overrideEls ? "Observation Conditions for " + timeContent : timeContent;
 
   // Score + rank — for CLOSED gate use breakdown.total (actual sky quality)
   const hiProfile = getActiveProfile();
@@ -4228,11 +4252,14 @@ function renderWeatherHTMLVertical(rootEl) {
         <div class="v-inspector-header">
           <div class="v-inspector-left">
             <div class="v-inspector-time" data-role="v-hi-time">—</div>
-            <div class="v-inspector-score" data-role="v-hi-score">—</div>
+            <div class="v-inspector-score-label">Score</div>
+            <div class="v-inspector-score-row">
+              <div class="v-inspector-score" data-role="v-hi-score">—</div>
+              <div class="v-metrics-line" data-role="v-metrics-line">—</div>
+            </div>
             <div class="v-inspector-label" data-role="v-hi-label">—</div>
           </div>
         </div>
-        <div class="v-metrics-line" data-role="v-metrics-line">—</div>
         <div class="v-inspector-section v-charts-section">
           <div class="hi-gate-header" data-panel="v-emb-clouds">
             <span class="hi-toggle-btn">▶</span>

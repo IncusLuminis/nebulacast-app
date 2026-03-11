@@ -1,12 +1,12 @@
 @import "./weather.css";
 
-/* Container: 300px standalone, 100% when embedded in iframe */
+/* Container: 450px standalone (300×1.5), 100% when embedded in iframe */
 .weather-vertical-page .weather-vertical-container {
   box-sizing: border-box;
   margin: 0 auto;
 }
 .weather-vertical-page:not(.weather-vertical-embed) .weather-vertical-container {
-  width: 300px;
+  width: 450px;
   max-width: 100%;
 }
 .weather-vertical-page.weather-vertical-embed .weather-vertical-container {
@@ -48,7 +48,7 @@
 .weather-vertical-page .loc-input-wrapper {
   min-width: 0;
   flex: 1 1 80px;
-  max-width: 100%;
+  max-width: calc(100% - 170px);
 }
 
 .weather-vertical-page .loc-input {
@@ -103,13 +103,25 @@
   margin-bottom: 8px;
 }
 
-.weather-vertical .v-inspector-embedded .v-metrics-line {
-  margin-bottom: 10px;
-}
-
 .weather-vertical .v-inspector-left {
   display: flex;
   flex-direction: column;
+}
+
+.weather-vertical .v-inspector-score-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.weather-vertical .v-inspector-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
 }
 
 .weather-vertical .v-inspector-time {
@@ -119,9 +131,15 @@
 }
 
 .weather-vertical .v-inspector-score {
-  font-size: 24px;
+  font-size: 36px;
   font-weight: 800;
   line-height: 1.2;
+}
+
+.weather-vertical .v-inspector-score-row .v-metrics-line {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 
 .weather-vertical .v-inspector-label {

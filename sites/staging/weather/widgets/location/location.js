@@ -32,8 +32,8 @@ async function lookupTimezone(lat, lon, country) {
     console.warn("Timezone API failed:", e);
   }
   
-  // Fallback: simple guessing
-  if (country === "United Kingdom" || country === "UK" || 
+  // Fallback: guess by country or coordinates (do NOT use browser timezone — wrong for remote locations)
+  if (country === "United Kingdom" || country === "UK" ||
       (lat > 50.0 && lat < 56.0 && lon > -6.0 && lon < 2.0)) {
     return "Europe/London";
   }
@@ -52,12 +52,64 @@ async function lookupTimezone(lat, lon, country) {
   if (country === "France" || (lat > 42.0 && lat < 51.0 && lon > -5.0 && lon < 10.0)) {
     return "Europe/Paris";
   }
-  
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  } catch (e) {
-    return "UTC";
+  if (country === "Spain" || (lat > 36.0 && lat < 44.0 && lon > -9.0 && lon < 4.5)) {
+    return "Europe/Madrid";
   }
+  if (country === "Italy" || (lat > 37.0 && lat < 47.5 && lon > 6.5 && lon < 18.5)) {
+    return "Europe/Rome";
+  }
+  if (country === "Japan" || (lat > 24.0 && lat < 46.0 && lon > 123.0 && lon < 154.0)) {
+    return "Asia/Tokyo";
+  }
+  if (country === "Australia") {
+    if (lon > 115.0 && lon < 130.0) return "Australia/Perth";
+    if (lon > 130.0 && lon < 141.0) return "Australia/Darwin";
+    if (lon > 141.0 && lon < 154.0) return "Australia/Brisbane";
+    if (lon > 154.0) return "Australia/Sydney";
+  }
+  if (country === "United States" || country === "USA" || country === "US" ||
+      (lat > 24.0 && lat < 50.0 && lon > -125.0 && lon < -66.0)) {
+    if (lon < -165) return "America/Anchorage";
+    if (lon < -140) return "America/Los_Angeles";
+    if (lon < -115) return "America/Denver";
+    if (lon < -90) return "America/Chicago";
+    if (lon < -75) return "America/New_York";
+    return "America/New_York";
+  }
+  if (country === "Canada" || (lat > 41.0 && lat < 84.0 && lon > -141.0 && lon < -52.0)) {
+    if (lon < -130) return "America/Vancouver";
+    if (lon < -115) return "America/Edmonton";
+    if (lon < -90) return "America/Winnipeg";
+    if (lon < -64) return "America/Toronto";
+    return "America/St_Johns";
+  }
+  if (country === "Mexico" || (lat > 14.0 && lat < 33.0 && lon > -118.0 && lon < -86.0)) {
+    if (lon < -106) return "America/Mazatlan";
+    if (lon < -90) return "America/Mexico_City";
+    return "America/Cancun";
+  }
+  if (country === "Brazil" || (lat > -34.0 && lat < 5.0 && lon > -74.0 && lon < -34.0)) {
+    if (lon < -60) return "America/Manaus";
+    return "America/Sao_Paulo";
+  }
+  if (country === "Russia" || (lat > 41.0 && lat < 82.0 && lon > 19.0 && lon < 180.0)) {
+    if (lon < 38) return "Europe/Moscow";
+    if (lon < 64) return "Asia/Yekaterinburg";
+    if (lon < 97) return "Asia/Novosibirsk";
+    if (lon < 127) return "Asia/Irkutsk";
+    if (lon < 151) return "Asia/Vladivostok";
+    return "Asia/Kamchatka";
+  }
+  if (country === "China" || (lat > 18.0 && lat < 54.0 && lon > 73.0 && lon < 136.0)) {
+    return "Asia/Shanghai";
+  }
+  if (country === "India" || (lat > 8.0 && lat < 36.0 && lon > 68.0 && lon < 97.0)) {
+    return "Asia/Kolkata";
+  }
+  if (lat > 21.0 && lat < 26.0 && lon > -158.5 && lon < -154.5) {
+    return "Pacific/Honolulu";
+  }
+  return "UTC";
 }
 
 /**
