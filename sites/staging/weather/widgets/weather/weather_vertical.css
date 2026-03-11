@@ -30,26 +30,25 @@
 }
 
 .weather-vertical-page .loc-action-bar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  /* Fixed-width input column so buttons never overlap it */
+  grid-template-columns: auto 180px auto auto;
   align-items: center;
-  gap: 6px;
+  column-gap: 6px;
+  row-gap: 4px;
   margin-top: 8px;
   margin-bottom: 4px;
-  min-width: 0;
   width: 100%;
+  max-width: 100%;
 }
 
 .weather-vertical-page .loc-action-label {
   font-size: 12px;
-  flex-shrink: 0;
-  width: 100%;
+  min-width: 0;
 }
 
 .weather-vertical-page .loc-input-wrapper {
   min-width: 0;
-  flex: 1 1 100%;
-  max-width: 100%;
 }
 
 .weather-vertical-page .loc-input {
@@ -59,13 +58,9 @@
 .weather-vertical-page .loc-btn-secondary {
   font-size: 11px;
   padding: 6px 10px;
-  flex-shrink: 0;
-  margin-top: 4px;
 }
 
 .weather-vertical-page .loc-btn-icon {
-  flex-shrink: 0;
-  margin-top: 4px;
 }
 
 .weather-vertical-page .loc-status-line {
