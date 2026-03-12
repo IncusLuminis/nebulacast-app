@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-03-12T01:25:41.769260Z",
+  "generated_utc": "2026-03-12T12:45:27.807109Z",
   "source": "JPL SSD CAD API + JPL Horizons + JPL SBDB",
   "counts": {
     "pha_rows": 0,
-    "ld10_rows": 5,
-    "items": 5
+    "ld10_rows": 6,
+    "items": 6
   },
   "items": [
     {
@@ -20,7 +20,7 @@
       "dec_deg": -65.88432,
       "mag": 16.77,
       "updated_utc": "2026-03-13T03:27:00Z",
-      "ingested_utc": "2026-03-12T01:25:37.223366Z",
+      "ingested_utc": "2026-03-12T12:45:22.988752Z",
       "meta": {
         "t_utc": "2026-Mar-13 03:27Z",
         "t_utc_iso": "2026-03-13T03:27:00Z",
@@ -88,6 +88,86 @@
       }
     },
     {
+      "id": "2026 EE2",
+      "source": "jpl-cad+horizons+sbdb",
+      "group": "neo",
+      "type": "neo",
+      "title": "2026 EE2",
+      "note": "Close approach within 10 lunar distances",
+      "score_raw": 87.14,
+      "score_norm": 0.8714,
+      "ra_deg": 191.45941,
+      "dec_deg": -25.87286,
+      "mag": 14.57,
+      "updated_utc": "2026-03-12T16:07:00Z",
+      "ingested_utc": "2026-03-12T12:45:22.988752Z",
+      "meta": {
+        "t_utc": "2026-Mar-12 16:07Z",
+        "t_utc_iso": "2026-03-12T16:07:00Z",
+        "date_local": "2026-03-12",
+        "neo_event_id": "neo:2026 EE2:2026-Mar-12 16:07",
+        "bucket": "10ld",
+        "pha": false,
+        "pha_cad_flag": false,
+        "pha_sbdb_flag": false,
+        "dist_au": 0.00557996530619017,
+        "dist_ld": 2.171568,
+        "v_rel_km_s": 7.30225288315503,
+        "h_cad": 24.409,
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-03-12&date-max=2026-03-19&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-03-12&date-max=2026-03-19&sort=dist&limit=50&dist-max=10LD",
+        "cad_fields_pha": null,
+        "cad_fields_10ld": [
+          "des",
+          "orbit_id",
+          "jd",
+          "cd",
+          "dist",
+          "dist_min",
+          "dist_max",
+          "v_rel",
+          "v_inf",
+          "t_sigma_f",
+          "h"
+        ],
+        "cad_row": [
+          "2026 EE2",
+          "1",
+          "2461112.171843404",
+          "2026-Mar-12 16:07",
+          "0.00557996530619017",
+          "0.00556673653452915",
+          "0.00559319301485715",
+          "7.30225288315503",
+          "7.23656553319655",
+          "< 00:01",
+          "24.409"
+        ],
+        "alt_deg": -37.687114,
+        "az_deg": 84.720475,
+        "horizons_ok": true,
+        "horizons_error": null,
+        "horizons_query": {
+          "id": "2026 EE2",
+          "jd": 2461112.171527778,
+          "site": {
+            "lat": 52.2297,
+            "lon": 21.0122,
+            "elev_km": 0.1
+          }
+        },
+        "sbdb_ok": true,
+        "sbdb_error": null,
+        "sbdb_moid_au": 0.00394,
+        "sbdb_h": null,
+        "sbdb_albedo": null,
+        "sbdb_diameter_km": null,
+        "sbdb_diameter_est_km": 0.04662952195557176,
+        "sbdb_diameter_source": "h_cad",
+        "risk_score": 0.5276
+      }
+    },
+    {
       "id": "2015 VO142",
       "source": "jpl-cad+horizons+sbdb",
       "group": "neo",
@@ -100,7 +180,7 @@
       "dec_deg": 64.28117,
       "mag": 20.77,
       "updated_utc": "2026-03-17T05:12:00Z",
-      "ingested_utc": "2026-03-12T01:25:37.223366Z",
+      "ingested_utc": "2026-03-12T12:45:22.988752Z",
       "meta": {
         "t_utc": "2026-Mar-17 05:12Z",
         "t_utc_iso": "2026-03-17T05:12:00Z",
@@ -180,7 +260,7 @@
       "dec_deg": -54.77403,
       "mag": 19.18,
       "updated_utc": "2026-03-15T16:54:00Z",
-      "ingested_utc": "2026-03-12T01:25:37.223366Z",
+      "ingested_utc": "2026-03-12T12:45:22.988752Z",
       "meta": {
         "t_utc": "2026-Mar-15 16:54Z",
         "t_utc_iso": "2026-03-15T16:54:00Z",
@@ -260,7 +340,7 @@
       "dec_deg": 53.44502,
       "mag": 16.72,
       "updated_utc": "2026-03-15T02:26:00Z",
-      "ingested_utc": "2026-03-12T01:25:37.223366Z",
+      "ingested_utc": "2026-03-12T12:45:22.988752Z",
       "meta": {
         "t_utc": "2026-Mar-15 02:26Z",
         "t_utc_iso": "2026-03-15T02:26:00Z",
@@ -340,7 +420,7 @@
       "dec_deg": 53.89485,
       "mag": 19.23,
       "updated_utc": "2026-03-12T06:01:00Z",
-      "ingested_utc": "2026-03-12T01:25:37.223366Z",
+      "ingested_utc": "2026-03-12T12:45:22.988752Z",
       "meta": {
         "t_utc": "2026-Mar-12 06:01Z",
         "t_utc_iso": "2026-03-12T06:01:00Z",
