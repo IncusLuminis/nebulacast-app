@@ -261,7 +261,7 @@
 
         <!-- Space Weather panel -->
         <div id="panel-space-weather" class="nebulacast-panel">
-          <div id="w-space-weather" class="widget-container"></div>
+          <div id="w-helio" class="widget-container"></div>
         </div>
 
         <!-- News panel -->
@@ -368,9 +368,10 @@
 
   <!-- News/Calendar widgets -->
   <script src="/assets/js/widget_runtime.js"></script>
-  <!-- Phase 1: observer + space weather panels -->
+  <!-- Observer weather panel -->
   <script src="/assets/js/widget_observer_weather.js"></script>
-  <script src="/assets/js/widget_space_weather.js"></script>
+  <!-- Helio widget (Space Weather) -->
+  <script src="/helio/dist/helio.widget.js"></script>
 
   <!-- Weather app state and widgets -->
   <script type="module">
@@ -441,14 +442,15 @@
       });
     }
 
-    // Phase 1: Observer Weather + Space Weather panels
+    // Observer weather panel
     const obsWeatherEl = document.getElementById('w-observer-weather');
     if (obsWeatherEl && window.runObserverWeatherPanel) {
       window.runObserverWeatherPanel(obsWeatherEl, { jsonUrl: '/data/observer_weather_now.json' });
     }
-    const spaceWeatherEl = document.getElementById('w-space-weather');
-    if (spaceWeatherEl && window.runSpaceWeatherPanel) {
-      window.runSpaceWeatherPanel(spaceWeatherEl, { jsonUrl: '/data/space_weather_now.json' });
+    // Helio widget (Space Weather)
+    const helioEl = document.getElementById('w-helio');
+    if (helioEl && window.HelioWidget) {
+      window.HelioWidget.mount(helioEl, { dataUrl: '/data/helio_now.json' });
     }
 
     window.runCalendarWidget({

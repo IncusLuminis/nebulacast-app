@@ -14,7 +14,7 @@ Output shape:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 
@@ -224,6 +224,206 @@ def _normalize_imf_bz(rows: Optional[List]) -> Optional[float]:
     return bz
 
 
+# ── 24-hour history series (1-hour buckets) ───────────────────────────────────
+
+def _hour_floor(ts: str) -> str:
+    """Truncate an ISO UTC timestamp to the hour floor: '2026-03-13T07:00:00Z'."""
+    return ts[:13] + ":00:00Z"
+
+
+def _history_cutoff() -> str:
+    """Return ISO UTC string for 24 hours ago."""
+    dt = datetime.now(timezone.utc) - timedelta(hours=24)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _history_cutoff_6h() -> str:
+    """Return ISO UTC string for 6 hours ago."""
+    dt = datetime.now(timezone.utc) - timedelta(hours=6)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _five_min_floor(ts: str) -> str:
+    """Truncate an ISO UTC timestamp to the nearest 5-minute floor."""
+    minute = int(ts[14:16])
+    floored = (minute // 5) * 5
+    return ts[:14] + f"{floored:02d}:00Z"
+
+
+def _normalize_kp_history_1h(rows: Optional[List]) -> List[Dict[str, Any]]:
+    """
+    Produce 1-hour averaged Kp values for the last 24h.
+    Input: kp_observed rows  [[time_tag, kp_index], ...]  (header first).
+    Returns [{t_utc, kp}] ascending, one point per completed hour.
+    """
+    if not rows:
+        return []
+    cutoff = _history_cutoff()
+    buckets: Dict[str, List[float]] = {}
+    for row in rows[1:]:
+        if not isinstance(row, (list, tuple)) or len(row) < 2:
+            continue
+        ts = _parse_swpc_ts(str(row[0]))
+        if not ts or ts < cutoff:
+            continue
+        try:
+            val = float(row[1])
+        except (TypeError, ValueError):
+            continue
+        key = _hour_floor(ts)
+        buckets.setdefault(key, []).append(val)
+    return sorted(
+        [{"t_utc": k, "kp": round(sum(v) / len(v), 2)} for k, v in buckets.items()],
+        key=lambda p: p["t_utc"],
+    )
+
+
+def _normalize_wind_history_1h(rows: Optional[List]) -> List[Dict[str, Any]]:
+    """
+    Produce 1-hour averaged solar wind parameters for the last 24h.
+    Input: solar_wind_plasma rows  [[time_tag, density, speed, temp], ...]
+    Returns [{t_utc, kms, density, temp_kk, pressure_npa}] ascending.
+    Dynamic pressure: P(nPa) = 1.67e-6 * n(cm⁻³) * v(km/s)²
+    """
+    if not rows:
+        return []
+    cutoff = _history_cutoff()
+    spd_b: Dict[str, List[float]] = {}
+    den_b: Dict[str, List[float]] = {}
+    tmp_b: Dict[str, List[float]] = {}
+    for row in rows[1:]:
+        if not isinstance(row, (list, tuple)) or len(row) < 4:
+            continue
+        ts = _parse_swpc_ts(str(row[0]))
+        if not ts or ts < cutoff:
+            continue
+        key = _hour_floor(ts)
+        try:
+            spd = float(row[2]) if row[2] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            spd = None
+        try:
+            den = float(row[1]) if row[1] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            den = None
+        try:
+            tmp = float(row[3]) if row[3] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            tmp = None
+        if spd is not None:
+            spd_b.setdefault(key, []).append(spd)
+        if den is not None:
+            den_b.setdefault(key, []).append(den)
+        if tmp is not None:
+            tmp_b.setdefault(key, []).append(tmp)
+    result = []
+    for k in sorted(set(spd_b) | set(den_b) | set(tmp_b)):
+        spd_avg = round(sum(spd_b[k]) / len(spd_b[k]), 1) if k in spd_b else None
+        den_avg = round(sum(den_b[k]) / len(den_b[k]), 2) if k in den_b else None
+        tmp_avg = round(sum(tmp_b[k]) / len(tmp_b[k]) / 1000, 1) if k in tmp_b else None  # K → kK
+        pres = round(1.67e-6 * den_avg * (spd_avg ** 2), 2) if den_avg and spd_avg else None
+        result.append({
+            "t_utc":        k,
+            "kms":          spd_avg,
+            "density":      den_avg,   # cm⁻³
+            "temp_kk":      tmp_avg,   # kilo-Kelvin
+            "pressure_npa": pres,      # nPa
+        })
+    return result
+
+
+def _normalize_xray_history_1h(entries: Optional[List]) -> List[Dict[str, Any]]:
+    """
+    Produce 1-hour averaged X-ray flux for the last 24h.
+    Input: GOES xrays-1-day JSON list of dicts (0.1–0.8 nm band only).
+    Returns [{t_utc, flux}] ascending, flux in W/m².
+    """
+    if not entries:
+        return []
+    cutoff = _history_cutoff()
+    buckets: Dict[str, List[float]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if "0.1-0.8" not in str(entry.get("energy", "")):
+            continue
+        ts = _parse_swpc_ts(str(entry.get("time_tag", "")))
+        if not ts or ts < cutoff:
+            continue
+        try:
+            f = float(entry.get("flux") or 0)
+        except (TypeError, ValueError):
+            continue
+        if f <= 0:
+            continue
+        key = _hour_floor(ts)
+        buckets.setdefault(key, []).append(f)
+    return sorted(
+        [{"t_utc": k, "flux": sum(v) / len(v)} for k, v in buckets.items()],
+        key=lambda p: p["t_utc"],
+    )
+
+
+def _normalize_bz_history_5m(rows: Optional[List]) -> List[Dict[str, Any]]:
+    """
+    Produce 5-minute averaged IMF Bz (nT) for the last 6h.
+    Input: solar_wind_mag rows [[time_tag, bx, by, bz_gsm, ...], ...]
+    Returns [{t_utc, bz}] ascending, one point per 5-min bucket.
+    """
+    if not rows:
+        return []
+    cutoff = _history_cutoff_6h()
+    buckets: Dict[str, List[float]] = {}
+    for row in rows[1:]:
+        if not isinstance(row, (list, tuple)) or len(row) < 4:
+            continue
+        ts = _parse_swpc_ts(str(row[0]))
+        if not ts or ts < cutoff:
+            continue
+        try:
+            val = float(row[3]) if row[3] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            val = None
+        if val is None:
+            continue
+        key = _five_min_floor(ts)
+        buckets.setdefault(key, []).append(val)
+    return sorted(
+        [{"t_utc": k, "bz": round(sum(v) / len(v), 2)} for k, v in buckets.items()],
+        key=lambda p: p["t_utc"],
+    )
+
+
+def _normalize_bz_history_1h(rows: Optional[List]) -> List[Dict[str, Any]]:
+    """
+    Produce 1-hour averaged IMF Bz (nT) for the last 24h.
+    Input: solar_wind_mag rows  [[time_tag, bx, by, bz_gsm, ...], ...]
+    Returns [{t_utc, bz}] ascending.
+    """
+    if not rows:
+        return []
+    cutoff = _history_cutoff()
+    buckets: Dict[str, List[float]] = {}
+    for row in rows[1:]:
+        if not isinstance(row, (list, tuple)) or len(row) < 4:
+            continue
+        ts = _parse_swpc_ts(str(row[0]))
+        if not ts or ts < cutoff:
+            continue
+        try:
+            val = float(row[3]) if row[3] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            val = None
+        if val is None:
+            continue
+        key = _hour_floor(ts)
+        buckets.setdefault(key, []).append(val)
+    return sorted(
+        [{"t_utc": k, "bz": round(sum(v) / len(v), 2)} for k, v in buckets.items()],
+        key=lambda p: p["t_utc"],
+    )
+
+
 # ── Raw alert records ─────────────────────────────────────────────────────────
 
 def _extract_message_code(message: str) -> Optional[str]:
@@ -332,14 +532,25 @@ def normalize(raw: Dict[str, Any]) -> Dict[str, Any]:
     imf_bz_nt      = _normalize_imf_bz(raw.get("solar_wind_mag"))
     raw_alerts     = _normalize_alerts(raw.get("alerts"))
 
+    kp_history_1h    = _normalize_kp_history_1h(raw.get("kp_observed"))
+    wind_history_1h  = _normalize_wind_history_1h(raw.get("solar_wind_plasma"))
+    xray_history_1h  = _normalize_xray_history_1h(raw.get("xray"))
+    bz_history_1h    = _normalize_bz_history_1h(raw.get("solar_wind_mag"))
+    bz_history_5m    = _normalize_bz_history_5m(raw.get("solar_wind_mag"))
+
     metrics: Dict[str, Any] = {
-        "kp_latest":      kp_val,
-        "kp_time_utc":    kp_ts,
-        "kp_forecast_3h": kp_forecast,
-        "xray_flux_wm2":  xray_flux,
-        "xray_class":     xray_class,
-        "solar_wind_kms": solar_wind_kms,
-        "imf_bz_nt":      imf_bz_nt,
+        "kp_latest":        kp_val,
+        "kp_time_utc":      kp_ts,
+        "kp_forecast_3h":   kp_forecast,
+        "kp_history_1h":    kp_history_1h,
+        "xray_flux_wm2":    xray_flux,
+        "xray_class":       xray_class,
+        "xray_history_1h":  xray_history_1h,
+        "solar_wind_kms":   solar_wind_kms,
+        "wind_history_1h":  wind_history_1h,
+        "imf_bz_nt":        imf_bz_nt,
+        "bz_history_1h":    bz_history_1h,
+        "bz_history_5m":    bz_history_5m,
     }
 
     return {

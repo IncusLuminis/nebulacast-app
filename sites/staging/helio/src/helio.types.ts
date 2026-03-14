@@ -1,0 +1,117 @@
+/**
+ * TypeScript types for the helio_now.json data contract.
+ * Source of truth: docs/Helio/Helio Data Contract v1.md
+ */
+
+export type HelioStatus = "quiet" | "active" | "elevated" | "storm";
+export type AuroraLabel  = "none" | "possible" | "good";
+export type ImpactLevel  = "none" | "low" | "moderate" | "high";
+export type AlertLevel   = "info" | "watch" | "warning";
+export type ScaleValue   = "G0"|"G1"|"G2"|"G3"|"G4"|"G5"|"R0"|"R1"|"R2"|"R3"|"R4"|"R5"|"S0"|"S1"|"S2"|"S3"|"S4"|"S5";
+
+export interface KpForecastPoint {
+  t_utc: string;
+  kp:    number;
+}
+
+export interface KpHistoryPoint { t_utc: string; kp: number; }
+
+export interface WindHistoryPoint {
+  t_utc:        string;
+  kms:          number | null;
+  density:      number | null;  // cm⁻³
+  temp_kk:      number | null;  // kilo-Kelvin
+  pressure_npa: number | null;  // nPa
+}
+
+export interface XrayHistoryPoint { t_utc: string; flux: number; }  // W/m²
+export interface BzHistoryPoint   { t_utc: string; bz:   number; }
+
+export interface HelioMetrics {
+  kp_latest:       number | null;
+  kp_time_utc:     string | null;
+  kp_forecast_3h:  KpForecastPoint[];
+  kp_history_1h:   KpHistoryPoint[];
+  xray_flux_wm2:   number | null;
+  xray_class:      "A"|"B"|"C"|"M"|"X" | null;
+  xray_history_1h: XrayHistoryPoint[];
+  solar_wind_kms:  number | null;
+  wind_history_1h: WindHistoryPoint[];
+  imf_bz_nt:       number | null;
+  bz_history_1h:   BzHistoryPoint[];
+  bz_history_5m:   BzHistoryPoint[];
+}
+
+export interface HelioSummary {
+  status: HelioStatus;
+  label:  string;
+  text:   string;
+}
+
+export interface HelioScales {
+  g_scale: ScaleValue;
+  r_scale: ScaleValue;
+  s_scale: ScaleValue;
+}
+
+export interface HelioForecast {
+  kp_max_next_24h: number | null;
+  kp_max_at_utc:   string | null;
+  trend:           "falling" | "steady" | "rising" | "unknown";
+}
+
+export interface HelioAuroraHint {
+  aurora_possible:    boolean;
+  aurora_min_lat_est: number | null;
+  aurora_label:       AuroraLabel;
+  summary:            string;
+}
+
+export interface ObserverImpact {
+  kind:    "aurora" | "radio" | "solar_activity";
+  level:   ImpactLevel;
+  label:   string;
+  summary: string;
+}
+
+export interface HelioEvent {
+  t_utc:          string;
+  kind:           string;
+  domain:         string;
+  severity:       number | null;
+  severity_label: string | null;
+  level:          AlertLevel;
+  title:          string;
+  summary_short:  string;
+  source_code:    string | null;
+  raw_title:      string | null;
+  raw_body:       string | null;
+  relevance:      number;
+  dedupe_key:     string;
+}
+
+export interface HelioNow {
+  schema_version:   string;
+  updated_utc:      string;
+  source: {
+    domain:   string;
+    provider: string;
+    products: string[];
+  };
+  metrics:          HelioMetrics;
+  summary:          HelioSummary;
+  scales:           HelioScales;
+  forecast:         HelioForecast;
+  aurora_hint:      HelioAuroraHint;
+  observer_impacts: ObserverImpact[];
+  alerts_preview:   HelioEvent[];
+  alerts_all:       HelioEvent[];
+  raw: {
+    alerts_count: number;
+  };
+}
+
+export interface HelioWidgetOptions {
+  dataUrl:         string;
+  refreshMs?:      number;  // default 10 min
+}
