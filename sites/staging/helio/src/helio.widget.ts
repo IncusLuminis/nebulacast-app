@@ -438,7 +438,8 @@ function deriveMagnetInfo(data: HelioNow): MagnetInfo {
   if ((bz != null && bz < -5) || kp >= 6) {
     state = "storm";  color = "#e05c5c"; label = "Storm conditions";
   } else if ((bz != null && bz < 0) || kp >= 4 || wind >= 400) {
-    state = "active"; color = "#e0a84a"; label = "Active coupling";
+    const coupling = bz != null && bz < 0;
+    state = "active"; color = "#e0a84a"; label = coupling ? "Active coupling" : "Elevated";
   } else {
     state = "stable"; color = "#5cce8c"; label = "Stable";
   }
@@ -535,8 +536,11 @@ function renderMagnetosphereSvg(
 
     const numGroups = wHigh ? 4 : 3;
     const arrowRows = [24, 42, 60, 78, 96];
+    const aOff = 40; // start arrows after sun right edge (cx=0 r=36 → right=36)
+    const aLen = wHigh ? 18 : 14;
+    const aHead = wHigh ? 14 : 10;
     const arrowPath = (y: number) =>
-      `<path d="M 0,${y} L ${wHigh ? 18 : 14},${y} M ${wHigh ? 14 : 10},${y - 4} L ${wHigh ? 18 : 14},${y} L ${wHigh ? 14 : 10},${y + 4}" stroke="${c}bb" stroke-width="${wHigh ? 2 : 1.5}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+      `<path d="M ${aOff},${y} L ${aOff + aLen},${y} M ${aOff + aHead},${y - 4} L ${aOff + aLen},${y} L ${aOff + aHead},${y + 4}" stroke="${c}bb" stroke-width="${wHigh ? 2 : 1.5}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
     const arrowSet = arrowRows.map(y => arrowPath(y)).join("");
     const windGroups = Array.from({ length: numGroups }, (_, i) =>
       `<g class="hw-wg" style="animation-duration:${dur}s;animation-delay:${((dur / numGroups) * i).toFixed(2)}s">${arrowSet}</g>`
@@ -550,9 +554,9 @@ function renderMagnetosphereSvg(
       `<text x="${ex + 13}" y="${ey + 2}" font-size="7" fill="${bz > 0 ? "#5cce8c" : "#e05c5c"}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
 
     return `<svg viewBox="0 0 200 120" style="width:100%;height:80px;display:block" xmlns="http://www.w3.org/2000/svg">
-      <defs><clipPath id="${uid}-wclip"><rect x="0" y="0" width="62" height="120"/></clipPath></defs>
+      <defs><clipPath id="${uid}-wclip"><rect x="38" y="0" width="46" height="120"/></clipPath></defs>
       <rect width="200" height="120" fill="#0a1014" rx="3"/>
-      <circle cx="8" cy="60" r="12" fill="#f0c040" opacity=".75"/>
+      <circle cx="0" cy="60" r="36" fill="#f0c040" opacity=".7"/>
       <g clip-path="url(#${uid}-wclip)">${windGroups}</g>
       <path d="${couplingPath}" fill="${c}08"/>
       <path d="${path}" fill="${c}12" stroke="${c}aa" stroke-width="1.2"/>
