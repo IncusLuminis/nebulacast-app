@@ -140,7 +140,7 @@
   </svg>`}function Se(e){if(e.length<2)return'<div style="color:#405058;font-size:.72em;padding:4px">No data</div>';let t=200,o=32,r=e.map(c=>Math.max(-9,Math.min(-3,Math.log10(c.flux)))),n=Math.min(...r),a=Math.max(...r)-n||1,s=c=>o-2-(c-n)/a*(o-4),l=r.map((c,p)=>`${(p/(r.length-1)*t).toFixed(1)},${s(c).toFixed(1)}`).join(" "),d=e.map((c,p)=>{let x=p/(r.length-1)*t,g=c.flux>=1e-4?"X":c.flux>=1e-5?"M":c.flux>=1e-6?"C":c.flux>=1e-7?"B":"A";return`<rect x="${(x-4).toFixed(1)}" y="0" width="8" height="${o}" fill="transparent"><title>${u(E(c.t_utc))} \xB7 ${g}-class (${c.flux.toExponential(2)})</title></rect>`}).join("");return`<svg viewBox="0 0 ${t} ${o}" style="width:100%;height:${o}px;display:block" preserveAspectRatio="none">
     <polyline points="${l}" fill="none" stroke="#e0a84a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
     ${d}
-  </svg>`}function B(e){return`<div class="hw-kpi-popover-title">
+  </svg>`}function N(e){return`<div class="hw-kpi-popover-title">
     <span>${e}</span>
     <button class="hw-kpi-popover-close hw-kpi-close" aria-label="Close">\u2715</button>
   </div>`}function ze(e){var s;let t=(s=e.metrics.wind_history_1h)!=null?s:[],o=G(t.map(l=>{var d;return(d=l.kms)!=null?d:0}).filter(l=>l>0),t.map(l=>E(l.t_utc)),"#5cce8c",36,!1),r=t[t.length-1],n=(r==null?void 0:r.density)!=null?`${r.density.toFixed(2)} cm\u207B\xB3`:"\u2014",i=(r==null?void 0:r.temp_kk)!=null?`${r.temp_kk.toFixed(0)} kK`:"\u2014",a=(r==null?void 0:r.pressure_npa)!=null?`${r.pressure_npa.toFixed(2)} nPa`:"\u2014";return`<div class="hw-kpi-popover">
