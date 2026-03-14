@@ -3,7 +3,9 @@
   "private": true,
   "description": "Staging site + Cloudflare Pages Functions (api/astro-weather, geocode, revgeo)",
   "scripts": {
-    "build:functions": "node scripts/build-functions.mjs"
+    "build:functions": "node scripts/build-functions.mjs",
+    "build:helio":     "node scripts/build-helio.mjs",
+    "watch:helio":     "node scripts/build-helio.mjs --watch"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260313.1",

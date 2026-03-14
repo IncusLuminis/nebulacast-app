@@ -1,0 +1,342 @@
+{
+  "schema_version": "helio_now/v1",
+  "updated_utc": "2026-03-13T07:23:34Z",
+  "source": {
+    "domain": "helio",
+    "provider": "NOAA_SWPC",
+    "products": [
+      "planetary_k_index_1m",
+      "kp_forecast_3d",
+      "solar_wind_plasma",
+      "solar_wind_mag",
+      "xray_flux",
+      "alerts"
+    ]
+  },
+  "metrics": {
+    "kp_latest": 4.0,
+    "kp_time_utc": "2026-03-13T03:00:00Z",
+    "kp_forecast_3h": [
+      {
+        "t_utc": "2026-03-13T09:00:00Z",
+        "kp": 3.67
+      },
+      {
+        "t_utc": "2026-03-13T12:00:00Z",
+        "kp": 4.67
+      },
+      {
+        "t_utc": "2026-03-13T15:00:00Z",
+        "kp": 4.0
+      },
+      {
+        "t_utc": "2026-03-13T18:00:00Z",
+        "kp": 3.67
+      },
+      {
+        "t_utc": "2026-03-13T21:00:00Z",
+        "kp": 3.67
+      },
+      {
+        "t_utc": "2026-03-14T00:00:00Z",
+        "kp": 4.67
+      },
+      {
+        "t_utc": "2026-03-14T03:00:00Z",
+        "kp": 4.0
+      },
+      {
+        "t_utc": "2026-03-14T06:00:00Z",
+        "kp": 4.0
+      },
+      {
+        "t_utc": "2026-03-14T09:00:00Z",
+        "kp": 3.0
+      },
+      {
+        "t_utc": "2026-03-14T12:00:00Z",
+        "kp": 2.67
+      },
+      {
+        "t_utc": "2026-03-14T15:00:00Z",
+        "kp": 2.33
+      },
+      {
+        "t_utc": "2026-03-14T18:00:00Z",
+        "kp": 2.33
+      },
+      {
+        "t_utc": "2026-03-14T21:00:00Z",
+        "kp": 3.67
+      },
+      {
+        "t_utc": "2026-03-15T00:00:00Z",
+        "kp": 4.0
+      },
+      {
+        "t_utc": "2026-03-15T03:00:00Z",
+        "kp": 3.33
+      },
+      {
+        "t_utc": "2026-03-15T06:00:00Z",
+        "kp": 2.67
+      },
+      {
+        "t_utc": "2026-03-15T09:00:00Z",
+        "kp": 2.0
+      },
+      {
+        "t_utc": "2026-03-15T12:00:00Z",
+        "kp": 2.0
+      },
+      {
+        "t_utc": "2026-03-15T15:00:00Z",
+        "kp": 2.0
+      },
+      {
+        "t_utc": "2026-03-15T18:00:00Z",
+        "kp": 2.33
+      },
+      {
+        "t_utc": "2026-03-15T21:00:00Z",
+        "kp": 2.67
+      },
+      {
+        "t_utc": "2026-03-16T00:00:00Z",
+        "kp": 3.0
+      }
+    ],
+    "xray_flux_wm2": 1.8659932266018586e-06,
+    "xray_class": "C",
+    "solar_wind_kms": 404.4,
+    "imf_bz_nt": -5.21
+  },
+  "summary": {
+    "status": "active",
+    "label": "Active",
+    "text": "Space weather is mildly active. Conditions may improve aurora chances at high latitudes."
+  },
+  "scales": {
+    "g_scale": "G0",
+    "r_scale": "R0",
+    "s_scale": "S0"
+  },
+  "forecast": {
+    "kp_max_next_24h": 4.67,
+    "kp_max_at_utc": "2026-03-13T12:00:00Z",
+    "trend": "steady"
+  },
+  "aurora_hint": {
+    "aurora_possible": true,
+    "aurora_min_lat_est": 60,
+    "aurora_label": "possible",
+    "summary": "Aurora may be possible at high latitudes if activity increases."
+  },
+  "observer_impacts": [
+    {
+      "kind": "aurora",
+      "level": "low",
+      "label": "Aurora",
+      "summary": "Aurora may be possible at high latitudes if activity increases."
+    },
+    {
+      "kind": "radio",
+      "level": "none",
+      "label": "Radio impact",
+      "summary": "No major radio blackout expected."
+    },
+    {
+      "kind": "solar_activity",
+      "level": "low",
+      "label": "Solar activity",
+      "summary": "Low flare activity."
+    }
+  ],
+  "alerts_preview": [
+    {
+      "t_utc": "2026-03-13T01:57:16Z",
+      "kind": "geomagnetic_storm",
+      "domain": "G",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Geomagnetic storm",
+      "summary_short": "Elevated geomagnetic activity may improve aurora chances at high latitudes.",
+      "source_code": "WARK04",
+      "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
+      "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5283\r\nIssue Time: 2026 Mar 13 0157 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 Mar 13 0156 UTC\r\nValid To: 2026 Mar 13 2359 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
+      "relevance": 1.0169,
+      "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-13T00"
+    },
+    {
+      "t_utc": "2026-03-13T04:54:05Z",
+      "kind": "geomagnetic_watch",
+      "domain": "G",
+      "severity": null,
+      "severity_label": null,
+      "level": "watch",
+      "title": "Elevated geomagnetic activity possible",
+      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
+      "source_code": "ALTK04",
+      "raw_title": "ALERT: Geomagnetic K-index of 4",
+      "raw_body": "Space Weather Message Code: ALTK04\r\nSerial Number: 2640\r\nIssue Time: 2026 Mar 13 0454 UTC\r\n\r\nALERT: Geomagnetic K-index of 4\r\n Threshold Reached: 2026 Mar 13 0447 UTC\r\nSynoptic Period: 0300-0600 UTC\r\n \r\nActive Warning: Yes\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
+      "relevance": 0.8302,
+      "dedupe_key": "geomagnetic_watch|G|na|watch|2026-03-13T00"
+    },
+    {
+      "t_utc": "2026-03-11T21:52:25Z",
+      "kind": "geomagnetic_watch",
+      "domain": "G",
+      "severity": 1,
+      "severity_label": "minor",
+      "level": "watch",
+      "title": "Geomagnetic storm watch",
+      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
+      "source_code": "WATA20",
+      "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
+      "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1100\r\nIssue Time: 2026 Mar 11 2152 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted\r\n\r\nHighest Storm Level Predicted by Day:\r\nMar 12:  None (Below G1)   Mar 13:  G1 (Minor)   Mar 14:  G1 (Minor)\r\n\r\nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
+      "relevance": 0.5024,
+      "dedupe_key": "geomagnetic_watch|G|1|watch|2026-03-11T18"
+    }
+  ],
+  "alerts_all": [
+    {
+      "t_utc": "2026-03-13T04:54:05Z",
+      "kind": "geomagnetic_watch",
+      "domain": "G",
+      "severity": null,
+      "severity_label": null,
+      "level": "watch",
+      "title": "Elevated geomagnetic activity possible",
+      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
+      "source_code": "ALTK04",
+      "raw_title": "ALERT: Geomagnetic K-index of 4",
+      "raw_body": "Space Weather Message Code: ALTK04\r\nSerial Number: 2640\r\nIssue Time: 2026 Mar 13 0454 UTC\r\n\r\nALERT: Geomagnetic K-index of 4\r\n Threshold Reached: 2026 Mar 13 0447 UTC\r\nSynoptic Period: 0300-0600 UTC\r\n \r\nActive Warning: Yes\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
+      "relevance": 0.8302,
+      "dedupe_key": "geomagnetic_watch|G|na|watch|2026-03-13T00"
+    },
+    {
+      "t_utc": "2026-03-13T01:57:16Z",
+      "kind": "geomagnetic_storm",
+      "domain": "G",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Geomagnetic storm",
+      "summary_short": "Elevated geomagnetic activity may improve aurora chances at high latitudes.",
+      "source_code": "WARK04",
+      "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
+      "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5283\r\nIssue Time: 2026 Mar 13 0157 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 Mar 13 0156 UTC\r\nValid To: 2026 Mar 13 2359 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
+      "relevance": 1.0169,
+      "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-13T00"
+    },
+    {
+      "t_utc": "2026-03-12T11:47:08Z",
+      "kind": "space_weather_info",
+      "domain": "info",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Space weather update",
+      "summary_short": "General space weather information update.",
+      "source_code": "ALTEF3",
+      "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
+      "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3645\r\nIssue Time: 2026 Mar 12 1147 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3644\r\nBegin Time: 2026 Mar 08 1510 UTC\r\nYesterday Maximum 2MeV Flux: 2076 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
+      "relevance": 0.2911,
+      "dedupe_key": "space_weather_info|info|na|warning|2026-03-12T06"
+    },
+    {
+      "t_utc": "2026-03-11T21:52:25Z",
+      "kind": "geomagnetic_watch",
+      "domain": "G",
+      "severity": 1,
+      "severity_label": "minor",
+      "level": "watch",
+      "title": "Geomagnetic storm watch",
+      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
+      "source_code": "WATA20",
+      "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
+      "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1100\r\nIssue Time: 2026 Mar 11 2152 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted\r\n\r\nHighest Storm Level Predicted by Day:\r\nMar 12:  None (Below G1)   Mar 13:  G1 (Minor)   Mar 14:  G1 (Minor)\r\n\r\nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
+      "relevance": 0.5024,
+      "dedupe_key": "geomagnetic_watch|G|1|watch|2026-03-11T18"
+    },
+    {
+      "t_utc": "2026-03-11T10:04:06Z",
+      "kind": "space_weather_info",
+      "domain": "info",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Space weather update",
+      "summary_short": "General space weather information update.",
+      "source_code": "ALTEF3",
+      "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
+      "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3644\r\nIssue Time: 2026 Mar 11 1004 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3643\r\nBegin Time: 2026 Mar 08 1510 UTC\r\nYesterday Maximum 2MeV Flux: 1726 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
+      "relevance": 0.1482,
+      "dedupe_key": "space_weather_info|info|na|warning|2026-03-11T06"
+    },
+    {
+      "t_utc": "2026-03-11T02:57:03Z",
+      "kind": "geomagnetic_storm",
+      "domain": "G",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Geomagnetic storm",
+      "summary_short": "Elevated geomagnetic activity may improve aurora chances at high latitudes.",
+      "source_code": "WARK04",
+      "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
+      "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5282\r\nIssue Time: 2026 Mar 11 0257 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\r\nExtension to Serial Number: 5281\r\nValid From: 2026 Mar 10 1752 UTC\r\nNow Valid Until: 2026 Mar 11 1200 UTC\r\nWarning Condition: Persistence\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
+      "relevance": 0.2988,
+      "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-11T00"
+    },
+    {
+      "t_utc": "2026-03-10T18:01:18Z",
+      "kind": "geomagnetic_watch",
+      "domain": "G",
+      "severity": null,
+      "severity_label": null,
+      "level": "watch",
+      "title": "Elevated geomagnetic activity possible",
+      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
+      "source_code": "ALTK04",
+      "raw_title": "ALERT: Geomagnetic K-index of 4",
+      "raw_body": "Space Weather Message Code: ALTK04\r\nSerial Number: 2639\r\nIssue Time: 2026 Mar 10 1801 UTC\r\n\r\nALERT: Geomagnetic K-index of 4\r\n Threshold Reached: 2026 Mar 10 1759 UTC\r\nSynoptic Period: 1500-1800 UTC\r\n \r\nActive Warning: Yes\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
+      "relevance": 0.129,
+      "dedupe_key": "geomagnetic_watch|G|na|watch|2026-03-10T18"
+    },
+    {
+      "t_utc": "2026-03-10T17:52:31Z",
+      "kind": "geomagnetic_storm",
+      "domain": "G",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Geomagnetic storm",
+      "summary_short": "Elevated geomagnetic activity may improve aurora chances at high latitudes.",
+      "source_code": "WARK04",
+      "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
+      "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5281\r\nIssue Time: 2026 Mar 10 1752 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 Mar 10 1752 UTC\r\nValid To: 2026 Mar 11 0300 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
+      "relevance": 0.165,
+      "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-10T12"
+    },
+    {
+      "t_utc": "2026-03-10T17:16:14Z",
+      "kind": "space_weather_info",
+      "domain": "info",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Space weather update",
+      "summary_short": "General space weather information update.",
+      "source_code": "ALTEF3",
+      "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
+      "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3643\r\nIssue Time: 2026 Mar 10 1716 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3642\r\nBegin Time: 2026 Mar 08 1510 UTC\r\nYesterday Maximum 2MeV Flux: 1358 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
+      "relevance": 0.06,
+      "dedupe_key": "space_weather_info|info|na|warning|2026-03-10T12"
+    }
+  ],
+  "raw": {
+    "alerts_count": 102
+  }
+}

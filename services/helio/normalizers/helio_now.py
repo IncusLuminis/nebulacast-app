@@ -247,6 +247,7 @@ def _extract_message_title(message: str) -> Optional[str]:
     """
     skip_prefixes = (
         "SPACE WEATHER MESSAGE CODE",
+        "SERIAL NUMBER",
         "ISSUE TIME",
         "VALID TIME",
         "NOAA SPACE WEATHER",

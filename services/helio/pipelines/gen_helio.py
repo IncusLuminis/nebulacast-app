@@ -29,8 +29,8 @@ from providers.noaa_swpc import fetch_swpc, active_product_names
 from normalizers.helio_now import normalize
 
 # Future imports — uncomment as tasks are completed:
-# from interpreters.swpc_alerts import interpret   # Task 2
-# from aggregators.helio_state import derive        # Task 3
+from interpreters.swpc_alerts import interpret, derive_scales  # Task 2
+from aggregators.helio_state import derive                     # Task 3
 
 _OUTPUT_PATH = _repo_root / "sites" / "staging" / "data" / "helio_now.json"
 
@@ -46,7 +46,8 @@ def _write_json_atomic(path: Path, data: dict) -> None:
 
 
 def main() -> int:
-    started = datetime.now(timezone.utc)
+    started     = datetime.now(timezone.utc)
+    updated_utc = started.strftime("%Y-%m-%dT%H:%M:%SZ")
     print(f"[helio.pipeline] Starting at {started.isoformat()}")
 
     # ── 1. Fetch ──────────────────────────────────────────────────────────────
@@ -67,35 +68,42 @@ def main() -> int:
           f"raw_alerts={len(raw_alerts)}")
 
     # ── 3. Interpret (Task 2) ─────────────────────────────────────────────────
-    # events = interpret(raw_alerts)
-    events: list = []  # placeholder until Task 2
+    interpreted = interpret(raw_alerts)
+    events        = interpreted["alerts_all"]
+    alerts_preview = interpreted["alerts_preview"]
+    event_scales   = derive_scales(events)
+    print(f"[helio.pipeline] events={len(events)} preview={len(alerts_preview)} "
+          f"scales={event_scales}")
 
     # ── 4. Aggregate (Task 3) ─────────────────────────────────────────────────
-    # aggregate = derive(metrics=metrics, events=events)
-    aggregate: dict = {}  # placeholder until Task 3
+    aggregate = derive(
+        metrics=metrics,
+        events=events,
+        updated_utc=updated_utc,
+    )
+    print(f"[helio.pipeline] status={aggregate['summary']['status']} "
+          f"scales={aggregate['scales']} "
+          f"aurora={aggregate['aurora_hint']['aurora_label']} "
+          f"kp_max_24h={aggregate['forecast']['kp_max_next_24h']} "
+          f"trend={aggregate['forecast']['trend']}")
 
     # ── 5. Serialize (Task 4) ─────────────────────────────────────────────────
-    # Full contract serialization is implemented in Task 4.
-    # For now, write a diagnostic snapshot so Task 1 is verifiable.
-    updated_utc = started.strftime("%Y-%m-%dT%H:%M:%SZ")
-
     payload = {
         "schema_version": "helio_now/v1",
-        "updated_utc": updated_utc,
+        "updated_utc":    updated_utc,
         "source": {
             "domain":   "helio",
             "provider": "NOAA_SWPC",
             "products": products,
         },
         "metrics":          metrics,
-        # Fields below are populated in Tasks 2–4:
-        "summary":          aggregate.get("summary",         _fallback_summary()),
-        "scales":           aggregate.get("scales",          _fallback_scales()),
-        "forecast":         aggregate.get("forecast",        _fallback_forecast()),
-        "aurora_hint":      aggregate.get("aurora_hint",     _fallback_aurora()),
-        "observer_impacts": aggregate.get("observer_impacts", _fallback_impacts()),
-        "alerts_preview":   aggregate.get("alerts_preview",  []),
-        "alerts_all":       aggregate.get("alerts_all",      []),
+        "summary":          aggregate["summary"],
+        "scales":           aggregate["scales"],
+        "forecast":         aggregate["forecast"],
+        "aurora_hint":      aggregate["aurora_hint"],
+        "observer_impacts": aggregate["observer_impacts"],
+        "alerts_preview":   alerts_preview,
+        "alerts_all":       aggregate["alerts_all"],
         "raw": {
             "alerts_count": len(raw_alerts),
         },
@@ -104,37 +112,6 @@ def main() -> int:
     _write_json_atomic(_OUTPUT_PATH, payload)
     print(f"[helio.pipeline] Done in {(datetime.now(timezone.utc) - started).total_seconds():.1f}s")
     return 0
-
-
-# ── Safe fallback helpers (used until Task 3 aggregator is wired in) ──────────
-
-def _fallback_summary() -> dict:
-    return {
-        "status": "quiet",
-        "label":  "Quiet",
-        "text":   "Quiet space weather conditions. No major impact expected.",
-    }
-
-def _fallback_scales() -> dict:
-    return {"g_scale": "G0", "r_scale": "R0", "s_scale": "S0"}
-
-def _fallback_forecast() -> dict:
-    return {"kp_max_next_24h": None, "kp_max_at_utc": None, "trend": "unknown"}
-
-def _fallback_aurora() -> dict:
-    return {
-        "aurora_possible":    False,
-        "aurora_min_lat_est": None,
-        "aurora_label":       "none",
-        "summary":            "No meaningful aurora chance for most users.",
-    }
-
-def _fallback_impacts() -> list:
-    return [
-        {"kind": "aurora",         "level": "none", "label": "Aurora",        "summary": "No meaningful aurora chance for most users."},
-        {"kind": "radio",          "level": "none", "label": "Radio impact",   "summary": "No major radio blackout expected."},
-        {"kind": "solar_activity", "level": "none", "label": "Solar activity", "summary": "No significant flare signal."},
-    ]
 
 
 if __name__ == "__main__":
