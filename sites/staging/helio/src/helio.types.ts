@@ -112,6 +112,9 @@ export interface HelioNow {
 }
 
 export interface HelioWidgetOptions {
-  dataUrl:         string;
-  refreshMs?:      number;  // default 10 min
+  dataUrl:       string;
+  refreshMs?:    number;   // default 10 min
+  lat?:          number;   // observer latitude °N
+  lon?:          number;   // observer longitude °E
+  locationName?: string;   // display name (e.g. "Moscow")
 }

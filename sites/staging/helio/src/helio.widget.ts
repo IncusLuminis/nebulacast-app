@@ -150,8 +150,11 @@ const WIDGET_CSS = `
 .hw-xray-scale-marker{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:5px solid #fff}
 .hw-xray-scale-labels{display:flex;margin-top:3px}
 .hw-xray-scale-label{flex:1;font-size:.63em;color:#607880;text-align:center}
-.hw-aurora-img{display:block;width:100%;border-radius:3px;aspect-ratio:1;object-fit:cover;background:#0a1012}
-.hw-aurora-caption{font-size:.65em;color:#607880;margin-top:4px;text-align:center}
+.hw-aurora-map-wrap{position:relative;border-radius:3px;overflow:hidden;background:#0a1012}
+.hw-aurora-img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.hw-aurora-caption{font-size:.65em;color:#607880;margin-top:5px;text-align:center}
+.hw-aurora-obs-panel{display:flex;align-items:center;gap:5px;padding:5px 0 1px;font-size:.72em;color:#9ab4bc}
+.hw-aurora-prob{font-weight:600;margin-left:auto}
 
 /* Hero detail panel */
 .hw-hero-detail{border-bottom:1px solid #1e2c30;padding:10px 14px;background:#131a1c}
@@ -193,6 +196,11 @@ const WIDGET_CSS = `
 .hw-impact-badge{font-size:.68em;font-weight:700;padding:1px 7px;border-radius:2px;text-transform:capitalize;min-width:52px;text-align:center;flex-shrink:0}
 .hw-impact-tip{flex-basis:100%;font-size:.72em;color:#7a9098;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px}
 .hw-impact-row:hover .hw-impact-tip{display:block}
+.hw-solar-tip{flex-basis:100%;display:none;flex-direction:row;align-items:center;gap:10px;margin-top:6px;padding:6px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
+.hw-impact-row:hover .hw-solar-tip{display:flex}
+.hw-solar-disk-wrap{position:relative;flex-shrink:0;width:80px;height:80px}
+.hw-solar-disk-img{position:absolute;top:0;left:0;width:80px;height:80px;border-radius:50%;object-fit:cover;background:#0a0a0a;border:1px solid #2a3c42}
+.hw-solar-tip-text{font-size:.72em;color:#7a9098;line-height:1.5}
 
 /* Alerts */
 .hw-alerts{padding:10px 14px}
@@ -212,6 +220,14 @@ const WIDGET_CSS = `
 .hw-alert-meta{font-size:.68em;color:#607880}
 .hw-alert-body{margin-top:8px;padding:7px 8px;background:#111b1e;border-radius:2px;font-size:.7em;color:#96a8b8;line-height:1.55;white-space:pre-wrap;font-family:monospace;word-break:break-word;border-top:1px solid #2a3c42}
 .hw-empty-alerts{font-size:.78em;color:#607880;font-style:italic;padding:4px 0}
+
+/* Magnetosphere */
+.hw-info-top-row{display:flex;gap:8px;align-items:flex-start}
+.hw-magnet-mini{flex-shrink:0;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s;display:flex;flex-direction:column;align-items:center;width:80px}
+.hw-magnet-mini:hover,.hw-magnet-mini.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
+.hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
+@keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
+.hw-wg{animation:hw-wind 1.5s linear infinite}
 
 /* States */
 .hw-error{padding:16px;text-align:center;color:#607880}
@@ -401,23 +417,321 @@ function renderBzPopover(data: HelioNow): string {
   </div>`;
 }
 
-function renderAuroraPopover(): string {
-  // NOAA OVATION aurora oval — updated every 5 min, no CORS for img tags
-  const url = `https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`;
+// ── Magnetosphere Visualization (Issue #178) ─────────────────────────────────
+
+interface MagnetInfo {
+  state:    "stable" | "active" | "storm";
+  color:    string;
+  label:    string;
+  coupling: string;
+}
+
+function deriveMagnetInfo(data: HelioNow): MagnetInfo {
+  const bz   = data.metrics.imf_bz_nt;
+  const kp   = data.metrics.kp_latest ?? 0;
+  const wind = data.metrics.solar_wind_kms ?? 0;
+
+  let state: MagnetInfo["state"];
+  let color: string;
+  let label: string;
+
+  if ((bz != null && bz < -5) || kp >= 6) {
+    state = "storm";  color = "#e05c5c"; label = "Storm conditions";
+  } else if ((bz != null && bz < 0) || kp >= 4 || wind >= 400) {
+    state = "active"; color = "#e0a84a"; label = "Active coupling";
+  } else {
+    state = "stable"; color = "#5cce8c"; label = "Stable";
+  }
+
+  let coupling: string;
+  if (bz == null)    coupling = "Unknown";
+  else if (bz > 2)   coupling = "Closed";
+  else if (bz > 0)   coupling = "Minimal";
+  else if (bz > -5)  coupling = "Moderate";
+  else if (bz > -10) coupling = "Strong";
+  else               coupling = "Very strong";
+
+  return { state, color, label, coupling };
+}
+
+/** Render SVG magnetosphere diagram.
+ *  compact=true  → 80×50 viewBox (hero mini)
+ *  compact=false → 200×120 viewBox (popover) */
+function renderMagnetosphereSvg(
+  info: MagnetInfo,
+  bz: number | null,
+  wind: number | null,
+  compact: boolean,
+): string {
+  const uid = compact ? "mc" : "mf";
+  const c   = info.color;
+
+  // Wind animation speed
+  const wKms = wind ?? 0;
+  const wHigh = wKms > 500, wSlow = wKms < 350;
+  const dur = wHigh ? 0.9 : wSlow ? 1.8 : 1.3;
+
+  if (compact) {
+    // ── Compact 80×50, Earth at (45, 25) ──────────────────────────────────
+    const ex = 45, ey = 25, er = 4.5;
+    const standoff = info.state === "storm" ? 11 : info.state === "active" ? 16 : 21;
+    const nx = ex - standoff;
+    const topY = info.state === "storm" ? 12 : info.state === "active" ? 10 : 8;
+    const botY = 50 - topY;
+    const tailX = 76;
+
+    const path = [
+      `M ${nx},${ey}`,
+      `C ${nx - 2},${ey - 10} ${ex - 4},${topY} ${ex},${topY}`,
+      `C ${ex + 8},${topY} ${tailX - 8},${topY + 4} ${tailX},${ey - 5}`,
+      `C ${tailX + 1},${ey - 2} ${tailX + 1},${ey + 2} ${tailX},${ey + 5}`,
+      `C ${tailX - 8},${botY - 4} ${ex + 8},${botY} ${ex},${botY}`,
+      `C ${ex - 4},${botY} ${nx - 2},${ey + 10} ${nx},${ey}`,
+      "Z",
+    ].join(" ");
+
+    const numGroups = wHigh ? 3 : 2;
+    const arrowRows = [14, 25, 36];
+    const arrowPath = (y: number) =>
+      `<path d="M 0,${y} L ${wHigh ? 8 : 6},${y} M ${wHigh ? 6 : 4},${y - 2} L ${wHigh ? 8 : 6},${y} L ${wHigh ? 6 : 4},${y + 2}" stroke="${c}bb" stroke-width="${wHigh ? 1.4 : 1}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const arrowSet = arrowRows.map(y => arrowPath(y)).join("");
+    const windGroups = Array.from({ length: numGroups }, (_, i) =>
+      `<g class="hw-wg" style="animation-duration:${dur}s;animation-delay:${((dur / numGroups) * i).toFixed(2)}s">${arrowSet}</g>`
+    ).join("");
+
+    const bzArrow = bz == null ? "" : bz > 0
+      ? `<path d="M ${ex},${ey + 2} L ${ex},${ey - 2} M ${ex - 1.5},${ey - 0.5} L ${ex},${ey - 2} L ${ex + 1.5},${ey - 0.5}" stroke="#5cce8c" stroke-width="1" fill="none" stroke-linecap="round"/>`
+      : `<path d="M ${ex},${ey - 2} L ${ex},${ey + 2} M ${ex - 1.5},${ey + 0.5} L ${ex},${ey + 2} L ${ex + 1.5},${ey + 0.5}" stroke="#e05c5c" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+
+    return `<svg viewBox="0 0 80 50" style="width:78px;height:49px;display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="${uid}-wclip"><rect x="0" y="0" width="26" height="50"/></clipPath></defs>
+      <circle cx="2" cy="25" r="5" fill="#f0c040" opacity=".7"/>
+      <g clip-path="url(#${uid}-wclip)">${windGroups}</g>
+      <path d="${path}" fill="${c}14" stroke="${c}b0" stroke-width="0.9"/>
+      <circle cx="${ex}" cy="${ey}" r="${er}" fill="#2a4a6a" stroke="#4a7090" stroke-width="0.8"/>
+      ${bzArrow}
+    </svg>`;
+
+  } else {
+    // ── Full 200×120, Earth at (110, 60) ──────────────────────────────────
+    const ex = 110, ey = 60, er = 10;
+    const standoff = info.state === "storm" ? 26 : info.state === "active" ? 38 : 50;
+    const nx = ex - standoff;
+    const topY = info.state === "storm" ? 28 : info.state === "active" ? 22 : 18;
+    const botY = 120 - topY;
+    const tailX = 188;
+
+    const path = [
+      `M ${nx},${ey}`,
+      `C ${nx - 5},${ey - 22} ${ex - 10},${topY} ${ex},${topY}`,
+      `C ${ex + 18},${topY} ${tailX - 20},${topY + 10} ${tailX},${ey - 12}`,
+      `C ${tailX + 3},${ey - 5} ${tailX + 3},${ey + 5} ${tailX},${ey + 12}`,
+      `C ${tailX - 20},${botY - 10} ${ex + 18},${botY} ${ex},${botY}`,
+      `C ${ex - 10},${botY} ${nx - 5},${ey + 22} ${nx},${ey}`,
+      "Z",
+    ].join(" ");
+
+    const couplingPath = `M ${nx + 2},${ey} C ${nx + 2},${ey - standoff * 0.4} ${ex - 4},${ey - 8} ${ex - er},${ey} C ${ex - 4},${ey + 8} ${nx + 2},${ey + standoff * 0.4} ${nx + 2},${ey} Z`;
+
+    const numGroups = wHigh ? 4 : 3;
+    const arrowRows = [24, 42, 60, 78, 96];
+    const arrowPath = (y: number) =>
+      `<path d="M 0,${y} L ${wHigh ? 18 : 14},${y} M ${wHigh ? 14 : 10},${y - 4} L ${wHigh ? 18 : 14},${y} L ${wHigh ? 14 : 10},${y + 4}" stroke="${c}bb" stroke-width="${wHigh ? 2 : 1.5}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const arrowSet = arrowRows.map(y => arrowPath(y)).join("");
+    const windGroups = Array.from({ length: numGroups }, (_, i) =>
+      `<g class="hw-wg" style="animation-duration:${dur}s;animation-delay:${((dur / numGroups) * i).toFixed(2)}s">${arrowSet}</g>`
+    ).join("");
+
+    const bzArrow = bz == null ? "" : bz > 0
+      ? `<path d="M ${ex},${ey + 5} L ${ex},${ey - 5} M ${ex - 3},${ey - 2} L ${ex},${ey - 5} L ${ex + 3},${ey - 2}" stroke="#5cce8c" stroke-width="1.5" fill="none" stroke-linecap="round"/>`
+      : `<path d="M ${ex},${ey - 5} L ${ex},${ey + 5} M ${ex - 3},${ey + 2} L ${ex},${ey + 5} L ${ex + 3},${ey + 2}" stroke="#e05c5c" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+
+    const bzLabel = bz == null ? "" :
+      `<text x="${ex + 13}" y="${ey + 2}" font-size="7" fill="${bz > 0 ? "#5cce8c" : "#e05c5c"}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
+
+    return `<svg viewBox="0 0 200 120" style="width:100%;height:80px;display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="${uid}-wclip"><rect x="0" y="0" width="62" height="120"/></clipPath></defs>
+      <rect width="200" height="120" fill="#0a1014" rx="3"/>
+      <circle cx="8" cy="60" r="12" fill="#f0c040" opacity=".75"/>
+      <g clip-path="url(#${uid}-wclip)">${windGroups}</g>
+      <path d="${couplingPath}" fill="${c}08"/>
+      <path d="${path}" fill="${c}12" stroke="${c}aa" stroke-width="1.2"/>
+      <text x="${nx + 3}" y="${topY - 2}" font-size="7" fill="${c}" opacity=".75" font-family="sans-serif">${escText(info.label)}</text>
+      <circle cx="${ex}" cy="${ey}" r="${er}" fill="#2a4a6a" stroke="#4a7090" stroke-width="1"/>
+      ${bzArrow}
+      ${bzLabel}
+      <text x="2" y="113" font-size="6" fill="#f0c04088" font-family="sans-serif">Sun</text>
+    </svg>`;
+  }
+}
+
+function renderMagnetospherePopover(data: HelioNow): string {
+  const info  = deriveMagnetInfo(data);
+  const bz    = data.metrics.imf_bz_nt;
+  const wind  = data.metrics.solar_wind_kms;
+  const kp    = data.metrics.kp_latest;
+
+  const bzStr   = bz   != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const windStr = wind != null ? `${Math.round(wind)} km/s` : "—";
+  const kpStr   = kp   != null ? kp.toFixed(1) : "—";
+  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
+
+  const hintText = (bz != null && bz < -5)
+    ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
+    : (bz != null && bz < 0)
+    ? "Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible."
+    : "Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";
+
   return `<div class="hw-kpi-popover">
-    ${renderPopoverHeader("Aurora Oval · Northern Hemisphere")}
-    <img class="hw-aurora-img" src="${esc(url)}" alt="NOAA Aurora Oval" loading="lazy" />
-    <div class="hw-aurora-caption">Source: NOAA OVATION Prime model · Updated every 5 min</div>
+    ${renderPopoverHeader("Magnetosphere")}
+    <div class="hw-spark-wrap" style="border-radius:3px;overflow:hidden">${renderMagnetosphereSvg(info, bz, wind, false)}</div>
+    <div class="hw-kpi-stat-row">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">IMF Bz</span>
+        <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Solar wind</span>
+        <span class="hw-kpi-stat-value">${escText(windStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Coupling</span>
+        <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
+      </div>
+    </div>
+    <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
   </div>`;
 }
 
-function renderKpiPopover(data: HelioNow, key: string): string {
+// ── Aurora probability map (Issue #177) ─────────────────────────────────────
+
+interface OvationEntry { lon: number; lat: number; prob: number; }
+interface OvationData  { entries: OvationEntry[]; forecastTime: string; }
+
+// NOAA OVATION aurora image covers 30°N–90°N (co-latitude 0°–60°).
+// Edge of the disk ≈ 30°N → MAX_COLAT = 60.
+const AURORA_MAP_MAX_COLAT = 60;
+
+/**
+ * Azimuthal equidistant projection matching the NOAA OVATION polar image.
+ * Pole at center; 30°N at the outer edge of the disk (r = R).
+ */
+function auroraMapProject(
+  lat: number, lon: number,
+  cx: number, cy: number, R: number,
+): { x: number; y: number } {
+  const r      = R * (90 - lat) / AURORA_MAP_MAX_COLAT;
+  const lonRad = lon * Math.PI / 180;
+  return { x: cx + r * Math.sin(lonRad), y: cy - r * Math.cos(lonRad) };
+}
+
+/** Nearest-grid-cell lookup of OVATION aurora probability at observer lat/lon. */
+function lookupOvationProb(entries: OvationEntry[], lat: number, lon: number): number | null {
+  if (!entries.length) return null;
+  const normLon = ((lon % 360) + 360) % 360;
+  let best = -1, bestDist = Infinity;
+  const cosLat = Math.cos(lat * Math.PI / 180);
+  for (const e of entries) {
+    const dLat = e.lat - lat;
+    const dLon = ((e.lon - normLon + 180 + 360) % 360) - 180;
+    const dist  = dLat * dLat + (dLon * cosLat) * (dLon * cosLat);
+    if (dist < bestDist) { bestDist = dist; best = e.prob; }
+  }
+  return best >= 0 ? best : null;
+}
+
+/** SVG overlay: lat-ring grid + observer dot, viewBox 0 0 100 100. */
+function renderAuroraSvgOverlay(opts: HelioWidgetOptions): string {
+  const CX = 50, CY = 50, R = 46;
+  const LAT_RINGS = [40, 50, 60, 70, 80];
+  const rings = LAT_RINGS.map(lat => {
+    const r = (R * (90 - lat) / AURORA_MAP_MAX_COLAT).toFixed(1);
+    const tx = (CX + parseFloat(r) + 1).toFixed(1);
+    return `<circle cx="${CX}" cy="${CY}" r="${r}" fill="none" stroke="#fff" stroke-width=".3" stroke-dasharray="1.5 2" opacity=".3"/>` +
+           `<text x="${tx}" y="${CY}" font-size="2.8" fill="#7c9ca8" font-family="monospace" dominant-baseline="middle" opacity=".7">${lat}°</text>`;
+  }).join("");
+
+  const cardinals = [
+    `<text x="${CX}" y="4"   font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">N</text>`,
+    `<text x="96"  y="${CY + 1}" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">E</text>`,
+    `<text x="${CX}" y="97"  font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">S</text>`,
+    `<text x="4"   y="${CY + 1}" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">W</text>`,
+  ].join("");
+
+  let observerDot = "";
+  if (opts.lat != null && opts.lon != null) {
+    const pos = auroraMapProject(opts.lat, opts.lon, CX, CY, R);
+    // Clamp to within disk
+    const dx = pos.x - CX, dy = pos.y - CY;
+    const d  = Math.sqrt(dx * dx + dy * dy);
+    const pxN = d <= R ? pos.x : CX + dx / d * R;
+    const pyN = d <= R ? pos.y : CY + dy / d * R;
+    const px = pxN.toFixed(1), py = pyN.toFixed(1);
+
+    // Label: place to the right unless too close to the right edge
+    const labelName  = opts.locationName ?? "";
+    const labelRight = pxN < 72;   // enough room on the right
+    const lx = labelRight ? (pxN + 2.8).toFixed(1) : (pxN - 2.8).toFixed(1);
+    const ly = (pyN - 2.2).toFixed(1);
+    const labelAnchor = labelRight ? "start" : "end";
+    const labelEl = labelName
+      ? `<text x="${lx}" y="${ly}" font-size="3" fill="#e8f0f2" font-family="system-ui,sans-serif"
+           text-anchor="${labelAnchor}" opacity=".82"
+           style="text-shadow:0 0 2px #000">${escText(labelName)}</text>`
+      : "";
+
+    observerDot =
+      `<circle cx="${px}" cy="${py}" r="2.6" fill="none" stroke="#fff" stroke-width=".5" opacity=".55" stroke-dasharray=".9 .6"/>` +
+      `<circle cx="${px}" cy="${py}" r="1.4" fill="#fff" stroke="#000" stroke-width=".35" opacity=".92"/>` +
+      labelEl;
+  }
+
+  return `<svg viewBox="0 0 100 100" width="100%" height="100%"
+    style="position:absolute;top:0;left:0;pointer-events:none">${rings}${cardinals}${observerDot}</svg>`;
+}
+
+function renderAuroraPopover(opts: HelioWidgetOptions, ovationData: OvationData | null): string {
+  const url = `https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`;
+
+  let prob: number | null = null;
+  if (ovationData && opts.lat != null && opts.lon != null) {
+    prob = lookupOvationProb(ovationData.entries, opts.lat, opts.lon);
+  }
+
+  const hasLocation = opts.lat != null && opts.lon != null;
+  const probColor   = prob != null
+    ? (prob >= 30 ? "#5cce8c" : prob >= 10 ? "#d4cc5c" : "#9ab4bc") : "#607880";
+  const probLabel   = prob != null ? `${prob}%` : ovationData ? "n/a" : "…";
+
+  const obsPanel = hasLocation ? `
+    <div class="hw-aurora-obs-panel">
+      <span>📍</span>
+      <span>${opts.locationName ? escText(opts.locationName) + " · " : ""}${opts.lat!.toFixed(1)}°${opts.lat! >= 0 ? "N" : "S"} ${Math.abs(opts.lon!).toFixed(1)}°${opts.lon! >= 0 ? "E" : "W"}</span>
+      <span class="hw-aurora-prob" style="color:${probColor}">Aurora: ${probLabel}</span>
+    </div>` : "";
+
+  return `<div class="hw-kpi-popover">
+    ${renderPopoverHeader("Aurora Oval · Northern Hemisphere")}
+    <div class="hw-aurora-map-wrap">
+      <img class="hw-aurora-img" src="${esc(url)}" alt="NOAA Aurora Oval" loading="lazy" />
+      ${renderAuroraSvgOverlay(opts)}
+    </div>
+    ${obsPanel}
+    <div class="hw-aurora-caption">NOAA OVATION Prime model · updates every 5 min</div>
+  </div>`;
+}
+
+function renderKpiPopover(
+  data: HelioNow, key: string,
+  opts: HelioWidgetOptions, ovationData: OvationData | null,
+): string {
   switch (key) {
-    case "solar_wind": return renderSolarWindPopover(data);
-    case "xray":       return renderXrayPopover(data);
-    case "imf_bz":     return renderBzPopover(data);
-    case "aurora":     return renderAuroraPopover();
-    default:           return "";
+    case "solar_wind":    return renderSolarWindPopover(data);
+    case "xray":          return renderXrayPopover(data);
+    case "imf_bz":        return renderBzPopover(data);
+    case "aurora":        return renderAuroraPopover(opts, ovationData);
+    case "magnetosphere": return renderMagnetospherePopover(data);
+    default:              return "";
   }
 }
 
@@ -438,7 +752,10 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 
 // ── Hero section ─────────────────────────────────────────────────────────────
 
-function renderHero(data: HelioNow, heroExpanded: boolean, activePopover: string | null, scrubData: ScrubData | null): string {
+function renderHero(
+  data: HelioNow, heroExpanded: boolean, activePopover: string | null,
+  scrubData: ScrubData | null, opts: HelioWidgetOptions, ovationData: OvationData | null,
+): string {
   const { summary, scales, metrics, aurora_hint } = data;
   const tone = STATUS_TONE[summary.status] ?? STATUS_TONE.quiet;
 
@@ -476,7 +793,8 @@ function renderHero(data: HelioNow, heroExpanded: boolean, activePopover: string
   // X-ray: use log10(flux) so small changes at low flux don't dominate
   const xrayTrend = trendArrow((metrics.xray_history_1h  ?? []).map(p => Math.log10(p.flux + 1e-9)), 0.15);
 
-  const toggleLabel = heroExpanded ? "▼ Details" : "▶ Details";
+  const toggleLabel  = heroExpanded ? "▼ Details" : "▶ Details";
+  const magnetInfo   = deriveMagnetInfo(data);
 
   // Aurora highlight — live Kp only (scrub shows forecast, not an "alert")
   const liveKp        = metrics.kp_latest ?? 0;
@@ -509,7 +827,13 @@ function renderHero(data: HelioNow, heroExpanded: boolean, activePopover: string
           <div class="hw-scales-row">${scaleChips}</div>
         </div>
         <div class="hw-info-col">
-          <div class="hw-summary-text">${escText(summary.text)}</div>
+          <div class="hw-info-top-row">
+            <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
+            <div class="hw-magnet-mini${activePopover === "magnetosphere" ? " hw-kpi-active" : ""}" data-kpi="magnetosphere" title="Magnetosphere status">
+              ${renderMagnetosphereSvg(magnetInfo, bz, metrics.solar_wind_kms, true)}
+              <div class="hw-magnet-state" style="color:${magnetInfo.color}">${escText(magnetInfo.label)}</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hw-quick-details">
@@ -520,7 +844,7 @@ function renderHero(data: HelioNow, heroExpanded: boolean, activePopover: string
       </div>
       <button class="hw-hero-toggle-btn hw-hero-click" aria-label="Toggle details">${toggleLabel}</button>
       ${auroraBanner}
-      ${activePopover ? renderKpiPopover(data, activePopover) : ""}
+      ${activePopover ? renderKpiPopover(data, activePopover, opts, ovationData) : ""}
     </div>`;
 }
 
@@ -777,6 +1101,56 @@ function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubDat
 
 // ── Impact icons (inline SVG, 12×12, currentColor) ───────────────────────────
 
+// ── Solar active regions overlay ──────────────────────────────────────────────
+
+interface SolarRegion {
+  region: number;
+  location: string;       // e.g. "S15E54"
+  spot_class: string | null;
+  mag_class:  string | null;
+  c_flare_probability: number;
+  m_flare_probability: number;
+  x_flare_probability: number;
+}
+
+/** Parse NOAA location string "N##E##" → {lat, lon} in degrees. */
+function parseSolarLocation(loc: string): { lat: number; lon: number } | null {
+  const m = /([NS])(\d+)([EW])(\d+)/i.exec(loc);
+  if (!m) return null;
+  return {
+    lat: (m[1].toUpperCase() === "N" ?  1 : -1) * parseInt(m[2], 10),
+    lon: (m[3].toUpperCase() === "E" ?  1 : -1) * parseInt(m[4], 10),
+  };
+}
+
+/** Render SVG dot-overlay of active regions on top of the solar disk image. */
+function renderSolarOverlay(regions: SolarRegion[], sizePx: number): string {
+  const cx = sizePx / 2;
+  const diskR = cx * 0.87; // HMI disk fills ~87% of the square image
+  const dots = regions.map(reg => {
+    const pos = parseSolarLocation(reg.location);
+    if (!pos || Math.abs(pos.lon) > 88) return ""; // skip behind-limb regions
+    const latR = pos.lat * Math.PI / 180;
+    const lonR = pos.lon * Math.PI / 180;
+    const x = (cx + diskR * Math.cos(latR) * Math.sin(lonR)).toFixed(1);
+    const y = (cx - diskR * Math.sin(latR)).toFixed(1);
+    const color = reg.x_flare_probability > 0  ? "#e05c5c"
+                : reg.m_flare_probability > 10 ? "#e0a84a"
+                : reg.c_flare_probability > 20 ? "#d4cc5c"
+                : "#c8d8e0";
+    const tip = `AR ${reg.region} · ${reg.location
+      }\nClass: ${reg.spot_class ?? "—"} / ${reg.mag_class ?? "—"
+      }\nC: ${reg.c_flare_probability}%  M: ${reg.m_flare_probability}%  X: ${reg.x_flare_probability}%`;
+    return `<g style="pointer-events:all">
+      <title>${escText(tip)}</title>
+      <circle cx="${x}" cy="${y}" r="3.5" fill="${color}" stroke="#000" stroke-width="0.6" opacity="0.88"/>
+      <text x="${x}" y="${(parseFloat(y) - 5).toFixed(1)}" font-size="5" fill="${color}" text-anchor="middle" font-family="monospace" opacity="0.95">${reg.region}</text>
+    </g>`;
+  }).join("");
+  return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 ${sizePx} ${sizePx}"
+    style="position:absolute;top:0;left:0;border-radius:50%;pointer-events:none">${dots}</svg>`;
+}
+
 const IMPACT_ICONS: Record<string, string> = {
   aurora: `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><path d="M6 1L6.8 5.2L11 6L6.8 6.8L6 11L5.2 6.8L1 6L5.2 5.2Z" fill="currentColor" opacity=".85"/></svg>`,
   radio:  `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.35" style="flex-shrink:0"><path d="M3.8 9.8 a3.1 3.1 0 0 1 4.4 0"/><path d="M1.5 7.4 A6 6 0 0 1 10.5 7.4"/><circle cx="6" cy="11.2" r="1" fill="currentColor" stroke="none"/></svg>`,
@@ -784,18 +1158,29 @@ const IMPACT_ICONS: Record<string, string> = {
 };
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
 
-function renderImpacts(data: HelioNow, scrubData: ScrubData | null): string {
+const SOLAR_DISK_URL = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+const SOLAR_DISK_PX  = 80;
+
+function renderImpacts(data: HelioNow, scrubData: ScrubData | null, solarRegions: SolarRegion[] | null): string {
   const rows = scrubData?.impacts ?? data.observer_impacts ?? [];
   const rowsHtml = rows.map(row => {
     const color      = IMPACT_COLOR[row.level] ?? "#666";
     const levelLabel = row.level === "none" ? "None" : row.level.charAt(0).toUpperCase() + row.level.slice(1);
     const icon       = IMPACT_ICONS[row.kind] ?? IMPACT_ICON_FALLBACK;
-    // Colour the icon to match the badge level (except "none" → keep muted)
     const iconColor  = row.level === "none" ? "#606870" : color;
+    const tipHtml    = row.kind === "solar_activity"
+      ? `<div class="hw-solar-tip">
+           <div class="hw-solar-disk-wrap">
+             <img class="hw-solar-disk-img" src="${SOLAR_DISK_URL}" alt="Solar disk" loading="lazy" />
+             ${solarRegions ? renderSolarOverlay(solarRegions, SOLAR_DISK_PX) : ""}
+           </div>
+           <span class="hw-solar-tip-text">${escText(row.summary)}</span>
+         </div>`
+      : `<div class="hw-impact-tip">${escText(row.summary)}</div>`;
     return `<div class="hw-impact-row">
       <span class="hw-impact-kind" style="color:${iconColor}">${icon}<span style="color:#b4c6cc">${escText(row.label)}</span></span>
       <span class="hw-impact-badge" style="background:${color}22;color:${color}">${escText(levelLabel)}</span>
-      <div class="hw-impact-tip">${escText(row.summary)}</div>
+      ${tipHtml}
     </div>`;
   }).join("");
   const simNote = scrubData
@@ -884,15 +1269,18 @@ function renderCard(
   scrubOffset:      number,
   alertsExpanded:   boolean,
   expandedAlertKey: string | null,
+  solarRegions:     SolarRegion[] | null,
+  opts:             HelioWidgetOptions,
+  ovationData:      OvationData | null,
 ): string {
   const scrubData = buildScrubData(data, scrubOffset);
   return `
     <div class="hw-root">
       ${renderHeader(data)}
-      ${renderHero(data, heroExpanded, activePopover, scrubData)}
+      ${renderHero(data, heroExpanded, activePopover, scrubData, opts, ovationData)}
       ${heroExpanded ? renderHeroDetail(data) : ""}
       ${renderForecast(data, scrubOffset, scrubData)}
-      ${renderImpacts(data, scrubData)}
+      ${renderImpacts(data, scrubData, solarRegions)}
       ${renderAlerts(data, alertsExpanded, expandedAlertKey)}
     </div>`;
 }
@@ -922,6 +1310,8 @@ class HelioWidgetInstance {
   private scrubOffset       = 0;
   private alertsExpanded    = false;
   private expandedAlertKey: string | null = null;
+  private solarRegions:     SolarRegion[] | null = null;
+  private ovationData:      OvationData | null = null;
   private timer:            ReturnType<typeof setTimeout> | null = null;
   private data:             HelioNow | null = null;
 
@@ -1017,6 +1407,8 @@ class HelioWidgetInstance {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.data = await res.json() as HelioNow;
       this.render();
+      this.fetchSolarRegions();  // parallel, re-renders when ready
+      this.fetchOvationData();   // parallel, re-renders when ready
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.el.innerHTML = renderError(`Space weather data unavailable (${msg})`);
@@ -1025,11 +1417,47 @@ class HelioWidgetInstance {
     }
   }
 
+  private async fetchSolarRegions(): Promise<void> {
+    try {
+      const res = await fetch("https://services.swpc.noaa.gov/json/solar_regions.json");
+      if (!res.ok) return;
+      const all = await res.json() as (SolarRegion & { observed_date: string })[];
+      // Keep only the latest observation per region number
+      const latest = new Map<number, SolarRegion & { observed_date: string }>();
+      for (const r of all) {
+        const prev = latest.get(r.region);
+        if (!prev || r.observed_date > prev.observed_date) latest.set(r.region, r);
+      }
+      this.solarRegions = [...latest.values()];
+      this.render();
+    } catch { /* non-critical, overlay just won't show */ }
+  }
+
+  private async fetchOvationData(): Promise<void> {
+    if (this.opts.lat == null || this.opts.lon == null) return; // no observer → skip
+    try {
+      const res = await fetch("https://services.swpc.noaa.gov/json/ovation_aurora_latest.json");
+      if (!res.ok) return;
+      const json = await res.json() as Record<string, unknown>;
+      // NOAA format: { "coordinates": [[lon, lat, aurora], ...], "type": "MultiPoint", ... }
+      // "Data Format" field confirms: [Longitude, Latitude, Aurora]
+      const raw = (json["coordinates"] ?? json["Data"] ?? json["data"] ?? []) as [number, number, number][];
+      const entries: OvationEntry[] = raw.map(([lon, lat, prob]) => ({ lon, lat, prob }));
+      this.ovationData = {
+        entries,
+        forecastTime: String(json["Forecast Time"] ?? json["forecast_time"] ?? json["Observation Time"] ?? ""),
+      };
+      this.render();
+    } catch { /* non-critical */ }
+  }
+
+
   private render(): void {
     if (!this.data) return;
     this.el.innerHTML = renderCard(
       this.data, this.expanded, this.heroExpanded, this.activePopover,
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
+      this.solarRegions, this.opts, this.ovationData,
     );
   }
 

@@ -447,10 +447,16 @@
     if (obsWeatherEl && window.runObserverWeatherPanel) {
       window.runObserverWeatherPanel(obsWeatherEl, { jsonUrl: '/data/observer_weather_now.json' });
     }
-    // Helio widget (Space Weather)
+    // Helio widget (Space Weather) — pass observer location from app state
     const helioEl = document.getElementById('w-helio');
     if (helioEl && window.HelioWidget) {
-      window.HelioWidget.mount(helioEl, { dataUrl: '/data/helio_now.json' });
+      const _helioLoc = getState()?.location ?? {};
+      window.HelioWidget.mount(helioEl, {
+        dataUrl:      '/data/helio_now.json',
+        lat:          typeof _helioLoc.lat === 'number' ? _helioLoc.lat : undefined,
+        lon:          typeof _helioLoc.lon === 'number' ? _helioLoc.lon : undefined,
+        locationName: _helioLoc.name  || undefined,
+      });
     }
 
     window.runCalendarWidget({
