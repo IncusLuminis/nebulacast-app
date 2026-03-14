@@ -4,7 +4,7 @@
 # make news-front — only frontend (HTML/JS)
 # make server     — local HTTP server :8080
 
-.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back server deps-news deps-calendar deps-weather deps-sky test-news help functions functions-build
+.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back server deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
 
 # Python: prefer venv if present
 PYTHON ?= python3
@@ -14,6 +14,9 @@ ifeq ($(wildcard .venv/bin/python),)
 else
   RUN := $(VENV_PY)
 endif
+
+SERVICE_HELIO := services/helio
+PYTHONPATH_HELIO := $(SERVICE_HELIO)
 
 SERVICE_NEWS := services/news
 SERVICE_CALENDAR := services/calendar
@@ -85,6 +88,15 @@ weather-front: functions-build
 
 weather: weather-back weather-front
 
+# Helio: space weather pipeline → sites/staging/data/helio_now.json
+deps-helio:
+	$(RUN) -m pip install -r $(SERVICE_HELIO)/requirements.txt
+
+helio-back:
+	PYTHONPATH=$(PYTHONPATH_HELIO) $(RUN) $(SERVICE_HELIO)/pipelines/gen_helio.py
+
+helio: helio-back
+
 # Sky: all pipelines (stars, constellations, milkyway, messier, sunmoon, planets, alerts, objects, ranking)
 deps-sky:
 	$(RUN) -m pip install -r $(SERVICE_SKY)/requirements.txt
@@ -105,6 +117,9 @@ help:
 	@echo "  make weather   — weather backend + frontend (outputs + sites/staging/weather/daily_weather.json)"
 	@echo "  make weather-back  — weather pipeline only"
 	@echo "  make weather-front — functions-build + frontend build (preserves index.html, weather/)"
+	@echo "  make helio        — helio pipeline → sites/staging/data/helio_now.json"
+	@echo "  make helio-back   — same (alias)"
+	@echo "  make deps-helio   — install helio deps (run once)"
 	@echo "  make sky          — sky pipelines (gen_all: stars, constellations, milkyway, messier, sunmoon, planets, alerts, objects, ranking)"
 	@echo "  make sky-back     — sky pipelines only (gen_all.py)"
 	@echo "  make functions    — rebuild Functions only (after editing functions/*.ts, before commit)"
