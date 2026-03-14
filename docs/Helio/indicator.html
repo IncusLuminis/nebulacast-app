@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body{
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  font-family:sans-serif;
+}
+
+.gauge text{
+  fill:#ddd;
+  font-size:12px;
+  text-anchor:middle;
+}
+
+.needle{
+  transform-origin:200px 200px;
+  transition:transform 0.6s ease;
+}
+
+.center{
+  fill:#222;
+  stroke:#aaa;
+  stroke-width:2;
+}
+
+</style>
+</head>
+
+<body>
+
+<svg class="gauge" width="400" height="260" viewBox="0 0 400 260">
+
+<!-- outer dial -->
+<circle cx="200" cy="200" r="180" fill="#222" stroke="#555" stroke-width="4"/>
+
+<!-- colored zones -->
+<path d="M40 200 A160 160 0 0 1 120 70" stroke="#2ecc71" stroke-width="20" fill="none"/>
+<path d="M120 70 A160 160 0 0 1 200 40" stroke="#f1c40f" stroke-width="20" fill="none"/>
+<path d="M200 40 A160 160 0 0 1 280 70" stroke="#e67e22" stroke-width="20" fill="none"/>
+<path d="M280 70 A160 160 0 0 1 360 200" stroke="#e74c3c" stroke-width="20" fill="none"/>
+
+<!-- scale numbers -->
+<text x="40" y="210">0</text>
+<text x="90" y="120">3</text>
+<text x="200" y="60">5</text>
+<text x="310" y="120">7</text>
+<text x="360" y="210">9</text>
+
+<!-- title -->
+<text x="200" y="150" font-size="18">Kp Index</text>
+
+<!-- needle -->
+<line id="needle"
+      class="needle"
+      x1="200" y1="200"
+      x2="200" y2="70"
+      stroke="#fff"
+      stroke-width="4"/>
+
+<!-- center hub -->
+<circle cx="200" cy="200" r="10" class="center"/>
+
+</svg>
+
+<script>
+
+function setKp(value)
+{
+  const minAngle = -90
+  const maxAngle = 90
+
+  const angle = minAngle + (value/9)*(maxAngle-minAngle)
+
+  document.getElementById("needle")
+    .style.transform = `rotate(${angle}deg)`
+}
+
+setKp(6)
+
+</script>
+
+</body>
+</html>
