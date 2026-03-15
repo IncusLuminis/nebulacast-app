@@ -224,7 +224,7 @@
       <img class="hw-aurora-img" src="${Q(o)}" alt="NOAA Aurora Oval" loading="lazy" />
       ${Te(e)}
     </div>
-    ${s}
+    ${a}
     <div class="hw-aurora-caption">NOAA OVATION Prime model \xB7 updates every 5 min</div>
   </div>`}function Ie(e,t,o,r){switch(t){case"solar_wind":return Se(e);case"xray":return ze(e);case"imf_bz":return He(e);case"aurora":return Ee(o,r);case"magnetosphere":return Fe(e);default:return""}}function X(e,t){if(e.length<2)return"\u2192";let o=e[e.length-1],r=Math.max(0,e.length-4),n=e[r];if(!isFinite(o)||!isFinite(n))return"\u2192";let i=o-n;return i>t?"\u2191":i<-t?"\u2193":"\u2192"}function Pe(e,t,o,r,n,i){var E,N,W,K,q,D,J;let{summary:l,scales:a,metrics:s,aurora_hint:d}=e,c=(E=te[l.status])!=null?E:te.quiet,h=r!=null?r.kp.toFixed(1):s.kp_latest!=null?s.kp_latest.toFixed(1):"\u2014",g=[r?r.gScale:a.g_scale,a.r_scale,a.s_scale].map(_=>{let U=ke(_),Y=U?`color:${c.accent};border-color:${c.accent}33`:"";return`<span class="hw-scale-chip${U?" hw-scale-active":""}" style="${Y}">${p(_)}</span>`}).join(""),u=r?r.auroraLabel:d.aurora_label,m=u==="good"?"#5cce8c":u==="possible"?"#d4cc5c":"#607880",y=u.charAt(0).toUpperCase()+u.slice(1),f="#b4c6cc",M=s.solar_wind_kms!=null?`${Math.round(s.solar_wind_kms)} km/s`:"\u2014",b=s.imf_bz_nt,L=b!=null?b<=-10?"#e05c5c":b<=-5?"#e0a84a":b>=5?"#5cce8c":"#a0b4b8":"#607880",H=b!=null?(b>=0?"+":"")+b.toFixed(1)+" nT":"\u2014",$=s.xray_class,F=$?(N=ae[$])!=null?N:"#a0b4b8":"#607880",z=$?`${$}-class`:"\u2014",v=X(((W=s.kp_history_1h)!=null?W:[]).map(_=>_.kp),.5),A=X(((K=s.wind_history_1h)!=null?K:[]).map(_=>_.kms),20),P=X(((q=s.bz_history_1h)!=null?q:[]).map(_=>_.bz),1.5),B=X(((D=s.xray_history_1h)!=null?D:[]).map(_=>Math.log10(_.flux+1e-9)),.15),j=t?"\u25BC Details":"\u25B6 Details",k=se(e),T=(J=s.kp_latest)!=null?J:0,x=T>=5,C=x?`linear-gradient(160deg, #0d2a1a 0%, ${c.bg}22 75%)`:`${c.bg}18`,S=(_,U,Y,pe,ee)=>{let he=ee?`<span class="hw-trend">${ee}</span>`:"";return`<div class="hw-kpi-item${o===_?" hw-kpi-active":""}" data-kpi="${_}">
       <span class="hw-qd-label">${U}</span>
@@ -268,7 +268,7 @@
       </div>
       <div class="hw-spark-row">
         <div class="hw-spark-label">IMF Bz \xB7 Last 24h</div>
-        <div class="hw-spark-wrap">${s}</div>
+        <div class="hw-spark-wrap">${a}</div>
       </div>
       <div class="hw-spark-row">
         <div class="hw-spark-label">Solar wind \xB7 Last 24h</div>
@@ -353,7 +353,7 @@ C: ${i.c_flare_probability}%  M: ${i.m_flare_probability}%  X: ${i.x_flare_proba
     <div class="hw-alerts">
       <div class="hw-alerts-header">
         <span class="hw-alerts-label">SWPC Alerts (${n})</span>
-        ${s}
+        ${a}
       </div>
       ${s}
     </div>`}function et(e,t,o,r,n,i,l,a,s,d){let c=Ke(e,n);return`
