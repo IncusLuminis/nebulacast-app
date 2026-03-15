@@ -103,7 +103,7 @@ const WIDGET_CSS = `
 .hw-root{font-family:inherit;color:#e0e0e0;background:#161c1e;border-radius:6px;overflow:hidden}
 .hw-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1a2428;border-bottom:1px solid #2a3438}
 .hw-header-title{font-size:.78em;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#b4c4cc}
-.hw-freshness{font-size:.72em;color:#7a9098}
+.hw-freshness{font-size:.72em;color:#96a8b8}
 
 /* Hero */
 .hw-hero{padding:12px 14px 10px;border-bottom:1px solid #1e2c30}
@@ -118,12 +118,12 @@ const WIDGET_CSS = `
 .hw-info-col{flex:1;display:flex;flex-direction:column;gap:5px;padding-top:3px}
 .hw-status-badge{font-size:.82em;font-weight:700;padding:2px 10px;border-radius:3px;letter-spacing:.04em}
 .hw-scales-row{display:flex;gap:6px}
-.hw-scale-chip{font-size:.72em;font-weight:600;padding:1px 6px;border-radius:2px;background:#222e32;color:#7a9098;border:1px solid #2a3c42}
+.hw-scale-chip{font-size:.72em;font-weight:600;padding:1px 6px;border-radius:2px;background:#222e32;color:#96a8b8;border:1px solid #2a3c42}
 .hw-scale-chip.hw-scale-active{color:#e0a84a;border-color:#5a4020}
 .hw-summary-text{font-size:.78em;color:#96a8b8;line-height:1.4}
 
 /* Hero toggle (bottom-left, 2 font steps up) */
-.hw-hero-toggle-btn{font-size:.78em;color:#607880;background:none;border:none;cursor:pointer;padding:0;white-space:nowrap;margin-top:8px;display:block;transition:color .15s}
+.hw-hero-toggle-btn{font-size:.78em;color:#96a8b8;background:none;border:none;cursor:pointer;padding:0;white-space:nowrap;margin-top:8px;display:block;transition:color .15s}
 .hw-hero-toggle-btn:hover{color:#b4c6cc}
 
 /* Hero quick details — KPI items are clickable */
@@ -131,28 +131,28 @@ const WIDGET_CSS = `
 .hw-kpi-item{display:flex;align-items:baseline;gap:5px;cursor:pointer;border-radius:4px;padding:3px 5px;margin:-3px -5px;transition:background .12s}
 .hw-kpi-item:hover{background:#ffffff0d}
 .hw-kpi-item.hw-kpi-active{background:#ffffff12}
-.hw-qd-label{font-size:.68em;color:#7a9098;flex-shrink:0}
+.hw-qd-label{font-size:.68em;color:#96a8b8;flex-shrink:0}
 .hw-qd-value{font-size:.82em;font-weight:600}
 .hw-trend{font-size:.8em;opacity:.72;margin-left:2px;font-weight:400;letter-spacing:0}
 
 /* KPI popover */
 .hw-kpi-popover{background:#0e1517;border-radius:4px;padding:10px 12px;margin-top:10px;border:1px solid #1e2c30}
-.hw-kpi-popover-title{font-size:.68em;color:#7a9098;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.hw-kpi-popover-close{background:none;border:none;color:#607880;cursor:pointer;font-size:.9em;padding:0;line-height:1;transition:color .15s}
+.hw-kpi-popover-title{font-size:.68em;color:#96a8b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.hw-kpi-popover-close{background:none;border:none;color:#96a8b8;cursor:pointer;font-size:.9em;padding:0;line-height:1;transition:color .15s}
 .hw-kpi-popover-close:hover{color:#b4c6cc}
 .hw-kpi-stat-row{display:flex;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #1a2428}
 .hw-kpi-stat{display:flex;flex-direction:column;gap:2px;flex:1}
-.hw-kpi-stat-label{font-size:.63em;color:#607880;text-transform:uppercase;letter-spacing:.05em}
+.hw-kpi-stat-label{font-size:.63em;color:#96a8b8;text-transform:uppercase;letter-spacing:.05em}
 .hw-kpi-stat-value{font-size:.78em;font-weight:600;color:#b4c6cc}
-.hw-kpi-hint{font-size:.72em;color:#7a9098;margin-top:8px;padding:6px 8px;background:#131a1c;border-radius:3px;border-left:2px solid #2a3c42;line-height:1.4}
+.hw-kpi-hint{font-size:.72em;color:#96a8b8;margin-top:8px;padding:6px 8px;background:#131a1c;border-radius:3px;border-left:2px solid #2a3c42;line-height:1.4}
 .hw-xray-scale{display:flex;gap:0;height:6px;border-radius:3px;overflow:hidden;margin-top:8px}
 .hw-xray-scale-band{flex:1;position:relative}
 .hw-xray-scale-marker{position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:5px solid #fff}
 .hw-xray-scale-labels{display:flex;margin-top:3px}
-.hw-xray-scale-label{flex:1;font-size:.63em;color:#607880;text-align:center}
+.hw-xray-scale-label{flex:1;font-size:.63em;color:#96a8b8;text-align:center}
 .hw-aurora-map-wrap{position:relative;border-radius:3px;overflow:hidden;background:#0a1012}
 .hw-aurora-img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
-.hw-aurora-caption{font-size:.65em;color:#607880;margin-top:5px;text-align:center}
+.hw-aurora-caption{font-size:.65em;color:#96a8b8;margin-top:5px;text-align:center}
 .hw-aurora-obs-panel{display:flex;align-items:center;gap:5px;padding:5px 0 1px;font-size:.72em;color:#9ab4bc}
 .hw-aurora-prob{font-weight:600;margin-left:auto}
 
@@ -160,12 +160,12 @@ const WIDGET_CSS = `
 .hw-hero-detail{border-bottom:1px solid #1e2c30;padding:10px 14px;background:#131a1c}
 .hw-spark-row{margin-bottom:10px}
 .hw-spark-row:last-child{margin-bottom:0}
-.hw-spark-label{font-size:.65em;color:#7a9098;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.hw-spark-label{font-size:.65em;color:#96a8b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
 .hw-spark-wrap{border-radius:3px;overflow:hidden;background:#0e1517}
 
 /* Forecast */
 .hw-forecast{padding:10px 14px;border-bottom:1px solid #1e2c30}
-.hw-section-label{font-size:.68em;color:#7a9098;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.hw-section-label{font-size:.68em;color:#96a8b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
 .hw-forecast-text{font-size:.78em;color:#b4c6cc;margin-bottom:8px}
 .hw-forecast-bars{display:flex;align-items:flex-end;gap:2px;height:40px}
 .hw-bar-col{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
@@ -174,14 +174,14 @@ const WIDGET_CSS = `
 /* Timeline scrubber */
 .hw-scrub-wrap{margin-top:10px;padding-top:8px;border-top:1px solid #1e2c30}
 .hw-scrub-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.hw-scrub-title{font-size:.65em;color:#607880;letter-spacing:.04em}
-.hw-scrub-reset{font-size:.65em;color:#607880;background:none;border:none;cursor:pointer;padding:0 2px;line-height:1.2;transition:color .15s}
+.hw-scrub-title{font-size:.65em;color:#96a8b8;letter-spacing:.04em}
+.hw-scrub-reset{font-size:.65em;color:#96a8b8;background:none;border:none;cursor:pointer;padding:0 2px;line-height:1.2;transition:color .15s}
 .hw-scrub-reset:hover{color:#b4c6cc}
 .hw-scrub-slider{width:100%;cursor:pointer;margin:2px 0 0;-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;background:linear-gradient(to right,#5cce8c var(--pct,0%),#2a3c42 var(--pct,0%));outline:none;display:block}
 .hw-scrub-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#5cce8c;cursor:pointer;margin-top:-4.5px}
 .hw-scrub-slider::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#5cce8c;cursor:pointer;border:none}
 .hw-scrub-tick-row{display:flex;justify-content:space-between;margin-top:3px}
-.hw-scrub-tick{font-size:.62em;color:#607880}
+.hw-scrub-tick{font-size:.62em;color:#96a8b8}
 /* Simulated state banner */
 .hw-sim-banner{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#1c2810;border:1px solid #364a1e;border-radius:3px;padding:4px 8px;margin-top:8px}
 .hw-sim-badge{font-size:.72em;font-weight:600;color:#9acf60}
@@ -194,20 +194,18 @@ const WIDGET_CSS = `
 .hw-impact-row:hover{background:#ffffff09}
 .hw-impact-kind{font-size:.75em;font-weight:600;min-width:88px;color:#b4c6cc;display:flex;align-items:center;gap:5px}
 .hw-impact-badge{font-size:.68em;font-weight:700;padding:1px 7px;border-radius:2px;text-transform:capitalize;min-width:52px;text-align:center;flex-shrink:0}
-.hw-impact-tip{flex-basis:100%;font-size:.72em;color:#7a9098;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px}
+.hw-impact-tip{flex-basis:100%;font-size:.72em;color:#96a8b8;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px}
 .hw-impact-row:hover .hw-impact-tip{display:block}
 .hw-solar-tip{flex-basis:100%;display:none;flex-direction:row;align-items:center;gap:10px;margin-top:6px;padding:6px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
 .hw-impact-row:hover .hw-solar-tip{display:flex}
 .hw-solar-disk-wrap{position:relative;flex-shrink:0;width:80px;height:80px}
 .hw-solar-disk-img{position:absolute;top:0;left:0;width:80px;height:80px;border-radius:50%;object-fit:cover;background:#0a0a0a;border:1px solid #2a3c42}
-.hw-solar-tip-text{font-size:.72em;color:#7a9098;line-height:1.5}
+.hw-solar-tip-text{font-size:.72em;color:#96a8b8;line-height:1.5}
 
 /* Alerts */
 .hw-alerts{padding:10px 14px}
-.hw-alerts-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.hw-alerts-label{font-size:.68em;color:#7a9098;letter-spacing:.06em;text-transform:uppercase}
-.hw-alerts-toggle{font-size:.68em;color:#607880;background:none;border:none;cursor:pointer;padding:0;transition:color .15s;letter-spacing:.03em}
-.hw-alerts-toggle:hover{color:#b4c6cc}
+.hw-alerts-header{display:flex;align-items:center;margin-bottom:8px}
+.hw-alerts-label{font-size:.68em;color:#96a8b8;letter-spacing:.06em;text-transform:uppercase}
 .hw-alert-item{border-left:2px solid;padding:7px 10px;margin-bottom:6px;border-radius:0 3px 3px 0;background:#1a2428;cursor:pointer;transition:background .12s}
 .hw-alert-item:last-child{margin-bottom:0}
 .hw-alert-item:hover{background:#1e2c32}
@@ -216,10 +214,36 @@ const WIDGET_CSS = `
 .hw-alert-icon{flex-shrink:0;opacity:.85}
 .hw-alert-level{font-size:.65em;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .hw-alert-title{font-size:.8em;font-weight:600;color:#ccdade}
-.hw-alert-summary{font-size:.75em;color:#7a9098;line-height:1.3;margin-bottom:3px}
-.hw-alert-meta{font-size:.68em;color:#607880}
+.hw-alert-summary{font-size:.75em;color:#96a8b8;line-height:1.3;margin-bottom:3px}
+.hw-alert-meta{font-size:.68em;color:#96a8b8}
 .hw-alert-body{margin-top:8px;padding:7px 8px;background:#111b1e;border-radius:2px;font-size:.7em;color:#96a8b8;line-height:1.55;white-space:pre-wrap;font-family:monospace;word-break:break-word;border-top:1px solid #2a3c42}
-.hw-empty-alerts{font-size:.78em;color:#607880;font-style:italic;padding:4px 0}
+.hw-empty-alerts{font-size:.78em;color:#96a8b8;font-style:italic;padding:4px 0}
+
+/* Collapsible section rows (shared by Timeline header, SWPC Alerts, per-day headers) */
+.hw-section-row{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;padding:2px 4px;margin:-2px -4px 4px;border-radius:3px;transition:background .12s}
+.hw-section-row:hover{background:#ffffff09}
+.hw-section-caret{font-size:.68em;color:#96a8b8;flex-shrink:0;width:10px;display:inline-block}
+
+/* Timeline */
+.hw-timeline{padding:10px 14px;border-bottom:1px solid #1e2c30}
+.hw-tl-group{margin-bottom:10px}
+.hw-tl-group:last-child{margin-bottom:0}
+.hw-tl-day-row{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;padding:2px 4px;margin:-2px -4px 4px;border-radius:3px;transition:background .12s}
+.hw-tl-day-row:hover{background:#ffffff09}
+.hw-tl-date{font-size:.65em;color:#96a8b8;letter-spacing:.06em;text-transform:uppercase}
+.hw-tl-day-count{font-size:.63em;color:#7a9098;margin-left:2px}
+.hw-tl-item{display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:3px 4px;border-radius:3px;margin-left:-4px;margin-right:-4px;transition:background .12s}
+.hw-tl-item:hover{background:#ffffff09}
+.hw-tl-chain{display:flex;flex-direction:column;align-items:center;padding-top:3px;width:8px;flex-shrink:0}
+.hw-tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hw-tl-line{width:1px;flex:1;background:#2a3c44;min-height:12px;margin-top:2px}
+.hw-tl-body{flex:1;min-width:0;padding-bottom:2px}
+.hw-tl-meta{display:flex;align-items:center;gap:6px;margin-bottom:1px}
+.hw-tl-time{font-size:.65em;color:#96a8b8}
+.hw-tl-src{font-size:.60em;color:#7a9098;letter-spacing:.03em}
+.hw-tl-title{font-size:.76em;color:#c4d4d8;line-height:1.3}
+.hw-tl-title.hw-tl-active{color:#e0f0e8;font-weight:600}
+.hw-tl-detail{font-size:.70em;color:#96a8b8;margin-top:4px;padding:6px 8px;background:#111b1e;border-radius:3px;line-height:1.55;white-space:pre-wrap;word-break:break-word;border-top:1px solid #1e2c30}
 
 /* Magnetosphere */
 .hw-info-top-row{display:flex;gap:8px;align-items:flex-start}
@@ -230,7 +254,7 @@ const WIDGET_CSS = `
 .hw-wg{animation:hw-wind 1.5s linear infinite}
 
 /* States */
-.hw-error{padding:16px;text-align:center;color:#607880}
+.hw-error{padding:16px;text-align:center;color:#96a8b8}
 .hw-error-title{font-size:.82em;font-weight:600;color:#b4c6cc;margin-bottom:4px}
 .hw-error-body{font-size:.75em}
 .hw-loading{padding:16px;text-align:center;color:#405058;font-size:.78em}
@@ -1113,7 +1137,7 @@ const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" ar
 const SOLAR_DISK_URL = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 const SOLAR_DISK_PX  = 80;
 
-function renderImpacts(data: HelioNow, scrubData: ScrubData | null, solarRegions: SolarRegion[] | null): string {
+function renderImpacts(data: HelioNow, scrubData: ScrubData | null, solarRegions: SolarRegion[] | null, impactsOpen: boolean): string {
   const rows = scrubData?.impacts ?? data.observer_impacts ?? [];
   const rowsHtml = rows.map(row => {
     const color      = IMPACT_COLOR[row.level] ?? "#666";
@@ -1138,10 +1162,18 @@ function renderImpacts(data: HelioNow, scrubData: ScrubData | null, solarRegions
   const simNote = scrubData
     ? `<span style="font-size:.65em;color:#7a9870;font-weight:normal;text-transform:none;letter-spacing:0"> · simulated</span>`
     : "";
+  const total = rows.length;
+  const caret = impactsOpen ? "▼" : "▶";
+  const label = total > 0 ? `Observer Impacts (${total})` : "Observer Impacts";
+  const sectionHdr = `
+    <div class="hw-section-row" data-impacts-toggle>
+      <span class="hw-section-caret">${caret}</span>
+      <span class="hw-section-label" style="margin-bottom:0">${label}${simNote}</span>
+    </div>`;
   return `
     <div class="hw-impacts">
-      <div class="hw-section-label">Observer Impacts${simNote}</div>
-      ${rowsHtml}
+      ${sectionHdr}
+      ${impactsOpen ? rowsHtml : ""}
     </div>`;
 }
 
@@ -1182,48 +1214,223 @@ function renderAlertItem(ev: HelioEvent, isOpen: boolean): string {
   </div>`;
 }
 
-const ALERTS_DEFAULT_LIMIT = 3;
+// ── Solar Activity Timeline ───────────────────────────────────────────────────
 
-function renderAlerts(data: HelioNow, alertsExpanded: boolean, expandedAlertKey: string | null): string {
-  const all    = data.alerts_all ?? [];
-  const total  = all.length;
-  if (total === 0) return `
-    <div class="hw-alerts">
-      <div class="hw-alerts-header">
-        <span class="hw-alerts-label">SWPC Alerts</span>
+const TL_LEVEL_COLOR: Record<string, string> = {
+  info:    "#445c64",
+  watch:   "#e0a84a",
+  warning: "#e05c5c",
+};
+const TL_ACTIVE_COLOR = "#4ae0a4";
+
+function timelineIcon(type: string): string {
+  // All icons are 13×13 inline SVG, stroke-based, consistent with alert icons
+  const s = (d: string, extra = "") =>
+    `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" ${extra}>${d}</svg>`;
+  switch (type) {
+    case "solar_flare":
+      // Circle with 8 short rays
+      return s(`<circle cx="6.5" cy="6.5" r="2.5"/>
+        <line x1="6.5" y1="1" x2="6.5" y2="3"/>
+        <line x1="6.5" y1="10" x2="6.5" y2="12"/>
+        <line x1="1" y1="6.5" x2="3" y2="6.5"/>
+        <line x1="10" y1="6.5" x2="12" y2="6.5"/>
+        <line x1="2.7" y1="2.7" x2="4.1" y2="4.1"/>
+        <line x1="8.9" y1="8.9" x2="10.3" y2="10.3"/>
+        <line x1="10.3" y1="2.7" x2="8.9" y2="4.1"/>
+        <line x1="4.1" y1="8.9" x2="2.7" y2="10.3"/>`);
+    case "cme_launch":
+      // Arrow pointing right with trailing lines
+      return s(`<line x1="1" y1="6.5" x2="10" y2="6.5"/>
+        <polyline points="7,3.5 10,6.5 7,9.5"/>
+        <line x1="1" y1="4.5" x2="6" y2="4.5" stroke-opacity=".5"/>
+        <line x1="1" y1="8.5" x2="6" y2="8.5" stroke-opacity=".5"/>`);
+    case "cme_arrival":
+      // Concentric arcs converging inward
+      return s(`<path d="M11,6.5 A4.5,4.5 0 0,1 2,6.5" stroke-opacity=".4"/>
+        <path d="M9.5,6.5 A3,3 0 0,1 3.5,6.5" stroke-opacity=".7"/>
+        <path d="M8,6.5 A1.5,1.5 0 0,1 5,6.5"/>
+        <circle cx="6.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>`);
+    case "geomagnetic_storm":
+      // Lightning bolt
+      return s(`<polyline points="8,1.5 5,6.5 7.5,6.5 5,11.5"/>`);
+    case "geomagnetic_watch":
+      // Clock face
+      return s(`<circle cx="6.5" cy="6.5" r="5"/>
+        <line x1="6.5" y1="3.5" x2="6.5" y2="6.5"/>
+        <line x1="6.5" y1="6.5" x2="9" y2="7.5"/>`);
+    case "radio_blackout":
+      // Crossed radio waves
+      return s(`<path d="M3,3.5 Q6.5,6.5 10,9.5" stroke-opacity=".5"/>
+        <path d="M10,3.5 Q6.5,6.5 3,9.5"/>
+        <line x1="5" y1="1" x2="8" y2="12" stroke-opacity=".3"/>`);
+    case "radiation_storm":
+      // Triangle + exclamation
+      return s(`<path d="M6.5,1.5 L12,11 L1,11 Z"/>
+        <line x1="6.5" y1="5" x2="6.5" y2="8"/>
+        <circle cx="6.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/>`);
+    default:
+      // Info circle
+      return s(`<circle cx="6.5" cy="6.5" r="5.5"/>
+        <line x1="6.5" y1="5.5" x2="6.5" y2="9"/>
+        <circle cx="6.5" cy="3.8" r=".6" fill="currentColor" stroke="none"/>`);
+  }
+}
+
+function renderTimelineMetadata(ev: TimelineEvent): string {
+  // Show only supplementary fields not already present in the description text.
+  // (speed/half_angle are in description for CMEs; region/location for flares)
+  const meta = ev.metadata ?? {};
+  const parts: string[] = [];
+  if (meta["source_code"]) parts.push(`Code: ${meta["source_code"]}`);
+  if (meta["model"])       parts.push(`Model: ${String(meta["model"]).toUpperCase()}`);
+  if (parts.length === 0) return "";
+  return `\n${parts.join(" · ")}`;
+}
+
+function renderTimelineItem(
+  ev:          TimelineEvent,
+  hasNext:     boolean,
+  expandedKey: string | null,
+): string {
+  const dotColor = ev.is_active ? TL_ACTIVE_COLOR : (TL_LEVEL_COLOR[ev.level] ?? "#445c64");
+  const isOpen   = ev.event_time === expandedKey;
+  const timeStr  = ev.event_time.slice(11, 16) + " UTC";
+  const srcLabel = ev.source === "NASA_DONKI" ? "DONKI" : "SWPC";
+  const detail   = isOpen
+    ? `<div class="hw-tl-detail">${escText(ev.description)}${escText(renderTimelineMetadata(ev))}</div>`
+    : "";
+  return `
+    <div class="hw-tl-item" data-timeline-key="${esc(ev.event_time)}">
+      <div class="hw-tl-chain">
+        <div class="hw-tl-dot" style="background:${dotColor}"></div>
+        ${hasNext ? `<div class="hw-tl-line"></div>` : ""}
       </div>
-      <div class="hw-empty-alerts">No significant recent SWPC alerts</div>
+      <div class="hw-tl-body">
+        <div class="hw-tl-meta">
+          <span class="hw-tl-time">${timeStr}</span>
+          <span class="hw-tl-src">${srcLabel}</span>
+        </div>
+        <div class="hw-tl-title${ev.is_active ? " hw-tl-active" : ""}">
+          ${timelineIcon(ev.event_type)} ${escText(ev.event_title)}
+        </div>
+        ${detail}
+      </div>
+    </div>`;
+}
+
+function renderTimeline(
+  data:                HelioNow,
+  expandedTimelineKey: string | null,
+  timelineOpen:        boolean,
+  collapsedDays:       Set<string>,
+): string {
+  const allEvents = data.timeline ?? [];
+
+  // Limit to 3 UTC calendar days: today, yesterday, day-before
+  const nowMs = Date.now();
+  const day0  = new Date(nowMs).toISOString().slice(0, 10);
+  const day1  = new Date(nowMs - 86_400_000).toISOString().slice(0, 10);
+  const day2  = new Date(nowMs - 172_800_000).toISOString().slice(0, 10);
+  const validDays = new Set([day0, day1, day2]);
+
+  // Filter + sort descending (most recent first)
+  const events = allEvents
+    .filter(ev => validDays.has((ev.event_time ?? "").slice(0, 10)))
+    .slice()
+    .reverse();
+
+  const total = events.length;
+  const caret = timelineOpen ? "▼" : "▶";
+  const label = total > 0 ? `Solar Activity Timeline (${total})` : "Solar Activity Timeline";
+
+  const sectionHdr = `
+    <div class="hw-section-row" data-tl-section>
+      <span class="hw-section-caret">${caret}</span>
+      <span class="hw-section-label" style="margin-bottom:0">${label}</span>
     </div>`;
 
-  const visible    = alertsExpanded ? all : all.slice(0, ALERTS_DEFAULT_LIMIT);
-  const hiddenCnt  = total - ALERTS_DEFAULT_LIMIT;
-  const toggleBtn  = hiddenCnt > 0 ? (
-    alertsExpanded
-      ? `<button class="hw-alerts-toggle hw-alerts-expand">▲ Show less</button>`
-      : `<button class="hw-alerts-toggle hw-alerts-expand">▼ Show all ${total}</button>`
-  ) : "";
-  const items = visible.map(ev => renderAlertItem(ev, ev.dedupe_key === expandedAlertKey)).join("");
+  if (!timelineOpen || total === 0) {
+    return `<div class="hw-timeline">${sectionHdr}</div>`;
+  }
+
+  // Group by date (descending: day0, day1, day2)
+  const groupMap = new Map<string, TimelineEvent[]>();
+  for (const ev of events) {
+    const dk = (ev.event_time ?? "").slice(0, 10);
+    if (!groupMap.has(dk)) groupMap.set(dk, []);
+    groupMap.get(dk)!.push(ev);
+  }
+
+  const groupsHtml = [...groupMap.entries()].map(([dk, evts]) => {
+    const dt        = new Date(dk + "T12:00:00Z");
+    const dateLabel = dt.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    const collapsed = collapsedDays.has(dk);
+    const dayCaret  = collapsed ? "▶" : "▼";
+    const countNote = collapsed ? `<span class="hw-tl-day-count">${evts.length} events</span>` : "";
+    const dayHdr    = `
+      <div class="hw-tl-day-row" data-tl-day="${esc(dk)}">
+        <span class="hw-section-caret">${dayCaret}</span>
+        <span class="hw-tl-date">${dateLabel}</span>
+        ${countNote}
+      </div>`;
+    const itemsHtml = collapsed ? "" :
+      evts.map((ev, i) => renderTimelineItem(ev, i < evts.length - 1, expandedTimelineKey)).join("");
+    return `<div class="hw-tl-group">${dayHdr}${itemsHtml}</div>`;
+  }).join("");
+
+  return `
+    <div class="hw-timeline">
+      ${sectionHdr}
+      ${groupsHtml}
+    </div>`;
+}
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+
+function renderAlerts(data: HelioNow, alertsExpanded: boolean, expandedAlertKey: string | null): string {
+  const all   = data.alerts_all ?? [];
+  const total = all.length;
+  const caret = alertsExpanded ? "▼" : "▶";
+  const label = total > 0 ? `SWPC Alerts (${total})` : "SWPC Alerts";
+
+  const header = `
+    <div class="hw-alerts-header">
+      <div class="hw-section-row" data-alerts-toggle style="margin-bottom:0">
+        <span class="hw-section-caret">${caret}</span>
+        <span class="hw-alerts-label">${label}</span>
+      </div>
+    </div>`;
+
+  if (!alertsExpanded || total === 0) {
+    const empty = alertsExpanded && total === 0
+      ? `<div class="hw-empty-alerts">No significant recent SWPC alerts</div>` : "";
+    return `<div class="hw-alerts">${header}${empty}</div>`;
+  }
+
+  const items = all.map(ev => renderAlertItem(ev, ev.dedupe_key === expandedAlertKey)).join("");
   return `
     <div class="hw-alerts">
-      <div class="hw-alerts-header">
-        <span class="hw-alerts-label">SWPC Alerts (${total})</span>
-        ${toggleBtn}
-      </div>
+      ${header}
       ${items}
     </div>`;
 }
 
 function renderCard(
-  data:             HelioNow,
-  expanded:         boolean,
-  heroExpanded:     boolean,
-  activePopover:    string | null,
-  scrubOffset:      number,
-  alertsExpanded:   boolean,
-  expandedAlertKey: string | null,
-  solarRegions:     SolarRegion[] | null,
-  opts:             HelioWidgetOptions,
-  ovationData:      OvationData | null,
+  data:                  HelioNow,
+  expanded:              boolean,
+  heroExpanded:          boolean,
+  activePopover:         string | null,
+  scrubOffset:           number,
+  alertsExpanded:        boolean,
+  expandedAlertKey:      string | null,
+  expandedTimelineKey:   string | null,
+  timelineOpen:          boolean,
+  collapsedDays:         Set<string>,
+  impactsOpen:           boolean,
+  solarRegions:          SolarRegion[] | null,
+  opts:                  HelioWidgetOptions,
+  ovationData:           OvationData | null,
 ): string {
   const scrubData = buildScrubData(data, scrubOffset);
   return `
@@ -1232,7 +1439,8 @@ function renderCard(
       ${renderHero(data, heroExpanded, activePopover, scrubData, opts, ovationData)}
       ${heroExpanded ? renderHeroDetail(data) : ""}
       ${renderForecast(data, scrubOffset, scrubData)}
-      ${renderImpacts(data, scrubData, solarRegions)}
+      ${renderImpacts(data, scrubData, solarRegions, impactsOpen)}
+      ${renderTimeline(data, expandedTimelineKey, timelineOpen, collapsedDays)}
       ${renderAlerts(data, alertsExpanded, expandedAlertKey)}
     </div>`;
 }
@@ -1260,9 +1468,13 @@ class HelioWidgetInstance {
   private heroExpanded      = false;
   private activePopover:    string | null = null;
   private scrubOffset       = 0;
-  private alertsExpanded    = false;
-  private expandedAlertKey: string | null = null;
-  private solarRegions:     SolarRegion[] | null = null;
+  private alertsExpanded       = false;
+  private expandedAlertKey:    string | null = null;
+  private expandedTimelineKey: string | null = null;
+  private timelineOpen         = false;
+  private collapsedDays:       Set<string>   = new Set();
+  private impactsOpen          = false;
+  private solarRegions:        SolarRegion[] | null = null;
   private ovationData:      OvationData | null = null;
   private timer:            ReturnType<typeof setTimeout> | null = null;
   private data:             HelioNow | null = null;
@@ -1287,8 +1499,15 @@ class HelioWidgetInstance {
       return;
     }
 
-    // Alerts: expand/collapse all
-    if (target.closest(".hw-alerts-expand")) {
+    // Observer Impacts section: collapse / expand
+    if (target.closest("[data-impacts-toggle]")) {
+      this.impactsOpen = !this.impactsOpen;
+      this.render();
+      return;
+    }
+
+    // SWPC Alerts section: collapse / expand
+    if (target.closest("[data-alerts-toggle]")) {
       this.alertsExpanded = !this.alertsExpanded;
       this.render();
       return;
@@ -1299,6 +1518,32 @@ class HelioWidgetInstance {
     if (alertEl) {
       const key = alertEl.dataset.alertKey ?? null;
       this.expandedAlertKey = this.expandedAlertKey === key ? null : key;
+      this.render();
+      return;
+    }
+
+    // Timeline section: collapse / expand
+    if (target.closest("[data-tl-section]")) {
+      this.timelineOpen = !this.timelineOpen;
+      this.render();
+      return;
+    }
+
+    // Timeline day: collapse / expand one day group
+    const dayEl = target.closest("[data-tl-day]") as HTMLElement | null;
+    if (dayEl) {
+      const dk = dayEl.dataset.tlDay ?? "";
+      if (this.collapsedDays.has(dk)) this.collapsedDays.delete(dk);
+      else this.collapsedDays.add(dk);
+      this.render();
+      return;
+    }
+
+    // Timeline item: toggle detail panel
+    const tlEl = target.closest("[data-timeline-key]") as HTMLElement | null;
+    if (tlEl) {
+      const key = tlEl.dataset.timelineKey ?? null;
+      this.expandedTimelineKey = this.expandedTimelineKey === key ? null : key;
       this.render();
       return;
     }
@@ -1409,7 +1654,8 @@ class HelioWidgetInstance {
     this.el.innerHTML = renderCard(
       this.data, this.expanded, this.heroExpanded, this.activePopover,
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
-      this.solarRegions, this.opts, this.ovationData,
+      this.expandedTimelineKey, this.timelineOpen, this.collapsedDays,
+      this.impactsOpen, this.solarRegions, this.opts, this.ovationData,
     );
   }
 

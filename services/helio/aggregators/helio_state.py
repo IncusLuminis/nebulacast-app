@@ -398,6 +398,7 @@ def derive(
     metrics: Dict[str, Any],
     events: List[Dict[str, Any]],
     updated_utc: Optional[str] = None,
+    timeline: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
     Derive aggregate helio state from metrics + interpreted events.
@@ -406,10 +407,11 @@ def derive(
         metrics:     HelioMetrics dict from normalizer (kp_latest, xray_*, etc.)
         events:      deduplicated HelioEvent list from interpreter
         updated_utc: pipeline run timestamp (UTC ISO string); defaults to now
+        timeline:    pre-built TimelineEvent list from timeline_builder (optional)
 
     Returns:
         Dict with keys: summary, scales, forecast, aurora_hint,
-        observer_impacts, alerts_preview, alerts_all
+        observer_impacts, alerts_preview, alerts_all, timeline
     """
     # Reference time
     if updated_utc:
@@ -489,4 +491,5 @@ def derive(
         "aurora_hint":      aurora_hint,
         "observer_impacts": observer_impacts,
         "alerts_all":       alerts_all,
+        "timeline":         timeline or [],
     }

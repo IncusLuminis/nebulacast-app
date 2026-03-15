@@ -3,11 +3,12 @@
 Helio domain main pipeline — generates sites/staging/data/helio_now.json.
 
 Layers (each implemented in its own module):
-  1. Provider     — fetch raw SWPC products            [providers/noaa_swpc.py]
+  1. Provider     — fetch raw SWPC + DONKI products    [providers/noaa_swpc.py, providers/nasa_donki.py]
   2. Normalizer   — parse raw → internal structures    [normalizers/helio_now.py]
-  3. Interpreter  — classify alerts → HelioEvent[]     [interpreters/swpc_alerts.py]  (Task 2)
-  4. Aggregator   — derive summary/scales/aurora/...   [aggregators/helio_state.py]   (Task 3)
-  5. Serializer   — write helio_now.json contract      [this file]                    (Task 4)
+  3. Interpreter  — classify alerts → HelioEvent[]     [interpreters/swpc_alerts.py]
+  3b. Timeline    — merge SWPC + DONKI → timeline[]    [interpreters/timeline_builder.py]
+  4. Aggregator   — derive summary/scales/aurora/...   [aggregators/helio_state.py]
+  5. Serializer   — write helio_now.json contract      [this file]
 
 Usage:
   PYTHONPATH=services/helio python services/helio/pipelines/gen_helio.py
@@ -26,11 +27,11 @@ if str(_service_root) not in sys.path:
     sys.path.insert(0, str(_service_root))
 
 from providers.noaa_swpc import fetch_swpc, active_product_names
+from providers.nasa_donki import fetch_donki, active_product_names as donki_product_names
 from normalizers.helio_now import normalize
-
-# Future imports — uncomment as tasks are completed:
-from interpreters.swpc_alerts import interpret, derive_scales  # Task 2
-from aggregators.helio_state import derive                     # Task 3
+from interpreters.swpc_alerts import interpret, derive_scales
+from interpreters.timeline_builder import build_timeline
+from aggregators.helio_state import derive
 
 _OUTPUT_PATH = _repo_root / "sites" / "staging" / "data" / "helio_now.json"
 
@@ -67,7 +68,7 @@ def main() -> int:
           f"forecast_points={len(metrics['kp_forecast_3h'])} "
           f"raw_alerts={len(raw_alerts)}")
 
-    # ── 3. Interpret (Task 2) ─────────────────────────────────────────────────
+    # ── 3. Interpret ──────────────────────────────────────────────────────────
     interpreted = interpret(raw_alerts)
     events        = interpreted["alerts_all"]
     alerts_preview = interpreted["alerts_preview"]
@@ -75,11 +76,17 @@ def main() -> int:
     print(f"[helio.pipeline] events={len(events)} preview={len(alerts_preview)} "
           f"scales={event_scales}")
 
-    # ── 4. Aggregate (Task 3) ─────────────────────────────────────────────────
+    # ── 3b. Fetch DONKI + build timeline ──────────────────────────────────────
+    raw_donki = fetch_donki()
+    donki_products = donki_product_names(raw_donki)
+    timeline  = build_timeline(events, raw_donki, now_utc=started)
+
+    # ── 4. Aggregate ──────────────────────────────────────────────────────────
     aggregate = derive(
         metrics=metrics,
         events=events,
         updated_utc=updated_utc,
+        timeline=timeline,
     )
     print(f"[helio.pipeline] status={aggregate['summary']['status']} "
           f"scales={aggregate['scales']} "
@@ -93,8 +100,8 @@ def main() -> int:
         "updated_utc":    updated_utc,
         "source": {
             "domain":   "helio",
-            "provider": "NOAA_SWPC",
-            "products": products,
+            "provider": "NOAA_SWPC+NASA_DONKI",
+            "products": products + donki_products,
         },
         "metrics":          metrics,
         "summary":          aggregate["summary"],
@@ -104,6 +111,7 @@ def main() -> int:
         "observer_impacts": aggregate["observer_impacts"],
         "alerts_preview":   alerts_preview,
         "alerts_all":       aggregate["alerts_all"],
+        "timeline":         aggregate["timeline"],
         "raw": {
             "alerts_count": len(raw_alerts),
         },

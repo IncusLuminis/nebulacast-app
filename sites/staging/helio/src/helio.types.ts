@@ -90,6 +90,29 @@ export interface HelioEvent {
   dedupe_key:     string;
 }
 
+export type TimelineEventType =
+  | "solar_flare"
+  | "cme_launch"
+  | "cme_arrival"
+  | "geomagnetic_storm"
+  | "geomagnetic_watch"
+  | "radio_blackout"
+  | "radiation_storm"
+  | "space_weather_info";
+
+export interface TimelineEvent {
+  event_time:     string;                       // UTC ISO-8601 with Z
+  event_type:     TimelineEventType;
+  event_title:    string;
+  level:          AlertLevel;                   // "info" | "watch" | "warning"
+  severity_label: string | null;                // e.g. "C2.3" | "minor" | "strong"
+  description:    string;                       // expanded detail text
+  source:         string;                       // "NOAA_SWPC" | "NASA_DONKI"
+  is_active:      boolean;                      // currently in progress
+  is_future:      boolean;                      // predicted future event
+  metadata:       Record<string, unknown>;      // source-specific fields
+}
+
 export interface HelioNow {
   schema_version:   string;
   updated_utc:      string;
@@ -106,6 +129,7 @@ export interface HelioNow {
   observer_impacts: ObserverImpact[];
   alerts_preview:   HelioEvent[];
   alerts_all:       HelioEvent[];
+  timeline:         TimelineEvent[];
   raw: {
     alerts_count: number;
   };
