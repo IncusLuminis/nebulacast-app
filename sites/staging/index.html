@@ -363,6 +363,95 @@
     <div class="hour-inspector-body" id="hourInspectorBody"></div>
   </div>
 
+  <!-- Widget resize controls (dev tool) -->
+  <style>
+    .resize-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 2px 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      font-family: monospace;
+      user-select: none;
+    }
+    .resize-bar label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .resize-bar input[type=number] {
+      width: 72px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px;
+      color: rgba(255,255,255,0.75);
+      font-size: 12px;
+      font-family: monospace;
+      padding: 3px 7px;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .resize-bar input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+    .resize-bar input[type=number]:focus {
+      border-color: rgba(74,111,165,0.7);
+      background: rgba(255,255,255,0.09);
+      color: #fff;
+    }
+    .resize-bar .rz-reset {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 5px;
+      color: rgba(255,255,255,0.35);
+      font-size: 11px;
+      font-family: monospace;
+      padding: 3px 9px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .resize-bar .rz-reset:hover {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.7);
+    }
+    .resize-bar .rz-presets {
+      display: flex;
+      gap: 4px;
+      margin-left: 4px;
+    }
+    .resize-bar .rz-preset {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.3);
+      font-size: 10px;
+      font-family: monospace;
+      padding: 2px 6px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .resize-bar .rz-preset:hover {
+      background: rgba(74,111,165,0.2);
+      color: rgba(255,255,255,0.6);
+      border-color: rgba(74,111,165,0.4);
+    }
+    .resize-bar .rz-embed {
+      background: rgba(74,111,165,0.18);
+      border: 1px solid rgba(74,111,165,0.4);
+      border-radius: 5px;
+      color: rgba(255,255,255,0.55);
+      font-size: 11px;
+      font-family: monospace;
+      padding: 3px 11px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .resize-bar .rz-embed:hover {
+      background: rgba(74,111,165,0.35);
+      color: #fff;
+      border-color: rgba(74,111,165,0.7);
+    }
+  </style>
+
   <!-- Sun/Moon calculations -->
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
 
@@ -618,6 +707,176 @@
         document.title = `Nebulacast — ${titles[targetTab] || 'Weather'}`;
       });
     });
+  </script>
+
+  <!-- Dev: resize controls + embed above each widget -->
+  <script>
+    (function () {
+      const PRESETS = [320, 480, 768, 1024];
+      const ORIGIN  = window.location.origin;
+
+      // Map panel-id → { sel: CSS selector to resize, embed: fn(w,h,base) → code string }
+      const PANELS = {
+        'panel-calendar':         { sel: '#panel-calendar .widget-section',  embed: (w,h,b) => iframeEmbed('calendar', w, h, b) },
+        'panel-weather':          { sel: '#w-weather',                        embed: (w,h,b) => iframeEmbed('weather', w, h, b) },
+        'panel-map':              { sel: '#mapIframe',                        embed: (w,h,b) => iframeEmbed('map', w, h, b) },
+        'panel-sun':              { sel: '#w-sun',                            embed: (w,h,b) => iframeEmbed('sun', w, h, b) },
+        'panel-sky':              { sel: '#w-sky',                            embed: (w,h,b) => iframeEmbed('sky', w, h, b) },
+        'panel-observer-weather': { sel: '#w-observer-weather',               embed: (w,h,b) => iframeEmbed('observer-weather', w, h, b) },
+        'panel-space-weather':    { sel: '#w-helio',                          embed: (w,h,b) => helioEmbed(w, h, b) },
+        'panel-news':             { sel: '#panel-news .widget-section',       embed: (w,h,b) => iframeEmbed('news', w, h, b) },
+      };
+
+      function iframeEmbed(tab, w, h, base) {
+        const wAttr = w || 800, hAttr = h || 600;
+        return [
+          `<iframe`,
+          `  src="${base}/?tab=${tab}"`,
+          `  width="${wAttr}"`,
+          `  height="${hAttr}"`,
+          `  style="border:none;border-radius:12px"`,
+          `  loading="lazy"`,
+          `></iframe>`,
+        ].join('\n');
+      }
+
+      function helioEmbed(w, h, base) {
+        const sizeAttr = w ? ` style="width:${w}px${h ? `;height:${h}px` : ''}"` : '';
+        return [
+          `<div id="helio-widget"${sizeAttr}></div>`,
+          ``,
+          `<script src="${base}/helio/dist/helio.widget.js"><\/script>`,
+          `<script>`,
+          `  HelioWidget.mount(document.getElementById('helio-widget'), {`,
+          `    dataUrl: '${base}/data/helio_now.json',`,
+          `  });`,
+          `<\/script>`,
+        ].join('\n');
+      }
+
+      // ── Embed modal ──────────────────────────────────────────────────────
+      const modal = document.createElement('div');
+      modal.id = 'embed-modal';
+      modal.style.cssText = [
+        'display:none', 'position:fixed', 'inset:0', 'z-index:9999',
+        'background:rgba(0,0,0,.72)', 'align-items:center', 'justify-content:center',
+      ].join(';');
+      modal.innerHTML = `
+        <div style="background:#1a1f2e;border:1px solid rgba(255,255,255,.15);border-radius:12px;
+                    padding:24px;max-width:640px;width:92%;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.6)">
+          <button id="em-close" style="position:absolute;top:10px;right:14px;background:none;border:none;
+                  color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;line-height:1">&times;</button>
+          <div style="font-size:11px;font-family:monospace;color:rgba(255,255,255,.4);margin-bottom:14px;letter-spacing:.05em">
+            EMBED CODE
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <label style="font-size:11px;font-family:monospace;color:rgba(255,255,255,.35);white-space:nowrap">Base URL</label>
+            <input id="em-origin" type="text" spellcheck="false"
+              style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+                border-radius:5px;color:rgba(255,255,255,.75);font-size:12px;font-family:monospace;
+                padding:4px 9px;outline:none;min-width:0"
+              placeholder="https://your-domain.com">
+          </div>
+          <textarea id="em-code" readonly style="width:100%;height:160px;background:rgba(0,0,0,.45);
+            border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#7ec8e3;
+            font-family:monospace;font-size:12px;line-height:1.6;padding:12px;
+            resize:vertical;outline:none;box-sizing:border-box"></textarea>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+            <button id="em-copy" style="padding:7px 20px;background:rgba(74,111,165,.35);
+              border:1px solid rgba(74,111,165,.5);border-radius:6px;color:#fff;
+              font-family:monospace;font-size:12px;cursor:pointer">
+              Copy
+            </button>
+            <span id="em-copied" style="font-size:11px;font-family:monospace;color:#5cce8c;
+              opacity:0;transition:opacity .3s">Copied!</span>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+
+      const emCode   = modal.querySelector('#em-code');
+      const emOrigin = modal.querySelector('#em-origin');
+      const emCopy   = modal.querySelector('#em-copy');
+      const emCopied = modal.querySelector('#em-copied');
+
+      modal.querySelector('#em-close').addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+      emCopy.addEventListener('click', () => {
+        navigator.clipboard.writeText(emCode.value).then(() => {
+          emCopied.style.opacity = '1';
+          setTimeout(() => { emCopied.style.opacity = '0'; }, 1800);
+        });
+      });
+
+      let _embedFn = null;
+      let _embedW = null, _embedH = null;
+
+      emOrigin.addEventListener('input', () => {
+        if (_embedFn) emCode.value = _embedFn(_embedW, _embedH, emOrigin.value.replace(/\/$/, '') || ORIGIN);
+      });
+
+      function openEmbed(fn, w, h) {
+        _embedFn = fn; _embedW = w; _embedH = h;
+        // Pre-fill Base URL: replace localhost with placeholder hint
+        if (!emOrigin.value || emOrigin.value.startsWith('http://localhost')) {
+          emOrigin.value = ORIGIN.startsWith('http://localhost') ? '' : ORIGIN;
+          emOrigin.placeholder = ORIGIN.startsWith('http://localhost')
+            ? 'https://your-domain.com  (localhost detected)'
+            : ORIGIN;
+        }
+        const base = emOrigin.value.replace(/\/$/, '') || ORIGIN;
+        emCode.value = fn(w, h, base);
+        modal.style.display = 'flex';
+        setTimeout(() => emCode.select(), 50);
+      }
+
+      // ── Per-panel bars ───────────────────────────────────────────────────
+      Object.entries(PANELS).forEach(([panelId, { sel, embed }]) => {
+        const panel = document.getElementById(panelId);
+        const target = panel && document.querySelector(sel);
+        if (!panel || !target) return;
+
+        const bar = document.createElement('div');
+        bar.className = 'resize-bar';
+        bar.innerHTML =
+          '<label>W <input type="number" class="rz-w" placeholder="auto" min="100" step="10"></label>' +
+          '<label>H <input type="number" class="rz-h" placeholder="auto" min="100" step="10"></label>' +
+          '<button class="rz-reset">reset</button>' +
+          '<span class="rz-presets">' +
+            PRESETS.map(w => `<button class="rz-preset" data-w="${w}">${w}</button>`).join('') +
+          '</span>' +
+          '<button class="rz-embed">Embed</button>';
+
+        const wIn = bar.querySelector('.rz-w');
+        const hIn = bar.querySelector('.rz-h');
+
+        function apply() {
+          target.style.width    = wIn.value ? wIn.value + 'px' : '';
+          target.style.maxWidth = wIn.value ? 'none' : '';
+          target.style.height   = hIn.value ? hIn.value + 'px' : '';
+        }
+
+        wIn.addEventListener('input', apply);
+        hIn.addEventListener('input', apply);
+
+        bar.querySelector('.rz-reset').addEventListener('click', () => {
+          wIn.value = ''; hIn.value = ''; apply();
+        });
+
+        bar.querySelectorAll('.rz-preset').forEach(btn => {
+          btn.addEventListener('click', () => { wIn.value = btn.dataset.w; apply(); });
+        });
+
+        bar.querySelector('.rz-embed').addEventListener('click', () => {
+          openEmbed(embed, wIn.value ? +wIn.value : null, hIn.value ? +hIn.value : null);
+        });
+
+        panel.insertBefore(bar, target);
+      });
+    })();
   </script>
 </body>
 </html>
