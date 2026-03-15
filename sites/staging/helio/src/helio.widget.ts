@@ -612,23 +612,6 @@ function renderMagnetospherePopover(data: HelioNow): string {
 interface OvationEntry { lon: number; lat: number; prob: number; }
 interface OvationData  { entries: OvationEntry[]; forecastTime: string; }
 
-// NOAA OVATION aurora image covers 30°N–90°N (co-latitude 0°–60°).
-// Edge of the disk ≈ 30°N → MAX_COLAT = 60.
-const AURORA_MAP_MAX_COLAT = 60;
-
-/**
- * Azimuthal equidistant projection matching the NOAA OVATION polar image.
- * Pole at center; 30°N at the outer edge of the disk (r = R).
- */
-function auroraMapProject(
-  lat: number, lon: number,
-  cx: number, cy: number, R: number,
-): { x: number; y: number } {
-  const r      = R * (90 - lat) / AURORA_MAP_MAX_COLAT;
-  const lonRad = lon * Math.PI / 180;
-  return { x: cx + r * Math.sin(lonRad), y: cy - r * Math.cos(lonRad) };
-}
-
 /** Nearest-grid-cell lookup of OVATION aurora probability at observer lat/lon. */
 function lookupOvationProb(entries: OvationEntry[], lat: number, lon: number): number | null {
   if (!entries.length) return null;
@@ -644,54 +627,19 @@ function lookupOvationProb(entries: OvationEntry[], lat: number, lon: number): n
   return best >= 0 ? best : null;
 }
 
-/** SVG overlay: lat-ring grid + observer dot, viewBox 0 0 100 100. */
+/** SVG overlay: observer dot + cardinal labels, viewBox 0 0 100 100. */
 function renderAuroraSvgOverlay(opts: HelioWidgetOptions): string {
-  const CX = 50, CY = 50, R = 46;
-  const LAT_RINGS = [40, 50, 60, 70, 80];
-  const rings = LAT_RINGS.map(lat => {
-    const r = (R * (90 - lat) / AURORA_MAP_MAX_COLAT).toFixed(1);
-    const tx = (CX + parseFloat(r) + 1).toFixed(1);
-    return `<circle cx="${CX}" cy="${CY}" r="${r}" fill="none" stroke="#fff" stroke-width=".3" stroke-dasharray="1.5 2" opacity=".3"/>` +
-           `<text x="${tx}" y="${CY}" font-size="2.8" fill="#7c9ca8" font-family="monospace" dominant-baseline="middle" opacity=".7">${lat}°</text>`;
-  }).join("");
+  const CX = 50, CY = 50, R = 50;
 
   const cardinals = [
     `<text x="${CX}" y="4"   font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">N</text>`,
-    `<text x="96"  y="${CY + 1}" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">E</text>`,
+    `<text x="96"  y="${CY + 1}" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">W</text>`,
     `<text x="${CX}" y="97"  font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">S</text>`,
-    `<text x="4"   y="${CY + 1}" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">W</text>`,
+    `<text x="4"   y="${CY + 1}" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">E</text>`,
   ].join("");
 
-  let observerDot = "";
-  if (opts.lat != null && opts.lon != null) {
-    const pos = auroraMapProject(opts.lat, opts.lon, CX, CY, R);
-    // Clamp to within disk
-    const dx = pos.x - CX, dy = pos.y - CY;
-    const d  = Math.sqrt(dx * dx + dy * dy);
-    const pxN = d <= R ? pos.x : CX + dx / d * R;
-    const pyN = d <= R ? pos.y : CY + dy / d * R;
-    const px = pxN.toFixed(1), py = pyN.toFixed(1);
-
-    // Label: place to the right unless too close to the right edge
-    const labelName  = opts.locationName ?? "";
-    const labelRight = pxN < 72;   // enough room on the right
-    const lx = labelRight ? (pxN + 2.8).toFixed(1) : (pxN - 2.8).toFixed(1);
-    const ly = (pyN - 2.2).toFixed(1);
-    const labelAnchor = labelRight ? "start" : "end";
-    const labelEl = labelName
-      ? `<text x="${lx}" y="${ly}" font-size="3" fill="#e8f0f2" font-family="system-ui,sans-serif"
-           text-anchor="${labelAnchor}" opacity=".82"
-           style="text-shadow:0 0 2px #000">${escText(labelName)}</text>`
-      : "";
-
-    observerDot =
-      `<circle cx="${px}" cy="${py}" r="2.6" fill="none" stroke="#fff" stroke-width=".5" opacity=".55" stroke-dasharray=".9 .6"/>` +
-      `<circle cx="${px}" cy="${py}" r="1.4" fill="#fff" stroke="#000" stroke-width=".35" opacity=".92"/>` +
-      labelEl;
-  }
-
   return `<svg viewBox="0 0 100 100" width="100%" height="100%"
-    style="position:absolute;top:0;left:0;pointer-events:none">${rings}${cardinals}${observerDot}</svg>`;
+    style="position:absolute;top:0;left:0;pointer-events:none">${cardinals}</svg>`;
 }
 
 function renderAuroraPopover(opts: HelioWidgetOptions, ovationData: OvationData | null): string {
