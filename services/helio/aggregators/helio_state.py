@@ -392,6 +392,32 @@ def _derive_observer_impacts(
     ]
 
 
+# ── Coronal hole / High-speed stream ─────────────────────────────────────────
+
+def _derive_coronal_hole(solar_wind_kms: Optional[float]) -> Dict[str, Any]:
+    """
+    Derive coronal hole / high-speed stream state from solar wind speed.
+
+    Heuristic thresholds:
+      <420 km/s  → quiet   (background solar wind)
+      420–499    → watch   (elevated, possible HSS source)
+      500–599    → active  (high-speed stream in progress)
+      ≥600       → strong  (strong HSS)
+
+    Returns a CoronalHoleState-compatible dict.
+    """
+    speed = round(solar_wind_kms, 1) if solar_wind_kms is not None else None
+    if solar_wind_kms is None:
+        return {"status": "quiet", "estimated_speed_kms": None,  "note": "No solar wind data"}
+    if solar_wind_kms >= 600:
+        return {"status": "strong", "estimated_speed_kms": speed, "note": "Strong high-speed stream"}
+    if solar_wind_kms >= 500:
+        return {"status": "active", "estimated_speed_kms": speed, "note": "High-speed stream active"}
+    if solar_wind_kms >= 420:
+        return {"status": "watch",  "estimated_speed_kms": speed, "note": "Elevated solar wind — possible HSS"}
+    return     {"status": "quiet",  "estimated_speed_kms": speed, "note": "Background solar wind"}
+
+
 # ── Main entry point ──────────────────────────────────────────────────────────
 
 def derive(
@@ -476,6 +502,9 @@ def derive(
     # ── Observer impacts ──────────────────────────────────────────────────────
     observer_impacts = _derive_observer_impacts(aurora_hint, r, xray_class, events_24h)
 
+    # ── Coronal hole / High-speed stream ──────────────────────────────────────
+    coronal_hole = _derive_coronal_hole(solar_wind_kms)
+
     # ── Alerts ────────────────────────────────────────────────────────────────
     # alerts_all: all events, newest first (already sorted by interpreter)
     alerts_all = sorted(events, key=lambda e: e.get("t_utc") or "", reverse=True)
@@ -490,6 +519,7 @@ def derive(
         "forecast":         forecast,
         "aurora_hint":      aurora_hint,
         "observer_impacts": observer_impacts,
+        "coronal_hole":     coronal_hole,
         "alerts_all":       alerts_all,
         "timeline":         timeline or [],
     }

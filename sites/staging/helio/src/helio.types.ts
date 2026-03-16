@@ -8,8 +8,9 @@ export type AuroraLabel  = "none" | "possible" | "good";
 export type ImpactLevel  = "none" | "low" | "moderate" | "high";
 export type AlertLevel   = "info" | "watch" | "warning";
 export type ScaleValue       = "G0"|"G1"|"G2"|"G3"|"G4"|"G5"|"R0"|"R1"|"R2"|"R3"|"R4"|"R5"|"S0"|"S1"|"S2"|"S3"|"S4"|"S5";
-export type CmeTrackerStatus = "detected" | "inbound" | "arrival_window" | "arrived";
-export type CmeImpactLevel   = "low" | "moderate" | "high" | "unknown";
+export type CmeTrackerStatus      = "detected" | "inbound" | "arrival_window" | "arrived";
+export type CmeImpactLevel        = "low" | "moderate" | "high" | "unknown";
+export type CoronalHoleStatus     = "quiet" | "watch" | "active" | "strong";
 
 export interface KpForecastPoint {
   t_utc: string;
@@ -116,6 +117,12 @@ export interface TimelineEvent {
   metadata:       Record<string, unknown>;      // source-specific fields
 }
 
+export interface CoronalHoleState {
+  status:              CoronalHoleStatus;
+  estimated_speed_kms: number | null;
+  note:                string;
+}
+
 export interface CmeTrackerEvent {
   status:           CmeTrackerStatus;
   impact_level:     CmeImpactLevel;
@@ -143,6 +150,7 @@ export interface HelioNow {
   forecast:         HelioForecast;
   aurora_hint:      HelioAuroraHint;
   observer_impacts: ObserverImpact[];
+  coronal_hole:     CoronalHoleState | null;
   alerts_preview:   HelioEvent[];
   alerts_all:       HelioEvent[];
   timeline:         TimelineEvent[];

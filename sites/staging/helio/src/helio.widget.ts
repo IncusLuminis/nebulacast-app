@@ -153,6 +153,54 @@ const WIDGET_CSS = `
 .hw-hero-toggle-btn:hover{color:#b4c6cc}
 .hw-section-toggle{font-size:.78em;color:#96a8b8;background:none;border:none;cursor:pointer;padding:8px 14px;white-space:nowrap;display:block;width:100%;text-align:left;transition:color .15s}
 .hw-section-toggle:hover{color:#b4c6cc}
+/* Radio Blackout R-scale (horizontal blocks) */
+.hw-radio-scale{display:flex;gap:5px;margin:4px 0 6px}
+.hw-radio-block{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.hw-radio-blabel{font-size:.82em;font-weight:700}
+.hw-radio-bbar{width:100%;height:7px;border-radius:3px}
+.hw-radio-bdesc{font-size:.70em;text-align:center;line-height:1.2}
+.hw-radio-meta{font-size:.75em;color:#7a9298;margin-top:2px}
+/* Solar Cycle section */
+.hw-sc-body{padding:4px 14px 10px}
+.hw-sc-name{font-size:.82em;color:#96a8b8;margin-bottom:2px}
+.hw-sc-svg{display:block;overflow:visible}
+.hw-sc-axlabel{font-size:11px;fill:#607880;font-family:inherit}
+.hw-sc-footer{font-size:.75em;color:#7a9298;margin-top:3px}
+/* Geomagnetic Storm Probability */
+.hw-gstorm-header{font-size:.75em;color:#7a9298;margin-bottom:5px}
+.hw-gstorm-rows{display:flex;flex-direction:column;gap:4px}
+.hw-gstorm-row{display:flex;align-items:center;gap:6px}
+.hw-gstorm-lbl{font-size:.82em;font-weight:700;min-width:18px;flex-shrink:0}
+.hw-gstorm-track{flex:1;height:6px;background:#1e2c30;border-radius:3px;overflow:hidden}
+.hw-gstorm-fill{height:100%;border-radius:3px;transition:width .3s}
+.hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
+.hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
+/* Coronal Hole / HSS Indicator */
+.hw-hss-diagram{display:block;width:100%;margin:4px 0 5px;overflow:visible}
+.hw-hss-meta{font-size:.75em;color:#7a9298;margin-top:1px}
+/* Satellite Drag Indicator */
+.hw-satdrag-ladder{display:flex;flex-direction:column;gap:4px;margin:4px 0 6px}
+.hw-satdrag-rung{display:flex;align-items:center;gap:7px}
+.hw-satdrag-label{font-size:.82em;font-weight:700;min-width:54px;flex-shrink:0}
+.hw-satdrag-bar-track{flex:1;height:6px;background:#1e2c30;border-radius:3px;overflow:hidden}
+.hw-satdrag-bar-fill{height:100%;border-radius:3px}
+.hw-satdrag-mark{font-size:.72em;min-width:14px;flex-shrink:0}
+.hw-satdrag-meta{font-size:.75em;color:#7a9298;margin-top:2px}
+/* GNSS Disturbance Risk */
+.hw-gnss-ladder{display:flex;flex-direction:column;gap:4px;margin:4px 0 6px}
+.hw-gnss-rung{display:flex;align-items:center;gap:7px}
+.hw-gnss-label{font-size:.82em;font-weight:700;min-width:54px;flex-shrink:0}
+.hw-gnss-bar-track{flex:1;height:6px;background:#1e2c30;border-radius:3px;overflow:hidden}
+.hw-gnss-bar-fill{height:100%;border-radius:3px}
+.hw-gnss-mark{font-size:.72em;min-width:14px;flex-shrink:0}
+.hw-gnss-meta{font-size:.75em;color:#7a9298;margin-top:2px}
+/* Solar Wind Dynamic Pressure gauge */
+.hw-swdp-gauge{display:block;width:100%;margin:4px 0 5px;overflow:visible}
+.hw-swdp-axlabel{font-size:10px;fill:#607880;font-family:inherit}
+.hw-swdp-meta{font-size:.75em;color:#7a9298;margin-top:1px}
+/* CME Impact Uncertainty Cone */
+.hw-cme-svg{display:block;width:100%;margin:4px 0 5px;overflow:visible}
+.hw-cme-footer{font-size:.75em;color:#7a9298;margin-top:2px}
 
 /* Hero quick details — KPI items are clickable */
 .hw-quick-details{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:10px;padding-top:8px;border-top:1px solid #1e2c30}
@@ -226,7 +274,7 @@ const WIDGET_CSS = `
 .hw-impact-row.hw-impact-open .hw-impact-caret{transform:rotate(90deg)}
 .hw-impact-kind{font-size:.75em;font-weight:600;min-width:88px;color:#b4c6cc;display:flex;align-items:center;gap:5px}
 .hw-impact-badge{font-size:.68em;font-weight:700;padding:1px 7px;border-radius:2px;text-transform:capitalize;min-width:52px;text-align:center;flex-shrink:0}
-.hw-impact-tip{flex-basis:100%;font-size:.72em;color:#96a8b8;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px}
+.hw-impact-tip{flex-basis:100%;font-size:.86em;color:#96a8b8;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px}
 .hw-impact-tip.hw-impact-tip-open{display:block}
 .hw-solar-tip,.hw-aurora-tip{flex-basis:100%;display:none;flex-direction:column;align-items:stretch;gap:6px;margin-top:6px;padding:10px 6px 8px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
 .hw-solar-tip{align-items:center}
@@ -991,7 +1039,10 @@ function renderHero(
         ${kpiItem("xray",       "X-ray",      escText(xrayDisp),   xrayColor, xrayTrend)}
       </div>
       ${activePopover ? renderKpiPopover(data, activePopover, opts, ovationData) : ""}
-      <button class="hw-hero-toggle-btn hw-hero-click" aria-label="Toggle history">${toggleLabel}</button>` : ""}
+      <div class="hw-section-row" data-hero-toggle style="margin-top:6px">
+        <span class="hw-section-caret">${heroExpanded ? "▼" : "▶"}</span>
+        <span class="hw-section-label" style="margin-bottom:0">HISTORY</span>
+      </div>` : ""}
       ${auroraBanner}
     </div>`;
 }
@@ -1340,6 +1391,663 @@ const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" ar
 const SOLAR_DISK_URL = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 const SOLAR_DISK_PX  = 240;
 
+function renderRadioBlackoutPanel(data: HelioNow, isOpen: boolean): string {
+  const rLevel    = parseInt((data.scales.r_scale ?? "R0").slice(1), 10);
+  const xrayClass = data.metrics.xray_class ?? "A";
+  const flux      = data.metrics.xray_flux_wm2;
+  const fluxStr   = flux != null ? flux.toExponential(2) + " W/m²" : "—";
+
+  const LEVELS = [
+    { r: 0, color: "#5cce8c", desc: "Quiet"    },
+    { r: 1, color: "#d4cc5c", desc: "Minor"    },
+    { r: 2, color: "#e0a84a", desc: "Moderate" },
+    { r: 3, color: "#e05c5c", desc: "Strong"   },
+    { r: 4, color: "#c0407a", desc: "Severe"   },
+    { r: 5, color: "#8c3cc0", desc: "Extreme"  },
+  ];
+
+  const blocks = LEVELS.map(l => {
+    const isCurrent = l.r === rLevel;
+    const isActive  = l.r <= rLevel;
+    const barBg     = isActive ? l.color : "#1e2c30";
+    const barOp     = isCurrent ? "1" : isActive ? "0.5" : "1";
+    const labelCol  = isCurrent ? l.color : isActive ? l.color + "99" : "#566068";
+    const descCol   = isCurrent ? l.color : isActive ? l.color + "88" : "#566068";
+    return `<div class="hw-radio-block">
+      <span class="hw-radio-blabel" style="color:${labelCol}">R${l.r}</span>
+      <div class="hw-radio-bbar" style="background:${barBg};opacity:${barOp}"></div>
+      <span class="hw-radio-bdesc" style="color:${descCol}">${l.desc}</span>
+    </div>`;
+  }).join("");
+
+  const openClass = isOpen ? " hw-impact-tip-open" : "";
+  return `<div class="hw-impact-tip${openClass}">
+    <div class="hw-radio-scale">${blocks}</div>
+    <div class="hw-radio-meta">X-ray: <b style="color:${XRAY_COLOR[xrayClass] ?? "#a0b4b8"}">${escText(xrayClass)}-class</b> · ${escText(fluxStr)}</div>
+  </div>`;
+}
+
+// ── Solar Cycle ───────────────────────────────────────────────────────────────
+
+// ── Geomagnetic Storm Probability ────────────────────────────────────────────
+
+const G_STORM_COLORS = { g1: "#d4cc5c", g2: "#e0a84a", g3: "#e05c5c" };
+const G_STORM_LABELS = { g1: "Minor", g2: "Moderate", g3: "Strong" };
+
+/** Derive approximate G-storm probabilities from Kp 3-hour forecast. */
+function deriveStormProbs(data: HelioNow): { g1: number; g2: number; g3: number } {
+  const forecast = data.metrics.kp_forecast_3h ?? [];
+  const now = Date.now();
+  const cutoff = now + 24 * 60 * 60 * 1000;
+  const next24h = forecast.filter(p => {
+    const t = new Date(p.t_utc).getTime();
+    return t >= now - 3 * 60 * 60 * 1000 && t <= cutoff; // include current period
+  });
+  if (next24h.length === 0) return { g1: 0, g2: 0, g3: 0 };
+  const maxKp = Math.max(...next24h.map(p => p.kp));
+
+  // Ramp: 0% below (threshold - 0.7), ~90% above (threshold + 1)
+  const prob = (threshold: number) => {
+    if (maxKp < threshold - 0.7) return 0;
+    if (maxKp > threshold + 1.0) return 90;
+    const frac = (maxKp - (threshold - 0.7)) / 1.7;
+    return Math.round(Math.pow(Math.max(0, frac), 0.7) * 90);
+  };
+  return { g1: prob(5), g2: prob(6), g3: prob(7) };
+}
+
+function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
+  const probs   = deriveStormProbs(data);
+  const maxKp24 = (() => {
+    const forecast = data.metrics.kp_forecast_3h ?? [];
+    const now = Date.now(), cutoff = now + 24 * 60 * 60 * 1000;
+    const pts = forecast.filter(p => new Date(p.t_utc).getTime() <= cutoff);
+    return pts.length ? Math.max(...pts.map(p => p.kp)) : null;
+  })();
+
+  const levels: Array<{ key: "g1"|"g2"|"g3"; label: string }> = [
+    { key: "g1", label: "G1" }, { key: "g2", label: "G2" }, { key: "g3", label: "G3" },
+  ];
+
+  const rows = levels.map(({ key, label }) => {
+    const pct   = probs[key];
+    const color = G_STORM_COLORS[key];
+    const dim   = pct === 0 ? " opacity:.35" : "";
+    return `<div class="hw-gstorm-row">
+      <span class="hw-gstorm-lbl" style="color:${color};${dim}">${label}</span>
+      <div class="hw-gstorm-track">
+        <div class="hw-gstorm-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+      <span class="hw-gstorm-pct" style="color:${pct > 0 ? color : "#607880"}">${pct}%</span>
+    </div>`;
+  }).join("");
+
+  const kpNote = maxKp24 != null
+    ? `Max Kp forecast 24h: <b style="color:#b4c6cc">${maxKp24.toFixed(1)}</b>`
+    : "";
+
+  const openClass = isOpen ? " hw-impact-tip-open" : "";
+  return `<div class="hw-impact-tip${openClass}">
+    <div class="hw-gstorm-header">Storm probability · next 24h</div>
+    <div class="hw-gstorm-rows">${rows}</div>
+    ${kpNote ? `<div class="hw-gstorm-footer">${kpNote} · derived from Kp forecast</div>` : ""}
+  </div>`;
+}
+
+// Static config — low-frequency data (~monthly); update manually each season.
+// SC25 started Dec 2019, peak ~Jul 2025, expected end ~2030.
+// Mar 2026 → 75 months of 132 → progress ≈ 0.57  (declining phase post-peak)
+const SOLAR_CYCLE = {
+  cycle_name:         "Solar Cycle 25",
+  phase:              "declining" as "minimum" | "rising" | "maximum" | "declining",
+  progress_0_1:       0.57,
+  cycle_start_year:   2019,
+  expected_peak_year: 2025,
+  expected_end_year:  2030,
+  subtitle:           "Activity remains elevated",
+};
+
+const SC_PHASE_COLOR: Record<string, string> = {
+  minimum:  "#607880",
+  rising:   "#d4cc5c",
+  maximum:  "#e0a84a",
+  declining: "#96a8c8",
+};
+
+function renderSolarCycleTip(isOpen: boolean): string {
+  const sc         = SOLAR_CYCLE;
+  const phaseColor = SC_PHASE_COLOR[sc.phase] ?? "#96a8b8";
+  const phaseLabel = sc.phase.charAt(0).toUpperCase() + sc.phase.slice(1);
+
+  // SVG geometry (viewBox-based so it scales to container width)
+  const W = 280, H = 52;
+  const padX = 10;
+  const baseline = H - 6;
+  const peakH    = H - 18;
+  const mu       = 0.5, sigma = 0.19;
+  const bell     = (t: number) => Math.exp(-Math.pow((t - mu) / sigma, 2) / 2);
+  const xOf      = (t: number) => padX + t * (W - 2 * padX);
+  const yOf      = (t: number) => baseline - bell(t) * peakH;
+
+  const N = 80;
+  const fullPts: string[] = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    fullPts.push(`${i === 0 ? "M" : "L"}${xOf(t).toFixed(1)},${yOf(t).toFixed(1)}`);
+  }
+
+  const activeN   = Math.round(sc.progress_0_1 * N);
+  const activePts: string[] = [];
+  for (let i = 0; i <= activeN; i++) {
+    const t = i / N;
+    activePts.push(`${i === 0 ? "M" : "L"}${xOf(t).toFixed(1)},${yOf(t).toFixed(1)}`);
+  }
+
+  const mx       = xOf(sc.progress_0_1);
+  const fillPts  = [`M${padX},${baseline}`, ...activePts.slice(1), `L${mx.toFixed(1)},${baseline} Z`];
+  const my       = yOf(sc.progress_0_1);
+  const ts       = 5;
+  const tri      = `M${mx.toFixed(1)},${my.toFixed(1)} L${(mx-ts).toFixed(1)},${(my-ts*1.8).toFixed(1)} L${(mx+ts).toFixed(1)},${(my-ts*1.8).toFixed(1)} Z`;
+  const yL       = baseline + 11;
+
+  const openClass = isOpen ? " hw-impact-tip-open" : "";
+  return `<div class="hw-impact-tip${openClass}" style="padding:8px 6px 6px">
+    <div class="hw-sc-name">${escText(sc.cycle_name)}</div>
+    <svg width="100%" height="${H + 14}" viewBox="0 0 ${W} ${H + 14}" class="hw-sc-svg" preserveAspectRatio="none">
+      <path d="${fillPts.join(" ")}" fill="${phaseColor}" opacity="0.12"/>
+      <path d="${fullPts.join(" ")}" fill="none" stroke="#2a4048" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+      <path d="${activePts.join(" ")}" fill="none" stroke="${phaseColor}" stroke-width="1.5" opacity="0.7" vector-effect="non-scaling-stroke"/>
+      <line x1="${padX}" y1="${baseline}" x2="${W - padX}" y2="${baseline}" stroke="#1e2c30" stroke-width="1" vector-effect="non-scaling-stroke"/>
+      <path d="${tri}" fill="${phaseColor}"/>
+      <text x="${padX + 2}" y="${yL}" class="hw-sc-axlabel" text-anchor="start">min</text>
+      <text x="${xOf(0.5).toFixed(1)}" y="${yL}" class="hw-sc-axlabel" text-anchor="middle">max</text>
+      <text x="${(W - padX - 2).toFixed(1)}" y="${yL}" class="hw-sc-axlabel" text-anchor="end">min</text>
+    </svg>
+    <div class="hw-sc-footer">Phase: <b style="color:${phaseColor}">${escText(phaseLabel)}</b>${sc.subtitle ? ` · ${escText(sc.subtitle)}` : ""}</div>
+  </div>`;
+}
+
+// ── Coronal Hole / HSS Indicator ─────────────────────────────────────────────
+interface HSSState {
+  status: "quiet" | "watch" | "active" | "strong";
+  color:  string;
+  label:  string;
+  desc:   string;
+  speed:  number | null;
+}
+function deriveHSSState(data: HelioNow): HSSState {
+  // Prefer backend-derived coronal_hole field when available
+  const speed = data.coronal_hole?.estimated_speed_kms ?? data.metrics.solar_wind_kms;
+  const backendStatus = data.coronal_hole?.status;
+  const spd   = speed ?? 0;
+
+  const status = backendStatus ?? (
+    spd >= 600 ? "strong" : spd >= 500 ? "active" : spd >= 420 ? "watch" : "quiet"
+  ) as HSSState["status"];
+
+  const COLOR_MAP: Record<string, string> = {
+    strong: "#e05c5c", active: "#e0a84a", watch: "#d4cc5c", quiet: "#5cce8c",
+  };
+  const LABEL_MAP: Record<string, string> = {
+    strong: "Strong", active: "Active", watch: "Watch", quiet: "None",
+  };
+  const DESC_MAP: Record<string, string> = {
+    strong: "Strong high-speed stream",
+    active: "High-speed stream active",
+    watch:  "Elevated solar wind",
+    quiet:  "Background solar wind",
+  };
+
+  return {
+    status,
+    color: COLOR_MAP[status],
+    label: LABEL_MAP[status],
+    desc:  data.coronal_hole?.note ?? DESC_MAP[status],
+    speed,
+  };
+}
+
+function renderHSSTip(data: HelioNow, isOpen: boolean): string {
+  const hss     = deriveHSSState(data);
+  const spd     = hss.speed ?? 0;
+  const spdStr  = hss.speed != null ? `${Math.round(hss.speed)} km/s` : "—";
+  const openCls = isOpen ? " hw-impact-tip-open" : "";
+
+  // ── SVG horizontal layout ────────────────────────────────────────────────
+  const W = 160, H = 72;
+  const scx = 18,  scy = 36;   // Sun centre
+  const ecx = 142, ecy = 36;   // Earth centre
+  const rSun = 11, rIn = 14, rOut = 19, rEarth = 9;
+
+  // Sun colours
+  const active     = spd >= 500;
+  const watch      = spd >= 420;
+  const sunFill    = active ? "#f5c540" : watch ? "#c8a020" : "#7a6010";
+  const sunGlow    = active ? "#f5c540" : watch ? "#c8a020" : "#3a3808";
+  const streamCol  = hss.color;
+  const streamOp   = watch  ? "0.9"  : "0.25";
+  const fanOp      = active ? "0.18" : watch ? "0.10" : "0.04";
+
+  // Sun rays (8 rays, right-side ones slightly dimmer — shielded by CME)
+  const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
+    const a  = deg * Math.PI / 180;
+    const x1 = (scx + rIn  * Math.cos(a)).toFixed(1);
+    const y1 = (scy + rIn  * Math.sin(a)).toFixed(1);
+    const x2 = (scx + rOut * Math.cos(a)).toFixed(1);
+    const y2 = (scy + rOut * Math.sin(a)).toFixed(1);
+    const op = (deg > 300 || deg < 60) ? "0.9" : "0.5";
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+      stroke="${sunFill}" stroke-width="1.6" stroke-linecap="round" opacity="${op}"/>`;
+  }).join("");
+
+  // Stream fan — wider than the dashed axis, shows stream spread
+  const fanX1 = scx + rSun + 2;
+  const fanX2 = ecx - rEarth - 3;
+  const fanH  = 14;  // half-width of stream fan at Earth side
+  const fanPts = `${fanX1},${scy} ${fanX2},${ecy - fanH} ${fanX2},${ecy + fanH}`;
+
+  // Arrow tip just before Earth
+  const arrX  = fanX2 + 1;
+  const arrPts = `${arrX},${ecy - 4} ${arrX + 7},${ecy} ${arrX},${ecy + 4}`;
+
+  // Earth grid lines
+  const er = rEarth;
+  const earthGrid = `
+    <ellipse cx="${ecx}" cy="${ecy}" rx="${er}" ry="${(er * 0.42).toFixed(1)}"
+             fill="none" stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>
+    <line x1="${ecx}" y1="${ecy - er}" x2="${ecx}" y2="${ecy + er}"
+          stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>
+    <line x1="${ecx - er}" y1="${ecy}" x2="${ecx + er}" y2="${ecy}"
+          stroke="#4a8ab0" stroke-width="0.8" opacity="0.35"/>`;
+
+  const svg = `<svg class="hw-hss-diagram" viewBox="0 0 ${W} ${H}"
+      preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <!-- stream fan -->
+    <polygon points="${fanPts}" fill="${streamCol}" opacity="${fanOp}"/>
+    <!-- dashed stream axis -->
+    <line x1="${fanX1}" y1="${scy}" x2="${fanX2 - 2}" y2="${ecy}"
+          stroke="${streamCol}" stroke-width="2" stroke-dasharray="5 3.5"
+          stroke-linecap="round" opacity="${streamOp}"/>
+    <!-- arrow -->
+    <polygon points="${arrPts}" fill="${streamCol}" opacity="${watch ? "0.9" : "0.25"}"/>
+    <!-- Sun glow ring -->
+    <circle cx="${scx}" cy="${scy}" r="${rSun + 6}" fill="none"
+            stroke="${sunGlow}" stroke-width="1.5" opacity="0.25"/>
+    <!-- Sun body -->
+    <circle cx="${scx}" cy="${scy}" r="${rSun}" fill="${sunFill}" opacity="0.92"/>
+    ${rays}
+    <!-- Earth body -->
+    <circle cx="${ecx}" cy="${ecy}" r="${er}" fill="#1a4a6e" opacity="0.92"/>
+    ${earthGrid}
+    <!-- labels -->
+    <text x="${scx}" y="${H - 4}" font-size="8" fill="#607880"
+          text-anchor="middle" font-family="inherit">Sun</text>
+    <text x="${ecx}" y="${H - 4}" font-size="8" fill="#607880"
+          text-anchor="middle" font-family="inherit">Earth</text>
+  </svg>`;
+
+  const note = watch
+    ? `<div class="hw-hss-meta" style="font-size:.72em">Elevated speed may indicate Earth-facing coronal hole stream</div>`
+    : `<div class="hw-hss-meta" style="font-size:.72em">Background solar wind · no HSS detected</div>`;
+
+  return `<div class="hw-impact-tip${openCls}">
+    ${svg}
+    <div class="hw-hss-meta">Solar wind: <b style="color:${hss.color}">${escText(spdStr)}</b> · ${escText(hss.desc)}</div>
+    ${note}
+  </div>`;
+}
+
+// ── Satellite Drag Indicator ──────────────────────────────────────────────────
+interface SatDragState {
+  level:  0 | 1 | 2;
+  color:  string;
+  label:  string;
+  kp:     number | null;
+  gScale: string;
+}
+function deriveSatDragState(data: HelioNow): SatDragState {
+  const gStr  = data.scales.g_scale ?? "G0";
+  const gNum  = parseInt(gStr.slice(1), 10);
+
+  // Best Kp: kp_latest, else closest forecast entry near now
+  let kp = data.metrics.kp_latest;
+  if (kp == null) {
+    const forecast = data.metrics.kp_forecast_3h ?? [];
+    const now      = Date.now();
+    const nearby   = forecast
+      .filter(p => new Date(p.t_utc).getTime() <= now + 3 * 60 * 60 * 1000)
+      .sort((a, b) => new Date(b.t_utc).getTime() - new Date(a.t_utc).getTime());
+    if (nearby.length > 0) kp = nearby[0].kp;
+  }
+
+  if (gNum >= 2 || (kp != null && kp >= 6)) return { level: 2, color: "#e05c5c", label: "High",     kp, gScale: gStr };
+  if (gNum >= 1 || (kp != null && kp >= 4)) return { level: 1, color: "#d4cc5c", label: "Moderate", kp, gScale: gStr };
+  return                                           { level: 0, color: "#5cce8c", label: "Low",      kp, gScale: gStr };
+}
+
+function renderSatDragTip(data: HelioNow, isOpen: boolean): string {
+  const sd      = deriveSatDragState(data);
+  const openCls = isOpen ? " hw-impact-tip-open" : "";
+
+  const DRAG_LEVELS = [
+    { l: 0 as 0|1|2, label: "Low",      color: "#5cce8c", width: 33,  desc: "Normal density"     },
+    { l: 1 as 0|1|2, label: "Moderate", color: "#d4cc5c", width: 64,  desc: "Elevated density"   },
+    { l: 2 as 0|1|2, label: "High",     color: "#e05c5c", width: 100, desc: "Strong expansion"   },
+  ];
+
+  const rungs = DRAG_LEVELS.map(dl => {
+    const isCurrent = dl.l === sd.level;
+    const labelCol  = isCurrent ? dl.color : "#566068";
+    const barOp     = isCurrent ? "0.88" : "0.16";
+    return `<div class="hw-satdrag-rung">
+      <span class="hw-satdrag-label" style="color:${labelCol}">${dl.label}</span>
+      <div class="hw-satdrag-bar-track">
+        <div class="hw-satdrag-bar-fill" style="width:${dl.width}%;background:${dl.color};opacity:${barOp}"></div>
+      </div>
+      <span class="hw-satdrag-mark" style="color:${isCurrent ? dl.color : "transparent"}">${isCurrent ? "◀" : ""}</span>
+    </div>`;
+  }).join("");
+
+  const kpStr   = sd.kp != null ? `Kp ${sd.kp.toFixed(1)}` : "Kp —";
+  const noteMap: Record<number, string> = {
+    0: "Near-normal thermospheric density",
+    1: "Elevated drag — minor orbit correction may be needed",
+    2: "Strong thermospheric expansion — significant drag increase",
+  };
+
+  return `<div class="hw-impact-tip${openCls}">
+    <div class="hw-satdrag-ladder">${rungs}</div>
+    <div class="hw-satdrag-meta">${kpStr} · ${escText(sd.gScale)} · ${noteMap[sd.level]}</div>
+  </div>`;
+}
+
+// ── GNSS Disturbance Risk ─────────────────────────────────────────────────────
+interface GnssState {
+  level:  0 | 1 | 2;
+  color:  string;
+  label:  string;
+  kp:     number | null;
+  gScale: string;
+  boostedByFlare: boolean;
+}
+function deriveGnssState(data: HelioNow): GnssState {
+  const gStr  = data.scales.g_scale ?? "G0";
+  const gNum  = parseInt(gStr.slice(1), 10);
+
+  let kp = data.metrics.kp_latest;
+  if (kp == null) {
+    const forecast = data.metrics.kp_forecast_3h ?? [];
+    const now      = Date.now();
+    const nearby   = forecast
+      .filter(p => new Date(p.t_utc).getTime() <= now + 3 * 60 * 60 * 1000)
+      .sort((a, b) => new Date(b.t_utc).getTime() - new Date(a.t_utc).getTime());
+    if (nearby.length > 0) kp = nearby[0].kp;
+  }
+
+  // Base level from G-scale / Kp
+  let level: 0 | 1 | 2 = 0;
+  if (gNum >= 2 || (kp != null && kp >= 6)) level = 2;
+  else if (gNum >= 1 || (kp != null && kp >= 4)) level = 1;
+
+  // Boost from R-scale: M/X flares cause direct ionospheric disturbance
+  const rNum = parseInt((data.scales.r_scale ?? "R0").slice(1), 10);
+  const boostedByFlare = rNum >= 2 && level < 2;
+  if (rNum >= 2) level = Math.min(2, level + 1) as 0 | 1 | 2;
+
+  const COLORS: Record<number, string> = { 0: "#5cce8c", 1: "#d4cc5c", 2: "#e05c5c" };
+  const LABELS: Record<number, string> = { 0: "Low", 1: "Moderate", 2: "High" };
+
+  return { level, color: COLORS[level], label: LABELS[level], kp, gScale: gStr, boostedByFlare };
+}
+
+function renderGnssTip(data: HelioNow, isOpen: boolean): string {
+  const gn      = deriveGnssState(data);
+  const openCls = isOpen ? " hw-impact-tip-open" : "";
+
+  const GNSS_LEVELS = [
+    { l: 0 as 0|1|2, label: "Low",      color: "#5cce8c", width: 33  },
+    { l: 1 as 0|1|2, label: "Moderate", color: "#d4cc5c", width: 64  },
+    { l: 2 as 0|1|2, label: "High",     color: "#e05c5c", width: 100 },
+  ];
+
+  const rungs = GNSS_LEVELS.map(gl => {
+    const isCurrent = gl.l === gn.level;
+    const labelCol  = isCurrent ? gl.color : "#566068";
+    const barOp     = isCurrent ? "0.88" : "0.16";
+    return `<div class="hw-gnss-rung">
+      <span class="hw-gnss-label" style="color:${labelCol}">${gl.label}</span>
+      <div class="hw-gnss-bar-track">
+        <div class="hw-gnss-bar-fill" style="width:${gl.width}%;background:${gl.color};opacity:${barOp}"></div>
+      </div>
+      <span class="hw-gnss-mark" style="color:${isCurrent ? gl.color : "transparent"}">${isCurrent ? "◀" : ""}</span>
+    </div>`;
+  }).join("");
+
+  const kpStr   = gn.kp != null ? `Kp ${gn.kp.toFixed(1)}` : "Kp —";
+  const noteMap: Record<number, string> = {
+    0: "Stable ionosphere · normal positioning accuracy",
+    1: "Possible signal delay or scintillation",
+    2: "Significant positioning errors · possible signal loss",
+  };
+  const flareNote = gn.boostedByFlare
+    ? `<div class="hw-gnss-meta" style="font-size:.72em">Risk elevated by solar flare activity (R${parseInt((data.scales.r_scale ?? "R0").slice(1), 10)})</div>`
+    : "";
+
+  return `<div class="hw-impact-tip${openCls}">
+    <div class="hw-gnss-ladder">${rungs}</div>
+    <div class="hw-gnss-meta">${kpStr} · ${escText(gn.gScale)} · ${noteMap[gn.level]}</div>
+    ${flareNote}
+  </div>`;
+}
+
+// ── Solar Wind Dynamic Pressure ───────────────────────────────────────────────
+function deriveSWDPState(data: HelioNow): {
+  pressure: number | null; color: string; label: string; density: number | null;
+} {
+  const p = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined;
+  const pressure = p ?? null;
+  const density  = (data.metrics as Record<string, unknown>).density as number | null | undefined ?? null;
+  if (pressure == null) return { pressure: null, color: "#607880", label: "—",        density };
+  if (pressure >= 6)    return { pressure,       color: "#e05c5c", label: "Extreme",  density };
+  if (pressure >= 4)    return { pressure,       color: "#e0a84a", label: "Strong",   density };
+  if (pressure >= 2)    return { pressure,       color: "#d4cc5c", label: "Elevated", density };
+  if (pressure >= 1)    return { pressure,       color: "#5cce8c", label: "Typical",  density };
+  return                       { pressure,       color: "#7a9298", label: "Weak",     density };
+}
+
+function renderSWDPTip(data: HelioNow, isOpen: boolean): string {
+  const sw      = deriveSWDPState(data);
+  const openCls = isOpen ? " hw-impact-tip-open" : "";
+  const p       = sw.pressure;
+
+  // Gauge geometry (viewBox fixed, scales to container)
+  const W = 200, barY1 = 6, barH = 10, barY2 = barY1 + barH;
+  const tickY2 = barY2 + 4, lblY = tickY2 + 11, triBase = barY2 + 9, H = lblY + 4;
+
+  // 4 color zones: 0–2, 2–4, 4–6, 6–8 nPa (each = 50px at W=200, scale max=8)
+  const ZONES = [
+    { x: 0,   w: 50, color: "#5cce8c" },
+    { x: 50,  w: 50, color: "#d4cc5c" },
+    { x: 100, w: 50, color: "#e0a84a" },
+    { x: 150, w: 50, color: "#e05c5c" },
+  ];
+  const zones = ZONES.map(z =>
+    `<rect x="${z.x}" y="${barY1}" width="${z.w}" height="${barH}" fill="${z.color}" opacity="0.55" rx="0"/>`
+  ).join("");
+
+  // Tick marks and labels at 0,2,4,6,8
+  const TICKS = [
+    { x: 0,   label: "0",  anchor: "start"  },
+    { x: 50,  label: "2",  anchor: "middle" },
+    { x: 100, label: "4",  anchor: "middle" },
+    { x: 150, label: "6",  anchor: "middle" },
+    { x: 200, label: "8+", anchor: "end"    },
+  ];
+  const ticks = TICKS.map(t =>
+    `<line x1="${t.x}" y1="${barY2}" x2="${t.x}" y2="${tickY2}" stroke="#3a5058" stroke-width="1"/>`
+  ).join("");
+  const labels = TICKS.map(t =>
+    `<text x="${t.x}" y="${lblY}" class="hw-swdp-axlabel" text-anchor="${t.anchor}">${t.label}</text>`
+  ).join("");
+
+  // Marker triangle (pointing up, base below bar)
+  let markerSvg = "";
+  if (p != null) {
+    const pClamped = Math.min(Math.max(p, 0), 8);
+    const mx = (pClamped / 8) * W;
+    const triPts = `${mx - 5},${triBase} ${mx + 5},${triBase} ${mx},${barY2}`;
+    markerSvg = `<polygon points="${triPts}" fill="${sw.color}" opacity="0.95"/>
+    <line x1="${mx}" y1="${barY1}" x2="${mx}" y2="${barY2}" stroke="${sw.color}" stroke-width="1.5" opacity="0.7"/>`;
+  }
+
+  // Bar border overlay
+  const border = `<rect x="0" y="${barY1}" width="${W}" height="${barH}" fill="none" stroke="#2a3c42" stroke-width="0.8" rx="0"/>`;
+
+  const svg = `<svg class="hw-swdp-gauge" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    ${zones}${border}${markerSvg}${ticks}${labels}
+  </svg>`;
+
+  const pStr      = p != null ? `${p.toFixed(2)} nPa` : "—";
+  const densStr   = sw.density != null ? `${(sw.density as number).toFixed(2)} cm⁻³` : "—";
+  const speedStr  = data.metrics.solar_wind_kms != null ? `${Math.round(data.metrics.solar_wind_kms)} km/s` : "—";
+  const compress  = p == null ? "" : p >= 4 ? " · Magnetosphere compressed" : p >= 2 ? " · Moderate compression" : "";
+
+  return `<div class="hw-impact-tip${openCls}">
+    ${svg}
+    <div class="hw-swdp-meta"><b style="color:${sw.color}">${escText(pStr)}</b>${escText(compress)}</div>
+    <div class="hw-swdp-meta" style="font-size:.72em">Speed ${escText(speedStr)} · Density ${escText(densStr)}</div>
+  </div>`;
+}
+
+// ── CME Impact Uncertainty Cone ──────────────────────────────────────────────
+
+interface CMEState {
+  status:      "quiet" | "watch" | "impact";
+  color:       string;
+  label:       string;
+  speed_kms:   number | null;
+  issued_utc:  string | null;
+  arrival_utc: string | null;
+}
+
+function deriveCMEState(data: HelioNow): CMEState {
+  const alerts    = data.alerts_all ?? [];
+  const impactEvt = alerts.find(a => a.kind === "cme_impact");
+  const watchEvt  = alerts.find(a => a.kind === "cme_watch");
+  const evt       = impactEvt ?? watchEvt;
+
+  if (!evt) {
+    return { status: "quiet", color: "#5cce8c", label: "None",
+             speed_kms: null, issued_utc: null, arrival_utc: null };
+  }
+
+  // Parse "Estimated Velocity: 1227 km/s" from raw_body
+  const velMatch = (evt.raw_body ?? "").match(/Estimated Velocity[:\s]+(\d+)\s*km\/s/i);
+  const speed_kms = velMatch ? parseInt(velMatch[1], 10) : null;
+
+  // Travel time: 1 AU (1.496 × 10⁸ km) ÷ speed
+  let arrival_utc: string | null = null;
+  if (speed_kms && evt.t_utc) {
+    const travelMs  = (1.496e8 / speed_kms) * 1000;
+    arrival_utc = new Date(new Date(evt.t_utc).getTime() + travelMs)
+      .toISOString().replace(".000Z", "Z");
+  }
+
+  const status = impactEvt ? "impact" : "watch";
+  return {
+    status,
+    color:       status === "impact" ? "#e05c5c" : "#d4cc5c",
+    label:       status === "impact" ? "Active"  : "Watch",
+    speed_kms,
+    issued_utc:  evt.t_utc,
+    arrival_utc,
+  };
+}
+
+function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
+  const cme       = deriveCMEState(data);
+  const openClass = isOpen ? " hw-impact-tip-open" : "";
+  const W = 160, H = 120;
+  const cx = 80, sunY = 16, earthY = 94;
+  const coneH     = earthY - sunY; // 78 px
+  const tanDeg    = (d: number) => Math.tan(d * Math.PI / 180);
+  const outerHW   = Math.round(tanDeg(36) * coneH); // ~57
+  const midHW     = Math.round(tanDeg(23) * coneH); // ~33
+  const innerHW   = Math.round(tanDeg(12) * coneH); // ~17
+  const tri       = (hw: number) =>
+    `${cx},${sunY} ${cx + hw},${earthY} ${cx - hw},${earthY}`;
+
+  // Earth x-offset by status
+  const earthX =
+    cme.status === "impact" ? cx :
+    cme.status === "watch"  ? cx + midHW + 10 :  // near mid-cone edge
+    cx + outerHW + 20;                             // quiet: outside cone
+  const eX = Math.min(W - 8, Math.max(8, earthX));
+
+  // Earth colour by zone
+  const inInner = eX >= cx - innerHW && eX <= cx + innerHW;
+  const inMid   = eX >= cx - midHW   && eX <= cx + midHW;
+  const inOuter = eX >= cx - outerHW && eX <= cx + outerHW;
+  const earthFill = inInner ? "#e05c5c" : inMid ? "#d4cc5c" : inOuter ? "#e0a84a" : "#5cce8c";
+
+  const coneSvg = cme.status !== "quiet"
+    ? `<polygon points="${tri(outerHW)}" fill="#253238" opacity="0.85"/>
+       <polygon points="${tri(midHW)}"   fill="#d4cc5c" opacity="0.14"/>
+       <polygon points="${tri(innerHW)}" fill="#e0a84a" opacity="0.28"/>
+       <line x1="${cx}" y1="${sunY + 9}" x2="${cx}" y2="${earthY - 7}"
+             stroke="#3a5058" stroke-dasharray="3 3" stroke-width="1"/>`
+    : `<line x1="${cx + 8}" y1="${sunY}" x2="${eX - 7}" y2="${earthY}"
+             stroke="#1e2c30" stroke-dasharray="4 3" stroke-width="1"/>`;
+
+  // Arrival label
+  let arrStr = "—";
+  if (cme.arrival_utc) {
+    const d  = new Date(cme.arrival_utc);
+    const mo = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+    const dy = d.getUTCDate();
+    const hr = String(d.getUTCHours()).padStart(2, "0");
+    const mn = String(d.getUTCMinutes()).padStart(2, "0");
+    arrStr = `~${mo}\u00a0${dy}\u00a0${hr}:${mn}\u202fUTC`;
+  }
+  const speedStr   = cme.speed_kms ? `${cme.speed_kms}\u202fkm/s` : "—";
+  const footerHtml = cme.status !== "quiet"
+    ? `Velocity: <b style="color:#b4c6cc">${escText(speedStr)}</b>&ensp;Arrival: <b style="color:#b4c6cc">${escText(arrStr)}</b>`
+    : `No Earth-directed CME in forecast window`;
+
+  const zoneLabel = inInner ? "Direct impact likely"
+                  : inMid   ? "Glancing blow possible"
+                  : inOuter ? "Near outer edge"
+                  : "Impact unlikely";
+  const zoneColor = inInner ? "#e05c5c" : inMid ? "#d4cc5c" : inOuter ? "#e0a84a" : "#5cce8c";
+
+  const svg = `<svg class="hw-cme-svg" viewBox="0 0 ${W} ${H}"
+      preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    ${coneSvg}
+    <!-- Sun -->
+    <circle cx="${cx}" cy="${sunY}" r="6" fill="#f5c540" opacity="0.92"/>
+    <circle cx="${cx}" cy="${sunY}" r="9" fill="none" stroke="#f5c540" stroke-width="1.2" opacity="0.3"/>
+    <!-- Earth -->
+    <circle cx="${eX}" cy="${earthY}" r="5.5" fill="${earthFill}" opacity="0.85"/>
+    <circle cx="${eX}" cy="${earthY}" r="8" fill="none" stroke="${earthFill}" stroke-width="5" opacity="0.12"/>
+    <!-- Sun label -->
+    <text x="${cx}" y="${sunY - 11}" font-size="8" fill="#607880"
+          text-anchor="middle" font-family="inherit">Sun</text>
+    <!-- Earth label -->
+    <text x="${eX}" y="${earthY + 16}" font-size="8" fill="#607880"
+          text-anchor="middle" font-family="inherit">Earth</text>
+    <!-- Zone label (when CME active) -->
+    ${cme.status !== "quiet"
+      ? `<text x="${cx}" y="${H - 4}" font-size="8" fill="${zoneColor}"
+               text-anchor="middle" font-family="inherit">${escText(zoneLabel)}</text>`
+      : ""}
+  </svg>`;
+
+  return `<div class="hw-impact-tip${openClass}">
+    ${svg}
+    <div class="hw-cme-footer">${footerHtml}</div>
+  </div>`;
+}
+
 function renderImpacts(
   data:            HelioNow,
   scrubData:       ScrubData | null,
@@ -1400,6 +2108,8 @@ function renderImpacts(
           ${obsPanel}
           <div class="hw-aurora-caption">NOAA OVATION Prime model · updates every 5 min</div>
         </div>`;
+    } else if (row.kind === "radio") {
+      tipHtml = renderRadioBlackoutPanel(data, isOpen);
     } else {
       const tipOpen = isOpen ? " hw-impact-tip-open" : "";
       tipHtml = `<div class="hw-impact-tip${tipOpen}">${escText(row.summary)}</div>`;
@@ -1415,7 +2125,7 @@ function renderImpacts(
   const simNote = scrubData
     ? `<span style="font-size:.65em;color:#7a9870;font-weight:normal;text-transform:none;letter-spacing:0"> · simulated</span>`
     : "";
-  const total = rows.length;
+  const total = rows.length + 7; // +7 for Storm Risk, Solar Cycle, Coronal Hole, Satellite Drag, GNSS, SW Pressure, CME Cone
   const caret = impactsOpen ? "▼" : "▶";
   const label = total > 0 ? `Observer Impacts (${total})` : "Observer Impacts";
   const sectionHdr = `
@@ -1423,10 +2133,91 @@ function renderImpacts(
       <span class="hw-section-caret">${caret}</span>
       <span class="hw-section-label" style="margin-bottom:0">${label}${simNote}</span>
     </div>`;
+  // Geomagnetic Storm Probability — derived from Kp forecast
+  const gsOpen      = expandedImpacts.has("geomag_storm");
+  const gsProbs     = deriveStormProbs(data);
+  const gsBadgePct  = gsProbs.g1;
+  const gsBadgeCol  = gsProbs.g1 >= 30 ? G_STORM_COLORS.g1 : gsProbs.g1 > 0 ? "#7a9298" : "#607880";
+  const gsBadgeTxt  = gsBadgePct > 0 ? `G1 ${gsBadgePct}%` : "None";
+  const gsIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg>`;
+  const gsRowHtml   = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" data-impact-row="geomag_storm">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${gsBadgeCol}">${gsIcon}<span style="color:#b4c6cc">Storm Risk</span></span>
+      <span class="hw-impact-badge" style="background:${gsBadgeCol}22;color:${gsBadgeCol}">${gsBadgeTxt}</span>
+      ${renderGeomagStormTip(data, gsOpen)}
+    </div>`;
+
+  // Solar Cycle — hardcoded context row appended to Observer Impacts
+  const scOpen      = expandedImpacts.has("solar_cycle");
+  const scColor     = SC_PHASE_COLOR[SOLAR_CYCLE.phase] ?? "#96a8b8";
+  const scPhase     = SOLAR_CYCLE.phase.charAt(0).toUpperCase() + SOLAR_CYCLE.phase.slice(1);
+  const scIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M1 9 Q3 4 6.5 4 Q10 4 12 9"/><circle cx="6.5" cy="4" r="1.3" fill="currentColor" stroke="none"/></svg>`;
+  const scRowHtml   = `<div class="hw-impact-row${scOpen ? " hw-impact-open" : ""}" data-impact-row="solar_cycle">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${scColor}">${scIcon}<span style="color:#b4c6cc">Solar Cycle</span></span>
+      <span class="hw-impact-badge" style="background:${scColor}22;color:${scColor}">${scPhase}</span>
+      ${renderSolarCycleTip(scOpen)}
+    </div>`;
+
+  // Coronal Hole / High-Speed Stream — derived from solar wind speed
+  const hssState    = deriveHSSState(data);
+  const hssOpen     = expandedImpacts.has("hss");
+  const hssIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="3.5" cy="6.5" r="2.5"/><line x1="6.2" y1="6.5" x2="11.5" y2="6.5"/><polyline points="9.5,4.5 11.5,6.5 9.5,8.5" fill="currentColor" stroke="none"/></svg>`;
+  const hssRowHtml  = `<div class="hw-impact-row${hssOpen ? " hw-impact-open" : ""}" data-impact-row="hss">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${hssState.color}">${hssIcon}<span style="color:#b4c6cc">Coronal Hole</span></span>
+      <span class="hw-impact-badge" style="background:${hssState.color}22;color:${hssState.color}">${hssState.label}</span>
+      ${renderHSSTip(data, hssOpen)}
+    </div>`;
+
+  // Satellite Drag — derived from G-scale / Kp
+  const sdState     = deriveSatDragState(data);
+  const sdOpen      = expandedImpacts.has("sat_drag");
+  const sdIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><rect x="4.5" y="5" width="4" height="3" rx="0.4"/><line x1="1" y1="6.5" x2="4.5" y2="6.5"/><line x1="8.5" y1="6.5" x2="12" y2="6.5"/><line x1="6.5" y1="5" x2="6.5" y2="3"/><circle cx="6.5" cy="2.5" r="0.6" fill="currentColor" stroke="none"/></svg>`;
+  const sdRowHtml   = `<div class="hw-impact-row${sdOpen ? " hw-impact-open" : ""}" data-impact-row="sat_drag">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${sdState.color}">${sdIcon}<span style="color:#b4c6cc">Satellite Drag</span></span>
+      <span class="hw-impact-badge" style="background:${sdState.color}22;color:${sdState.color}">${sdState.label}</span>
+      ${renderSatDragTip(data, sdOpen)}
+    </div>`;
+
+  // GNSS Disturbance Risk — derived from G-scale / Kp + R-scale boost
+  const gnState     = deriveGnssState(data);
+  const gnOpen      = expandedImpacts.has("gnss");
+  const gnIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M3 5.5 Q6.5 2.5 10 5.5"/><path d="M4.5 7.5 Q6.5 5.5 8.5 7.5"/><circle cx="6.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/><line x1="6.5" y1="10.7" x2="6.5" y2="12"/></svg>`;
+  const gnRowHtml   = `<div class="hw-impact-row${gnOpen ? " hw-impact-open" : ""}" data-impact-row="gnss">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${gnState.color}">${gnIcon}<span style="color:#b4c6cc">GNSS Risk</span></span>
+      <span class="hw-impact-badge" style="background:${gnState.color}22;color:${gnState.color}">${gnState.label}</span>
+      ${renderGnssTip(data, gnOpen)}
+    </div>`;
+
+  // Solar Wind Dynamic Pressure
+  const swdpState   = deriveSWDPState(data);
+  const swdpOpen    = expandedImpacts.has("sw_pressure");
+  const swdpBadge   = swdpState.pressure != null ? `${swdpState.pressure.toFixed(2)} nPa` : "—";
+  const swdpIcon    = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 9 Q6.5 3 11 9"/><path d="M4 9 Q6.5 5 9 9"/><line x1="6.5" y1="9" x2="6.5" y2="11"/></svg>`;
+  const swdpRowHtml = `<div class="hw-impact-row${swdpOpen ? " hw-impact-open" : ""}" data-impact-row="sw_pressure">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${swdpState.color}">${swdpIcon}<span style="color:#b4c6cc">SW Pressure</span></span>
+      <span class="hw-impact-badge" style="background:${swdpState.color}22;color:${swdpState.color}">${swdpBadge}</span>
+      ${renderSWDPTip(data, swdpOpen)}
+    </div>`;
+
+  const cmeState    = deriveCMEState(data);
+  const cmeOpen     = expandedImpacts.has("cme_cone");
+  const cmeIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="2.5" cy="6.5" r="2" fill="currentColor" stroke="none"/><line x1="5" y1="6.5" x2="12" y2="6.5"/><polyline points="10,4.5 12,6.5 10,8.5" fill="none"/><line x1="4.2" y1="4.2" x2="5.5" y2="5.5" stroke-width="1"/><line x1="4.2" y1="8.8" x2="5.5" y2="7.5" stroke-width="1"/></svg>`;
+  const cmeRowHtml  = `<div class="hw-impact-row${cmeOpen ? " hw-impact-open" : ""}" data-impact-row="cme_cone">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${cmeState.color}">${cmeIcon}<span style="color:#b4c6cc">CME Cone</span></span>
+      <span class="hw-impact-badge" style="background:${cmeState.color}22;color:${cmeState.color}">${escText(cmeState.label)}</span>
+      ${renderCMEConeTip(data, cmeOpen)}
+    </div>`;
+
   return `
     <div class="hw-impacts">
       ${sectionHdr}
-      ${impactsOpen ? rowsHtml : ""}
+      ${impactsOpen ? rowsHtml + gsRowHtml + scRowHtml + hssRowHtml + sdRowHtml + gnRowHtml + swdpRowHtml + cmeRowHtml : ""}
     </div>`;
 }
 
@@ -1896,7 +2687,7 @@ class HelioWidgetInstance {
       return;
     }
 
-    // Impact row toggle (Aurora, Radio, etc.)
+    // Impact row toggle (Aurora, Radio, Solar Cycle, etc.)
     const impactRowEl = target.closest("[data-impact-row]") as HTMLElement | null;
     if (impactRowEl) {
       const kind = impactRowEl.dataset.impactRow ?? "";
@@ -1997,8 +2788,8 @@ class HelioWidgetInstance {
       return;
     }
 
-    // Hero detail expand ("▼ Details" button only)
-    if (target.closest(".hw-hero-click")) {
+    // Hero detail expand (HISTORY toggle)
+    if (target.closest("[data-hero-toggle]")) {
       this.heroExpanded = !this.heroExpanded;
       this.render();
     }
