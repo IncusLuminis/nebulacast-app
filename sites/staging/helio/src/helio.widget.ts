@@ -1614,9 +1614,11 @@ function renderHSSTip(data: HelioNow, isOpen: boolean): string {
   const openCls = isOpen ? " hw-impact-tip-open" : "";
 
   // ── SVG horizontal layout ────────────────────────────────────────────────
-  const W = 160, H = 72;
-  const scx = 18,  scy = 36;   // Sun centre
-  const ecx = 142, ecy = 36;   // Earth centre
+  // Wide viewBox (320×72) matches CME cone width — prevents extreme stretch on
+  // large screens. All X-coords scaled ×2 from the original 160-unit design.
+  const W = 320, H = 72;
+  const scx = 36,  scy = 36;   // Sun centre  (was 18)
+  const ecx = 284, ecy = 36;   // Earth centre (was 142)
   const rSun = 11, rIn = 14, rOut = 19, rEarth = 9;
 
   // Sun colours
@@ -1628,7 +1630,7 @@ function renderHSSTip(data: HelioNow, isOpen: boolean): string {
   const streamOp   = watch  ? "0.9"  : "0.25";
   const fanOp      = active ? "0.18" : watch ? "0.10" : "0.04";
 
-  // Sun rays (8 rays, right-side ones slightly dimmer — shielded by CME)
+  // Sun rays (8 rays, right-side ones slightly brighter — towards Earth)
   const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
     const a  = deg * Math.PI / 180;
     const x1 = (scx + rIn  * Math.cos(a)).toFixed(1);
