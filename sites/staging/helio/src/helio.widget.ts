@@ -252,6 +252,8 @@ const WIDGET_CSS = `
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
+@keyframes hw-wind-full{from{transform:translateX(0)}to{transform:translateX(16px)}}
+.hw-wg-full{animation:hw-wind-full linear infinite}
 
 /* States */
 .hw-error{padding:16px;text-align:center;color:#96a8b8}
@@ -538,71 +540,87 @@ function renderMagnetosphereSvg(
     </svg>`;
 
   } else {
-    // ── Full 200×120, Earth at (110, 60) ──────────────────────────────────
-    const ex = 110, ey = 60, er = 10;
-    const standoff = info.state === "storm" ? 26 : info.state === "active" ? 38 : 50;
-    const nx = ex - standoff;
-    const topY = info.state === "storm" ? 28 : info.state === "active" ? 22 : 18;
+    // ── viewBox "-60 0 280 120" — Sun arc off-screen left, Earth+tail off-screen right ──
+    // Sun center at cx=-60, r=80: large golden arc visible at left edge of frame
+    //   at x=0: y = 60 ± sqrt(80²-60²) = 60 ± 53 → arc spans y≈7..113 (almost full height)
+    //   right edge at x=20 → just the rightmost crescent of the Sun visible
+    // Magnetosphere tail at tailX=240 extends 20px past right edge (220) → clipped = elongated
+    const VX = -60, VW = 280;             // viewBox: x from -60 to 220
+    const ey = 60;
+    const sx = -60, sr = 80;             // Sun: center off-screen, large arc at left edge
+    const ex = 155, er = 5;              // Earth: right side of frame
+    const standoff = info.state === "storm" ? 16 : info.state === "active" ? 26 : 38;
+    const nx   = ex - standoff;
+    const topY = info.state === "storm" ? 22 : info.state === "active" ? 30 : 40;
     const botY = 120 - topY;
-    const tailX = 188;
+    const tailX = 240;                   // extends beyond right edge → tail clips naturally
 
     const path = [
       `M ${nx},${ey}`,
-      `C ${nx - 5},${ey - 22} ${ex - 10},${topY} ${ex},${topY}`,
-      `C ${ex + 18},${topY} ${tailX - 20},${topY + 10} ${tailX},${ey - 12}`,
-      `C ${tailX + 3},${ey - 5} ${tailX + 3},${ey + 5} ${tailX},${ey + 12}`,
-      `C ${tailX - 20},${botY - 10} ${ex + 18},${botY} ${ex},${botY}`,
-      `C ${ex - 10},${botY} ${nx - 5},${ey + 22} ${nx},${ey}`,
+      `C ${nx - 4},${ey - 18} ${ex - 5},${topY} ${ex},${topY}`,
+      `C ${ex + 18},${topY} ${tailX - 5},${topY + 18} ${tailX},${ey}`,
+      `C ${tailX - 5},${botY - 18} ${ex + 18},${botY} ${ex},${botY}`,
+      `C ${ex - 5},${botY} ${nx - 4},${ey + 18} ${nx},${ey}`,
       "Z",
     ].join(" ");
 
-    const couplingPath = `M ${nx + 2},${ey} C ${nx + 2},${ey - standoff * 0.4} ${ex - 4},${ey - 8} ${ex - er},${ey} C ${ex - 4},${ey + 8} ${nx + 2},${ey + standoff * 0.4} ${nx + 2},${ey} Z`;
+    const couplingPath = `M ${nx + 2},${ey} C ${nx + 2},${ey - standoff * 0.4} ${ex - 3},${ey - 6} ${ex - er},${ey} C ${ex - 3},${ey + 6} ${nx + 2},${ey + standoff * 0.4} ${nx + 2},${ey} Z`;
 
-    const numGroups = wHigh ? 4 : 3;
-    const arrowRows = [24, 42, 60, 78, 96];
-    const aOff = 40; // start arrows after sun right edge (cx=0 r=36 → right=36)
-    const aLen = wHigh ? 18 : 14;
-    const aHead = wHigh ? 14 : 10;
-    const arrowPath = (y: number) =>
-      `<path d="M ${aOff},${y} L ${aOff + aLen},${y} M ${aOff + aHead},${y - 4} L ${aOff + aLen},${y} L ${aOff + aHead},${y + 4}" stroke="${c}bb" stroke-width="${wHigh ? 2 : 1.5}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
-    const arrowSet = arrowRows.map(y => arrowPath(y)).join("");
-    const windGroups = Array.from({ length: numGroups }, (_, i) =>
-      `<g class="hw-wg" style="animation-duration:${dur}s;animation-delay:${((dur / numGroups) * i).toFixed(2)}s">${arrowSet}</g>`
+    const windColor = wKms > 700 ? "#e05c5c" : wKms > 500 ? "#e0a84a" : wKms > 350 ? "#d4c840" : "#5cce8c";
+    const wDur      = wKms > 700 ? 0.4 : wKms > 500 ? 0.65 : wKms > 350 ? 1.1 : 1.8;
+    const arrowRows = wKms > 500 ? [10, 24, 40, 57, 74, 90, 106]  // 7 rows
+                    : wKms > 350 ? [14, 34, 57, 82, 104]           // 5 rows
+                                 : [20, 50, 82, 108];               // 4 rows
+    const S = 16;
+    const clipStart = sx + sr + 2;       // = 22 (just past Sun right edge)
+    const clipEnd   = nx - 6;
+    const numArrows = Math.ceil((clipEnd - clipStart) / S) + 2;
+    const arrowXs   = Array.from({ length: numArrows }, (_, i) => clipStart - S + i * S);
+    const aLen = 12, aHead = 8;
+    const arrowSet = arrowXs.flatMap(ax =>
+      arrowRows.map(y =>
+        `<path d="M ${ax},${y} L ${ax + aLen},${y} M ${ax + aHead},${y - 3} L ${ax + aLen},${y} L ${ax + aHead},${y + 3}" stroke="${windColor}cc" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+      )
     ).join("");
+    const windGroups = `<g class="hw-wg-full" style="animation-duration:${wDur}s">${arrowSet}</g>`;
 
     const bzArrow = bz == null ? "" : bz > 0
-      ? `<path d="M ${ex},${ey + 5} L ${ex},${ey - 5} M ${ex - 3},${ey - 2} L ${ex},${ey - 5} L ${ex + 3},${ey - 2}" stroke="#5cce8c" stroke-width="1.5" fill="none" stroke-linecap="round"/>`
-      : `<path d="M ${ex},${ey - 5} L ${ex},${ey + 5} M ${ex - 3},${ey + 2} L ${ex},${ey + 5} L ${ex + 3},${ey + 2}" stroke="#e05c5c" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
-
+      ? `<path d="M ${ex},${ey + 4} L ${ex},${ey - 4} M ${ex - 2},${ey - 2} L ${ex},${ey - 4} L ${ex + 2},${ey - 2}" stroke="#5cce8c" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+      : `<path d="M ${ex},${ey - 4} L ${ex},${ey + 4} M ${ex - 2},${ey + 2} L ${ex},${ey + 4} L ${ex + 2},${ey + 2}" stroke="#e05c5c" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
     const bzLabel = bz == null ? "" :
-      `<text x="${ex + 13}" y="${ey + 2}" font-size="7" fill="${bz > 0 ? "#5cce8c" : "#e05c5c"}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
+      `<text x="${ex + 8}" y="${ey + 2}" font-size="6" fill="${bz > 0 ? "#5cce8c" : "#e05c5c"}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
 
-    return `<svg viewBox="0 0 200 120" style="width:100%;height:80px;display:block" xmlns="http://www.w3.org/2000/svg">
-      <defs><clipPath id="${uid}-wclip"><rect x="38" y="0" width="46" height="120"/></clipPath></defs>
-      <rect width="200" height="120" fill="#0a1014" rx="3"/>
-      <circle cx="0" cy="60" r="36" fill="#f0c040" opacity=".7"/>
+    return `<svg viewBox="${VX} 0 ${VW} 120" style="width:100%;height:80px;display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="${uid}-wclip"><rect x="${clipStart}" y="0" width="${clipEnd - clipStart}" height="120"/></clipPath></defs>
+      <rect x="${VX}" width="${VW}" height="120" fill="#0a1014" rx="3"/>
+      <circle cx="${sx}" cy="${ey}" r="${sr}" fill="#f0c040" opacity=".85"/>
       <g clip-path="url(#${uid}-wclip)">${windGroups}</g>
       <path d="${couplingPath}" fill="${c}08"/>
       <path d="${path}" fill="${c}12" stroke="${c}aa" stroke-width="1.2"/>
-      <text x="${nx + 3}" y="${topY - 2}" font-size="7" fill="${c}" opacity=".75" font-family="sans-serif">${escText(info.label)}</text>
+      <text x="${nx + 2}" y="${topY - 2}" font-size="7" fill="${c}" opacity=".8" font-family="sans-serif">${escText(info.label)}</text>
       <circle cx="${ex}" cy="${ey}" r="${er}" fill="#2a4a6a" stroke="#4a7090" stroke-width="1"/>
       ${bzArrow}
       ${bzLabel}
-      <text x="2" y="113" font-size="6" fill="#f0c04088" font-family="sans-serif">Sun</text>
+      <text x="2" y="115" font-size="6" fill="#f0c04088" font-family="sans-serif">Sun</text>
+      <text x="${ex - 7}" y="${ey + er + 10}" font-size="6" fill="#4a709088" font-family="sans-serif">Earth</text>
     </svg>`;
   }
 }
 
 function renderMagnetospherePopover(data: HelioNow): string {
-  const info  = deriveMagnetInfo(data);
-  const bz    = data.metrics.imf_bz_nt;
-  const wind  = data.metrics.solar_wind_kms;
-  const kp    = data.metrics.kp_latest;
+  const info     = deriveMagnetInfo(data);
+  const bz       = data.metrics.imf_bz_nt;
+  const wind     = data.metrics.solar_wind_kms;
+  const kp       = data.metrics.kp_latest;
+  const density  = (data.metrics as Record<string, unknown>).density  as number | null | undefined;
+  const pressure = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined;
 
-  const bzStr   = bz   != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
-  const windStr = wind != null ? `${Math.round(wind)} km/s` : "—";
-  const kpStr   = kp   != null ? kp.toFixed(1) : "—";
-  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
+  const bzStr      = bz      != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const windStr    = wind    != null ? `${Math.round(wind)} km/s` : "—";
+  const densityStr = density != null ? `${(density as number).toFixed(1)} p/cm³` : "—";
+  const pressStr   = pressure != null ? `${(pressure as number).toFixed(2)} nPa` : "—";
+  const bzColor    = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
+  const windColor  = wind != null ? (wind > 700 ? "#e05c5c" : wind > 500 ? "#e0a84a" : wind > 350 ? "#d4c840" : "#5cce8c") : "#607880";
 
   const hintText = (bz != null && bz < -5)
     ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
@@ -615,16 +633,26 @@ function renderMagnetospherePopover(data: HelioNow): string {
     <div class="hw-spark-wrap" style="border-radius:3px;overflow:hidden">${renderMagnetosphereSvg(info, bz, wind, false)}</div>
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Solar wind</span>
+        <span class="hw-kpi-stat-value" style="color:${windColor}">${escText(windStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">IMF Bz</span>
         <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
       </div>
       <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Solar wind</span>
-        <span class="hw-kpi-stat-value">${escText(windStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Coupling</span>
         <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
+      </div>
+    </div>
+    <div class="hw-kpi-stat-row" style="margin-top:4px">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Density</span>
+        <span class="hw-kpi-stat-value">${escText(densityStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Pressure</span>
+        <span class="hw-kpi-stat-value">${escText(pressStr)}</span>
       </div>
     </div>
     <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
