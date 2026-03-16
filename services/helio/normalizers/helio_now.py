@@ -169,6 +169,42 @@ def _normalize_xray(
 
 # ── Solar wind ────────────────────────────────────────────────────────────────
 
+def _normalize_solar_wind_density_pressure(rows: Optional[List]) -> tuple:
+    """
+    Extract latest density (cm⁻³) and dynamic pressure (nPa) from plasma-1-day data.
+    Column order: time_tag, density, speed, temperature.
+    Returns (density, pressure_npa) — each may be None.
+    """
+    if not rows:
+        return None, None
+
+    density: Optional[float] = None
+    speed: Optional[float] = None
+
+    for row in rows[1:]:  # skip header
+        if not isinstance(row, (list, tuple)) or len(row) < 3:
+            continue
+        ts = _parse_swpc_ts(str(row[0]))
+        if ts is None:
+            continue
+        try:
+            d = float(row[1]) if row[1] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            d = None
+        try:
+            s = float(row[2]) if row[2] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            s = None
+        if d is not None:
+            density = d
+        if s is not None:
+            speed = s
+
+    pressure = round(1.67e-6 * density * (speed ** 2), 2) if density and speed else None
+    density_r = round(density, 2) if density is not None else None
+    return density_r, pressure
+
+
 def _normalize_solar_wind_speed(rows: Optional[List]) -> Optional[float]:
     """
     Extract latest solar wind speed (km/s) from plasma-1-day data.
@@ -529,6 +565,7 @@ def normalize(raw: Dict[str, Any]) -> Dict[str, Any]:
     kp_forecast   = _normalize_kp_forecast(raw.get("kp_forecast"))
     xray_flux, xray_class = _normalize_xray(raw.get("xray"))
     solar_wind_kms = _normalize_solar_wind_speed(raw.get("solar_wind_plasma"))
+    density, pressure_npa = _normalize_solar_wind_density_pressure(raw.get("solar_wind_plasma"))
     imf_bz_nt      = _normalize_imf_bz(raw.get("solar_wind_mag"))
     raw_alerts     = _normalize_alerts(raw.get("alerts"))
 
@@ -547,6 +584,8 @@ def normalize(raw: Dict[str, Any]) -> Dict[str, Any]:
         "xray_class":       xray_class,
         "xray_history_1h":  xray_history_1h,
         "solar_wind_kms":   solar_wind_kms,
+        "density":          density,
+        "pressure_npa":     pressure_npa,
         "wind_history_1h":  wind_history_1h,
         "imf_bz_nt":        imf_bz_nt,
         "bz_history_1h":    bz_history_1h,

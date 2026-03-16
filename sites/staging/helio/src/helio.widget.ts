@@ -191,16 +191,24 @@ const WIDGET_CSS = `
 .hw-impacts{padding:10px 14px;border-bottom:1px solid #1e2c30}
 .hw-impact-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;cursor:default;border-radius:3px;padding:3px 4px;margin-left:-4px;margin-right:-4px;transition:background .12s}
 .hw-impact-row:last-child{margin-bottom:0}
+.hw-impact-row{cursor:pointer}
 .hw-impact-row:hover{background:#ffffff09}
+.hw-impact-row.hw-impact-open{background:#ffffff06}
+.hw-impact-caret{font-size:.6em;color:#607880;margin-right:5px;flex-shrink:0;transition:transform .15s}
+.hw-impact-row.hw-impact-open .hw-impact-caret{transform:rotate(90deg)}
 .hw-impact-kind{font-size:.75em;font-weight:600;min-width:88px;color:#b4c6cc;display:flex;align-items:center;gap:5px}
 .hw-impact-badge{font-size:.68em;font-weight:700;padding:1px 7px;border-radius:2px;text-transform:capitalize;min-width:52px;text-align:center;flex-shrink:0}
 .hw-impact-tip{flex-basis:100%;font-size:.72em;color:#96a8b8;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px}
-.hw-impact-row:hover .hw-impact-tip{display:block}
-.hw-solar-tip{flex-basis:100%;display:none;flex-direction:row;align-items:center;gap:10px;margin-top:6px;padding:6px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
-.hw-impact-row:hover .hw-solar-tip{display:flex}
-.hw-solar-disk-wrap{position:relative;flex-shrink:0;width:80px;height:80px}
-.hw-solar-disk-img{position:absolute;top:0;left:0;width:80px;height:80px;border-radius:50%;object-fit:cover;background:#0a0a0a;border:1px solid #2a3c42}
-.hw-solar-tip-text{font-size:.72em;color:#96a8b8;line-height:1.5}
+.hw-impact-tip.hw-impact-tip-open{display:block}
+.hw-solar-tip,.hw-aurora-tip{flex-basis:100%;display:none;flex-direction:column;align-items:stretch;gap:6px;margin-top:6px;padding:10px 6px 8px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
+.hw-solar-tip{align-items:center}
+.hw-solar-tip.hw-solar-open,.hw-aurora-tip.hw-aurora-tip-open{display:flex}
+.hw-solar-disk-wrap{position:relative;flex-shrink:0;width:240px;height:240px}
+.hw-solar-disk-img{position:absolute;top:0;left:0;width:240px;height:240px;border-radius:50%;object-fit:cover;background:#0a0a0a;border:1px solid #2a3c42}
+.hw-solar-tip-text{font-size:.72em;color:#96a8b8;line-height:1.5;text-align:center}
+.hw-solar-layers{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.hw-sl-btn{font-size:.63em;padding:2px 8px;border-radius:3px;border:1px solid;cursor:pointer;background:transparent;transition:opacity .15s;font-family:inherit;letter-spacing:.03em}
+.hw-impact-row[data-solar-toggle]{cursor:pointer}
 
 /* Alerts */
 .hw-alerts{padding:10px 14px}
@@ -1128,31 +1136,47 @@ function parseSolarLocation(loc: string): { lat: number; lon: number } | null {
 }
 
 /** Render SVG dot-overlay of active regions on top of the solar disk image. */
-function renderSolarOverlay(regions: SolarRegion[], sizePx: number): string {
-  const cx = sizePx / 2;
+const SOLAR_LAYER_DEFS = [
+  { id: "X",     label: "X-risk", color: "#e05c5c" },
+  { id: "M",     label: "M-risk", color: "#e0a84a" },
+  { id: "C",     label: "C-risk", color: "#d4cc5c" },
+  { id: "quiet", label: "Quiet",  color: "#5cce8c" },
+] as const;
+
+function solarRegionLayer(reg: SolarRegion): string {
+  return reg.x_flare_probability > 0 ? "X"
+       : reg.m_flare_probability > 0 ? "M"
+       : reg.c_flare_probability > 0 ? "C"
+       : "quiet";
+}
+
+function renderSolarOverlay(regions: SolarRegion[], sizePx: number, activeLayers: Set<string>): string {
+  const cx    = sizePx / 2;
   const diskR = cx * 0.87; // HMI disk fills ~87% of the square image
-  const dots = regions.map(reg => {
+  const dotR  = sizePx * 0.030;  // ring radius (~7.2 at 240px)
+  const sw    = sizePx * 0.009;  // stroke width (~2.2 at 240px)
+  const rings = regions.map(reg => {
     const pos = parseSolarLocation(reg.location);
-    if (!pos || Math.abs(pos.lon) > 88) return ""; // skip behind-limb regions
-    const latR = pos.lat * Math.PI / 180;
-    const lonR = pos.lon * Math.PI / 180;
-    const x = (cx + diskR * Math.cos(latR) * Math.sin(lonR)).toFixed(1);
-    const y = (cx - diskR * Math.sin(latR)).toFixed(1);
-    const color = reg.x_flare_probability > 0  ? "#e05c5c"
-                : reg.m_flare_probability > 10 ? "#e0a84a"
-                : reg.c_flare_probability > 20 ? "#d4cc5c"
-                : "#c8d8e0";
-    const tip = `AR ${reg.region} · ${reg.location
+    // skip behind-limb and "past limb" tracked regions (asterisk in location)
+    if (!pos || Math.abs(pos.lon) > 88 || reg.location.includes("*")) return "";
+    const layer = solarRegionLayer(reg);
+    if (!activeLayers.has(layer)) return "";
+    const color = SOLAR_LAYER_DEFS.find(l => l.id === layer)!.color;
+    const latR  = pos.lat * Math.PI / 180;
+    const lonR  = pos.lon * Math.PI / 180;
+    const x     = (cx + diskR * Math.cos(latR) * Math.sin(lonR)).toFixed(1);
+    const y     = (cx - diskR * Math.sin(latR)).toFixed(1);
+    const tip   = `AR ${reg.region} · ${reg.location
       }\nClass: ${reg.spot_class ?? "—"} / ${reg.mag_class ?? "—"
       }\nC: ${reg.c_flare_probability}%  M: ${reg.m_flare_probability}%  X: ${reg.x_flare_probability}%`;
     return `<g style="pointer-events:all">
       <title>${escText(tip)}</title>
-      <circle cx="${x}" cy="${y}" r="3.5" fill="${color}" stroke="#000" stroke-width="0.6" opacity="0.88"/>
-      <text x="${x}" y="${(parseFloat(y) - 5).toFixed(1)}" font-size="5" fill="${color}" text-anchor="middle" font-family="monospace" opacity="0.95">${reg.region}</text>
+      <circle cx="${x}" cy="${y}" r="${(dotR + sw + 1).toFixed(1)}" fill="none" stroke="#000000" stroke-width="${(sw * 2.5).toFixed(1)}" opacity="0.45"/>
+      <circle cx="${x}" cy="${y}" r="${dotR.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${sw.toFixed(1)}"/>
     </g>`;
   }).join("");
   return `<svg width="${sizePx}" height="${sizePx}" viewBox="0 0 ${sizePx} ${sizePx}"
-    style="position:absolute;top:0;left:0;border-radius:50%;pointer-events:none">${dots}</svg>`;
+    style="position:absolute;top:0;left:0;border-radius:50%;pointer-events:none">${rings}</svg>`;
 }
 
 const IMPACT_ICONS: Record<string, string> = {
@@ -1163,25 +1187,75 @@ const IMPACT_ICONS: Record<string, string> = {
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
 
 const SOLAR_DISK_URL = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
-const SOLAR_DISK_PX  = 80;
+const SOLAR_DISK_PX  = 240;
 
-function renderImpacts(data: HelioNow, scrubData: ScrubData | null, solarRegions: SolarRegion[] | null, impactsOpen: boolean): string {
+function renderImpacts(
+  data:            HelioNow,
+  scrubData:       ScrubData | null,
+  solarRegions:    SolarRegion[] | null,
+  impactsOpen:     boolean,
+  solarExpanded:   boolean,
+  solarLayers:     Set<string>,
+  expandedImpacts: Set<string>,
+  ovationData:     OvationData | null,
+  opts:            HelioWidgetOptions,
+): string {
   const rows = scrubData?.impacts ?? data.observer_impacts ?? [];
   const rowsHtml = rows.map(row => {
     const color      = IMPACT_COLOR[row.level] ?? "#666";
     const levelLabel = row.level === "none" ? "None" : row.level.charAt(0).toUpperCase() + row.level.slice(1);
     const icon       = IMPACT_ICONS[row.kind] ?? IMPACT_ICON_FALLBACK;
     const iconColor  = row.level === "none" ? "#606870" : color;
-    const tipHtml    = row.kind === "solar_activity"
-      ? `<div class="hw-solar-tip">
-           <div class="hw-solar-disk-wrap">
-             <img class="hw-solar-disk-img" src="${SOLAR_DISK_URL}" alt="Solar disk" loading="lazy" />
-             ${solarRegions ? renderSolarOverlay(solarRegions, SOLAR_DISK_PX) : ""}
-           </div>
-           <span class="hw-solar-tip-text">${escText(row.summary)}</span>
-         </div>`
-      : `<div class="hw-impact-tip">${escText(row.summary)}</div>`;
-    return `<div class="hw-impact-row">
+    const isOpen     = row.kind === "solar_activity" ? solarExpanded : expandedImpacts.has(row.kind);
+    const openClass  = isOpen ? " hw-impact-open" : "";
+    let tipHtml: string;
+    if (row.kind === "solar_activity") {
+      const solarOpen  = solarExpanded ? " hw-solar-open" : "";
+      const layerBtns  = SOLAR_LAYER_DEFS.map(l => {
+        const on = solarLayers.has(l.id);
+        const bg = on ? l.color + "22" : "transparent";
+        const op = on ? "1" : "0.32";
+        return `<button class="hw-sl-btn" data-solar-layer="${l.id}" style="color:${l.color};border-color:${l.color};background:${bg};opacity:${op}">${l.label}</button>`;
+      }).join("");
+      tipHtml = `<div class="hw-solar-tip${solarOpen}">
+          <div class="hw-solar-disk-wrap">
+            <img class="hw-solar-disk-img" src="${SOLAR_DISK_URL}" alt="Solar disk" loading="lazy" />
+            ${solarRegions ? renderSolarOverlay(solarRegions, SOLAR_DISK_PX, solarLayers) : ""}
+          </div>
+          <div class="hw-solar-layers">${layerBtns}</div>
+          <span class="hw-solar-tip-text">${escText(row.summary)}</span>
+        </div>`;
+    } else if (row.kind === "aurora") {
+      const auroraOpen = isOpen ? " hw-aurora-tip-open" : "";
+      const aUrl = `https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`;
+      let prob: number | null = null;
+      if (ovationData && opts.lat != null && opts.lon != null) {
+        prob = lookupOvationProb(ovationData.entries, opts.lat, opts.lon);
+      }
+      const hasLocation = opts.lat != null && opts.lon != null;
+      const probColor   = prob != null ? (prob >= 30 ? "#5cce8c" : prob >= 10 ? "#d4cc5c" : "#9ab4bc") : "#607880";
+      const probLabel   = prob != null ? `${prob}%` : ovationData ? "n/a" : "…";
+      const obsPanel    = hasLocation ? `
+        <div class="hw-aurora-obs-panel">
+          <span>📍</span>
+          <span>${opts.locationName ? escText(opts.locationName) + " · " : ""}${opts.lat!.toFixed(1)}°${opts.lat! >= 0 ? "N" : "S"} ${Math.abs(opts.lon!).toFixed(1)}°${opts.lon! >= 0 ? "E" : "W"}</span>
+          <span class="hw-aurora-prob" style="color:${probColor}">Aurora: ${probLabel}</span>
+        </div>` : "";
+      tipHtml = `<div class="hw-aurora-tip${auroraOpen}">
+          <div class="hw-aurora-map-wrap">
+            <img class="hw-aurora-img" src="${esc(aUrl)}" alt="NOAA Aurora Oval" loading="lazy" />
+            ${renderAuroraSvgOverlay(opts)}
+          </div>
+          ${obsPanel}
+          <div class="hw-aurora-caption">NOAA OVATION Prime model · updates every 5 min</div>
+        </div>`;
+    } else {
+      const tipOpen = isOpen ? " hw-impact-tip-open" : "";
+      tipHtml = `<div class="hw-impact-tip${tipOpen}">${escText(row.summary)}</div>`;
+    }
+    const rowAttr = row.kind === "solar_activity" ? " data-solar-toggle" : ` data-impact-row="${esc(row.kind)}"`;
+    return `<div class="hw-impact-row${openClass}"${rowAttr}>
+      <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${iconColor}">${icon}<span style="color:#b4c6cc">${escText(row.label)}</span></span>
       <span class="hw-impact-badge" style="background:${color}22;color:${color}">${escText(levelLabel)}</span>
       ${tipHtml}
@@ -1457,6 +1531,9 @@ function renderCard(
   collapsedDays:         Set<string>,
   impactsOpen:           boolean,
   solarRegions:          SolarRegion[] | null,
+  solarExpanded:         boolean,
+  solarLayers:           Set<string>,
+  expandedImpacts:       Set<string>,
   opts:                  HelioWidgetOptions,
   ovationData:           OvationData | null,
 ): string {
@@ -1467,7 +1544,7 @@ function renderCard(
       ${renderHero(data, heroExpanded, activePopover, scrubData, opts, ovationData)}
       ${heroExpanded ? renderHeroDetail(data) : ""}
       ${renderForecast(data, scrubOffset, scrubData)}
-      ${renderImpacts(data, scrubData, solarRegions, impactsOpen)}
+      ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${renderTimeline(data, expandedTimelineKey, timelineOpen, collapsedDays)}
       ${renderAlerts(data, alertsExpanded, expandedAlertKey)}
     </div>`;
@@ -1503,6 +1580,9 @@ class HelioWidgetInstance {
   private collapsedDays:       Set<string>   = new Set();
   private impactsOpen          = false;
   private solarRegions:        SolarRegion[] | null = null;
+  private solarExpanded        = false;
+  private solarLayers:         Set<string> = new Set(["X", "M", "C", "quiet"]);
+  private expandedImpacts:     Set<string> = new Set();
   private ovationData:      OvationData | null = null;
   private timer:            ReturnType<typeof setTimeout> | null = null;
   private data:             HelioNow | null = null;
@@ -1534,6 +1614,33 @@ class HelioWidgetInstance {
       return;
     }
 
+    // Impact row toggle (Aurora, Radio, etc.)
+    const impactRowEl = target.closest("[data-impact-row]") as HTMLElement | null;
+    if (impactRowEl) {
+      const kind = impactRowEl.dataset.impactRow ?? "";
+      if (this.expandedImpacts.has(kind)) this.expandedImpacts.delete(kind);
+      else this.expandedImpacts.add(kind);
+      this.render();
+      return;
+    }
+
+    // Solar layer toggle button (must be before solar-toggle to prevent bubbling)
+    const layerEl = target.closest("[data-solar-layer]") as HTMLElement | null;
+    if (layerEl) {
+      const layer = layerEl.dataset.solarLayer ?? "";
+      if (this.solarLayers.has(layer)) this.solarLayers.delete(layer);
+      else this.solarLayers.add(layer);
+      this.render();
+      return;
+    }
+
+    // Solar activity row: toggle disk panel
+    if (target.closest("[data-solar-toggle]")) {
+      this.solarExpanded = !this.solarExpanded;
+      this.render();
+      return;
+    }
+
     // SWPC Alerts section: collapse / expand
     if (target.closest("[data-alerts-toggle]")) {
       this.alertsExpanded = !this.alertsExpanded;
@@ -1553,6 +1660,15 @@ class HelioWidgetInstance {
     // Timeline section: collapse / expand
     if (target.closest("[data-tl-section]")) {
       this.timelineOpen = !this.timelineOpen;
+      if (this.timelineOpen) {
+        // Pre-collapse all day groups so user opts in per-day
+        const nowMs = Date.now();
+        this.collapsedDays = new Set([
+          new Date(nowMs).toISOString().slice(0, 10),
+          new Date(nowMs - 86_400_000).toISOString().slice(0, 10),
+          new Date(nowMs - 172_800_000).toISOString().slice(0, 10),
+        ]);
+      }
       this.render();
       return;
     }
@@ -1646,12 +1762,17 @@ class HelioWidgetInstance {
     try {
       const res = await fetch("https://services.swpc.noaa.gov/json/solar_regions.json");
       if (!res.ok) return;
-      const all = await res.json() as (SolarRegion & { observed_date: string })[];
-      // Keep only the latest observation per region number
-      const latest = new Map<number, SolarRegion & { observed_date: string }>();
+      const all = await res.json() as (SolarRegion & { observed_date: string; area: number | null })[];
+      // Prefer latest record with non-null area (classified); fall back to latest overall
+      const latest = new Map<number, SolarRegion & { observed_date: string; area: number | null }>();
       for (const r of all) {
-        const prev = latest.get(r.region);
-        if (!prev || r.observed_date > prev.observed_date) latest.set(r.region, r);
+        const prev        = latest.get(r.region);
+        const hasData     = r.area != null;
+        const prevHasData = prev?.area != null;
+        if (!prev
+          || (!prevHasData && hasData)                                    // upgrade: no data → has data
+          || (prevHasData === hasData && r.observed_date > prev.observed_date)  // same quality, newer
+        ) latest.set(r.region, r);
       }
       this.solarRegions = [...latest.values()];
       this.render();
@@ -1683,7 +1804,8 @@ class HelioWidgetInstance {
       this.data, this.expanded, this.heroExpanded, this.activePopover,
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
       this.expandedTimelineKey, this.timelineOpen, this.collapsedDays,
-      this.impactsOpen, this.solarRegions, this.opts, this.ovationData,
+      this.impactsOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
+      this.expandedImpacts, this.opts, this.ovationData,
     );
   }
 
