@@ -40,6 +40,7 @@ export interface HelioMetrics {
   solar_wind_kms:  number | null;
   wind_history_1h: WindHistoryPoint[];
   imf_bz_nt:       number | null;
+  imf_bt_nt:       number | null;
   bz_history_1h:   BzHistoryPoint[];
   bz_history_5m:   BzHistoryPoint[];
 }

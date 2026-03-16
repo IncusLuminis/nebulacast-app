@@ -233,16 +233,17 @@ def _normalize_solar_wind_speed(rows: Optional[List]) -> Optional[float]:
 
 # ── IMF Bz ────────────────────────────────────────────────────────────────────
 
-def _normalize_imf_bz(rows: Optional[List]) -> Optional[float]:
+def _normalize_imf_bz(rows: Optional[List]) -> Tuple[Optional[float], Optional[float]]:
     """
-    Extract latest IMF Bz (nT) from solar-wind/mag-1-day data.
-    Column order: time_tag, bx_gsm, by_gsm, bz_gsm, bt, lat, lon.
-    Returns None if feed is unavailable or values are missing.
+    Extract latest IMF Bz and Bt (nT) from solar-wind/mag-1-day data.
+    Column order: time_tag, bx_gsm, by_gsm, bz_gsm, lon_gsm, lat_gsm, bt.
+    Returns (bz_nt, bt_nt); either may be None if unavailable.
     """
     if not rows:
-        return None
+        return None, None
 
     bz: Optional[float] = None
+    bt: Optional[float] = None
 
     for row in rows[1:]:  # skip header
         if not isinstance(row, (list, tuple)) or len(row) < 4:
@@ -254,10 +255,16 @@ def _normalize_imf_bz(rows: Optional[List]) -> Optional[float]:
             bz_val = float(row[3]) if row[3] not in (None, "null", "") else None
         except (TypeError, ValueError):
             bz_val = None
+        try:
+            bt_val = float(row[6]) if len(row) > 6 and row[6] not in (None, "null", "") else None
+        except (TypeError, ValueError):
+            bt_val = None
         if bz_val is not None:
             bz = bz_val
+        if bt_val is not None:
+            bt = bt_val
 
-    return bz
+    return bz, bt
 
 
 # ── 24-hour history series (1-hour buckets) ───────────────────────────────────
@@ -566,7 +573,7 @@ def normalize(raw: Dict[str, Any]) -> Dict[str, Any]:
     xray_flux, xray_class = _normalize_xray(raw.get("xray"))
     solar_wind_kms = _normalize_solar_wind_speed(raw.get("solar_wind_plasma"))
     density, pressure_npa = _normalize_solar_wind_density_pressure(raw.get("solar_wind_plasma"))
-    imf_bz_nt      = _normalize_imf_bz(raw.get("solar_wind_mag"))
+    imf_bz_nt, imf_bt_nt = _normalize_imf_bz(raw.get("solar_wind_mag"))
     raw_alerts     = _normalize_alerts(raw.get("alerts"))
 
     kp_history_1h    = _normalize_kp_history_1h(raw.get("kp_observed"))
@@ -588,6 +595,7 @@ def normalize(raw: Dict[str, Any]) -> Dict[str, Any]:
         "pressure_npa":     pressure_npa,
         "wind_history_1h":  wind_history_1h,
         "imf_bz_nt":        imf_bz_nt,
+        "imf_bt_nt":        imf_bt_nt,
         "bz_history_1h":    bz_history_1h,
         "bz_history_5m":    bz_history_5m,
     }

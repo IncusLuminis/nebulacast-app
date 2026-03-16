@@ -151,6 +151,8 @@ const WIDGET_CSS = `
 /* Hero toggle (bottom-left, 2 font steps up) */
 .hw-hero-toggle-btn{font-size:.78em;color:#96a8b8;background:none;border:none;cursor:pointer;padding:0;white-space:nowrap;margin-top:8px;display:block;transition:color .15s}
 .hw-hero-toggle-btn:hover{color:#b4c6cc}
+.hw-section-toggle{font-size:.78em;color:#96a8b8;background:none;border:none;cursor:pointer;padding:8px 14px;white-space:nowrap;display:block;width:100%;text-align:left;transition:color .15s}
+.hw-section-toggle:hover{color:#b4c6cc}
 
 /* Hero quick details — KPI items are clickable */
 .hw-quick-details{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:10px;padding-top:8px;border-top:1px solid #1e2c30}
@@ -289,6 +291,10 @@ const WIDGET_CSS = `
 @keyframes hw-wind-full{from{transform:translateX(0)}to{transform:translateX(16px)}}
 .hw-wg-full{animation:hw-wind-full linear infinite}
 
+/* Bz Gauge */
+.hw-bz-gauge-wrap{margin-bottom:8px}
+.hw-bz-gauge-labels{display:flex;justify-content:space-between;font-size:.6em;color:#607880;margin-top:2px;padding:0 2px}
+
 /* CME Tracker */
 .hw-cme{padding:10px 14px;border-bottom:1px solid #1e2c30}
 .hw-cme-row{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:2px 4px;margin:-2px -4px 6px;border-radius:3px;transition:background .12s}
@@ -407,20 +413,23 @@ function renderPopoverHeader(title: string): string {
 
 function renderSolarWindPopover(data: HelioNow): string {
   const pts: WindHistoryPoint[] = data.metrics.wind_history_1h ?? [];
-  const svg = sparkLine(
-    pts.map(p => p.kms ?? 0).filter(v => v > 0),
-    pts.map(p => fmtHour(p.t_utc)),
-    "#5cce8c", 36, false,
-  );
   const latest = pts[pts.length - 1];
-  const densityVal  = latest?.density  != null ? `${latest.density.toFixed(2)} cm⁻³`   : "—";
-  const tempVal     = latest?.temp_kk  != null ? `${latest.temp_kk.toFixed(0)} kK`      : "—";
-  const pressureVal = latest?.pressure_npa != null ? `${latest.pressure_npa.toFixed(2)} nPa` : "—";
+  const speed    = data.metrics.solar_wind_kms;
+  const speedStr = speed != null ? `${Math.round(speed)} km/s` : "—";
+  const speedColor = speed != null
+    ? (speed >= 700 ? "#e05c5c" : speed >= 500 ? "#e0a84a" : speed >= 400 ? "#d4cc5c" : "#5cce8c")
+    : "#607880";
+  const densityVal  = latest?.density      != null ? `${latest.density.toFixed(2)} cm⁻³`      : "—";
+  const tempVal     = latest?.temp_kk      != null ? `${latest.temp_kk.toFixed(0)} kK`         : "—";
+  const pressureVal = latest?.pressure_npa != null ? `${latest.pressure_npa.toFixed(2)} nPa`   : "—";
 
   return `<div class="hw-kpi-popover">
-    ${renderPopoverHeader("Solar Wind · Last 24h")}
-    <div class="hw-spark-wrap">${svg}</div>
+    ${renderPopoverHeader("Solar Wind · Current")}
     <div class="hw-kpi-stat-row">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Speed</span>
+        <span class="hw-kpi-stat-value" style="color:${speedColor}">${escText(speedStr)}</span>
+      </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Density</span>
         <span class="hw-kpi-stat-value">${escText(densityVal)}</span>
@@ -434,22 +443,21 @@ function renderSolarWindPopover(data: HelioNow): string {
         <span class="hw-kpi-stat-value">${escText(pressureVal)}</span>
       </div>
     </div>
+    <div class="hw-kpi-hint" style="margin-top:4px">Trend history: ▶ HISTORY</div>
   </div>`;
 }
 
 function renderXrayPopover(data: HelioNow): string {
-  const pts: XrayHistoryPoint[] = data.metrics.xray_history_1h ?? [];
-  const svg = sparkXray(pts);
   const currentClass = data.metrics.xray_class ?? "A";
   const flux = data.metrics.xray_flux_wm2;
   const fluxStr = flux != null ? flux.toExponential(2) + " W/m²" : "—";
 
   const bands = [
-    { label: "A", color: "#888",     start: 1e-8, end: 1e-7 },
-    { label: "B", color: "#5cce8c",  start: 1e-7, end: 1e-6 },
-    { label: "C", color: "#aad47a",  start: 1e-6, end: 1e-5 },
-    { label: "M", color: "#e0a84a",  start: 1e-5, end: 1e-4 },
-    { label: "X", color: "#e05c5c",  start: 1e-4, end: 1e-3 },
+    { label: "A", color: "#888"    },
+    { label: "B", color: "#5cce8c" },
+    { label: "C", color: "#aad47a" },
+    { label: "M", color: "#e0a84a" },
+    { label: "X", color: "#e05c5c" },
   ];
   const scaleBands = bands.map(b => {
     const isActive = b.label === currentClass;
@@ -461,34 +469,116 @@ function renderXrayPopover(data: HelioNow): string {
   ).join("");
 
   return `<div class="hw-kpi-popover">
-    ${renderPopoverHeader("X-Ray Flux · Last 24h")}
-    <div class="hw-spark-wrap">${svg}</div>
-    <div style="margin-top:8px">
+    ${renderPopoverHeader("X-Ray · Current")}
+    <div style="margin-bottom:8px">
       <div class="hw-xray-scale">${scaleBands}</div>
       <div class="hw-xray-scale-labels">${scaleLabels}</div>
     </div>
-    <div class="hw-kpi-hint">Current: <b style="color:${XRAY_COLOR[currentClass] ?? "#a0b4b8"}">${escText(currentClass)}-class</b> · ${escText(fluxStr)}</div>
+    <div class="hw-kpi-hint">Class: <b style="color:${XRAY_COLOR[currentClass] ?? "#a0b4b8"}">${escText(currentClass)}-class</b> · ${escText(fluxStr)}</div>
+    <div class="hw-kpi-hint" style="margin-top:4px">Trend history: ▶ HISTORY</div>
   </div>`;
 }
 
+function renderBzGauge(bz: number | null): string {
+  // Layout: triangle pointer above track, value label below track
+  // H=36: 0..10 = triangle zone, 10..20 = track zone, 20..30 = label zone, 30..36 = padding
+  const W = 200, H = 36;
+  const MAX = 20;
+  const cx = W / 2;
+  const trackY = 16, trackH = 6;   // track top-y and height
+  const trackMid = trackY + trackH / 2;
+
+  const track = `<rect x="0" y="${trackY}" width="${W}" height="${trackH}" rx="3" fill="#1e2c30"/>`;
+
+  // Threshold tick marks at ±5, ±10 (inside track)
+  const ticks = [-10, -5, 5, 10].map(v => {
+    const x = cx + (v / MAX) * cx;
+    return `<line x1="${x.toFixed(1)}" y1="${trackY}" x2="${x.toFixed(1)}" y2="${trackY + trackH}" stroke="#2a3c42" stroke-width="1"/>`;
+  }).join("");
+
+  // Center tick — slightly taller
+  const centerTick = `<line x1="${cx}" y1="${trackY - 2}" x2="${cx}" y2="${trackY + trackH + 2}" stroke="#3a4c52" stroke-width="1.5"/>`;
+
+  if (bz == null) {
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block">${track}${ticks}${centerTick}</svg>`;
+  }
+
+  const color = bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz < 0 ? "#d4b84a" : bz >= 5 ? "#5cce8c" : "#7acca8";
+  const clampedBz = Math.max(-MAX, Math.min(MAX, bz));
+  const markerX = cx + (clampedBz / MAX) * cx;
+
+  // Colored bar: rx=3 (= trackH/2) gives semicircular end caps.
+  // Shift bar by rx so the cap's visual CENTER aligns with markerX,
+  // making the triangle tip point to the center of the cap (not its edge).
+  const capR = 3;
+  const barStartX = clampedBz < 0 ? markerX - capR : cx - capR;
+  const barW = Math.max(2 * capR, Math.abs(markerX - cx) + 2 * capR);
+  const bar = `<rect x="${barStartX.toFixed(1)}" y="${trackY}" width="${barW.toFixed(1)}" height="${trackH}" rx="${capR}" fill="${color}" opacity="0.82"/>`;
+
+  // Downward-pointing triangle above the track (▼)
+  const triSize = 5;
+  const triTip  = trackY - 1;           // tip of triangle just touches track top
+  const triBase = triTip - triSize * 1.1;
+  const triangle = `<polygon points="${markerX.toFixed(1)},${triTip.toFixed(1)} ${(markerX - triSize).toFixed(1)},${triBase.toFixed(1)} ${(markerX + triSize).toFixed(1)},${triBase.toFixed(1)}" fill="${color}"/>`;
+
+  // Vertical stem from triangle tip to track midline
+  const stem = `<line x1="${markerX.toFixed(1)}" y1="${triTip.toFixed(1)}" x2="${markerX.toFixed(1)}" y2="${trackMid.toFixed(1)}" stroke="${color}" stroke-width="1" opacity="0.6"/>`;
+
+  // Value label below track
+  const labelY = trackY + trackH + 9;
+  const label = `<text x="${markerX.toFixed(1)}" y="${labelY}" text-anchor="middle" font-size="8" fill="${color}" font-weight="600">${bz >= 0 ? "+" : ""}${bz.toFixed(1)}</text>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block">
+    ${track}${ticks}${centerTick}${bar}${triangle}${stem}${label}
+  </svg>`;
+}
+
 function renderBzPopover(data: HelioNow): string {
-  const pts5m: BzHistoryPoint[] = data.metrics.bz_history_5m ?? [];
-  const svg = sparkLine(
-    pts5m.map(p => p.bz),
-    pts5m.map(p => fmtHour(p.t_utc)),
-    "#d4cc5c", 36, true,
-  );
-  const bz = data.metrics.imf_bz_nt;
-  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
-  const bzStr = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const bz       = data.metrics.imf_bz_nt;
+  const bt       = data.metrics.imf_bt_nt;
+  const wind     = data.metrics.solar_wind_kms;
+  const pressure = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined ?? null;
+
+  const bzColor  = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
+  const bzStr    = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const btStr    = bt != null ? bt.toFixed(1) + " nT" : "—";
+  const windStr  = wind != null ? `${Math.round(wind)} km/s` : "—";
+  const pressStr = pressure != null ? `${(pressure as number).toFixed(2)} nPa` : "—";
+
+  const magnetInfo   = deriveMagnetInfo(data);
+
+  const aurora = bz != null && bz < -5
+    ? { msg: "Southward IMF · Aurora favorable", color: "#5cce8c" }
+    : bz != null && bz < 0
+    ? { msg: "Weakly southward · Conditions may improve", color: "#d4cc5c" }
+    : { msg: "Northward IMF · Stable magnetosphere", color: "#96a8b8" };
 
   return `<div class="hw-kpi-popover">
-    ${renderPopoverHeader("IMF Bz · Last 6h")}
-    <div class="hw-spark-wrap">${svg}</div>
-    <div class="hw-kpi-hint">
-      Current Bz: <b style="color:${bzColor}">${escText(bzStr)}</b>
-      <br>Negative Bz opens Earth's magnetosphere to solar wind and significantly improves aurora probability.
+    ${renderPopoverHeader("IMF Bz · Coupling")}
+    <div class="hw-bz-gauge-wrap">
+      ${renderBzGauge(bz)}
+      <div class="hw-bz-gauge-labels"><span>−20 nT</span><span>−10</span><span>0</span><span>+10</span><span>+20 nT</span></div>
     </div>
+    <div class="hw-kpi-stat-row">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Bz</span>
+        <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Bt total</span>
+        <span class="hw-kpi-stat-value">${escText(btStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Solar wind</span>
+        <span class="hw-kpi-stat-value">${escText(windStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Pressure</span>
+        <span class="hw-kpi-stat-value">${escText(pressStr)}</span>
+      </div>
+    </div>
+    <div class="hw-kpi-hint" style="color:${aurora.color};font-weight:600;margin-bottom:4px">${escText(aurora.msg)}</div>
+    <div style="font-size:.65em;color:#607880">Coupling: <span style="color:${magnetInfo.color};font-weight:600">${escText(magnetInfo.coupling)}</span> · Trend history: ▶ Details</div>
   </div>`;
 }
 
@@ -806,7 +896,7 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 // ── Hero section ─────────────────────────────────────────────────────────────
 
 function renderHero(
-  data: HelioNow, heroExpanded: boolean, activePopover: string | null,
+  data: HelioNow, heroExpanded: boolean, indicatorsOpen: boolean, activePopover: string | null,
   scrubData: ScrubData | null, opts: HelioWidgetOptions, ovationData: OvationData | null,
 ): string {
   const { summary, scales, metrics, aurora_hint } = data;
@@ -846,7 +936,7 @@ function renderHero(
   // X-ray: use log10(flux) so small changes at low flux don't dominate
   const xrayTrend = trendArrow((metrics.xray_history_1h  ?? []).map(p => Math.log10(p.flux + 1e-9)), 0.15);
 
-  const toggleLabel  = heroExpanded ? "▼ Details" : "▶ Details";
+  const toggleLabel  = heroExpanded ? "▼ HISTORY" : "▶ HISTORY";
   const magnetInfo   = deriveMagnetInfo(data);
 
   // Aurora highlight — live Kp only (scrub shows forecast, not an "alert")
@@ -889,15 +979,20 @@ function renderHero(
           </div>
         </div>
       </div>
+      <div class="hw-section-row" data-indicators-toggle style="margin-top:8px;margin-bottom:${indicatorsOpen ? "0" : "4px"}">
+        <span class="hw-section-caret">${indicatorsOpen ? "▼" : "▶"}</span>
+        <span class="hw-section-label" style="margin-bottom:0">INDICATORS</span>
+      </div>
+      ${indicatorsOpen ? `
       <div class="hw-quick-details">
         ${kpiItem("aurora",     "Aurora",     escText(auroraDisp), auroraColor)}
         ${kpiItem("solar_wind", "Solar wind", escText(windDisp),   windColor, windTrend)}
         ${kpiItem("imf_bz",     "IMF Bz",     escText(bzDisp),     bzColor,   bzTrend)}
         ${kpiItem("xray",       "X-ray",      escText(xrayDisp),   xrayColor, xrayTrend)}
       </div>
-      <button class="hw-hero-toggle-btn hw-hero-click" aria-label="Toggle details">${toggleLabel}</button>
-      ${auroraBanner}
       ${activePopover ? renderKpiPopover(data, activePopover, opts, ovationData) : ""}
+      <button class="hw-hero-toggle-btn hw-hero-click" aria-label="Toggle history">${toggleLabel}</button>` : ""}
+      ${auroraBanner}
     </div>`;
 }
 
@@ -906,6 +1001,7 @@ function renderHeroDetail(data: HelioNow): string {
   const kpPts:   KpHistoryPoint[]   = metrics.kp_history_1h  ?? [];
   const windPts: WindHistoryPoint[] = metrics.wind_history_1h ?? [];
   const bzPts:   BzHistoryPoint[]   = metrics.bz_history_1h  ?? [];
+  const xrayPts: XrayHistoryPoint[] = metrics.xray_history_1h ?? [];
 
   const kpSvg   = sparkKp(kpPts);
   const windSvg = sparkLine(
@@ -917,6 +1013,7 @@ function renderHeroDetail(data: HelioNow): string {
     bzPts.map(p => p.bz), bzPts.map(p => fmtHour(p.t_utc)),
     "#d4cc5c", 28, true,
   );
+  const xraySvg = sparkXray(xrayPts);
 
   return `
     <div class="hw-hero-detail">
@@ -931,6 +1028,10 @@ function renderHeroDetail(data: HelioNow): string {
       <div class="hw-spark-row">
         <div class="hw-spark-label">Solar wind · Last 24h</div>
         <div class="hw-spark-wrap">${windSvg}</div>
+      </div>
+      <div class="hw-spark-row">
+        <div class="hw-spark-label">X-Ray · Last 24h</div>
+        <div class="hw-spark-wrap">${xraySvg}</div>
       </div>
     </div>`;
 }
@@ -1041,7 +1142,7 @@ function buildScrubData(data: HelioNow, offsetH: number): ScrubData | null {
 
 // ── Forecast & scrubber ───────────────────────────────────────────────────────
 
-function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubData | null): string {
+function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubData | null, forecastOpen: boolean): string {
   const { forecast, metrics } = data;
   const { kp_max_next_24h, kp_max_at_utc, trend } = forecast;
   const pts: KpForecastPoint[] = (metrics.kp_forecast_3h ?? []).slice(0, 16);
@@ -1059,10 +1160,15 @@ function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubDat
     forecastText   = `Peak Kp ${kp_max_next_24h.toFixed(1)} next 24h${timeStr ? ` at ${timeStr}` : ""} · ${trendStr}`;
   }
 
+  const forecastToggleLabel = forecastOpen ? "▼ FORECAST" : "▶ FORECAST";
+
   if (!pts.length) return `
     <div class="hw-forecast">
-      <div class="hw-section-label">Kp Forecast · Next 24h</div>
-      <div class="hw-forecast-text">${escText(forecastText)}</div>
+      <div class="hw-section-row" data-forecast-toggle>
+        <span class="hw-section-caret">${forecastOpen ? "▼" : "▶"}</span>
+        <span class="hw-section-label" style="margin-bottom:0">FORECAST</span>
+      </div>
+      ${forecastOpen ? `<div class="hw-forecast-text">${escText(forecastText)}</div>` : ""}
     </div>`; // no scrubber when no data
 
   const W = 320, BAR_H = 38, LABEL_H = 14, H = BAR_H + LABEL_H;
@@ -1140,7 +1246,11 @@ function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubDat
 
   return `
     <div class="hw-forecast">
-      <div class="hw-section-label">Kp Forecast · Next 24h</div>
+      <div class="hw-section-row" data-forecast-toggle>
+        <span class="hw-section-caret">${forecastOpen ? "▼" : "▶"}</span>
+        <span class="hw-section-label" style="margin-bottom:0">FORECAST</span>
+      </div>
+      ${forecastOpen ? `
       ${simBannerHtml}
       <div class="hw-forecast-text">${escText(forecastText)}</div>
       <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block" preserveAspectRatio="none">
@@ -1148,7 +1258,7 @@ function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubDat
         ${trendSvg}
         ${markerSvg}
       </svg>
-      ${scrubHtml}
+      ${scrubHtml}` : ""}
     </div>`;
 }
 
@@ -1675,6 +1785,8 @@ function renderCard(
   collapsedDays:         Set<string>,
   impactsOpen:           boolean,
   cmeExpanded:           boolean,
+  forecastOpen:          boolean,
+  indicatorsOpen:        boolean,
   solarRegions:          SolarRegion[] | null,
   solarExpanded:         boolean,
   solarLayers:           Set<string>,
@@ -1686,9 +1798,9 @@ function renderCard(
   return `
     <div class="hw-root">
       ${renderHeader(data)}
-      ${renderHero(data, heroExpanded, activePopover, scrubData, opts, ovationData)}
+      ${renderHero(data, heroExpanded, indicatorsOpen, activePopover, scrubData, opts, ovationData)}
       ${heroExpanded ? renderHeroDetail(data) : ""}
-      ${renderForecast(data, scrubOffset, scrubData)}
+      ${renderForecast(data, scrubOffset, scrubData, forecastOpen)}
       ${renderCmeTracker(data, cmeExpanded)}
       ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${renderTimeline(data, expandedTimelineKey, timelineOpen, collapsedDays)}
@@ -1726,6 +1838,8 @@ class HelioWidgetInstance {
   private collapsedDays:       Set<string>   = new Set();
   private impactsOpen          = false;
   private cmeExpanded          = false;
+  private forecastOpen         = false;
+  private indicatorsOpen       = true;
   private solarRegions:        SolarRegion[] | null = null;
   private solarExpanded        = false;
   private solarLayers:         Set<string> = new Set(["X", "M", "C", "quiet"]);
@@ -1757,6 +1871,20 @@ class HelioWidgetInstance {
     // CME Tracker: toggle detail panel
     if (target.closest("[data-cme-toggle]")) {
       this.cmeExpanded = !this.cmeExpanded;
+      this.render();
+      return;
+    }
+
+    // Forecast section: collapse / expand
+    if (target.closest("[data-forecast-toggle]")) {
+      this.forecastOpen = !this.forecastOpen;
+      this.render();
+      return;
+    }
+
+    // Indicators group: collapse / expand
+    if (target.closest("[data-indicators-toggle]")) {
+      this.indicatorsOpen = !this.indicatorsOpen;
       this.render();
       return;
     }
@@ -1958,7 +2086,7 @@ class HelioWidgetInstance {
       this.data, this.expanded, this.heroExpanded, this.activePopover,
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
       this.expandedTimelineKey, this.timelineOpen, this.collapsedDays,
-      this.impactsOpen, this.cmeExpanded, this.solarRegions, this.solarExpanded, this.solarLayers,
+      this.impactsOpen, this.cmeExpanded, this.forecastOpen, this.indicatorsOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
       this.expandedImpacts, this.opts, this.ovationData,
     );
   }
