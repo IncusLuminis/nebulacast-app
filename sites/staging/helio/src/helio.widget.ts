@@ -11,6 +11,7 @@ import type {
   HelioNow, HelioEvent, KpForecastPoint,
   KpHistoryPoint, WindHistoryPoint, BzHistoryPoint, XrayHistoryPoint,
   HelioWidgetOptions, ImpactLevel, AlertLevel, HelioStatus, AuroraLabel, ObserverImpact,
+  CmeTrackerEvent, CmeTrackerStatus, CmeImpactLevel,
 } from "./helio.types";
 
 const REFRESH_MS_DEFAULT = 10 * 60 * 1000; // 10 minutes
@@ -39,6 +40,20 @@ const ALERT_LEVEL_COLOR: Record<AlertLevel, string> = {
 
 const XRAY_COLOR: Record<string, string> = {
   A: "#888", B: "#5cce8c", C: "#aad47a", M: "#e0a84a", X: "#e05c5c",
+};
+
+const CME_IMPACT_COLOR: Record<string, string> = {
+  low:      "#5cce8c",
+  moderate: "#d4cc5c",
+  high:     "#e05c5c",
+  unknown:  "#96a8b8",
+};
+
+const CME_STATUS_LABEL: Record<string, string> = {
+  detected:       "Detected",
+  inbound:        "Inbound",
+  arrival_window: "Arriving",
+  arrived:        "Arrived",
 };
 
 // ── Timestamp formatting ─────────────────────────────────────────────────────
@@ -83,6 +98,17 @@ function fmtHour(ts: string): string {
       hour12: false,
     });
   } catch { return ts.slice(11, 16); }
+}
+
+function fmtCmeTs(ts: string | null): string {
+  if (!ts) return "—";
+  try {
+    return new Date(ts).toLocaleString("en-GB", {
+      month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit",
+      timeZone: "UTC", hour12: false,
+    }) + " UTC";
+  } catch { return ts; }
 }
 
 // ── Escape helpers ───────────────────────────────────────────────────────────
@@ -262,6 +288,21 @@ const WIDGET_CSS = `
 .hw-wg{animation:hw-wind 1.5s linear infinite}
 @keyframes hw-wind-full{from{transform:translateX(0)}to{transform:translateX(16px)}}
 .hw-wg-full{animation:hw-wind-full linear infinite}
+
+/* CME Tracker */
+.hw-cme{padding:10px 14px;border-bottom:1px solid #1e2c30}
+.hw-cme-row{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:2px 4px;margin:-2px -4px 6px;border-radius:3px;transition:background .12s}
+.hw-cme-row:hover{background:#ffffff09}
+.hw-cme-badge{font-size:.68em;font-weight:700;padding:1px 8px;border-radius:2px;text-transform:capitalize;margin-left:auto;flex-shrink:0}
+.hw-cme-svg{width:100%;display:block;height:44px;margin-bottom:4px}
+.hw-cme-detail{margin-top:6px;padding:8px 10px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
+.hw-cme-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:0}
+.hw-cme-stat{display:flex;flex-direction:column;gap:1px}
+.hw-cme-stat-label{font-size:.63em;color:#96a8b8;text-transform:uppercase;letter-spacing:.05em}
+.hw-cme-stat-value{font-size:.78em;font-weight:600;color:#b4c6cc}
+.hw-cme-note{font-size:.68em;color:#96a8b8;margin-top:6px;line-height:1.4}
+@keyframes hw-cme-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.6)}}
+.hw-cme-pulse-dot{animation:hw-cme-pulse 1.6s ease-in-out infinite}
 
 /* States */
 .hw-error{padding:16px;text-align:center;color:#96a8b8}
@@ -1518,6 +1559,109 @@ function renderAlerts(data: HelioNow, alertsExpanded: boolean, expandedAlertKey:
     </div>`;
 }
 
+function renderCmeTracker(data: HelioNow, cmeExpanded: boolean): string {
+  const cme = data.cme_tracker;
+  if (!cme) return "";
+
+  const color      = CME_IMPACT_COLOR[cme.impact_level] ?? "#96a8b8";
+  const statusText = CME_STATUS_LABEL[cme.status] ?? cme.status;
+
+  // ── SVG trajectory ───────────────────────────────────────────────────────
+  const VW = 300, VH = 44;
+  const sunCx = 18, cy = VH / 2, sunR = 10;
+  const earthCx = VW - 18, earthR = 7;
+
+  const trackLine = `<line x1="${sunCx + sunR}" y1="${cy}" x2="${earthCx - earthR}" y2="${cy}" stroke="#2a3c42" stroke-width="1.5" stroke-dasharray="5,4"/>`;
+  const sunCircle = `<circle cx="${sunCx}" cy="${cy}" r="${sunR}" fill="#f0c040" opacity="0.92"/>`;
+  const earthCircle = `
+    <circle cx="${earthCx}" cy="${cy}" r="${earthR}" fill="#4a90c4" opacity="0.88"/>
+    <circle cx="${earthCx}" cy="${cy}" r="2.5" fill="#fff" opacity="0.7"/>`;
+  const sunLabel   = `<text x="${sunCx}" y="${cy + sunR + 9}" text-anchor="middle" font-size="9" fill="#c8aa60">Sun</text>`;
+  const earthLabel = `<text x="${earthCx}" y="${cy + earthR + 9}" text-anchor="middle" font-size="9" fill="#7ab0d4">Earth</text>`;
+
+  let progressDot = "";
+  if (cme.progress != null) {
+    const trackStart = sunCx + sunR + 4;
+    const trackEnd   = earthCx - earthR - 4;
+    const dotX       = trackStart + cme.progress * (trackEnd - trackStart);
+    const dotR       = 5;
+    if (cme.status === "arrival_window") {
+      progressDot = `
+        <g transform="translate(${dotX.toFixed(1)},${cy})" class="hw-cme-pulse-dot" style="transform-box:fill-box;transform-origin:center">
+          <circle cx="0" cy="0" r="${dotR}" fill="${color}" opacity="0.92"/>
+        </g>`;
+    } else {
+      progressDot = `<circle cx="${dotX.toFixed(1)}" cy="${cy}" r="${dotR}" fill="${color}" opacity="0.85"/>`;
+    }
+  }
+
+  const svg = `<svg class="hw-cme-svg" viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    ${trackLine}
+    ${sunCircle}${sunLabel}
+    ${earthCircle}${earthLabel}
+    ${progressDot}
+  </svg>`;
+
+  // ── Detail panel ──────────────────────────────────────────────────────────
+  const arrivalText  = fmtCmeTs(cme.arrival_time_utc);
+  const launchText   = fmtCmeTs(cme.launch_time_utc);
+  const speedText    = cme.speed_kms   != null ? `${Math.round(cme.speed_kms)} km/s` : "—";
+  const angleText    = cme.half_angle_deg != null ? `${cme.half_angle_deg}°` : "—";
+  const locText      = cme.source_location ?? "—";
+  const hitText      = cme.is_earth_direct ? "Direct hit" : "Glancing blow";
+  const progressPct  = cme.progress != null ? `${Math.round(cme.progress * 100)}%` : "—";
+
+  const detailHtml = `
+    <div class="hw-cme-detail">
+      <div class="hw-cme-stat-grid">
+        <div class="hw-cme-stat">
+          <span class="hw-cme-stat-label">Arrival estimate</span>
+          <span class="hw-cme-stat-value">${escText(arrivalText)}</span>
+        </div>
+        <div class="hw-cme-stat">
+          <span class="hw-cme-stat-label">Speed</span>
+          <span class="hw-cme-stat-value" style="color:${color}">${escText(speedText)}</span>
+        </div>
+        <div class="hw-cme-stat">
+          <span class="hw-cme-stat-label">Impact</span>
+          <span class="hw-cme-stat-value" style="color:${color}">${escText(cme.impact_level.charAt(0).toUpperCase() + cme.impact_level.slice(1))}</span>
+        </div>
+        <div class="hw-cme-stat">
+          <span class="hw-cme-stat-label">Status</span>
+          <span class="hw-cme-stat-value">${escText(statusText)}</span>
+        </div>
+        <div class="hw-cme-stat">
+          <span class="hw-cme-stat-label">Launch</span>
+          <span class="hw-cme-stat-value">${escText(launchText)}</span>
+        </div>
+        <div class="hw-cme-stat">
+          <span class="hw-cme-stat-label">Progress</span>
+          <span class="hw-cme-stat-value">${escText(progressPct)}</span>
+        </div>
+      </div>
+      <div class="hw-cme-note">Half-angle: ${escText(angleText)} · Source: ${escText(locText)} · ${escText(hitText)} · Model: Enlil (NASA DONKI)</div>
+    </div>`;
+
+  // ── Header row ────────────────────────────────────────────────────────────
+  const caret = cmeExpanded ? "▼" : "▶";
+  const impactLabel = cme.impact_level === "unknown"
+    ? "Unrated"
+    : cme.impact_level.charAt(0).toUpperCase() + cme.impact_level.slice(1);
+
+  const body = cmeExpanded ? `${svg}${detailHtml}` : "";
+
+  return `
+    <div class="hw-cme">
+      <div class="hw-cme-row" data-cme-toggle>
+        <span class="hw-section-caret">${caret}</span>
+        <span class="hw-section-label" style="margin-bottom:0">CME Tracker</span>
+        <span class="hw-cme-badge" style="background:${color}22;color:${color};margin-left:auto">${escText(statusText)}</span>
+        <span class="hw-cme-badge" style="background:${color}15;color:${color};margin-left:4px">${escText(impactLabel)} impact</span>
+      </div>
+      ${body}
+    </div>`;
+}
+
 function renderCard(
   data:                  HelioNow,
   expanded:              boolean,
@@ -1530,6 +1674,7 @@ function renderCard(
   timelineOpen:          boolean,
   collapsedDays:         Set<string>,
   impactsOpen:           boolean,
+  cmeExpanded:           boolean,
   solarRegions:          SolarRegion[] | null,
   solarExpanded:         boolean,
   solarLayers:           Set<string>,
@@ -1544,6 +1689,7 @@ function renderCard(
       ${renderHero(data, heroExpanded, activePopover, scrubData, opts, ovationData)}
       ${heroExpanded ? renderHeroDetail(data) : ""}
       ${renderForecast(data, scrubOffset, scrubData)}
+      ${renderCmeTracker(data, cmeExpanded)}
       ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${renderTimeline(data, expandedTimelineKey, timelineOpen, collapsedDays)}
       ${renderAlerts(data, alertsExpanded, expandedAlertKey)}
@@ -1579,6 +1725,7 @@ class HelioWidgetInstance {
   private timelineOpen         = false;
   private collapsedDays:       Set<string>   = new Set();
   private impactsOpen          = false;
+  private cmeExpanded          = false;
   private solarRegions:        SolarRegion[] | null = null;
   private solarExpanded        = false;
   private solarLayers:         Set<string> = new Set(["X", "M", "C", "quiet"]);
@@ -1603,6 +1750,13 @@ class HelioWidgetInstance {
     // Reset scrub to live
     if (target.closest(".hw-scrub-reset")) {
       this.scrubOffset = 0;
+      this.render();
+      return;
+    }
+
+    // CME Tracker: toggle detail panel
+    if (target.closest("[data-cme-toggle]")) {
+      this.cmeExpanded = !this.cmeExpanded;
       this.render();
       return;
     }
@@ -1804,7 +1958,7 @@ class HelioWidgetInstance {
       this.data, this.expanded, this.heroExpanded, this.activePopover,
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
       this.expandedTimelineKey, this.timelineOpen, this.collapsedDays,
-      this.impactsOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
+      this.impactsOpen, this.cmeExpanded, this.solarRegions, this.solarExpanded, this.solarLayers,
       this.expandedImpacts, this.opts, this.ovationData,
     );
   }

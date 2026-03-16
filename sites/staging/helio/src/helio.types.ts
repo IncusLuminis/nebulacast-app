@@ -7,7 +7,9 @@ export type HelioStatus = "quiet" | "active" | "elevated" | "storm";
 export type AuroraLabel  = "none" | "possible" | "good";
 export type ImpactLevel  = "none" | "low" | "moderate" | "high";
 export type AlertLevel   = "info" | "watch" | "warning";
-export type ScaleValue   = "G0"|"G1"|"G2"|"G3"|"G4"|"G5"|"R0"|"R1"|"R2"|"R3"|"R4"|"R5"|"S0"|"S1"|"S2"|"S3"|"S4"|"S5";
+export type ScaleValue       = "G0"|"G1"|"G2"|"G3"|"G4"|"G5"|"R0"|"R1"|"R2"|"R3"|"R4"|"R5"|"S0"|"S1"|"S2"|"S3"|"S4"|"S5";
+export type CmeTrackerStatus = "detected" | "inbound" | "arrival_window" | "arrived";
+export type CmeImpactLevel   = "low" | "moderate" | "high" | "unknown";
 
 export interface KpForecastPoint {
   t_utc: string;
@@ -113,6 +115,19 @@ export interface TimelineEvent {
   metadata:       Record<string, unknown>;      // source-specific fields
 }
 
+export interface CmeTrackerEvent {
+  status:           CmeTrackerStatus;
+  impact_level:     CmeImpactLevel;
+  speed_kms:        number | null;
+  half_angle_deg:   number | null;
+  launch_time_utc:  string | null;
+  arrival_time_utc: string | null;
+  progress:         number | null;   // 0.0–1.0; null when status is "detected"
+  source_location:  string | null;   // e.g. "N12E30"
+  is_earth_direct:  boolean;
+  model:            string;          // "enlil"
+}
+
 export interface HelioNow {
   schema_version:   string;
   updated_utc:      string;
@@ -130,6 +145,7 @@ export interface HelioNow {
   alerts_preview:   HelioEvent[];
   alerts_all:       HelioEvent[];
   timeline:         TimelineEvent[];
+  cme_tracker:      CmeTrackerEvent | null;
   raw: {
     alerts_count: number;
   };

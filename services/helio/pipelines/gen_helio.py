@@ -31,6 +31,7 @@ from providers.nasa_donki import fetch_donki, active_product_names as donki_prod
 from normalizers.helio_now import normalize
 from interpreters.swpc_alerts import interpret, derive_scales
 from interpreters.timeline_builder import build_timeline
+from interpreters.cme_tracker import build_cme_tracker
 from aggregators.helio_state import derive
 
 _OUTPUT_PATH = _repo_root / "sites" / "staging" / "data" / "helio_now.json"
@@ -81,6 +82,16 @@ def main() -> int:
     donki_products = donki_product_names(raw_donki)
     timeline  = build_timeline(events, raw_donki, now_utc=started)
 
+    # ── 3c. CME Tracker ───────────────────────────────────────────────────────
+    cme_tracker = build_cme_tracker(raw_donki, events, started)
+    if cme_tracker:
+        print(f"[helio.pipeline] cme_tracker status={cme_tracker['status']} "
+              f"impact={cme_tracker['impact_level']} "
+              f"speed={cme_tracker['speed_kms']} km/s "
+              f"progress={cme_tracker['progress']}")
+    else:
+        print("[helio.pipeline] cme_tracker: no relevant CME")
+
     # ── 4. Aggregate ──────────────────────────────────────────────────────────
     aggregate = derive(
         metrics=metrics,
@@ -112,6 +123,7 @@ def main() -> int:
         "alerts_preview":   alerts_preview,
         "alerts_all":       aggregate["alerts_all"],
         "timeline":         aggregate["timeline"],
+        "cme_tracker":      cme_tracker,
         "raw": {
             "alerts_count": len(raw_alerts),
         },
