@@ -1967,39 +1967,68 @@ function deriveCMEState(data: HelioNow): CMEState {
 function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
   const cme       = deriveCMEState(data);
   const openClass = isOpen ? " hw-impact-tip-open" : "";
-  const W = 160, H = 120;
-  const cx = 80, sunY = 16, earthY = 94;
-  const coneH     = earthY - sunY; // 78 px
-  const tanDeg    = (d: number) => Math.tan(d * Math.PI / 180);
-  const outerHW   = Math.round(tanDeg(36) * coneH); // ~57
-  const midHW     = Math.round(tanDeg(23) * coneH); // ~33
-  const innerHW   = Math.round(tanDeg(12) * coneH); // ~17
-  const tri       = (hw: number) =>
-    `${cx},${sunY} ${cx + hw},${earthY} ${cx - hw},${earthY}`;
 
-  // Earth x-offset by status
-  const earthX =
-    cme.status === "impact" ? cx :
-    cme.status === "watch"  ? cx + midHW + 10 :  // near mid-cone edge
-    cx + outerHW + 20;                             // quiet: outside cone
-  const eX = Math.min(W - 8, Math.max(8, earthX));
+  // ── Horizontal layout: Sun left → cone right → Earth right ──────────────
+  const W = 160, H = 80;
+  const sx = 18,  cy = 40;   // Sun centre
+  const coneEnd = 126;        // x where cone base is
+  const ex = 142;             // Earth x
+  const coneLen = coneEnd - sx;  // 108 px
 
-  // Earth colour by zone
-  const inInner = eX >= cx - innerHW && eX <= cx + innerHW;
-  const inMid   = eX >= cx - midHW   && eX <= cx + midHW;
-  const inOuter = eX >= cx - outerHW && eX <= cx + outerHW;
+  const tanDeg  = (d: number) => Math.tan(d * Math.PI / 180);
+  const outerHW = Math.round(tanDeg(18) * coneLen); // ~35
+  const midHW   = Math.round(tanDeg(12) * coneLen); // ~23
+  const innerHW = Math.round(tanDeg(6)  * coneLen); // ~11
+
+  // Horizontal triangle: tip at Sun, base at coneEnd
+  const tri = (hw: number) =>
+    `${sx},${cy} ${coneEnd},${cy - hw} ${coneEnd},${cy + hw}`;
+
+  // Earth y position by status (offset from centre line)
+  const rawEY =
+    cme.status === "impact" ? cy :
+    cme.status === "watch"  ? cy + midHW + 9 :  // just outside mid zone
+    cy;                                           // quiet: centre, no cone
+  const eY = Math.min(H - 10, Math.max(10, rawEY));
+
+  // Earth zone
+  const inInner = Math.abs(eY - cy) <= innerHW;
+  const inMid   = Math.abs(eY - cy) <= midHW;
+  const inOuter = Math.abs(eY - cy) <= outerHW;
   const earthFill = inInner ? "#e05c5c" : inMid ? "#d4cc5c" : inOuter ? "#e0a84a" : "#5cce8c";
 
   const coneSvg = cme.status !== "quiet"
     ? `<polygon points="${tri(outerHW)}" fill="#253238" opacity="0.85"/>
        <polygon points="${tri(midHW)}"   fill="#d4cc5c" opacity="0.14"/>
        <polygon points="${tri(innerHW)}" fill="#e0a84a" opacity="0.28"/>
-       <line x1="${cx}" y1="${sunY + 9}" x2="${cx}" y2="${earthY - 7}"
+       <line x1="${sx + 9}" y1="${cy}" x2="${coneEnd - 2}" y2="${cy}"
              stroke="#3a5058" stroke-dasharray="3 3" stroke-width="1"/>`
-    : `<line x1="${cx + 8}" y1="${sunY}" x2="${eX - 7}" y2="${earthY}"
+    : `<line x1="${sx + 9}" y1="${cy}" x2="${ex - 9}" y2="${cy}"
              stroke="#1e2c30" stroke-dasharray="4 3" stroke-width="1"/>`;
 
-  // Arrival label
+  // Sun rays
+  const rSun = 8, rIn = 11, rOut = 15;
+  const sunFill = "#f5c540";
+  const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
+    const a  = deg * Math.PI / 180;
+    const x1 = (sx + rIn  * Math.cos(a)).toFixed(1);
+    const y1 = (cy + rIn  * Math.sin(a)).toFixed(1);
+    const x2 = (sx + rOut * Math.cos(a)).toFixed(1);
+    const y2 = (cy + rOut * Math.sin(a)).toFixed(1);
+    const op = (deg < 45 || deg > 315) ? "0.9" : "0.5";
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+      stroke="${sunFill}" stroke-width="1.4" stroke-linecap="round" opacity="${op}"/>`;
+  }).join("");
+
+  // Earth grid
+  const rE = 7;
+  const earthGrid = `
+    <ellipse cx="${ex}" cy="${eY}" rx="${rE}" ry="${(rE * 0.42).toFixed(1)}"
+             fill="none" stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>
+    <line x1="${ex}" y1="${eY - rE}" x2="${ex}" y2="${eY + rE}"
+          stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>`;
+
+  // Arrival footer
   let arrStr = "—";
   if (cme.arrival_utc) {
     const d  = new Date(cme.arrival_utc);
@@ -2023,22 +2052,26 @@ function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
   const svg = `<svg class="hw-cme-svg" width="100%" height="${H}"
       viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     ${coneSvg}
-    <!-- Sun -->
-    <circle cx="${cx}" cy="${sunY}" r="6" fill="#f5c540" opacity="0.92"/>
-    <circle cx="${cx}" cy="${sunY}" r="9" fill="none" stroke="#f5c540" stroke-width="1.2" opacity="0.3"/>
-    <!-- Earth -->
-    <circle cx="${eX}" cy="${earthY}" r="5.5" fill="${earthFill}" opacity="0.85"/>
-    <circle cx="${eX}" cy="${earthY}" r="8" fill="none" stroke="${earthFill}" stroke-width="5" opacity="0.12"/>
-    <!-- Sun label -->
-    <text x="${cx}" y="${sunY - 11}" font-size="8" fill="#607880"
+    <!-- Sun glow -->
+    <circle cx="${sx}" cy="${cy}" r="${rSun + 5}" fill="none"
+            stroke="${sunFill}" stroke-width="1.2" opacity="0.25"/>
+    <!-- Sun body -->
+    <circle cx="${sx}" cy="${cy}" r="${rSun}" fill="${sunFill}" opacity="0.92"/>
+    ${rays}
+    <!-- Earth body -->
+    <circle cx="${ex}" cy="${eY}" r="${rE}" fill="#1a4a6e" opacity="0.92"/>
+    ${earthGrid}
+    <!-- Earth glow -->
+    <circle cx="${ex}" cy="${eY}" r="${rE + 4}" fill="none"
+            stroke="${earthFill}" stroke-width="4" opacity="0.12"/>
+    <!-- Labels -->
+    <text x="${sx}" y="${H - 3}" font-size="8" fill="#607880"
           text-anchor="middle" font-family="inherit">Sun</text>
-    <!-- Earth label -->
-    <text x="${eX}" y="${earthY + 16}" font-size="8" fill="#607880"
+    <text x="${ex}" y="${H - 3}" font-size="8" fill="#607880"
           text-anchor="middle" font-family="inherit">Earth</text>
-    <!-- Zone label (when CME active) -->
     ${cme.status !== "quiet"
-      ? `<text x="${cx}" y="${H - 4}" font-size="8" fill="${zoneColor}"
-               text-anchor="middle" font-family="inherit">${escText(zoneLabel)}</text>`
+      ? `<text x="${Math.round((sx + ex) / 2)}" y="${H - 3}" font-size="7.5"
+               fill="${zoneColor}" text-anchor="middle" font-family="inherit">${escText(zoneLabel)}</text>`
       : ""}
   </svg>`;
 
