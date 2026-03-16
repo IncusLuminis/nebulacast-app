@@ -1660,8 +1660,8 @@ function renderHSSTip(data: HelioNow, isOpen: boolean): string {
     <line x1="${ecx - er}" y1="${ecy}" x2="${ecx + er}" y2="${ecy}"
           stroke="#4a8ab0" stroke-width="0.8" opacity="0.35"/>`;
 
-  const svg = `<svg class="hw-hss-diagram" viewBox="0 0 ${W} ${H}"
-      preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  const svg = `<svg class="hw-hss-diagram" width="100%" height="${H}"
+      viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     <!-- stream fan -->
     <polygon points="${fanPts}" fill="${streamCol}" opacity="${fanOp}"/>
     <!-- dashed stream axis -->
@@ -2020,8 +2020,8 @@ function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
                   : "Impact unlikely";
   const zoneColor = inInner ? "#e05c5c" : inMid ? "#d4cc5c" : inOuter ? "#e0a84a" : "#5cce8c";
 
-  const svg = `<svg class="hw-cme-svg" viewBox="0 0 ${W} ${H}"
-      preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  const svg = `<svg class="hw-cme-svg" width="100%" height="${H}"
+      viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     ${coneSvg}
     <!-- Sun -->
     <circle cx="${cx}" cy="${sunY}" r="6" fill="#f5c540" opacity="0.92"/>
