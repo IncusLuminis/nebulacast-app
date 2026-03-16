@@ -1969,27 +1969,29 @@ function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
   const openClass = isOpen ? " hw-impact-tip-open" : "";
 
   // ── Horizontal layout: Sun left → cone right → Earth right ──────────────
-  const W = 160, H = 80;
-  const sx = 18,  cy = 40;   // Sun centre
-  const coneEnd = 126;        // x where cone base is
-  const ex = 142;             // Earth x
-  const coneLen = coneEnd - sx;  // 108 px
+  // Wide viewBox (320×80) keeps aspect ratio close to real container (~360px),
+  // preventing the 2.5× stretch that deforms circles and clips Earth.
+  const W = 320, H = 80;
+  const sx = 24,  cy = 40;   // Sun centre
+  const coneEnd = 268;        // x where cone base is
+  const ex = 296;             // Earth x (right of cone base)
+  const coneLen = coneEnd - sx;  // 244 px
 
   const tanDeg  = (d: number) => Math.tan(d * Math.PI / 180);
-  const outerHW = Math.round(tanDeg(18) * coneLen); // ~35
-  const midHW   = Math.round(tanDeg(12) * coneLen); // ~23
-  const innerHW = Math.round(tanDeg(6)  * coneLen); // ~11
+  const outerHW = Math.round(tanDeg(9)   * coneLen); // ~39 — fits in H
+  const midHW   = Math.round(tanDeg(6)   * coneLen); // ~26
+  const innerHW = Math.round(tanDeg(3)   * coneLen); // ~13
 
   // Horizontal triangle: tip at Sun, base at coneEnd
   const tri = (hw: number) =>
     `${sx},${cy} ${coneEnd},${cy - hw} ${coneEnd},${cy + hw}`;
 
-  // Earth y position by status (offset from centre line)
+  // Earth y — offset from centreline; clamped to keep glow inside viewBox
   const rawEY =
     cme.status === "impact" ? cy :
-    cme.status === "watch"  ? cy + midHW + 9 :  // just outside mid zone
-    cy;                                           // quiet: centre, no cone
-  const eY = Math.min(H - 10, Math.max(10, rawEY));
+    cme.status === "watch"  ? cy + midHW + 8 :
+    cy;
+  const eY = Math.min(H - 14, Math.max(14, rawEY));
 
   // Earth zone
   const inInner = Math.abs(eY - cy) <= innerHW;
