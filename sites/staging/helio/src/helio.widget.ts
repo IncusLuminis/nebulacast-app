@@ -198,8 +198,8 @@ const WIDGET_CSS = `
 .hw-swdp-gauge{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-swdp-axlabel{font-size:10px;fill:#607880;font-family:inherit}
 .hw-swdp-meta{font-size:.75em;color:#7a9298;margin-top:1px}
-/* CME Impact Uncertainty Cone */
-.hw-cme-svg{display:block;width:100%;margin:4px 0 5px;overflow:visible}
+/* CME Impact Uncertainty Cone (Observer Impacts panel) */
+.hw-cme-cone-svg{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-cme-footer{font-size:.75em;color:#7a9298;margin-top:2px}
 
 /* Hero quick details — KPI items are clickable */
@@ -2051,7 +2051,7 @@ function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
                   : "Impact unlikely";
   const zoneColor = inInner ? "#e05c5c" : inMid ? "#d4cc5c" : inOuter ? "#e0a84a" : "#5cce8c";
 
-  const svg = `<svg class="hw-cme-svg" width="100%" height="${H}"
+  const svg = `<svg class="hw-cme-cone-svg" width="100%" height="${H}"
       viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     ${coneSvg}
     <!-- Sun glow -->

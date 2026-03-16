@@ -71,8 +71,8 @@
 .hw-swdp-gauge{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-swdp-axlabel{font-size:10px;fill:#607880;font-family:inherit}
 .hw-swdp-meta{font-size:.75em;color:#7a9298;margin-top:1px}
-/* CME Impact Uncertainty Cone */
-.hw-cme-svg{display:block;width:100%;margin:4px 0 5px;overflow:visible}
+/* CME Impact Uncertainty Cone (Observer Impacts panel) */
+.hw-cme-cone-svg{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-cme-footer{font-size:.75em;color:#7a9298;margin-top:2px}
 
 /* Hero quick details \u2014 KPI items are clickable */
@@ -579,7 +579,7 @@ C: ${a.c_flare_probability}%  M: ${a.m_flare_probability}%  X: ${a.x_flare_proba
     <ellipse cx="${i}" cy="${x}" rx="${C}" ry="${(C*.42).toFixed(1)}"
              fill="none" stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>
     <line x1="${i}" y1="${x-C}" x2="${i}" y2="${x+C}"
-          stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>`,R="\u2014";if(e.arrival_utc){let _=new Date(e.arrival_utc),E=_.toLocaleString("en-US",{month:"short",timeZone:"UTC"}),A=_.getUTCDate(),O=String(_.getUTCHours()).padStart(2,"0"),B=String(_.getUTCMinutes()).padStart(2,"0");R=`~${E}\xA0${A}\xA0${O}:${B}\u202FUTC`}let P=e.speed_kms?`${e.speed_kms}\u202Fkm/s`:"\u2014",I=e.status!=="quiet"?`Velocity: <b style="color:#b4c6cc">${h(P)}</b>&ensp;Arrival: <b style="color:#b4c6cc">${h(R)}</b>`:"No Earth-directed CME in forecast window",D=f?"Direct impact likely":b?"Glancing blow possible":$?"Near outer edge":"Impact unlikely",S=f?"#e05c5c":b?"#d4cc5c":$?"#e0a84a":"#5cce8c",z=`<svg class="hw-cme-svg" width="100%" height="${c}"
+          stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>`,R="\u2014";if(e.arrival_utc){let _=new Date(e.arrival_utc),E=_.toLocaleString("en-US",{month:"short",timeZone:"UTC"}),A=_.getUTCDate(),O=String(_.getUTCHours()).padStart(2,"0"),B=String(_.getUTCMinutes()).padStart(2,"0");R=`~${E}\xA0${A}\xA0${O}:${B}\u202FUTC`}let P=e.speed_kms?`${e.speed_kms}\u202Fkm/s`:"\u2014",I=e.status!=="quiet"?`Velocity: <b style="color:#b4c6cc">${h(P)}</b>&ensp;Arrival: <b style="color:#b4c6cc">${h(R)}</b>`:"No Earth-directed CME in forecast window",D=f?"Direct impact likely":b?"Glancing blow possible":$?"Near outer edge":"Impact unlikely",S=f?"#e05c5c":b?"#d4cc5c":$?"#e0a84a":"#5cce8c",z=`<svg class="hw-cme-cone-svg" width="100%" height="${c}"
       viewBox="0 0 ${n} ${c}" preserveAspectRatio="none" aria-hidden="true">
     ${H}
     <!-- Sun glow -->
