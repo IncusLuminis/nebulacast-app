@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-03-15T12:40:51.577206+00:00",
+  "generated_utc": "2026-03-16T01:54:40.714341+00:00",
   "observer": {
     "lat_deg": 52.2297,
     "lon_deg": 21.0122
@@ -19,15 +19,37 @@
     }
   ],
   "counts": {
-    "total_filtered": 36,
+    "total_filtered": 32,
     "by_group": {
-      "neocp": 26,
+      "neocp": 22,
       "grb": 1,
       "transient": 9
     }
   },
   "groups": {
     "neocp": [
+      {
+        "id": "ZTF10CQ",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": "Unconfirmed NEO Candidate",
+        "score_raw": 100,
+        "score_norm": 1.0,
+        "ra_deg": 195.291,
+        "dec_deg": -7.0834,
+        "mag": 18.7,
+        "discovery": {
+          "year": "2026",
+          "month": "03",
+          "day": "15.3"
+        },
+        "updated_utc": "2026-03-15T12:43:12+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+        "meta": {
+          "action": "added"
+        }
+      },
       {
         "id": "ZTF10CO",
         "source": "neocp",
@@ -36,16 +58,16 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 154.908,
-        "dec_deg": -1.5401,
-        "mag": 18.7,
+        "ra_deg": 153.4965,
+        "dec_deg": 2.3982,
+        "mag": 19.9,
         "discovery": {
           "year": "2026",
           "month": "03",
           "day": "15.3"
         },
         "updated_utc": "2026-03-15T10:19:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "added"
         }
@@ -58,8 +80,8 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 127.0875,
-        "dec_deg": 24.1677,
+        "ra_deg": 132.099,
+        "dec_deg": 16.8416,
         "mag": 18.7,
         "discovery": {
           "year": "2026",
@@ -67,31 +89,9 @@
           "day": "15.1"
         },
         "updated_utc": "2026-03-15T10:04:48+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "added"
-        }
-      },
-      {
-        "id": "CECQFR2",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 137.4585,
-        "dec_deg": -14.1509,
-        "mag": 20.7,
-        "discovery": {
-          "year": "2026",
-          "month": "03",
-          "day": "15.2"
-        },
-        "updated_utc": "2026-03-15T09:50:24+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
         }
       },
       {
@@ -102,84 +102,18 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 149.313,
-        "dec_deg": 0.3128,
-        "mag": 20.7,
+        "ra_deg": 149.856,
+        "dec_deg": -1.7367,
+        "mag": 20.8,
         "discovery": {
           "year": "2026",
           "month": "03",
           "day": "14.9"
         },
         "updated_utc": "2026-03-15T09:36:00+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "added"
-        }
-      },
-      {
-        "id": "CECQMZ2",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 149.187,
-        "dec_deg": -15.7561,
-        "mag": 21.2,
-        "discovery": {
-          "year": "2026",
-          "month": "03",
-          "day": "15.2"
-        },
-        "updated_utc": "2026-03-15T09:36:00+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "CECQGT2",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 141.5865,
-        "dec_deg": -10.3303,
-        "mag": 20.4,
-        "discovery": {
-          "year": "2026",
-          "month": "03",
-          "day": "15.2"
-        },
-        "updated_utc": "2026-03-15T08:38:24+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "CEC7CG2",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 193.01850000000002,
-        "dec_deg": 1.9801,
-        "mag": 21.3,
-        "discovery": {
-          "year": "2026",
-          "month": "03",
-          "day": "13.3"
-        },
-        "updated_utc": "2026-03-15T05:31:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
         }
       },
       {
@@ -190,16 +124,16 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 87.3525,
-        "dec_deg": 8.1498,
-        "mag": 18.9,
+        "ra_deg": 87.2895,
+        "dec_deg": 8.1509,
+        "mag": 19.0,
         "discovery": {
           "year": "2026",
           "month": "03",
           "day": "14.7"
         },
         "updated_utc": "2026-03-14T18:43:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "added"
         }
@@ -212,8 +146,8 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 136.0995,
-        "dec_deg": 56.3433,
+        "ra_deg": 136.29749999999999,
+        "dec_deg": 56.2883,
         "mag": 19.4,
         "discovery": {
           "year": "2026",
@@ -221,29 +155,7 @@
           "day": "25.7"
         },
         "updated_utc": "2026-03-14T06:00:00+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "ZTF10CI",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 100,
-        "score_norm": 1.0,
-        "ra_deg": 244.257,
-        "dec_deg": 9.0936,
-        "mag": 21.3,
-        "discovery": {
-          "year": "2026",
-          "month": "03",
-          "day": "12.4"
-        },
-        "updated_utc": "2026-03-14T05:31:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -256,8 +168,8 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 100,
         "score_norm": 1.0,
-        "ra_deg": 190.22549999999998,
-        "dec_deg": 26.6986,
+        "ra_deg": 190.21349999999998,
+        "dec_deg": 26.674,
         "mag": 18.4,
         "discovery": {
           "year": "2026",
@@ -265,29 +177,95 @@
           "day": "8.6"
         },
         "updated_utc": "2026-03-14T05:31:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
       },
       {
-        "id": "6CD2D21",
+        "id": "Sar2885",
         "source": "neocp",
         "group": "neocp",
         "type": "neo",
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 98,
         "score_norm": 0.98,
-        "ra_deg": 198.4635,
-        "dec_deg": -17.6178,
-        "mag": 20.4,
+        "ra_deg": 151.476,
+        "dec_deg": 28.0559,
+        "mag": 20.2,
         "discovery": {
           "year": "2026",
           "month": "03",
-          "day": "14.2"
+          "day": "15.8"
         },
-        "updated_utc": "2026-03-15T08:38:24+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-16T01:40:48+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "CECQMZ2",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": "Unconfirmed NEO Candidate",
+        "score_raw": 97,
+        "score_norm": 0.97,
+        "ra_deg": 149.073,
+        "dec_deg": -15.458,
+        "mag": 21.3,
+        "discovery": {
+          "year": "2026",
+          "month": "03",
+          "day": "15.2"
+        },
+        "updated_utc": "2026-03-16T00:43:12+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "CECQGT2",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": "Unconfirmed NEO Candidate",
+        "score_raw": 86,
+        "score_norm": 0.86,
+        "ra_deg": 142.7655,
+        "dec_deg": -7.3705,
+        "mag": 20.2,
+        "discovery": {
+          "year": "2026",
+          "month": "03",
+          "day": "15.2"
+        },
+        "updated_utc": "2026-03-16T00:43:12+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "CECQFR2",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": "Unconfirmed NEO Candidate",
+        "score_raw": 85,
+        "score_norm": 0.85,
+        "ra_deg": 137.7585,
+        "dec_deg": -13.5024,
+        "mag": 20.6,
+        "discovery": {
+          "year": "2026",
+          "month": "03",
+          "day": "15.2"
+        },
+        "updated_utc": "2026-03-16T00:43:12+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -298,40 +276,18 @@
         "group": "neocp",
         "type": "neo",
         "note": "Unconfirmed NEO Candidate",
-        "score_raw": 91,
-        "score_norm": 0.91,
-        "ra_deg": 213.6825,
-        "dec_deg": 11.3954,
-        "mag": 21.0,
+        "score_raw": 81,
+        "score_norm": 0.81,
+        "ra_deg": 213.7035,
+        "dec_deg": 10.08,
+        "mag": 20.9,
         "discovery": {
           "year": "2026",
           "month": "03",
           "day": "14.3"
         },
-        "updated_utc": "2026-03-15T09:50:24+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "CECN1Q2",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 81,
-        "score_norm": 0.81,
-        "ra_deg": 194.964,
-        "dec_deg": 15.5606,
-        "mag": 20.8,
-        "discovery": {
-          "year": "2026",
-          "month": "03",
-          "day": "14.2"
-        },
-        "updated_utc": "2026-03-15T06:43:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-15T18:28:48+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -344,8 +300,8 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 81,
         "score_norm": 0.81,
-        "ra_deg": 193.203,
-        "dec_deg": -8.7166,
+        "ra_deg": 194.424,
+        "dec_deg": -8.8935,
         "mag": 21.2,
         "discovery": {
           "year": "2026",
@@ -353,51 +309,29 @@
           "day": "13.3"
         },
         "updated_utc": "2026-03-15T03:50:24+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
       },
       {
-        "id": "CEC9ZL2",
+        "id": "CECN1Q2",
         "source": "neocp",
         "group": "neocp",
         "type": "neo",
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 79,
         "score_norm": 0.79,
-        "ra_deg": 182.58749999999998,
-        "dec_deg": -5.6371,
-        "mag": 21.2,
+        "ra_deg": 196.4385,
+        "dec_deg": 17.5752,
+        "mag": 20.8,
         "discovery": {
           "year": "2026",
           "month": "03",
-          "day": "13.3"
+          "day": "14.2"
         },
-        "updated_utc": "2026-03-15T10:33:36+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "CECP0Z2",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 72,
-        "score_norm": 0.72,
-        "ra_deg": 190.149,
-        "dec_deg": 5.8242,
-        "mag": 20.3,
-        "discovery": {
-          "year": "2026",
-          "month": "03",
-          "day": "14.3"
-        },
-        "updated_utc": "2026-03-15T06:28:48+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-16T01:40:48+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -408,10 +342,10 @@
         "group": "neocp",
         "type": "neo",
         "note": "Unconfirmed NEO Candidate",
-        "score_raw": 66,
-        "score_norm": 0.66,
-        "ra_deg": 190.8135,
-        "dec_deg": -49.6645,
+        "score_raw": 71,
+        "score_norm": 0.71,
+        "ra_deg": 190.50300000000001,
+        "dec_deg": -49.4706,
         "mag": 19.1,
         "discovery": {
           "year": "2026",
@@ -419,7 +353,7 @@
           "day": "10.9"
         },
         "updated_utc": "2026-03-14T14:24:00+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -432,8 +366,8 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 46,
         "score_norm": 0.46,
-        "ra_deg": 265.719,
-        "dec_deg": -5.5917,
+        "ra_deg": 266.082,
+        "dec_deg": -5.5866,
         "mag": 21.5,
         "discovery": {
           "year": "2026",
@@ -441,7 +375,7 @@
           "day": "28.6"
         },
         "updated_utc": "2026-03-14T05:31:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -454,60 +388,16 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 35,
         "score_norm": 0.35,
-        "ra_deg": 189.75900000000001,
-        "dec_deg": 6.5795,
+        "ra_deg": 189.69899999999998,
+        "dec_deg": 6.5979,
         "mag": 19.1,
         "discovery": {
           "year": "2026",
           "month": "02",
           "day": "11.8"
         },
-        "updated_utc": "2026-03-15T10:19:12+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "C19RNP5",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 35,
-        "score_norm": 0.35,
-        "ra_deg": 268.32300000000004,
-        "dec_deg": 48.1449,
-        "mag": 19.7,
-        "discovery": {
-          "year": "2026",
-          "month": "01",
-          "day": "15.5"
-        },
-        "updated_utc": "2026-03-15T00:14:24+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-        "meta": {
-          "action": "updated"
-        }
-      },
-      {
-        "id": "P12lwY3",
-        "source": "neocp",
-        "group": "neocp",
-        "type": "neo",
-        "note": "Unconfirmed NEO Candidate",
-        "score_raw": 35,
-        "score_norm": 0.35,
-        "ra_deg": 158.4405,
-        "dec_deg": 3.4604,
-        "mag": 20.1,
-        "discovery": {
-          "year": "2026",
-          "month": "02",
-          "day": "13.4"
-        },
-        "updated_utc": "2026-03-14T19:26:24+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-15T23:16:48+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -520,60 +410,60 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 35,
         "score_norm": 0.35,
-        "ra_deg": 123.7845,
-        "dec_deg": 20.5212,
+        "ra_deg": 123.67349999999999,
+        "dec_deg": 20.5258,
         "mag": 21.1,
         "discovery": {
           "year": "2026",
           "month": "01",
           "day": "13.4"
         },
-        "updated_utc": "2026-03-14T16:04:48+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-15T23:02:24+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
       },
       {
-        "id": "CECNLZ2",
+        "id": "P12lwY3",
         "source": "neocp",
         "group": "neocp",
         "type": "neo",
         "note": "Unconfirmed NEO Candidate",
-        "score_raw": 10,
-        "score_norm": 0.1,
-        "ra_deg": 187.68599999999998,
-        "dec_deg": 16.0304,
-        "mag": 19.9,
+        "score_raw": 35,
+        "score_norm": 0.35,
+        "ra_deg": 158.3595,
+        "dec_deg": 3.5274,
+        "mag": 20.1,
         "discovery": {
           "year": "2026",
-          "month": "03",
-          "day": "14.2"
+          "month": "02",
+          "day": "13.4"
         },
-        "updated_utc": "2026-03-15T12:00:00+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-15T21:36:00+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
       },
       {
-        "id": "6CB3B21",
+        "id": "C19RNP5",
         "source": "neocp",
         "group": "neocp",
         "type": "neo",
         "note": "Unconfirmed NEO Candidate",
-        "score_raw": 10,
-        "score_norm": 0.1,
-        "ra_deg": 180.09900000000002,
-        "dec_deg": -24.5474,
-        "mag": 19.2,
+        "score_raw": 35,
+        "score_norm": 0.35,
+        "ra_deg": 268.4715,
+        "dec_deg": 48.3245,
+        "mag": 19.6,
         "discovery": {
           "year": "2026",
-          "month": "03",
-          "day": "12.2"
+          "month": "01",
+          "day": "15.5"
         },
-        "updated_utc": "2026-03-15T11:45:36+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-15T00:14:24+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -586,16 +476,38 @@
         "note": "Unconfirmed NEO Candidate",
         "score_raw": 10,
         "score_norm": 0.1,
-        "ra_deg": 180.79500000000002,
-        "dec_deg": 18.0143,
-        "mag": 20.9,
+        "ra_deg": 180.4965,
+        "dec_deg": 18.216,
+        "mag": 20.8,
         "discovery": {
           "year": "2026",
           "month": "03",
           "day": "3.5"
         },
-        "updated_utc": "2026-03-15T02:09:36+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+        "updated_utc": "2026-03-15T23:45:36+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+        "meta": {
+          "action": "updated"
+        }
+      },
+      {
+        "id": "6CB3B21",
+        "source": "neocp",
+        "group": "neocp",
+        "type": "neo",
+        "note": "Unconfirmed NEO Candidate",
+        "score_raw": 10,
+        "score_norm": 0.1,
+        "ra_deg": 179.952,
+        "dec_deg": -24.6817,
+        "mag": 19.2,
+        "discovery": {
+          "year": "2026",
+          "month": "03",
+          "day": "12.2"
+        },
+        "updated_utc": "2026-03-15T11:45:36+00:00",
+        "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
         "meta": {
           "action": "updated"
         }
@@ -615,7 +527,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-03-14T00:59:02+00:00",
-        "ingested_utc": "2026-03-15T12:40:47.011823+00:00",
+        "ingested_utc": "2026-03-16T01:54:24.632739+00:00",
         "meta": {
           "trigger_name": "bn260314041"
         }
@@ -635,7 +547,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-03-12T14:31:35+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible nova",
           "observation_date": "2026 03 12.5744",
@@ -655,7 +567,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-03-10T19:50:59+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 03 10.4268",
@@ -675,7 +587,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-22T18:07:46+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible nova",
           "observation_date": "2026 02 20.893",
@@ -695,7 +607,7 @@
         "mag": 13.6,
         "discovery": null,
         "updated_utc": "2026-02-22T13:50:36+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 22.3773",
@@ -715,7 +627,7 @@
         "mag": 14.0,
         "discovery": null,
         "updated_utc": "2026-02-22T07:04:39+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 22.1634",
@@ -735,7 +647,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-21T00:35:19+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible nova",
           "observation_date": "2026 02 20.5923",
@@ -755,7 +667,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-20T18:59:43+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible nova",
           "observation_date": "2026 02 20.738",
@@ -775,7 +687,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-19T12:24:35+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 19",
@@ -795,7 +707,7 @@
         "mag": null,
         "discovery": null,
         "updated_utc": "2026-02-18T01:10:20+00:00",
-        "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+        "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
         "meta": {
           "title": "Possible transient object",
           "observation_date": "2026 02 17.5511",
@@ -806,6 +718,28 @@
   },
   "items": [
     {
+      "id": "ZTF10CQ",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": "Unconfirmed NEO Candidate",
+      "score_raw": 100,
+      "score_norm": 1.0,
+      "ra_deg": 195.291,
+      "dec_deg": -7.0834,
+      "mag": 18.7,
+      "discovery": {
+        "year": "2026",
+        "month": "03",
+        "day": "15.3"
+      },
+      "updated_utc": "2026-03-15T12:43:12+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+      "meta": {
+        "action": "added"
+      }
+    },
+    {
       "id": "ZTF10CO",
       "source": "neocp",
       "group": "neocp",
@@ -813,16 +747,16 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 154.908,
-      "dec_deg": -1.5401,
-      "mag": 18.7,
+      "ra_deg": 153.4965,
+      "dec_deg": 2.3982,
+      "mag": 19.9,
       "discovery": {
         "year": "2026",
         "month": "03",
         "day": "15.3"
       },
       "updated_utc": "2026-03-15T10:19:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "added"
       }
@@ -835,8 +769,8 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 127.0875,
-      "dec_deg": 24.1677,
+      "ra_deg": 132.099,
+      "dec_deg": 16.8416,
       "mag": 18.7,
       "discovery": {
         "year": "2026",
@@ -844,31 +778,9 @@
         "day": "15.1"
       },
       "updated_utc": "2026-03-15T10:04:48+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "added"
-      }
-    },
-    {
-      "id": "CECQFR2",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 137.4585,
-      "dec_deg": -14.1509,
-      "mag": 20.7,
-      "discovery": {
-        "year": "2026",
-        "month": "03",
-        "day": "15.2"
-      },
-      "updated_utc": "2026-03-15T09:50:24+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
       }
     },
     {
@@ -879,84 +791,18 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 149.313,
-      "dec_deg": 0.3128,
-      "mag": 20.7,
+      "ra_deg": 149.856,
+      "dec_deg": -1.7367,
+      "mag": 20.8,
       "discovery": {
         "year": "2026",
         "month": "03",
         "day": "14.9"
       },
       "updated_utc": "2026-03-15T09:36:00+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "added"
-      }
-    },
-    {
-      "id": "CECQMZ2",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 149.187,
-      "dec_deg": -15.7561,
-      "mag": 21.2,
-      "discovery": {
-        "year": "2026",
-        "month": "03",
-        "day": "15.2"
-      },
-      "updated_utc": "2026-03-15T09:36:00+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "CECQGT2",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 141.5865,
-      "dec_deg": -10.3303,
-      "mag": 20.4,
-      "discovery": {
-        "year": "2026",
-        "month": "03",
-        "day": "15.2"
-      },
-      "updated_utc": "2026-03-15T08:38:24+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "CEC7CG2",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 193.01850000000002,
-      "dec_deg": 1.9801,
-      "mag": 21.3,
-      "discovery": {
-        "year": "2026",
-        "month": "03",
-        "day": "13.3"
-      },
-      "updated_utc": "2026-03-15T05:31:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
       }
     },
     {
@@ -967,16 +813,16 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 87.3525,
-      "dec_deg": 8.1498,
-      "mag": 18.9,
+      "ra_deg": 87.2895,
+      "dec_deg": 8.1509,
+      "mag": 19.0,
       "discovery": {
         "year": "2026",
         "month": "03",
         "day": "14.7"
       },
       "updated_utc": "2026-03-14T18:43:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "added"
       }
@@ -989,8 +835,8 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 136.0995,
-      "dec_deg": 56.3433,
+      "ra_deg": 136.29749999999999,
+      "dec_deg": 56.2883,
       "mag": 19.4,
       "discovery": {
         "year": "2026",
@@ -998,29 +844,7 @@
         "day": "25.7"
       },
       "updated_utc": "2026-03-14T06:00:00+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "ZTF10CI",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 100,
-      "score_norm": 1.0,
-      "ra_deg": 244.257,
-      "dec_deg": 9.0936,
-      "mag": 21.3,
-      "discovery": {
-        "year": "2026",
-        "month": "03",
-        "day": "12.4"
-      },
-      "updated_utc": "2026-03-14T05:31:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1033,8 +857,8 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 100,
       "score_norm": 1.0,
-      "ra_deg": 190.22549999999998,
-      "dec_deg": 26.6986,
+      "ra_deg": 190.21349999999998,
+      "dec_deg": 26.674,
       "mag": 18.4,
       "discovery": {
         "year": "2026",
@@ -1042,7 +866,7 @@
         "day": "8.6"
       },
       "updated_utc": "2026-03-14T05:31:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1060,29 +884,95 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-03-14T00:59:02+00:00",
-      "ingested_utc": "2026-03-15T12:40:47.011823+00:00",
+      "ingested_utc": "2026-03-16T01:54:24.632739+00:00",
       "meta": {
         "trigger_name": "bn260314041"
       }
     },
     {
-      "id": "6CD2D21",
+      "id": "Sar2885",
       "source": "neocp",
       "group": "neocp",
       "type": "neo",
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 98,
       "score_norm": 0.98,
-      "ra_deg": 198.4635,
-      "dec_deg": -17.6178,
-      "mag": 20.4,
+      "ra_deg": 151.476,
+      "dec_deg": 28.0559,
+      "mag": 20.2,
       "discovery": {
         "year": "2026",
         "month": "03",
-        "day": "14.2"
+        "day": "15.8"
       },
-      "updated_utc": "2026-03-15T08:38:24+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-16T01:40:48+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "CECQMZ2",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": "Unconfirmed NEO Candidate",
+      "score_raw": 97,
+      "score_norm": 0.97,
+      "ra_deg": 149.073,
+      "dec_deg": -15.458,
+      "mag": 21.3,
+      "discovery": {
+        "year": "2026",
+        "month": "03",
+        "day": "15.2"
+      },
+      "updated_utc": "2026-03-16T00:43:12+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "CECQGT2",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": "Unconfirmed NEO Candidate",
+      "score_raw": 86,
+      "score_norm": 0.86,
+      "ra_deg": 142.7655,
+      "dec_deg": -7.3705,
+      "mag": 20.2,
+      "discovery": {
+        "year": "2026",
+        "month": "03",
+        "day": "15.2"
+      },
+      "updated_utc": "2026-03-16T00:43:12+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "CECQFR2",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": "Unconfirmed NEO Candidate",
+      "score_raw": 85,
+      "score_norm": 0.85,
+      "ra_deg": 137.7585,
+      "dec_deg": -13.5024,
+      "mag": 20.6,
+      "discovery": {
+        "year": "2026",
+        "month": "03",
+        "day": "15.2"
+      },
+      "updated_utc": "2026-03-16T00:43:12+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1093,40 +983,18 @@
       "group": "neocp",
       "type": "neo",
       "note": "Unconfirmed NEO Candidate",
-      "score_raw": 91,
-      "score_norm": 0.91,
-      "ra_deg": 213.6825,
-      "dec_deg": 11.3954,
-      "mag": 21.0,
+      "score_raw": 81,
+      "score_norm": 0.81,
+      "ra_deg": 213.7035,
+      "dec_deg": 10.08,
+      "mag": 20.9,
       "discovery": {
         "year": "2026",
         "month": "03",
         "day": "14.3"
       },
-      "updated_utc": "2026-03-15T09:50:24+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "CECN1Q2",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 81,
-      "score_norm": 0.81,
-      "ra_deg": 194.964,
-      "dec_deg": 15.5606,
-      "mag": 20.8,
-      "discovery": {
-        "year": "2026",
-        "month": "03",
-        "day": "14.2"
-      },
-      "updated_utc": "2026-03-15T06:43:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-15T18:28:48+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1139,8 +1007,8 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 81,
       "score_norm": 0.81,
-      "ra_deg": 193.203,
-      "dec_deg": -8.7166,
+      "ra_deg": 194.424,
+      "dec_deg": -8.8935,
       "mag": 21.2,
       "discovery": {
         "year": "2026",
@@ -1148,51 +1016,29 @@
         "day": "13.3"
       },
       "updated_utc": "2026-03-15T03:50:24+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
     },
     {
-      "id": "CEC9ZL2",
+      "id": "CECN1Q2",
       "source": "neocp",
       "group": "neocp",
       "type": "neo",
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 79,
       "score_norm": 0.79,
-      "ra_deg": 182.58749999999998,
-      "dec_deg": -5.6371,
-      "mag": 21.2,
+      "ra_deg": 196.4385,
+      "dec_deg": 17.5752,
+      "mag": 20.8,
       "discovery": {
         "year": "2026",
         "month": "03",
-        "day": "13.3"
+        "day": "14.2"
       },
-      "updated_utc": "2026-03-15T10:33:36+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "CECP0Z2",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 72,
-      "score_norm": 0.72,
-      "ra_deg": 190.149,
-      "dec_deg": 5.8242,
-      "mag": 20.3,
-      "discovery": {
-        "year": "2026",
-        "month": "03",
-        "day": "14.3"
-      },
-      "updated_utc": "2026-03-15T06:28:48+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-16T01:40:48+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1203,10 +1049,10 @@
       "group": "neocp",
       "type": "neo",
       "note": "Unconfirmed NEO Candidate",
-      "score_raw": 66,
-      "score_norm": 0.66,
-      "ra_deg": 190.8135,
-      "dec_deg": -49.6645,
+      "score_raw": 71,
+      "score_norm": 0.71,
+      "ra_deg": 190.50300000000001,
+      "dec_deg": -49.4706,
       "mag": 19.1,
       "discovery": {
         "year": "2026",
@@ -1214,7 +1060,7 @@
         "day": "10.9"
       },
       "updated_utc": "2026-03-14T14:24:00+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1232,7 +1078,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-03-12T14:31:35+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible nova",
         "observation_date": "2026 03 12.5744",
@@ -1252,7 +1098,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-03-10T19:50:59+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 03 10.4268",
@@ -1272,7 +1118,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-22T18:07:46+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible nova",
         "observation_date": "2026 02 20.893",
@@ -1292,7 +1138,7 @@
       "mag": 13.6,
       "discovery": null,
       "updated_utc": "2026-02-22T13:50:36+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 22.3773",
@@ -1312,7 +1158,7 @@
       "mag": 14.0,
       "discovery": null,
       "updated_utc": "2026-02-22T07:04:39+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 22.1634",
@@ -1332,7 +1178,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-21T00:35:19+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible nova",
         "observation_date": "2026 02 20.5923",
@@ -1352,7 +1198,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-20T18:59:43+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible nova",
         "observation_date": "2026 02 20.738",
@@ -1372,7 +1218,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-19T12:24:35+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 19",
@@ -1392,7 +1238,7 @@
       "mag": null,
       "discovery": null,
       "updated_utc": "2026-02-18T01:10:20+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.996713+00:00",
+      "ingested_utc": "2026-03-16T01:54:40.166961+00:00",
       "meta": {
         "title": "Possible transient object",
         "observation_date": "2026 02 17.5511",
@@ -1407,8 +1253,8 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 46,
       "score_norm": 0.46,
-      "ra_deg": 265.719,
-      "dec_deg": -5.5917,
+      "ra_deg": 266.082,
+      "dec_deg": -5.5866,
       "mag": 21.5,
       "discovery": {
         "year": "2026",
@@ -1416,7 +1262,7 @@
         "day": "28.6"
       },
       "updated_utc": "2026-03-14T05:31:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1429,60 +1275,16 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 35,
       "score_norm": 0.35,
-      "ra_deg": 189.75900000000001,
-      "dec_deg": 6.5795,
+      "ra_deg": 189.69899999999998,
+      "dec_deg": 6.5979,
       "mag": 19.1,
       "discovery": {
         "year": "2026",
         "month": "02",
         "day": "11.8"
       },
-      "updated_utc": "2026-03-15T10:19:12+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "C19RNP5",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 35,
-      "score_norm": 0.35,
-      "ra_deg": 268.32300000000004,
-      "dec_deg": 48.1449,
-      "mag": 19.7,
-      "discovery": {
-        "year": "2026",
-        "month": "01",
-        "day": "15.5"
-      },
-      "updated_utc": "2026-03-15T00:14:24+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
-      "meta": {
-        "action": "updated"
-      }
-    },
-    {
-      "id": "P12lwY3",
-      "source": "neocp",
-      "group": "neocp",
-      "type": "neo",
-      "note": "Unconfirmed NEO Candidate",
-      "score_raw": 35,
-      "score_norm": 0.35,
-      "ra_deg": 158.4405,
-      "dec_deg": 3.4604,
-      "mag": 20.1,
-      "discovery": {
-        "year": "2026",
-        "month": "02",
-        "day": "13.4"
-      },
-      "updated_utc": "2026-03-14T19:26:24+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-15T23:16:48+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1495,60 +1297,60 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 35,
       "score_norm": 0.35,
-      "ra_deg": 123.7845,
-      "dec_deg": 20.5212,
+      "ra_deg": 123.67349999999999,
+      "dec_deg": 20.5258,
       "mag": 21.1,
       "discovery": {
         "year": "2026",
         "month": "01",
         "day": "13.4"
       },
-      "updated_utc": "2026-03-14T16:04:48+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-15T23:02:24+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
     },
     {
-      "id": "CECNLZ2",
+      "id": "P12lwY3",
       "source": "neocp",
       "group": "neocp",
       "type": "neo",
       "note": "Unconfirmed NEO Candidate",
-      "score_raw": 10,
-      "score_norm": 0.1,
-      "ra_deg": 187.68599999999998,
-      "dec_deg": 16.0304,
-      "mag": 19.9,
+      "score_raw": 35,
+      "score_norm": 0.35,
+      "ra_deg": 158.3595,
+      "dec_deg": 3.5274,
+      "mag": 20.1,
       "discovery": {
         "year": "2026",
-        "month": "03",
-        "day": "14.2"
+        "month": "02",
+        "day": "13.4"
       },
-      "updated_utc": "2026-03-15T12:00:00+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-15T21:36:00+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
     },
     {
-      "id": "6CB3B21",
+      "id": "C19RNP5",
       "source": "neocp",
       "group": "neocp",
       "type": "neo",
       "note": "Unconfirmed NEO Candidate",
-      "score_raw": 10,
-      "score_norm": 0.1,
-      "ra_deg": 180.09900000000002,
-      "dec_deg": -24.5474,
-      "mag": 19.2,
+      "score_raw": 35,
+      "score_norm": 0.35,
+      "ra_deg": 268.4715,
+      "dec_deg": 48.3245,
+      "mag": 19.6,
       "discovery": {
         "year": "2026",
-        "month": "03",
-        "day": "12.2"
+        "month": "01",
+        "day": "15.5"
       },
-      "updated_utc": "2026-03-15T11:45:36+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-15T00:14:24+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
@@ -1561,16 +1363,38 @@
       "note": "Unconfirmed NEO Candidate",
       "score_raw": 10,
       "score_norm": 0.1,
-      "ra_deg": 180.79500000000002,
-      "dec_deg": 18.0143,
-      "mag": 20.9,
+      "ra_deg": 180.4965,
+      "dec_deg": 18.216,
+      "mag": 20.8,
       "discovery": {
         "year": "2026",
         "month": "03",
         "day": "3.5"
       },
-      "updated_utc": "2026-03-15T02:09:36+00:00",
-      "ingested_utc": "2026-03-15T12:40:50.069942+00:00",
+      "updated_utc": "2026-03-15T23:45:36+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
+      "meta": {
+        "action": "updated"
+      }
+    },
+    {
+      "id": "6CB3B21",
+      "source": "neocp",
+      "group": "neocp",
+      "type": "neo",
+      "note": "Unconfirmed NEO Candidate",
+      "score_raw": 10,
+      "score_norm": 0.1,
+      "ra_deg": 179.952,
+      "dec_deg": -24.6817,
+      "mag": 19.2,
+      "discovery": {
+        "year": "2026",
+        "month": "03",
+        "day": "12.2"
+      },
+      "updated_utc": "2026-03-15T11:45:36+00:00",
+      "ingested_utc": "2026-03-16T01:54:28.291256+00:00",
       "meta": {
         "action": "updated"
       }
