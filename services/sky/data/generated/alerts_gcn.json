@@ -1,10 +1,12 @@
 {
-  "generated_utc": "2026-03-18T01:47:31.236296Z",
+  "generated_utc": "2026-03-18T12:58:59.750595Z",
   "source": "NASA/GCN Kafka via gcn_kafka",
   "counts": {
-    "items": 0,
-    "by_topic": {},
-    "polls_total": 120,
+    "items": 1,
+    "by_topic": {
+      "igwn.gwalert": 1
+    },
+    "polls_total": 121,
     "polls_empty": 120
   },
   "raw": {
@@ -20,5 +22,115 @@
     "consume_timeout_sec": 1.0,
     "heartbeat_sec": 15
   },
-  "items": []
+  "items": [
+    {
+      "id": "gcn:igwn.gwalert:97230",
+      "source": "gcn_kafka",
+      "group": "gcn",
+      "type": "gcn",
+      "title": "GW PRELIMINARY: MS260318m (BNS 0.99998)",
+      "ui_type": "GW alert",
+      "note": "H1,L1 · FAR 9.111e-14 · t=2026-03-18T12:56:45.411Z",
+      "score_raw": null,
+      "score_norm": 0.5,
+      "ra_deg": null,
+      "dec_deg": null,
+      "mag": null,
+      "discovery": null,
+      "updated_utc": "2026-03-18T12:57:21.854000+00:00",
+      "ingested_utc": "2026-03-18T12:56:58.773360Z",
+      "meta": {
+        "topic": "igwn.gwalert",
+        "offset": 97230,
+        "kafka_timestamp_ms": 1773838641854,
+        "payload_text": null,
+        "payload_json": {
+          "alert_type": "PRELIMINARY",
+          "time_created": "2026-03-18T12:57:21Z",
+          "superevent_id": "MS260318m",
+          "urls": {
+            "gracedb": "https://gracedb.ligo.org/superevents/MS260318m/view/"
+          },
+          "event": {
+            "significant": true,
+            "time": "2026-03-18T12:56:45.411Z",
+            "far": 9.110699364861297e-14,
+            "instruments": [
+              "H1",
+              "L1"
+            ],
+            "group": "CBC",
+            "pipeline": "gstlal",
+            "search": "MDC",
+            "properties": {
+              "HasNS": 1.0,
+              "HasRemnant": 1.0,
+              "HasMassGap": 0.0
+            },
+            "classification": {
+              "BNS": 0.9999814397083302,
+              "NSBH": 0.0,
+              "BBH": 0.0,
+              "Terrestrial": 1.856029166975714e-05
+            },
+            "duration": null,
+            "central_frequency": null,
+            "skymap_meta": {
+              "present": true,
+              "bytes": 1036800,
+              "sha256": "60b40343d44be1d6a4d4a1c54af2bc6999f38f1526353b34934697b515588acd"
+            }
+          },
+          "external_coinc": null
+        },
+        "payload_text_meta": {
+          "present": true,
+          "bytes": 1037419,
+          "sha256": "4a74fe8c625012e18a41a4bb772d3685015d25833122e665fb03844504c11020",
+          "truncated": true,
+          "max_chars": 4096
+        },
+        "gw": {
+          "alert_type": "PRELIMINARY",
+          "time_created_utc": "2026-03-18T12:57:21Z",
+          "superevent_id": "MS260318m",
+          "significant": true,
+          "event_time_utc": "2026-03-18T12:56:45.411Z",
+          "far": 9.110699364861297e-14,
+          "instruments": [
+            "H1",
+            "L1"
+          ],
+          "group": "CBC",
+          "pipeline": "gstlal",
+          "search": "MDC",
+          "properties": {
+            "HasNS": 1.0,
+            "HasRemnant": 1.0,
+            "HasMassGap": 0.0
+          },
+          "classification": {
+            "BNS": 0.9999814397083302,
+            "NSBH": 0.0,
+            "BBH": 0.0,
+            "Terrestrial": 1.856029166975714e-05
+          },
+          "classification_top": "BNS",
+          "skymap": {
+            "present": true,
+            "bytes": 1036800,
+            "sha256": "60b40343d44be1d6a4d4a1c54af2bc6999f38f1526353b34934697b515588acd"
+          }
+        },
+        "urls": {
+          "gracedb": "https://gracedb.ligo.org/superevents/MS260318m/view/"
+        },
+        "title": "GW PRELIMINARY: MS260318m (BNS 0.99998)",
+        "note": "H1,L1 · FAR 9.111e-14 · t=2026-03-18T12:56:45.411Z",
+        "ui_type": "GW alert",
+        "ui_type_hint": "Gravitational-wave candidate alert (LIGO/Virgo/KAGRA/IGWN). Preliminary machine-generated notice; classification and sky localization can be updated.",
+        "ui_type_html": "<strong>Gravitational-wave candidate</strong> (LIGO/Virgo/KAGRA/IGWN). Preliminary; classification and sky localization may be revised."
+      }
+    }
+  ]
 }
