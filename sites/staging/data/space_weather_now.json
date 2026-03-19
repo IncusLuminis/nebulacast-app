@@ -1,19 +1,11 @@
 {
-  "generated_utc": "2026-03-19T01:21:54Z",
+  "generated_utc": "2026-03-19T06:47:23Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-18T21:00:00Z",
-      "value": 1.67
+      "timestamp_utc": "2026-03-19T03:00:00Z",
+      "value": 0.67
     },
     "forecast_3h": [
-      {
-        "timestamp_utc": "2026-03-19T00:00:00Z",
-        "value": 1.67
-      },
-      {
-        "timestamp_utc": "2026-03-19T03:00:00Z",
-        "value": 2.0
-      },
       {
         "timestamp_utc": "2026-03-19T06:00:00Z",
         "value": 2.33
@@ -37,21 +29,36 @@
       {
         "timestamp_utc": "2026-03-19T21:00:00Z",
         "value": 6.0
+      },
+      {
+        "timestamp_utc": "2026-03-20T00:00:00Z",
+        "value": 6.33
+      },
+      {
+        "timestamp_utc": "2026-03-20T03:00:00Z",
+        "value": 6.0
       }
     ],
     "activity_label": "quiet"
   },
   "solar_wind": {
-    "timestamp_utc": "2026-03-19T01:19:00Z",
-    "speed_kms": 362.2,
-    "density_protons_cm3": 0.09
+    "timestamp_utc": "2026-03-19T06:44:00Z",
+    "speed_kms": 367.7,
+    "density_protons_cm3": 1.18
   },
   "xray": {
-    "timestamp_utc": "2026-03-19T01:17:00Z",
-    "flux_wm2": 3.3094880791395553e-07,
+    "timestamp_utc": "2026-03-19T06:44:00Z",
+    "flux_wm2": 4.796285679731227e-07,
     "class": "B"
   },
   "alerts": [
+    {
+      "id": "EF3A",
+      "timestamp_utc": "2026-03-19T04:59:20Z",
+      "title": "Space Weather Message Code: ALTEF3",
+      "level": "info",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "A30F",
       "timestamp_utc": "2026-03-18T21:14:07Z",
