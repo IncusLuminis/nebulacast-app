@@ -176,13 +176,15 @@ const WIDGET_CSS = `
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
 /* Storm Progress Indicator */
-.hw-spi-wrap{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #1e2c30}
+@keyframes hw-spi-pulse{0%,100%{opacity:.35}50%{opacity:1}}
+.hw-spi-wrap{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #1e2c30;cursor:default}
 .hw-spi-hdr{font-size:.73em;color:#7a9298;margin-bottom:7px}
-.hw-spi-track{display:flex;align-items:center;gap:2px}
-.hw-spi-node{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.hw-spi-track{display:flex;align-items:center;gap:2px;cursor:default}
+.hw-spi-node{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;cursor:default}
 .hw-spi-dot{width:9px;height:9px;border-radius:50%;border:2px solid #1e2c30;background:#111b1e;flex-shrink:0}
+.hw-spi-dot-active{animation:hw-spi-pulse 2s ease-in-out infinite}
 .hw-spi-txt{font-size:.70em;font-weight:600;letter-spacing:.02em}
-.hw-spi-arr{color:#2a3c42;font-size:.78em;flex-shrink:0;margin-bottom:13px}
+.hw-spi-arr{color:#2a3c42;font-size:.78em;flex-shrink:0;margin-bottom:13px;cursor:default}
 .hw-spi-params{font-size:.70em;color:#607880;margin-top:4px}
 /* Coronal Hole / HSS Indicator */
 .hw-hss-diagram{display:block;width:100%;margin:4px 0 5px;overflow:visible}
@@ -1533,6 +1535,7 @@ function renderStormProgress(sp: StormPhaseResult): string {
       : isPast
         ? `background:${col}44;border-color:${col}66`
         : `background:#111b1e;border-color:#1e2c30`;
+    const dotClass = isCur ? " hw-spi-dot-active" : "";
     const txtStyle = isCur
       ? `color:${col};font-weight:700`
       : isPast
@@ -1542,7 +1545,7 @@ function renderStormProgress(sp: StormPhaseResult): string {
       ? `<div class="hw-spi-arr">${isPast ? `<span style="color:${col}55">→</span>` : "→"}</div>`
       : "";
     return `<div class="hw-spi-node">
-        <div class="hw-spi-dot" style="${dotStyle}"></div>
+        <div class="hw-spi-dot${dotClass}" style="${dotStyle}"></div>
         <div class="hw-spi-txt" style="${txtStyle}">${s.label}</div>
       </div>${arrow}`;
   }).join("");
