@@ -212,6 +212,7 @@ const WIDGET_CSS = `
 /* CME Impact Uncertainty Cone (Observer Impacts panel) */
 .hw-cme-cone-svg{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-cme-footer{font-size:.75em;color:#7a9298;margin-top:2px}
+.hw-solar-earth-scene{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 
 /* Hero quick details — KPI items are clickable */
 .hw-quick-details{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:10px;padding-top:8px;border-top:1px solid #1e2c30}
@@ -798,21 +799,200 @@ function renderMagnetosphereSvg(
     const bzLabel = bz == null ? "" :
       `<text x="${ex + 8}" y="${ey + 2}" font-size="6" fill="${bz > 0 ? "#5cce8c" : "#e05c5c"}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
 
-    return `<svg viewBox="${VX} 0 ${VW} 120" style="width:100%;height:80px;display:block" xmlns="http://www.w3.org/2000/svg">
-      <defs><clipPath id="${uid}-wclip"><rect x="${clipStart}" y="0" width="${clipEnd - clipStart}" height="120"/></clipPath></defs>
-      <rect x="${VX}" width="${VW}" height="120" fill="#0a1014" rx="3"/>
-      <circle cx="${sx}" cy="${ey}" r="${sr}" fill="#f0c040" opacity=".85"/>
-      <g clip-path="url(#${uid}-wclip)">${windGroups}</g>
-      <path d="${couplingPath}" fill="${c}08"/>
-      <path d="${path}" fill="${c}12" stroke="${c}aa" stroke-width="1.2"/>
-      <text x="${nx + 2}" y="${topY - 2}" font-size="7" fill="${c}" opacity=".8" font-family="sans-serif">${escText(info.label)}</text>
-      <circle cx="${ex}" cy="${ey}" r="${er}" fill="#2a4a6a" stroke="#4a7090" stroke-width="1"/>
-      ${bzArrow}
-      ${bzLabel}
-      <text x="2" y="115" font-size="6" fill="#f0c04088" font-family="sans-serif">Sun</text>
-      <text x="${ex - 7}" y="${ey + er + 10}" font-size="6" fill="#4a709088" font-family="sans-serif">Earth</text>
-    </svg>`;
+    return buildHelioSolarEarthScene("magnetosphere", {
+      magnetInfo: info,
+      bz,
+      windKms: wind,
+      uid: uid,
+    });
   }
+}
+
+// ── Shared Solar–Earth SVG Scene ─────────────────────────────────────────────
+function buildHelioSolarEarthScene(
+  mode: "magnetosphere" | "coronal_hole" | "cme_cone",
+  opts: {
+    magnetInfo?: MagnetInfo;
+    bz?: number | null;
+    windKms?: number | null;
+    hssState?: HSSState;
+    cmeState?: CMEState;
+    uid?: string;
+  } = {}
+): string {
+  const W = 1000, H = 260, midY = 130;
+  const uid = opts.uid ?? "hse";
+
+  // Geometry anchors
+  const SUN_CX    = 0,   SUN_R    = 160;   // Sun: large arc, right edge at x=160
+  const EARTH_CX  = 870, EARTH_R  = 17;
+  const EARTH_LEFT = EARTH_CX - EARTH_R;   // 853
+
+  // Magnetosphere geometry (depends on state)
+  const magInfo  = opts.magnetInfo;
+  const magState = magInfo?.state ?? "stable";
+  const magColor = magInfo?.color ?? "#e0a84a";
+  const standoff = magState === "storm" ? 60 : magState === "active" ? 95 : 145;
+  const noseX    = EARTH_CX - standoff;    // 725–810
+  const topY     = magState === "storm" ? 65  : magState === "active" ? 85  : 108;
+  const botY     = H - topY;
+  const tailX    = W + 20;
+
+  const magPath = [
+    `M ${noseX},${midY}`,
+    `C ${noseX - 12},${midY - 45} ${EARTH_CX - 20},${topY} ${EARTH_CX},${topY}`,
+    `C ${EARTH_CX + 55},${topY} ${tailX - 35},${topY + 55} ${tailX},${midY - 22}`,
+    `C ${tailX + 5},${midY - 9} ${tailX + 5},${midY + 9} ${tailX},${midY + 22}`,
+    `C ${tailX - 35},${botY - 55} ${EARTH_CX + 55},${botY} ${EARTH_CX},${botY}`,
+    `C ${EARTH_CX - 20},${botY} ${noseX - 12},${midY + 45} ${noseX},${midY}`,
+    "Z",
+  ].join(" ");
+
+  const magEmph     = mode === "magnetosphere";
+  const magFillOp   = magEmph ? (magState === "storm" ? "0.12" : "0.08") : "0.04";
+  const magStrokeOp = magEmph ? "0.75" : "0.28";
+
+  // ── Base layer groups ───────────────────────────────────────────────────
+  const sunGroup = `<g id="${uid}-base-sun">
+    <circle cx="${SUN_CX}" cy="${midY}" r="${SUN_R + 18}" fill="none"
+            stroke="#f0c040" stroke-width="2.5" opacity="0.12"/>
+    <circle cx="${SUN_CX}" cy="${midY}" r="${SUN_R}" fill="#f0c040" opacity="0.88"/>
+  </g>`;
+
+  const earthGrid = `
+    <ellipse cx="${EARTH_CX}" cy="${midY}" rx="${EARTH_R}" ry="${(EARTH_R * 0.42).toFixed(1)}"
+             fill="none" stroke="#4a8ab0" stroke-width="1.2" opacity="0.6"/>
+    <line x1="${EARTH_CX}" y1="${midY - EARTH_R}" x2="${EARTH_CX}" y2="${midY + EARTH_R}"
+          stroke="#4a8ab0" stroke-width="1.2" opacity="0.6"/>
+    <line x1="${EARTH_LEFT}" y1="${midY}" x2="${EARTH_CX + EARTH_R}" y2="${midY}"
+          stroke="#4a8ab0" stroke-width="1.2" opacity="0.35"/>`;
+  const earthGroup = `<g id="${uid}-base-earth">
+    <circle cx="${EARTH_CX}" cy="${midY}" r="${EARTH_R}" fill="#1a4a6e" opacity="0.92"/>
+    ${earthGrid}
+  </g>`;
+
+  const magGroup = `<g id="${uid}-base-magnetosphere">
+    <path d="${magPath}" fill="${magColor}" fill-opacity="${magFillOp}"
+          stroke="${magColor}" stroke-opacity="${magStrokeOp}" stroke-width="1.8"/>
+    ${magInfo ? `<text x="${noseX + 5}" y="${topY - 7}" font-size="12" fill="${magColor}"
+          opacity="0.85" font-family="sans-serif">${magInfo.label}</text>` : ""}
+  </g>`;
+
+  const axisGroup = `<g id="${uid}-base-axis">
+    <line x1="${SUN_R}" y1="${midY}" x2="${noseX}" y2="${midY}"
+          stroke="rgba(255,255,255,0.10)" stroke-width="1.5" stroke-dasharray="8 5"/>
+  </g>`;
+
+  // ── Overlay: Solar wind (magnetosphere mode) ────────────────────────────
+  let solarWindContent = "";
+  if (mode === "magnetosphere") {
+    const wKms  = opts.windKms ?? 0;
+    const wHigh = wKms > 500, wSlow = wKms < 350;
+    const wDur  = wHigh ? 0.55 : wSlow ? 1.5 : 1.0;
+    const wCol  = wKms > 700 ? "#e05c5c" : wKms > 500 ? "#e0a84a" : wKms > 350 ? "#d4c840" : "#5cce8c";
+    const clipS = SUN_R + 8;
+    const clipE = noseX - 14;
+    const rowsY = wKms > 500 ? [22,50,80,110,150,180,210,238] : [30,65,100,130,160,195,230];
+    const S  = 30;
+    const nc = Math.ceil((clipE - clipS) / S) + 2;
+    const xs = Array.from({ length: nc }, (_, i) => clipS - S + i * S);
+    const aL = 22, aH = 15;
+    const arrows = xs.flatMap(ax => rowsY.map(y =>
+      `<path d="M ${ax},${y} L ${ax+aL},${y} M ${ax+aH},${y-5} L ${ax+aL},${y} L ${ax+aH},${y+5}"
+       stroke="${wCol}cc" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+    )).join("");
+    const bz    = opts.bz ?? null;
+    const bzHtml = bz == null ? "" : (() => {
+      const col = bz > 0 ? "#5cce8c" : "#e05c5c";
+      const arrow = bz > 0
+        ? `<path d="M ${EARTH_CX},${midY+7} L ${EARTH_CX},${midY-7} M ${EARTH_CX-3},${midY-4} L ${EARTH_CX},${midY-7} L ${EARTH_CX+3},${midY-4}"
+           stroke="${col}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+        : `<path d="M ${EARTH_CX},${midY-7} L ${EARTH_CX},${midY+7} M ${EARTH_CX-3},${midY+4} L ${EARTH_CX},${midY+7} L ${EARTH_CX+3},${midY+4}"
+           stroke="${col}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+      return `${arrow}<text x="${EARTH_CX+22}" y="${midY+5}" font-size="13"
+        fill="${col}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
+    })();
+    solarWindContent = `
+    <defs><clipPath id="${uid}-wclip"><rect x="${clipS}" y="0" width="${clipE - clipS}" height="${H}"/></clipPath></defs>
+    <g class="hw-wg-full" style="animation-duration:${wDur}s" clip-path="url(#${uid}-wclip)">${arrows}</g>
+    ${bzHtml}`;
+  }
+  const solarWindGroup = `<g id="${uid}-overlay-solar-wind">${solarWindContent}</g>`;
+
+  // ── Overlay: Coronal Hole / HSS (coronal_hole mode) ─────────────────────
+  let coronalContent = "";
+  if (mode === "coronal_hole" && opts.hssState) {
+    const hss    = opts.hssState;
+    const spd    = hss.speed ?? 0;
+    const watch  = spd >= 420;
+    const sCol   = hss.color;
+    const sOp    = watch  ? "0.85" : "0.25";
+    const fanOp  = spd >= 500 ? "0.18" : watch ? "0.10" : "0.04";
+    const fX1    = SUN_R + 8;
+    const fX2    = EARTH_LEFT - 16;
+    const fanH   = 60;
+    const fanPts = `${fX1},${midY} ${fX2},${midY - fanH} ${fX2},${midY + fanH}`;
+    const arrX   = fX2 + 6;
+    const arrPts = `${arrX},${midY - 10} ${arrX + 18},${midY} ${arrX},${midY + 10}`;
+    coronalContent = `
+    <polygon points="${fanPts}" fill="${sCol}" opacity="${fanOp}"/>
+    <line x1="${fX1}" y1="${midY}" x2="${fX2 - 5}" y2="${midY}"
+          stroke="${sCol}" stroke-width="3.5" stroke-dasharray="10 6"
+          stroke-linecap="round" opacity="${sOp}"/>
+    <polygon points="${arrPts}" fill="${sCol}" opacity="${watch ? "0.9" : "0.25"}"/>`;
+  }
+  const coronalGroup = `<g id="${uid}-overlay-coronal-hole">${coronalContent}</g>`;
+
+  // ── Overlay: CME Cone (cme_cone mode) ───────────────────────────────────
+  let cmeContent = "";
+  if (mode === "cme_cone" && opts.cmeState) {
+    const cme      = opts.cmeState;
+    const coneOriX = SUN_R;
+    const coneEndX = EARTH_LEFT - 10;
+    const coneLen  = coneEndX - coneOriX;
+    const td       = (d: number) => Math.tan(d * Math.PI / 180);
+    const outerHW  = Math.round(td(9) * coneLen);
+    const midHW    = Math.round(td(6) * coneLen);
+    const innerHW  = Math.round(td(3) * coneLen);
+    const tri      = (hw: number) => `${coneOriX},${midY} ${coneEndX},${midY - hw} ${coneEndX},${midY + hw}`;
+    if (cme.status !== "quiet") {
+      const earthFill = (cme.status === "impact") ? "#e05c5c" : "#d4cc5c";
+      cmeContent = `
+    <polygon points="${tri(outerHW)}" fill="#253238" opacity="0.85"/>
+    <polygon points="${tri(midHW)}"   fill="#d4cc5c" opacity="0.14"/>
+    <polygon points="${tri(innerHW)}" fill="#e0a84a" opacity="0.28"/>
+    <line x1="${coneOriX + 14}" y1="${midY}" x2="${coneEndX - 5}" y2="${midY}"
+          stroke="#3a5058" stroke-dasharray="6 5" stroke-width="2"/>
+    <circle cx="${EARTH_CX}" cy="${midY}" r="${EARTH_R + 8}" fill="none"
+            stroke="${earthFill}" stroke-width="7" opacity="0.16"/>`;
+    } else {
+      cmeContent = `
+    <line x1="${coneOriX + 14}" y1="${midY}" x2="${EARTH_LEFT - 14}" y2="${midY}"
+          stroke="#1e2c30" stroke-dasharray="7 5" stroke-width="2"/>`;
+    }
+  }
+  const cmeGroup = `<g id="${uid}-overlay-cme-cone">${cmeContent}</g>`;
+
+  // ── Labels ───────────────────────────────────────────────────────────────
+  const labelsGroup = `<g id="${uid}-overlay-labels">
+    <text x="18" y="${H - 10}" font-size="13" fill="#f0c04055"
+          font-family="sans-serif">Sun</text>
+    <text x="${EARTH_CX}" y="${H - 8}" font-size="13" fill="#4a709055"
+          text-anchor="middle" font-family="sans-serif">Earth</text>
+  </g>`;
+
+  return `<svg class="hw-solar-earth-scene" viewBox="0 0 ${W} ${H}"
+      style="width:100%;height:80px;display:block" preserveAspectRatio="none" aria-hidden="true">
+    <rect width="${W}" height="${H}" fill="#0a1014"/>
+    ${axisGroup}
+    ${solarWindGroup}
+    ${coronalGroup}
+    ${cmeGroup}
+    ${sunGroup}
+    ${magGroup}
+    ${earthGroup}
+    ${labelsGroup}
+  </svg>`;
 }
 
 function renderMagnetospherePopover(data: HelioNow): string {
@@ -1762,80 +1942,8 @@ function renderHSSTip(data: HelioNow, isOpen: boolean): string {
   const spdStr  = hss.speed != null ? `${Math.round(hss.speed)} km/s` : "—";
   const openCls = isOpen ? " hw-impact-tip-open" : "";
 
-  // ── SVG horizontal layout ────────────────────────────────────────────────
-  // Wide viewBox (320×72) matches CME cone width — prevents extreme stretch on
-  // large screens. All X-coords scaled ×2 from the original 160-unit design.
-  const W = 320, H = 72;
-  const scx = 36,  scy = 36;   // Sun centre  (was 18)
-  const ecx = 284, ecy = 36;   // Earth centre (was 142)
-  const rSun = 11, rIn = 14, rOut = 19, rEarth = 9;
-
-  // Sun colours
-  const active     = spd >= 500;
-  const watch      = spd >= 420;
-  const sunFill    = active ? "#f5c540" : watch ? "#c8a020" : "#7a6010";
-  const sunGlow    = active ? "#f5c540" : watch ? "#c8a020" : "#3a3808";
-  const streamCol  = hss.color;
-  const streamOp   = watch  ? "0.9"  : "0.25";
-  const fanOp      = active ? "0.18" : watch ? "0.10" : "0.04";
-
-  // Sun rays (8 rays, right-side ones slightly brighter — towards Earth)
-  const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
-    const a  = deg * Math.PI / 180;
-    const x1 = (scx + rIn  * Math.cos(a)).toFixed(1);
-    const y1 = (scy + rIn  * Math.sin(a)).toFixed(1);
-    const x2 = (scx + rOut * Math.cos(a)).toFixed(1);
-    const y2 = (scy + rOut * Math.sin(a)).toFixed(1);
-    const op = (deg > 300 || deg < 60) ? "0.9" : "0.5";
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
-      stroke="${sunFill}" stroke-width="1.6" stroke-linecap="round" opacity="${op}"/>`;
-  }).join("");
-
-  // Stream fan — wider than the dashed axis, shows stream spread
-  const fanX1 = scx + rSun + 2;
-  const fanX2 = ecx - rEarth - 3;
-  const fanH  = 14;  // half-width of stream fan at Earth side
-  const fanPts = `${fanX1},${scy} ${fanX2},${ecy - fanH} ${fanX2},${ecy + fanH}`;
-
-  // Arrow tip just before Earth
-  const arrX  = fanX2 + 1;
-  const arrPts = `${arrX},${ecy - 4} ${arrX + 7},${ecy} ${arrX},${ecy + 4}`;
-
-  // Earth grid lines
-  const er = rEarth;
-  const earthGrid = `
-    <ellipse cx="${ecx}" cy="${ecy}" rx="${er}" ry="${(er * 0.42).toFixed(1)}"
-             fill="none" stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>
-    <line x1="${ecx}" y1="${ecy - er}" x2="${ecx}" y2="${ecy + er}"
-          stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>
-    <line x1="${ecx - er}" y1="${ecy}" x2="${ecx + er}" y2="${ecy}"
-          stroke="#4a8ab0" stroke-width="0.8" opacity="0.35"/>`;
-
-  const svg = `<svg class="hw-hss-diagram" width="100%" height="${H}"
-      viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-    <!-- stream fan -->
-    <polygon points="${fanPts}" fill="${streamCol}" opacity="${fanOp}"/>
-    <!-- dashed stream axis -->
-    <line x1="${fanX1}" y1="${scy}" x2="${fanX2 - 2}" y2="${ecy}"
-          stroke="${streamCol}" stroke-width="2" stroke-dasharray="5 3.5"
-          stroke-linecap="round" opacity="${streamOp}"/>
-    <!-- arrow -->
-    <polygon points="${arrPts}" fill="${streamCol}" opacity="${watch ? "0.9" : "0.25"}"/>
-    <!-- Sun glow ring -->
-    <circle cx="${scx}" cy="${scy}" r="${rSun + 6}" fill="none"
-            stroke="${sunGlow}" stroke-width="1.5" opacity="0.25"/>
-    <!-- Sun body -->
-    <circle cx="${scx}" cy="${scy}" r="${rSun}" fill="${sunFill}" opacity="0.92"/>
-    ${rays}
-    <!-- Earth body -->
-    <circle cx="${ecx}" cy="${ecy}" r="${er}" fill="#1a4a6e" opacity="0.92"/>
-    ${earthGrid}
-    <!-- labels -->
-    <text x="${scx}" y="${H - 4}" font-size="8" fill="#607880"
-          text-anchor="middle" font-family="inherit">Sun</text>
-    <text x="${ecx}" y="${H - 4}" font-size="8" fill="#607880"
-          text-anchor="middle" font-family="inherit">Earth</text>
-  </svg>`;
+  const watch = spd >= 420;
+  const svg = buildHelioSolarEarthScene("coronal_hole", { hssState: hss, uid: "hss" });
 
   const note = watch
     ? `<div class="hw-hss-meta" style="font-size:.72em">Elevated speed may indicate Earth-facing coronal hole stream</div>`
@@ -2119,68 +2227,6 @@ function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
   const cme       = deriveCMEState(data);
   const openClass = isOpen ? " hw-impact-tip-open" : "";
 
-  // ── Horizontal layout: Sun left → cone right → Earth right ──────────────
-  // Wide viewBox (320×80) keeps aspect ratio close to real container (~360px),
-  // preventing the 2.5× stretch that deforms circles and clips Earth.
-  const W = 320, H = 80;
-  const sx = 24,  cy = 40;   // Sun centre
-  const coneEnd = 268;        // x where cone base is
-  const ex = 296;             // Earth x (right of cone base)
-  const coneLen = coneEnd - sx;  // 244 px
-
-  const tanDeg  = (d: number) => Math.tan(d * Math.PI / 180);
-  const outerHW = Math.round(tanDeg(9)   * coneLen); // ~39 — fits in H
-  const midHW   = Math.round(tanDeg(6)   * coneLen); // ~26
-  const innerHW = Math.round(tanDeg(3)   * coneLen); // ~13
-
-  // Horizontal triangle: tip at Sun, base at coneEnd
-  const tri = (hw: number) =>
-    `${sx},${cy} ${coneEnd},${cy - hw} ${coneEnd},${cy + hw}`;
-
-  // Earth y — offset from centreline; clamped to keep glow inside viewBox
-  const rawEY =
-    cme.status === "impact" ? cy :
-    cme.status === "watch"  ? cy + midHW + 8 :
-    cy;
-  const eY = Math.min(H - 14, Math.max(14, rawEY));
-
-  // Earth zone
-  const inInner = Math.abs(eY - cy) <= innerHW;
-  const inMid   = Math.abs(eY - cy) <= midHW;
-  const inOuter = Math.abs(eY - cy) <= outerHW;
-  const earthFill = inInner ? "#e05c5c" : inMid ? "#d4cc5c" : inOuter ? "#e0a84a" : "#5cce8c";
-
-  const coneSvg = cme.status !== "quiet"
-    ? `<polygon points="${tri(outerHW)}" fill="#253238" opacity="0.85"/>
-       <polygon points="${tri(midHW)}"   fill="#d4cc5c" opacity="0.14"/>
-       <polygon points="${tri(innerHW)}" fill="#e0a84a" opacity="0.28"/>
-       <line x1="${sx + 9}" y1="${cy}" x2="${coneEnd - 2}" y2="${cy}"
-             stroke="#3a5058" stroke-dasharray="3 3" stroke-width="1"/>`
-    : `<line x1="${sx + 9}" y1="${cy}" x2="${ex - 9}" y2="${cy}"
-             stroke="#1e2c30" stroke-dasharray="4 3" stroke-width="1"/>`;
-
-  // Sun rays
-  const rSun = 8, rIn = 11, rOut = 15;
-  const sunFill = "#f5c540";
-  const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
-    const a  = deg * Math.PI / 180;
-    const x1 = (sx + rIn  * Math.cos(a)).toFixed(1);
-    const y1 = (cy + rIn  * Math.sin(a)).toFixed(1);
-    const x2 = (sx + rOut * Math.cos(a)).toFixed(1);
-    const y2 = (cy + rOut * Math.sin(a)).toFixed(1);
-    const op = (deg < 45 || deg > 315) ? "0.9" : "0.5";
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
-      stroke="${sunFill}" stroke-width="1.4" stroke-linecap="round" opacity="${op}"/>`;
-  }).join("");
-
-  // Earth grid
-  const rE = 7;
-  const earthGrid = `
-    <ellipse cx="${ex}" cy="${eY}" rx="${rE}" ry="${(rE * 0.42).toFixed(1)}"
-             fill="none" stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>
-    <line x1="${ex}" y1="${eY - rE}" x2="${ex}" y2="${eY + rE}"
-          stroke="#4a8ab0" stroke-width="0.8" opacity="0.6"/>`;
-
   // Arrival footer
   let arrStr = "—";
   if (cme.arrival_utc) {
@@ -2196,37 +2242,7 @@ function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
     ? `Velocity: <b style="color:#b4c6cc">${escText(speedStr)}</b>&ensp;Arrival: <b style="color:#b4c6cc">${escText(arrStr)}</b>`
     : `No Earth-directed CME in forecast window`;
 
-  const zoneLabel = inInner ? "Direct impact likely"
-                  : inMid   ? "Glancing blow possible"
-                  : inOuter ? "Near outer edge"
-                  : "Impact unlikely";
-  const zoneColor = inInner ? "#e05c5c" : inMid ? "#d4cc5c" : inOuter ? "#e0a84a" : "#5cce8c";
-
-  const svg = `<svg class="hw-cme-cone-svg" width="100%" height="${H}"
-      viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-    ${coneSvg}
-    <!-- Sun glow -->
-    <circle cx="${sx}" cy="${cy}" r="${rSun + 5}" fill="none"
-            stroke="${sunFill}" stroke-width="1.2" opacity="0.25"/>
-    <!-- Sun body -->
-    <circle cx="${sx}" cy="${cy}" r="${rSun}" fill="${sunFill}" opacity="0.92"/>
-    ${rays}
-    <!-- Earth body -->
-    <circle cx="${ex}" cy="${eY}" r="${rE}" fill="#1a4a6e" opacity="0.92"/>
-    ${earthGrid}
-    <!-- Earth glow -->
-    <circle cx="${ex}" cy="${eY}" r="${rE + 4}" fill="none"
-            stroke="${earthFill}" stroke-width="4" opacity="0.12"/>
-    <!-- Labels -->
-    <text x="${sx}" y="${H - 3}" font-size="8" fill="#607880"
-          text-anchor="middle" font-family="inherit">Sun</text>
-    <text x="${ex}" y="${H - 3}" font-size="8" fill="#607880"
-          text-anchor="middle" font-family="inherit">Earth</text>
-    ${cme.status !== "quiet"
-      ? `<text x="${Math.round((sx + ex) / 2)}" y="${H - 3}" font-size="7.5"
-               fill="${zoneColor}" text-anchor="middle" font-family="inherit">${escText(zoneLabel)}</text>`
-      : ""}
-  </svg>`;
+  const svg = buildHelioSolarEarthScene("cme_cone", { cmeState: cme, uid: "cme" });
 
   return `<div class="hw-impact-tip${openClass}">
     ${svg}
