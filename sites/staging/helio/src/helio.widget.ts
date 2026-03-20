@@ -175,6 +175,15 @@ const WIDGET_CSS = `
 .hw-gstorm-fill{height:100%;border-radius:3px;transition:width .3s}
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
+/* Storm Progress Indicator */
+.hw-spi-wrap{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #1e2c30}
+.hw-spi-hdr{font-size:.73em;color:#7a9298;margin-bottom:7px}
+.hw-spi-track{display:flex;align-items:center;gap:2px}
+.hw-spi-node{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.hw-spi-dot{width:9px;height:9px;border-radius:50%;border:2px solid #1e2c30;background:#111b1e;flex-shrink:0}
+.hw-spi-txt{font-size:.70em;font-weight:600;letter-spacing:.02em}
+.hw-spi-arr{color:#2a3c42;font-size:.78em;flex-shrink:0;margin-bottom:13px}
+.hw-spi-params{font-size:.70em;color:#607880;margin-top:4px}
 /* Coronal Hole / HSS Indicator */
 .hw-hss-diagram{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-hss-meta{font-size:.75em;color:#7a9298;margin-top:1px}
@@ -1456,8 +1465,102 @@ function deriveStormProbs(data: HelioNow): { g1: number; g2: number; g3: number 
   return { g1: prob(5), g2: prob(6), g3: prob(7) };
 }
 
+const STORM_PHASE_COLORS = {
+  rising:  "#e0884a",
+  peak:    "#e05c5c",
+  decline: "#d4cc5c",
+};
+
+interface StormPhaseResult {
+  active:         boolean;
+  phase:          "rising" | "peak" | "decline" | "quiet";
+  kp_current:     number;
+  kp_trend:       number;
+  bz_nt:          number | null;
+  solar_wind_kms: number | null;
+}
+
+function deriveStormPhase(data: HelioNow): StormPhaseResult {
+  const kp   = data.metrics.kp_latest ?? 0;
+  const bz   = data.metrics.imf_bz_nt;
+  const wind = data.metrics.solar_wind_kms;
+
+  const gNum   = parseInt((data.scales.g_scale ?? "G0").replace("G", ""), 10) || 0;
+  const active = kp >= 5 || gNum >= 1;
+
+  // Kp trend from last two history readings (3h periods)
+  const hist = data.metrics.kp_history_1h ?? [];
+  let kp_trend = 0;
+  if (hist.length >= 2) {
+    kp_trend = hist[hist.length - 1].kp - hist[hist.length - 2].kp;
+  }
+
+  if (!active) {
+    return { active: false, phase: "quiet", kp_current: kp, kp_trend, bz_nt: bz, solar_wind_kms: wind };
+  }
+
+  let phase: "rising" | "peak" | "decline";
+  if (kp_trend > 0.3 && (bz == null || bz < -5)) {
+    phase = "rising";
+  } else if (kp_trend < -0.5) {
+    phase = "decline";
+  } else {
+    phase = "peak";
+  }
+
+  return { active: true, phase, kp_current: kp, kp_trend, bz_nt: bz, solar_wind_kms: wind };
+}
+
+function renderStormProgress(sp: StormPhaseResult): string {
+  if (!sp.active) return "";
+
+  const stages: Array<{ key: "rising" | "peak" | "decline"; label: string }> = [
+    { key: "rising",  label: "Rising"  },
+    { key: "peak",    label: "Peak"    },
+    { key: "decline", label: "Decline" },
+  ];
+
+  const curIdx     = stages.findIndex(s => s.key === sp.phase);
+  const phaseColor = STORM_PHASE_COLORS[sp.phase];
+  const phaseLabel = stages[curIdx].label;
+
+  const nodesHtml = stages.map((s, i) => {
+    const isCur  = i === curIdx;
+    const isPast = i < curIdx;
+    const col    = STORM_PHASE_COLORS[s.key];
+    const dotStyle = isCur
+      ? `background:${col};border-color:${col};box-shadow:0 0 6px ${col}88`
+      : isPast
+        ? `background:${col}44;border-color:${col}66`
+        : `background:#111b1e;border-color:#1e2c30`;
+    const txtStyle = isCur
+      ? `color:${col};font-weight:700`
+      : isPast
+        ? `color:${col}66`
+        : `color:#2e4248`;
+    const arrow = i < stages.length - 1
+      ? `<div class="hw-spi-arr">${isPast ? `<span style="color:${col}55">→</span>` : "→"}</div>`
+      : "";
+    return `<div class="hw-spi-node">
+        <div class="hw-spi-dot" style="${dotStyle}"></div>
+        <div class="hw-spi-txt" style="${txtStyle}">${s.label}</div>
+      </div>${arrow}`;
+  }).join("");
+
+  const parts = [`Kp ${sp.kp_current.toFixed(1)}`];
+  if (sp.bz_nt != null) parts.push(`Bz ${sp.bz_nt > 0 ? "+" : ""}${sp.bz_nt.toFixed(1)} nT`);
+  if (sp.solar_wind_kms != null) parts.push(`Wind ${Math.round(sp.solar_wind_kms)} km/s`);
+
+  return `<div class="hw-spi-wrap">
+    <div class="hw-spi-hdr">Geomagnetic Storm · <span style="color:${phaseColor};font-weight:700">${phaseLabel}</span></div>
+    <div class="hw-spi-track">${nodesHtml}</div>
+    <div class="hw-spi-params">${parts.join(" · ")}</div>
+  </div>`;
+}
+
 function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
   const probs   = deriveStormProbs(data);
+  const sp      = deriveStormPhase(data);
   const maxKp24 = (() => {
     const forecast = data.metrics.kp_forecast_3h ?? [];
     const now = Date.now(), cutoff = now + 24 * 60 * 60 * 1000;
@@ -1488,6 +1591,7 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
 
   const openClass = isOpen ? " hw-impact-tip-open" : "";
   return `<div class="hw-impact-tip${openClass}">
+    ${renderStormProgress(sp)}
     <div class="hw-gstorm-header">Storm probability · next 24h</div>
     <div class="hw-gstorm-rows">${rows}</div>
     ${kpNote ? `<div class="hw-gstorm-footer">${kpNote} · derived from Kp forecast</div>` : ""}
