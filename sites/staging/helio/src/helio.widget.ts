@@ -350,7 +350,10 @@ const WIDGET_CSS = `
 .hw-solar-mini-inner{position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;border:1px solid #2a3c42;background:#0a0a0a;flex-shrink:0}
 .hw-solar-mini-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center}
 .hw-solar-mini-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;background:transparent}
-.hw-solar-mini-label{font-size:.60em;letter-spacing:.03em;font-weight:600;margin-top:2px}
+.hw-solar-mini-switcher{display:flex;align-items:center;gap:3px;margin-top:3px}
+.hw-solar-mini-btn{background:none;border:none;color:#607880;font-size:.75em;cursor:pointer;padding:0 2px;line-height:1;transition:color .12s;font-family:inherit}
+.hw-solar-mini-btn:hover{color:#b4c6cc}
+.hw-solar-mini-lbl{font-size:.60em;color:#96a8b8;letter-spacing:.02em;min-width:52px;text-align:center;font-weight:600}
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
@@ -961,9 +964,31 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 
 // ── Hero section ─────────────────────────────────────────────────────────────
 
+function renderSolarMini(activePopover: string | null, channelIdx: number): string {
+  const ch  = SOLAR_CHANNELS[channelIdx];
+  const hmi = SUN_HMI_URL;
+  return `<div class="hw-solar-mini-wrap${activePopover === "magnetosphere" ? " hw-kpi-active" : ""}" data-kpi="magnetosphere" title="Magnetosphere status">
+    <div class="hw-solar-mini-inner">
+      <img class="hw-solar-mini-img" src="${esc(ch.url)}" alt="${esc(ch.label)}"
+        onerror="if(this.src!=='${esc(hmi)}')this.src='${esc(hmi)}'" />
+      <video class="hw-solar-mini-video" autoplay loop muted playsinline
+        oncanplay="this.style.opacity=1"
+        aria-label="Solar disk · ${esc(ch.label)} · last 24h">
+        <source src="${esc(SUN_LOOP_URL)}" type="video/mp4">
+      </video>
+    </div>
+    <div class="hw-solar-mini-switcher">
+      <button class="hw-solar-mini-btn" data-solar-prev>&#8249;</button>
+      <span class="hw-solar-mini-lbl">${esc(ch.label)}</span>
+      <button class="hw-solar-mini-btn" data-solar-next>&#8250;</button>
+    </div>
+  </div>`;
+}
+
 function renderHero(
   data: HelioNow, heroExpanded: boolean, indicatorsOpen: boolean, activePopover: string | null,
   scrubData: ScrubData | null, opts: HelioWidgetOptions, ovationData: OvationData | null,
+  solarChannelIdx: number = 0,
 ): string {
   const { summary, scales, metrics, aurora_hint } = data;
   const tone = STATUS_TONE[summary.status] ?? STATUS_TONE.quiet;
@@ -1038,18 +1063,7 @@ function renderHero(
         <div class="hw-info-col">
           <div class="hw-info-top-row">
             <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
-            <div class="hw-solar-mini-wrap${activePopover === "magnetosphere" ? " hw-kpi-active" : ""}" data-kpi="magnetosphere" title="Magnetosphere status">
-              <div class="hw-solar-mini-inner">
-                <img class="hw-solar-mini-img" src="${esc(SUN_EIT171_URL)}" alt="SOHO EIT 171"
-                  onerror="if(this.src!=='${esc(SUN_HMI_URL)}')this.src='${esc(SUN_HMI_URL)}'" />
-                <video class="hw-solar-mini-video" autoplay loop muted playsinline
-                  oncanplay="this.style.opacity=1"
-                  aria-label="Solar disk · SDO AIA 171 · last 24h">
-                  <source src="${esc(SUN_LOOP_URL)}" type="video/mp4">
-                </video>
-              </div>
-              <span class="hw-solar-mini-label">SOHO EIT 171</span>
-            </div>
+            ${renderSolarMini(activePopover, solarChannelIdx)}
           </div>
         </div>
       </div>
@@ -1415,10 +1429,18 @@ const IMPACT_ICONS: Record<string, string> = {
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
 
 const SOLAR_DISK_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
-// Primary: SOHO EIT 171 Å (EUV corona); fallback: SOHO HMI white-light
-const SUN_EIT171_URL    = "https://soho.nascom.nasa.gov/data/realtime/eit_171/512/latest.jpg";
-const SUN_HMI_URL       = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
-const SUN_AIA171_URL    = SUN_EIT171_URL;
+
+const SOLAR_CHANNELS = [
+  { id: "eit171", label: "EIT 171",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_171/512/latest.jpg" },
+  { id: "eit195", label: "EIT 195",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_195/512/latest.jpg" },
+  { id: "eit284", label: "EIT 284",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_284/512/latest.jpg" },
+  { id: "eit304", label: "EIT 304",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg" },
+  { id: "cont",   label: "Continuum",  url: "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg" },
+  { id: "mag",    label: "Magnetogram",url: "https://soho.nascom.nasa.gov/data/realtime/hmi_mag/512/latest.jpg" },
+] as const;
+
+const SUN_HMI_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+const SUN_AIA171_URL = SOLAR_CHANNELS[0].url;
 const SUN_LOOP_URL   = "/data/sun_loop.mp4";
 const SOLAR_DISK_PX  = 240;
 
@@ -2748,12 +2770,13 @@ function renderCard(
   expandedImpacts:       Set<string>,
   opts:                  HelioWidgetOptions,
   ovationData:           OvationData | null,
+  solarChannelIdx:       number = 0,
 ): string {
   const scrubData = buildScrubData(data, scrubOffset);
   return `
     <div class="hw-root">
       ${renderHeader(data)}
-      ${renderHero(data, heroExpanded, indicatorsOpen, activePopover, scrubData, opts, ovationData)}
+      ${renderHero(data, heroExpanded, indicatorsOpen, activePopover, scrubData, opts, ovationData, solarChannelIdx)}
       ${heroExpanded ? renderHeroDetail(data) : ""}
       ${renderForecast(data, scrubOffset, scrubData, forecastOpen)}
       ${renderCmeTracker(data, cmeExpanded)}
@@ -2798,6 +2821,7 @@ class HelioWidgetInstance {
   private solarRegions:        SolarRegion[] | null = null;
   private solarExpanded        = false;
   private solarLayers:         Set<string> = new Set(["X", "M", "C", "quiet"]);
+  private solarChannelIdx      = 0;
   private expandedImpacts:     Set<string> = new Set();
   private ovationData:      OvationData | null = null;
   private timer:            ReturnType<typeof setTimeout> | null = null;
@@ -2815,6 +2839,18 @@ class HelioWidgetInstance {
 
   private onClick(e: Event): void {
     const target = e.target as Element;
+
+    // Solar channel switcher
+    if (target.closest("[data-solar-prev]")) {
+      this.solarChannelIdx = (this.solarChannelIdx - 1 + SOLAR_CHANNELS.length) % SOLAR_CHANNELS.length;
+      this.render();
+      return;
+    }
+    if (target.closest("[data-solar-next]")) {
+      this.solarChannelIdx = (this.solarChannelIdx + 1) % SOLAR_CHANNELS.length;
+      this.render();
+      return;
+    }
 
     // Reset scrub to live
     if (target.closest(".hw-scrub-reset")) {
@@ -3042,7 +3078,7 @@ class HelioWidgetInstance {
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
       this.expandedTimelineKey, this.timelineOpen, this.collapsedDays,
       this.impactsOpen, this.cmeExpanded, this.forecastOpen, this.indicatorsOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
-      this.expandedImpacts, this.opts, this.ovationData,
+      this.expandedImpacts, this.opts, this.ovationData, this.solarChannelIdx,
     );
   }
 
