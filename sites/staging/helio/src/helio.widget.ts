@@ -357,8 +357,7 @@ const WIDGET_CSS = `
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
-@keyframes hw-wind-full{from{transform:translateX(0)}to{transform:translateX(30px)}}
-.hw-wg-full{animation:hw-wind-full linear infinite;will-change:transform}
+@keyframes hw-arrow-chase{0%,12.5%{opacity:.9}12.501%,100%{opacity:.12}}
 
 /* Bz Gauge */
 .hw-bz-gauge-wrap{margin-bottom:8px}
@@ -887,20 +886,33 @@ function buildHelioSolarEarthScene(
   if (mode === "magnetosphere") {
     const wKms  = opts.windKms ?? 0;
     const wHigh = wKms > 500, wSlow = wKms < 350;
-    const wDur  = wHigh ? 0.55 : wSlow ? 1.5 : 1.0;
+    // Chase period: faster wind = shorter period
+    const T     = wHigh ? 0.5 : wSlow ? 1.4 : 0.9;
     const wCol  = wKms > 700 ? "#e05c5c" : wKms > 500 ? "#e0a84a" : wKms > 350 ? "#d4c840" : "#5cce8c";
     const clipS = SUN_R + 8;
     const clipE = noseX - 14;
-    const rowsY = wKms > 500 ? [22,50,80,110,150,180,210,238] : [30,65,100,130,160,195,230];
-    const S  = 30;
-    const nc = Math.ceil((clipE - clipS) / S) + 2;
-    const xs = Array.from({ length: nc }, (_, i) => clipS - S + i * S);
-    const aL = 22, aH = 15;
-    const arrows = xs.flatMap(ax => rowsY.map(y =>
-      `<path d="M ${ax},${y} L ${ax+aL},${y} M ${ax+aH},${y-5} L ${ax+aL},${y} L ${ax+aH},${y+5}"
-       stroke="${wCol}cc" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
-    )).join("");
-    const bz    = opts.bz ?? null;
+
+    // 8 columns evenly across corridor, 6 rows evenly across height
+    const N_COLS = 8, N_ROWS = 6;
+    const colStep = (clipE - clipS) / (N_COLS - 1);
+    const rowStep = H / (N_ROWS + 1);
+    const aL = 38, aH = 24;   // large arrows in SVG-unit space
+
+    // Chase animation: col 0 lights first, col 7 last, repeating left→right
+    // animation-delay = -((N_COLS - col) / N_COLS * T) puts each column at
+    // the right phase so opacity peak travels left→right.
+    const colGroups = Array.from({ length: N_COLS }, (_, col) => {
+      const ax    = clipS + col * colStep;
+      const delay = -((N_COLS - col) / N_COLS * T);
+      const paths = Array.from({ length: N_ROWS }, (__, row) => {
+        const y = rowStep * (row + 1);
+        return `<path d="M ${ax.toFixed(1)},${y.toFixed(1)} L ${(ax+aL).toFixed(1)},${y.toFixed(1)} M ${(ax+aH).toFixed(1)},${(y-6).toFixed(1)} L ${(ax+aL).toFixed(1)},${y.toFixed(1)} L ${(ax+aH).toFixed(1)},${(y+6).toFixed(1)}"
+          stroke="${wCol}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+      }).join("");
+      return `<g style="opacity:.12;animation:hw-arrow-chase ${T}s linear ${delay.toFixed(3)}s infinite">${paths}</g>`;
+    }).join("");
+
+    const bz = opts.bz ?? null;
     const bzHtml = bz == null ? "" : (() => {
       const col = bz > 0 ? "#5cce8c" : "#e05c5c";
       const arrow = bz > 0
@@ -911,21 +923,7 @@ function buildHelioSolarEarthScene(
       return `${arrow}<text x="${EARTH_CX+22}" y="${midY+5}" font-size="13"
         fill="${col}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
     })();
-    // Use SVG animateTransform (SVG user-unit coords) so translation matches
-    // arrow spacing exactly regardless of container width. Two staggered groups
-    // = arrows every S/2 units, seamless tiling hides the loop reset.
-    const halfDur = (wDur / 2).toFixed(2);
-    const windGroups = [0, 1].map(g =>
-      `<g clip-path="url(#${uid}-wclip)">${arrows}
-        <animateTransform attributeName="transform" type="translate"
-          from="0,0" to="${S},0" dur="${wDur}s" begin="-${(g * wDur / 2).toFixed(2)}s"
-          repeatCount="indefinite"/>
-      </g>`
-    ).join("");
-    solarWindContent = `
-    <defs><clipPath id="${uid}-wclip"><rect x="${clipS}" y="0" width="${clipE - clipS}" height="${H}"/></clipPath></defs>
-    ${windGroups}
-    ${bzHtml}`;
+    solarWindContent = `${colGroups}${bzHtml}`;
   }
   const solarWindGroup = `<g id="${uid}-overlay-solar-wind">${solarWindContent}</g>`;
 
