@@ -143,7 +143,7 @@ const WIDGET_CSS = `
 .hw-kp-big b{color:#d4e4e8;font-weight:700}
 .hw-info-col{flex:1;display:flex;flex-direction:column;gap:5px;padding-top:3px}
 .hw-status-badge{font-size:.82em;font-weight:700;padding:2px 10px;border-radius:3px;letter-spacing:.04em}
-.hw-scales-row{display:flex;gap:6px}
+.hw-scales-row{display:flex;gap:6px;justify-content:flex-end}
 .hw-scale-chip{font-size:.72em;font-weight:600;padding:1px 6px;border-radius:2px;background:#222e32;color:#96a8b8;border:1px solid #2a3c42}
 .hw-scale-chip.hw-scale-active{color:#e0a84a;border-color:#5a4020}
 .hw-summary-text{font-size:.78em;color:#96a8b8;line-height:1.4}
@@ -346,8 +346,7 @@ const WIDGET_CSS = `
 .hw-magnet-mini{flex-shrink:0;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s;display:flex;flex-direction:column;align-items:center;width:80px}
 .hw-magnet-mini:hover,.hw-magnet-mini.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
 /* Solar Disk Mini Loop */
-.hw-solar-mini-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s}
-.hw-solar-mini-wrap:hover,.hw-solar-mini-wrap.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
+.hw-solar-mini-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;border-radius:4px;border:1px solid #1e2c30;padding:1px}
 .hw-solar-mini-inner{position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;border:1px solid #2a3c42;background:#0a0a0a;flex-shrink:0}
 .hw-solar-mini-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center}
 .hw-solar-mini-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;background:transparent}
@@ -358,8 +357,8 @@ const WIDGET_CSS = `
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
-@keyframes hw-wind-full{from{transform:translateX(0)}to{transform:translateX(16px)}}
-.hw-wg-full{animation:hw-wind-full linear infinite}
+@keyframes hw-wind-full{from{transform:translateX(0)}to{transform:translateX(30px)}}
+.hw-wg-full{animation:hw-wind-full linear infinite;will-change:transform}
 
 /* Bz Gauge */
 .hw-bz-gauge-wrap{margin-bottom:8px}
@@ -912,9 +911,13 @@ function buildHelioSolarEarthScene(
       return `${arrow}<text x="${EARTH_CX+22}" y="${midY+5}" font-size="13"
         fill="${col}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
     })();
+    const NUM_WG = 3;
+    const windGroups = Array.from({ length: NUM_WG }, (_, g) =>
+      `<g class="hw-wg-full" style="animation-duration:${wDur}s;animation-delay:-${((wDur / NUM_WG) * g).toFixed(2)}s" clip-path="url(#${uid}-wclip)">${arrows}</g>`
+    ).join("");
     solarWindContent = `
     <defs><clipPath id="${uid}-wclip"><rect x="${clipS}" y="0" width="${clipE - clipS}" height="${H}"/></clipPath></defs>
-    <g class="hw-wg-full" style="animation-duration:${wDur}s" clip-path="url(#${uid}-wclip)">${arrows}</g>
+    ${windGroups}
     ${bzHtml}`;
   }
   const solarWindGroup = `<g id="${uid}-overlay-solar-wind">${solarWindContent}</g>`;
@@ -1047,6 +1050,60 @@ function renderMagnetospherePopover(data: HelioNow): string {
   </div>`;
 }
 
+/** Tip content for Magnetosphere impact row (Observer Impacts panel) */
+function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
+  if (!isOpen) return "";
+  const info     = deriveMagnetInfo(data);
+  const bz       = data.metrics.imf_bz_nt;
+  const wind     = data.metrics.solar_wind_kms;
+  const density  = (data.metrics as Record<string, unknown>).density  as number | null | undefined;
+  const pressure = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined;
+
+  const bzStr      = bz      != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const windStr    = wind    != null ? `${Math.round(wind)} km/s` : "—";
+  const densityStr = density != null ? `${(density as number).toFixed(1)} p/cm³` : "—";
+  const pressStr   = pressure != null ? `${(pressure as number).toFixed(2)} nPa` : "—";
+  const bzColor    = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
+  const windColor  = wind != null ? (wind > 700 ? "#e05c5c" : wind > 500 ? "#e0a84a" : wind > 350 ? "#d4c840" : "#5cce8c") : "#607880";
+
+  const hintText = (bz != null && bz < -5)
+    ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
+    : (bz != null && bz < 0)
+    ? "Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible."
+    : "Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";
+
+  const scene = buildHelioSolarEarthScene("magnetosphere", { windKms: wind ?? undefined, bz: bz ?? undefined });
+
+  return `<div class="hw-impact-tip">
+    <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${scene}</div>
+    <div class="hw-kpi-stat-row">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Solar wind</span>
+        <span class="hw-kpi-stat-value" style="color:${windColor}">${escText(windStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">IMF Bz</span>
+        <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Coupling</span>
+        <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
+      </div>
+    </div>
+    <div class="hw-kpi-stat-row" style="margin-top:4px">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Density</span>
+        <span class="hw-kpi-stat-value">${escText(densityStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Pressure</span>
+        <span class="hw-kpi-stat-value">${escText(pressStr)}</span>
+      </div>
+    </div>
+    <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
+  </div>`;
+}
+
 // ── Aurora probability map (Issue #177) ─────────────────────────────────────
 
 interface OvationEntry { lon: number; lat: number; prob: number; }
@@ -1147,7 +1204,7 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 function renderSolarMini(activePopover: string | null, channelIdx: number): string {
   const ch  = SOLAR_CHANNELS[channelIdx];
   const hmi = SUN_HMI_URL;
-  return `<div class="hw-solar-mini-wrap${activePopover === "magnetosphere" ? " hw-kpi-active" : ""}" data-kpi="magnetosphere" title="Magnetosphere status">
+  return `<div class="hw-solar-mini-wrap" style="cursor:default">
     <div class="hw-solar-mini-inner">
       <img class="hw-solar-mini-img" src="${esc(ch.url)}" alt="${esc(ch.label)}"
         onerror="if(this.src!=='${esc(hmi)}')this.src='${esc(hmi)}'" />
@@ -2328,7 +2385,7 @@ function renderImpacts(
   const simNote = scrubData
     ? `<span style="font-size:.65em;color:#7a9870;font-weight:normal;text-transform:none;letter-spacing:0"> · simulated</span>`
     : "";
-  const total = rows.length + 7; // +7 for Storm Risk, Solar Cycle, Coronal Hole, Satellite Drag, GNSS, SW Pressure, CME Cone
+  const total = rows.length + 8; // +8 for Magnetosphere, Storm Risk, Solar Cycle, Coronal Hole, Satellite Drag, GNSS, SW Pressure, CME Cone
   const caret = impactsOpen ? "▼" : "▶";
   const label = total > 0 ? `Observer Impacts (${total})` : "Observer Impacts";
   const sectionHdr = `
@@ -2417,10 +2474,21 @@ function renderImpacts(
       ${renderCMEConeTip(data, cmeOpen)}
     </div>`;
 
+  // Magnetosphere — moved from hero KPI popover into Observer Impacts
+  const magInfo     = deriveMagnetInfo(data);
+  const magOpen     = expandedImpacts.has("magnetosphere");
+  const magIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 Q2 2 6.5 2 Q11 2 11 6.5 Q11 11 6.5 11 Q2 11 2 6.5"/><path d="M4.5 6.5 Q4.5 4 6.5 4 Q8.5 4 8.5 6.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>`;
+  const magRowHtml  = `<div class="hw-impact-row${magOpen ? " hw-impact-open" : ""}" data-impact-row="magnetosphere">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${magInfo.color}">${magIcon}<span style="color:#b4c6cc">Magnetosphere</span></span>
+      <span class="hw-impact-badge" style="background:${magInfo.color}22;color:${magInfo.color}">${escText(magInfo.label)}</span>
+      ${renderMagnetosphereTip(data, magOpen)}
+    </div>`;
+
   return `
     <div class="hw-impacts">
       ${sectionHdr}
-      ${impactsOpen ? rowsHtml + gsRowHtml + scRowHtml + hssRowHtml + sdRowHtml + gnRowHtml + swdpRowHtml + cmeRowHtml : ""}
+      ${impactsOpen ? rowsHtml + gsRowHtml + magRowHtml + scRowHtml + hssRowHtml + sdRowHtml + gnRowHtml + swdpRowHtml + cmeRowHtml : ""}
     </div>`;
 }
 
