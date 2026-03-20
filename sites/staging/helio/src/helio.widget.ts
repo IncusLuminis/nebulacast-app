@@ -1074,7 +1074,7 @@ function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
 
   const scene = buildHelioSolarEarthScene("magnetosphere", { windKms: wind ?? undefined, bz: bz ?? undefined });
 
-  return `<div class="hw-impact-tip">
+  return `<div class="hw-impact-tip hw-impact-tip-open">
     <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${scene}</div>
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
