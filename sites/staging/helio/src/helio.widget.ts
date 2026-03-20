@@ -1048,7 +1048,7 @@ function renderHero(
                   <source src="${esc(SUN_LOOP_URL)}" type="video/mp4">
                 </video>
               </div>
-              <span class="hw-solar-mini-label" style="color:${magnetInfo.color}">${escText(magnetInfo.label)}</span>
+              <span class="hw-solar-mini-label">SOHO EIT 171</span>
             </div>
           </div>
         </div>
