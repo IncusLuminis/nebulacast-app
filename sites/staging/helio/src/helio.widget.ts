@@ -357,7 +357,7 @@ const WIDGET_CSS = `
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
-@keyframes hw-arrow-chase{0%,12.5%{opacity:.9}12.501%,100%{opacity:.12}}
+@keyframes hw-arrow-chase{0%{opacity:.12}4%{opacity:.42}8%{opacity:.82}13%{opacity:.82}18%{opacity:.42}23%{opacity:.12}100%{opacity:.12}}
 
 /* Bz Gauge */
 .hw-bz-gauge-wrap{margin-bottom:8px}
@@ -886,8 +886,8 @@ function buildHelioSolarEarthScene(
   if (mode === "magnetosphere") {
     const wKms  = opts.windKms ?? 0;
     const wHigh = wKms > 500, wSlow = wKms < 350;
-    // Chase period: faster wind = shorter period
-    const T     = wHigh ? 0.5 : wSlow ? 1.4 : 0.9;
+    // Chase period ×1.3 slower; two waves travel simultaneously (offset T/2 each)
+    const T     = (wHigh ? 0.5 : wSlow ? 1.4 : 0.9) * 1.3;
     const wCol  = wKms > 700 ? "#e05c5c" : wKms > 500 ? "#e0a84a" : wKms > 350 ? "#d4c840" : "#5cce8c";
     const clipS = SUN_R + 8;
     const clipE = noseX - 14;
@@ -898,18 +898,20 @@ function buildHelioSolarEarthScene(
     const rowStep = H / (N_ROWS + 1);
     const aL = 38, aH = 24;   // large arrows in SVG-unit space
 
-    // Chase animation: col 0 lights first, col 7 last, repeating left→right
-    // animation-delay = -((N_COLS - col) / N_COLS * T) puts each column at
-    // the right phase so opacity peak travels left→right.
+    // Chase animation: col 0 lights first, col 7 last, repeating left→right.
+    // Two waves travel simultaneously — wave 1 and wave 2 offset by T/2.
+    const N_WAVES = 2;
     const colGroups = Array.from({ length: N_COLS }, (_, col) => {
       const ax    = clipS + col * colStep;
-      const delay = -((N_COLS - col) / N_COLS * T);
       const paths = Array.from({ length: N_ROWS }, (__, row) => {
         const y = rowStep * (row + 1);
         return `<path d="M ${ax.toFixed(1)},${y.toFixed(1)} L ${(ax+aL).toFixed(1)},${y.toFixed(1)} M ${(ax+aH).toFixed(1)},${(y-6).toFixed(1)} L ${(ax+aL).toFixed(1)},${y.toFixed(1)} L ${(ax+aH).toFixed(1)},${(y+6).toFixed(1)}"
           stroke="${wCol}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
       }).join("");
-      return `<g style="opacity:.12;animation:hw-arrow-chase ${T}s linear ${delay.toFixed(3)}s infinite">${paths}</g>`;
+      return Array.from({ length: N_WAVES }, (__, wave) => {
+        const delay = -((N_COLS - col) / N_COLS * T) - (wave * T / N_WAVES);
+        return `<g style="opacity:.12;animation:hw-arrow-chase ${T}s linear ${delay.toFixed(3)}s infinite">${paths}</g>`;
+      }).join("");
     }).join("");
 
     const bz = opts.bz ?? null;
