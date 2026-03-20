@@ -1621,7 +1621,8 @@ const SOLAR_CHANNELS = [
 
 const SUN_HMI_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 const SUN_AIA171_URL = SOLAR_CHANNELS[0].url;
-const SUN_LOOP_URL   = "/data/sun_loop.mp4";
+// NASA SDO publishes a rolling "latest 24h" AIA 171 Å loop, refreshed automatically
+const SUN_LOOP_URL   = "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_512_0171.mp4";
 const SOLAR_DISK_PX  = 240;
 
 function renderRadioBlackoutPanel(data: HelioNow, isOpen: boolean): string {
