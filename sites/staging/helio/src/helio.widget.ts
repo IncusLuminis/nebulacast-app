@@ -825,7 +825,7 @@ function buildHelioSolarEarthScene(
   // Earth is placed left-of-center so the dayside nose is a tight compressed
   // bulge and the nightside tail has plenty of room to extend rightward.
   const SUN_CX    = 0,   SUN_R    = 160;   // Sun: large arc, right edge at x=160
-  const EARTH_CX  = 480, EARTH_R  = 17;
+  const EARTH_CX  = 580, EARTH_R  = 17;
   const EARTH_LEFT = EARTH_CX - EARTH_R;
 
   // Magnetosphere geometry — asymmetric: short sunward standoff, long nightside tail
@@ -834,11 +834,11 @@ function buildHelioSolarEarthScene(
   const magColor = magInfo?.color ?? "#e0a84a";
   // standoff = distance from Earth to sunward nose (compressed by solar wind)
   const standoff = magState === "storm" ? 55 : magState === "active" ? 80 : 110;
-  const noseX    = EARTH_CX - standoff;        // 370–425
+  const noseX    = EARTH_CX - standoff;        // 470–525
   // halfW = magnetosphere half-width (widest, near Earth's flanks)
-  const halfW    = magState === "storm" ? 62  : magState === "active" ? 80  : 98;
-  const tailX    = W + 20;                     // 1020 — tail tip past right edge
-  const tailHW   = 22;                         // narrow half-width at tail tip
+  const halfW    = magState === "storm" ? 50  : magState === "active" ? 64  : 78;
+  const tailX    = W - 5;                      // 995 — tail just within right edge
+  const tailHW   = 16;                         // narrow half-width at tail tip
 
   // Upper boundary: blunt nose → max width near Earth → narrow tail
   // Lower boundary: mirror image
