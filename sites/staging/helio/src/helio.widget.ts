@@ -822,27 +822,33 @@ function buildHelioSolarEarthScene(
   const uid = opts.uid ?? "hse";
 
   // Geometry anchors
+  // Earth is placed left-of-center so the dayside nose is a tight compressed
+  // bulge and the nightside tail has plenty of room to extend rightward.
   const SUN_CX    = 0,   SUN_R    = 160;   // Sun: large arc, right edge at x=160
-  const EARTH_CX  = 870, EARTH_R  = 17;
-  const EARTH_LEFT = EARTH_CX - EARTH_R;   // 853
+  const EARTH_CX  = 480, EARTH_R  = 17;
+  const EARTH_LEFT = EARTH_CX - EARTH_R;
 
-  // Magnetosphere geometry (depends on state)
+  // Magnetosphere geometry — asymmetric: short sunward standoff, long nightside tail
   const magInfo  = opts.magnetInfo;
   const magState = magInfo?.state ?? "stable";
   const magColor = magInfo?.color ?? "#e0a84a";
-  const standoff = magState === "storm" ? 60 : magState === "active" ? 95 : 145;
-  const noseX    = EARTH_CX - standoff;    // 725–810
-  const topY     = magState === "storm" ? 65  : magState === "active" ? 85  : 108;
-  const botY     = H - topY;
-  const tailX    = W + 20;
+  // standoff = distance from Earth to sunward nose (compressed by solar wind)
+  const standoff = magState === "storm" ? 55 : magState === "active" ? 80 : 110;
+  const noseX    = EARTH_CX - standoff;        // 370–425
+  // halfW = magnetosphere half-width (widest, near Earth's flanks)
+  const halfW    = magState === "storm" ? 62  : magState === "active" ? 80  : 98;
+  const tailX    = W + 20;                     // 1020 — tail tip past right edge
+  const tailHW   = 22;                         // narrow half-width at tail tip
 
+  // Upper boundary: blunt nose → max width near Earth → narrow tail
+  // Lower boundary: mirror image
   const magPath = [
     `M ${noseX},${midY}`,
-    `C ${noseX - 12},${midY - 45} ${EARTH_CX - 20},${topY} ${EARTH_CX},${topY}`,
-    `C ${EARTH_CX + 55},${topY} ${tailX - 35},${topY + 55} ${tailX},${midY - 22}`,
-    `C ${tailX + 5},${midY - 9} ${tailX + 5},${midY + 9} ${tailX},${midY + 22}`,
-    `C ${tailX - 35},${botY - 55} ${EARTH_CX + 55},${botY} ${EARTH_CX},${botY}`,
-    `C ${EARTH_CX - 20},${botY} ${noseX - 12},${midY + 45} ${noseX},${midY}`,
+    `C ${noseX - 8},${midY - halfW * 0.55} ${EARTH_CX - 18},${midY - halfW} ${EARTH_CX},${midY - halfW}`,
+    `C ${EARTH_CX + 120},${midY - halfW} ${tailX - 180},${midY - tailHW} ${tailX},${midY - tailHW}`,
+    `L ${tailX},${midY + tailHW}`,
+    `C ${tailX - 180},${midY + tailHW} ${EARTH_CX + 120},${midY + halfW} ${EARTH_CX},${midY + halfW}`,
+    `C ${EARTH_CX - 18},${midY + halfW} ${noseX - 8},${midY + halfW * 0.55} ${noseX},${midY}`,
     "Z",
   ].join(" ");
 
@@ -872,7 +878,7 @@ function buildHelioSolarEarthScene(
   const magGroup = `<g id="${uid}-base-magnetosphere">
     <path d="${magPath}" fill="${magColor}" fill-opacity="${magFillOp}"
           stroke="${magColor}" stroke-opacity="${magStrokeOp}" stroke-width="1.8"/>
-    ${magInfo ? `<text x="${noseX + 5}" y="${topY - 7}" font-size="12" fill="${magColor}"
+    ${magInfo ? `<text x="${noseX + 5}" y="${midY - halfW - 7}" font-size="12" fill="${magColor}"
           opacity="0.85" font-family="sans-serif">${magInfo.label}</text>` : ""}
   </g>`;
 
