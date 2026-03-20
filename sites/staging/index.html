@@ -723,7 +723,7 @@
         'panel-sun':              { sel: '#w-sun',                            embed: (w,h,b) => iframeEmbed('sun', w, h, b) },
         'panel-sky':              { sel: '#w-sky',                            embed: (w,h,b) => iframeEmbed('sky', w, h, b) },
         'panel-observer-weather': { sel: '#w-observer-weather',               embed: (w,h,b) => iframeEmbed('observer-weather', w, h, b) },
-        'panel-space-weather':    { sel: '#w-helio',                          embed: (w,h,b) => helioEmbed(w, h, b) },
+        'panel-space-weather':    { sel: '#w-helio', defaultW: 400,            embed: (w,h,b) => helioEmbed(w, h, b) },
         'panel-news':             { sel: '#panel-news .widget-section',       embed: (w,h,b) => iframeEmbed('news', w, h, b) },
       };
 
@@ -834,7 +834,7 @@
       }
 
       // ── Per-panel bars ───────────────────────────────────────────────────
-      Object.entries(PANELS).forEach(([panelId, { sel, embed }]) => {
+      Object.entries(PANELS).forEach(([panelId, { sel, embed, defaultW }]) => {
         const panel = document.getElementById(panelId);
         const target = panel && document.querySelector(sel);
         if (!panel || !target) return;
@@ -858,6 +858,8 @@
           target.style.maxWidth = wIn.value ? 'none' : '';
           target.style.height   = hIn.value ? hIn.value + 'px' : '';
         }
+
+        if (defaultW) { wIn.value = defaultW; apply(); }
 
         wIn.addEventListener('input', apply);
         hIn.addEventListener('input', apply);
