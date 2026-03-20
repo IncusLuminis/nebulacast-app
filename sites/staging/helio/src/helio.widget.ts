@@ -347,8 +347,10 @@ const WIDGET_CSS = `
 /* Solar Disk Mini Loop */
 .hw-solar-mini-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s}
 .hw-solar-mini-wrap:hover,.hw-solar-mini-wrap.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
-.hw-solar-mini-video{width:86px;height:86px;border-radius:50%;object-fit:cover;background:#0a0a0a;border:1px solid #2a3c42;display:block}
-.hw-solar-mini-label{font-size:.60em;color:#607880;letter-spacing:.03em;font-weight:600;margin-top:2px}
+.hw-solar-mini-inner{position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;border:1px solid #2a3c42;background:#0a0a0a;flex-shrink:0}
+.hw-solar-mini-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.hw-solar-mini-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;background:transparent}
+.hw-solar-mini-label{font-size:.60em;letter-spacing:.03em;font-weight:600;margin-top:2px}
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
@@ -1037,11 +1039,14 @@ function renderHero(
           <div class="hw-info-top-row">
             <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
             <div class="hw-solar-mini-wrap${activePopover === "magnetosphere" ? " hw-kpi-active" : ""}" data-kpi="magnetosphere" title="Magnetosphere status">
-              <video class="hw-solar-mini-video" autoplay loop muted playsinline
-                poster="${esc(SOLAR_DISK_URL)}"
-                aria-label="Solar disk · SDO AIA 171 · last 24h">
-                <source src="${esc(SUN_LOOP_URL)}" type="video/mp4">
-              </video>
+              <div class="hw-solar-mini-inner">
+                <img class="hw-solar-mini-img" src="${esc(SUN_AIA171_URL)}" alt="SDO AIA 171" />
+                <video class="hw-solar-mini-video" autoplay loop muted playsinline
+                  oncanplay="this.style.opacity=1"
+                  aria-label="Solar disk · SDO AIA 171 · last 24h">
+                  <source src="${esc(SUN_LOOP_URL)}" type="video/mp4">
+                </video>
+              </div>
               <span class="hw-solar-mini-label" style="color:${magnetInfo.color}">${escText(magnetInfo.label)}</span>
             </div>
           </div>
@@ -1409,6 +1414,8 @@ const IMPACT_ICONS: Record<string, string> = {
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
 
 const SOLAR_DISK_URL  = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+// AIA 171 Å — shows corona, coronal loops, active regions (gold on black)
+const SUN_AIA171_URL = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0171.jpg";
 const SUN_LOOP_URL   = "/data/sun_loop.mp4";
 const SOLAR_DISK_PX  = 240;
 
