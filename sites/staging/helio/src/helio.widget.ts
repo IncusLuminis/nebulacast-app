@@ -1081,11 +1081,7 @@ function renderHero(
         ${kpiItem("imf_bz",     "IMF Bz",     escText(bzDisp),     bzColor,   bzTrend)}
         ${kpiItem("xray",       "X-ray",      escText(xrayDisp),   xrayColor, xrayTrend)}
       </div>
-      ${activePopover ? renderKpiPopover(data, activePopover, opts, ovationData) : ""}
-      <div class="hw-section-row" data-hero-toggle style="margin-top:6px">
-        <span class="hw-section-caret">${heroExpanded ? "▼" : "▶"}</span>
-        <span class="hw-section-label" style="margin-bottom:0">${escText(historyLabel)}</span>
-      </div>` : ""}
+      ${activePopover ? renderKpiPopover(data, activePopover, opts, ovationData) : ""}` : ""}
       ${auroraBanner}
     </div>`;
 }
@@ -2776,15 +2772,24 @@ function renderCard(
   ovationData:           OvationData | null,
   solarChannelIdx:       number = 0,
 ): string {
-  const scrubData = buildScrubData(data, scrubOffset);
+  const scrubData   = buildScrubData(data, scrubOffset);
+  const histPts     = data.metrics.kp_history_1h ?? [];
+  const lastStepT   = histPts.length ? fmtKpTime(histPts[histPts.length - 1].t_utc) : null;
+  const histLbl     = lastStepT ? `Recent history · Last step ${lastStepT}` : "Recent history";
+  const histToggle  = `<div class="hw-section-row" data-hero-toggle>
+    <span class="hw-section-caret">${heroExpanded ? "▼" : "▶"}</span>
+    <span class="hw-section-label" style="margin-bottom:0">${esc(histLbl)}</span>
+  </div>`;
+  const histDetail  = heroExpanded ? renderHeroDetail(data) : "";
   return `
     <div class="hw-root">
       ${renderHeader(data)}
       ${renderHero(data, heroExpanded, indicatorsOpen, activePopover, scrubData, opts, ovationData, solarChannelIdx)}
-      ${heroExpanded ? renderHeroDetail(data) : ""}
+      ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
+      ${histToggle}
+      ${histDetail}
       ${renderForecast(data, scrubOffset, scrubData, forecastOpen)}
       ${renderCmeTracker(data, cmeExpanded)}
-      ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${renderTimeline(data, expandedTimelineKey, timelineOpen, collapsedDays)}
       ${renderAlerts(data, alertsExpanded, expandedAlertKey)}
     </div>`;
