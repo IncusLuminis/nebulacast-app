@@ -1027,7 +1027,9 @@ function renderHero(
   // X-ray: use log10(flux) so small changes at low flux don't dominate
   const xrayTrend = trendArrow((metrics.xray_history_1h  ?? []).map(p => Math.log10(p.flux + 1e-9)), 0.15);
 
-  const toggleLabel  = heroExpanded ? "▼ HISTORY" : "▶ HISTORY";
+  const historyPts   = metrics.kp_history_1h ?? [];
+  const lastStepTime = historyPts.length ? fmtKpTime(historyPts[historyPts.length - 1].t_utc) : null;
+  const historyLabel = lastStepTime ? `Recent history · Last step ${lastStepTime}` : "Recent history";
   const magnetInfo   = deriveMagnetInfo(data);
 
   // Aurora highlight — live Kp only (scrub shows forecast, not an "alert")
@@ -1058,6 +1060,7 @@ function renderHero(
         <div class="hw-kp-col">
           <div class="hw-kp-big" style="${scrubData ? "color:#9acf60" : ""}">Kp <b>${escText(kp)}</b>${scrubData ? "" : `<span class="hw-trend">${kpTrend}</span>`}</div>
           <span class="hw-status-badge" style="background:${tone.accent}22;color:${tone.accent};display:block;text-align:center">${escText(summary.label)}</span>
+          <div style="font-size:.62em;color:#607880;text-align:center;margin-top:1px;letter-spacing:.03em">Current conditions</div>
           <div class="hw-scales-row">${scaleChips}</div>
         </div>
         <div class="hw-info-col">
@@ -1081,7 +1084,7 @@ function renderHero(
       ${activePopover ? renderKpiPopover(data, activePopover, opts, ovationData) : ""}
       <div class="hw-section-row" data-hero-toggle style="margin-top:6px">
         <span class="hw-section-caret">${heroExpanded ? "▼" : "▶"}</span>
-        <span class="hw-section-label" style="margin-bottom:0">HISTORY</span>
+        <span class="hw-section-label" style="margin-bottom:0">${escText(historyLabel)}</span>
       </div>` : ""}
       ${auroraBanner}
     </div>`;
@@ -1251,13 +1254,14 @@ function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubDat
     forecastText   = `Peak Kp ${kp_max_next_24h.toFixed(1)} next 24h${timeStr ? ` at ${timeStr}` : ""} · ${trendStr}`;
   }
 
-  const forecastToggleLabel = forecastOpen ? "▼ FORECAST" : "▶ FORECAST";
+  const nextStepTime    = pts.length ? fmtKpTime(pts[0].t_utc) : null;
+  const forecastLabel   = nextStepTime ? `Forecast · Next step ${nextStepTime}` : "Forecast";
 
   if (!pts.length) return `
     <div class="hw-forecast">
       <div class="hw-section-row" data-forecast-toggle>
         <span class="hw-section-caret">${forecastOpen ? "▼" : "▶"}</span>
-        <span class="hw-section-label" style="margin-bottom:0">FORECAST</span>
+        <span class="hw-section-label" style="margin-bottom:0">${escText(forecastLabel)}</span>
       </div>
       ${forecastOpen ? `<div class="hw-forecast-text">${escText(forecastText)}</div>` : ""}
     </div>`; // no scrubber when no data
@@ -1339,7 +1343,7 @@ function renderForecast(data: HelioNow, scrubOffset: number, scrubData: ScrubDat
     <div class="hw-forecast">
       <div class="hw-section-row" data-forecast-toggle>
         <span class="hw-section-caret">${forecastOpen ? "▼" : "▶"}</span>
-        <span class="hw-section-label" style="margin-bottom:0">FORECAST</span>
+        <span class="hw-section-label" style="margin-bottom:0">${escText(forecastLabel)}</span>
       </div>
       ${forecastOpen ? `
       ${simBannerHtml}
@@ -2328,7 +2332,7 @@ function renderImpacts(
   const gsIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg>`;
   const gsRowHtml   = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" data-impact-row="geomag_storm">
       <span class="hw-impact-caret">▶</span>
-      <span class="hw-impact-kind" style="color:${gsBadgeCol}">${gsIcon}<span style="color:#b4c6cc">Storm Risk</span></span>
+      <span class="hw-impact-kind" style="color:${gsBadgeCol}">${gsIcon}<span style="color:#b4c6cc">Storm Risk</span><span style="color:#607880;font-size:.85em;font-weight:normal"> — Next 24h</span></span>
       <span class="hw-impact-badge" style="background:${gsBadgeCol}22;color:${gsBadgeCol}">${gsBadgeTxt}</span>
       ${renderGeomagStormTip(data, gsOpen)}
     </div>`;
