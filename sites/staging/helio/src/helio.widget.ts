@@ -344,6 +344,10 @@ const WIDGET_CSS = `
 .hw-info-top-row{display:flex;gap:8px;align-items:flex-start}
 .hw-magnet-mini{flex-shrink:0;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s;display:flex;flex-direction:column;align-items:center;width:80px}
 .hw-magnet-mini:hover,.hw-magnet-mini.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
+/* Solar Disk Mini Loop */
+.hw-solar-mini-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+.hw-solar-mini-video{width:86px;height:86px;border-radius:50%;object-fit:cover;background:#0a0a0a;border:1px solid #2a3c42;display:block}
+.hw-solar-mini-label{font-size:.60em;color:#607880;letter-spacing:.03em}
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
@@ -1035,6 +1039,13 @@ function renderHero(
               ${renderMagnetosphereSvg(magnetInfo, bz, metrics.solar_wind_kms, true)}
               <div class="hw-magnet-state" style="color:${magnetInfo.color}">${escText(magnetInfo.label)}</div>
             </div>
+            <div class="hw-solar-mini-wrap">
+              <video class="hw-solar-mini-video" autoplay loop muted playsinline
+                aria-label="Solar disk · SDO AIA 171 · last 24h">
+                <source src="${esc(SUN_LOOP_URL)}" type="video/mp4">
+              </video>
+              <span class="hw-solar-mini-label">SDO AIA 171</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1399,7 +1410,8 @@ const IMPACT_ICONS: Record<string, string> = {
 };
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
 
-const SOLAR_DISK_URL = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+const SOLAR_DISK_URL  = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+const SUN_LOOP_URL   = "/data/sun_loop.mp4";
 const SOLAR_DISK_PX  = 240;
 
 function renderRadioBlackoutPanel(data: HelioNow, isOpen: boolean): string {
