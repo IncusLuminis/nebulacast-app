@@ -58,7 +58,7 @@
 .hw-spi-dot-active{animation:hw-spi-pulse 2s ease-in-out infinite}
 .hw-spi-txt{font-size:.70em;font-weight:600;letter-spacing:.02em}
 .hw-spi-arr{color:#2a3c42;font-size:.78em;flex-shrink:0;margin-bottom:13px;cursor:default}
-.hw-spi-params{font-size:.70em;color:#607880;margin-top:4px}
+.hw-spi-params{font-size:.70em;color:#607880;margin-top:4px;text-align:center}
 /* Coronal Hole / HSS Indicator */
 .hw-hss-diagram{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-hss-meta{font-size:.75em;color:#7a9298;margin-top:1px}
