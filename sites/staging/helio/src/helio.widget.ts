@@ -143,7 +143,7 @@ const WIDGET_CSS = `
 .hw-kp-big b{color:#d4e4e8;font-weight:700}
 .hw-info-col{flex:1;display:flex;flex-direction:column;gap:5px;padding-top:3px}
 .hw-status-badge{font-size:.82em;font-weight:700;padding:2px 10px;border-radius:3px;letter-spacing:.04em}
-.hw-scales-row{display:flex;gap:6px}
+.hw-scales-row{display:flex;gap:6px;justify-content:flex-end}
 .hw-scale-chip{font-size:.72em;font-weight:600;padding:1px 6px;border-radius:2px;background:#222e32;color:#96a8b8;border:1px solid #2a3c42}
 .hw-scale-chip.hw-scale-active{color:#e0a84a;border-color:#5a4020}
 .hw-summary-text{font-size:.78em;color:#96a8b8;line-height:1.4}
@@ -285,7 +285,7 @@ const WIDGET_CSS = `
 .hw-impact-caret{font-size:.6em;color:#607880;margin-right:5px;flex-shrink:0;transition:transform .15s}
 .hw-impact-row.hw-impact-open .hw-impact-caret{transform:rotate(90deg)}
 .hw-impact-kind{font-size:.75em;font-weight:600;min-width:88px;color:#b4c6cc;display:flex;align-items:center;gap:5px}
-.hw-impact-badge{font-size:.68em;font-weight:700;padding:1px 7px;border-radius:2px;text-transform:capitalize;min-width:52px;text-align:center;flex-shrink:0}
+.hw-impact-badge{font-size:.68em;font-weight:700;padding:1px 7px;border-radius:2px;text-transform:capitalize;min-width:52px;text-align:center;flex-shrink:0;margin-left:auto}
 .hw-impact-tip{flex-basis:100%;font-size:.86em;color:#96a8b8;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px;overflow:hidden}
 .hw-impact-tip.hw-impact-tip-open{display:block}
 .hw-solar-tip,.hw-aurora-tip{flex-basis:100%;display:none;flex-direction:column;align-items:stretch;gap:6px;margin-top:6px;padding:10px 6px 8px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
@@ -346,8 +346,7 @@ const WIDGET_CSS = `
 .hw-magnet-mini{flex-shrink:0;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s;display:flex;flex-direction:column;align-items:center;width:80px}
 .hw-magnet-mini:hover,.hw-magnet-mini.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
 /* Solar Disk Mini Loop */
-.hw-solar-mini-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s}
-.hw-solar-mini-wrap:hover,.hw-solar-mini-wrap.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
+.hw-solar-mini-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;border-radius:4px;border:1px solid #1e2c30;padding:1px}
 .hw-solar-mini-inner{position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;border:1px solid #2a3c42;background:#0a0a0a;flex-shrink:0}
 .hw-solar-mini-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center}
 .hw-solar-mini-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;background:transparent}
@@ -358,8 +357,7 @@ const WIDGET_CSS = `
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
-@keyframes hw-wind-full{from{transform:translateX(0)}to{transform:translateX(16px)}}
-.hw-wg-full{animation:hw-wind-full linear infinite}
+@keyframes hw-arrow-chase{0%{opacity:.12}4%{opacity:.42}8%{opacity:.82}13%{opacity:.82}18%{opacity:.42}23%{opacity:.12}100%{opacity:.12}}
 
 /* Bz Gauge */
 .hw-bz-gauge-wrap{margin-bottom:8px}
@@ -824,27 +822,31 @@ function buildHelioSolarEarthScene(
   const uid = opts.uid ?? "hse";
 
   // Geometry anchors
+  // Earth is placed left-of-center so the dayside nose is a tight compressed
+  // bulge and the nightside tail has plenty of room to extend rightward.
   const SUN_CX    = 0,   SUN_R    = 160;   // Sun: large arc, right edge at x=160
-  const EARTH_CX  = 870, EARTH_R  = 17;
-  const EARTH_LEFT = EARTH_CX - EARTH_R;   // 853
+  const EARTH_CX  = 800, EARTH_R  = 17;    // ~4/5 of width from left
+  const EARTH_LEFT = EARTH_CX - EARTH_R;
 
-  // Magnetosphere geometry (depends on state)
+  // Magnetosphere geometry — asymmetric: short sunward standoff, long nightside tail
   const magInfo  = opts.magnetInfo;
   const magState = magInfo?.state ?? "stable";
   const magColor = magInfo?.color ?? "#e0a84a";
-  const standoff = magState === "storm" ? 60 : magState === "active" ? 95 : 145;
-  const noseX    = EARTH_CX - standoff;    // 725–810
-  const topY     = magState === "storm" ? 65  : magState === "active" ? 85  : 108;
-  const botY     = H - topY;
-  const tailX    = W + 20;
+  const standoff = magState === "storm" ? 55 : magState === "active" ? 80 : 110;
+  const noseX    = EARTH_CX - standoff;        // 690–745
+  const halfW    = magState === "storm" ? 58  : magState === "active" ? 76  : 95;
+  const tailX    = W + 120;                    // 1120 — tail extends well past right edge
+  const tailHW   = 20;
 
+  // Upper boundary: blunt nose → max width near Earth → narrow tail
+  // Lower boundary: mirror image
   const magPath = [
     `M ${noseX},${midY}`,
-    `C ${noseX - 12},${midY - 45} ${EARTH_CX - 20},${topY} ${EARTH_CX},${topY}`,
-    `C ${EARTH_CX + 55},${topY} ${tailX - 35},${topY + 55} ${tailX},${midY - 22}`,
-    `C ${tailX + 5},${midY - 9} ${tailX + 5},${midY + 9} ${tailX},${midY + 22}`,
-    `C ${tailX - 35},${botY - 55} ${EARTH_CX + 55},${botY} ${EARTH_CX},${botY}`,
-    `C ${EARTH_CX - 20},${botY} ${noseX - 12},${midY + 45} ${noseX},${midY}`,
+    `C ${noseX - 8},${midY - halfW * 0.55} ${EARTH_CX - 18},${midY - halfW} ${EARTH_CX},${midY - halfW}`,
+    `C ${EARTH_CX + 120},${midY - halfW} ${tailX - 180},${midY - tailHW} ${tailX},${midY - tailHW}`,
+    `L ${tailX},${midY + tailHW}`,
+    `C ${tailX - 180},${midY + tailHW} ${EARTH_CX + 120},${midY + halfW} ${EARTH_CX},${midY + halfW}`,
+    `C ${EARTH_CX - 18},${midY + halfW} ${noseX - 8},${midY + halfW * 0.55} ${noseX},${midY}`,
     "Z",
   ].join(" ");
 
@@ -874,7 +876,7 @@ function buildHelioSolarEarthScene(
   const magGroup = `<g id="${uid}-base-magnetosphere">
     <path d="${magPath}" fill="${magColor}" fill-opacity="${magFillOp}"
           stroke="${magColor}" stroke-opacity="${magStrokeOp}" stroke-width="1.8"/>
-    ${magInfo ? `<text x="${noseX + 5}" y="${topY - 7}" font-size="12" fill="${magColor}"
+    ${magInfo ? `<text x="${noseX + 5}" y="${midY - halfW - 7}" font-size="12" fill="${magColor}"
           opacity="0.85" font-family="sans-serif">${magInfo.label}</text>` : ""}
   </g>`;
 
@@ -888,20 +890,35 @@ function buildHelioSolarEarthScene(
   if (mode === "magnetosphere") {
     const wKms  = opts.windKms ?? 0;
     const wHigh = wKms > 500, wSlow = wKms < 350;
-    const wDur  = wHigh ? 0.55 : wSlow ? 1.5 : 1.0;
+    // Chase period ×1.3 slower; two waves travel simultaneously (offset T/2 each)
+    const T     = (wHigh ? 0.5 : wSlow ? 1.4 : 0.9) * 1.3;
     const wCol  = wKms > 700 ? "#e05c5c" : wKms > 500 ? "#e0a84a" : wKms > 350 ? "#d4c840" : "#5cce8c";
     const clipS = SUN_R + 8;
     const clipE = noseX - 14;
-    const rowsY = wKms > 500 ? [22,50,80,110,150,180,210,238] : [30,65,100,130,160,195,230];
-    const S  = 30;
-    const nc = Math.ceil((clipE - clipS) / S) + 2;
-    const xs = Array.from({ length: nc }, (_, i) => clipS - S + i * S);
-    const aL = 22, aH = 15;
-    const arrows = xs.flatMap(ax => rowsY.map(y =>
-      `<path d="M ${ax},${y} L ${ax+aL},${y} M ${ax+aH},${y-5} L ${ax+aL},${y} L ${ax+aH},${y+5}"
-       stroke="${wCol}cc" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
-    )).join("");
-    const bz    = opts.bz ?? null;
+
+    // 8 columns evenly across corridor, 6 rows evenly across height
+    const N_COLS = 8, N_ROWS = 6;
+    const colStep = (clipE - clipS) / (N_COLS - 1);
+    const rowStep = H / (N_ROWS + 1);
+    const aL = 38, aH = 24;   // large arrows in SVG-unit space
+
+    // Chase animation: col 0 lights first, col 7 last, repeating left→right.
+    // Two waves travel simultaneously — wave 1 and wave 2 offset by T/2.
+    const N_WAVES = 2;
+    const colGroups = Array.from({ length: N_COLS }, (_, col) => {
+      const ax    = clipS + col * colStep;
+      const paths = Array.from({ length: N_ROWS }, (__, row) => {
+        const y = rowStep * (row + 1);
+        return `<path d="M ${ax.toFixed(1)},${y.toFixed(1)} L ${(ax+aL).toFixed(1)},${y.toFixed(1)} M ${(ax+aH).toFixed(1)},${(y-6).toFixed(1)} L ${(ax+aL).toFixed(1)},${y.toFixed(1)} L ${(ax+aH).toFixed(1)},${(y+6).toFixed(1)}"
+          stroke="${wCol}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+      }).join("");
+      return Array.from({ length: N_WAVES }, (__, wave) => {
+        const delay = -((N_COLS - col) / N_COLS * T) - (wave * T / N_WAVES);
+        return `<g style="opacity:.12;animation:hw-arrow-chase ${T}s linear ${delay.toFixed(3)}s infinite">${paths}</g>`;
+      }).join("");
+    }).join("");
+
+    const bz = opts.bz ?? null;
     const bzHtml = bz == null ? "" : (() => {
       const col = bz > 0 ? "#5cce8c" : "#e05c5c";
       const arrow = bz > 0
@@ -912,10 +929,7 @@ function buildHelioSolarEarthScene(
       return `${arrow}<text x="${EARTH_CX+22}" y="${midY+5}" font-size="13"
         fill="${col}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
     })();
-    solarWindContent = `
-    <defs><clipPath id="${uid}-wclip"><rect x="${clipS}" y="0" width="${clipE - clipS}" height="${H}"/></clipPath></defs>
-    <g class="hw-wg-full" style="animation-duration:${wDur}s" clip-path="url(#${uid}-wclip)">${arrows}</g>
-    ${bzHtml}`;
+    solarWindContent = `${colGroups}${bzHtml}`;
   }
   const solarWindGroup = `<g id="${uid}-overlay-solar-wind">${solarWindContent}</g>`;
 
@@ -1047,6 +1061,60 @@ function renderMagnetospherePopover(data: HelioNow): string {
   </div>`;
 }
 
+/** Tip content for Magnetosphere impact row (Observer Impacts panel) */
+function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
+  if (!isOpen) return "";
+  const info     = deriveMagnetInfo(data);
+  const bz       = data.metrics.imf_bz_nt;
+  const wind     = data.metrics.solar_wind_kms;
+  const density  = (data.metrics as Record<string, unknown>).density  as number | null | undefined;
+  const pressure = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined;
+
+  const bzStr      = bz      != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const windStr    = wind    != null ? `${Math.round(wind)} km/s` : "—";
+  const densityStr = density != null ? `${(density as number).toFixed(1)} p/cm³` : "—";
+  const pressStr   = pressure != null ? `${(pressure as number).toFixed(2)} nPa` : "—";
+  const bzColor    = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
+  const windColor  = wind != null ? (wind > 700 ? "#e05c5c" : wind > 500 ? "#e0a84a" : wind > 350 ? "#d4c840" : "#5cce8c") : "#607880";
+
+  const hintText = (bz != null && bz < -5)
+    ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
+    : (bz != null && bz < 0)
+    ? "Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible."
+    : "Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";
+
+  const scene = buildHelioSolarEarthScene("magnetosphere", { windKms: wind ?? undefined, bz: bz ?? undefined });
+
+  return `<div class="hw-impact-tip hw-impact-tip-open">
+    <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${scene}</div>
+    <div class="hw-kpi-stat-row">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Solar wind</span>
+        <span class="hw-kpi-stat-value" style="color:${windColor}">${escText(windStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">IMF Bz</span>
+        <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Coupling</span>
+        <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
+      </div>
+    </div>
+    <div class="hw-kpi-stat-row" style="margin-top:4px">
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Density</span>
+        <span class="hw-kpi-stat-value">${escText(densityStr)}</span>
+      </div>
+      <div class="hw-kpi-stat">
+        <span class="hw-kpi-stat-label">Pressure</span>
+        <span class="hw-kpi-stat-value">${escText(pressStr)}</span>
+      </div>
+    </div>
+    <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
+  </div>`;
+}
+
 // ── Aurora probability map (Issue #177) ─────────────────────────────────────
 
 interface OvationEntry { lon: number; lat: number; prob: number; }
@@ -1147,7 +1215,7 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 function renderSolarMini(activePopover: string | null, channelIdx: number): string {
   const ch  = SOLAR_CHANNELS[channelIdx];
   const hmi = SUN_HMI_URL;
-  return `<div class="hw-solar-mini-wrap${activePopover === "magnetosphere" ? " hw-kpi-active" : ""}" data-kpi="magnetosphere" title="Magnetosphere status">
+  return `<div class="hw-solar-mini-wrap" style="cursor:default">
     <div class="hw-solar-mini-inner">
       <img class="hw-solar-mini-img" src="${esc(ch.url)}" alt="${esc(ch.label)}"
         onerror="if(this.src!=='${esc(hmi)}')this.src='${esc(hmi)}'" />
@@ -1611,17 +1679,18 @@ const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" ar
 const SOLAR_DISK_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 
 const SOLAR_CHANNELS = [
-  { id: "eit171", label: "EIT 171",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_171/512/latest.jpg" },
-  { id: "eit195", label: "EIT 195",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_195/512/latest.jpg" },
-  { id: "eit284", label: "EIT 284",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_284/512/latest.jpg" },
-  { id: "eit304", label: "EIT 304",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg" },
+  { id: "eit171", label: "EIT 171",    url: "/assets/gifs/current_eit_171.gif" },
+  { id: "eit195", label: "EIT 195",    url: "/assets/gifs/current_eit_195.gif" },
+  { id: "eit284", label: "EIT 284",    url: "/assets/gifs/current_eit_284.gif" },
+  { id: "eit304", label: "EIT 304",    url: "/assets/gifs/current_eit_304.gif" },
   { id: "cont",   label: "Continuum",  url: "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg" },
   { id: "mag",    label: "Magnetogram",url: "https://soho.nascom.nasa.gov/data/realtime/hmi_mag/512/latest.jpg" },
 ] as const;
 
 const SUN_HMI_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 const SUN_AIA171_URL = SOLAR_CHANNELS[0].url;
-const SUN_LOOP_URL   = "/data/sun_loop.mp4";
+// NASA SDO publishes a rolling "latest 24h" AIA 171 Å loop, refreshed automatically
+const SUN_LOOP_URL   = "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_512_0171.mp4";
 const SOLAR_DISK_PX  = 240;
 
 function renderRadioBlackoutPanel(data: HelioNow, isOpen: boolean): string {
@@ -2327,7 +2396,7 @@ function renderImpacts(
   const simNote = scrubData
     ? `<span style="font-size:.65em;color:#7a9870;font-weight:normal;text-transform:none;letter-spacing:0"> · simulated</span>`
     : "";
-  const total = rows.length + 7; // +7 for Storm Risk, Solar Cycle, Coronal Hole, Satellite Drag, GNSS, SW Pressure, CME Cone
+  const total = rows.length + 8; // +8 for Magnetosphere, Storm Risk, Solar Cycle, Coronal Hole, Satellite Drag, GNSS, SW Pressure, CME Cone
   const caret = impactsOpen ? "▼" : "▶";
   const label = total > 0 ? `Observer Impacts (${total})` : "Observer Impacts";
   const sectionHdr = `
@@ -2416,10 +2485,21 @@ function renderImpacts(
       ${renderCMEConeTip(data, cmeOpen)}
     </div>`;
 
+  // Magnetosphere — moved from hero KPI popover into Observer Impacts
+  const magInfo     = deriveMagnetInfo(data);
+  const magOpen     = expandedImpacts.has("magnetosphere");
+  const magIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 Q2 2 6.5 2 Q11 2 11 6.5 Q11 11 6.5 11 Q2 11 2 6.5"/><path d="M4.5 6.5 Q4.5 4 6.5 4 Q8.5 4 8.5 6.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>`;
+  const magRowHtml  = `<div class="hw-impact-row${magOpen ? " hw-impact-open" : ""}" data-impact-row="magnetosphere">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${magInfo.color}">${magIcon}<span style="color:#b4c6cc">Magnetosphere</span></span>
+      <span class="hw-impact-badge" style="background:${magInfo.color}22;color:${magInfo.color}">${escText(magInfo.label)}</span>
+      ${renderMagnetosphereTip(data, magOpen)}
+    </div>`;
+
   return `
     <div class="hw-impacts">
       ${sectionHdr}
-      ${impactsOpen ? rowsHtml + gsRowHtml + scRowHtml + hssRowHtml + sdRowHtml + gnRowHtml + swdpRowHtml + cmeRowHtml : ""}
+      ${impactsOpen ? rowsHtml + gsRowHtml + magRowHtml + scRowHtml + hssRowHtml + sdRowHtml + gnRowHtml + swdpRowHtml + cmeRowHtml : ""}
     </div>`;
 }
 
