@@ -24,9 +24,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install helio deps
-        run: pip install -r services/helio/requirements.txt
-
       - name: Run helio backend
         run: |
           set -e
