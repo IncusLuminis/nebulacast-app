@@ -911,9 +911,16 @@ function buildHelioSolarEarthScene(
       return `${arrow}<text x="${EARTH_CX+22}" y="${midY+5}" font-size="13"
         fill="${col}" font-family="monospace">Bz${bz > 0 ? "↑" : "↓"}</text>`;
     })();
-    const NUM_WG = 3;
-    const windGroups = Array.from({ length: NUM_WG }, (_, g) =>
-      `<g class="hw-wg-full" style="animation-duration:${wDur}s;animation-delay:-${((wDur / NUM_WG) * g).toFixed(2)}s" clip-path="url(#${uid}-wclip)">${arrows}</g>`
+    // Use SVG animateTransform (SVG user-unit coords) so translation matches
+    // arrow spacing exactly regardless of container width. Two staggered groups
+    // = arrows every S/2 units, seamless tiling hides the loop reset.
+    const halfDur = (wDur / 2).toFixed(2);
+    const windGroups = [0, 1].map(g =>
+      `<g clip-path="url(#${uid}-wclip)">${arrows}
+        <animateTransform attributeName="transform" type="translate"
+          from="0,0" to="${S},0" dur="${wDur}s" begin="-${(g * wDur / 2).toFixed(2)}s"
+          repeatCount="indefinite"/>
+      </g>`
     ).join("");
     solarWindContent = `
     <defs><clipPath id="${uid}-wclip"><rect x="${clipS}" y="0" width="${clipE - clipS}" height="${H}"/></clipPath></defs>
