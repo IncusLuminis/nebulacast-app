@@ -1679,10 +1679,10 @@ const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" ar
 const SOLAR_DISK_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 
 const SOLAR_CHANNELS = [
-  { id: "eit171", label: "EIT 171",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_171/512/latest.jpg" },
-  { id: "eit195", label: "EIT 195",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_195/512/latest.jpg" },
-  { id: "eit284", label: "EIT 284",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_284/512/latest.jpg" },
-  { id: "eit304", label: "EIT 304",    url: "https://soho.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg" },
+  { id: "eit171", label: "EIT 171",    url: "/assets/gifs/current_eit_171.gif" },
+  { id: "eit195", label: "EIT 195",    url: "/assets/gifs/current_eit_195.gif" },
+  { id: "eit284", label: "EIT 284",    url: "/assets/gifs/current_eit_284.gif" },
+  { id: "eit304", label: "EIT 304",    url: "/assets/gifs/current_eit_304.gif" },
   { id: "cont",   label: "Continuum",  url: "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg" },
   { id: "mag",    label: "Magnetogram",url: "https://soho.nascom.nasa.gov/data/realtime/hmi_mag/512/latest.jpg" },
 ] as const;
