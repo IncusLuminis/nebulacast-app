@@ -2776,10 +2776,10 @@ function renderCard(
   const histPts     = data.metrics.kp_history_1h ?? [];
   const lastStepT   = histPts.length ? fmtKpTime(histPts[histPts.length - 1].t_utc) : null;
   const histLbl     = lastStepT ? `Recent history · Last step ${lastStepT}` : "Recent history";
-  const histToggle  = `<div class="hw-section-row" data-hero-toggle>
+  const histToggle  = `<div style="padding:10px 14px;border-bottom:1px solid #1e2c30"><div class="hw-section-row" data-hero-toggle style="margin-bottom:0">
     <span class="hw-section-caret">${heroExpanded ? "▼" : "▶"}</span>
     <span class="hw-section-label" style="margin-bottom:0">${esc(histLbl)}</span>
-  </div>`;
+  </div></div>`;
   const histDetail  = heroExpanded ? renderHeroDetail(data) : "";
   return `
     <div class="hw-root">

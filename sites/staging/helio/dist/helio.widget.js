@@ -828,10 +828,10 @@ ${e.join(" \xB7 ")}`}function Je(t,s,e){var a;let o=t.is_active?Ve:(a=qe[t.level
         <span class="hw-cme-badge" style="background:${o}15;color:${o};margin-left:4px">${m(H)} impact</span>
       </div>
       ${P}
-    </div>`}function os(t,s,e,o,n,d,i,r,a,l,c,p,h,g,w,u,_,f,x,$,v=0){var T;let k=Me(t,n),z=(T=t.metrics.kp_history_1h)!=null?T:[],C=z.length?et(z[z.length-1].t_utc):null,L=C?`Recent history \xB7 Last step ${C}`:"Recent history",b=`<div class="hw-section-row" data-hero-toggle>
+    </div>`}function os(t,s,e,o,n,d,i,r,a,l,c,p,h,g,w,u,_,f,x,$,v=0){var T;let k=Me(t,n),z=(T=t.metrics.kp_history_1h)!=null?T:[],C=z.length?et(z[z.length-1].t_utc):null,L=C?`Recent history \xB7 Last step ${C}`:"Recent history",b=`<div style="padding:10px 14px;border-bottom:1px solid #1e2c30"><div class="hw-section-row" data-hero-toggle style="margin-bottom:0">
     <span class="hw-section-caret">${e?"\u25BC":"\u25B6"}</span>
     <span class="hw-section-label" style="margin-bottom:0">${W(L)}</span>
-  </div>`,y=e?be(t):"";return`
+  </div></div>`,y=e?be(t):"";return`
     <div class="hw-root">
       ${ve(t)}
       ${$e(t,e,g,o,k,x,$,v)}
