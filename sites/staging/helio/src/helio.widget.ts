@@ -1040,7 +1040,8 @@ function renderHero(
             <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
             <div class="hw-solar-mini-wrap${activePopover === "magnetosphere" ? " hw-kpi-active" : ""}" data-kpi="magnetosphere" title="Magnetosphere status">
               <div class="hw-solar-mini-inner">
-                <img class="hw-solar-mini-img" src="${esc(SUN_AIA171_URL)}" alt="SDO AIA 171" />
+                <img class="hw-solar-mini-img" src="${esc(SUN_EIT171_URL)}" alt="SOHO EIT 171"
+                  onerror="if(this.src!=='${esc(SUN_HMI_URL)}')this.src='${esc(SUN_HMI_URL)}'" />
                 <video class="hw-solar-mini-video" autoplay loop muted playsinline
                   oncanplay="this.style.opacity=1"
                   aria-label="Solar disk · SDO AIA 171 · last 24h">
@@ -1413,9 +1414,11 @@ const IMPACT_ICONS: Record<string, string> = {
 };
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
 
-const SOLAR_DISK_URL  = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
-// SOHO HMI near-infrared continuum — shows solar disk clearly (white-light, sunspots visible)
-const SUN_AIA171_URL = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+const SOLAR_DISK_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+// Primary: SOHO EIT 171 Å (EUV corona); fallback: SOHO HMI white-light
+const SUN_EIT171_URL    = "https://soho.nascom.nasa.gov/data/realtime/eit_171/512/latest.jpg";
+const SUN_HMI_URL       = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
+const SUN_AIA171_URL    = SUN_EIT171_URL;
 const SUN_LOOP_URL   = "/data/sun_loop.mp4";
 const SOLAR_DISK_PX  = 240;
 
