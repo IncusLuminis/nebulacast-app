@@ -1,0 +1,74 @@
+# Backend pipeline: helio (NOAA SWPC space weather). Runs on schedule and writes to sites/staging/data/helio_now.json
+name: Cron — Helio backend
+
+on:
+  schedule:
+    # Every 3 hours (UTC)
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: helio-back-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  helio-back:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install helio deps
+        run: pip install -r services/helio/requirements.txt
+
+      - name: Run helio backend
+        run: |
+          set -e
+          PYTHONPATH=services/helio python services/helio/pipelines/gen_helio.py
+          echo "Helio backend completed successfully"
+
+      - name: Validate helio_now.json
+        run: |
+          python3 << 'EOF'
+          import json, sys
+          from pathlib import Path
+
+          path = Path("sites/staging/data/helio_now.json")
+          if not path.exists():
+              print(f"ERROR: {path} not found after pipeline run")
+              sys.exit(1)
+
+          try:
+              data = json.loads(path.read_text())
+          except json.JSONDecodeError as e:
+              print(f"ERROR: invalid JSON — {e}")
+              sys.exit(1)
+
+          required = ["schema_version", "updated_utc", "metrics", "summary", "scales", "forecast"]
+          missing = [k for k in required if k not in data]
+          if missing:
+              print(f"ERROR: missing keys: {missing}")
+              sys.exit(1)
+
+          print(f"✓ helio_now.json valid · updated_utc={data['updated_utc']}")
+          EOF
+
+      - name: Commit and push
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
+
+          git add sites/staging/data/helio_now.json
+          git diff --staged --quiet && exit 0
+          git commit -m "chore(helio): update helio_now.json"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"
