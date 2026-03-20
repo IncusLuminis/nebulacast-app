@@ -212,7 +212,7 @@ const WIDGET_CSS = `
 /* CME Impact Uncertainty Cone (Observer Impacts panel) */
 .hw-cme-cone-svg{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-cme-footer{font-size:.75em;color:#7a9298;margin-top:2px}
-.hw-solar-earth-scene{display:block;width:100%;margin:4px 0 5px;overflow:visible}
+.hw-solar-earth-scene{display:block;width:100%;margin:4px 0 5px;overflow:hidden}
 
 /* Hero quick details — KPI items are clickable */
 .hw-quick-details{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:10px;padding-top:8px;border-top:1px solid #1e2c30}
@@ -286,7 +286,7 @@ const WIDGET_CSS = `
 .hw-impact-row.hw-impact-open .hw-impact-caret{transform:rotate(90deg)}
 .hw-impact-kind{font-size:.75em;font-weight:600;min-width:88px;color:#b4c6cc;display:flex;align-items:center;gap:5px}
 .hw-impact-badge{font-size:.68em;font-weight:700;padding:1px 7px;border-radius:2px;text-transform:capitalize;min-width:52px;text-align:center;flex-shrink:0}
-.hw-impact-tip{flex-basis:100%;font-size:.86em;color:#96a8b8;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px}
+.hw-impact-tip{flex-basis:100%;font-size:.86em;color:#96a8b8;line-height:1.45;padding:5px 6px;background:#111b1e;border-radius:2px;border-left:2px solid #2a3c42;display:none;margin-top:4px;overflow:hidden}
 .hw-impact-tip.hw-impact-tip-open{display:block}
 .hw-solar-tip,.hw-aurora-tip{flex-basis:100%;display:none;flex-direction:column;align-items:stretch;gap:6px;margin-top:6px;padding:10px 6px 8px;background:#111b1e;border-radius:4px;border:1px solid #1e2c30}
 .hw-solar-tip{align-items:center}
