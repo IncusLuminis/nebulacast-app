@@ -8,6 +8,8 @@ on:
 jobs:
   weather-map:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -52,12 +54,33 @@ jobs:
           print(f"OK: {rendered} total frames, updated {d['updated_utc']}")
           EOF
 
-      - name: Commit results
+      # Commit only the JSON manifest to git (WebP files are .gitignored)
+      - name: Commit manifest
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add sites/staging/data/weather_map_now.json sites/staging/data/clouds/
-          git diff --cached --quiet && echo "No changes" && exit 0
-          git commit -m "data: weather map cloud frames $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git add sites/staging/data/weather_map_now.json
+          git diff --cached --quiet && echo "No changes to manifest" && exit 0
+          git commit -m "data: weather map manifest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git pull --rebase origin main
           git push
+
+      # Deploy the full staging site (git files + generated WebP) to Cloudflare Pages.
+      # This direct-upload deployment includes everything: static files from git checkout
+      # + freshly generated cloud frames that are not committed to git.
+      #
+      # Required secrets (Settings → Secrets → Actions):
+      #   CLOUDFLARE_API_TOKEN  — CF API token with Pages:Edit permission
+      #   CLOUDFLARE_ACCOUNT_ID — CF account ID
+      # Required variable (Settings → Variables → Actions):
+      #   CF_PAGES_PROJECT      — Cloudflare Pages project name (e.g. "nebulacast-app")
+      - name: Deploy to Cloudflare Pages (git files + generated frames)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >
+            pages deploy sites/staging
+            --project-name=${{ vars.CF_PAGES_PROJECT }}
+            --branch=main
+            --commit-dirty=true

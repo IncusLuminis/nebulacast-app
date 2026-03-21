@@ -1177,12 +1177,26 @@
           // v1.1 — select profile for current zoom
           var zoom    = map ? map.getZoom() : 5;
           var profile = selectCloudProfile(zoom) || layer.profiles[0];
+
+          // Fallback: if the selected profile has no rendered frames yet, try others
+          if (profile && !profile.available) {
+            var fallback = layer.profiles.find(function(p) { return p.available; });
+            if (fallback) {
+              console.log("[clouds] profile " + profile.id + " unavailable, falling back to " + fallback.id);
+              profile = fallback;
+            } else {
+              console.log("[clouds] no available profiles yet (pipeline not run?)");
+              return;
+            }
+          }
+
           cloudActiveProfileId = profile.id;
           bounds = profile.bounds;
           console.log("[clouds] v1.1 — active profile: " + profile.id + " (zoom " + zoom + ")");
         } else {
           // v1 fallback
-          bounds = layer.render.bounds;
+          bounds = layer.render && layer.render.bounds;
+          if (!bounds) { console.log("[clouds] no bounds in manifest"); return; }
           console.log("[clouds] v1 — single bounds");
         }
 
