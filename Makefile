@@ -88,7 +88,7 @@ weather-front: functions-build
 
 weather: weather-back weather-front
 
-# Weather Map: cloud layer pipeline → sites/staging/data/weather_map_now.json + data/clouds/
+# Weather Map v1.1: 3 zoom profiles → data/clouds/{eu_wide,eu_central,local}/ + data/weather_map_now.json
 weather-map-back:
 	PYTHONPATH=$(PYTHONPATH_WEATHER) $(RUN) $(SERVICE_WEATHER)/pipelines/gen_weather_map.py
 

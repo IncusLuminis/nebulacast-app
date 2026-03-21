@@ -845,6 +845,7 @@
   let cloudManifest = null;       // weather_map_now.json data
   let cloudOverlay = null;        // L.imageOverlay instance
   let cloudFrameIndex = -1;       // currently displayed frame index
+  let cloudActiveProfileId = null; // v1.1: currently loaded profile id
   // Prefetch cache: url → Image (preloaded)
   const cloudCache = {};
   let observedAvailable = false;
@@ -1136,10 +1137,28 @@
   layerAdapters.moon.setTime = adapterMoonSetTime;
   layerAdapters.clouds.setTime = adapterCloudsSetTime;
 
-  // ── Cloud layer functions ──────────────────────────────────────────────────
+  // ── Cloud layer functions (v1.1 — zoom-aware profiles) ───────────────────────
+
+  /**
+   * Return the profile object matching the given zoom level.
+   * Falls back to the widest profile if no exact match.
+   */
+  function selectCloudProfile(zoom) {
+    if (!cloudManifest) return null;
+    var profiles = cloudManifest.layers.clouds.profiles;
+    if (!profiles || !profiles.length) return null;
+    for (var i = 0; i < profiles.length; i++) {
+      if (zoom >= profiles[i].zoom_min && zoom <= profiles[i].zoom_max) return profiles[i];
+    }
+    // No exact match → prefer wider coverage (lowest zoom_min)
+    return profiles.reduce(function(best, p) {
+      return (!best || p.zoom_min < best.zoom_min) ? p : best;
+    }, null);
+  }
 
   /**
    * Load weather_map_now.json manifest and initialise the ImageOverlay.
+   * Supports v1.1 (profiles[]) and v1 (render.bounds) formats.
    */
   function initCloudLayer() {
     fetch(CLOUD_MANIFEST_URL)
@@ -1151,24 +1170,34 @@
           console.log("[clouds] layer unavailable");
           return;
         }
-        var bounds = layer.render.bounds; // [[latMin,lonMin],[latMax,lonMax]]
-        var opacity = layer.render.opacity || 0.75;
-        // Create a transparent placeholder overlay (no URL yet)
+        var opacity = (layer.render && layer.render.opacity) || 0.75;
+        var bounds;
+
+        if (layer.profiles && layer.profiles.length) {
+          // v1.1 — select profile for current zoom
+          var zoom    = map ? map.getZoom() : 5;
+          var profile = selectCloudProfile(zoom) || layer.profiles[0];
+          cloudActiveProfileId = profile.id;
+          bounds = profile.bounds;
+          console.log("[clouds] v1.1 — active profile: " + profile.id + " (zoom " + zoom + ")");
+        } else {
+          // v1 fallback
+          bounds = layer.render.bounds;
+          console.log("[clouds] v1 — single bounds");
+        }
+
         cloudOverlay = L.imageOverlay("", bounds, {
-          opacity: opacity,
+          opacity:     opacity,
           interactive: false,
-          className: "cloud-overlay",
-          zIndex: 250,
+          className:   "cloud-overlay",
+          zIndex:      250,
           crossOrigin: true,
         });
-        if (cloudsOn) {
-          cloudOverlay.addTo(map);
-        }
-        // Jump to current frame immediately
-        if (currentTimeUtcMs !== null) {
-          adapterCloudsSetTime(currentTimeUtcMs);
-        }
-        // Extend timeline to match manifest
+        if (cloudsOn) cloudOverlay.addTo(map);
+
+        if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
+
+        // Extend master timeline to cover manifest range
         var tl = manifest.timeline;
         if (tl && tl.frames && tl.frames.length) {
           var first = new Date(tl.frames[0].t_utc).getTime();
@@ -1178,8 +1207,8 @@
           currentTimeUtcMs = clampTime(currentTimeUtcMs);
           updateTimeUI();
         }
-        // Prefetch ±5 frames around current
-        prefetchCloudFrames(cloudManifest.timeline.current_index);
+
+        prefetchCloudFrames(manifest.timeline.current_index);
       })
       .catch(function(err) {
         console.warn("[clouds] manifest load failed:", err);
@@ -1187,14 +1216,31 @@
   }
 
   /**
-   * Find the nearest available frame index for a given UTC ms timestamp.
+   * Switch to the profile matching the current zoom level.
+   * Preserves the current frame index — only bounds + URL change.
+   */
+  function checkCloudProfileSwitch() {
+    if (!cloudManifest || !cloudOverlay) return;
+    var layer = cloudManifest.layers.clouds;
+    if (!layer.profiles) return;
+    var profile = selectCloudProfile(map.getZoom());
+    if (!profile || profile.id === cloudActiveProfileId) return;
+
+    console.log("[clouds] profile switch: " + cloudActiveProfileId + " → " + profile.id);
+    cloudActiveProfileId = profile.id;
+    cloudOverlay.setBounds(profile.bounds);
+    cloudFrameIndex = -1; // force URL reload for new profile
+    if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
+  }
+
+  /**
+   * Find nearest frame index by time. Uses shared timeline.frames (time metadata only).
    */
   function cloudFrameForTime(tUtcMs) {
     if (!cloudManifest) return -1;
     var frames = cloudManifest.timeline.frames;
-    var best = -1, bestDiff = Infinity;
+    var best = 0, bestDiff = Infinity;
     for (var i = 0; i < frames.length; i++) {
-      if (!frames[i].available) continue;
       var diff = Math.abs(new Date(frames[i].t_utc).getTime() - tUtcMs);
       if (diff < bestDiff) { bestDiff = diff; best = i; }
     }
@@ -1202,17 +1248,31 @@
   }
 
   /**
-   * Prefetch images for frames [idx-5 … idx+5].
+   * Return the frames array for the active profile (v1.1) or null (v1 fallback).
+   */
+  function getActiveProfileFrames() {
+    if (!cloudManifest) return null;
+    var layer = cloudManifest.layers.clouds;
+    if (!layer.profiles) return null; // v1: no profiles
+    var profile = selectCloudProfile(map ? map.getZoom() : 5);
+    return profile ? profile.frames : null;
+  }
+
+  /**
+   * Prefetch images for frames [idx-5 … idx+5] in the active profile.
    */
   function prefetchCloudFrames(idx) {
     if (!cloudManifest) return;
-    var frames = cloudManifest.timeline.frames;
-    for (var i = Math.max(0, idx - 5); i <= Math.min(frames.length - 1, idx + 5); i++) {
-      var f = frames[i];
-      if (f.available && f.asset_url && !cloudCache[f.asset_url]) {
+    var pFrames = getActiveProfileFrames();
+    var tFrames = cloudManifest.timeline.frames;
+    var n = pFrames ? pFrames.length : tFrames.length;
+    for (var i = Math.max(0, idx - 5); i <= Math.min(n - 1, idx + 5); i++) {
+      var f   = pFrames ? pFrames[i] : tFrames[i];
+      var url = f && f.asset_url;
+      if (url && !cloudCache[url]) {
         var img = new Image();
-        img.src = f.asset_url;
-        cloudCache[f.asset_url] = img;
+        img.src = url;
+        cloudCache[url] = img;
       }
     }
   }
@@ -1222,29 +1282,40 @@
    */
   function adapterCloudsSetTime(tUtcMs) {
     if (!cloudsOn || !cloudManifest || !cloudOverlay) return;
+
     var idx = cloudFrameForTime(tUtcMs);
-    if (idx === -1 || idx === cloudFrameIndex) return;
+    if (idx === -1) return;
+
+    // Get asset URL from active profile (v1.1) or fallback to timeline.frames (v1)
+    var pFrames   = getActiveProfileFrames();
+    var frameData = pFrames ? pFrames[idx] : cloudManifest.timeline.frames[idx];
+    var assetUrl  = frameData && frameData.asset_url;
+    var available = frameData && frameData.available;
+
+    // Only skip if same index AND same profile (skip on profile switch even if same index)
+    if (idx === cloudFrameIndex && assetUrl) return;
     cloudFrameIndex = idx;
-    var frame = cloudManifest.timeline.frames[idx];
-    if (frame.available && frame.asset_url) {
-      // L.imageOverlay doesn't have setUrl in older Leaflet; use _url + _image
+
+    if (available && assetUrl) {
       if (cloudOverlay.setUrl) {
-        cloudOverlay.setUrl(frame.asset_url);
+        cloudOverlay.setUrl(assetUrl);
       } else {
-        cloudOverlay._url = frame.asset_url;
-        if (cloudOverlay._image) cloudOverlay._image.src = frame.asset_url;
+        cloudOverlay._url = assetUrl;
+        if (cloudOverlay._image) cloudOverlay._image.src = assetUrl;
       }
       if (!map.hasLayer(cloudOverlay)) cloudOverlay.addTo(map);
       prefetchCloudFrames(idx);
     } else {
       if (map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
     }
-    // Update phase indicator in timeline
+
+    // Update phase label
     var phaseEl = document.getElementById("cloudPhaseLabel");
-    if (phaseEl && cloudManifest) {
-      var f = cloudManifest.timeline.frames[idx];
-      var phaseText = f.phase === "history" ? "▶ history" : f.phase === "current" ? "▶ now" : "▶ forecast";
-      phaseEl.textContent = phaseText;
+    if (phaseEl) {
+      var tlFrame = cloudManifest.timeline.frames[idx];
+      phaseEl.textContent = tlFrame.phase === "history" ? "▶ history"
+                          : tlFrame.phase === "current" ? "▶ now"
+                          : "▶ forecast";
     }
   }
 
@@ -3476,6 +3547,7 @@
       if (moonInfoOn && currentTimeUtcMs !== null) {
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
+      checkCloudProfileSwitch();
     });
     map.on("resize", function () {
       setTimeout(function() {

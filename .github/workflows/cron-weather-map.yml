@@ -35,7 +35,21 @@ jobs:
           rendered = d["stats"]["rendered_frames"]
           if rendered < 50:
               print(f"FAIL: only {rendered} frames rendered (expected ≥50)"); sys.exit(1)
-          print(f"OK: {rendered} frames, updated {d['updated_utc']}")
+          # v1.1: validate profiles
+          profiles = d["layers"]["clouds"].get("profiles", [])
+          if profiles:
+              if len(profiles) < 1:
+                  print("FAIL: no profiles in layers.clouds.profiles"); sys.exit(1)
+              for p in profiles:
+                  for pk in ["id", "zoom_min", "zoom_max", "bounds", "frames"]:
+                      if pk not in p:
+                          print(f"FAIL: profile missing key '{pk}'"); sys.exit(1)
+              n_frames = len(profiles[0]["frames"])
+              for p in profiles[1:]:
+                  if len(p["frames"]) != n_frames:
+                      print(f"FAIL: profile {p['id']} frame count mismatch"); sys.exit(1)
+              print(f"OK: {len(profiles)} profiles, {n_frames} frames each")
+          print(f"OK: {rendered} total frames, updated {d['updated_utc']}")
           EOF
 
       - name: Commit results
