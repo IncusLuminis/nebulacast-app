@@ -1,0 +1,1654 @@
+{
+  "schema_version": "1.0",
+  "updated_utc": "2026-03-21T04:25:53Z",
+  "source": {
+    "domain": "weather",
+    "dataset": "weather_map_now",
+    "products": [
+      "open-meteo-cloud-cover"
+    ]
+  },
+  "viewport": {
+    "bbox": {
+      "lat_min": 45.0,
+      "lat_max": 60.0,
+      "lon_min": 5.0,
+      "lon_max": 35.0
+    },
+    "default_zoom": 5,
+    "min_zoom": 4,
+    "max_zoom": 8
+  },
+  "timeline": {
+    "anchor_utc": "2026-03-21T04:00:00Z",
+    "step_hours": 1,
+    "total_frames": 121,
+    "current_index": 48,
+    "frames": [
+      {
+        "index": 0,
+        "t_utc": "2026-03-19T04:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_000.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 1,
+        "t_utc": "2026-03-19T05:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_001.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 2,
+        "t_utc": "2026-03-19T06:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_002.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 3,
+        "t_utc": "2026-03-19T07:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_003.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 4,
+        "t_utc": "2026-03-19T08:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_004.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 5,
+        "t_utc": "2026-03-19T09:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_005.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 6,
+        "t_utc": "2026-03-19T10:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_006.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 7,
+        "t_utc": "2026-03-19T11:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_007.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 8,
+        "t_utc": "2026-03-19T12:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_008.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 9,
+        "t_utc": "2026-03-19T13:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_009.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 10,
+        "t_utc": "2026-03-19T14:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_010.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 11,
+        "t_utc": "2026-03-19T15:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_011.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 12,
+        "t_utc": "2026-03-19T16:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_012.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 13,
+        "t_utc": "2026-03-19T17:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_013.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 14,
+        "t_utc": "2026-03-19T18:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_014.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 15,
+        "t_utc": "2026-03-19T19:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_015.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 16,
+        "t_utc": "2026-03-19T20:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_016.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 17,
+        "t_utc": "2026-03-19T21:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_017.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 18,
+        "t_utc": "2026-03-19T22:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_018.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 19,
+        "t_utc": "2026-03-19T23:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_019.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 20,
+        "t_utc": "2026-03-20T00:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_020.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 21,
+        "t_utc": "2026-03-20T01:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_021.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 22,
+        "t_utc": "2026-03-20T02:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_022.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 23,
+        "t_utc": "2026-03-20T03:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_023.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 24,
+        "t_utc": "2026-03-20T04:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_024.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 25,
+        "t_utc": "2026-03-20T05:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_025.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 26,
+        "t_utc": "2026-03-20T06:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_026.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 27,
+        "t_utc": "2026-03-20T07:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_027.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 28,
+        "t_utc": "2026-03-20T08:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_028.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 29,
+        "t_utc": "2026-03-20T09:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_029.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 30,
+        "t_utc": "2026-03-20T10:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_030.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 31,
+        "t_utc": "2026-03-20T11:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_031.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 32,
+        "t_utc": "2026-03-20T12:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_032.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 33,
+        "t_utc": "2026-03-20T13:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_033.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 34,
+        "t_utc": "2026-03-20T14:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_034.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 35,
+        "t_utc": "2026-03-20T15:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_035.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 36,
+        "t_utc": "2026-03-20T16:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_036.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 37,
+        "t_utc": "2026-03-20T17:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_037.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 38,
+        "t_utc": "2026-03-20T18:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_038.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 39,
+        "t_utc": "2026-03-20T19:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_039.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 40,
+        "t_utc": "2026-03-20T20:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_040.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 41,
+        "t_utc": "2026-03-20T21:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_041.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 42,
+        "t_utc": "2026-03-20T22:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_042.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 43,
+        "t_utc": "2026-03-20T23:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_043.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 44,
+        "t_utc": "2026-03-21T00:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_044.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 45,
+        "t_utc": "2026-03-21T01:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_045.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 46,
+        "t_utc": "2026-03-21T02:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_046.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 47,
+        "t_utc": "2026-03-21T03:00:00Z",
+        "phase": "history",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_047.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 48,
+        "t_utc": "2026-03-21T04:00:00Z",
+        "phase": "current",
+        "confidence": "high",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_048.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 49,
+        "t_utc": "2026-03-21T05:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_049.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 50,
+        "t_utc": "2026-03-21T06:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_050.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 51,
+        "t_utc": "2026-03-21T07:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_051.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 52,
+        "t_utc": "2026-03-21T08:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_052.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 53,
+        "t_utc": "2026-03-21T09:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_053.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 54,
+        "t_utc": "2026-03-21T10:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_054.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 55,
+        "t_utc": "2026-03-21T11:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_055.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 56,
+        "t_utc": "2026-03-21T12:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_056.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 57,
+        "t_utc": "2026-03-21T13:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_057.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 58,
+        "t_utc": "2026-03-21T14:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_058.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 59,
+        "t_utc": "2026-03-21T15:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_059.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 60,
+        "t_utc": "2026-03-21T16:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_060.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 61,
+        "t_utc": "2026-03-21T17:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_061.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 62,
+        "t_utc": "2026-03-21T18:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_062.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 63,
+        "t_utc": "2026-03-21T19:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_063.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 64,
+        "t_utc": "2026-03-21T20:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_064.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 65,
+        "t_utc": "2026-03-21T21:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_065.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 66,
+        "t_utc": "2026-03-21T22:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_066.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 67,
+        "t_utc": "2026-03-21T23:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_067.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 68,
+        "t_utc": "2026-03-22T00:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_068.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 69,
+        "t_utc": "2026-03-22T01:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_069.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 70,
+        "t_utc": "2026-03-22T02:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_070.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 71,
+        "t_utc": "2026-03-22T03:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_071.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 72,
+        "t_utc": "2026-03-22T04:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_072.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 73,
+        "t_utc": "2026-03-22T05:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_073.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 74,
+        "t_utc": "2026-03-22T06:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_074.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 75,
+        "t_utc": "2026-03-22T07:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_075.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 76,
+        "t_utc": "2026-03-22T08:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_076.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 77,
+        "t_utc": "2026-03-22T09:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_077.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 78,
+        "t_utc": "2026-03-22T10:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_078.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 79,
+        "t_utc": "2026-03-22T11:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_079.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 80,
+        "t_utc": "2026-03-22T12:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_080.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 81,
+        "t_utc": "2026-03-22T13:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_081.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 82,
+        "t_utc": "2026-03-22T14:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_082.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 83,
+        "t_utc": "2026-03-22T15:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_083.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 84,
+        "t_utc": "2026-03-22T16:00:00Z",
+        "phase": "forecast",
+        "confidence": "medium",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_084.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 85,
+        "t_utc": "2026-03-22T17:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_085.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 86,
+        "t_utc": "2026-03-22T18:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_086.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 87,
+        "t_utc": "2026-03-22T19:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_087.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 88,
+        "t_utc": "2026-03-22T20:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_088.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 89,
+        "t_utc": "2026-03-22T21:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_089.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 90,
+        "t_utc": "2026-03-22T22:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_090.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 91,
+        "t_utc": "2026-03-22T23:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_091.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 92,
+        "t_utc": "2026-03-23T00:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_092.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 93,
+        "t_utc": "2026-03-23T01:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_093.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 94,
+        "t_utc": "2026-03-23T02:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_094.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 95,
+        "t_utc": "2026-03-23T03:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_095.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 96,
+        "t_utc": "2026-03-23T04:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_096.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 97,
+        "t_utc": "2026-03-23T05:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_097.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 98,
+        "t_utc": "2026-03-23T06:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_098.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 99,
+        "t_utc": "2026-03-23T07:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_099.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 100,
+        "t_utc": "2026-03-23T08:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_100.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 101,
+        "t_utc": "2026-03-23T09:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_101.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 102,
+        "t_utc": "2026-03-23T10:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_102.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 103,
+        "t_utc": "2026-03-23T11:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_103.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 104,
+        "t_utc": "2026-03-23T12:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_104.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 105,
+        "t_utc": "2026-03-23T13:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_105.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 106,
+        "t_utc": "2026-03-23T14:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_106.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 107,
+        "t_utc": "2026-03-23T15:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_107.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 108,
+        "t_utc": "2026-03-23T16:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_108.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 109,
+        "t_utc": "2026-03-23T17:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_109.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 110,
+        "t_utc": "2026-03-23T18:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_110.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 111,
+        "t_utc": "2026-03-23T19:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_111.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 112,
+        "t_utc": "2026-03-23T20:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_112.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 113,
+        "t_utc": "2026-03-23T21:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_113.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 114,
+        "t_utc": "2026-03-23T22:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_114.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 115,
+        "t_utc": "2026-03-23T23:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": true,
+        "asset_type": "image",
+        "asset_url": "/data/clouds/cloud_115.webp",
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 116,
+        "t_utc": "2026-03-24T00:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": false,
+        "asset_type": "image",
+        "asset_url": null,
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 117,
+        "t_utc": "2026-03-24T01:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": false,
+        "asset_type": "image",
+        "asset_url": null,
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 118,
+        "t_utc": "2026-03-24T02:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": false,
+        "asset_type": "image",
+        "asset_url": null,
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 119,
+        "t_utc": "2026-03-24T03:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": false,
+        "asset_type": "image",
+        "asset_url": null,
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      },
+      {
+        "index": 120,
+        "t_utc": "2026-03-24T04:00:00Z",
+        "phase": "forecast",
+        "confidence": "low",
+        "available": false,
+        "asset_type": "image",
+        "asset_url": null,
+        "meta": {
+          "source_kind": "model",
+          "source_name": "open-meteo"
+        }
+      }
+    ]
+  },
+  "layers": {
+    "clouds": {
+      "id": "clouds",
+      "enabled_by_default": true,
+      "available": true,
+      "render": {
+        "type": "image_overlay",
+        "bounds": [
+          [
+            45.0,
+            5.0
+          ],
+          [
+            60.0,
+            35.0
+          ]
+        ],
+        "opacity": 0.75,
+        "blend_mode": "normal"
+      }
+    },
+    "isobars": {
+      "id": "isobars",
+      "enabled_by_default": false,
+      "available": false
+    },
+    "wind": {
+      "id": "wind",
+      "enabled_by_default": false,
+      "available": false
+    }
+  },
+  "playback": {
+    "player_id": "global_time_player",
+    "shared": true,
+    "recommended_fps": 1,
+    "supported_actions": [
+      "play",
+      "pause",
+      "step_forward",
+      "step_back",
+      "scrub"
+    ]
+  },
+  "stats": {
+    "rendered_frames": 116,
+    "skipped_frames": 5,
+    "elapsed_sec": 4.1,
+    "render_size_px": 256,
+    "grid_points": 36
+  }
+}

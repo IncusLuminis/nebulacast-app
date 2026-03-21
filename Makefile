@@ -4,7 +4,7 @@
 # make news-front — only frontend (HTML/JS)
 # make server     — local HTTP server :8080
 
-.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back server deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
+.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back weather-map weather-map-back server deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
 
 # Python: prefer venv if present
 PYTHON ?= python3
@@ -87,6 +87,12 @@ weather-front: functions-build
 	$(RUN) frontend/build.py
 
 weather: weather-back weather-front
+
+# Weather Map: cloud layer pipeline → sites/staging/data/weather_map_now.json + data/clouds/
+weather-map-back:
+	PYTHONPATH=$(PYTHONPATH_WEATHER) $(RUN) $(SERVICE_WEATHER)/pipelines/gen_weather_map.py
+
+weather-map: weather-map-back
 
 # Helio: space weather pipeline → sites/staging/data/helio_now.json
 deps-helio:
