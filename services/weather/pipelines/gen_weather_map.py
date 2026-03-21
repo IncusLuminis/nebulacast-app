@@ -1,17 +1,21 @@
 """
-gen_weather_map.py — Cloud Layer Pipeline v1.1
+gen_weather_map.py — Cloud Layer Pipeline v1.2
 
 Generates zoom-aware cloud profiles:
   - sites/staging/data/clouds/{profile_id}/cloud_NNN.webp  (121 frames × 3 profiles)
-  - sites/staging/data/weather_map_now.json   (data contract v1.1)
+  - sites/staging/data/weather_map_now.json   (data contract v1.2)
 
-Profiles:
-  eu_wide    — zoom 0–4  — lat 30–72°N, lon −15–50°E
-  eu_central — zoom 5–7  — lat 45–60°N, lon   5–35°E  (same domain as v1)
-  local      — zoom 8+   — lat 48–57°N, lon  12–30°E
+Hybrid cloud architecture (spec #266):
+  world_external — zoom 0–5  — external tile layer (OpenWeatherMap), no frames generated
+  eu_wide        — zoom 6–8  — internal raster, lat 30–72°N, lon −15–50°E
+  eu_central     — zoom 9–11 — internal raster, lat 45–60°N, lon   5–35°E
+  local          — zoom 12+  — internal raster, lat 48–57°N, lon  12–30°E
 
-All profiles share the same 121-frame timeline (identical indexes, t_utc values).
-Switching profiles at zoom boundaries is seamless: same frame index, new bounds + URL.
+All internal profiles share the same 121-frame timeline (identical indexes, t_utc values).
+External profile uses Mode A (live latest tiles, no timeline alignment).
+
+Env vars:
+  OWM_API_KEY — OpenWeatherMap API key; if absent world_external is available=false
 """
 
 from __future__ import annotations
@@ -42,11 +46,12 @@ OUT_JSON   = DATA_DIR / "weather_map_now.json"
 
 # ── Profile definitions ───────────────────────────────────────────────────────
 
+# Internal raster profiles (pipeline generates WebP frames for these)
 PROFILES: list[dict] = [
     {
         "id":          "eu_wide",
-        "zoom_min":    0,
-        "zoom_max":    4,
+        "zoom_min":    6,
+        "zoom_max":    8,
         "bbox":        {"lat_min": 30.0, "lat_max": 72.0, "lon_min": -15.0, "lon_max": 50.0},
         "grid_lat_n":  6,
         "grid_lon_n":  8,   # wider bbox → more lon samples
@@ -55,8 +60,8 @@ PROFILES: list[dict] = [
     },
     {
         "id":          "eu_central",
-        "zoom_min":    5,
-        "zoom_max":    7,
+        "zoom_min":    9,
+        "zoom_max":    11,
         "bbox":        {"lat_min": 45.0, "lat_max": 60.0, "lon_min":  5.0, "lon_max": 35.0},
         "grid_lat_n":  6,
         "grid_lon_n":  6,
@@ -65,8 +70,8 @@ PROFILES: list[dict] = [
     },
     {
         "id":          "local",
-        "zoom_min":    8,
-        "zoom_max":    14,
+        "zoom_min":    12,
+        "zoom_max":    18,
         "bbox":        {"lat_min": 48.0, "lat_max": 57.0, "lon_min": 12.0, "lon_max": 30.0},
         "grid_lat_n":  6,
         "grid_lon_n":  6,
@@ -74,6 +79,11 @@ PROFILES: list[dict] = [
         "blur_radius": 2,
     },
 ]
+
+# External tile profile (no pipeline work needed, just metadata in manifest)
+EXTERNAL_PROFILE_ID = "world_external"
+EXTERNAL_PROFILE_ZOOM_MIN = 0
+EXTERNAL_PROFILE_ZOOM_MAX = 5
 
 # ── Timeline ──────────────────────────────────────────────────────────────────
 
@@ -399,21 +409,59 @@ def run() -> None:
     profile_manifests: list[dict] = []
     total_rendered = total_skipped = 0
 
+    # Build world_external profile entry (no pipeline run, just metadata)
+    owm_key = os.environ.get("OWM_API_KEY", "").strip()
+    world_external_manifest = {
+        "id":               EXTERNAL_PROFILE_ID,
+        "kind":             "external_tiles",
+        "zoom_min":         EXTERNAL_PROFILE_ZOOM_MIN,
+        "zoom_max":         EXTERNAL_PROFILE_ZOOM_MAX,
+        "bbox":             None,
+        "bounds":           None,
+        "tile_url_template": (
+            f"https://tile.openweathermap.org/map/clouds_new/{{z}}/{{x}}/{{y}}.png?appid={owm_key}"
+            if owm_key else None
+        ),
+        "frames":           None,
+        "available":        bool(owm_key),
+        "meta": {
+            "source_kind":   "external_tiles",
+            "source_name":   "OpenWeatherMap",
+            "timeline_mode": "live_latest",
+            "styling_mode":  "provider_native",
+            "source_owned":  False,
+        },
+    }
+    profile_manifests.append(world_external_manifest)
+    if owm_key:
+        print(f"[weather-map] External profile: world_external (OWM key configured)", flush=True)
+    else:
+        print(f"[weather-map] External profile: world_external (OWM_API_KEY not set → available=false)", flush=True)
+
     for profile in PROFILES:
         frame_refs, rendered, skipped = run_profile(profile, timeline)
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]
         profile_manifests.append({
-            "id":        profile["id"],
-            "zoom_min":  profile["zoom_min"],
-            "zoom_max":  profile["zoom_max"],
-            "bbox":      bbox,
-            "bounds":    [[bbox["lat_min"], bbox["lon_min"]], [bbox["lat_max"], bbox["lon_max"]]],
-            "width":     profile.get("render_size", 256),
-            "height":    profile.get("render_size", 256),
-            "available": rendered > 0,
-            "frames":    frame_refs,
+            "id":               profile["id"],
+            "kind":             "internal_raster",
+            "zoom_min":         profile["zoom_min"],
+            "zoom_max":         profile["zoom_max"],
+            "bbox":             bbox,
+            "bounds":           [[bbox["lat_min"], bbox["lon_min"]], [bbox["lat_max"], bbox["lon_max"]]],
+            "tile_url_template": None,
+            "width":            profile.get("render_size", 256),
+            "height":           profile.get("render_size", 256),
+            "available":        rendered > 0,
+            "frames":           frame_refs,
+            "meta": {
+                "source_kind":   "internal_raster",
+                "source_name":   "nebulacast/open-meteo",
+                "timeline_mode": "time_addressable",
+                "styling_mode":  "internal_style",
+                "source_owned":  True,
+            },
         })
 
     elapsed = time.time() - t0
@@ -421,7 +469,7 @@ def run() -> None:
 
     now_utc  = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     contract = {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "updated_utc":    now_utc,
         "source": {
             "domain":   "weather",
@@ -464,10 +512,13 @@ def run() -> None:
             "profiles": [
                 {
                     "id":          pm["id"],
-                    "rendered":    sum(1 for f in pm["frames"] if f["available"]),
-                    "grid_points": PROFILES[i]["grid_lat_n"] * PROFILES[i]["grid_lon_n"],
+                    "kind":        pm["kind"],
+                    "rendered":    sum(1 for f in pm["frames"] if f["available"]) if pm.get("frames") else 0,
+                    "grid_points": (
+                        next((p["grid_lat_n"] * p["grid_lon_n"] for p in PROFILES if p["id"] == pm["id"]), None)
+                    ),
                 }
-                for i, pm in enumerate(profile_manifests)
+                for pm in profile_manifests
             ],
         },
     }

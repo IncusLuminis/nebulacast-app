@@ -23,6 +23,8 @@ jobs:
         run: pip install -r services/weather/requirements.txt
 
       - name: Run weather map pipeline
+        env:
+          OWM_API_KEY: ${{ secrets.OWM_API_KEY }}
         run: PYTHONPATH=services/weather python services/weather/pipelines/gen_weather_map.py
 
       - name: Validate output
@@ -37,20 +39,25 @@ jobs:
           rendered = d["stats"]["rendered_frames"]
           if rendered < 50:
               print(f"FAIL: only {rendered} frames rendered (expected ≥50)"); sys.exit(1)
-          # v1.1: validate profiles
+          # v1.2: validate hybrid profiles (external_tiles + internal_raster)
           profiles = d["layers"]["clouds"].get("profiles", [])
-          if profiles:
-              if len(profiles) < 1:
-                  print("FAIL: no profiles in layers.clouds.profiles"); sys.exit(1)
-              for p in profiles:
-                  for pk in ["id", "zoom_min", "zoom_max", "bounds", "frames"]:
-                      if pk not in p:
-                          print(f"FAIL: profile missing key '{pk}'"); sys.exit(1)
-              n_frames = len(profiles[0]["frames"])
-              for p in profiles[1:]:
+          if not profiles:
+              print("FAIL: no profiles in layers.clouds.profiles"); sys.exit(1)
+          raster = [p for p in profiles if p.get("kind") == "internal_raster"]
+          external = [p for p in profiles if p.get("kind") == "external_tiles"]
+          for p in raster:
+              for pk in ["id", "zoom_min", "zoom_max", "bounds", "frames"]:
+                  if p.get(pk) is None:
+                      print(f"FAIL: raster profile {p['id']} missing '{pk}'"); sys.exit(1)
+          for p in external:
+              if p.get("available") and not p.get("tile_url_template"):
+                  print(f"FAIL: external profile {p['id']} available but no tile_url_template"); sys.exit(1)
+          if raster:
+              n_frames = len(raster[0]["frames"])
+              for p in raster[1:]:
                   if len(p["frames"]) != n_frames:
-                      print(f"FAIL: profile {p['id']} frame count mismatch"); sys.exit(1)
-              print(f"OK: {len(profiles)} profiles, {n_frames} frames each")
+                      print(f"FAIL: raster profile {p['id']} frame count mismatch"); sys.exit(1)
+              print(f"OK: {len(raster)} raster profiles ({n_frames} frames each), {len(external)} external profiles")
           print(f"OK: {rendered} total frames, updated {d['updated_utc']}")
           EOF
 
