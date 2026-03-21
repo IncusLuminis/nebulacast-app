@@ -3056,12 +3056,10 @@
     var line1 = document.getElementById("moonInfoLine1");
     var line2 = document.getElementById("moonInfoLine2");
     if (line1) {
-      line1.textContent = phaseEmoji + " " + phasePercent + "%";
-    }
-    if (line2) {
       var altSign = altDeg >= 0 ? "+" : "";
-      line2.textContent = "Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
+      line1.textContent = phaseEmoji + " " + phasePercent + "%  Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
     }
+    if (line2) line2.style.display = "none";
 
     // Sun phase + altitude indicator above moon lines
     var sunLine   = document.getElementById("sunPhaseLine");
