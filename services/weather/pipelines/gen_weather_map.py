@@ -246,8 +246,32 @@ def interpolate_frame(
     return np.array(img_large, dtype=np.float32)
 
 
+def make_edge_feather(h: int, w: int, margin_frac: float = 0.12) -> "np.ndarray":
+    """
+    Return a float32 mask [h, w] in [0, 1] that fades smoothly to 0 near each edge.
+    Uses a cosine ramp over `margin_frac` of the image width/height on each side.
+    """
+    mx = max(1, int(w * margin_frac))
+    my = max(1, int(h * margin_frac))
+
+    ramp_x = np.ones(w, dtype=np.float32)
+    ramp_y = np.ones(h, dtype=np.float32)
+
+    for i in range(mx):
+        v = 0.5 - 0.5 * np.cos(np.pi * i / mx)   # 0 → 1
+        ramp_x[i]         = v
+        ramp_x[w - 1 - i] = v
+
+    for i in range(my):
+        v = 0.5 - 0.5 * np.cos(np.pi * i / my)
+        ramp_y[i]         = v
+        ramp_y[h - 1 - i] = v
+
+    return np.outer(ramp_y, ramp_x)   # 2-D mask via outer product
+
+
 def render_frame_webp(grid_values: "np.ndarray", dest: Path, blur_radius: int = 3) -> bool:
-    """Render cloud opacity grid to RGBA WebP (white clouds, non-linear alpha)."""
+    """Render cloud opacity grid to RGBA WebP (white clouds, non-linear alpha, feathered edges)."""
     if not HAS_PIL:
         return False
 
@@ -262,6 +286,10 @@ def render_frame_webp(grid_values: "np.ndarray", dest: Path, blur_radius: int = 
         if not seg.any(): continue
         t = np.clip((v[seg] - lo) / (hi - lo), 0, 1)
         alpha[seg] = a_lo + t * (a_hi - a_lo)
+
+    # Feather edges so the domain boundary fades to transparent instead of cutting hard
+    feather = make_edge_feather(h, w, margin_frac=0.12)
+    alpha   = alpha * feather
 
     rgba[:, :, 3] = np.clip(alpha, 0, 255).astype(np.uint8)
 
