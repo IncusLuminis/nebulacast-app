@@ -1,11 +1,13 @@
 {
-  "generated_utc": "2026-03-21T01:25:45.497118Z",
+  "generated_utc": "2026-03-21T12:36:57.730429Z",
   "source": "NASA/GCN Kafka via gcn_kafka",
   "counts": {
-    "items": 0,
-    "by_topic": {},
+    "items": 1,
+    "by_topic": {
+      "gcn.notices.einstein_probe.wxt.alert": 1
+    },
     "polls_total": 120,
-    "polls_empty": 120
+    "polls_empty": 119
   },
   "raw": {
     "topics": [
@@ -20,5 +22,50 @@
     "consume_timeout_sec": 1.0,
     "heartbeat_sec": 15
   },
-  "items": []
+  "items": [
+    {
+      "id": "gcn:gcn.notices.einstein_probe.wxt.alert:233",
+      "source": "gcn_kafka",
+      "group": "gcn",
+      "type": "gcn",
+      "title": "Einstein Probe Alert",
+      "ui_type": "X-ray transient",
+      "note": null,
+      "score_raw": null,
+      "score_norm": 0.5,
+      "ra_deg": 149.894,
+      "dec_deg": 0.397,
+      "mag": null,
+      "discovery": null,
+      "updated_utc": "2026-03-21T12:35:45.597000+00:00",
+      "ingested_utc": "2026-03-21T12:34:57.726954Z",
+      "meta": {
+        "topic": "gcn.notices.einstein_probe.wxt.alert",
+        "offset": 233,
+        "kafka_timestamp_ms": 1774096545597,
+        "payload_text": "{\"$schema\": \"https://gcn.nasa.gov/schema/v4.1.0/gcn/notices/einstein_probe/wxt/alert.schema.json\", \"instrument\": \"WXT\", \"trigger_time\": \"2026-03-21T12:30:18.849Z\", \"id\": [\"01709259023\"], \"ra\": 149.894, \"dec\": 0.397, \"ra_dec_error\": 0.05115533, \"image_energy_range\": [0.5, 4.0], \"net_count_rate\": 0.07, \"image_snr\": 7.0, \"additional_info\": \"The net count rate is derived from an accumulated image (up to 20 min) in 0.5-4 keV, assuming a constant flux. However, it can be significantly lower than the actual count rate of a burst with a duration much shorter than 20 min.\"}",
+        "payload_json": {
+          "$schema": "https://gcn.nasa.gov/schema/v4.1.0/gcn/notices/einstein_probe/wxt/alert.schema.json",
+          "instrument": "WXT",
+          "trigger_time": "2026-03-21T12:30:18.849Z",
+          "id": [
+            "01709259023"
+          ],
+          "ra": 149.894,
+          "dec": 0.397,
+          "ra_dec_error": 0.05115533,
+          "image_energy_range": [
+            0.5,
+            4.0
+          ],
+          "net_count_rate": 0.07,
+          "image_snr": 7.0,
+          "additional_info": "The net count rate is derived from an accumulated image (up to 20 min) in 0.5-4 keV, assuming a constant flux. However, it can be significantly lower than the actual count rate of a burst with a duration much shorter than 20 min."
+        },
+        "ui_type": "X-ray transient",
+        "ui_type_hint": "Einstein Probe X-ray transient alert. Wide-field X-ray monitor; localization is typically arcsecond-level.",
+        "ui_type_html": "<strong>Einstein Probe X-ray transient</strong>. Wide-field monitor; arcsecond-class localization."
+      }
+    }
+  ]
 }
