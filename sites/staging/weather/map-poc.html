@@ -526,7 +526,7 @@
         <div class="moon-info-panel" id="moonInfoPanel">
           <div class="sun-phase-line" id="sunPhaseLine" style="display:none;"></div>
           <div class="moon-info-line" id="sunAltLine" style="display:none;"></div>
-          <div class="moon-info-line" id="moonInfoLine1">🌙 Moon: —</div>
+          <div class="moon-info-line" id="moonInfoLine1">🌙 —</div>
           <div class="moon-info-line" id="moonInfoLine2">Alt: — Az: —</div>
         </div>
         <map-player id="mapPlayer" style="position:absolute;left:0;bottom:0;z-index:1000;transition:opacity 0.25s ease,transform 0.25s ease;"></map-player>
@@ -3056,7 +3056,7 @@
     var line1 = document.getElementById("moonInfoLine1");
     var line2 = document.getElementById("moonInfoLine2");
     if (line1) {
-      line1.textContent = phaseEmoji + " Moon: " + phasePercent + "% (" + phaseName + ")";
+      line1.textContent = phaseEmoji + " " + phasePercent + "%";
     }
     if (line2) {
       var altSign = altDeg >= 0 ? "+" : "";
