@@ -3064,27 +3064,26 @@
     // Sun phase + altitude indicator above moon lines
     var sunLine   = document.getElementById("sunPhaseLine");
     var sunAltLine = document.getElementById("sunAltLine");
+    // Sun: always show Alt/Az; phase label only during twilight/night
+    var sunPos    = SunCalcLib.getPosition(date, center.lat, center.lng);
+    var sunAltDeg = sunPos.altitude * 180 / Math.PI;
+    var sunAzDeg  = ((sunPos.azimuth * 180 / Math.PI) + 180 + 360) % 360;
+    var sunAltSign = sunAltDeg >= 0 ? "+" : "";
+    var phase = getSunPhase(date, center.lat, center.lng);
     if (sunLine) {
-      var phase = getSunPhase(date, center.lat, center.lng);
       if (phase) {
         var icons = { "Sunrise": "🌅", "Sunset": "🌇", "Civil twilight": "🌆", "Astro twilight": "🌃", "Night": "🌌" };
         sunLine.textContent = (icons[phase.label] || "☀️") + "\u2009" + phase.label;
-        sunLine.style.color  = phase.color;
+        sunLine.style.color   = phase.color;
         sunLine.style.display = "block";
-        // Sun altitude (recompute; getSunPhase already called getPosition internally)
-        if (sunAltLine) {
-          var sunPos    = SunCalcLib.getPosition(date, center.lat, center.lng);
-          var sunAltDeg = sunPos.altitude * 180 / Math.PI;
-          var sunAzDeg  = sunPos.azimuth  * 180 / Math.PI + 180; // SunCalc: S=0 → +180 = N=0
-          var sunAltSign = sunAltDeg >= 0 ? "+" : "";
-          sunAltLine.textContent = "☀️ Alt: " + sunAltSign + Math.round(sunAltDeg) + "°  Az: " + Math.round((sunAzDeg + 360) % 360) + "°";
-          sunAltLine.style.color  = "var(--muted)";
-          sunAltLine.style.display = "block";
-        }
       } else {
         sunLine.style.display = "none";
-        if (sunAltLine) sunAltLine.style.display = "none";
       }
+    }
+    if (sunAltLine) {
+      sunAltLine.textContent = "☀️ Alt: " + sunAltSign + Math.round(sunAltDeg) + "°  Az: " + Math.round(sunAzDeg) + "°";
+      sunAltLine.style.color  = "var(--muted)";
+      sunAltLine.style.display = "block";
     }
   }
 
