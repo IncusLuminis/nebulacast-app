@@ -185,6 +185,11 @@
       margin-top: 2px;
       margin-left: 26px;
     }
+    .layers-popover .layer-freq {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
     .layers-popover .coming-soon {
       font-size: 10px;
       color: var(--muted);
@@ -432,14 +437,19 @@
             </label>
           </div>
           <div class="layer-row">
-            <label title="Animated cloud cover from weather model (pre-rendered)">
-              <input type="checkbox" id="toggleClouds" checked> Clouds
+            <label title="Global cloud tiles from OpenWeatherMap, refreshes every ~10 min">
+              <input type="checkbox" id="toggleOwmClouds" checked> OWM Clouds <span class="layer-freq">10 min</span>
+            </label>
+          </div>
+          <div class="layer-row">
+            <label title="Pre-rendered cloud cover from weather model (Open-Meteo), updated every 3h">
+              <input type="checkbox" id="toggleRasterClouds" checked> Raster Clouds <span class="layer-freq">3h</span>
             </label>
             <div id="cloudPhaseLabel" style="font-size:10px;color:var(--muted);margin-left:20px;margin-top:2px"></div>
           </div>
           <div class="layer-row">
-            <label title="Satellite-like cloud masses from NASA GIBS">
-              <input type="checkbox" id="toggleGibs" checked> Satellite
+            <label title="True-color satellite imagery from NASA GIBS (Terra/Aqua), updated daily">
+              <input type="checkbox" id="toggleGibs" checked> Satellite <span class="layer-freq">daily</span>
             </label>
           </div>
           <div class="layer-row">
@@ -497,11 +507,6 @@
             <span class="hillshade-unavailable" id="hillshadeUnavailable" style="display:none;">Hillshade unavailable</span>
           </div>
           <div style="margin: 8px 0; border-top: 1px solid var(--line);"></div>
-          <div class="layer-row">
-            <label title="Modelled cloud cover from weather pipeline (pre-rendered)">
-              <input type="checkbox" id="toggleForecast" checked> Forecast clouds
-            </label>
-          </div>
           <div class="layer-row disabled">
             <label>
               <input type="checkbox" disabled> Wind <span class="coming-soon">(soon)</span>
@@ -841,12 +846,13 @@
 
   // ── Cloud layer (hybrid v1.2: external tiles + internal raster) ────────────
   const CLOUD_MANIFEST_URL = "/data/weather_map_now.json";
-  let cloudsOn = true;
+  let owmCloudsOn    = true;  // OWM external tile layer (10 min)
+  let rasterCloudsOn = true;  // internal raster WebP layer (3h)
   let cloudManifest = null;        // weather_map_now.json data
   let cloudOverlay = null;         // L.imageOverlay — internal raster
   let cloudTileLayer = null;       // L.tileLayer   — external tiles
   let cloudFrameIndex = -1;        // currently displayed frame index (raster only)
-  let cloudActiveProfileId = null; // currently active profile id
+  let cloudActiveProfileId = null; // active internal raster profile id
   // Prefetch cache: url → Image (preloaded)
   const cloudCache = {};
   let observedAvailable = false;
@@ -1138,92 +1144,59 @@
   layerAdapters.moon.setTime = adapterMoonSetTime;
   layerAdapters.clouds.setTime = adapterCloudsSetTime;
 
-  // ── Cloud layer functions (v1.2 — hybrid external tiles + internal raster) ──
+  // ── Cloud layer functions (v1.2 — OWM tiles and raster are fully independent) ─
 
-  /**
-   * Return profile data for currently active profile id.
-   */
-  function getActiveProfile() {
+  /** Return the OWM external-tiles profile from manifest (or null). */
+  function getOwmProfile() {
+    if (!cloudManifest) return null;
+    var profiles = cloudManifest.layers.clouds.profiles;
+    return profiles && profiles.find(function(p) { return p.kind === "external_tiles"; });
+  }
+
+  /** Return the best internal raster profile for the given zoom. */
+  function selectRasterProfile(zoom) {
+    if (!cloudManifest) return null;
+    var profiles = cloudManifest.layers.clouds.profiles;
+    if (!profiles) return null;
+    // Exact zoom match
+    for (var i = 0; i < profiles.length; i++) {
+      var p = profiles[i];
+      if (p.kind === "internal_raster" && p.available &&
+          zoom >= p.zoom_min && zoom <= p.zoom_max) return p;
+    }
+    // Fallback: widest available raster
+    return profiles.reduce(function(best, p) {
+      if (p.kind !== "internal_raster" || !p.available) return best;
+      return (!best || p.zoom_min < best.zoom_min) ? p : best;
+    }, null);
+  }
+
+  /** Return data for currently active raster profile id. */
+  function getActiveRasterProfile() {
     if (!cloudManifest || !cloudActiveProfileId) return null;
     var profiles = cloudManifest.layers.clouds.profiles;
     return profiles && profiles.find(function(p) { return p.id === cloudActiveProfileId; });
   }
 
-  /**
-   * Select profile for given zoom per spec §9 selection policy:
-   *   zoom ≤ external.zoom_max  → external_tiles (if available)
-   *   zoom >  external.zoom_max → best matching internal_raster (fallback to external)
-   */
-  function selectCloudProfile(zoom) {
-    if (!cloudManifest) return null;
-    var profiles = cloudManifest.layers.clouds.profiles;
-    if (!profiles || !profiles.length) return null;
+  // Keep legacy alias used by adapterCloudsSetTime
+  function getActiveProfile() { return getActiveRasterProfile(); }
 
-    // Find external profile
-    var externalP = null;
-    for (var i = 0; i < profiles.length; i++) {
-      if (profiles[i].kind === "external_tiles") { externalP = profiles[i]; break; }
-    }
-
-    // Low zoom or no raster coverage → prefer external (if available)
-    if (externalP && externalP.available && zoom <= externalP.zoom_max) {
-      return externalP;
-    }
-
-    // High zoom → find best matching internal raster
-    for (var i = 0; i < profiles.length; i++) {
-      var p = profiles[i];
-      if (p.kind === "internal_raster" && p.available &&
-          zoom >= p.zoom_min && zoom <= p.zoom_max) {
-        return p;
-      }
-    }
-
-    // Raster unavailable for this zoom → fallback to external
-    if (externalP && externalP.available) return externalP;
-
-    // Last resort: any available profile (even unavailable to show placeholder)
-    return profiles.reduce(function(best, p) {
-      return (!best || p.zoom_min < best.zoom_min) ? p : best;
-    }, null);
-  }
-
-  /**
-   * Show/update source attribution hint near cloud controls.
-   */
-  function updateCloudSourceHint(profile) {
-    var phaseEl = document.getElementById("cloudPhaseLabel");
-    if (!phaseEl) return;
-    if (!profile) { phaseEl.textContent = ""; return; }
-    if (profile.kind === "external_tiles") {
-      var src = (profile.meta && profile.meta.source_name) || "external";
-      phaseEl.textContent = "⊕ live · " + src;
-    }
-    // internal raster: updated by adapterCloudsSetTime
-  }
-
-  /**
-   * Create (or reuse) the external L.tileLayer for the given profile.
-   */
-  function attachExternalTileLayer(profile) {
-    if (!profile || !profile.tile_url_template) return;
-    if (cloudTileLayer) {
-      if (!map.hasLayer(cloudTileLayer)) cloudTileLayer.addTo(map);
-      return;
-    }
-    cloudTileLayer = L.tileLayer(profile.tile_url_template, {
+  /** Create cloudTileLayer from OWM profile if not yet created. */
+  function ensureOwmTileLayer(owmProfile) {
+    if (cloudTileLayer) return;
+    if (!owmProfile || !owmProfile.tile_url_template) return;
+    cloudTileLayer = L.tileLayer(owmProfile.tile_url_template, {
       opacity:     0.65,
       interactive: false,
       maxZoom:     19,
-      zIndex:      250,
-      attribution: "Cloud data © " + ((profile.meta && profile.meta.source_name) || "external"),
+      zIndex:      240,
+      attribution: "Cloud © " + ((owmProfile.meta && owmProfile.meta.source_name) || "OWM"),
     });
-    if (cloudsOn) cloudTileLayer.addTo(map);
+    console.log("[clouds] OWM tile layer created");
   }
 
   /**
-   * Load weather_map_now.json and initialize the appropriate cloud layer.
-   * Supports v1.2 (hybrid profiles), v1.1 (internal_raster profiles), v1 (bounds only).
+   * Load weather_map_now.json and initialise both cloud layers independently.
    */
   function initCloudLayer() {
     fetch(CLOUD_MANIFEST_URL)
@@ -1234,7 +1207,7 @@
         if (!layer) { console.log("[clouds] no cloud layer in manifest"); return; }
         var opacity = (layer.render && layer.render.opacity) || 0.75;
 
-        // Always extend master timeline first (needed regardless of profile state)
+        // Extend master timeline (always, before any early return)
         var tl = manifest.timeline;
         if (tl && tl.frames && tl.frames.length) {
           var first = new Date(tl.frames[0].t_utc).getTime();
@@ -1245,110 +1218,62 @@
           updateTimeUI();
         }
 
+        var zoom = map ? map.getZoom() : 7;
+
+        // ── OWM tile layer (independent of zoom) ──────────────────────────────
+        var owmP = getOwmProfile();
+        ensureOwmTileLayer(owmP);
+        if (cloudTileLayer && owmCloudsOn) cloudTileLayer.addTo(map);
+
+        // ── Internal raster overlay ───────────────────────────────────────────
         if (layer.profiles && layer.profiles.length) {
-          // v1.1/v1.2 — select profile for current zoom
-          var zoom    = map ? map.getZoom() : 5;
-          var profile = selectCloudProfile(zoom);
-
-          if (!profile || !profile.available) {
-            console.log("[clouds] no available profiles (pipeline not run / OWM key missing?)");
-            // Pre-create raster overlay so zoom-in switch works later
-            var rasterP = layer.profiles.find(function(p) { return p.kind === "internal_raster"; });
-            if (rasterP && rasterP.bounds) {
-              cloudOverlay = L.imageOverlay("", rasterP.bounds, {
-                opacity: opacity, interactive: false, className: "cloud-overlay",
-                zIndex: 250, crossOrigin: true,
-              });
-            }
-            if (tl) prefetchCloudFrames(tl.current_index);
-            return;
-          }
-
-          cloudActiveProfileId = profile.id;
-          console.log("[clouds] v1.2 — active profile: " + profile.id +
-                      " (kind: " + profile.kind + ", zoom " + zoom + ")");
-
-          if (profile.kind === "external_tiles") {
-            // Always pre-create the raster overlay (hidden) for zoom-in switch
-            var rasterP = layer.profiles.find(function(p) {
-              return p.kind === "internal_raster" && p.available;
-            });
-            if (rasterP && rasterP.bounds) {
-              cloudOverlay = L.imageOverlay("", rasterP.bounds, {
-                opacity: opacity, interactive: false, className: "cloud-overlay",
-                zIndex: 250, crossOrigin: true,
-              });
-              // not added to map yet
-            }
-            attachExternalTileLayer(profile);
-            updateCloudSourceHint(profile);
-          } else {
-            // internal_raster
-            cloudOverlay = L.imageOverlay("", profile.bounds, {
+          var rasterP = selectRasterProfile(zoom);
+          if (rasterP) {
+            cloudActiveProfileId = rasterP.id;
+            cloudOverlay = L.imageOverlay("", rasterP.bounds, {
               opacity: opacity, interactive: false, className: "cloud-overlay",
               zIndex: 250, crossOrigin: true,
             });
-            if (cloudsOn) cloudOverlay.addTo(map);
+            if (rasterCloudsOn) {
+              cloudOverlay.addTo(map);
+              if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
+            }
+            console.log("[clouds] raster profile: " + rasterP.id + " (zoom " + zoom + ")");
+          } else {
+            console.log("[clouds] no raster profile available (pipeline not run?)");
+          }
+        } else {
+          // v1 fallback
+          var bounds = layer.render && layer.render.bounds;
+          if (bounds) {
+            cloudOverlay = L.imageOverlay("", bounds, {
+              opacity: opacity, interactive: false, className: "cloud-overlay",
+              zIndex: 250, crossOrigin: true,
+            });
+            if (rasterCloudsOn) cloudOverlay.addTo(map);
             if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
           }
-
-        } else {
-          // v1 fallback: single bounds
-          var bounds = layer.render && layer.render.bounds;
-          if (!bounds) { console.log("[clouds] no bounds in manifest"); return; }
-          cloudOverlay = L.imageOverlay("", bounds, {
-            opacity: opacity, interactive: false, className: "cloud-overlay",
-            zIndex: 250, crossOrigin: true,
-          });
-          if (cloudsOn) cloudOverlay.addTo(map);
-          if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
-          console.log("[clouds] v1 — single bounds");
         }
 
         if (tl) prefetchCloudFrames(tl.current_index);
       })
-      .catch(function(err) {
-        console.warn("[clouds] manifest load failed:", err);
-      });
+      .catch(function(err) { console.warn("[clouds] manifest load failed:", err); });
   }
 
   /**
-   * Switch cloud profile on zoom change.
-   * Handles kind transitions: external↔raster, bounds change within raster.
+   * On zoom change: switch internal raster profile if needed.
+   * OWM tile layer is unaffected (always on if owmCloudsOn).
    */
   function checkCloudProfileSwitch() {
-    if (!cloudManifest) return;
-    var layer = cloudManifest.layers.clouds;
-    if (!layer.profiles) return;
+    if (!cloudManifest || !cloudOverlay) return;
+    var rasterP = selectRasterProfile(map.getZoom());
+    if (!rasterP || rasterP.id === cloudActiveProfileId) return;
 
-    var profile = selectCloudProfile(map.getZoom());
-    if (!profile || profile.id === cloudActiveProfileId) return;
-
-    var prevProfile = getActiveProfile();
-    var prevKind = prevProfile ? prevProfile.kind : null;
-    console.log("[clouds] profile switch: " + cloudActiveProfileId +
-                " (" + prevKind + ") → " + profile.id + " (" + profile.kind + ")");
-    cloudActiveProfileId = profile.id;
-
-    if (profile.kind === "external_tiles") {
-      // Raster → External: hide raster overlay, show tile layer
-      if (cloudOverlay && map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
-      attachExternalTileLayer(profile);
-      updateCloudSourceHint(profile);
-
-    } else {
-      // External → Raster (or raster→raster): remove tile layer, update overlay bounds
-      if (cloudTileLayer && map.hasLayer(cloudTileLayer)) map.removeLayer(cloudTileLayer);
-      if (cloudOverlay) {
-        cloudOverlay.setBounds(profile.bounds);
-        cloudFrameIndex = -1; // force reload for new profile
-        if (cloudsOn) {
-          if (!map.hasLayer(cloudOverlay)) cloudOverlay.addTo(map);
-          if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
-        }
-      }
-      updateCloudSourceHint(profile);
-    }
+    console.log("[clouds] raster profile switch: " + cloudActiveProfileId + " → " + rasterP.id);
+    cloudActiveProfileId = rasterP.id;
+    cloudOverlay.setBounds(rasterP.bounds);
+    cloudFrameIndex = -1;
+    if (rasterCloudsOn && currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
   }
 
   /**
@@ -1396,21 +1321,11 @@
   }
 
   /**
-   * Layer adapter: update cloud overlay to nearest frame for tUtcMs.
-   * External tile profiles use Mode A (live latest) — no time update needed.
+   * Layer adapter: update internal raster overlay to nearest frame for tUtcMs.
+   * OWM tile layer is Mode A (live latest) — not touched here.
    */
   function adapterCloudsSetTime(tUtcMs) {
-    if (!cloudsOn || !cloudManifest) return;
-
-    // External tiles: Mode A — static latest, no per-frame update
-    var activeP = getActiveProfile();
-    if (activeP && activeP.kind === "external_tiles") {
-      var phaseEl = document.getElementById("cloudPhaseLabel");
-      if (phaseEl) phaseEl.textContent = "⊕ live · " + ((activeP.meta && activeP.meta.source_name) || "external");
-      return;
-    }
-
-    if (!cloudOverlay) return;
+    if (!rasterCloudsOn || !cloudManifest || !cloudOverlay) return;
 
     var idx = cloudFrameForTime(tUtcMs);
     if (idx === -1) return;
@@ -3391,55 +3306,40 @@
       });
     }
 
-    // Cloud layer (hybrid: external tiles + internal raster)
-    function applyCloudVisibility(on) {
-      // Apply visibility to whichever cloud layer is currently active
-      var activeP = getActiveProfile();
-      if (activeP && activeP.kind === "external_tiles") {
+    // ── OWM cloud tiles toggle ─────────────────────────────────────────────────
+    var owmCb = document.getElementById("toggleOwmClouds");
+    if (owmCb) {
+      owmCb.checked = owmCloudsOn;
+      owmCb.addEventListener("change", function () {
+        owmCloudsOn = this.checked;
         if (cloudTileLayer) {
-          if (on) { if (!map.hasLayer(cloudTileLayer)) cloudTileLayer.addTo(map); }
-          else    { if (map.hasLayer(cloudTileLayer)) map.removeLayer(cloudTileLayer); }
+          if (owmCloudsOn) { if (!map.hasLayer(cloudTileLayer)) cloudTileLayer.addTo(map); }
+          else             { if (map.hasLayer(cloudTileLayer))  map.removeLayer(cloudTileLayer); }
         }
-      } else {
+        saveLayerState();
+      });
+    }
+
+    // ── Raster cloud overlay toggle ────────────────────────────────────────────
+    var rasterCb = document.getElementById("toggleRasterClouds");
+    if (rasterCb) {
+      rasterCb.checked = rasterCloudsOn;
+      rasterCb.addEventListener("change", function () {
+        rasterCloudsOn = this.checked;
+        layerAdapters.clouds.enabled = this.checked;
         if (cloudOverlay) {
-          if (on) {
+          if (rasterCloudsOn) {
             if (!map.hasLayer(cloudOverlay)) cloudOverlay.addTo(map);
             if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
           } else {
             if (map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
           }
         }
-      }
-    }
-
-    var cloudsCb = document.getElementById("toggleClouds");
-    if (cloudsCb) {
-      cloudsCb.checked = cloudsOn;
-      cloudsCb.addEventListener("change", function () {
-        cloudsOn = this.checked;
-        layerAdapters.clouds.enabled = this.checked;
-        var syncForecast = document.getElementById("toggleForecast");
-        if (syncForecast) syncForecast.checked = this.checked;
-        applyCloudVisibility(cloudsOn);
         saveLayerState();
       });
     }
-    layerAdapters.clouds.enabled = cloudsOn;
+    layerAdapters.clouds.enabled = rasterCloudsOn;
     initCloudLayer();
-
-    // Forecast checkbox → same as Clouds toggle
-    var forecastCb = document.getElementById("toggleForecast");
-    if (forecastCb) {
-      forecastCb.checked = cloudsOn;
-      forecastCb.addEventListener("change", function () {
-        cloudsOn = this.checked;
-        layerAdapters.clouds.enabled = this.checked;
-        var syncCb = document.getElementById("toggleClouds");
-        if (syncCb) syncCb.checked = this.checked;
-        applyCloudVisibility(cloudsOn);
-        saveLayerState();
-      });
-    }
 
     var gibsCb = document.getElementById("toggleGibs");
     if (gibsCb) {
