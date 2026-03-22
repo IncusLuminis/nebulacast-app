@@ -56,10 +56,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # stage outputs (use -A to avoid unstaged surprises)
+          # stage outputs incl. simbad cache (prevents unstaged changes blocking rebase)
           git add -A \
             services/sky/data/generated/objects_today.json \
             services/sky/data/generated/objects_week.json \
+            services/sky/data/generated/simbad_cache.json \
             sites/staging/sky/data/objects_today.json \
             sites/staging/sky/data/objects_week.json \
             2>/dev/null || true
