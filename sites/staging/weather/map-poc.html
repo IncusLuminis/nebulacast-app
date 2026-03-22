@@ -525,7 +525,8 @@
         <!-- Moon Info Panel -->
         <div class="moon-info-panel" id="moonInfoPanel">
           <div class="sun-phase-line" id="sunPhaseLine" style="display:none;"></div>
-          <div class="moon-info-line" id="moonInfoLine1">🌙 Moon: —</div>
+          <div class="moon-info-line" id="sunAltLine" style="display:none;"></div>
+          <div class="moon-info-line" id="moonInfoLine1">🌙 —</div>
           <div class="moon-info-line" id="moonInfoLine2">Alt: — Az: —</div>
         </div>
         <map-player id="mapPlayer" style="position:absolute;left:0;bottom:0;z-index:1000;transition:opacity 0.25s ease,transform 0.25s ease;"></map-player>
@@ -3055,25 +3056,34 @@
     var line1 = document.getElementById("moonInfoLine1");
     var line2 = document.getElementById("moonInfoLine2");
     if (line1) {
-      line1.textContent = phaseEmoji + " Moon: " + phasePercent + "% (" + phaseName + ")";
-    }
-    if (line2) {
       var altSign = altDeg >= 0 ? "+" : "";
-      line2.textContent = "Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
+      line1.textContent = phaseEmoji + " " + phasePercent + "%  Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
     }
+    if (line2) line2.style.display = "none";
 
-    // Sun phase indicator above moon lines
-    var sunLine = document.getElementById("sunPhaseLine");
+    // Sun phase + altitude indicator above moon lines
+    var sunLine   = document.getElementById("sunPhaseLine");
+    var sunAltLine = document.getElementById("sunAltLine");
+    // Sun: always show Alt/Az; phase label only during twilight/night
+    var sunPos    = SunCalcLib.getPosition(date, center.lat, center.lng);
+    var sunAltDeg = sunPos.altitude * 180 / Math.PI;
+    var sunAzDeg  = ((sunPos.azimuth * 180 / Math.PI) + 180 + 360) % 360;
+    var sunAltSign = sunAltDeg >= 0 ? "+" : "";
+    var phase = getSunPhase(date, center.lat, center.lng);
     if (sunLine) {
-      var phase = getSunPhase(date, center.lat, center.lng);
       if (phase) {
         var icons = { "Sunrise": "🌅", "Sunset": "🌇", "Civil twilight": "🌆", "Astro twilight": "🌃", "Night": "🌌" };
-        sunLine.textContent = (icons[phase.label] || "☀") + "\u2009" + phase.label;
-        sunLine.style.color = phase.color;
+        sunLine.textContent = (icons[phase.label] || "☀️") + "\u2009" + phase.label;
+        sunLine.style.color   = phase.color;
         sunLine.style.display = "block";
       } else {
         sunLine.style.display = "none";
       }
+    }
+    if (sunAltLine) {
+      sunAltLine.textContent = "☀️ Alt: " + sunAltSign + Math.round(sunAltDeg) + "°  Az: " + Math.round(sunAzDeg) + "°";
+      sunAltLine.style.color  = "var(--muted)";
+      sunAltLine.style.display = "block";
     }
   }
 
