@@ -832,7 +832,7 @@
   let currentFrameIdx = 0;
   
   // Master timeline state (single source of truth)
-  let stepHours = 1; // step size: 1 hour per ◀◀/▶▶ click
+  let stepHours = 6; // step size: 6 hours per ◀◀/▶▶ click
   let currentTimeUtcMs = null; // current time in UTC (milliseconds since epoch)
   let startTimeUtcMs = null; // start of timeline range (UTC ms)
   let endTimeUtcMs = null; // end of timeline range (UTC ms)
@@ -935,13 +935,13 @@
   /**
    * Initializes the master timeline range
    * startTime = 00:00 UTC of (today - 2 days)
-   * endTime = 23:59 UTC of (today + 2 days)
+   * endTime = end of (today + 3 days)
    */
   function initTimelineRange() {
     var now = Date.now();
     var todayUtc = floorToUtcDay(now);
     startTimeUtcMs = addHours(todayUtc, -48); // -2 days
-    endTimeUtcMs = ceilToUtcDayEnd(addHours(todayUtc, 48)); // +2 days
+    endTimeUtcMs = ceilToUtcDayEnd(addHours(todayUtc, 72)); // +3 days
     if (currentTimeUtcMs === null) {
       currentTimeUtcMs = now; // Start at current time
     }
@@ -1298,7 +1298,7 @@
     if (!cloudManifest) return null;
     var layer = cloudManifest.layers.clouds;
     if (!layer.profiles) return null; // v1: no profiles
-    var profile = selectCloudProfile(map ? map.getZoom() : 5);
+    var profile = selectRasterProfile(map ? map.getZoom() : 5);
     return profile ? profile.frames : null;
   }
 

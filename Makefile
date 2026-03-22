@@ -7,7 +7,7 @@
 .PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back weather-map weather-map-back server deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
 
 # Python: prefer venv if present
-PYTHON ?= python3
+PYTHON ?= python
 VENV_PY := .venv/bin/python
 ifeq ($(wildcard .venv/bin/python),)
   RUN := $(PYTHON)
