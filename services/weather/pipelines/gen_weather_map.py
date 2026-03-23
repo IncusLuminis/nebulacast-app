@@ -72,7 +72,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  18,
         "render_size":      256,
         "blur_radius":      4,
-        "isobar_render_size": 2048,
+        "isobar_render_size": 512,
     },
     {
         "id":               "eu_central",
@@ -86,7 +86,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  21,
         "render_size":      256,
         "blur_radius":      3,
-        "isobar_render_size": 2048,
+        "isobar_render_size": 512,
     },
     {
         "id":               "local",
@@ -100,7 +100,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  19,
         "render_size":      256,
         "blur_radius":      2,
-        "isobar_render_size": 2048,
+        "isobar_render_size": 512,
     },
 ]
 
@@ -428,7 +428,7 @@ def render_frame_webp(grid_values: "np.ndarray", dest: Path, blur_radius: int = 
 
 # ── Isobar renderer ───────────────────────────────────────────────────────────
 
-def render_isobar_frame_webp(
+def render_isobar_frame_svg(
     values:      list[float | None],
     points:      list[tuple[float, float]],
     bbox:        dict,
@@ -437,24 +437,23 @@ def render_isobar_frame_webp(
     render_size: int,
     dest:        Path,
 ) -> bool:
-    """Render pressure isobars as transparent RGBA WebP using matplotlib contour lines.
+    """Render pressure isobars as a scalable vector SVG (infinite resolution).
 
-    Contour levels: 950–1060 hPa, step 5 hPa.
-    Line style: #c8d8e8, linewidth 0.8.  Labels on every 3rd level.
+    Output is a transparent SVG with contour lines at 950–1060 hPa, step 5 hPa.
+    Fonts embedded as paths so there are no external font dependencies.
+    L.imageOverlay handles SVG natively — no pixelation at any zoom level.
     """
     if not HAS_MPL or not HAS_PIL:
         return False
 
-    import io
+    import io, re
 
-    # Interpolate pressure grid → render_size × render_size float32
-    # BICUBIC gives much smoother isoline shapes than BILINEAR
+    # Interpolate sparse pressure grid → render_size × render_size float32
     coarse = np.full((lat_n, lon_n), np.nan, dtype=np.float32)
-    bbox_ = bbox
     for i, (lat, lon) in enumerate(points):
         if i < len(values) and values[i] is not None:
-            li = round((lat - bbox_["lat_min"]) / (bbox_["lat_max"] - bbox_["lat_min"]) * (lat_n - 1))
-            lj = round((lon - bbox_["lon_min"]) / (bbox_["lon_max"] - bbox_["lon_min"]) * (lon_n - 1))
+            li = round((lat - bbox["lat_min"]) / (bbox["lat_max"] - bbox["lat_min"]) * (lat_n - 1))
+            lj = round((lon - bbox["lon_min"]) / (bbox["lon_max"] - bbox["lon_min"]) * (lon_n - 1))
             coarse[max(0, min(lat_n - 1, li)), max(0, min(lon_n - 1, lj))] = values[i]
 
     mask = np.isnan(coarse)
@@ -473,50 +472,50 @@ def render_isobar_frame_webp(
     img_large  = img_coarse.resize((render_size, render_size), Image.BICUBIC)
     grid = np.array(img_large, dtype=np.float32)
 
-    # Gaussian smooth to eliminate sharp kinks — blur on uint8 then rescale back
+    # Gaussian smooth to eliminate sharp kinks from the coarse grid
     p_min, p_max = float(grid.min()), float(grid.max())
     if p_max > p_min:
         scaled  = ((grid - p_min) / (p_max - p_min) * 255).astype(np.uint8)
-        blur_r  = max(4, render_size // 50)   # scales with image size (≈40px at 2048)
+        blur_r  = max(4, render_size // 50)
         blurred = Image.fromarray(scaled, mode="L").filter(ImageFilter.GaussianBlur(radius=blur_r))
         grid    = np.array(blurred, dtype=np.float32) / 255.0 * (p_max - p_min) + p_min
 
-    # Use pixel-space coordinates for contour (axes cover 0..render_size)
     xs = np.arange(render_size, dtype=np.float32)
-    ys = np.arange(render_size, dtype=np.float32)
-    X, Y = np.meshgrid(xs, ys)
+    X, Y = np.meshgrid(xs, xs)
 
-    dpi      = 200
-    fig_size = render_size / dpi          # inches (2048/200 = 10.24")
-    fig, ax  = plt.subplots(figsize=(fig_size, fig_size), dpi=dpi)
+    # Embed fonts as paths — no external font dependency in SVG
+    plt.rcParams["svg.fonttype"] = "path"
+
+    fig, ax = plt.subplots(figsize=(5.12, 5.12), dpi=100)  # 512pt viewBox
     fig.patch.set_alpha(0.0)
     ax.set_facecolor((0.0, 0.0, 0.0, 0.0))
-    ax.set_position([0, 0, 1, 1])         # fill entire figure area
+    ax.set_position([0, 0, 1, 1])
     ax.set_xlim(0, render_size)
     ax.set_ylim(0, render_size)
     ax.axis("off")
 
     levels = list(range(950, 1061, 5))
     try:
-        cs = ax.contour(X, Y, grid, levels=levels, colors="#c8d8e8", linewidths=0.6)
-        ax.clabel(cs, levels[::4], inline=True, fontsize=7, colors="#c8d8e8", fmt="%d")
+        cs = ax.contour(X, Y, grid, levels=levels, colors="#c8d8e8", linewidths=0.5)
+        ax.clabel(cs, levels[::4], inline=True, fontsize=6, colors="#c8d8e8", fmt="%d")
     except Exception as exc:
         plt.close(fig)
         print(f"  [warn] isobar contour failed: {exc}", flush=True)
         return False
 
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=dpi, transparent=True,
-                bbox_inches=None, pad_inches=0)
+    fig.savefig(buf, format="svg", transparent=True, bbox_inches=None, pad_inches=0)
     plt.close(fig)
-    buf.seek(0)
 
-    img = Image.open(buf).convert("RGBA")
-    if img.size != (render_size, render_size):
-        img = img.resize((render_size, render_size), Image.LANCZOS)
+    # Make SVG responsive for L.imageOverlay: replace fixed px dims with 100%
+    # and add preserveAspectRatio="none" so it fills the overlay bounds exactly
+    svg = buf.getvalue().decode("utf-8")
+    svg = re.sub(r'(<svg\b[^>]*?)\s+width="[^"]*"',  r'\1 width="100%"',  svg, count=1)
+    svg = re.sub(r'(<svg\b[^>]*?)\s+height="[^"]*"', r'\1 height="100%"', svg, count=1)
+    svg = svg.replace("<svg ", '<svg preserveAspectRatio="none" ', 1)
 
     dest.parent.mkdir(parents=True, exist_ok=True)
-    img.save(dest, "WEBP", quality=85)
+    dest.write_text(svg, encoding="utf-8")
     return True
 
 
@@ -638,13 +637,13 @@ def run_profile(
             },
         })
 
-        # ── Isobar frame ──────────────────────────────────────────────────────
+        # ── Isobar frame (SVG — vector, scales without pixelation) ───────────
         iso_values  = isobar_matrix[idx]
-        iso_name    = f"isobar_{idx:03d}.webp"
+        iso_name    = f"isobar_{idx:03d}.svg"
         iso_path    = isobar_dir / iso_name
         iso_url     = f"/data/isobars/{pid}/{iso_name}"
 
-        iso_ok = render_isobar_frame_webp(
+        iso_ok = render_isobar_frame_svg(
             iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path
         )
         if not iso_ok and iso_path.exists():
