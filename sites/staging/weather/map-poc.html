@@ -507,9 +507,9 @@
             <span class="hillshade-unavailable" id="hillshadeUnavailable" style="display:none;">Hillshade unavailable</span>
           </div>
           <div style="margin: 8px 0; border-top: 1px solid var(--line);"></div>
-          <div class="layer-row disabled">
-            <label>
-              <input type="checkbox" disabled> Wind <span class="coming-soon">(soon)</span>
+          <div class="layer-row">
+            <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h">
+              <input type="checkbox" id="toggleWind"> Wind <span class="layer-freq">3h</span>
             </label>
           </div>
           <div class="layer-row disabled">
@@ -856,6 +856,13 @@
   let cloudActiveProfileId = null; // active internal raster profile id
   // Prefetch cache: url → Image (preloaded)
   const cloudCache = {};
+
+  // ── Wind layer ─────────────────────────────────────────────────────────────
+  let windOn = false;             // off by default per spec
+  let windSvgEl = null;           // <svg> element in map container
+  let windFrameCache = {};        // asset_url → parsed JSON
+  let windActiveProfileId = null; // active wind profile id
+  let windLastVectors = null;     // last successfully drawn vectors (for redraw on pan)
   let observedAvailable = false;
   let radarOn = true;
   let hillshadeOn = true;
@@ -874,7 +881,8 @@
     satellite: { enabled: true, setTime: null },
     nightMask: { enabled: true, setTime: null },
     moon: { enabled: true, setTime: null },
-    clouds: { enabled: true, setTime: null }
+    clouds: { enabled: true, setTime: null },
+    wind:   { enabled: false, setTime: null }
   };
 
   /**
@@ -1144,6 +1152,7 @@
   layerAdapters.nightMask.setTime = adapterNightMaskSetTime;
   layerAdapters.moon.setTime = adapterMoonSetTime;
   layerAdapters.clouds.setTime = adapterCloudsSetTime;
+  layerAdapters.wind.setTime = adapterWindSetTime;
 
   // ── Cloud layer functions (v1.2 — OWM tiles and raster are fully independent) ─
 
@@ -1377,6 +1386,148 @@
       if (d < bestDiff) { bestDiff = d; best = i; }
     }
     return best;
+  }
+
+  // ── Wind layer functions ────────────────────────────────────────────────────
+
+  /** Select best wind profile for current zoom. */
+  function selectWindProfile(zoom) {
+    if (!cloudManifest) return null;
+    var wl = cloudManifest.layers && cloudManifest.layers.wind;
+    if (!wl || !wl.profiles) return null;
+    var profiles = wl.profiles;
+    for (var i = 0; i < profiles.length; i++) {
+      var p = profiles[i];
+      if (p.available && zoom >= p.zoom_min && zoom <= p.zoom_max) return p;
+    }
+    // fallback: widest available
+    return profiles.reduce(function(best, p) {
+      if (!p.available) return best;
+      return (!best || p.zoom_min < best.zoom_min) ? p : best;
+    }, null);
+  }
+
+  /** Create SVG element in map container (not in panes — avoids transform issues). */
+  function ensureWindSvg() {
+    if (windSvgEl) return;
+    windSvgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    windSvgEl.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:450;overflow:visible;";
+    map.getContainer().appendChild(windSvgEl);
+  }
+
+  /** Project vectors and draw SVG arrows. */
+  function drawWindArrows(vectors) {
+    if (!windSvgEl) return;
+    while (windSvgEl.firstChild) windSvgEl.removeChild(windSvgEl.firstChild);
+    if (!vectors || vectors.length === 0 || !windOn) return;
+
+    var ARROW_MIN = 12;
+    var ARROW_MAX = 22;
+    var SPEED_REF = 15; // m/s → max length
+
+    windLastVectors = vectors;
+    vectors.forEach(function(v) {
+      var pt = map.latLngToContainerPoint([v.lat, v.lon]);
+      var speed = v.speed_ms || 0;
+      var len = ARROW_MIN + (Math.min(speed, SPEED_REF) / SPEED_REF) * (ARROW_MAX - ARROW_MIN);
+
+      // dir_deg = FROM direction; arrow points TO = +180°
+      var angleDeg = (v.dir_deg + 180) % 360;
+      var angle = angleDeg * Math.PI / 180;
+      var dx = Math.sin(angle);
+      var dy = -Math.cos(angle); // SVG y-axis is down
+
+      var x1 = pt.x - dx * len * 0.45; // tail
+      var y1 = pt.y - dy * len * 0.45;
+      var x2 = pt.x + dx * len * 0.55; // tip
+      var y2 = pt.y + dy * len * 0.55;
+
+      var hl = len * 0.38; // head length
+      var hw = len * 0.22; // head half-width
+      var nx = -dy, ny = dx; // perpendicular to arrow
+
+      // head base point
+      var hx = x2 - dx * hl;
+      var hy = y2 - dy * hl;
+
+      var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+      var shaft = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      shaft.setAttribute("x1", x1.toFixed(1)); shaft.setAttribute("y1", y1.toFixed(1));
+      shaft.setAttribute("x2", hx.toFixed(1)); shaft.setAttribute("y2", hy.toFixed(1));
+      shaft.setAttribute("stroke", "#a8d8ea");
+      shaft.setAttribute("stroke-width", "1.5");
+      shaft.setAttribute("stroke-linecap", "round");
+
+      var head = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      head.setAttribute("points", [
+        x2.toFixed(1) + "," + y2.toFixed(1),
+        (hx + nx * hw).toFixed(1) + "," + (hy + ny * hw).toFixed(1),
+        (hx - nx * hw).toFixed(1) + "," + (hy - ny * hw).toFixed(1),
+      ].join(" "));
+      head.setAttribute("fill", "#a8d8ea");
+
+      g.setAttribute("opacity", "0.82");
+      g.appendChild(shaft);
+      g.appendChild(head);
+      windSvgEl.appendChild(g);
+    });
+  }
+
+  /** Redraw wind arrows using cached data for the current time. */
+  function redrawWindArrows() {
+    if (!windOn || !cloudManifest) return;
+    var profile = selectWindProfile(map ? map.getZoom() : 7);
+    if (!profile || !profile.frames) return;
+    // Find currently loaded frame
+    var pFrames = profile.frames;
+    for (var i = 0; i < pFrames.length; i++) {
+      var f = pFrames[i];
+      if (f.asset_url && windFrameCache[f.asset_url]) {
+        // Find which frame was last drawn by checking currentTimeUtcMs
+        break;
+      }
+    }
+    if (currentTimeUtcMs !== null) adapterWindSetTime(currentTimeUtcMs);
+  }
+
+  /** Load wind frame JSON and draw arrows. Aligned to master timeline. */
+  function adapterWindSetTime(tUtcMs) {
+    if (!windOn || !cloudManifest) return;
+    var wl = cloudManifest.layers && cloudManifest.layers.wind;
+    if (!wl || !wl.available || !wl.profiles) { drawWindArrows(null); return; }
+
+    var zoom = map ? map.getZoom() : 7;
+    var profile = selectWindProfile(zoom);
+    if (!profile || !profile.frames) { drawWindArrows(null); return; }
+
+    // Find nearest frame by time
+    var pFrames = profile.frames;
+    var best = 0, bestDiff = Infinity;
+    for (var i = 0; i < pFrames.length; i++) {
+      var diff = Math.abs(new Date(pFrames[i].t_utc).getTime() - tUtcMs);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    var frame = pFrames[best];
+    if (!frame || !frame.available || !frame.asset_url) { drawWindArrows(null); return; }
+
+    // Check profile switched
+    if (profile.id !== windActiveProfileId) {
+      windActiveProfileId = profile.id;
+    }
+
+    // Serve from cache or fetch
+    if (windFrameCache[frame.asset_url]) {
+      drawWindArrows(windFrameCache[frame.asset_url].vectors);
+      return;
+    }
+    fetch(frame.asset_url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        windFrameCache[frame.asset_url] = data;
+        if (windOn) drawWindArrows(data.vectors);
+      })
+      .catch(function(e) { console.warn("[wind] fetch failed:", e); });
   }
 
   // ---------- Open-Meteo forecast cloud grid (data only, no rendering yet) ----------
@@ -3351,6 +3502,27 @@
     layerAdapters.clouds.enabled = rasterCloudsOn;
     initCloudLayer();
 
+    // ── Wind toggle ────────────────────────────────────────────────────────────
+    var windCb = document.getElementById("toggleWind");
+    if (windCb) {
+      windCb.checked = windOn;
+      windCb.addEventListener("change", function () {
+        windOn = this.checked;
+        layerAdapters.wind.enabled = windOn;
+        if (windOn) {
+          ensureWindSvg();
+          if (windSvgEl) windSvgEl.style.display = "";
+          if (currentTimeUtcMs !== null) adapterWindSetTime(currentTimeUtcMs);
+        } else {
+          if (windSvgEl) {
+            windSvgEl.style.display = "none";
+            while (windSvgEl.firstChild) windSvgEl.removeChild(windSvgEl.firstChild);
+          }
+        }
+        saveLayerState();
+      });
+    }
+
     var gibsCb = document.getElementById("toggleGibs");
     if (gibsCb) {
       gibsCb.checked = gibsOn;
@@ -3579,6 +3751,12 @@
     layerAdapters.moon.enabled = moonInfoOn;
 
     // Update night mask on map events (also updates moon info when center changes)
+    map.on("move", function () {
+      // Redraw wind arrows using cached vectors during panning (synchronous)
+      if (windOn && windSvgEl && windLastVectors) {
+        drawWindArrows(windLastVectors);
+      }
+    });
     map.on("moveend", function () {
       renderNightMaskDebounced();
       if (moonInfoOn && currentTimeUtcMs !== null) {
@@ -3591,12 +3769,19 @@
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
       checkCloudProfileSwitch();
+      // Reload wind for new zoom profile
+      if (windOn && currentTimeUtcMs !== null) {
+        adapterWindSetTime(currentTimeUtcMs);
+      }
     });
     map.on("resize", function () {
       setTimeout(function() {
         renderNightMaskDebounced();
         if (moonInfoOn && currentTimeUtcMs !== null) {
           layerAdapters.moon.setTime(currentTimeUtcMs);
+        }
+        if (windOn && currentTimeUtcMs !== null) {
+          adapterWindSetTime(currentTimeUtcMs);
         }
       }, 50);
     });
