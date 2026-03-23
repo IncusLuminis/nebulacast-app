@@ -533,9 +533,9 @@
               <input type="checkbox" id="toggleWindDir"> Direction
             </label>
           </div>
-          <div class="layer-row disabled">
+          <div class="layer-row">
             <label>
-              <input type="checkbox" disabled> Pressure <span class="coming-soon">(soon)</span>
+              <input type="checkbox" id="toggleIsobars"> Pressure <span class="layer-freq">3h</span>
             </label>
           </div>
         </div>
@@ -878,6 +878,12 @@
   // Prefetch cache: url → Image (preloaded)
   const cloudCache = {};
 
+  // ── Isobar layer ───────────────────────────────────────────────────────────
+  let isobarOn = false;
+  let isobarOverlay = null;        // L.imageOverlay — transparent WebP contour frame
+  let isobarActiveProfileId = null;
+  let isobarFrameIndex = -1;
+
   // ── Wind layer ─────────────────────────────────────────────────────────────
   let windOn = false;              // off by default per spec
   let windCanvasEl = null;         // <canvas> element in map container
@@ -908,8 +914,9 @@
     satellite: { enabled: true, setTime: null },
     nightMask: { enabled: true, setTime: null },
     moon: { enabled: true, setTime: null },
-    clouds: { enabled: true, setTime: null },
-    wind:   { enabled: false, setTime: null }
+    clouds:  { enabled: true,  setTime: null },
+    isobars: { enabled: false, setTime: null },
+    wind:    { enabled: false, setTime: null }
   };
 
   /**
@@ -1185,6 +1192,7 @@
   layerAdapters.nightMask.setTime = adapterNightMaskSetTime;
   layerAdapters.moon.setTime = adapterMoonSetTime;
   layerAdapters.clouds.setTime = adapterCloudsSetTime;
+  layerAdapters.isobars.setTime = adapterIsobarSetTime;
   layerAdapters.wind.setTime = adapterWindSetTime;
 
   // ── Cloud layer functions (v1.2 — OWM tiles and raster are fully independent) ─
@@ -1302,6 +1310,8 @@
 
         // If wind was toggled on before manifest loaded, start it now
         if (windOn && currentTimeUtcMs !== null) adapterWindSetTime(currentTimeUtcMs);
+        // If isobars were toggled on before manifest loaded, start now
+        if (isobarOn && currentTimeUtcMs !== null) adapterIsobarSetTime(currentTimeUtcMs);
       })
       .catch(function(err) { console.warn("[clouds] manifest load failed:", err); });
   }
@@ -1406,6 +1416,87 @@
       phaseEl.textContent = tlFrame.phase === "history" ? "▶ history"
                           : tlFrame.phase === "current" ? "▶ now"
                           : "▶ forecast";
+    }
+  }
+
+  // ── Isobar layer functions ──────────────────────────────────────────────────
+
+  /** Select best isobar profile for current zoom level. */
+  function selectIsobarProfile(zoom) {
+    if (!cloudManifest) return null;
+    var il = cloudManifest.layers && cloudManifest.layers.isobars;
+    if (!il || !il.profiles) return null;
+    var profiles = il.profiles;
+    for (var i = 0; i < profiles.length; i++) {
+      var p = profiles[i];
+      if (p.available && zoom >= p.zoom_min && zoom <= p.zoom_max) return p;
+    }
+    // fallback: widest available
+    return profiles.reduce(function(best, p) {
+      if (!p.available) return best;
+      return (!best || p.zoom_min < best.zoom_min) ? p : best;
+    }, null);
+  }
+
+  /** On zoom: switch isobar profile if needed. */
+  function checkIsobarProfileSwitch() {
+    if (!cloudManifest || !isobarOverlay) return;
+    var zoom = map ? map.getZoom() : 7;
+    var p = selectIsobarProfile(zoom);
+    if (!p || p.id === isobarActiveProfileId) return;
+    console.log("[isobars] profile switch: " + isobarActiveProfileId + " → " + p.id);
+    isobarActiveProfileId = p.id;
+    isobarOverlay.setBounds(p.bounds);
+    isobarFrameIndex = -1;
+    if (isobarOn && currentTimeUtcMs !== null) adapterIsobarSetTime(currentTimeUtcMs);
+  }
+
+  /** Layer adapter: update isobar overlay to nearest frame for tUtcMs. */
+  function adapterIsobarSetTime(tUtcMs) {
+    if (!isobarOn) return;
+    if (!cloudManifest) {
+      setTimeout(function() { if (isobarOn) adapterIsobarSetTime(tUtcMs); }, 600);
+      return;
+    }
+    var il = cloudManifest.layers && cloudManifest.layers.isobars;
+    if (!il || !il.available || !il.profiles) { return; }
+
+    var zoom = map ? map.getZoom() : 7;
+    var profile = selectIsobarProfile(zoom);
+    if (!profile || !profile.frames) return;
+
+    // Find nearest frame by time (frames have t_utc)
+    var pFrames = profile.frames;
+    var best = 0, bestDiff = Infinity;
+    for (var i = 0; i < pFrames.length; i++) {
+      var diff = Math.abs(new Date(pFrames[i].t_utc).getTime() - tUtcMs);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    var frame = pFrames[best];
+    if (!frame || !frame.available || !frame.asset_url) {
+      if (isobarOverlay && map.hasLayer(isobarOverlay)) map.removeLayer(isobarOverlay);
+      return;
+    }
+
+    if (profile.id !== isobarActiveProfileId) {
+      isobarActiveProfileId = profile.id;
+      if (isobarOverlay) isobarOverlay.setBounds(profile.bounds);
+    }
+
+    if (best === isobarFrameIndex && isobarOverlay) return;
+    isobarFrameIndex = best;
+
+    if (!isobarOverlay) {
+      isobarOverlay = L.imageOverlay(frame.asset_url, profile.bounds, {
+        opacity: (il.render && il.render.opacity) || 0.85,
+        interactive: false,
+        className: "isobar-overlay",
+        zIndex: 260,
+      });
+      isobarOverlay.addTo(map);
+    } else {
+      isobarOverlay.setUrl(frame.asset_url);
+      if (!map.hasLayer(isobarOverlay)) isobarOverlay.addTo(map);
     }
   }
 
@@ -3657,6 +3748,22 @@
       });
     }
 
+    // ── Isobar toggle ───────────────────────────────────────────────────────
+    var isobarCb = document.getElementById("toggleIsobars");
+    if (isobarCb) {
+      isobarCb.checked = isobarOn;
+      isobarCb.addEventListener("change", function () {
+        isobarOn = this.checked;
+        layerAdapters.isobars.enabled = isobarOn;
+        if (isobarOn) {
+          if (currentTimeUtcMs !== null) adapterIsobarSetTime(currentTimeUtcMs);
+        } else {
+          if (isobarOverlay && map.hasLayer(isobarOverlay)) map.removeLayer(isobarOverlay);
+          isobarFrameIndex = -1;
+        }
+        saveLayerState();
+      });
+    }
 
     var gibsCb = document.getElementById("toggleGibs");
     if (gibsCb) {
@@ -3905,9 +4012,14 @@
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
       checkCloudProfileSwitch();
+      checkIsobarProfileSwitch();
       // Reload wind for new zoom profile
       if (windOn && currentTimeUtcMs !== null) {
         adapterWindSetTime(currentTimeUtcMs);
+      }
+      // Reload isobars for new zoom profile
+      if (isobarOn && currentTimeUtcMs !== null) {
+        adapterIsobarSetTime(currentTimeUtcMs);
       }
     });
     map.on("resize", function () {
