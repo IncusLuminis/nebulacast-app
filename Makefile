@@ -4,6 +4,10 @@
 # make news-front — only frontend (HTML/JS)
 # make server     — local HTTP server :8080
 
+# Load .env if present (provides OWM_API_KEY etc.)
+-include .env
+export
+
 .PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back weather-map weather-map-back server deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
 
 # Python: prefer venv if present
