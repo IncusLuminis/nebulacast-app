@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-03-23T01:48:38.298739Z",
+  "generated_utc": "2026-03-23T12:54:46.299791Z",
   "source": "JPL SSD CAD API + JPL Horizons + JPL SBDB",
   "counts": {
     "pha_rows": 0,
-    "ld10_rows": 10,
-    "items": 10
+    "ld10_rows": 11,
+    "items": 11
   },
   "items": [
     {
@@ -20,7 +20,7 @@
       "dec_deg": -42.22393,
       "mag": 18.8,
       "updated_utc": "2026-03-25T02:08:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-25 02:08Z",
         "t_utc_iso": "2026-03-25T02:08:00Z",
@@ -100,7 +100,7 @@
       "dec_deg": -18.94097,
       "mag": 19.07,
       "updated_utc": "2026-03-28T23:17:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-28 23:17Z",
         "t_utc_iso": "2026-03-28T23:17:00Z",
@@ -168,6 +168,86 @@
       }
     },
     {
+      "id": "2026 FX3",
+      "source": "jpl-cad+horizons+sbdb",
+      "group": "neo",
+      "type": "neo",
+      "title": "2026 FX3",
+      "note": "Close approach within 10 lunar distances",
+      "score_raw": 75.87,
+      "score_norm": 0.7587,
+      "ra_deg": 83.03339,
+      "dec_deg": 45.59315,
+      "mag": 18.99,
+      "updated_utc": "2026-03-24T13:08:00Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
+      "meta": {
+        "t_utc": "2026-Mar-24 13:08Z",
+        "t_utc_iso": "2026-03-24T13:08:00Z",
+        "date_local": "2026-03-24",
+        "neo_event_id": "neo:2026 FX3:2026-Mar-24 13:08",
+        "bucket": "10ld",
+        "pha": false,
+        "pha_cad_flag": false,
+        "pha_sbdb_flag": false,
+        "dist_au": 0.0076850320235661,
+        "dist_ld": 2.990802,
+        "v_rel_km_s": 9.67036946468638,
+        "h_cad": 26.061,
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-03-23&date-max=2026-03-30&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-03-23&date-max=2026-03-30&sort=dist&limit=50&dist-max=10LD",
+        "cad_fields_pha": null,
+        "cad_fields_10ld": [
+          "des",
+          "orbit_id",
+          "jd",
+          "cd",
+          "dist",
+          "dist_min",
+          "dist_max",
+          "v_rel",
+          "v_inf",
+          "t_sigma_f",
+          "h"
+        ],
+        "cad_row": [
+          "2026 FX3",
+          "1",
+          "2461124.046994412",
+          "2026-Mar-24 13:08",
+          "0.0076850320235661",
+          "0.00766791218536179",
+          "0.00770215131394858",
+          "9.67036946468638",
+          "9.63444991127749",
+          "< 00:01",
+          "26.061"
+        ],
+        "alt_deg": 61.137926,
+        "az_deg": 85.660575,
+        "horizons_ok": true,
+        "horizons_error": null,
+        "horizons_query": {
+          "id": "2026 FX3",
+          "jd": 2461124.047222222,
+          "site": {
+            "lat": 52.2297,
+            "lon": 21.0122,
+            "elev_km": 0.1
+          }
+        },
+        "sbdb_ok": true,
+        "sbdb_error": null,
+        "sbdb_moid_au": 0.00359,
+        "sbdb_h": null,
+        "sbdb_albedo": null,
+        "sbdb_diameter_km": null,
+        "sbdb_diameter_est_km": 0.02179018729068585,
+        "sbdb_diameter_source": "h_cad",
+        "risk_score": 0.5203
+      }
+    },
+    {
       "id": "2026 FU3",
       "source": "jpl-cad+horizons+sbdb",
       "group": "neo",
@@ -180,7 +260,7 @@
       "dec_deg": 31.48555,
       "mag": 19.37,
       "updated_utc": "2026-03-23T07:09:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-23 07:09Z",
         "t_utc_iso": "2026-03-23T07:09:00Z",
@@ -260,7 +340,7 @@
       "dec_deg": -18.1053,
       "mag": 20.92,
       "updated_utc": "2026-03-24T19:04:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-24 19:04Z",
         "t_utc_iso": "2026-03-24T19:04:00Z",
@@ -340,7 +420,7 @@
       "dec_deg": 13.96383,
       "mag": 19.58,
       "updated_utc": "2026-03-23T11:58:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-23 11:58Z",
         "t_utc_iso": "2026-03-23T11:58:00Z",
@@ -420,7 +500,7 @@
       "dec_deg": 19.12708,
       "mag": 20.68,
       "updated_utc": "2026-03-24T08:41:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-24 08:41Z",
         "t_utc_iso": "2026-03-24T08:41:00Z",
@@ -500,7 +580,7 @@
       "dec_deg": -35.03547,
       "mag": 19.37,
       "updated_utc": "2026-03-26T12:02:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-26 12:02Z",
         "t_utc_iso": "2026-03-26T12:02:00Z",
@@ -580,7 +660,7 @@
       "dec_deg": -48.60425,
       "mag": 20.79,
       "updated_utc": "2026-03-27T05:09:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-27 05:09Z",
         "t_utc_iso": "2026-03-27T05:09:00Z",
@@ -660,7 +740,7 @@
       "dec_deg": -0.418,
       "mag": 19.0,
       "updated_utc": "2026-03-24T15:36:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-24 15:36Z",
         "t_utc_iso": "2026-03-24T15:36:00Z",
@@ -740,7 +820,7 @@
       "dec_deg": -53.68886,
       "mag": 19.6,
       "updated_utc": "2026-03-25T02:12:00Z",
-      "ingested_utc": "2026-03-23T01:48:32.116061Z",
+      "ingested_utc": "2026-03-23T12:54:38.455623Z",
       "meta": {
         "t_utc": "2026-Mar-25 02:12Z",
         "t_utc_iso": "2026-03-25T02:12:00Z",
