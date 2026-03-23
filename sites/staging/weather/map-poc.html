@@ -399,6 +399,19 @@
       pointer-events: none;
       z-index: 400;
     }
+    .isobar-label {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    .isobar-label span {
+      font-size: 9px;
+      font-weight: 500;
+      color: #c8d8e8;
+      text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
+      white-space: nowrap;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -880,8 +893,8 @@
 
   // ── Isobar layer ───────────────────────────────────────────────────────────
   let isobarOn = false;
-  let isobarOverlay = null;        // L.imageOverlay — transparent WebP contour frame
-  let isobarActiveProfileId = null;
+  let isobarGroup = null;          // L.layerGroup holding current frame's L.polylines
+  let isobarFrameCache = {};       // asset_url → parsed JSON
   let isobarFrameIndex = -1;
 
   // ── Wind layer ─────────────────────────────────────────────────────────────
@@ -1423,34 +1436,53 @@
 
   /**
    * Isobars are large-scale features — always use the widest available profile
-   * regardless of zoom. Switching to a smaller region at high zoom leaves almost
-   * no isobars visible (1-2 lines crossing a tiny bbox).
+   * regardless of zoom.
    */
-  function selectIsobarProfile(zoom) {
+  function selectIsobarProfile() {
     if (!cloudManifest) return null;
     var il = cloudManifest.layers && cloudManifest.layers.isobars;
     if (!il || !il.profiles) return null;
-    // Always pick widest bbox (lowest zoom_min)
     return il.profiles.reduce(function(best, p) {
       if (!p.available) return best;
       return (!best || p.zoom_min < best.zoom_min) ? p : best;
     }, null);
   }
 
-  /** On zoom: switch isobar profile if needed. */
-  function checkIsobarProfileSwitch() {
-    if (!cloudManifest || !isobarOverlay) return;
-    var zoom = map ? map.getZoom() : 7;
-    var p = selectIsobarProfile(zoom);
-    if (!p || p.id === isobarActiveProfileId) return;
-    console.log("[isobars] profile switch: " + isobarActiveProfileId + " → " + p.id);
-    isobarActiveProfileId = p.id;
-    isobarOverlay.setBounds(p.bounds);
-    isobarFrameIndex = -1;
-    if (isobarOn && currentTimeUtcMs !== null) adapterIsobarSetTime(currentTimeUtcMs);
+  /** Build Leaflet layer group from isobar JSON data. */
+  function buildIsobarGroup(data) {
+    var group = L.layerGroup();
+    (data.isobars || []).forEach(function(iso) {
+      (iso.paths || []).forEach(function(coords) {
+        L.polyline(coords, {
+          color:         "#c8d8e8",
+          weight:        1,
+          opacity:       0.85,
+          smoothFactor:  1.5,
+          interactive:   false,
+        }).addTo(group);
+      });
+      // Label: place on the longest path for this level
+      if (iso.paths && iso.paths.length > 0) {
+        var longest = iso.paths.reduce(function(a, b) { return b.length > a.length ? b : a; });
+        if (longest.length > 4) {
+          var mid = longest[Math.floor(longest.length / 2)];
+          L.marker(mid, {
+            icon: L.divIcon({
+              className: "isobar-label",
+              html: '<span>' + iso.level + '</span>',
+              iconSize: [28, 12],
+              iconAnchor: [14, 6],
+            }),
+            interactive: false,
+            zIndexOffset: -1000,
+          }).addTo(group);
+        }
+      }
+    });
+    return group;
   }
 
-  /** Layer adapter: update isobar overlay to nearest frame for tUtcMs. */
+  /** Layer adapter: update isobar polylines to nearest frame for tUtcMs. */
   function adapterIsobarSetTime(tUtcMs) {
     if (!isobarOn) return;
     if (!cloudManifest) {
@@ -1458,13 +1490,11 @@
       return;
     }
     var il = cloudManifest.layers && cloudManifest.layers.isobars;
-    if (!il || !il.available || !il.profiles) { return; }
+    if (!il || !il.available || !il.profiles) return;
 
-    var zoom = map ? map.getZoom() : 7;
-    var profile = selectIsobarProfile(zoom);
+    var profile = selectIsobarProfile();
     if (!profile || !profile.frames) return;
 
-    // Find nearest frame by time (frames have t_utc)
     var pFrames = profile.frames;
     var best = 0, bestDiff = Infinity;
     for (var i = 0; i < pFrames.length; i++) {
@@ -1473,30 +1503,29 @@
     }
     var frame = pFrames[best];
     if (!frame || !frame.available || !frame.asset_url) {
-      if (isobarOverlay && map.hasLayer(isobarOverlay)) map.removeLayer(isobarOverlay);
+      if (isobarGroup && map.hasLayer(isobarGroup)) map.removeLayer(isobarGroup);
       return;
     }
-
-    if (profile.id !== isobarActiveProfileId) {
-      isobarActiveProfileId = profile.id;
-      if (isobarOverlay) isobarOverlay.setBounds(profile.bounds);
-    }
-
-    if (best === isobarFrameIndex && isobarOverlay) return;
+    if (best === isobarFrameIndex) return;
     isobarFrameIndex = best;
 
-    if (!isobarOverlay) {
-      isobarOverlay = L.imageOverlay(frame.asset_url, profile.bounds, {
-        opacity: (il.render && il.render.opacity) || 0.85,
-        interactive: false,
-        className: "isobar-overlay",
-        zIndex: 260,
-      });
-      isobarOverlay.addTo(map);
-    } else {
-      isobarOverlay.setUrl(frame.asset_url);
-      if (!map.hasLayer(isobarOverlay)) isobarOverlay.addTo(map);
+    function applyData(data) {
+      if (isobarGroup) map.removeLayer(isobarGroup);
+      isobarGroup = buildIsobarGroup(data);
+      if (isobarOn) isobarGroup.addTo(map);
     }
+
+    if (isobarFrameCache[frame.asset_url]) {
+      applyData(isobarFrameCache[frame.asset_url]);
+      return;
+    }
+    fetch(frame.asset_url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        isobarFrameCache[frame.asset_url] = data;
+        if (isobarOn) applyData(data);
+      })
+      .catch(function(e) { console.warn("[isobars] fetch failed:", e); });
   }
 
   function rainviewerRadarTileUrl(path) {
@@ -3757,7 +3786,7 @@
         if (isobarOn) {
           if (currentTimeUtcMs !== null) adapterIsobarSetTime(currentTimeUtcMs);
         } else {
-          if (isobarOverlay && map.hasLayer(isobarOverlay)) map.removeLayer(isobarOverlay);
+          if (isobarGroup && map.hasLayer(isobarGroup)) map.removeLayer(isobarGroup);
           isobarFrameIndex = -1;
         }
         saveLayerState();

@@ -428,6 +428,95 @@ def render_frame_webp(grid_values: "np.ndarray", dest: Path, blur_radius: int = 
 
 # ── Isobar renderer ───────────────────────────────────────────────────────────
 
+def render_isobar_frame_json(
+    values:      list[float | None],
+    points:      list[tuple[float, float]],
+    bbox:        dict,
+    lat_n:       int,
+    lon_n:       int,
+    render_size: int,
+    dest:        Path,
+) -> bool:
+    """Extract pressure isobar contour lines as lat/lon JSON for Leaflet L.polyline.
+
+    Output: {"isobars": [{"level": 1010, "paths": [[[lat,lon], ...], ...]}, ...]}
+    Polylines rendered by Leaflet always use screen-pixel stroke width — no
+    pixelation or scaling issues at any zoom level.
+    """
+    if not HAS_MPL or not HAS_PIL:
+        return False
+
+    import warnings
+
+    # Build pressure grid (same interpolation + smoothing as SVG renderer)
+    coarse = np.full((lat_n, lon_n), np.nan, dtype=np.float32)
+    for i, (lat, lon) in enumerate(points):
+        if i < len(values) and values[i] is not None:
+            li = round((lat - bbox["lat_min"]) / (bbox["lat_max"] - bbox["lat_min"]) * (lat_n - 1))
+            lj = round((lon - bbox["lon_min"]) / (bbox["lon_max"] - bbox["lon_min"]) * (lon_n - 1))
+            coarse[max(0, min(lat_n - 1, li)), max(0, min(lon_n - 1, lj))] = values[i]
+
+    mask = np.isnan(coarse)
+    if mask.all():
+        return False
+    if mask.any():
+        filled = coarse.copy()
+        rows, cols = np.where(~mask)
+        for r, c in zip(*np.where(mask)):
+            dists   = (rows - r) ** 2 + (cols - c) ** 2
+            nearest = int(np.argmin(dists))
+            filled[r, c] = coarse[rows[nearest], cols[nearest]]
+        coarse = filled
+
+    img_coarse = Image.fromarray(np.flipud(coarse).astype(np.float32), mode="F")
+    img_large  = img_coarse.resize((render_size, render_size), Image.BICUBIC)
+    grid = np.array(img_large, dtype=np.float32)
+
+    p_min, p_max = float(grid.min()), float(grid.max())
+    if p_max > p_min:
+        scaled  = ((grid - p_min) / (p_max - p_min) * 255).astype(np.uint8)
+        blur_r  = max(4, render_size // 50)
+        blurred = Image.fromarray(scaled, mode="L").filter(ImageFilter.GaussianBlur(radius=blur_r))
+        grid    = np.array(blurred, dtype=np.float32) / 255.0 * (p_max - p_min) + p_min
+
+    xs = np.arange(render_size, dtype=np.float32)
+    X, Y = np.meshgrid(xs, xs)
+
+    # Extract contour paths (no rendering — data only)
+    fig = plt.figure(figsize=(1, 1))
+    ax  = fig.add_subplot(111)
+    levels = list(range(950, 1061, 5))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")      # suppress allsegs deprecation warning
+        cs = ax.contour(X, Y, grid, levels=levels)
+        all_segs = cs.allsegs
+    plt.close(fig)
+
+    lat_range = bbox["lat_max"] - bbox["lat_min"]
+    lon_range = bbox["lon_max"] - bbox["lon_min"]
+    MAX_PTS   = 150   # max points per path segment (Douglas-Peucker would be better but this is fast)
+
+    isobars: list[dict] = []
+    for i, level in enumerate(levels):
+        paths: list[list] = []
+        for seg in all_segs[i]:
+            if len(seg) < 2:
+                continue
+            lons = bbox["lon_min"] + seg[:, 0] / render_size * lon_range
+            lats = bbox["lat_max"] - seg[:, 1] / render_size * lat_range  # y=0 → lat_max (flipud)
+            step = max(1, len(lons) // MAX_PTS)
+            path = [[round(float(lats[k]), 3), round(float(lons[k]), 3)]
+                    for k in range(0, len(lons), step)]
+            if len(path) >= 2:
+                paths.append(path)
+        if paths:
+            isobars.append({"level": int(level), "paths": paths})
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps({"isobars": isobars}, separators=(",", ":")), encoding="utf-8")
+    return True
+
+
 def render_isobar_frame_svg(
     values:      list[float | None],
     points:      list[tuple[float, float]],
@@ -637,13 +726,13 @@ def run_profile(
             },
         })
 
-        # ── Isobar frame (SVG — vector, scales without pixelation) ───────────
+        # ── Isobar frame (JSON lat/lon paths → Leaflet L.polyline) ───────────
         iso_values  = isobar_matrix[idx]
-        iso_name    = f"isobar_{idx:03d}.svg"
+        iso_name    = f"isobar_{idx:03d}.json"
         iso_path    = isobar_dir / iso_name
         iso_url     = f"/data/isobars/{pid}/{iso_name}"
 
-        iso_ok = render_isobar_frame_svg(
+        iso_ok = render_isobar_frame_json(
             iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path
         )
         if not iso_ok and iso_path.exists():
