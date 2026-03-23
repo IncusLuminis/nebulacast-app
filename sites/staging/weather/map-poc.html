@@ -1483,7 +1483,7 @@
    * rAF animation loop — advances particle phases and redraws canvas.
    * Speed-scaled: a 10 m/s wind crosses one cell in ~1.6 s.
    */
-  var WIND_PHASE_PER_MS_PER_MS = 0.000070; // phase units / ms / (m/s) → ~1.5s/cycle at 10 m/s
+  var WIND_PHASE_PER_MS_PER_MS = 0.00028; // phase units / ms / (m/s) → ~0.4s/cycle at 10 m/s
 
   function animateWind(ts) {
     if (!windOn || !windCanvasEl) { windRafId = null; windLastTs = null; return; }
@@ -1495,7 +1495,7 @@
     var ctx = windCanvasEl.getContext("2d");
     ctx.clearRect(0, 0, windCanvasEl.width, windCanvasEl.height);
 
-    ctx.lineCap = "round";
+    ctx.fillStyle = "#a8d8ea";
 
     windParticles.forEach(function(p) {
       // Advance phase (wraps 0–1)
@@ -1509,16 +1509,20 @@
 
       // Fade: sin envelope → 0 at cell edges, 1 at centre
       var fade = Math.sin(p.phase * Math.PI);
-      ctx.globalAlpha = 0.18 + 0.72 * fade;
+      ctx.globalAlpha = 0.2 + 0.75 * fade;
 
-      // Streak length scales with speed
-      var halfStreak = 5 + p.speed_ms * 0.6;
-      ctx.lineWidth = 2.0;
-      ctx.strokeStyle = "#a8d8ea";
+      // Arrow size scales with wind speed
+      var sz = 5 + p.speed_ms * 0.5;  // tip half-length
+      var hw = sz * 0.55;             // base half-width
+      var nx = -p.dy, ny = p.dx;      // perpendicular (left of direction)
+
+      // Tip → two base corners
       ctx.beginPath();
-      ctx.moveTo(cx - p.dx * halfStreak, cy - p.dy * halfStreak);
-      ctx.lineTo(cx + p.dx * halfStreak, cy + p.dy * halfStreak);
-      ctx.stroke();
+      ctx.moveTo(cx + p.dx * sz,        cy + p.dy * sz);         // tip
+      ctx.lineTo(cx - p.dx * sz + nx * hw, cy - p.dy * sz + ny * hw); // base-left
+      ctx.lineTo(cx - p.dx * sz - nx * hw, cy - p.dy * sz - ny * hw); // base-right
+      ctx.closePath();
+      ctx.fill();
     });
   }
 
