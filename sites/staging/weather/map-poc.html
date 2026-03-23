@@ -1544,13 +1544,13 @@
 
   /** Load wind frame JSON and start particle animation. Aligned to master timeline. */
   function adapterWindSetTime(tUtcMs) {
-    if (!windOn || !cloudManifest) return;
+    if (!windOn || !cloudManifest) { console.log("[wind] adapterWindSetTime early: windOn=" + windOn + " manifest=" + !!cloudManifest); return; }
     var wl = cloudManifest.layers && cloudManifest.layers.wind;
-    if (!wl || !wl.available || !wl.profiles) { stopWindAnim(); return; }
+    if (!wl || !wl.available || !wl.profiles) { console.log("[wind] adapterWindSetTime early: no wind layer", wl); stopWindAnim(); return; }
 
     var zoom = map ? map.getZoom() : 7;
     var profile = selectWindProfile(zoom);
-    if (!profile || !profile.frames) { stopWindAnim(); return; }
+    if (!profile || !profile.frames) { console.log("[wind] adapterWindSetTime early: no profile for zoom", zoom); stopWindAnim(); return; }
 
     // Find nearest frame by time
     var pFrames = profile.frames;
@@ -1560,7 +1560,8 @@
       if (diff < bestDiff) { bestDiff = diff; best = i; }
     }
     var frame = pFrames[best];
-    if (!frame || !frame.available || !frame.asset_url) { stopWindAnim(); return; }
+    if (!frame || !frame.available || !frame.asset_url) { console.log("[wind] adapterWindSetTime early: no frame", frame); stopWindAnim(); return; }
+    console.log("[wind] fetching/serving frame", frame.asset_url);
 
     if (profile.id !== windActiveProfileId) windActiveProfileId = profile.id;
 
