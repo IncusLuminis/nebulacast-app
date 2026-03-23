@@ -196,6 +196,16 @@
       font-style: italic;
       margin-left: 4px;
     }
+    .wind-sub-opts {
+      margin: 5px 0 0 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .wind-sub-opts label {
+      font-size: 11px;
+      color: var(--muted);
+    }
     .layers-popover .layer-expand-toggle {
       transition: transform 0.2s ease;
     }
@@ -510,6 +520,14 @@
           <div class="layer-row">
             <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h">
               <input type="checkbox" id="toggleWind"> Wind <span class="layer-freq">3h</span>
+            </label>
+          </div>
+          <div class="wind-sub-opts" id="windSubOpts" style="display:none;">
+            <label title="Show wind speed in m/s next to each arrow">
+              <input type="checkbox" id="toggleWindSpeed"> Speed (m/s)
+            </label>
+            <label title="Show wind direction (compass) next to each arrow">
+              <input type="checkbox" id="toggleWindDir"> Direction
             </label>
           </div>
           <div class="layer-row disabled">
@@ -864,6 +882,9 @@
   let windActiveProfileId = null;  // active wind profile id
   let windCurrentVectors = null;   // vectors for current frame
   let windParticles = [];          // animated particle objects
+  let windGridPoints = [];         // static label positions [{bx,by,speed_ms,dir_deg}]
+  let windShowSpeed = false;       // show speed label at each grid point
+  let windShowDir = false;         // show direction label at each grid point
   let windRafId = null;            // requestAnimationFrame handle
   let windLastTs = null;           // last rAF timestamp (for dt)
   let observedAvailable = false;
@@ -1435,9 +1456,16 @@
    * Each grid point → PARTICLES_PER_CELL particles at evenly spaced phase offsets.
    * Particles travel along wind direction, wrapping within a "cell" of cellLen px.
    */
+  /** Convert meteorological FROM-direction degrees to 8-point compass string. */
+  function windDirCompass(deg) {
+    var dirs = ["N","NE","E","SE","S","SW","W","NW"];
+    return dirs[Math.round(((deg % 360) + 360) / 45) % 8];
+  }
+
   function buildWindParticles(vectors) {
     windCurrentVectors = vectors;
     windParticles = [];
+    windGridPoints = [];
     if (!vectors || !vectors.length || !windOn) return;
 
     var PARTICLES_PER_CELL = 5;
@@ -1456,6 +1484,8 @@
       var dy = -Math.cos(angle); // canvas y is down
 
       var cellLen = BASE_CELL_LEN + speed * 1.8; // longer cell at higher speeds
+
+      windGridPoints.push({ lat: v.lat, lon: v.lon, bx: pt.x, by: pt.y, speed_ms: speed, dir_deg: v.dir_deg || 0 });
 
       for (var i = 0; i < PARTICLES_PER_CELL; i++) {
         windParticles.push({
@@ -1476,6 +1506,11 @@
       var pt = map.latLngToContainerPoint([p.lat, p.lon]);
       p.bx = pt.x;
       p.by = pt.y;
+    });
+    windGridPoints.forEach(function(g) {
+      var pt = map.latLngToContainerPoint([g.lat, g.lon]);
+      g.bx = pt.x;
+      g.by = pt.y;
     });
   }
 
@@ -1524,6 +1559,23 @@
       ctx.closePath();
       ctx.fill();
     });
+
+    // Static labels at each visible grid point
+    if ((windShowSpeed || windShowDir) && windGridPoints.length) {
+      ctx.globalAlpha = 0.90;
+      ctx.font = "bold 10px 'Inter', sans-serif";
+      ctx.fillStyle = "#c8ecf4";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "rgba(0,0,0,0.85)";
+      ctx.shadowBlur = 3;
+      windGridPoints.forEach(function(g) {
+        var parts = [];
+        if (windShowSpeed) parts.push(g.speed_ms.toFixed(1));
+        if (windShowDir)   parts.push(windDirCompass(g.dir_deg));
+        ctx.fillText(parts.join("  "), g.bx, g.by - 16);
+      });
+      ctx.shadowBlur = 0;
+    }
   }
 
   function startWindAnim() {
@@ -3555,12 +3607,15 @@
     initCloudLayer();
 
     // ── Wind toggle ────────────────────────────────────────────────────────────
+    var windSubOpts = document.getElementById("windSubOpts");
     var windCb = document.getElementById("toggleWind");
     if (windCb) {
       windCb.checked = windOn;
+      if (windSubOpts) windSubOpts.style.display = windOn ? "" : "none";
       windCb.addEventListener("change", function () {
         windOn = this.checked;
         layerAdapters.wind.enabled = windOn;
+        if (windSubOpts) windSubOpts.style.display = windOn ? "" : "none";
         if (windOn) {
           ensureWindCanvas();
           if (windCanvasEl) windCanvasEl.style.display = "";
@@ -3570,6 +3625,22 @@
           if (windCanvasEl) windCanvasEl.style.display = "none";
         }
         saveLayerState();
+      });
+    }
+
+    var windSpeedCb = document.getElementById("toggleWindSpeed");
+    if (windSpeedCb) {
+      windSpeedCb.checked = windShowSpeed;
+      windSpeedCb.addEventListener("change", function () {
+        windShowSpeed = this.checked;
+      });
+    }
+
+    var windDirCb = document.getElementById("toggleWindDir");
+    if (windDirCb) {
+      windDirCb.checked = windShowDir;
+      windDirCb.addEventListener("change", function () {
+        windShowDir = this.checked;
       });
     }
 
