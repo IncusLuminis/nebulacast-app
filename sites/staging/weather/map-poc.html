@@ -196,6 +196,16 @@
       font-style: italic;
       margin-left: 4px;
     }
+    .wind-sub-opts {
+      margin: 5px 0 0 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .wind-sub-opts label {
+      font-size: 11px;
+      color: var(--muted);
+    }
     .layers-popover .layer-expand-toggle {
       transition: transform 0.2s ease;
     }
@@ -508,8 +518,19 @@
           </div>
           <div style="margin: 8px 0; border-top: 1px solid var(--line);"></div>
           <div class="layer-row">
-            <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h">
+            <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h" style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="layer-expand-toggle" id="windExpandToggle"
+                data-role="wind-sub-toggle" aria-expanded="false" aria-label="Toggle wind options"
+                style="display:flex;background:none;border:none;color:var(--text);cursor:pointer;padding:0;font-size:10px;width:14px;height:14px;align-items:center;justify-content:center;">▶</button>
               <input type="checkbox" id="toggleWind"> Wind <span class="layer-freq">3h</span>
+            </label>
+          </div>
+          <div class="wind-sub-opts" id="windSubOpts" style="display:none;">
+            <label title="Show wind speed in m/s next to each arrow">
+              <input type="checkbox" id="toggleWindSpeed"> Speed (m/s)
+            </label>
+            <label title="Show wind direction (compass) next to each arrow">
+              <input type="checkbox" id="toggleWindDir"> Direction
             </label>
           </div>
           <div class="layer-row disabled">
@@ -858,11 +879,17 @@
   const cloudCache = {};
 
   // ── Wind layer ─────────────────────────────────────────────────────────────
-  let windOn = false;             // off by default per spec
-  let windSvgEl = null;           // <svg> element in map container
-  let windFrameCache = {};        // asset_url → parsed JSON
-  let windActiveProfileId = null; // active wind profile id
-  let windLastVectors = null;     // last successfully drawn vectors (for redraw on pan)
+  let windOn = false;              // off by default per spec
+  let windCanvasEl = null;         // <canvas> element in map container
+  let windFrameCache = {};         // asset_url → parsed JSON
+  let windActiveProfileId = null;  // active wind profile id
+  let windCurrentVectors = null;   // vectors for current frame
+  let windParticles = [];          // animated particle objects
+  let windGridPoints = [];         // static label positions [{bx,by,speed_ms,dir_deg}]
+  let windShowSpeed = false;       // show speed label at each grid point
+  let windShowDir = false;         // show direction label at each grid point
+  let windRafId = null;            // requestAnimationFrame handle
+  let windLastTs = null;           // last rAF timestamp (for dt)
   let observedAvailable = false;
   let radarOn = true;
   let hillshadeOn = true;
@@ -1272,6 +1299,9 @@
         }
 
         if (tl) prefetchCloudFrames(tl.current_index);
+
+        // If wind was toggled on before manifest loaded, start it now
+        if (windOn && currentTimeUtcMs !== null) adapterWindSetTime(currentTimeUtcMs);
       })
       .catch(function(err) { console.warn("[clouds] manifest load failed:", err); });
   }
@@ -1413,104 +1443,172 @@
     }, null);
   }
 
-  /** Create SVG element in map container (not in panes — avoids transform issues). */
-  function ensureWindSvg() {
-    if (windSvgEl) return;
-    windSvgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    windSvgEl.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:450;overflow:visible;";
-    map.getContainer().appendChild(windSvgEl);
+  /** Create <canvas> in map container for animated wind particles. */
+  function ensureWindCanvas() {
+    if (windCanvasEl) return;
+    windCanvasEl = document.createElement("canvas");
+    windCanvasEl.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:450;";
+    var sz = map.getSize();
+    windCanvasEl.width = sz.x || 800;
+    windCanvasEl.height = sz.y || 600;
+    map.getContainer().appendChild(windCanvasEl);
   }
 
-  /** Project vectors and draw SVG arrows. */
-  function drawWindArrows(vectors) {
-    if (!windSvgEl) return;
-    while (windSvgEl.firstChild) windSvgEl.removeChild(windSvgEl.firstChild);
+  /**
+   * Build particle array from wind vectors.
+   * Each grid point → PARTICLES_PER_CELL particles at evenly spaced phase offsets.
+   * Particles travel along wind direction, wrapping within a "cell" of cellLen px.
+   */
+  /** Convert meteorological FROM-direction degrees to 8-point compass string. */
+  function windDirCompass(deg) {
+    var dirs = ["N","NE","E","SE","S","SW","W","NW"];
+    return dirs[Math.round(((deg % 360) + 360) / 45) % 8];
+  }
 
-    if (!vectors || vectors.length === 0 || !windOn) return;
+  function buildWindParticles(vectors) {
+    windCurrentVectors = vectors;
+    windParticles = [];
+    windGridPoints = [];
+    if (!vectors || !vectors.length || !windOn) return;
 
-    var ARROW_MIN = 12;
-    var ARROW_MAX = 22;
-    var SPEED_REF = 15; // m/s → max length
+    var PARTICLES_PER_CELL = 5;
+    var BASE_CELL_LEN = 50; // px — travel distance per phase cycle
+    var sz = map.getSize();
+    var W = sz.x, H = sz.y, PAD = 60;
 
-    windLastVectors = vectors;
-    var containerSize = map.getSize();
-    var W = containerSize.x, H = containerSize.y;
-    var PAD = 40; // px margin — skip points outside viewport
     vectors.forEach(function(v) {
       var pt = map.latLngToContainerPoint([v.lat, v.lon]);
       if (pt.x < -PAD || pt.x > W + PAD || pt.y < -PAD || pt.y > H + PAD) return;
-      var speed = v.speed_ms || 0;
-      var len = ARROW_MIN + (Math.min(speed, SPEED_REF) / SPEED_REF) * (ARROW_MAX - ARROW_MIN);
 
-      // dir_deg = FROM direction; arrow points TO = +180°
-      var angleDeg = (v.dir_deg + 180) % 360;
+      var speed = v.speed_ms || 0;
+      var angleDeg = (v.dir_deg + 180) % 360; // FROM→TO
       var angle = angleDeg * Math.PI / 180;
       var dx = Math.sin(angle);
-      var dy = -Math.cos(angle); // SVG y-axis is down
+      var dy = -Math.cos(angle); // canvas y is down
 
-      var x1 = pt.x - dx * len * 0.45; // tail
-      var y1 = pt.y - dy * len * 0.45;
-      var x2 = pt.x + dx * len * 0.55; // tip
-      var y2 = pt.y + dy * len * 0.55;
+      var cellLen = BASE_CELL_LEN + speed * 1.8; // longer cell at higher speeds
 
-      var hl = len * 0.38; // head length
-      var hw = len * 0.22; // head half-width
-      var nx = -dy, ny = dx; // perpendicular to arrow
+      windGridPoints.push({ lat: v.lat, lon: v.lon, bx: pt.x, by: pt.y, speed_ms: speed, dir_deg: v.dir_deg || 0 });
 
-      // head base point
-      var hx = x2 - dx * hl;
-      var hy = y2 - dy * hl;
-
-      var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
-      var shaft = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      shaft.setAttribute("x1", x1.toFixed(1)); shaft.setAttribute("y1", y1.toFixed(1));
-      shaft.setAttribute("x2", hx.toFixed(1)); shaft.setAttribute("y2", hy.toFixed(1));
-      shaft.setAttribute("stroke", "#a8d8ea");
-      shaft.setAttribute("stroke-width", "1.5");
-      shaft.setAttribute("stroke-linecap", "round");
-
-      var head = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-      head.setAttribute("points", [
-        x2.toFixed(1) + "," + y2.toFixed(1),
-        (hx + nx * hw).toFixed(1) + "," + (hy + ny * hw).toFixed(1),
-        (hx - nx * hw).toFixed(1) + "," + (hy - ny * hw).toFixed(1),
-      ].join(" "));
-      head.setAttribute("fill", "#a8d8ea");
-
-      g.setAttribute("opacity", "0.82");
-      g.appendChild(shaft);
-      g.appendChild(head);
-      windSvgEl.appendChild(g);
+      for (var i = 0; i < PARTICLES_PER_CELL; i++) {
+        windParticles.push({
+          lat: v.lat, lon: v.lon,
+          bx: pt.x, by: pt.y,   // cached base pixel (updated on map.move)
+          dx: dx, dy: dy,
+          speed_ms: speed,
+          cellLen: cellLen,
+          phase: (i / PARTICLES_PER_CELL) + (Math.random() * 0.08 - 0.04), // slight jitter
+        });
+      }
     });
   }
 
-  /** Redraw wind arrows using cached data for the current time. */
-  function redrawWindArrows() {
-    if (!windOn || !cloudManifest) return;
-    var profile = selectWindProfile(map ? map.getZoom() : 7);
-    if (!profile || !profile.frames) return;
-    // Find currently loaded frame
-    var pFrames = profile.frames;
-    for (var i = 0; i < pFrames.length; i++) {
-      var f = pFrames[i];
-      if (f.asset_url && windFrameCache[f.asset_url]) {
-        // Find which frame was last drawn by checking currentTimeUtcMs
-        break;
-      }
-    }
-    if (currentTimeUtcMs !== null) adapterWindSetTime(currentTimeUtcMs);
+  /** Update cached base-pixel positions for all particles (called on map pan). */
+  function updateWindParticlePositions() {
+    windParticles.forEach(function(p) {
+      var pt = map.latLngToContainerPoint([p.lat, p.lon]);
+      p.bx = pt.x;
+      p.by = pt.y;
+    });
+    windGridPoints.forEach(function(g) {
+      var pt = map.latLngToContainerPoint([g.lat, g.lon]);
+      g.bx = pt.x;
+      g.by = pt.y;
+    });
   }
 
-  /** Load wind frame JSON and draw arrows. Aligned to master timeline. */
+  /**
+   * rAF animation loop — advances particle phases and redraws canvas.
+   * Speed-scaled: a 10 m/s wind crosses one cell in ~1.6 s.
+   */
+  var WIND_PHASE_PER_MS_PER_MS = 0.00028; // phase units / ms / (m/s) → ~0.4s/cycle at 10 m/s
+
+  function animateWind(ts) {
+    if (!windOn || !windCanvasEl) { windRafId = null; windLastTs = null; return; }
+    windRafId = requestAnimationFrame(animateWind);
+
+    var dt = windLastTs === null ? 0 : Math.min(ts - windLastTs, 80); // cap at 80 ms
+    windLastTs = ts;
+
+    var ctx = windCanvasEl.getContext("2d");
+    ctx.clearRect(0, 0, windCanvasEl.width, windCanvasEl.height);
+
+    ctx.fillStyle = "#a8d8ea";
+
+    windParticles.forEach(function(p) {
+      // Advance phase (wraps 0–1)
+      p.phase += p.speed_ms * WIND_PHASE_PER_MS_PER_MS * dt;
+      if (p.phase >= 1) p.phase -= 1;
+
+      // Position along cell: phase 0→1 maps to -cellLen/2 → +cellLen/2
+      var offset = (p.phase - 0.5) * p.cellLen;
+      var cx = p.bx + p.dx * offset;
+      var cy = p.by + p.dy * offset;
+
+      // Fade: sin envelope → 0 at cell edges, 1 at centre
+      var fade = Math.sin(p.phase * Math.PI);
+      ctx.globalAlpha = 0.2 + 0.75 * fade;
+
+      // Arrow size scales with wind speed
+      var sz = 5 + p.speed_ms * 0.5;  // tip half-length
+      var hw = sz * 0.55;             // base half-width
+      var nx = -p.dy, ny = p.dx;      // perpendicular (left of direction)
+
+      // Tip → two base corners
+      ctx.beginPath();
+      ctx.moveTo(cx + p.dx * sz,        cy + p.dy * sz);         // tip
+      ctx.lineTo(cx - p.dx * sz + nx * hw, cy - p.dy * sz + ny * hw); // base-left
+      ctx.lineTo(cx - p.dx * sz - nx * hw, cy - p.dy * sz - ny * hw); // base-right
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    // Static labels at each visible grid point
+    if ((windShowSpeed || windShowDir) && windGridPoints.length) {
+      ctx.globalAlpha = 0.90;
+      ctx.font = "bold 10px 'Inter', sans-serif";
+      ctx.fillStyle = "#c8ecf4";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "rgba(0,0,0,0.85)";
+      ctx.shadowBlur = 3;
+      windGridPoints.forEach(function(g) {
+        var parts = [];
+        if (windShowSpeed) parts.push(g.speed_ms.toFixed(1));
+        if (windShowDir)   parts.push(windDirCompass(g.dir_deg));
+        ctx.fillText(parts.join("  "), g.bx, g.by - 16);
+      });
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  function startWindAnim() {
+    if (windRafId) return;
+    windLastTs = null;
+    windRafId = requestAnimationFrame(animateWind);
+  }
+
+  function stopWindAnim() {
+    if (windRafId) { cancelAnimationFrame(windRafId); windRafId = null; }
+    windLastTs = null;
+    if (windCanvasEl) {
+      windCanvasEl.getContext("2d").clearRect(0, 0, windCanvasEl.width, windCanvasEl.height);
+    }
+  }
+
+  /** Load wind frame JSON and start particle animation. Aligned to master timeline. */
   function adapterWindSetTime(tUtcMs) {
-    if (!windOn || !cloudManifest) return;
+    if (!windOn) return;
+    if (!cloudManifest) {
+      // Manifest still loading — retry once it's ready
+      setTimeout(function() { if (windOn) adapterWindSetTime(tUtcMs); }, 600);
+      return;
+    }
     var wl = cloudManifest.layers && cloudManifest.layers.wind;
-    if (!wl || !wl.available || !wl.profiles) { drawWindArrows(null); return; }
+    if (!wl || !wl.available || !wl.profiles) { stopWindAnim(); return; }
 
     var zoom = map ? map.getZoom() : 7;
     var profile = selectWindProfile(zoom);
-    if (!profile || !profile.frames) { drawWindArrows(null); return; }
+    if (!profile || !profile.frames) { stopWindAnim(); return; }
 
     // Find nearest frame by time
     var pFrames = profile.frames;
@@ -1520,20 +1618,21 @@
       if (diff < bestDiff) { bestDiff = diff; best = i; }
     }
     var frame = pFrames[best];
-    if (!frame || !frame.available || !frame.asset_url) { drawWindArrows(null); return; }
+    if (!frame || !frame.available || !frame.asset_url) { stopWindAnim(); return; }
 
     if (profile.id !== windActiveProfileId) windActiveProfileId = profile.id;
 
-    // Serve from cache or fetch
+    // Serve from cache or fetch, then build particles + start animation
     if (windFrameCache[frame.asset_url]) {
-      drawWindArrows(windFrameCache[frame.asset_url].vectors);
+      buildWindParticles(windFrameCache[frame.asset_url].vectors);
+      startWindAnim();
       return;
     }
     fetch(frame.asset_url)
       .then(function(r) { return r.json(); })
       .then(function(data) {
         windFrameCache[frame.asset_url] = data;
-        if (windOn) drawWindArrows(data.vectors);
+        if (windOn) { buildWindParticles(data.vectors); startWindAnim(); }
       })
       .catch(function(e) { console.warn("[wind] fetch failed:", e); });
   }
@@ -3512,24 +3611,52 @@
 
     // ── Wind toggle ────────────────────────────────────────────────────────────
     var windCb = document.getElementById("toggleWind");
+    var windExpandToggle = document.getElementById("windExpandToggle");
+    var windSubOpts = document.getElementById("windSubOpts");
+
+    function setWindSubEnabled(enabled) {
+      if (!windSubOpts) return;
+      windSubOpts.querySelectorAll("input[type='checkbox']").forEach(function(cb) {
+        cb.disabled = !enabled;
+      });
+      windSubOpts.style.opacity = enabled ? "" : "0.45";
+    }
+
     if (windCb) {
       windCb.checked = windOn;
+      setWindSubEnabled(windOn);
       windCb.addEventListener("change", function () {
         windOn = this.checked;
         layerAdapters.wind.enabled = windOn;
+        setWindSubEnabled(windOn);
         if (windOn) {
-          ensureWindSvg();
-          if (windSvgEl) windSvgEl.style.display = "";
+          ensureWindCanvas();
+          if (windCanvasEl) windCanvasEl.style.display = "";
           if (currentTimeUtcMs !== null) adapterWindSetTime(currentTimeUtcMs);
         } else {
-          if (windSvgEl) {
-            windSvgEl.style.display = "none";
-            while (windSvgEl.firstChild) windSvgEl.removeChild(windSvgEl.firstChild);
-          }
+          stopWindAnim();
+          if (windCanvasEl) windCanvasEl.style.display = "none";
         }
         saveLayerState();
       });
     }
+
+    var windSpeedCb = document.getElementById("toggleWindSpeed");
+    if (windSpeedCb) {
+      windSpeedCb.checked = windShowSpeed;
+      windSpeedCb.addEventListener("change", function () {
+        windShowSpeed = this.checked;
+      });
+    }
+
+    var windDirCb = document.getElementById("toggleWindDir");
+    if (windDirCb) {
+      windDirCb.checked = windShowDir;
+      windDirCb.addEventListener("change", function () {
+        windShowDir = this.checked;
+      });
+    }
+
 
     var gibsCb = document.getElementById("toggleGibs");
     if (gibsCb) {
@@ -3702,21 +3829,24 @@
       
       // Expandable legend toggles
       layersPopover.addEventListener("click", function (e) {
-        var toggleBtn = e.target.closest("[data-role=\"radar-legend-toggle\"], [data-role=\"nightmask-legend-toggle\"], [data-role=\"mooninfo-legend-toggle\"]");
+        var toggleBtn = e.target.closest("[data-role=\"radar-legend-toggle\"], [data-role=\"nightmask-legend-toggle\"], [data-role=\"mooninfo-legend-toggle\"], [data-role=\"wind-sub-toggle\"]");
         if (!toggleBtn) return;
         e.preventDefault();
         e.stopPropagation();
-        
+
         var expanded = toggleBtn.getAttribute("aria-expanded") === "true";
         var next = !expanded;
         toggleBtn.setAttribute("aria-expanded", String(next));
         toggleBtn.textContent = next ? "▼" : "▶";
-        
+
         var role = toggleBtn.getAttribute("data-role");
-        var panelRole = role.replace("-toggle", "-panel");
-        var panel = layersPopover.querySelector('[data-role="' + panelRole + '"]');
-        if (panel) {
-          panel.setAttribute("aria-hidden", String(!next));
+        if (role === "wind-sub-toggle") {
+          var windSub = document.getElementById("windSubOpts");
+          if (windSub) windSub.style.display = next ? "flex" : "none";
+        } else {
+          var panelRole = role.replace("-toggle", "-panel");
+          var panel = layersPopover.querySelector('[data-role="' + panelRole + '"]');
+          if (panel) panel.setAttribute("aria-hidden", String(!next));
         }
       });
     }
@@ -3760,10 +3890,8 @@
 
     // Update night mask on map events (also updates moon info when center changes)
     map.on("move", function () {
-      // Redraw wind arrows using cached vectors during panning (synchronous)
-      if (windOn && windSvgEl && windLastVectors) {
-        drawWindArrows(windLastVectors);
-      }
+      // Update particle base-pixel positions when map pans (rAF loop handles redraw)
+      if (windOn && windParticles.length) updateWindParticlePositions();
     });
     map.on("moveend", function () {
       renderNightMaskDebounced();
@@ -3787,6 +3915,11 @@
         renderNightMaskDebounced();
         if (moonInfoOn && currentTimeUtcMs !== null) {
           layerAdapters.moon.setTime(currentTimeUtcMs);
+        }
+        if (windCanvasEl) {
+          var sz = map.getSize();
+          windCanvasEl.width = sz.x;
+          windCanvasEl.height = sz.y;
         }
         if (windOn && currentTimeUtcMs !== null) {
           adapterWindSetTime(currentTimeUtcMs);
