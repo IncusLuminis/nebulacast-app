@@ -1275,6 +1275,9 @@
         }
 
         if (tl) prefetchCloudFrames(tl.current_index);
+
+        // If wind was toggled on before manifest loaded, start it now
+        if (windOn && currentTimeUtcMs !== null) adapterWindSetTime(currentTimeUtcMs);
       })
       .catch(function(err) { console.warn("[clouds] manifest load failed:", err); });
   }
@@ -1422,9 +1425,10 @@
     windCanvasEl = document.createElement("canvas");
     windCanvasEl.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:450;";
     var sz = map.getSize();
-    windCanvasEl.width = sz.x;
-    windCanvasEl.height = sz.y;
+    windCanvasEl.width = sz.x || 800;
+    windCanvasEl.height = sz.y || 600;
     map.getContainer().appendChild(windCanvasEl);
+    console.log("[wind] canvas created", windCanvasEl.width, "×", windCanvasEl.height);
   }
 
   /**
@@ -1442,9 +1446,11 @@
     var sz = map.getSize();
     var W = sz.x, H = sz.y, PAD = 60;
 
+    var inView = 0;
     vectors.forEach(function(v) {
       var pt = map.latLngToContainerPoint([v.lat, v.lon]);
       if (pt.x < -PAD || pt.x > W + PAD || pt.y < -PAD || pt.y > H + PAD) return;
+      inView++;
 
       var speed = v.speed_ms || 0;
       var angleDeg = (v.dir_deg + 180) % 360; // FROM→TO
@@ -1465,6 +1471,7 @@
         });
       }
     });
+    console.log("[wind] buildParticles: vectors=" + vectors.length + " inView=" + inView + " particles=" + windParticles.length);
   }
 
   /** Update cached base-pixel positions for all particles (called on map pan). */
@@ -1482,9 +1489,11 @@
    */
   var WIND_PHASE_PER_MS_PER_MS = 0.000018; // phase units / ms / (m/s)
 
+  var _windAnimFrameCount = 0;
   function animateWind(ts) {
     if (!windOn || !windCanvasEl) { windRafId = null; windLastTs = null; return; }
     windRafId = requestAnimationFrame(animateWind);
+    if (_windAnimFrameCount++ < 3) console.log("[wind] animateWind frame", _windAnimFrameCount, "particles:", windParticles.length, "canvas:", windCanvasEl.width, "×", windCanvasEl.height);
 
     var dt = windLastTs === null ? 0 : Math.min(ts - windLastTs, 80); // cap at 80 ms
     windLastTs = ts;
