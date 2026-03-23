@@ -1,9 +1,10 @@
 """
-gen_weather_map.py — Cloud Layer Pipeline v1.2
+gen_weather_map.py — Cloud + Wind Layer Pipeline v1.4
 
-Generates zoom-aware cloud profiles:
+Generates zoom-aware cloud profiles and wind vector frames:
   - sites/staging/data/clouds/{profile_id}/cloud_NNN.webp  (121 frames × 3 profiles)
-  - sites/staging/data/weather_map_now.json   (data contract v1.2)
+  - sites/staging/data/wind/{profile_id}/wind_NNN.json     (121 frames × 3 profiles)
+  - sites/staging/data/weather_map_now.json   (data contract v1.3)
 
 Hybrid cloud architecture (spec #266):
   world_external — zoom 0–5  — external tile layer (OpenWeatherMap), no frames generated
@@ -42,6 +43,7 @@ REPO_ROOT  = Path(__file__).resolve().parents[3]
 STAGING    = REPO_ROOT / "sites" / "staging"
 DATA_DIR   = STAGING / "data"
 CLOUDS_DIR = DATA_DIR / "clouds"
+WIND_DIR   = DATA_DIR / "wind"
 OUT_JSON   = DATA_DIR / "weather_map_now.json"
 
 # ── Profile definitions ───────────────────────────────────────────────────────
@@ -49,34 +51,43 @@ OUT_JSON   = DATA_DIR / "weather_map_now.json"
 # Internal raster profiles (pipeline generates WebP frames for these)
 PROFILES: list[dict] = [
     {
-        "id":          "eu_wide",
-        "zoom_min":    6,
-        "zoom_max":    8,
-        "bbox":        {"lat_min": 30.0, "lat_max": 72.0, "lon_min": -15.0, "lon_max": 50.0},
-        "grid_lat_n":  6,
-        "grid_lon_n":  8,   # wider bbox → more lon samples
-        "render_size": 256,
-        "blur_radius": 4,
+        "id":               "eu_wide",
+        "zoom_min":         6,
+        "zoom_max":         8,
+        "bbox":             {"lat_min": 30.0, "lat_max": 72.0, "lon_min": -15.0, "lon_max": 50.0},
+        "grid_lat_n":       6,
+        "grid_lon_n":       8,   # wider bbox → more lon samples
+        # Wind uses a denser grid (step ~2°lat × 4°lon) → ~20 arrows visible at zoom 7
+        "wind_grid_lat_n":  22,
+        "wind_grid_lon_n":  18,
+        "render_size":      256,
+        "blur_radius":      4,
     },
     {
-        "id":          "eu_central",
-        "zoom_min":    9,
-        "zoom_max":    11,
-        "bbox":        {"lat_min": 45.0, "lat_max": 60.0, "lon_min":  5.0, "lon_max": 35.0},
-        "grid_lat_n":  6,
-        "grid_lon_n":  6,
-        "render_size": 256,
-        "blur_radius": 3,
+        "id":               "eu_central",
+        "zoom_min":         9,
+        "zoom_max":         11,
+        "bbox":             {"lat_min": 45.0, "lat_max": 60.0, "lon_min":  5.0, "lon_max": 35.0},
+        "grid_lat_n":       6,
+        "grid_lon_n":       6,
+        # Wind: step ~0.75°lat × 1.5°lon → fine enough for zoom 9-11
+        "wind_grid_lat_n":  21,
+        "wind_grid_lon_n":  21,
+        "render_size":      256,
+        "blur_radius":      3,
     },
     {
-        "id":          "local",
-        "zoom_min":    12,
-        "zoom_max":    18,
-        "bbox":        {"lat_min": 48.0, "lat_max": 57.0, "lon_min": 12.0, "lon_max": 30.0},
-        "grid_lat_n":  6,
-        "grid_lon_n":  6,
-        "render_size": 256,
-        "blur_radius": 2,
+        "id":               "local",
+        "zoom_min":         12,
+        "zoom_max":         18,
+        "bbox":             {"lat_min": 48.0, "lat_max": 57.0, "lon_min": 12.0, "lon_max": 30.0},
+        "grid_lat_n":       6,
+        "grid_lon_n":       6,
+        # Wind: step ~0.5°lat × 1°lon → detailed for zoom 12+
+        "wind_grid_lat_n":  19,
+        "wind_grid_lon_n":  19,
+        "render_size":      256,
+        "blur_radius":      2,
     },
 ]
 
@@ -120,20 +131,26 @@ def fetch_open_meteo(
     points: list[tuple[float, float]],
     past_days: int = 2,
     forecast_days: int = 3,
+    variables: str = "cloud_cover,wind_speed_10m,wind_direction_10m",
 ) -> list[dict]:
-    """Fetch hourly cloud_cover for all grid points in batches of 10."""
+    """Fetch hourly fields for all grid points in batches of 10.
+
+    variables: comma-separated Open-Meteo hourly fields to request.
+    Returns list of dicts with keys: lat, lon, times, cloud_cover, wind_speed, wind_direction.
+    Missing variables are returned as empty lists.
+    """
     results = []
     BATCH = 10
     for i in range(0, len(points), BATCH):
         batch = points[i:i + BATCH]
         params = {
-            "latitude":       ",".join(f"{p[0]:.4f}" for p in batch),
-            "longitude":      ",".join(f"{p[1]:.4f}" for p in batch),
-            "hourly":         "cloud_cover",
-            "past_days":      str(past_days),
-            "forecast_days":  str(forecast_days),
-            "timeformat":     "unixtime",
-            "timezone":       "UTC",
+            "latitude":        ",".join(f"{p[0]:.4f}" for p in batch),
+            "longitude":       ",".join(f"{p[1]:.4f}" for p in batch),
+            "hourly":          variables,
+            "past_days":       str(past_days),
+            "forecast_days":   str(forecast_days),
+            "timeformat":      "unixtime",
+            "timezone":        "UTC",
             "wind_speed_unit": "ms",
         }
         url = OM_BASE + "?" + urllib.parse.urlencode(params)
@@ -143,7 +160,10 @@ def fetch_open_meteo(
         except Exception as e:
             print(f"  [warn] Open-Meteo batch {i // BATCH} failed: {e}", flush=True)
             for lat, lon in batch:
-                results.append({"lat": lat, "lon": lon, "times": [], "cloud_cover": []})
+                results.append({
+                    "lat": lat, "lon": lon, "times": [],
+                    "cloud_cover": [], "wind_speed": [], "wind_direction": [],
+                })
             continue
 
         if isinstance(data, dict):
@@ -152,10 +172,12 @@ def fetch_open_meteo(
             lat, lon = batch[j]
             hourly = point_data.get("hourly", {})
             results.append({
-                "lat":         lat,
-                "lon":         lon,
-                "times":       hourly.get("time", []),
-                "cloud_cover": hourly.get("cloud_cover", []),
+                "lat":            lat,
+                "lon":            lon,
+                "times":          hourly.get("time", []),
+                "cloud_cover":    hourly.get("cloud_cover", []),
+                "wind_speed":     hourly.get("wind_speed_10m", []),
+                "wind_direction": hourly.get("wind_direction_10m", []),
             })
         time.sleep(0.1)
 
@@ -183,6 +205,74 @@ def slot_confidence(idx: int) -> str:
     if idx <= CURRENT_IDX:      return "high"
     if idx - CURRENT_IDX <= 36: return "medium"
     return "low"
+
+
+# ── Wind vector builder ────────────────────────────────────────────────────────
+
+def build_wind_timeseries(
+    grid_data: list[dict],
+    timeline:  list[datetime],
+) -> list[list[dict | None]]:
+    """
+    Build matrix[frame_idx][point_idx] = {dir_deg, speed_ms} or None.
+    Uses same time-matching logic as cloud timeseries.
+    """
+    spd_lookups: list[dict[int, float]] = []
+    dir_lookups: list[dict[int, float]] = []
+    for pd in grid_data:
+        spd_lut: dict[int, float] = {}
+        dir_lut: dict[int, float] = {}
+        for t, s, d in zip(pd["times"], pd.get("wind_speed", []), pd.get("wind_direction", [])):
+            if s is not None:
+                spd_lut[int(t)] = float(s)
+            if d is not None:
+                dir_lut[int(t)] = float(d)
+        spd_lookups.append(spd_lut)
+        dir_lookups.append(dir_lut)
+
+    matrix: list[list[dict | None]] = []
+    for slot_dt in timeline:
+        unix = int(slot_dt.timestamp())
+        row: list[dict | None] = []
+        for pi in range(len(grid_data)):
+            spd = spd_lookups[pi].get(unix)
+            dir_ = dir_lookups[pi].get(unix)
+            if spd is None or dir_ is None:
+                for delta in range(1, 31):
+                    if spd is None:
+                        spd = spd_lookups[pi].get(unix + delta * 60) or spd_lookups[pi].get(unix - delta * 60)
+                    if dir_ is None:
+                        dir_ = dir_lookups[pi].get(unix + delta * 60) or dir_lookups[pi].get(unix - delta * 60)
+                    if spd is not None and dir_ is not None:
+                        break
+            row.append({"dir_deg": round(dir_, 1), "speed_ms": round(spd, 1)} if spd is not None and dir_ is not None else None)
+        matrix.append(row)
+    return matrix
+
+
+def build_wind_frame_json(
+    wind_row:   list[dict | None],
+    points:     list[tuple[float, float]],
+    idx:        int,
+    slot_dt:    datetime,
+) -> dict:
+    """Build a single wind frame dict with vector list."""
+    vectors = []
+    for i, (lat, lon) in enumerate(points):
+        w = wind_row[i]
+        if w is not None:
+            vectors.append({
+                "lat":      round(lat, 4),
+                "lon":      round(lon, 4),
+                "dir_deg":  w["dir_deg"],
+                "speed_ms": w["speed_ms"],
+            })
+    return {
+        "index":    idx,
+        "t_utc":    slot_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "available": len(vectors) > 0,
+        "vectors":  vectors,
+    }
 
 
 # ── Grid → raster ─────────────────────────────────────────────────────────────
@@ -319,39 +409,62 @@ def run_profile(
     timeline:      list[datetime],
     past_days:     int = 2,
     forecast_days: int = 3,
-) -> tuple[list[dict], int, int]:
+) -> tuple[list[dict], list[dict], int, int]:
     """
     Run full pipeline for one profile.
-    Returns (frame_refs, rendered_count, skipped_count).
-    frame_refs: [{index, available, asset_url}]
+    Returns (cloud_frame_refs, wind_frame_refs, rendered_count, skipped_count).
+    cloud_frame_refs: [{index, available, asset_url}]
+    wind_frame_refs:  [{index, t_utc, available, asset_type, asset_url}]
     """
     pid         = profile["id"]
     bbox        = profile["bbox"]
     lat_n       = profile["grid_lat_n"]
     lon_n       = profile["grid_lon_n"]
+    wind_lat_n  = profile.get("wind_grid_lat_n", lat_n)
+    wind_lon_n  = profile.get("wind_grid_lon_n", lon_n)
     render_size = profile.get("render_size", 256)
     blur_radius = profile.get("blur_radius", 3)
 
     print(f"\n[weather-map] Profile: {pid}  zoom {profile['zoom_min']}–{profile['zoom_max']}", flush=True)
     print(f"  bbox: lat {bbox['lat_min']}–{bbox['lat_max']}, lon {bbox['lon_min']}–{bbox['lon_max']}", flush=True)
 
+    # Cloud grid (coarse — used for raster interpolation)
     points    = build_grid(bbox, lat_n, lon_n)
-    print(f"  Grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
-
+    print(f"  Cloud grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
     grid_data = fetch_open_meteo(points, past_days, forecast_days)
-    print(f"  Fetched {len(grid_data)} series", flush=True)
+    print(f"  Fetched {len(grid_data)} cloud series", flush=True)
 
-    matrix      = build_point_timeseries(grid_data, timeline)
-    profile_dir = CLOUDS_DIR / pid
-    profile_dir.mkdir(parents=True, exist_ok=True)
+    cloud_matrix = build_point_timeseries(grid_data, timeline)
 
-    frame_refs: list[dict] = []
+    # Wind grid (denser — used for SVG arrow layer)
+    if wind_lat_n != lat_n or wind_lon_n != lon_n:
+        wind_points = build_grid(bbox, wind_lat_n, wind_lon_n)
+        print(f"  Wind grid:  {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
+        wind_grid_data = fetch_open_meteo(
+            wind_points, past_days, forecast_days,
+            variables="wind_speed_10m,wind_direction_10m",
+        )
+        print(f"  Fetched {len(wind_grid_data)} wind series", flush=True)
+    else:
+        wind_points    = points
+        wind_grid_data = grid_data
+
+    wind_matrix = build_wind_timeseries(wind_grid_data, timeline)
+
+    cloud_dir = CLOUDS_DIR / pid
+    wind_dir  = WIND_DIR / pid
+    cloud_dir.mkdir(parents=True, exist_ok=True)
+    wind_dir.mkdir(parents=True, exist_ok=True)
+
+    cloud_refs: list[dict] = []
+    wind_refs:  list[dict] = []
     rendered = skipped = 0
 
     for idx, slot_dt in enumerate(timeline):
-        values     = matrix[idx]
+        # ── Cloud frame ───────────────────────────────────────────────────────
+        values     = cloud_matrix[idx]
         frame_name = f"cloud_{idx:03d}.webp"
-        frame_path = profile_dir / frame_name
+        frame_path = cloud_dir / frame_name
         asset_url  = f"/data/clouds/{pid}/{frame_name}"
 
         grid      = interpolate_frame(values, points, bbox, lat_n, lon_n, render_size)
@@ -366,24 +479,51 @@ def run_profile(
             if frame_path.exists():
                 frame_path.unlink()
 
-        frame_refs.append({
+        cloud_refs.append({
             "index":     idx,
             "available": available,
             "asset_url": asset_url if available else None,
         })
 
+        # ── Wind frame ────────────────────────────────────────────────────────
+        wind_frame = build_wind_frame_json(wind_matrix[idx], wind_points, idx, slot_dt)
+        wind_name  = f"wind_{idx:03d}.json"
+        wind_path  = wind_dir / wind_name
+        wind_url   = f"/data/wind/{pid}/{wind_name}"
+
+        if wind_frame["available"]:
+            with open(wind_path, "w", encoding="utf-8") as wf:
+                json.dump(wind_frame, wf, separators=(",", ":"))
+        elif wind_path.exists():
+            wind_path.unlink()
+
+        wind_refs.append({
+            "index":      idx,
+            "t_utc":      wind_frame["t_utc"],
+            "available":  wind_frame["available"],
+            "asset_type": "vector",
+            "asset_url":  wind_url if wind_frame["available"] else None,
+            "meta": {
+                "source_name":   "open-meteo",
+                "wind_unit":     "m/s",
+                "density_mode":  "full_grid",
+                "vector_count":  len(wind_frame["vectors"]),
+            },
+        })
+
         if idx % 20 == 0:
             print(f"  [{pid}][{idx:3d}/{len(timeline)}] {slot_dt.strftime('%Y-%m-%d %H:%M')} UTC", flush=True)
 
-    print(f"  [{pid}] rendered={rendered} skipped={skipped}", flush=True)
-    return frame_refs, rendered, skipped
+    wind_available = sum(1 for r in wind_refs if r["available"])
+    print(f"  [{pid}] clouds: rendered={rendered} skipped={skipped}  wind: {wind_available}/{len(wind_refs)} frames", flush=True)
+    return cloud_refs, wind_refs, rendered, skipped
 
 
 # ── Main pipeline ─────────────────────────────────────────────────────────────
 
 def run() -> None:
     t0 = time.time()
-    print("[weather-map] Starting cloud layer pipeline v1.1", flush=True)
+    print("[weather-map] Starting cloud + wind layer pipeline v1.4", flush=True)
 
     if not HAS_PIL:
         print("[weather-map] ERROR: Pillow/numpy not installed. Run: pip install Pillow numpy", flush=True)
@@ -407,6 +547,7 @@ def run() -> None:
 
     # Run each profile
     profile_manifests: list[dict] = []
+    wind_profile_manifests: list[dict] = []
     total_rendered = total_skipped = 0
 
     # Build world_external profile entry (no pipeline run, just metadata)
@@ -439,7 +580,7 @@ def run() -> None:
         print(f"[weather-map] External profile: world_external (OWM_API_KEY not set → available=false)", flush=True)
 
     for profile in PROFILES:
-        frame_refs, rendered, skipped = run_profile(profile, timeline)
+        cloud_refs, wind_refs, rendered, skipped = run_profile(profile, timeline)
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]
@@ -454,7 +595,7 @@ def run() -> None:
             "width":            profile.get("render_size", 256),
             "height":           profile.get("render_size", 256),
             "available":        rendered > 0,
-            "frames":           frame_refs,
+            "frames":           cloud_refs,
             "meta": {
                 "source_kind":   "internal_raster",
                 "source_name":   "nebulacast/open-meteo",
@@ -463,13 +604,23 @@ def run() -> None:
                 "source_owned":  True,
             },
         })
+        wind_available = sum(1 for r in wind_refs if r["available"])
+        wind_profile_manifests.append({
+            "id":        profile["id"],
+            "zoom_min":  profile["zoom_min"],
+            "zoom_max":  profile["zoom_max"],
+            "bbox":      bbox,
+            "bounds":    [[bbox["lat_min"], bbox["lon_min"]], [bbox["lat_max"], bbox["lon_max"]]],
+            "available": wind_available > 0,
+            "frames":    wind_refs,
+        })
 
     elapsed = time.time() - t0
     print(f"\n[weather-map] Total: rendered={total_rendered} skipped={total_skipped}  ({elapsed:.1f}s)", flush=True)
 
     now_utc  = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     contract = {
-        "schema_version": "1.2",
+        "schema_version": "1.4",
         "updated_utc":    now_utc,
         "source": {
             "domain":   "weather",
@@ -496,7 +647,18 @@ def run() -> None:
                 "profiles": profile_manifests,
             },
             "isobars": {"id": "isobars", "enabled_by_default": False, "available": False},
-            "wind":    {"id": "wind",    "enabled_by_default": False, "available": False},
+            "wind": {
+                "id":                 "wind",
+                "enabled_by_default": False,
+                "available":          any(pm["available"] for pm in wind_profile_manifests),
+                "opacity":            0.80,
+                "profiles":           wind_profile_manifests,
+                "meta": {
+                    "source_name":  "open-meteo",
+                    "wind_unit":    "m/s",
+                    "asset_type":   "vector",
+                },
+            },
         },
         "playback": {
             "player_id":         "global_time_player",
