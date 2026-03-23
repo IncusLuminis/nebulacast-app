@@ -1440,8 +1440,8 @@
     windParticles = [];
     if (!vectors || !vectors.length || !windOn) return;
 
-    var PARTICLES_PER_CELL = 4;
-    var BASE_CELL_LEN = 38; // px — travel distance per phase cycle
+    var PARTICLES_PER_CELL = 5;
+    var BASE_CELL_LEN = 50; // px — travel distance per phase cycle
     var sz = map.getSize();
     var W = sz.x, H = sz.y, PAD = 60;
 
@@ -1483,7 +1483,7 @@
    * rAF animation loop — advances particle phases and redraws canvas.
    * Speed-scaled: a 10 m/s wind crosses one cell in ~1.6 s.
    */
-  var WIND_PHASE_PER_MS_PER_MS = 0.000018; // phase units / ms / (m/s)
+  var WIND_PHASE_PER_MS_PER_MS = 0.000070; // phase units / ms / (m/s) → ~1.5s/cycle at 10 m/s
 
   function animateWind(ts) {
     if (!windOn || !windCanvasEl) { windRafId = null; windLastTs = null; return; }
@@ -1512,8 +1512,8 @@
       ctx.globalAlpha = 0.18 + 0.72 * fade;
 
       // Streak length scales with speed
-      var halfStreak = 4 + p.speed_ms * 0.35;
-      ctx.lineWidth = 1.6;
+      var halfStreak = 5 + p.speed_ms * 0.6;
+      ctx.lineWidth = 2.0;
       ctx.strokeStyle = "#a8d8ea";
       ctx.beginPath();
       ctx.moveTo(cx - p.dx * halfStreak, cy - p.dy * halfStreak);
