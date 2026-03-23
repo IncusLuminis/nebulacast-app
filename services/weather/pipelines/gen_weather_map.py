@@ -72,7 +72,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  18,
         "render_size":      256,
         "blur_radius":      4,
-        "isobar_render_size": 512,
+        "isobar_render_size": 2048,
     },
     {
         "id":               "eu_central",
@@ -86,7 +86,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  21,
         "render_size":      256,
         "blur_radius":      3,
-        "isobar_render_size": 512,
+        "isobar_render_size": 2048,
     },
     {
         "id":               "local",
@@ -100,7 +100,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  19,
         "render_size":      256,
         "blur_radius":      2,
-        "isobar_render_size": 512,
+        "isobar_render_size": 2048,
     },
 ]
 
@@ -476,17 +476,18 @@ def render_isobar_frame_webp(
     # Gaussian smooth to eliminate sharp kinks — blur on uint8 then rescale back
     p_min, p_max = float(grid.min()), float(grid.max())
     if p_max > p_min:
-        scaled = ((grid - p_min) / (p_max - p_min) * 255).astype(np.uint8)
-        blurred = Image.fromarray(scaled, mode="L").filter(ImageFilter.GaussianBlur(radius=10))
-        grid = np.array(blurred, dtype=np.float32) / 255.0 * (p_max - p_min) + p_min
+        scaled  = ((grid - p_min) / (p_max - p_min) * 255).astype(np.uint8)
+        blur_r  = max(4, render_size // 50)   # scales with image size (≈40px at 2048)
+        blurred = Image.fromarray(scaled, mode="L").filter(ImageFilter.GaussianBlur(radius=blur_r))
+        grid    = np.array(blurred, dtype=np.float32) / 255.0 * (p_max - p_min) + p_min
 
     # Use pixel-space coordinates for contour (axes cover 0..render_size)
     xs = np.arange(render_size, dtype=np.float32)
     ys = np.arange(render_size, dtype=np.float32)
     X, Y = np.meshgrid(xs, ys)
 
-    dpi      = 100
-    fig_size = render_size / dpi          # inches
+    dpi      = 200
+    fig_size = render_size / dpi          # inches (2048/200 = 10.24")
     fig, ax  = plt.subplots(figsize=(fig_size, fig_size), dpi=dpi)
     fig.patch.set_alpha(0.0)
     ax.set_facecolor((0.0, 0.0, 0.0, 0.0))
@@ -497,8 +498,8 @@ def render_isobar_frame_webp(
 
     levels = list(range(950, 1061, 5))
     try:
-        cs = ax.contour(X, Y, grid, levels=levels, colors="#c8d8e8", linewidths=0.4)
-        ax.clabel(cs, levels[::4], inline=True, fontsize=5, colors="#c8d8e8", fmt="%d")
+        cs = ax.contour(X, Y, grid, levels=levels, colors="#c8d8e8", linewidths=0.6)
+        ax.clabel(cs, levels[::4], inline=True, fontsize=7, colors="#c8d8e8", fmt="%d")
     except Exception as exc:
         plt.close(fig)
         print(f"  [warn] isobar contour failed: {exc}", flush=True)
