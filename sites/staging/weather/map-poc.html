@@ -521,6 +521,9 @@
             <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h">
               <input type="checkbox" id="toggleWind"> Wind <span class="layer-freq">3h</span>
             </label>
+            <button type="button" class="layer-expand-toggle" id="windExpandToggle"
+              data-role="wind-sub-toggle" aria-expanded="false" aria-label="Toggle wind options"
+              style="display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:0;font-size:10px;width:14px;height:14px;align-items:center;justify-content:center;">▶</button>
           </div>
           <div class="wind-sub-opts" id="windSubOpts" style="display:none;">
             <label title="Show wind speed in m/s next to each arrow">
@@ -3607,15 +3610,27 @@
     initCloudLayer();
 
     // ── Wind toggle ────────────────────────────────────────────────────────────
-    var windSubOpts = document.getElementById("windSubOpts");
     var windCb = document.getElementById("toggleWind");
+    var windExpandToggle = document.getElementById("windExpandToggle");
+    var windSubOpts = document.getElementById("windSubOpts");
+
+    function setWindExpandVisible(visible) {
+      if (windExpandToggle) windExpandToggle.style.display = visible ? "flex" : "none";
+      if (!visible && windExpandToggle) {
+        // collapse when wind turns off
+        windExpandToggle.setAttribute("aria-expanded", "false");
+        windExpandToggle.textContent = "▶";
+        if (windSubOpts) windSubOpts.style.display = "none";
+      }
+    }
+
     if (windCb) {
       windCb.checked = windOn;
-      if (windSubOpts) windSubOpts.style.display = windOn ? "" : "none";
+      setWindExpandVisible(windOn);
       windCb.addEventListener("change", function () {
         windOn = this.checked;
         layerAdapters.wind.enabled = windOn;
-        if (windSubOpts) windSubOpts.style.display = windOn ? "" : "none";
+        setWindExpandVisible(windOn);
         if (windOn) {
           ensureWindCanvas();
           if (windCanvasEl) windCanvasEl.style.display = "";
@@ -3815,21 +3830,24 @@
       
       // Expandable legend toggles
       layersPopover.addEventListener("click", function (e) {
-        var toggleBtn = e.target.closest("[data-role=\"radar-legend-toggle\"], [data-role=\"nightmask-legend-toggle\"], [data-role=\"mooninfo-legend-toggle\"]");
+        var toggleBtn = e.target.closest("[data-role=\"radar-legend-toggle\"], [data-role=\"nightmask-legend-toggle\"], [data-role=\"mooninfo-legend-toggle\"], [data-role=\"wind-sub-toggle\"]");
         if (!toggleBtn) return;
         e.preventDefault();
         e.stopPropagation();
-        
+
         var expanded = toggleBtn.getAttribute("aria-expanded") === "true";
         var next = !expanded;
         toggleBtn.setAttribute("aria-expanded", String(next));
         toggleBtn.textContent = next ? "▼" : "▶";
-        
+
         var role = toggleBtn.getAttribute("data-role");
-        var panelRole = role.replace("-toggle", "-panel");
-        var panel = layersPopover.querySelector('[data-role="' + panelRole + '"]');
-        if (panel) {
-          panel.setAttribute("aria-hidden", String(!next));
+        if (role === "wind-sub-toggle") {
+          var windSub = document.getElementById("windSubOpts");
+          if (windSub) windSub.style.display = next ? "flex" : "none";
+        } else {
+          var panelRole = role.replace("-toggle", "-panel");
+          var panel = layersPopover.querySelector('[data-role="' + panelRole + '"]');
+          if (panel) panel.setAttribute("aria-hidden", String(!next));
         }
       });
     }
