@@ -1544,7 +1544,12 @@
 
   /** Load wind frame JSON and start particle animation. Aligned to master timeline. */
   function adapterWindSetTime(tUtcMs) {
-    if (!windOn || !cloudManifest) { console.log("[wind] adapterWindSetTime early: windOn=" + windOn + " manifest=" + !!cloudManifest); return; }
+    if (!windOn) return;
+    if (!cloudManifest) {
+      // Manifest still loading — retry once it's ready
+      setTimeout(function() { if (windOn) adapterWindSetTime(tUtcMs); }, 600);
+      return;
+    }
     var wl = cloudManifest.layers && cloudManifest.layers.wind;
     if (!wl || !wl.available || !wl.profiles) { console.log("[wind] adapterWindSetTime early: no wind layer", wl); stopWindAnim(); return; }
 
