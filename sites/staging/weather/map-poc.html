@@ -1102,13 +1102,19 @@
     
     layer.on("tileerror", function() {
       tileErrorCount++;
-      // If we get many errors and no successful loads, mark as unavailable
+      // If we get many errors and no successful loads, fall back to previous day
       if (checkTimeout) clearTimeout(checkTimeout);
       checkTimeout = setTimeout(function() {
         if (gibsLayer === layer && tileLoadCount === 0 && tileErrorCount > 3) {
           setMapLoading("gibs", false);
-          observedAvailable = false;
-          updateCloudSourceDisplay();
+          // Auto-fallback: try previous day (NASA imagery lags 1-2 days)
+          if (gibsDayOffset > -3) {
+            gibsDayOffset -= 1;
+            if (currentTimeUtcMs !== null) adapterSatelliteSetTime(currentTimeUtcMs);
+          } else {
+            observedAvailable = false;
+            updateCloudSourceDisplay();
+          }
         }
       }, 3000);
     });
@@ -1419,6 +1425,7 @@
   function drawWindArrows(vectors) {
     if (!windSvgEl) return;
     while (windSvgEl.firstChild) windSvgEl.removeChild(windSvgEl.firstChild);
+
     if (!vectors || vectors.length === 0 || !windOn) return;
 
     var ARROW_MIN = 12;
@@ -1426,8 +1433,12 @@
     var SPEED_REF = 15; // m/s → max length
 
     windLastVectors = vectors;
+    var containerSize = map.getSize();
+    var W = containerSize.x, H = containerSize.y;
+    var PAD = 40; // px margin — skip points outside viewport
     vectors.forEach(function(v) {
       var pt = map.latLngToContainerPoint([v.lat, v.lon]);
+      if (pt.x < -PAD || pt.x > W + PAD || pt.y < -PAD || pt.y > H + PAD) return;
       var speed = v.speed_ms || 0;
       var len = ARROW_MIN + (Math.min(speed, SPEED_REF) / SPEED_REF) * (ARROW_MAX - ARROW_MIN);
 
@@ -1511,10 +1522,7 @@
     var frame = pFrames[best];
     if (!frame || !frame.available || !frame.asset_url) { drawWindArrows(null); return; }
 
-    // Check profile switched
-    if (profile.id !== windActiveProfileId) {
-      windActiveProfileId = profile.id;
-    }
+    if (profile.id !== windActiveProfileId) windActiveProfileId = profile.id;
 
     // Serve from cache or fetch
     if (windFrameCache[frame.asset_url]) {
