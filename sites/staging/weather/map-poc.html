@@ -1428,7 +1428,6 @@
     windCanvasEl.width = sz.x || 800;
     windCanvasEl.height = sz.y || 600;
     map.getContainer().appendChild(windCanvasEl);
-    console.log("[wind] canvas created", windCanvasEl.width, "×", windCanvasEl.height);
   }
 
   /**
@@ -1446,11 +1445,9 @@
     var sz = map.getSize();
     var W = sz.x, H = sz.y, PAD = 60;
 
-    var inView = 0;
     vectors.forEach(function(v) {
       var pt = map.latLngToContainerPoint([v.lat, v.lon]);
       if (pt.x < -PAD || pt.x > W + PAD || pt.y < -PAD || pt.y > H + PAD) return;
-      inView++;
 
       var speed = v.speed_ms || 0;
       var angleDeg = (v.dir_deg + 180) % 360; // FROM→TO
@@ -1471,7 +1468,6 @@
         });
       }
     });
-    console.log("[wind] buildParticles: vectors=" + vectors.length + " inView=" + inView + " particles=" + windParticles.length);
   }
 
   /** Update cached base-pixel positions for all particles (called on map pan). */
@@ -1489,11 +1485,9 @@
    */
   var WIND_PHASE_PER_MS_PER_MS = 0.000018; // phase units / ms / (m/s)
 
-  var _windAnimFrameCount = 0;
   function animateWind(ts) {
     if (!windOn || !windCanvasEl) { windRafId = null; windLastTs = null; return; }
     windRafId = requestAnimationFrame(animateWind);
-    if (_windAnimFrameCount++ < 3) console.log("[wind] animateWind frame", _windAnimFrameCount, "particles:", windParticles.length, "canvas:", windCanvasEl.width, "×", windCanvasEl.height);
 
     var dt = windLastTs === null ? 0 : Math.min(ts - windLastTs, 80); // cap at 80 ms
     windLastTs = ts;
@@ -1551,11 +1545,11 @@
       return;
     }
     var wl = cloudManifest.layers && cloudManifest.layers.wind;
-    if (!wl || !wl.available || !wl.profiles) { console.log("[wind] adapterWindSetTime early: no wind layer", wl); stopWindAnim(); return; }
+    if (!wl || !wl.available || !wl.profiles) { stopWindAnim(); return; }
 
     var zoom = map ? map.getZoom() : 7;
     var profile = selectWindProfile(zoom);
-    if (!profile || !profile.frames) { console.log("[wind] adapterWindSetTime early: no profile for zoom", zoom); stopWindAnim(); return; }
+    if (!profile || !profile.frames) { stopWindAnim(); return; }
 
     // Find nearest frame by time
     var pFrames = profile.frames;
@@ -1565,8 +1559,7 @@
       if (diff < bestDiff) { bestDiff = diff; best = i; }
     }
     var frame = pFrames[best];
-    if (!frame || !frame.available || !frame.asset_url) { console.log("[wind] adapterWindSetTime early: no frame", frame); stopWindAnim(); return; }
-    console.log("[wind] fetching/serving frame", frame.asset_url);
+    if (!frame || !frame.available || !frame.asset_url) { stopWindAnim(); return; }
 
     if (profile.id !== windActiveProfileId) windActiveProfileId = profile.id;
 
