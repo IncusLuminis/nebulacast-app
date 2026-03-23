@@ -1,5 +1,5 @@
 """
-gen_weather_map.py — Cloud + Wind Layer Pipeline v1.3
+gen_weather_map.py — Cloud + Wind Layer Pipeline v1.4
 
 Generates zoom-aware cloud profiles and wind vector frames:
   - sites/staging/data/clouds/{profile_id}/cloud_NNN.webp  (121 frames × 3 profiles)
@@ -51,34 +51,43 @@ OUT_JSON   = DATA_DIR / "weather_map_now.json"
 # Internal raster profiles (pipeline generates WebP frames for these)
 PROFILES: list[dict] = [
     {
-        "id":          "eu_wide",
-        "zoom_min":    6,
-        "zoom_max":    8,
-        "bbox":        {"lat_min": 30.0, "lat_max": 72.0, "lon_min": -15.0, "lon_max": 50.0},
-        "grid_lat_n":  6,
-        "grid_lon_n":  8,   # wider bbox → more lon samples
-        "render_size": 256,
-        "blur_radius": 4,
+        "id":               "eu_wide",
+        "zoom_min":         6,
+        "zoom_max":         8,
+        "bbox":             {"lat_min": 30.0, "lat_max": 72.0, "lon_min": -15.0, "lon_max": 50.0},
+        "grid_lat_n":       6,
+        "grid_lon_n":       8,   # wider bbox → more lon samples
+        # Wind uses a denser grid (step ~2°lat × 4°lon) → ~20 arrows visible at zoom 7
+        "wind_grid_lat_n":  22,
+        "wind_grid_lon_n":  18,
+        "render_size":      256,
+        "blur_radius":      4,
     },
     {
-        "id":          "eu_central",
-        "zoom_min":    9,
-        "zoom_max":    11,
-        "bbox":        {"lat_min": 45.0, "lat_max": 60.0, "lon_min":  5.0, "lon_max": 35.0},
-        "grid_lat_n":  6,
-        "grid_lon_n":  6,
-        "render_size": 256,
-        "blur_radius": 3,
+        "id":               "eu_central",
+        "zoom_min":         9,
+        "zoom_max":         11,
+        "bbox":             {"lat_min": 45.0, "lat_max": 60.0, "lon_min":  5.0, "lon_max": 35.0},
+        "grid_lat_n":       6,
+        "grid_lon_n":       6,
+        # Wind: step ~0.75°lat × 1.5°lon → fine enough for zoom 9-11
+        "wind_grid_lat_n":  21,
+        "wind_grid_lon_n":  21,
+        "render_size":      256,
+        "blur_radius":      3,
     },
     {
-        "id":          "local",
-        "zoom_min":    12,
-        "zoom_max":    18,
-        "bbox":        {"lat_min": 48.0, "lat_max": 57.0, "lon_min": 12.0, "lon_max": 30.0},
-        "grid_lat_n":  6,
-        "grid_lon_n":  6,
-        "render_size": 256,
-        "blur_radius": 2,
+        "id":               "local",
+        "zoom_min":         12,
+        "zoom_max":         18,
+        "bbox":             {"lat_min": 48.0, "lat_max": 57.0, "lon_min": 12.0, "lon_max": 30.0},
+        "grid_lat_n":       6,
+        "grid_lon_n":       6,
+        # Wind: step ~0.5°lat × 1°lon → detailed for zoom 12+
+        "wind_grid_lat_n":  19,
+        "wind_grid_lon_n":  19,
+        "render_size":      256,
+        "blur_radius":      2,
     },
 ]
 
@@ -122,8 +131,14 @@ def fetch_open_meteo(
     points: list[tuple[float, float]],
     past_days: int = 2,
     forecast_days: int = 3,
+    variables: str = "cloud_cover,wind_speed_10m,wind_direction_10m",
 ) -> list[dict]:
-    """Fetch hourly cloud_cover + wind fields for all grid points in batches of 10."""
+    """Fetch hourly fields for all grid points in batches of 10.
+
+    variables: comma-separated Open-Meteo hourly fields to request.
+    Returns list of dicts with keys: lat, lon, times, cloud_cover, wind_speed, wind_direction.
+    Missing variables are returned as empty lists.
+    """
     results = []
     BATCH = 10
     for i in range(0, len(points), BATCH):
@@ -131,7 +146,7 @@ def fetch_open_meteo(
         params = {
             "latitude":        ",".join(f"{p[0]:.4f}" for p in batch),
             "longitude":       ",".join(f"{p[1]:.4f}" for p in batch),
-            "hourly":          "cloud_cover,wind_speed_10m,wind_direction_10m",
+            "hourly":          variables,
             "past_days":       str(past_days),
             "forecast_days":   str(forecast_days),
             "timeformat":      "unixtime",
@@ -405,20 +420,36 @@ def run_profile(
     bbox        = profile["bbox"]
     lat_n       = profile["grid_lat_n"]
     lon_n       = profile["grid_lon_n"]
+    wind_lat_n  = profile.get("wind_grid_lat_n", lat_n)
+    wind_lon_n  = profile.get("wind_grid_lon_n", lon_n)
     render_size = profile.get("render_size", 256)
     blur_radius = profile.get("blur_radius", 3)
 
     print(f"\n[weather-map] Profile: {pid}  zoom {profile['zoom_min']}–{profile['zoom_max']}", flush=True)
     print(f"  bbox: lat {bbox['lat_min']}–{bbox['lat_max']}, lon {bbox['lon_min']}–{bbox['lon_max']}", flush=True)
 
+    # Cloud grid (coarse — used for raster interpolation)
     points    = build_grid(bbox, lat_n, lon_n)
-    print(f"  Grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
-
+    print(f"  Cloud grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
     grid_data = fetch_open_meteo(points, past_days, forecast_days)
-    print(f"  Fetched {len(grid_data)} series", flush=True)
+    print(f"  Fetched {len(grid_data)} cloud series", flush=True)
 
     cloud_matrix = build_point_timeseries(grid_data, timeline)
-    wind_matrix  = build_wind_timeseries(grid_data, timeline)
+
+    # Wind grid (denser — used for SVG arrow layer)
+    if wind_lat_n != lat_n or wind_lon_n != lon_n:
+        wind_points = build_grid(bbox, wind_lat_n, wind_lon_n)
+        print(f"  Wind grid:  {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
+        wind_grid_data = fetch_open_meteo(
+            wind_points, past_days, forecast_days,
+            variables="wind_speed_10m,wind_direction_10m",
+        )
+        print(f"  Fetched {len(wind_grid_data)} wind series", flush=True)
+    else:
+        wind_points    = points
+        wind_grid_data = grid_data
+
+    wind_matrix = build_wind_timeseries(wind_grid_data, timeline)
 
     cloud_dir = CLOUDS_DIR / pid
     wind_dir  = WIND_DIR / pid
@@ -455,7 +486,7 @@ def run_profile(
         })
 
         # ── Wind frame ────────────────────────────────────────────────────────
-        wind_frame = build_wind_frame_json(wind_matrix[idx], points, idx, slot_dt)
+        wind_frame = build_wind_frame_json(wind_matrix[idx], wind_points, idx, slot_dt)
         wind_name  = f"wind_{idx:03d}.json"
         wind_path  = wind_dir / wind_name
         wind_url   = f"/data/wind/{pid}/{wind_name}"
@@ -492,7 +523,7 @@ def run_profile(
 
 def run() -> None:
     t0 = time.time()
-    print("[weather-map] Starting cloud + wind layer pipeline v1.3", flush=True)
+    print("[weather-map] Starting cloud + wind layer pipeline v1.4", flush=True)
 
     if not HAS_PIL:
         print("[weather-map] ERROR: Pillow/numpy not installed. Run: pip install Pillow numpy", flush=True)
@@ -589,7 +620,7 @@ def run() -> None:
 
     now_utc  = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     contract = {
-        "schema_version": "1.3",
+        "schema_version": "1.4",
         "updated_utc":    now_utc,
         "source": {
             "domain":   "weather",
