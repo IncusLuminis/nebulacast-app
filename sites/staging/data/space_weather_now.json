@@ -1,57 +1,190 @@
 {
-  "generated_utc": "2026-03-22T12:31:25Z",
+  "generated_utc": "2026-03-23T01:22:09Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-22T09:00:00Z",
-      "value": 6.67
+      "timestamp_utc": "2026-03-22T21:00:00Z",
+      "value": 6.33
     },
     "forecast_3h": [
       {
-        "timestamp_utc": "2026-03-22T12:00:00Z",
-        "value": 5.33
-      },
-      {
-        "timestamp_utc": "2026-03-22T15:00:00Z",
-        "value": 3.67
-      },
-      {
-        "timestamp_utc": "2026-03-22T18:00:00Z",
-        "value": 3.67
-      },
-      {
-        "timestamp_utc": "2026-03-22T21:00:00Z",
-        "value": 5.0
-      },
-      {
         "timestamp_utc": "2026-03-23T00:00:00Z",
-        "value": 5.0
+        "value": 6.0
       },
       {
         "timestamp_utc": "2026-03-23T03:00:00Z",
-        "value": 5.0
+        "value": 5.67
       },
       {
         "timestamp_utc": "2026-03-23T06:00:00Z",
-        "value": 3.67
+        "value": 4.67
       },
       {
         "timestamp_utc": "2026-03-23T09:00:00Z",
-        "value": 2.67
+        "value": 4.0
+      },
+      {
+        "timestamp_utc": "2026-03-23T12:00:00Z",
+        "value": 3.0
+      },
+      {
+        "timestamp_utc": "2026-03-23T15:00:00Z",
+        "value": 3.0
+      },
+      {
+        "timestamp_utc": "2026-03-23T18:00:00Z",
+        "value": 3.33
+      },
+      {
+        "timestamp_utc": "2026-03-23T21:00:00Z",
+        "value": 3.67
       }
     ],
     "activity_label": "strong"
   },
   "solar_wind": {
-    "timestamp_utc": "2026-03-22T12:29:00Z",
-    "speed_kms": 634.0,
-    "density_protons_cm3": 3.29
+    "timestamp_utc": "2026-03-23T01:19:00Z",
+    "speed_kms": 647.8,
+    "density_protons_cm3": 1.43
   },
   "xray": {
-    "timestamp_utc": "2026-03-22T12:28:00Z",
-    "flux_wm2": 5.430326268651697e-07,
-    "class": "B"
+    "timestamp_utc": "2026-03-23T01:18:00Z",
+    "flux_wm2": 1.4986859468990588e-06,
+    "class": "C"
   },
   "alerts": [
+    {
+      "id": "K05A",
+      "timestamp_utc": "2026-03-23T01:07:46Z",
+      "title": "Space Weather Message Code: ALTK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K06W",
+      "timestamp_utc": "2026-03-22T23:43:34Z",
+      "title": "Space Weather Message Code: WARK06",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K05A",
+      "timestamp_utc": "2026-03-22T23:39:29Z",
+      "title": "Space Weather Message Code: ALTK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K06A",
+      "timestamp_utc": "2026-03-22T23:37:25Z",
+      "title": "Space Weather Message Code: ALTK06",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K05A",
+      "timestamp_utc": "2026-03-22T23:31:27Z",
+      "title": "Space Weather Message Code: ALTK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "A30F",
+      "timestamp_utc": "2026-03-22T20:34:52Z",
+      "title": "Space Weather Message Code: WATA30",
+      "level": "watch",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K06A",
+      "timestamp_utc": "2026-03-22T20:03:04Z",
+      "title": "Space Weather Message Code: ALTK06",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K05A",
+      "timestamp_utc": "2026-03-22T19:37:27Z",
+      "title": "Space Weather Message Code: ALTK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K07A",
+      "timestamp_utc": "2026-03-22T18:05:14Z",
+      "title": "Space Weather Message Code: ALTK07",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K04W",
+      "timestamp_utc": "2026-03-22T16:17:28Z",
+      "title": "Space Weather Message Code: WARK04",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K05W",
+      "timestamp_utc": "2026-03-22T16:15:53Z",
+      "title": "Space Weather Message Code: WARK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K05W",
+      "timestamp_utc": "2026-03-22T16:14:37Z",
+      "title": "Space Weather Message Code: WARK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K06W",
+      "timestamp_utc": "2026-03-22T16:12:30Z",
+      "title": "Space Weather Message Code: WARK06",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K07W",
+      "timestamp_utc": "2026-03-22T16:11:11Z",
+      "title": "Space Weather Message Code: WARK07",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K06A",
+      "timestamp_utc": "2026-03-22T16:06:48Z",
+      "title": "Space Weather Message Code: ALTK06",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K05A",
+      "timestamp_utc": "2026-03-22T16:03:20Z",
+      "title": "Space Weather Message Code: ALTK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K06A",
+      "timestamp_utc": "2026-03-22T14:51:58Z",
+      "title": "Space Weather Message Code: ALTK06",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "EF3A",
+      "timestamp_utc": "2026-03-22T14:38:25Z",
+      "title": "Space Weather Message Code: ALTEF3",
+      "level": "info",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K05A",
+      "timestamp_utc": "2026-03-22T13:10:49Z",
+      "title": "Space Weather Message Code: ALTK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "K07A",
       "timestamp_utc": "2026-03-22T10:43:10Z",
@@ -963,16 +1096,16 @@
       "source": "NOAA SWPC"
     },
     {
-      "id": "K06W",
+      "id": "K04W",
       "timestamp_utc": "2026-02-22T08:00:36Z",
-      "title": "Space Weather Message Code: WARK06",
+      "title": "Space Weather Message Code: WARK04",
       "level": "warning",
       "source": "NOAA SWPC"
     },
     {
-      "id": "K04W",
+      "id": "K06W",
       "timestamp_utc": "2026-02-22T08:00:36Z",
-      "title": "Space Weather Message Code: WARK04",
+      "title": "Space Weather Message Code: WARK06",
       "level": "warning",
       "source": "NOAA SWPC"
     },
@@ -1016,20 +1149,6 @@
       "timestamp_utc": "2026-02-21T09:53:58Z",
       "title": "Space Weather Message Code: WATA20",
       "level": "watch",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K04A",
-      "timestamp_utc": "2026-02-20T23:40:47Z",
-      "title": "Space Weather Message Code: ALTK04",
-      "level": "warning",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K04W",
-      "timestamp_utc": "2026-02-20T23:27:17Z",
-      "title": "Space Weather Message Code: WARK04",
-      "level": "warning",
       "source": "NOAA SWPC"
     }
   ]
