@@ -1421,18 +1421,17 @@
 
   // ── Isobar layer functions ──────────────────────────────────────────────────
 
-  /** Select best isobar profile for current zoom level. */
+  /**
+   * Isobars are large-scale features — always use the widest available profile
+   * regardless of zoom. Switching to a smaller region at high zoom leaves almost
+   * no isobars visible (1-2 lines crossing a tiny bbox).
+   */
   function selectIsobarProfile(zoom) {
     if (!cloudManifest) return null;
     var il = cloudManifest.layers && cloudManifest.layers.isobars;
     if (!il || !il.profiles) return null;
-    var profiles = il.profiles;
-    for (var i = 0; i < profiles.length; i++) {
-      var p = profiles[i];
-      if (p.available && zoom >= p.zoom_min && zoom <= p.zoom_max) return p;
-    }
-    // fallback: widest available
-    return profiles.reduce(function(best, p) {
+    // Always pick widest bbox (lowest zoom_min)
+    return il.profiles.reduce(function(best, p) {
       if (!p.available) return best;
       return (!best || p.zoom_min < best.zoom_min) ? p : best;
     }, null);
@@ -4012,15 +4011,11 @@
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
       checkCloudProfileSwitch();
-      checkIsobarProfileSwitch();
       // Reload wind for new zoom profile
       if (windOn && currentTimeUtcMs !== null) {
         adapterWindSetTime(currentTimeUtcMs);
       }
-      // Reload isobars for new zoom profile
-      if (isobarOn && currentTimeUtcMs !== null) {
-        adapterIsobarSetTime(currentTimeUtcMs);
-      }
+      // Isobars: no profile switch on zoom (always widest profile), but bounds stay fixed
     });
     map.on("resize", function () {
       setTimeout(function() {
