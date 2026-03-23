@@ -447,12 +447,39 @@ def render_isobar_frame_webp(
 
     import io
 
-    # Interpolate sparse pressure grid → render_size × render_size float32
-    grid = interpolate_frame(values, points, bbox, lat_n, lon_n, render_size)
-    if grid is None:
-        return False
+    # Interpolate pressure grid → render_size × render_size float32
+    # BICUBIC gives much smoother isoline shapes than BILINEAR
+    coarse = np.full((lat_n, lon_n), np.nan, dtype=np.float32)
+    bbox_ = bbox
+    for i, (lat, lon) in enumerate(points):
+        if i < len(values) and values[i] is not None:
+            li = round((lat - bbox_["lat_min"]) / (bbox_["lat_max"] - bbox_["lat_min"]) * (lat_n - 1))
+            lj = round((lon - bbox_["lon_min"]) / (bbox_["lon_max"] - bbox_["lon_min"]) * (lon_n - 1))
+            coarse[max(0, min(lat_n - 1, li)), max(0, min(lon_n - 1, lj))] = values[i]
 
-    # grid is oriented with lat_max at row 0 (flipud applied in interpolate_frame)
+    mask = np.isnan(coarse)
+    if mask.all():
+        return False
+    if mask.any():
+        filled = coarse.copy()
+        rows, cols = np.where(~mask)
+        for r, c in zip(*np.where(mask)):
+            dists   = (rows - r) ** 2 + (cols - c) ** 2
+            nearest = int(np.argmin(dists))
+            filled[r, c] = coarse[rows[nearest], cols[nearest]]
+        coarse = filled
+
+    img_coarse = Image.fromarray(np.flipud(coarse).astype(np.float32), mode="F")
+    img_large  = img_coarse.resize((render_size, render_size), Image.BICUBIC)
+    grid = np.array(img_large, dtype=np.float32)
+
+    # Gaussian smooth to eliminate sharp kinks — blur on uint8 then rescale back
+    p_min, p_max = float(grid.min()), float(grid.max())
+    if p_max > p_min:
+        scaled = ((grid - p_min) / (p_max - p_min) * 255).astype(np.uint8)
+        blurred = Image.fromarray(scaled, mode="L").filter(ImageFilter.GaussianBlur(radius=10))
+        grid = np.array(blurred, dtype=np.float32) / 255.0 * (p_max - p_min) + p_min
+
     # Use pixel-space coordinates for contour (axes cover 0..render_size)
     xs = np.arange(render_size, dtype=np.float32)
     ys = np.arange(render_size, dtype=np.float32)
@@ -470,8 +497,8 @@ def render_isobar_frame_webp(
 
     levels = list(range(950, 1061, 5))
     try:
-        cs = ax.contour(X, Y, grid, levels=levels, colors="#c8d8e8", linewidths=0.8)
-        ax.clabel(cs, levels[::3], inline=True, fontsize=6, colors="#c8d8e8", fmt="%d")
+        cs = ax.contour(X, Y, grid, levels=levels, colors="#c8d8e8", linewidths=0.4)
+        ax.clabel(cs, levels[::4], inline=True, fontsize=5, colors="#c8d8e8", fmt="%d")
     except Exception as exc:
         plt.close(fig)
         print(f"  [warn] isobar contour failed: {exc}", flush=True)
@@ -529,20 +556,23 @@ def run_profile(
     cloud_matrix   = build_point_timeseries(grid_data, timeline)
     isobar_matrix  = build_scalar_timeseries(grid_data, timeline, "pressure_msl")
 
-    # Wind grid (denser — used for particle animation layer)
+    # Wind grid (denser — used for particle animation layer AND pressure isobars)
     if wind_lat_n != lat_n or wind_lon_n != lon_n:
         wind_points = build_grid(bbox, wind_lat_n, wind_lon_n)
         print(f"  Wind grid:  {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
         wind_grid_data = fetch_open_meteo(
             wind_points, past_days, forecast_days,
-            variables="wind_speed_10m,wind_direction_10m",
+            # Include pressure_msl so isobars benefit from the denser grid at no extra cost
+            variables="wind_speed_10m,wind_direction_10m,pressure_msl",
         )
-        print(f"  Fetched {len(wind_grid_data)} wind series", flush=True)
+        print(f"  Fetched {len(wind_grid_data)} wind/pressure series", flush=True)
     else:
         wind_points    = points
         wind_grid_data = grid_data
 
-    wind_matrix = build_wind_timeseries(wind_grid_data, timeline)
+    wind_matrix   = build_wind_timeseries(wind_grid_data, timeline)
+    # Isobars reuse the dense wind grid for much better spatial detail
+    isobar_matrix = build_scalar_timeseries(wind_grid_data, timeline, "pressure_msl")
 
     cloud_dir   = CLOUDS_DIR / pid
     wind_dir    = WIND_DIR / pid
@@ -614,7 +644,7 @@ def run_profile(
         iso_url     = f"/data/isobars/{pid}/{iso_name}"
 
         iso_ok = render_isobar_frame_webp(
-            iso_values, points, bbox, lat_n, lon_n, isobar_render_size, iso_path
+            iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path
         )
         if not iso_ok and iso_path.exists():
             iso_path.unlink()
