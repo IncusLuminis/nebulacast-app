@@ -518,12 +518,12 @@
           </div>
           <div style="margin: 8px 0; border-top: 1px solid var(--line);"></div>
           <div class="layer-row">
-            <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h">
+            <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h" style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="layer-expand-toggle" id="windExpandToggle"
+                data-role="wind-sub-toggle" aria-expanded="false" aria-label="Toggle wind options"
+                style="display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:0;font-size:10px;width:14px;height:14px;align-items:center;justify-content:center;">▶</button>
               <input type="checkbox" id="toggleWind"> Wind <span class="layer-freq">3h</span>
             </label>
-            <button type="button" class="layer-expand-toggle" id="windExpandToggle"
-              data-role="wind-sub-toggle" aria-expanded="false" aria-label="Toggle wind options"
-              style="display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:0;font-size:10px;width:14px;height:14px;align-items:center;justify-content:center;">▶</button>
           </div>
           <div class="wind-sub-opts" id="windSubOpts" style="display:none;">
             <label title="Show wind speed in m/s next to each arrow">
