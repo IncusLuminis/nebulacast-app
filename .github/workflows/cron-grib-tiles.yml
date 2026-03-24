@@ -1,0 +1,106 @@
+name: Cron — GRIB tile pipeline (GFS → WebP cloud tiles)
+
+on:
+  schedule:
+    - cron: "30 1,7,13,19 * * *"  # ~1.5h after GFS 00/06/12/18Z runs; data is ready by then
+  workflow_dispatch:
+
+jobs:
+  grib-tiles:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+
+      # eccodes C library is required by the eccodes Python binding
+      - name: Install eccodes system library
+        run: sudo apt-get install -y libeccodes-dev
+
+      - name: Install Python dependencies
+        run: pip install -r services/weather/requirements.txt
+
+      # GRIB_TILES_SKIP_DOWNLOAD=0 ensures fresh download (cached files from previous
+      # runs would be in a different directory anyway since each CI run is fresh)
+      - name: Run GRIB tile pipeline
+        run: PYTHONPATH=services/weather python services/weather/pipelines/gen_grib_tiles.py
+
+      - name: Validate tile output
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+          from pathlib import Path
+
+          latest_path = Path("sites/staging/data/tile_manifests/latest.json")
+          if not latest_path.exists():
+              print("FAIL: tile_manifests/latest.json not found"); sys.exit(1)
+
+          latest = json.loads(latest_path.read_text())
+          run_id = latest.get("run_id")
+          if not run_id:
+              print("FAIL: latest.json missing run_id"); sys.exit(1)
+          print(f"run_id = {run_id}")
+
+          manifest_path = Path(f"sites/staging/data/tile_manifests/{run_id}.json")
+          if not manifest_path.exists():
+              print(f"FAIL: {manifest_path} not found"); sys.exit(1)
+
+          m = json.loads(manifest_path.read_text())
+          for key in ["profile_id", "run_id", "zoom_min", "zoom_max",
+                      "frame_indexes", "url_template", "generated_at"]:
+              if key not in m:
+                  print(f"FAIL: manifest missing '{key}'"); sys.exit(1)
+
+          n_frames = len(m["frame_indexes"])
+          if n_frames < 10:
+              print(f"FAIL: only {n_frames} tile frames (expected ≥10)"); sys.exit(1)
+
+          # Spot-check: z=0 x=0 y=0 tile for first frame
+          fi = m["frame_indexes"][0]
+          tile_path = Path(f"sites/staging/data/clouds/tiles/{run_id}/{fi:03d}/0/0/0.webp")
+          if not tile_path.exists():
+              print(f"FAIL: spot-check tile not found: {tile_path}"); sys.exit(1)
+          size = tile_path.stat().st_size
+          if size < 500:
+              print(f"FAIL: spot-check tile too small ({size} bytes)"); sys.exit(1)
+
+          print(f"OK: {n_frames} frames, zoom {m['zoom_min']}–{m['zoom_max']}, "
+                f"spot tile {size} bytes, run={run_id}")
+          EOF
+
+      # Commit tile manifests (WebP tiles are .gitignored — deployed via wrangler dirty)
+      - name: Commit tile manifests
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin feat/grib-tile-pipeline 2>/dev/null || true
+          git add sites/staging/data/tile_manifests/
+          git diff --cached --quiet && echo "No manifest changes" && exit 0
+          git commit -m "data: grib tile manifest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git pull --rebase origin feat/grib-tile-pipeline
+          git push origin feat/grib-tile-pipeline
+
+      # Deploy staging site including generated tile WebPs (not in git) to Cloudflare Pages
+      #
+      # Required secrets (Settings → Secrets → Actions):
+      #   CLOUDFLARE_API_TOKEN  — CF API token with Pages:Edit permission
+      #   CLOUDFLARE_ACCOUNT_ID — CF account ID
+      # Required variable (Settings → Variables → Actions):
+      #   CF_PAGES_PROJECT      — Cloudflare Pages project name (e.g. "nebulacast-app")
+      - name: Deploy to Cloudflare Pages (manifests + tile WebPs)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >
+            pages deploy sites/staging
+            --project-name=${{ vars.CF_PAGES_PROJECT }}
+            --branch=feat/grib-tile-pipeline
+            --commit-dirty=true

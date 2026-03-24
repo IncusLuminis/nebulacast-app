@@ -901,6 +901,12 @@
   // Prefetch cache: url → Image (preloaded)
   const cloudCache = {};
 
+  // ── world_tiles: owned GRIB tile pyramid (zoom 0–3) ──────────────────────
+  let worldTilesLayer      = null;  // custom L.GridLayer — GRIB tiles
+  let worldTilesManifest   = null;  // tile manifest JSON from GRIB pipeline
+  let worldTilesProfile    = null;  // world_tiles profile entry from weather_map_now.json
+  let worldTilesFrameIndex = -1;    // currently displayed frame index
+
   // ── Isobar layer ───────────────────────────────────────────────────────────
   let isobarOn = false;
   let isobarGroup = null;          // L.layerGroup holding current frame's L.polylines
@@ -1249,6 +1255,85 @@
   // Keep legacy alias used by adapterCloudsSetTime
   function getActiveProfile() { return getActiveRasterProfile(); }
 
+  /** Return the world_tiles (internal_tiles kind) profile from manifest, or null. */
+  function getWorldTilesProfile() {
+    if (!cloudManifest) return null;
+    var profiles = cloudManifest.layers.clouds.profiles;
+    return profiles && profiles.find(function(p) { return p.kind === "internal_tiles"; }) || null;
+  }
+
+  /**
+   * Custom Leaflet GridLayer for time-addressable WebP cloud tiles.
+   * Tile URL uses {frame_index}, {z}, {x}, {y} placeholders.
+   */
+  var CloudWorldTileLayer = L.GridLayer.extend({
+    createTile: function(coords, done) {
+      var tile = document.createElement("img");
+      tile.setAttribute("role", "presentation");
+      tile.onload  = function() { done(null, tile); };
+      tile.onerror = function() { done(null, tile); };  // silently skip missing
+      tile.crossOrigin = "anonymous";
+      var fi  = this.options.frameIndex;
+      var tpl = this.options.urlTemplate;
+      if (tpl && fi >= 0) {
+        tile.src = tpl
+          .replace("{frame_index}", String(fi).padStart(3, "0"))
+          .replace("{z}", coords.z)
+          .replace("{x}", coords.x)
+          .replace("{y}", coords.y);
+      }
+      return tile;
+    },
+    setFrame: function(frameIndex) {
+      if (this.options.frameIndex === frameIndex) return;
+      this.options.frameIndex = frameIndex;
+      this.redraw();
+    },
+  });
+
+  /** Create the world tiles L.GridLayer from tile manifest data (once). */
+  function ensureWorldTilesLayer(tileManifest) {
+    if (worldTilesLayer) return;
+    if (!tileManifest || !tileManifest.url_template) return;
+    var zMin = tileManifest.zoom_min != null ? tileManifest.zoom_min : 0;
+    var zMax = tileManifest.zoom_max != null ? tileManifest.zoom_max : 3;
+    worldTilesLayer = new CloudWorldTileLayer({
+      frameIndex:     -1,
+      urlTemplate:    tileManifest.url_template,
+      opacity:        0.65,
+      interactive:    false,
+      zIndex:         239,
+      attribution:    "Cloud \u00a9 nebulacast/GFS",
+      minZoom:        zMin,
+      maxZoom:        19,
+      maxNativeZoom:  zMax,
+    });
+    console.log("[clouds] world_tiles GridLayer created (GFS TCDC, zoom " + zMin + "–" + zMax + ")");
+  }
+
+  /**
+   * Layer adapter: update world_tiles layer to the frame nearest tUtcMs.
+   * Shows layer only if a tile frame exists for that time.
+   */
+  function adapterWorldTilesSetTime(tUtcMs) {
+    if (!rasterCloudsOn || !worldTilesLayer || !worldTilesManifest) return;
+    var frameIndexes = worldTilesManifest.frame_indexes;
+    if (!frameIndexes || !frameIndexes.length) return;
+
+    var idx = cloudFrameForTime(tUtcMs);
+
+    if (frameIndexes.indexOf(idx) === -1) {
+      // No owned tile for this frame (e.g. history frames) — hide layer
+      if (map && map.hasLayer(worldTilesLayer)) map.removeLayer(worldTilesLayer);
+      worldTilesFrameIndex = -1;
+      return;
+    }
+
+    worldTilesLayer.setFrame(idx);
+    worldTilesFrameIndex = idx;
+    if (map && !map.hasLayer(worldTilesLayer)) worldTilesLayer.addTo(map);
+  }
+
   /**
    * Load weather_map_now.json and initialise both cloud layers independently.
    */
@@ -1273,6 +1358,28 @@
         }
 
         var zoom = map ? map.getZoom() : 7;
+
+        // ── world_tiles: owned GRIB tile pyramid (zoom 0–3) ──────────────────
+        var wtP = getWorldTilesProfile();
+        worldTilesProfile = wtP;
+        if (wtP && wtP.available && wtP.tile_manifest_url) {
+          fetch(wtP.tile_manifest_url)
+            .then(function(r) { return r.json(); })
+            .then(function(tm) {
+              worldTilesManifest = tm;
+              ensureWorldTilesLayer(tm);
+              if (rasterCloudsOn && currentTimeUtcMs !== null) {
+                adapterWorldTilesSetTime(currentTimeUtcMs);
+              }
+              // Correct visibility immediately based on current zoom
+              checkCloudProfileSwitch();
+              console.log("[clouds] world_tiles manifest: run=" + tm.run_id
+                + " frames=" + (tm.frame_indexes ? tm.frame_indexes.length : 0));
+            })
+            .catch(function(err) {
+              console.warn("[clouds] world_tiles manifest load failed:", err);
+            });
+        }
 
         // ── Internal raster overlay ───────────────────────────────────────────
         if (layer.profiles && layer.profiles.length) {
@@ -1315,11 +1422,25 @@
   }
 
   /**
-   * On zoom change: switch internal raster profile if needed.
+   * On zoom change: switch internal raster profile if needed; manage world_tiles visibility.
    */
   function checkCloudProfileSwitch() {
+    var zoom = map ? map.getZoom() : 7;
+
+    // ── world_tiles visibility: show only within its native zoom range ────────
+    if (worldTilesLayer && worldTilesManifest) {
+      var wtZMax = worldTilesManifest.zoom_max != null ? worldTilesManifest.zoom_max : 3;
+      var shouldShow = rasterCloudsOn && zoom <= wtZMax && worldTilesFrameIndex >= 0;
+      if (shouldShow && map && !map.hasLayer(worldTilesLayer)) {
+        worldTilesLayer.addTo(map);
+      } else if (!shouldShow && map && map.hasLayer(worldTilesLayer)) {
+        map.removeLayer(worldTilesLayer);
+      }
+    }
+
+    // ── Internal raster profile switch ────────────────────────────────────────
     if (!cloudManifest || !cloudOverlay) return;
-    var rasterP = selectRasterProfile(map.getZoom());
+    var rasterP = selectRasterProfile(zoom);
     if (!rasterP || rasterP.id === cloudActiveProfileId) return;
 
     console.log("[clouds] raster profile switch: " + cloudActiveProfileId + " → " + rasterP.id);
@@ -1377,6 +1498,9 @@
    * Layer adapter: update internal raster overlay to nearest frame for tUtcMs.
    */
   function adapterCloudsSetTime(tUtcMs) {
+    // Update owned GRIB tile layer (independent of raster overlay availability)
+    adapterWorldTilesSetTime(tUtcMs);
+
     if (!rasterCloudsOn || !cloudManifest || !cloudOverlay) return;
 
     var idx = cloudFrameForTime(tUtcMs);
