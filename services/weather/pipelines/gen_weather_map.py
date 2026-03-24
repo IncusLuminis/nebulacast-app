@@ -771,16 +771,18 @@ def run_profile(
         })
 
         # ── Isobar frame (JSON lat/lon paths → Leaflet L.polyline) ───────────
-        iso_values  = isobar_matrix[idx]
         iso_name    = f"isobar_{idx:03d}.json"
         iso_path    = isobar_dir / iso_name
         iso_url     = f"/data/isobars/{pid}/{iso_name}"
 
-        iso_ok = render_isobar_frame_json(
-            iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path
-        )
-        if not iso_ok and iso_path.exists():
-            iso_path.unlink()
+        if iso_path.exists():
+            iso_ok = True   # reuse cached file from previous run / git checkout
+        else:
+            iso_values = isobar_matrix[idx]
+            iso_ok = render_isobar_frame_json(
+                iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path
+            )
+            # never delete an existing file on render failure — stale data is better than no data
 
         isobar_refs.append({
             "index":     idx,
