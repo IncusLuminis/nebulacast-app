@@ -1,10 +1,11 @@
 """
-gen_weather_map.py — Cloud + Wind Layer Pipeline v1.4
+gen_weather_map.py — Cloud + Wind + Isobars Layer Pipeline v1.5
 
-Generates zoom-aware cloud profiles and wind vector frames:
-  - sites/staging/data/clouds/{profile_id}/cloud_NNN.webp  (121 frames × 3 profiles)
-  - sites/staging/data/wind/{profile_id}/wind_NNN.json     (121 frames × 3 profiles)
-  - sites/staging/data/weather_map_now.json   (data contract v1.3)
+Generates zoom-aware cloud profiles, wind vector frames, and pressure isobar overlays:
+  - sites/staging/data/clouds/{profile_id}/cloud_NNN.webp   (121 frames × 3 profiles)
+  - sites/staging/data/wind/{profile_id}/wind_NNN.json      (121 frames × 3 profiles)
+  - sites/staging/data/isobars/{profile_id}/isobar_NNN.webp (121 frames × 3 profiles)
+  - sites/staging/data/weather_map_now.json   (data contract v1.5)
 
 Hybrid cloud architecture (spec #266):
   world_external — zoom 0–5  — external tile layer (OpenWeatherMap), no frames generated
@@ -21,6 +22,7 @@ Env vars:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -37,14 +39,27 @@ try:
 except ImportError:
     HAS_PIL = False
 
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    HAS_MPL = True
+except ImportError:
+    HAS_MPL = False
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
-REPO_ROOT  = Path(__file__).resolve().parents[3]
-STAGING    = REPO_ROOT / "sites" / "staging"
-DATA_DIR   = STAGING / "data"
-CLOUDS_DIR = DATA_DIR / "clouds"
-WIND_DIR   = DATA_DIR / "wind"
-OUT_JSON   = DATA_DIR / "weather_map_now.json"
+REPO_ROOT    = Path(__file__).resolve().parents[3]
+STAGING      = REPO_ROOT / "sites" / "staging"
+DATA_DIR     = STAGING / "data"
+CLOUDS_DIR   = DATA_DIR / "clouds"
+WIND_DIR     = DATA_DIR / "wind"
+ISOBARS_DIR  = DATA_DIR / "isobars"
+OUT_JSON     = DATA_DIR / "weather_map_now.json"
+OM_CACHE_DIR = DATA_DIR / "_cache" / "open_meteo"
+
+# How long a cached batch response is considered fresh (seconds)
+OM_CACHE_TTL = 3 * 3600  # 3 hours
 
 # ── Profile definitions ───────────────────────────────────────────────────────
 
@@ -62,6 +77,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  18,
         "render_size":      256,
         "blur_radius":      4,
+        "isobar_render_size": 512,
     },
     {
         "id":               "eu_central",
@@ -75,6 +91,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  21,
         "render_size":      256,
         "blur_radius":      3,
+        "isobar_render_size": 512,
     },
     {
         "id":               "local",
@@ -88,6 +105,7 @@ PROFILES: list[dict] = [
         "wind_grid_lon_n":  19,
         "render_size":      256,
         "blur_radius":      2,
+        "isobar_render_size": 512,
     },
 ]
 
@@ -127,17 +145,44 @@ def build_grid(bbox: dict, lat_n: int, lon_n: int) -> list[tuple[float, float]]:
     return [(lat, lon) for lat in lats for lon in lons]
 
 
+def _om_cache_path(url: str) -> Path:
+    key = hashlib.sha1(url.encode()).hexdigest()[:16]
+    return OM_CACHE_DIR / f"{key}.json"
+
+
+def _om_cache_load(url: str) -> tuple[list | None, bool]:
+    """Return (data, is_fresh). data=None if no cache exists."""
+    path = _om_cache_path(url)
+    if not path.exists():
+        return None, False
+    try:
+        cached = json.loads(path.read_text())
+        age = time.time() - cached.get("_cached_at", 0)
+        return cached["data"], age < OM_CACHE_TTL
+    except Exception:
+        return None, False
+
+
+def _om_cache_save(url: str, data: list) -> None:
+    OM_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path = _om_cache_path(url)
+    path.write_text(json.dumps({"_cached_at": time.time(), "data": data}))
+
+
 def fetch_open_meteo(
     points: list[tuple[float, float]],
     past_days: int = 2,
     forecast_days: int = 3,
-    variables: str = "cloud_cover,wind_speed_10m,wind_direction_10m",
+    variables: str = "cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m",
 ) -> list[dict]:
     """Fetch hourly fields for all grid points in batches of 10.
 
+    Responses are cached on disk (TTL=3h). On 429 / network error, stale cache
+    is used if available so the pipeline can still produce output.
+
     variables: comma-separated Open-Meteo hourly fields to request.
-    Returns list of dicts with keys: lat, lon, times, cloud_cover, wind_speed, wind_direction.
-    Missing variables are returned as empty lists.
+    Returns list of dicts with keys: lat, lon, times, cloud_cover, pressure_msl,
+    wind_speed, wind_direction. Missing variables are returned as empty lists.
     """
     results = []
     BATCH = 10
@@ -154,17 +199,30 @@ def fetch_open_meteo(
             "wind_speed_unit": "ms",
         }
         url = OM_BASE + "?" + urllib.parse.urlencode(params)
-        try:
-            with urllib.request.urlopen(url, timeout=30) as resp:
-                data = json.loads(resp.read())
-        except Exception as e:
-            print(f"  [warn] Open-Meteo batch {i // BATCH} failed: {e}", flush=True)
-            for lat, lon in batch:
-                results.append({
-                    "lat": lat, "lon": lon, "times": [],
-                    "cloud_cover": [], "wind_speed": [], "wind_direction": [],
-                })
-            continue
+        batch_idx = i // BATCH
+
+        # Try fresh cache first
+        cached_data, is_fresh = _om_cache_load(url)
+        if is_fresh:
+            data = cached_data
+        else:
+            try:
+                with urllib.request.urlopen(url, timeout=30) as resp:
+                    data = json.loads(resp.read())
+                _om_cache_save(url, data)
+            except Exception as e:
+                print(f"  [warn] Open-Meteo batch {batch_idx} failed: {e}", flush=True)
+                if cached_data is not None:
+                    print(f"  [cache] batch {batch_idx}: using stale cache", flush=True)
+                    data = cached_data
+                else:
+                    for lat, lon in batch:
+                        results.append({
+                            "lat": lat, "lon": lon, "times": [],
+                            "cloud_cover": [], "pressure_msl": [],
+                            "wind_speed": [], "wind_direction": [],
+                        })
+                    continue
 
         if isinstance(data, dict):
             data = [data]
@@ -176,10 +234,11 @@ def fetch_open_meteo(
                 "lon":            lon,
                 "times":          hourly.get("time", []),
                 "cloud_cover":    hourly.get("cloud_cover", []),
+                "pressure_msl":   hourly.get("pressure_msl", []),
                 "wind_speed":     hourly.get("wind_speed_10m", []),
                 "wind_direction": hourly.get("wind_direction_10m", []),
             })
-        time.sleep(0.1)
+        time.sleep(0.2)
 
     return results
 
@@ -282,10 +341,19 @@ def build_point_timeseries(
     timeline:  list[datetime],
 ) -> list[list[float | None]]:
     """Build matrix[frame_idx][point_idx] = cloud_opacity (0–100) or None."""
+    return build_scalar_timeseries(grid_data, timeline, "cloud_cover")
+
+
+def build_scalar_timeseries(
+    grid_data: list[dict],
+    timeline:  list[datetime],
+    field:     str,
+) -> list[list[float | None]]:
+    """Build matrix[frame_idx][point_idx] = scalar value or None for given field name."""
     lookups: list[dict[int, float]] = []
     for pd in grid_data:
         lut: dict[int, float] = {}
-        for t, c in zip(pd["times"], pd["cloud_cover"]):
+        for t, c in zip(pd["times"], pd.get(field, [])):
             if c is not None:
                 lut[int(t)] = float(c)
         lookups.append(lut)
@@ -402,6 +470,188 @@ def render_frame_webp(grid_values: "np.ndarray", dest: Path, blur_radius: int = 
     return True
 
 
+# ── Isobar renderer ───────────────────────────────────────────────────────────
+
+def render_isobar_frame_json(
+    values:      list[float | None],
+    points:      list[tuple[float, float]],
+    bbox:        dict,
+    lat_n:       int,
+    lon_n:       int,
+    render_size: int,
+    dest:        Path,
+) -> bool:
+    """Extract pressure isobar contour lines as lat/lon JSON for Leaflet L.polyline.
+
+    Output: {"isobars": [{"level": 1010, "paths": [[[lat,lon], ...], ...]}, ...]}
+    Polylines rendered by Leaflet always use screen-pixel stroke width — no
+    pixelation or scaling issues at any zoom level.
+    """
+    if not HAS_MPL or not HAS_PIL:
+        return False
+
+    import warnings
+
+    # Build pressure grid (same interpolation + smoothing as SVG renderer)
+    coarse = np.full((lat_n, lon_n), np.nan, dtype=np.float32)
+    for i, (lat, lon) in enumerate(points):
+        if i < len(values) and values[i] is not None:
+            li = round((lat - bbox["lat_min"]) / (bbox["lat_max"] - bbox["lat_min"]) * (lat_n - 1))
+            lj = round((lon - bbox["lon_min"]) / (bbox["lon_max"] - bbox["lon_min"]) * (lon_n - 1))
+            coarse[max(0, min(lat_n - 1, li)), max(0, min(lon_n - 1, lj))] = values[i]
+
+    mask = np.isnan(coarse)
+    if mask.all():
+        return False
+    if mask.any():
+        filled = coarse.copy()
+        rows, cols = np.where(~mask)
+        for r, c in zip(*np.where(mask)):
+            dists   = (rows - r) ** 2 + (cols - c) ** 2
+            nearest = int(np.argmin(dists))
+            filled[r, c] = coarse[rows[nearest], cols[nearest]]
+        coarse = filled
+
+    img_coarse = Image.fromarray(np.flipud(coarse).astype(np.float32), mode="F")
+    img_large  = img_coarse.resize((render_size, render_size), Image.BICUBIC)
+    grid = np.array(img_large, dtype=np.float32)
+
+    p_min, p_max = float(grid.min()), float(grid.max())
+    if p_max > p_min:
+        scaled  = ((grid - p_min) / (p_max - p_min) * 255).astype(np.uint8)
+        blur_r  = max(4, render_size // 50)
+        blurred = Image.fromarray(scaled, mode="L").filter(ImageFilter.GaussianBlur(radius=blur_r))
+        grid    = np.array(blurred, dtype=np.float32) / 255.0 * (p_max - p_min) + p_min
+
+    xs = np.arange(render_size, dtype=np.float32)
+    X, Y = np.meshgrid(xs, xs)
+
+    # Extract contour paths (no rendering — data only)
+    fig = plt.figure(figsize=(1, 1))
+    ax  = fig.add_subplot(111)
+    levels = list(range(950, 1061, 5))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")      # suppress allsegs deprecation warning
+        cs = ax.contour(X, Y, grid, levels=levels)
+        all_segs = cs.allsegs
+    plt.close(fig)
+
+    lat_range = bbox["lat_max"] - bbox["lat_min"]
+    lon_range = bbox["lon_max"] - bbox["lon_min"]
+    MAX_PTS   = 150   # max points per path segment (Douglas-Peucker would be better but this is fast)
+
+    isobars: list[dict] = []
+    for i, level in enumerate(levels):
+        paths: list[list] = []
+        for seg in all_segs[i]:
+            if len(seg) < 2:
+                continue
+            lons = bbox["lon_min"] + seg[:, 0] / render_size * lon_range
+            lats = bbox["lat_max"] - seg[:, 1] / render_size * lat_range  # y=0 → lat_max (flipud)
+            step = max(1, len(lons) // MAX_PTS)
+            path = [[round(float(lats[k]), 3), round(float(lons[k]), 3)]
+                    for k in range(0, len(lons), step)]
+            if len(path) >= 2:
+                paths.append(path)
+        if paths:
+            isobars.append({"level": int(level), "paths": paths})
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps({"isobars": isobars}, separators=(",", ":")), encoding="utf-8")
+    return True
+
+
+def render_isobar_frame_svg(
+    values:      list[float | None],
+    points:      list[tuple[float, float]],
+    bbox:        dict,
+    lat_n:       int,
+    lon_n:       int,
+    render_size: int,
+    dest:        Path,
+) -> bool:
+    """Render pressure isobars as a scalable vector SVG (infinite resolution).
+
+    Output is a transparent SVG with contour lines at 950–1060 hPa, step 5 hPa.
+    Fonts embedded as paths so there are no external font dependencies.
+    L.imageOverlay handles SVG natively — no pixelation at any zoom level.
+    """
+    if not HAS_MPL or not HAS_PIL:
+        return False
+
+    import io, re
+
+    # Interpolate sparse pressure grid → render_size × render_size float32
+    coarse = np.full((lat_n, lon_n), np.nan, dtype=np.float32)
+    for i, (lat, lon) in enumerate(points):
+        if i < len(values) and values[i] is not None:
+            li = round((lat - bbox["lat_min"]) / (bbox["lat_max"] - bbox["lat_min"]) * (lat_n - 1))
+            lj = round((lon - bbox["lon_min"]) / (bbox["lon_max"] - bbox["lon_min"]) * (lon_n - 1))
+            coarse[max(0, min(lat_n - 1, li)), max(0, min(lon_n - 1, lj))] = values[i]
+
+    mask = np.isnan(coarse)
+    if mask.all():
+        return False
+    if mask.any():
+        filled = coarse.copy()
+        rows, cols = np.where(~mask)
+        for r, c in zip(*np.where(mask)):
+            dists   = (rows - r) ** 2 + (cols - c) ** 2
+            nearest = int(np.argmin(dists))
+            filled[r, c] = coarse[rows[nearest], cols[nearest]]
+        coarse = filled
+
+    img_coarse = Image.fromarray(np.flipud(coarse).astype(np.float32), mode="F")
+    img_large  = img_coarse.resize((render_size, render_size), Image.BICUBIC)
+    grid = np.array(img_large, dtype=np.float32)
+
+    # Gaussian smooth to eliminate sharp kinks from the coarse grid
+    p_min, p_max = float(grid.min()), float(grid.max())
+    if p_max > p_min:
+        scaled  = ((grid - p_min) / (p_max - p_min) * 255).astype(np.uint8)
+        blur_r  = max(4, render_size // 50)
+        blurred = Image.fromarray(scaled, mode="L").filter(ImageFilter.GaussianBlur(radius=blur_r))
+        grid    = np.array(blurred, dtype=np.float32) / 255.0 * (p_max - p_min) + p_min
+
+    xs = np.arange(render_size, dtype=np.float32)
+    X, Y = np.meshgrid(xs, xs)
+
+    # Embed fonts as paths — no external font dependency in SVG
+    plt.rcParams["svg.fonttype"] = "path"
+
+    fig, ax = plt.subplots(figsize=(5.12, 5.12), dpi=100)  # 512pt viewBox
+    fig.patch.set_alpha(0.0)
+    ax.set_facecolor((0.0, 0.0, 0.0, 0.0))
+    ax.set_position([0, 0, 1, 1])
+    ax.set_xlim(0, render_size)
+    ax.set_ylim(0, render_size)
+    ax.axis("off")
+
+    levels = list(range(950, 1061, 5))
+    try:
+        cs = ax.contour(X, Y, grid, levels=levels, colors="#c8d8e8", linewidths=0.5)
+        ax.clabel(cs, levels[::4], inline=True, fontsize=6, colors="#c8d8e8", fmt="%d")
+    except Exception as exc:
+        plt.close(fig)
+        print(f"  [warn] isobar contour failed: {exc}", flush=True)
+        return False
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="svg", transparent=True, bbox_inches=None, pad_inches=0)
+    plt.close(fig)
+
+    # Make SVG responsive for L.imageOverlay: replace fixed px dims with 100%
+    # and add preserveAspectRatio="none" so it fills the overlay bounds exactly
+    svg = buf.getvalue().decode("utf-8")
+    svg = re.sub(r'(<svg\b[^>]*?)\s+width="[^"]*"',  r'\1 width="100%"',  svg, count=1)
+    svg = re.sub(r'(<svg\b[^>]*?)\s+height="[^"]*"', r'\1 height="100%"', svg, count=1)
+    svg = svg.replace("<svg ", '<svg preserveAspectRatio="none" ', 1)
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(svg, encoding="utf-8")
+    return True
+
+
 # ── Per-profile pipeline ──────────────────────────────────────────────────────
 
 def run_profile(
@@ -409,55 +659,64 @@ def run_profile(
     timeline:      list[datetime],
     past_days:     int = 2,
     forecast_days: int = 3,
-) -> tuple[list[dict], list[dict], int, int]:
+) -> tuple[list[dict], list[dict], list[dict], int, int]:
     """
     Run full pipeline for one profile.
-    Returns (cloud_frame_refs, wind_frame_refs, rendered_count, skipped_count).
-    cloud_frame_refs: [{index, available, asset_url}]
-    wind_frame_refs:  [{index, t_utc, available, asset_type, asset_url}]
+    Returns (cloud_frame_refs, wind_frame_refs, isobar_frame_refs, rendered_count, skipped_count).
+    cloud_frame_refs:  [{index, available, asset_url}]
+    wind_frame_refs:   [{index, t_utc, available, asset_type, asset_url}]
+    isobar_frame_refs: [{index, available, asset_url}]
     """
-    pid         = profile["id"]
-    bbox        = profile["bbox"]
-    lat_n       = profile["grid_lat_n"]
-    lon_n       = profile["grid_lon_n"]
-    wind_lat_n  = profile.get("wind_grid_lat_n", lat_n)
-    wind_lon_n  = profile.get("wind_grid_lon_n", lon_n)
-    render_size = profile.get("render_size", 256)
-    blur_radius = profile.get("blur_radius", 3)
+    pid               = profile["id"]
+    bbox              = profile["bbox"]
+    lat_n             = profile["grid_lat_n"]
+    lon_n             = profile["grid_lon_n"]
+    wind_lat_n        = profile.get("wind_grid_lat_n", lat_n)
+    wind_lon_n        = profile.get("wind_grid_lon_n", lon_n)
+    render_size       = profile.get("render_size", 256)
+    blur_radius       = profile.get("blur_radius", 3)
+    isobar_render_size = profile.get("isobar_render_size", 512)
 
     print(f"\n[weather-map] Profile: {pid}  zoom {profile['zoom_min']}–{profile['zoom_max']}", flush=True)
     print(f"  bbox: lat {bbox['lat_min']}–{bbox['lat_max']}, lon {bbox['lon_min']}–{bbox['lon_max']}", flush=True)
 
-    # Cloud grid (coarse — used for raster interpolation)
+    # Cloud + pressure grid (coarse — used for raster interpolation and isobars)
     points    = build_grid(bbox, lat_n, lon_n)
-    print(f"  Cloud grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
+    print(f"  Cloud/pressure grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
     grid_data = fetch_open_meteo(points, past_days, forecast_days)
-    print(f"  Fetched {len(grid_data)} cloud series", flush=True)
+    print(f"  Fetched {len(grid_data)} cloud/pressure series", flush=True)
 
-    cloud_matrix = build_point_timeseries(grid_data, timeline)
+    cloud_matrix   = build_point_timeseries(grid_data, timeline)
+    isobar_matrix  = build_scalar_timeseries(grid_data, timeline, "pressure_msl")
 
-    # Wind grid (denser — used for SVG arrow layer)
+    # Wind grid (denser — used for particle animation layer AND pressure isobars)
     if wind_lat_n != lat_n or wind_lon_n != lon_n:
         wind_points = build_grid(bbox, wind_lat_n, wind_lon_n)
         print(f"  Wind grid:  {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
         wind_grid_data = fetch_open_meteo(
             wind_points, past_days, forecast_days,
-            variables="wind_speed_10m,wind_direction_10m",
+            # Include pressure_msl so isobars benefit from the denser grid at no extra cost
+            variables="wind_speed_10m,wind_direction_10m,pressure_msl",
         )
-        print(f"  Fetched {len(wind_grid_data)} wind series", flush=True)
+        print(f"  Fetched {len(wind_grid_data)} wind/pressure series", flush=True)
     else:
         wind_points    = points
         wind_grid_data = grid_data
 
-    wind_matrix = build_wind_timeseries(wind_grid_data, timeline)
+    wind_matrix   = build_wind_timeseries(wind_grid_data, timeline)
+    # Isobars reuse the dense wind grid for much better spatial detail
+    isobar_matrix = build_scalar_timeseries(wind_grid_data, timeline, "pressure_msl")
 
-    cloud_dir = CLOUDS_DIR / pid
-    wind_dir  = WIND_DIR / pid
+    cloud_dir   = CLOUDS_DIR / pid
+    wind_dir    = WIND_DIR / pid
+    isobar_dir  = ISOBARS_DIR / pid
     cloud_dir.mkdir(parents=True, exist_ok=True)
     wind_dir.mkdir(parents=True, exist_ok=True)
+    isobar_dir.mkdir(parents=True, exist_ok=True)
 
-    cloud_refs: list[dict] = []
-    wind_refs:  list[dict] = []
+    cloud_refs:  list[dict] = []
+    wind_refs:   list[dict] = []
+    isobar_refs: list[dict] = []
     rendered = skipped = 0
 
     for idx, slot_dt in enumerate(timeline):
@@ -511,19 +770,44 @@ def run_profile(
             },
         })
 
+        # ── Isobar frame (JSON lat/lon paths → Leaflet L.polyline) ───────────
+        iso_values  = isobar_matrix[idx]
+        iso_name    = f"isobar_{idx:03d}.json"
+        iso_path    = isobar_dir / iso_name
+        iso_url     = f"/data/isobars/{pid}/{iso_name}"
+
+        iso_ok = render_isobar_frame_json(
+            iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path
+        )
+        if not iso_ok and iso_path.exists():
+            iso_path.unlink()
+
+        isobar_refs.append({
+            "index":     idx,
+            "t_utc":     slot_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "available": iso_ok,
+            "asset_url": iso_url if iso_ok else None,
+        })
+
         if idx % 20 == 0:
             print(f"  [{pid}][{idx:3d}/{len(timeline)}] {slot_dt.strftime('%Y-%m-%d %H:%M')} UTC", flush=True)
 
-    wind_available = sum(1 for r in wind_refs if r["available"])
-    print(f"  [{pid}] clouds: rendered={rendered} skipped={skipped}  wind: {wind_available}/{len(wind_refs)} frames", flush=True)
-    return cloud_refs, wind_refs, rendered, skipped
+    wind_available   = sum(1 for r in wind_refs   if r["available"])
+    isobar_available = sum(1 for r in isobar_refs if r["available"])
+    print(
+        f"  [{pid}] clouds: rendered={rendered} skipped={skipped}"
+        f"  wind: {wind_available}/{len(wind_refs)}"
+        f"  isobars: {isobar_available}/{len(isobar_refs)} frames",
+        flush=True,
+    )
+    return cloud_refs, wind_refs, isobar_refs, rendered, skipped
 
 
 # ── Main pipeline ─────────────────────────────────────────────────────────────
 
 def run() -> None:
     t0 = time.time()
-    print("[weather-map] Starting cloud + wind layer pipeline v1.4", flush=True)
+    print("[weather-map] Starting cloud + wind + isobar layer pipeline v1.5", flush=True)
 
     if not HAS_PIL:
         print("[weather-map] ERROR: Pillow/numpy not installed. Run: pip install Pillow numpy", flush=True)
@@ -548,6 +832,7 @@ def run() -> None:
     # Run each profile
     profile_manifests: list[dict] = []
     wind_profile_manifests: list[dict] = []
+    isobar_profile_manifests: list[dict] = []
     total_rendered = total_skipped = 0
 
     # Build world_external profile entry (no pipeline run, just metadata)
@@ -580,7 +865,7 @@ def run() -> None:
         print(f"[weather-map] External profile: world_external (OWM_API_KEY not set → available=false)", flush=True)
 
     for profile in PROFILES:
-        cloud_refs, wind_refs, rendered, skipped = run_profile(profile, timeline)
+        cloud_refs, wind_refs, isobar_refs, rendered, skipped = run_profile(profile, timeline)
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]
@@ -614,18 +899,30 @@ def run() -> None:
             "available": wind_available > 0,
             "frames":    wind_refs,
         })
+        isobar_available = sum(1 for r in isobar_refs if r["available"])
+        isobar_profile_manifests.append({
+            "id":        profile["id"],
+            "zoom_min":  profile["zoom_min"],
+            "zoom_max":  profile["zoom_max"],
+            "bbox":      bbox,
+            "bounds":    [[bbox["lat_min"], bbox["lon_min"]], [bbox["lat_max"], bbox["lon_max"]]],
+            "width":     profile.get("isobar_render_size", 512),
+            "height":    profile.get("isobar_render_size", 512),
+            "available": isobar_available > 0,
+            "frames":    isobar_refs,
+        })
 
     elapsed = time.time() - t0
     print(f"\n[weather-map] Total: rendered={total_rendered} skipped={total_skipped}  ({elapsed:.1f}s)", flush=True)
 
     now_utc  = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     contract = {
-        "schema_version": "1.4",
+        "schema_version": "1.5",
         "updated_utc":    now_utc,
         "source": {
             "domain":   "weather",
             "dataset":  "weather_map_now",
-            "products": ["open-meteo-cloud-cover"],
+            "products": ["open-meteo-cloud-cover", "open-meteo-pressure-msl", "open-meteo-wind"],
         },
         "timeline": {
             "anchor_utc":    anchor.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -646,7 +943,16 @@ def run() -> None:
                 },
                 "profiles": profile_manifests,
             },
-            "isobars": {"id": "isobars", "enabled_by_default": False, "available": False},
+            "isobars": {
+                "id":                 "isobars",
+                "enabled_by_default": False,
+                "available":          any(pm["available"] for pm in isobar_profile_manifests),
+                "render": {
+                    "type":    "image_overlay",
+                    "opacity": 0.85,
+                },
+                "profiles": isobar_profile_manifests,
+            },
             "wind": {
                 "id":                 "wind",
                 "enabled_by_default": False,
