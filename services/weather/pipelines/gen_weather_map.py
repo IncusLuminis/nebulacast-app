@@ -22,6 +22,7 @@ Env vars:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -55,6 +56,10 @@ CLOUDS_DIR   = DATA_DIR / "clouds"
 WIND_DIR     = DATA_DIR / "wind"
 ISOBARS_DIR  = DATA_DIR / "isobars"
 OUT_JSON     = DATA_DIR / "weather_map_now.json"
+OM_CACHE_DIR = DATA_DIR / "_cache" / "open_meteo"
+
+# How long a cached batch response is considered fresh (seconds)
+OM_CACHE_TTL = 3 * 3600  # 3 hours
 
 # ── Profile definitions ───────────────────────────────────────────────────────
 
@@ -140,6 +145,30 @@ def build_grid(bbox: dict, lat_n: int, lon_n: int) -> list[tuple[float, float]]:
     return [(lat, lon) for lat in lats for lon in lons]
 
 
+def _om_cache_path(url: str) -> Path:
+    key = hashlib.sha1(url.encode()).hexdigest()[:16]
+    return OM_CACHE_DIR / f"{key}.json"
+
+
+def _om_cache_load(url: str) -> tuple[list | None, bool]:
+    """Return (data, is_fresh). data=None if no cache exists."""
+    path = _om_cache_path(url)
+    if not path.exists():
+        return None, False
+    try:
+        cached = json.loads(path.read_text())
+        age = time.time() - cached.get("_cached_at", 0)
+        return cached["data"], age < OM_CACHE_TTL
+    except Exception:
+        return None, False
+
+
+def _om_cache_save(url: str, data: list) -> None:
+    OM_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    path = _om_cache_path(url)
+    path.write_text(json.dumps({"_cached_at": time.time(), "data": data}))
+
+
 def fetch_open_meteo(
     points: list[tuple[float, float]],
     past_days: int = 2,
@@ -147,6 +176,9 @@ def fetch_open_meteo(
     variables: str = "cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m",
 ) -> list[dict]:
     """Fetch hourly fields for all grid points in batches of 10.
+
+    Responses are cached on disk (TTL=3h). On 429 / network error, stale cache
+    is used if available so the pipeline can still produce output.
 
     variables: comma-separated Open-Meteo hourly fields to request.
     Returns list of dicts with keys: lat, lon, times, cloud_cover, pressure_msl,
@@ -167,18 +199,30 @@ def fetch_open_meteo(
             "wind_speed_unit": "ms",
         }
         url = OM_BASE + "?" + urllib.parse.urlencode(params)
-        try:
-            with urllib.request.urlopen(url, timeout=30) as resp:
-                data = json.loads(resp.read())
-        except Exception as e:
-            print(f"  [warn] Open-Meteo batch {i // BATCH} failed: {e}", flush=True)
-            for lat, lon in batch:
-                results.append({
-                    "lat": lat, "lon": lon, "times": [],
-                    "cloud_cover": [], "pressure_msl": [],
-                    "wind_speed": [], "wind_direction": [],
-                })
-            continue
+        batch_idx = i // BATCH
+
+        # Try fresh cache first
+        cached_data, is_fresh = _om_cache_load(url)
+        if is_fresh:
+            data = cached_data
+        else:
+            try:
+                with urllib.request.urlopen(url, timeout=30) as resp:
+                    data = json.loads(resp.read())
+                _om_cache_save(url, data)
+            except Exception as e:
+                print(f"  [warn] Open-Meteo batch {batch_idx} failed: {e}", flush=True)
+                if cached_data is not None:
+                    print(f"  [cache] batch {batch_idx}: using stale cache", flush=True)
+                    data = cached_data
+                else:
+                    for lat, lon in batch:
+                        results.append({
+                            "lat": lat, "lon": lon, "times": [],
+                            "cloud_cover": [], "pressure_msl": [],
+                            "wind_speed": [], "wind_direction": [],
+                        })
+                    continue
 
         if isinstance(data, dict):
             data = [data]
@@ -194,7 +238,7 @@ def fetch_open_meteo(
                 "wind_speed":     hourly.get("wind_speed_10m", []),
                 "wind_direction": hourly.get("wind_direction_10m", []),
             })
-        time.sleep(0.1)
+        time.sleep(0.2)
 
     return results
 
