@@ -5,8 +5,8 @@ Downloads GFS TCDC (total cloud cover) from NOAA NOMADS, generates z/x/y WebP
 tile pyramids aligned to the master weather-map timeline (spec #267).
 
 Pipeline:
-  1. Resolve latest available GFS run (00/06/12/18 Z) via NOMADS check
-  2. Download TCDC GRIB2 for forecast hours f000–f072 (frames 48–120)
+  1. Resolve latest available GFS run (00/06/12/18 Z) via .idx probe (NOMADS / AWS S3)
+  2. Download TCDC GRIB2 message via .idx byte-range for f000–f072 (frames 48–120)
   3. Parse + shift lon from [0,360) to [-180,180)
   4. Render z/x/y WebP tile pyramid (zoom 0–3) per frame
   5. Write per-run tile manifest + latest.json pointer
@@ -109,14 +109,18 @@ def _cloud_to_alpha_array(values: "np.ndarray") -> "np.ndarray":
 # Cloud tile color (light silvery-white, same visual family as raster overlays)
 CLOUD_R, CLOUD_G, CLOUD_B = 210, 215, 225
 
-# ── GFS NOMADS ────────────────────────────────────────────────────────────────
+# ── GFS data sources ──────────────────────────────────────────────────────────
+# Strategy: use .idx (index) files to locate the TCDC byte-range, then HTTP Range
+# to download only ~50–80 KB instead of the full 300 MB+ GRIB2 file.
+# NOMADS is authoritative; AWS S3 open-data mirror is the fallback.
 
-NOMADS_FILTER = (
-    "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl"
-    "?dir=/gfs.{date}/{run:02d}/atmos"
-    "&file=gfs.t{run:02d}z.pgrb2.0p25.f{fhour:03d}"
-    "&var_TCDC=on"
-    "&lev_entire_atmosphere_%28considered_as_a_single_layer%29=on"
+_NOMADS_BASE = (
+    "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
+    "/gfs.{date}/{run:02d}/atmos/gfs.t{run:02d}z.pgrb2.0p25.f{fhour:03d}"
+)
+_AWS_BASE = (
+    "https://noaa-gfs-bdp-pds.s3.amazonaws.com"
+    "/gfs.{date}/{run:02d}/atmos/gfs.t{run:02d}z.pgrb2.0p25.f{fhour:03d}"
 )
 
 # GFS grid: 721 lat (90→−90) × 1440 lon (0→359.75)
@@ -128,92 +132,136 @@ GFS_DLAT = -180.0 / (GFS_NJ - 1)   # −0.25°
 GFS_DLON =  360.0 / GFS_NI          # +0.25°
 
 
-# ── Run discovery ─────────────────────────────────────────────────────────────
+def _candidate_urls(date_str: str, run_hour: int, fhour: int) -> list[str]:
+    ctx = dict(date=date_str, run=run_hour, fhour=fhour)
+    return [_NOMADS_BASE.format(**ctx), _AWS_BASE.format(**ctx)]
 
-def _nomads_url(date_str: str, run_hour: int, fhour: int) -> str:
-    return NOMADS_FILTER.format(date=date_str, run=run_hour, fhour=fhour)
 
+def _fetch_idx(base_url: str, timeout: int = 20) -> str | None:
+    """
+    Fetch the .idx text file for a GFS GRIB2.  The index lists every message
+    with its byte offset (~50–200 KB total).  Returns raw text or None on error.
 
-def _check_grib_url(url: str, timeout: int = 12) -> bool:
-    """Return True if URL responds with ≥ 1 000 bytes (valid GRIB2)."""
+    .idx line format:
+      MSG_NUM:BYTE_OFFSET:d=DATETIME:SHORT_NAME:LEVEL:FORECAST:
+    """
+    idx_url = base_url + ".idx"
     try:
-        req = urllib.request.Request(url, method="HEAD")
+        req = urllib.request.Request(idx_url, headers={"User-Agent": "nebulacast-grib/1.0"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            length = resp.headers.get("Content-Length", "0")
-            return int(length) > 1000
+            if resp.status not in (200, 206):
+                return None
+            data = resp.read(512 * 1024)   # 512 KB cap — plenty for any .idx
+            return data.decode("ascii", errors="replace")
     except Exception:
-        try:
-            req2 = urllib.request.Request(url)
-            req2.get_method = lambda: "GET"
-            with urllib.request.urlopen(req2, timeout=timeout) as resp:
-                chunk = resp.read(2000)
-                return len(chunk) > 1000
-        except Exception:
-            return False
+        return None
 
+
+def _parse_tcdc_range(idx_text: str) -> tuple[int, int | None]:
+    """
+    Parse a .idx file and return (start_byte, end_byte|None) for the
+    TCDC/entire-atmosphere message.  end_byte=None means read to EOF.
+    Raises ValueError if TCDC is not found.
+    """
+    lines = idx_text.strip().splitlines()
+    for i, line in enumerate(lines):
+        parts = line.split(":")
+        if len(parts) < 5:
+            continue
+        short_name = parts[3].strip()
+        level      = parts[4].strip().lower()
+        if short_name == "TCDC" and "entire atmosphere" in level:
+            start_byte = int(parts[1])
+            end_byte: int | None = None
+            if i + 1 < len(lines):
+                nxt = lines[i + 1].split(":")
+                if len(nxt) >= 2:
+                    end_byte = int(nxt[1]) - 1
+            return start_byte, end_byte
+    raise ValueError("TCDC/entire-atmosphere not found in .idx")
+
+
+def _range_download(base_url: str, start: int, end: int | None, timeout: int = 60) -> bytes:
+    """HTTP Range request → returns raw GRIB2 message bytes (~40–80 KB)."""
+    hdr = f"bytes={start}-" if end is None else f"bytes={start}-{end}"
+    req = urllib.request.Request(
+        base_url,
+        headers={"Range": hdr, "User-Agent": "nebulacast-grib/1.0"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read()
+
+
+# ── Run discovery ─────────────────────────────────────────────────────────────
 
 def find_latest_gfs_run() -> tuple[str, int, datetime]:
     """
     Return (date_str 'YYYYMMDD', run_hour 0/6/12/18, run_datetime_utc) for the
-    latest GFS run where f024 data is available on NOMADS.
-    Checks up to the last 4 run slots (24 h back).
+    most recent GFS run whose f024 .idx file is reachable.
+    Tries NOMADS first, then AWS S3.  Looks up to 5 slots back (30 h).
     """
     now = datetime.now(timezone.utc)
-    # Start from the most recently completed run slot
-    candidate = now - timedelta(hours=4)  # GFS data lands ~4 h after run start
-    # Round down to nearest 6-h slot
-    run_hour = (candidate.hour // 6) * 6
+    candidate = now - timedelta(hours=4)          # allow ~4 h for data to land
+    run_hour  = (candidate.hour // 6) * 6
     candidate = candidate.replace(hour=run_hour, minute=0, second=0, microsecond=0)
 
     for _ in range(5):
-        date_str  = candidate.strftime("%Y%m%d")
-        rh        = candidate.hour
-        url_probe = _nomads_url(date_str, rh, 24)
+        date_str = candidate.strftime("%Y%m%d")
+        rh       = candidate.hour
         print(f"[grib-tiles] Probing GFS run {date_str} {rh:02d}Z … ", end="", flush=True)
-        if _check_grib_url(url_probe):
-            print("available", flush=True)
-            return date_str, rh, candidate
+        for base_url in _candidate_urls(date_str, rh, 24):
+            idx_text = _fetch_idx(base_url)
+            if idx_text and "TCDC" in idx_text:
+                src = "NOMADS" if "nomads" in base_url else "AWS-S3"
+                print(f"available ({src})", flush=True)
+                return date_str, rh, candidate
         print("not yet / unavailable", flush=True)
         candidate -= timedelta(hours=6)
 
-    raise RuntimeError("No available GFS run found in last 30 h on NOMADS")
+    raise RuntimeError("No available GFS run found in last 30 h (NOMADS + AWS S3)")
 
 
 # ── GRIB download ─────────────────────────────────────────────────────────────
 
 def download_tcdc(date_str: str, run_hour: int, fhour: int) -> Path:
     """
-    Download (or reuse cached) GRIB2 TCDC slice for the given forecast hour.
-    Returns local Path to the GRIB2 file.
+    Fetch only the TCDC GRIB2 message for the given forecast hour using
+    .idx byte-range download (~50–80 KB vs 300 MB full file).
+    Caches result locally; skips network if cached file is valid.
     """
     GRIB_CACHE.mkdir(parents=True, exist_ok=True)
-    fname  = f"gfs_{date_str}_{run_hour:02d}z_f{fhour:03d}_tcdc.grib2"
-    path   = GRIB_CACHE / fname
-    url    = _nomads_url(date_str, run_hour, fhour)
+    fname = f"gfs_{date_str}_{run_hour:02d}z_f{fhour:03d}_tcdc.grib2"
+    path  = GRIB_CACHE / fname
 
-    skip = os.environ.get("GRIB_TILES_SKIP_DOWNLOAD") == "1"
     if path.exists() and path.stat().st_size > 1000:
-        if skip:
-            print(f"  [cache] {fname}", flush=True)
-            return path
-        # Always reuse if present; CI pipeline won't re-download across runs
         print(f"  [cache] {fname}", flush=True)
         return path
 
     print(f"  [fetch] f{fhour:03d} … ", end="", flush=True)
-    t0 = time.time()
-    try:
-        tmp = path.with_suffix(".tmp")
-        urllib.request.urlretrieve(url, tmp)
-        if tmp.stat().st_size < 1000:
-            tmp.unlink(missing_ok=True)
-            raise IOError(f"Response too small for {url}")
-        tmp.rename(path)
-        print(f"{path.stat().st_size // 1024} KB  ({time.time()-t0:.1f}s)", flush=True)
-    except Exception as exc:
-        print(f"FAILED: {exc}", flush=True)
-        raise
-    return path
+    t0       = time.time()
+    last_exc: Exception | None = None
+
+    for base_url in _candidate_urls(date_str, run_hour, fhour):
+        try:
+            idx_text = _fetch_idx(base_url)
+            if not idx_text:
+                raise IOError("Empty or missing .idx")
+            start, end = _parse_tcdc_range(idx_text)
+            raw = _range_download(base_url, start, end)
+            if len(raw) < 100:
+                raise IOError(f"Range response too small ({len(raw)} B)")
+            if not raw.startswith(b"GRIB"):
+                raise ValueError("Response is not a GRIB2 message (bad magic bytes)")
+            path.with_suffix(".tmp").write_bytes(raw)
+            path.with_suffix(".tmp").rename(path)
+            src = "NOMADS" if "nomads" in base_url else "AWS-S3"
+            print(f"{len(raw) // 1024} KB  ({time.time()-t0:.1f}s) [{src}]", flush=True)
+            return path
+        except Exception as exc:
+            last_exc = exc
+            continue
+
+    raise IOError(f"f{fhour:03d} TCDC download failed from all sources: {last_exc}")
 
 
 # ── GRIB parsing ──────────────────────────────────────────────────────────────
