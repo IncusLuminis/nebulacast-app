@@ -1403,6 +1403,9 @@
               if (rasterCloudsOn && currentTimeUtcMs !== null) {
                 adapterWorldTilesSetTime(currentTimeUtcMs);
               }
+              // Correct visibility immediately based on current zoom
+              // (avoids upscaled tiles flashing at zoom > zoom_max on initial load)
+              checkCloudProfileSwitch();
               console.log("[clouds] world_tiles manifest: run=" + tm.run_id
                 + " frames=" + (tm.frame_indexes ? tm.frame_indexes.length : 0));
             })
