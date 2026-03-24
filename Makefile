@@ -3,12 +3,13 @@
 # make news-back  — only backend (RSS pipeline)
 # make news-front — only frontend (HTML/JS)
 # make server     — local HTTP server :8080
+# make server-8081 — local HTTP server :8081 (grib-pipeline branch)
 
 # Load .env if present (provides OWM_API_KEY etc.)
 -include .env
 export
 
-.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back weather-map weather-map-back server deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
+.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back weather-map weather-map-back grib-tiles server server-8081 deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
 
 # Python: prefer venv if present
 PYTHON ?= python
@@ -59,6 +60,10 @@ functions-build:
 server:
 	bash infra/scripts/serve_local.sh
 
+# Local HTTP server on :8081 — for feat/grib-tile-pipeline branch
+server-8081:
+	cd sites/staging && python3 -m http.server 8081
+
 # Local dev server with API endpoints (astro-weather, geocode, revgeo)
 # Uses same Python as other targets (respects .venv or PYTHON env var)
 server-api:
@@ -98,6 +103,10 @@ weather-map-back:
 
 weather-map: weather-map-back
 
+# GRIB Tile Pipeline: download GFS TCDC → generate z/x/y WebP tiles + manifests
+grib-tiles:
+	PYTHONPATH=$(PYTHONPATH_WEATHER) $(RUN) $(SERVICE_WEATHER)/pipelines/gen_grib_tiles.py
+
 # Helio: space weather pipeline → sites/staging/data/helio_now.json
 deps-helio:
 	$(RUN) -m pip install -r $(SERVICE_HELIO)/requirements.txt
@@ -135,6 +144,8 @@ help:
 	@echo "  make functions    — rebuild Functions only (after editing functions/*.ts, before commit)"
 	@echo "  make functions-build — npm ci + bundle Functions (for CI / first time)"
 	@echo "  make server     — start local HTTP server on :8080"
+	@echo "  make server-8081 — start local HTTP server on :8081 (grib-pipeline branch)"
+	@echo "  make grib-tiles — run GRIB tile pipeline (GFS TCDC → WebP z/x/y tiles + manifests)"
 	@echo "  make deps-news  — install news deps (run once)"
 	@echo "  make deps-calendar — install calendar deps (run once)"
 	@echo "  make deps-weather  — install weather deps (run once)"

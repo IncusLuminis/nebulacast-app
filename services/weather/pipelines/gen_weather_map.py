@@ -866,6 +866,55 @@ def run() -> None:
     else:
         print(f"[weather-map] External profile: world_external (OWM_API_KEY not set → available=false)", flush=True)
 
+    # Build world_tiles profile entry (owned internal tile pyramid from GRIB pipeline)
+    _tile_manifests_dir = DATA_DIR / "tile_manifests"
+    _tile_latest = _tile_manifests_dir / "latest.json"
+    if _tile_latest.exists():
+        try:
+            _tl = json.loads(_tile_latest.read_text())
+            _run_manifest_path = DATA_DIR / "tile_manifests" / f"{_tl['run_id']}.json"
+            _tm = json.loads(_run_manifest_path.read_text()) if _run_manifest_path.exists() else _tl
+            world_tiles_manifest = {
+                "id":               "world_tiles",
+                "kind":             "internal_tiles",
+                "zoom_min":         _tm.get("zoom_min", 0),
+                "zoom_max":         _tm.get("zoom_max", 3),
+                "bbox":             None,
+                "bounds":           None,
+                "tile_manifest_url": f"/data/tile_manifests/{_tl['run_id']}.json",
+                "frames":           None,
+                "available":        True,
+                "meta": {
+                    "source_kind":   "internal_tiles",
+                    "source_name":   "nebulacast/gfs-tcdc",
+                    "timeline_mode": "time_addressable",
+                    "source_owned":  True,
+                    "run_id":        _tl.get("run_id"),
+                },
+            }
+            print(f"[weather-map] Tile profile: world_tiles run={_tl.get('run_id')} available=true", flush=True)
+        except Exception as _e:
+            print(f"[weather-map] Tile profile: world_tiles manifest read failed ({_e}) → available=false", flush=True)
+            world_tiles_manifest = {
+                "id": "world_tiles", "kind": "internal_tiles",
+                "zoom_min": 0, "zoom_max": 3,
+                "bbox": None, "bounds": None,
+                "tile_manifest_url": None, "frames": None, "available": False,
+                "meta": {"source_kind": "internal_tiles", "source_name": "nebulacast/gfs-tcdc",
+                         "source_owned": True},
+            }
+    else:
+        world_tiles_manifest = {
+            "id": "world_tiles", "kind": "internal_tiles",
+            "zoom_min": 0, "zoom_max": 3,
+            "bbox": None, "bounds": None,
+            "tile_manifest_url": None, "frames": None, "available": False,
+            "meta": {"source_kind": "internal_tiles", "source_name": "nebulacast/gfs-tcdc",
+                     "source_owned": True},
+        }
+        print(f"[weather-map] Tile profile: world_tiles (no manifest yet → available=false)", flush=True)
+    profile_manifests.insert(0, world_tiles_manifest)
+
     for profile in PROFILES:
         cloud_refs, wind_refs, isobar_refs, rendered, skipped = run_profile(profile, timeline)
         total_rendered += rendered
