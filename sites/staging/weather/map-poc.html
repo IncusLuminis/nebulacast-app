@@ -482,6 +482,11 @@
             </label>
             <div id="cloudPhaseLabel" style="font-size:10px;color:var(--muted);margin-left:20px;margin-top:2px"></div>
           </div>
+          <div class="layer-row" id="worldTilesRow">
+            <label title="Global cloud tiles from GFS TCDC (NOAA), zoom 0–5, updated every 6h">
+              <input type="checkbox" id="toggleWorldTiles" checked> GFS Cloud Tiles <span class="layer-freq">6h</span>
+            </label>
+          </div>
           <div class="layer-row">
             <label title="True-color satellite imagery from NASA GIBS (Terra/Aqua), updated daily">
               <input type="checkbox" id="toggleGibs" checked> Satellite <span class="layer-freq">daily</span>
@@ -906,6 +911,7 @@
   let worldTilesManifest   = null;  // tile manifest JSON from GRIB pipeline
   let worldTilesProfile    = null;  // world_tiles profile entry from weather_map_now.json
   let worldTilesFrameIndex = -1;    // currently displayed frame index
+  let worldTilesOn         = true;  // user toggle for world_tiles layer
 
   // ── Isobar layer ───────────────────────────────────────────────────────────
   let isobarOn = false;
@@ -1316,7 +1322,7 @@
    * Shows layer only if a tile frame exists for that time.
    */
   function adapterWorldTilesSetTime(tUtcMs) {
-    if (!rasterCloudsOn || !worldTilesLayer || !worldTilesManifest) return;
+    if (!worldTilesOn || !rasterCloudsOn || !worldTilesLayer || !worldTilesManifest) return;
     var frameIndexes = worldTilesManifest.frame_indexes;
     if (!frameIndexes || !frameIndexes.length) return;
 
@@ -1427,10 +1433,12 @@
   function checkCloudProfileSwitch() {
     var zoom = map ? map.getZoom() : 7;
 
-    // ── world_tiles visibility: show only within its native zoom range ────────
+    // ── world_tiles visibility ────────────────────────────────────────────────
+    // Show at zoom 0–5 (GFS native 0–3, upscaled 4–5); raster overlay takes over at 6+.
+    // maxNativeZoom:3 on the GridLayer handles tile upscaling automatically.
     if (worldTilesLayer && worldTilesManifest) {
-      var wtZMax = worldTilesManifest.zoom_max != null ? worldTilesManifest.zoom_max : 3;
-      var shouldShow = rasterCloudsOn && zoom <= wtZMax && worldTilesFrameIndex >= 0;
+      var RASTER_MIN_ZOOM = 6;  // eu_wide profile starts at zoom 6
+      var shouldShow = worldTilesOn && rasterCloudsOn && zoom < RASTER_MIN_ZOOM && worldTilesFrameIndex >= 0;
       if (shouldShow && map && !map.hasLayer(worldTilesLayer)) {
         worldTilesLayer.addTo(map);
       } else if (!shouldShow && map && map.hasLayer(worldTilesLayer)) {
@@ -3257,7 +3265,8 @@
         // forecastOpacity: forecastOpacity,
         radarOn: radarOn,
         hillshadeOn: hillshadeOn,
-        gibsDayOffset: gibsDayOffset
+        gibsDayOffset: gibsDayOffset,
+        worldTilesOn: worldTilesOn
       };
       window.localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
@@ -3819,6 +3828,25 @@
       });
     }
     layerAdapters.clouds.enabled = rasterCloudsOn;
+
+    // ── GFS world_tiles toggle ─────────────────────────────────────────────────
+    var worldTilesCb = document.getElementById("toggleWorldTiles");
+    if (worldTilesCb) {
+      worldTilesCb.checked = worldTilesOn;
+      worldTilesCb.addEventListener("change", function () {
+        worldTilesOn = this.checked;
+        if (worldTilesLayer) {
+          if (worldTilesOn) {
+            // re-evaluate visibility based on current zoom and frame
+            checkCloudProfileSwitch();
+          } else {
+            if (map.hasLayer(worldTilesLayer)) map.removeLayer(worldTilesLayer);
+          }
+        }
+        saveLayerState();
+      });
+    }
+
     initCloudLayer();
 
     // ── Wind toggle ────────────────────────────────────────────────────────────
@@ -4750,6 +4778,7 @@
       radarOn = !!state.radarOn;
       hillshadeOn = state.hillshadeOn !== false;
       gibsDayOffset = Math.min(state.gibsDayOffset || 0, 0); // Never allow future dates
+      worldTilesOn = state.worldTilesOn !== false;
     }
     
     // Обновляем checkbox'ы после загрузки состояния
@@ -4761,6 +4790,8 @@
     if (radarCb) radarCb.checked = radarOn;
     var hillshadeCb = document.getElementById("toggleHillshade");
     if (hillshadeCb) hillshadeCb.checked = hillshadeOn;
+    var worldTilesCbInit = document.getElementById("toggleWorldTiles");
+    if (worldTilesCbInit) worldTilesCbInit.checked = worldTilesOn;
     
     // Apply initial visibility for dynamic layers
     if (!terrainOn && baseLayer && map.hasLayer(baseLayer)) {
