@@ -3925,26 +3925,37 @@
     }
     var btnFs = document.getElementById("btnMapFullscreen");
     if (btnFs) {
+      // Sync CSS class with native fullscreen state (handles Esc key exit too)
+      function onFullscreenChange() {
+        var wrapper = document.querySelector(".map-wrapper");
+        if (!wrapper) return;
+        var isNativeFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        wrapper.classList.toggle("fullscreen-mode", isNativeFs);
+        document.body.classList.toggle("fullscreen-map", isNativeFs);
+        setTimeout(function () { if (map) map.invalidateSize(); }, 50);
+      }
+      document.addEventListener("fullscreenchange", onFullscreenChange);
+      document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+
       btnFs.addEventListener("click", function () {
         if (!map) return;
         var wrapper = document.querySelector(".map-wrapper");
         if (!wrapper) return;
 
-        var isFs = wrapper.classList.contains("fullscreen-mode");
+        var isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
         if (!isFs) {
-          // Входим в кастомный fullscreen-режим (fixed + 100vw/100vh)
-          document.body.classList.add("fullscreen-map");
-          wrapper.classList.add("fullscreen-mode");
-          setTimeout(function () {
-            map.invalidateSize();
-          }, 50);
+          var req = wrapper.requestFullscreen || wrapper.webkitRequestFullscreen;
+          if (req) {
+            req.call(wrapper).catch(function () {
+              // Fallback: CSS-only mode (e.g. browser blocks fullscreen)
+              document.body.classList.add("fullscreen-map");
+              wrapper.classList.add("fullscreen-mode");
+              setTimeout(function () { if (map) map.invalidateSize(); }, 50);
+            });
+          }
         } else {
-          // Выходим из кастомного fullscreen
-          document.body.classList.remove("fullscreen-map");
-          wrapper.classList.remove("fullscreen-mode");
-          setTimeout(function () {
-            map.invalidateSize();
-          }, 50);
+          var exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) exit.call(document);
         }
       });
     }
