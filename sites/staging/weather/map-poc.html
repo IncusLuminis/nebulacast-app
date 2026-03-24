@@ -477,11 +477,6 @@
             </label>
           </div>
           <div class="layer-row">
-            <label title="Global cloud tiles from OpenWeatherMap, refreshes every ~10 min">
-              <input type="checkbox" id="toggleOwmClouds" checked> OWM Clouds <span class="layer-freq">10 min</span>
-            </label>
-          </div>
-          <div class="layer-row">
             <label title="Pre-rendered cloud cover from weather model (Open-Meteo), updated every 3h">
               <input type="checkbox" id="toggleRasterClouds" checked> Raster Clouds <span class="layer-freq">3h</span>
             </label>
@@ -898,11 +893,9 @@
 
   // ── Cloud layer (hybrid v1.2: external tiles + internal raster) ────────────
   const CLOUD_MANIFEST_URL = "/data/weather_map_now.json";
-  let owmCloudsOn    = true;  // OWM external tile layer (10 min)
   let rasterCloudsOn = true;  // internal raster WebP layer (3h)
   let cloudManifest = null;        // weather_map_now.json data
   let cloudOverlay = null;         // L.imageOverlay — internal raster
-  let cloudTileLayer = null;       // L.tileLayer   — external tiles
   let cloudFrameIndex = -1;        // currently displayed frame index (raster only)
   let cloudActiveProfileId = null; // active internal raster profile id
   // Prefetch cache: url → Image (preloaded)
@@ -1091,9 +1084,10 @@
     radarLayer = L.tileLayer(url, {
       opacity: 0.8,
       maxZoom: 19,
+      maxNativeZoom: 7,
       attribution: "Precipitation © RainViewer"
     });
-    
+
     if (radarOn) {
       radarLayer.addTo(map);
       radarLayer.setZIndex(600);
@@ -1225,14 +1219,7 @@
   layerAdapters.isobars.setTime = adapterIsobarSetTime;
   layerAdapters.wind.setTime = adapterWindSetTime;
 
-  // ── Cloud layer functions (v1.2 — OWM tiles and raster are fully independent) ─
-
-  /** Return the OWM external-tiles profile from manifest (or null). */
-  function getOwmProfile() {
-    if (!cloudManifest) return null;
-    var profiles = cloudManifest.layers.clouds.profiles;
-    return profiles && profiles.find(function(p) { return p.kind === "external_tiles"; });
-  }
+  // ── Cloud layer functions ─────────────────────────────────────────────────
 
   /** Return the best internal raster profile for the given zoom. */
   function selectRasterProfile(zoom) {
@@ -1262,20 +1249,6 @@
   // Keep legacy alias used by adapterCloudsSetTime
   function getActiveProfile() { return getActiveRasterProfile(); }
 
-  /** Create cloudTileLayer from OWM profile if not yet created. */
-  function ensureOwmTileLayer(owmProfile) {
-    if (cloudTileLayer) return;
-    if (!owmProfile || !owmProfile.tile_url_template) return;
-    cloudTileLayer = L.tileLayer(owmProfile.tile_url_template, {
-      opacity:     0.65,
-      interactive: false,
-      maxZoom:     19,
-      zIndex:      240,
-      attribution: "Cloud © " + ((owmProfile.meta && owmProfile.meta.source_name) || "OWM"),
-    });
-    console.log("[clouds] OWM tile layer created");
-  }
-
   /**
    * Load weather_map_now.json and initialise both cloud layers independently.
    */
@@ -1300,11 +1273,6 @@
         }
 
         var zoom = map ? map.getZoom() : 7;
-
-        // ── OWM tile layer (independent of zoom) ──────────────────────────────
-        var owmP = getOwmProfile();
-        ensureOwmTileLayer(owmP);
-        if (cloudTileLayer && owmCloudsOn) cloudTileLayer.addTo(map);
 
         // ── Internal raster overlay ───────────────────────────────────────────
         if (layer.profiles && layer.profiles.length) {
@@ -1348,7 +1316,6 @@
 
   /**
    * On zoom change: switch internal raster profile if needed.
-   * OWM tile layer is unaffected (always on if owmCloudsOn).
    */
   function checkCloudProfileSwitch() {
     if (!cloudManifest || !cloudOverlay) return;
@@ -1408,7 +1375,6 @@
 
   /**
    * Layer adapter: update internal raster overlay to nearest frame for tUtcMs.
-   * OWM tile layer is Mode A (live latest) — not touched here.
    */
   function adapterCloudsSetTime(tUtcMs) {
     if (!rasterCloudsOn || !cloudManifest || !cloudOverlay) return;
@@ -2770,7 +2736,7 @@
       opacity: GIBS_OPACITY,
       minZoom: 1,
       maxZoom: 9,
-      maxNativeZoom: 9,
+      maxNativeZoom: 6,
       crossOrigin: true,
       attribution: "Imagery © NASA GIBS",
       getTileUrl: function (coords) {
@@ -3710,20 +3676,6 @@
       });
     }
 
-    // ── OWM cloud tiles toggle ─────────────────────────────────────────────────
-    var owmCb = document.getElementById("toggleOwmClouds");
-    if (owmCb) {
-      owmCb.checked = owmCloudsOn;
-      owmCb.addEventListener("change", function () {
-        owmCloudsOn = this.checked;
-        if (cloudTileLayer) {
-          if (owmCloudsOn) { if (!map.hasLayer(cloudTileLayer)) cloudTileLayer.addTo(map); }
-          else             { if (map.hasLayer(cloudTileLayer))  map.removeLayer(cloudTileLayer); }
-        }
-        saveLayerState();
-      });
-    }
-
     // ── Raster cloud overlay toggle ────────────────────────────────────────────
     var rasterCb = document.getElementById("toggleRasterClouds");
     if (rasterCb) {
@@ -4186,6 +4138,7 @@
     radarLayer = L.tileLayer(url, {
       opacity: 0.8,
       maxZoom: 19,
+      maxNativeZoom: 7,
       attribution: "Precipitation © RainViewer"
     });
     if (radarOn) {

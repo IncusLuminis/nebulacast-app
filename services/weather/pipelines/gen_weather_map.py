@@ -7,17 +7,12 @@ Generates zoom-aware cloud profiles, wind vector frames, and pressure isobar ove
   - sites/staging/data/isobars/{profile_id}/isobar_NNN.webp (121 frames × 3 profiles)
   - sites/staging/data/weather_map_now.json   (data contract v1.5)
 
-Hybrid cloud architecture (spec #266):
-  world_external — zoom 0–5  — external tile layer (OpenWeatherMap), no frames generated
-  eu_wide        — zoom 6–8  — internal raster, lat 30–72°N, lon −15–50°E
-  eu_central     — zoom 9–11 — internal raster, lat 45–60°N, lon   5–35°E
-  local          — zoom 12+  — internal raster, lat 48–57°N, lon  12–30°E
+Cloud architecture:
+  eu_wide    — zoom 6–8  — internal raster, lat 30–72°N, lon −15–50°E
+  eu_central — zoom 9–11 — internal raster, lat 45–60°N, lon   5–35°E
+  local      — zoom 12+  — internal raster, lat 48–57°N, lon  12–30°E
 
-All internal profiles share the same 121-frame timeline (identical indexes, t_utc values).
-External profile uses Mode A (live latest tiles, no timeline alignment).
-
-Env vars:
-  OWM_API_KEY — OpenWeatherMap API key; if absent world_external is available=false
+All profiles share the same 121-frame timeline (identical indexes, t_utc values).
 """
 
 from __future__ import annotations
@@ -108,11 +103,6 @@ PROFILES: list[dict] = [
         "isobar_render_size": 512,
     },
 ]
-
-# External tile profile (no pipeline work needed, just metadata in manifest)
-EXTERNAL_PROFILE_ID = "world_external"
-EXTERNAL_PROFILE_ZOOM_MIN = 0
-EXTERNAL_PROFILE_ZOOM_MAX = 5
 
 # ── Timeline ──────────────────────────────────────────────────────────────────
 
@@ -836,35 +826,6 @@ def run() -> None:
     wind_profile_manifests: list[dict] = []
     isobar_profile_manifests: list[dict] = []
     total_rendered = total_skipped = 0
-
-    # Build world_external profile entry (no pipeline run, just metadata)
-    owm_key = os.environ.get("OWM_API_KEY", "").strip()
-    world_external_manifest = {
-        "id":               EXTERNAL_PROFILE_ID,
-        "kind":             "external_tiles",
-        "zoom_min":         EXTERNAL_PROFILE_ZOOM_MIN,
-        "zoom_max":         EXTERNAL_PROFILE_ZOOM_MAX,
-        "bbox":             None,
-        "bounds":           None,
-        "tile_url_template": (
-            f"https://tile.openweathermap.org/map/clouds_new/{{z}}/{{x}}/{{y}}.png?appid={owm_key}"
-            if owm_key else None
-        ),
-        "frames":           None,
-        "available":        bool(owm_key),
-        "meta": {
-            "source_kind":   "external_tiles",
-            "source_name":   "OpenWeatherMap",
-            "timeline_mode": "live_latest",
-            "styling_mode":  "provider_native",
-            "source_owned":  False,
-        },
-    }
-    profile_manifests.append(world_external_manifest)
-    if owm_key:
-        print(f"[weather-map] External profile: world_external (OWM key configured)", flush=True)
-    else:
-        print(f"[weather-map] External profile: world_external (OWM_API_KEY not set → available=false)", flush=True)
 
     for profile in PROFILES:
         cloud_refs, wind_refs, isobar_refs, rendered, skipped = run_profile(profile, timeline)
