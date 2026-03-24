@@ -105,15 +105,32 @@
     @media (max-width: 560px) {
       #map { height: 280px; }
     }
-    /* Custom fullscreen-like mode (without relying on browser Fullscreen API) */
+    /* Native fullscreen — browser handles positioning, we just fill 100% */
+    .map-wrapper:fullscreen,
+    .map-wrapper:-webkit-full-screen {
+      background: #000;
+      border-radius: 0;
+      border: none;
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .map-wrapper:fullscreen #map,
+    .map-wrapper:-webkit-full-screen #map {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 0;
+    }
+    /* CSS fallback (when native API is blocked — e.g. sandboxed iframe) */
     body.fullscreen-map {
       overflow: hidden;
     }
     .map-wrapper.fullscreen-mode {
       position: fixed;
       inset: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100vw !important;
+      height: 100vh !important;
       border-radius: 0;
       border: none;
       margin: 0;
@@ -121,8 +138,8 @@
       background: #000;
     }
     .map-wrapper.fullscreen-mode #map {
-      width: 100vw;
-      height: 100vh;
+      width: 100% !important;
+      height: 100% !important;
       border-radius: 0;
     }
     .layers-btn {
@@ -3925,14 +3942,23 @@
     }
     var btnFs = document.getElementById("btnMapFullscreen");
     if (btnFs) {
-      // Sync CSS class with native fullscreen state (handles Esc key exit too)
+      function invalidateMapSize() {
+        // Call multiple times to catch the end of the browser's fullscreen transition
+        if (map) map.invalidateSize();
+        setTimeout(function () { if (map) map.invalidateSize(); }, 300);
+      }
+
+      // Sync state when fullscreen ends (e.g. user presses Esc)
       function onFullscreenChange() {
         var wrapper = document.querySelector(".map-wrapper");
         if (!wrapper) return;
         var isNativeFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        wrapper.classList.toggle("fullscreen-mode", isNativeFs);
-        document.body.classList.toggle("fullscreen-map", isNativeFs);
-        setTimeout(function () { if (map) map.invalidateSize(); }, 50);
+        if (!isNativeFs) {
+          // Exited native fullscreen — clear fallback CSS classes too
+          wrapper.classList.remove("fullscreen-mode");
+          document.body.classList.remove("fullscreen-map");
+        }
+        invalidateMapSize();
       }
       document.addEventListener("fullscreenchange", onFullscreenChange);
       document.addEventListener("webkitfullscreenchange", onFullscreenChange);
@@ -3942,20 +3968,28 @@
         var wrapper = document.querySelector(".map-wrapper");
         if (!wrapper) return;
 
-        var isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        var isFs = !!(document.fullscreenElement || document.webkitFullscreenElement)
+                   || wrapper.classList.contains("fullscreen-mode");
         if (!isFs) {
           var req = wrapper.requestFullscreen || wrapper.webkitRequestFullscreen;
           if (req) {
-            req.call(wrapper).catch(function () {
-              // Fallback: CSS-only mode (e.g. browser blocks fullscreen)
+            req.call(wrapper).then(invalidateMapSize).catch(function () {
+              // Fallback: CSS-only mode (sandboxed iframe or browser policy)
               document.body.classList.add("fullscreen-map");
               wrapper.classList.add("fullscreen-mode");
-              setTimeout(function () { if (map) map.invalidateSize(); }, 50);
+              invalidateMapSize();
             });
           }
         } else {
-          var exit = document.exitFullscreen || document.webkitExitFullscreen;
-          if (exit) exit.call(document);
+          if (document.fullscreenElement || document.webkitFullscreenElement) {
+            var exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (exit) exit.call(document);
+          } else {
+            // Fallback CSS mode exit
+            wrapper.classList.remove("fullscreen-mode");
+            document.body.classList.remove("fullscreen-map");
+            invalidateMapSize();
+          }
         }
       });
     }
