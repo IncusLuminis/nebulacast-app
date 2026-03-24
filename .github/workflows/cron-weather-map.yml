@@ -61,14 +61,16 @@ jobs:
           print(f"OK: {rendered} total frames, updated {d['updated_utc']}")
           EOF
 
-      # Commit only the JSON manifest to git (WebP files are .gitignored)
-      - name: Commit manifest
+      # Commit JSON manifest + isobar frames (WebP cloud/wind frames are .gitignored)
+      - name: Commit outputs
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main 2>/dev/null || true
           git add sites/staging/data/weather_map_now.json
-          git diff --cached --quiet && echo "No changes to manifest" && exit 0
-          git commit -m "data: weather map manifest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git add sites/staging/data/isobars/
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "data: weather map manifest + isobars $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git pull --rebase origin main
           git push
 
