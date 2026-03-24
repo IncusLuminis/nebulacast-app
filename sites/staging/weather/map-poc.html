@@ -1438,11 +1438,11 @@
     // maxNativeZoom:3 on the GridLayer handles tile upscaling automatically.
     if (worldTilesLayer && worldTilesManifest) {
       var RASTER_MIN_ZOOM = 6;  // eu_wide profile starts at zoom 6
-      var shouldShow = worldTilesOn && rasterCloudsOn && zoom < RASTER_MIN_ZOOM && worldTilesFrameIndex >= 0;
-      if (shouldShow && map && !map.hasLayer(worldTilesLayer)) {
-        worldTilesLayer.addTo(map);
-      } else if (!shouldShow && map && map.hasLayer(worldTilesLayer)) {
-        map.removeLayer(worldTilesLayer);
+      if (worldTilesOn && rasterCloudsOn && zoom < RASTER_MIN_ZOOM) {
+        // Delegate show/hide to the adapter — it knows which frames are available
+        if (currentTimeUtcMs !== null) adapterWorldTilesSetTime(currentTimeUtcMs);
+      } else {
+        if (map && map.hasLayer(worldTilesLayer)) map.removeLayer(worldTilesLayer);
       }
     }
 
@@ -4188,7 +4188,7 @@
       if (moonInfoOn && currentTimeUtcMs !== null) {
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
-      checkCloudProfileSwitch();
+      checkCloudProfileSwitch();  // handles world_tiles show/hide + raster profile switch
       // Reload wind for new zoom profile
       if (windOn && currentTimeUtcMs !== null) {
         adapterWindSetTime(currentTimeUtcMs);
