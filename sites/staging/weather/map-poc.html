@@ -1406,7 +1406,7 @@
               opacity: opacity, interactive: false, className: "cloud-overlay",
               zIndex: 250, crossOrigin: true,
             });
-            if (rasterCloudsOn) {
+            if (rasterCloudsOn && !rasterBboxEdgesVisible(rasterP)) {
               cloudOverlay.addTo(map);
               if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
             }
