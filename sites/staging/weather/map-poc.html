@@ -1854,7 +1854,16 @@
       var tx   = cx - p.dx * sz;          // tail end of line
       var ty   = cy - p.dy * sz;
 
-      // Trail line
+      // Dark outline pass — makes particles readable on bright dayside backgrounds
+      ctx.shadowColor = "rgba(0,0,0,0)";
+      ctx.beginPath();
+      ctx.moveTo(hx, hy);
+      ctx.lineTo(tx, ty);
+      ctx.strokeStyle = "rgba(0,0,0,0.55)";
+      ctx.lineWidth   = lw + 2;
+      ctx.stroke();
+
+      // Colored pass on top
       ctx.beginPath();
       ctx.moveTo(hx, hy);
       ctx.lineTo(tx, ty);
@@ -1862,7 +1871,11 @@
       ctx.lineWidth   = lw;
       ctx.stroke();
 
-      // Head dot
+      // Head dot — dark ring first, then colored fill
+      ctx.beginPath();
+      ctx.arc(hx, hy, dotR + 1, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fill();
       ctx.beginPath();
       ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
       ctx.fillStyle = p.color;
