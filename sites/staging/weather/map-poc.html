@@ -1444,10 +1444,10 @@
     var zoom = map ? map.getZoom() : 7;
 
     // ── world_tiles visibility ────────────────────────────────────────────────
-    // Show at zoom 0–5 (GFS native 0–3, upscaled 4–5); raster overlay takes over at 6+.
-    // maxNativeZoom:3 on the GridLayer handles tile upscaling automatically.
+    // Show at zoom 0–7 (GFS native 0–4, upscaled 5–7); raster overlay takes over at 8+.
+    // maxNativeZoom:4 on the GridLayer handles tile upscaling automatically.
     if (worldTilesLayer && worldTilesManifest) {
-      var RASTER_MIN_ZOOM = 7;  // raster takes over at zoom 7+; tiles visible at 0–6
+      var RASTER_MIN_ZOOM = 8;  // raster takes over at zoom 8+; tiles visible at 0–7
       if (worldTilesOn && zoom < RASTER_MIN_ZOOM) {
         // Delegate show/hide to the adapter — it knows which frames are available
         if (currentTimeUtcMs !== null) adapterWorldTilesSetTime(currentTimeUtcMs);
