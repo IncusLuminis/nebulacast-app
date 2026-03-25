@@ -424,7 +424,7 @@
     .isobar-label span {
       font-size: 9px;
       font-weight: 500;
-      color: #c8d8e8;
+      color: #ffffff;
       text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
       white-space: nowrap;
       pointer-events: none;
@@ -471,17 +471,6 @@
         </button>
         <div class="layers-popover" id="layersPopover">
           <div class="layers-popover-title">Layers</div>
-          <div class="layer-row">
-            <label>
-              <input type="checkbox" id="toggleTerrain" checked> Terrain
-            </label>
-          </div>
-          <div class="layer-row">
-            <label title="Pre-rendered cloud cover from weather model (Open-Meteo), updated every 3h">
-              <input type="checkbox" id="toggleRasterClouds" checked> Raster Clouds <span class="layer-freq">3h</span>
-            </label>
-            <div id="cloudPhaseLabel" style="font-size:10px;color:var(--muted);margin-left:20px;margin-top:2px"></div>
-          </div>
           <div class="layer-row" id="worldTilesRow">
             <label title="Global cloud tiles from GFS TCDC (NOAA), zoom 0–5, updated every 6h">
               <input type="checkbox" id="toggleWorldTiles" checked> GFS Cloud Tiles <span class="layer-freq">6h</span>
@@ -490,6 +479,43 @@
           <div class="layer-row">
             <label title="True-color satellite imagery from NASA GIBS (Terra/Aqua), updated daily">
               <input type="checkbox" id="toggleGibs" checked> Satellite <span class="layer-freq">daily</span>
+            </label>
+          </div>
+          <div class="layer-row">
+            <label title="Pre-rendered cloud cover from weather model (Open-Meteo), updated every 3h">
+              <input type="checkbox" id="toggleRasterClouds" checked> Raster Clouds <span class="layer-freq">3h</span>
+            </label>
+            <div id="cloudPhaseLabel" style="font-size:10px;color:var(--muted);margin-left:20px;margin-top:2px"></div>
+          </div>
+          <div class="layer-row">
+            <label>
+              <input type="checkbox" id="toggleTerrain" checked> Terrain
+            </label>
+          </div>
+          <div class="layer-row">
+            <label><input type="checkbox" id="toggleHillshade" checked> Hillshade</label>
+            <span class="hillshade-unavailable" id="hillshadeUnavailable" style="display:none;">Hillshade unavailable</span>
+          </div>
+          <div style="margin: 8px 0; border-top: 1px solid var(--line);"></div>
+          <div class="layer-row">
+            <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h" style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="layer-expand-toggle" id="windExpandToggle"
+                data-role="wind-sub-toggle" aria-expanded="false" aria-label="Toggle wind options"
+                style="display:flex;background:none;border:none;color:var(--text);cursor:pointer;padding:0;font-size:10px;width:14px;height:14px;align-items:center;justify-content:center;">▶</button>
+              <input type="checkbox" id="toggleWind"> Wind <span class="layer-freq">3h</span>
+            </label>
+          </div>
+          <div class="wind-sub-opts" id="windSubOpts" style="display:none;">
+            <label title="Show wind speed in m/s next to each arrow">
+              <input type="checkbox" id="toggleWindSpeed"> Speed (m/s)
+            </label>
+            <label title="Show wind direction (compass) next to each arrow">
+              <input type="checkbox" id="toggleWindDir"> Direction
+            </label>
+          </div>
+          <div class="layer-row">
+            <label>
+              <input type="checkbox" id="toggleIsobars"> Pressure <span class="layer-freq">3h</span>
             </label>
           </div>
           <div class="layer-row">
@@ -541,32 +567,6 @@
                 <div style="margin-top: 6px; font-size: 9px; color: var(--muted); font-style: italic;">Phase: 0% = New Moon, 100% = Full Moon</div>
               </div>
             </div>
-          </div>
-          <div class="layer-row">
-            <label><input type="checkbox" id="toggleHillshade" checked> Hillshade</label>
-            <span class="hillshade-unavailable" id="hillshadeUnavailable" style="display:none;">Hillshade unavailable</span>
-          </div>
-          <div style="margin: 8px 0; border-top: 1px solid var(--line);"></div>
-          <div class="layer-row">
-            <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h" style="display:flex;align-items:center;gap:6px;">
-              <button type="button" class="layer-expand-toggle" id="windExpandToggle"
-                data-role="wind-sub-toggle" aria-expanded="false" aria-label="Toggle wind options"
-                style="display:flex;background:none;border:none;color:var(--text);cursor:pointer;padding:0;font-size:10px;width:14px;height:14px;align-items:center;justify-content:center;">▶</button>
-              <input type="checkbox" id="toggleWind"> Wind <span class="layer-freq">3h</span>
-            </label>
-          </div>
-          <div class="wind-sub-opts" id="windSubOpts" style="display:none;">
-            <label title="Show wind speed in m/s next to each arrow">
-              <input type="checkbox" id="toggleWindSpeed"> Speed (m/s)
-            </label>
-            <label title="Show wind direction (compass) next to each arrow">
-              <input type="checkbox" id="toggleWindDir"> Direction
-            </label>
-          </div>
-          <div class="layer-row">
-            <label>
-              <input type="checkbox" id="toggleIsobars"> Pressure <span class="layer-freq">3h</span>
-            </label>
           </div>
         </div>
         <div class="map-extra-controls">
@@ -1550,14 +1550,22 @@
   // ── Isobar layer functions ──────────────────────────────────────────────────
 
   /**
-   * Isobars are large-scale features — always use the widest available profile
-   * regardless of zoom.
+   * Select isobar profile based on current zoom level.
+   * Exact zoom range match first; falls back to widest available profile.
    */
   function selectIsobarProfile() {
     if (!cloudManifest) return null;
     var il = cloudManifest.layers && cloudManifest.layers.isobars;
     if (!il || !il.profiles) return null;
-    return il.profiles.reduce(function(best, p) {
+    var zoom = map ? map.getZoom() : 0;
+    var profiles = il.profiles;
+    // Exact match within zoom range
+    for (var i = 0; i < profiles.length; i++) {
+      var p = profiles[i];
+      if (p.available && zoom >= p.zoom_min && zoom <= p.zoom_max) return p;
+    }
+    // Fallback: widest available
+    return profiles.reduce(function(best, p) {
       if (!p.available) return best;
       return (!best || p.zoom_min < best.zoom_min) ? p : best;
     }, null);
@@ -1569,9 +1577,9 @@
     (data.isobars || []).forEach(function(iso) {
       (iso.paths || []).forEach(function(coords) {
         L.polyline(coords, {
-          color:         "#c8d8e8",
-          weight:        1,
-          opacity:       0.85,
+          color:         "#ffffff",
+          weight:        1.5,
+          opacity:       0.9,
           smoothFactor:  1.5,
           interactive:   false,
         }).addTo(group);
@@ -1688,9 +1696,61 @@
     map.getContainer().appendChild(windCanvasEl);
   }
 
+  /** Number of particles per grid point — fewer at global zoom, more at regional. */
+  function windParticlesPerCell(zoom) {
+    if (zoom <= 5)  return 3;
+    if (zoom <= 8)  return 4;
+    if (zoom <= 11) return 5;
+    return 6;
+  }
+
+  /** Cell length (px) scales down at low zoom so arrows don't overlap on world view. */
+  function windCellLen(zoom, speed_ms) {
+    var base, k;
+    if (zoom <= 3)       { base = 16; k = 0.9; }
+    else if (zoom <= 5)  { base = 24; k = 1.2; }
+    else if (zoom <= 8)  { base = 36; k = 1.5; }
+    else if (zoom <= 11) { base = 50; k = 1.8; }
+    else                 { base = 60; k = 2.0; }
+    return base + speed_ms * k;
+  }
+
+  /** Arrow tip half-length (px) — smaller at world zoom, larger at regional. */
+  function windArrowSz(zoom, speed_ms) {
+    var base, k;
+    if (zoom <= 3)       { base = 2.5; k = 0.25; }
+    else if (zoom <= 5)  { base = 3.0; k = 0.30; }
+    else if (zoom <= 8)  { base = 4.0; k = 0.40; }
+    else if (zoom <= 11) { base = 5.0; k = 0.50; }
+    else                 { base = 5.5; k = 0.55; }
+    return base + speed_ms * k;
+  }
+
+  /** RGB color string encoding wind speed: calm=muted blue → strong=white. */
+  function windSpeedColor(speed_ms) {
+    var stops = [
+      { s:  0, r:  60, g: 120, b: 200 },  // calm — muted blue
+      { s:  5, r:  90, g: 185, b: 235 },  // moderate — blue
+      { s: 12, r: 190, g: 230, b: 255 },  // fresh — light blue
+      { s: 20, r: 255, g: 255, b: 255 },  // strong — white
+    ];
+    if (speed_ms <= 0)  return "rgb(60,120,200)";
+    if (speed_ms >= 20) return "rgb(255,255,255)";
+    for (var i = 1; i < stops.length; i++) {
+      if (speed_ms <= stops[i].s) {
+        var t = (speed_ms - stops[i-1].s) / (stops[i].s - stops[i-1].s);
+        var r = Math.round(stops[i-1].r + t * (stops[i].r - stops[i-1].r));
+        var g = Math.round(stops[i-1].g + t * (stops[i].g - stops[i-1].g));
+        var b = Math.round(stops[i-1].b + t * (stops[i].b - stops[i-1].b));
+        return "rgb(" + r + "," + g + "," + b + ")";
+      }
+    }
+    return "rgb(255,255,255)";
+  }
+
   /**
    * Build particle array from wind vectors.
-   * Each grid point → PARTICLES_PER_CELL particles at evenly spaced phase offsets.
+   * Each grid point → windParticlesPerCell(zoom) particles at evenly spaced phase offsets.
    * Particles travel along wind direction, wrapping within a "cell" of cellLen px.
    */
   /** Convert meteorological FROM-direction degrees to 8-point compass string. */
@@ -1705,10 +1765,10 @@
     windGridPoints = [];
     if (!vectors || !vectors.length || !windOn) return;
 
-    var PARTICLES_PER_CELL = 5;
-    var BASE_CELL_LEN = 50; // px — travel distance per phase cycle
-    var sz = map.getSize();
-    var W = sz.x, H = sz.y, PAD = 60;
+    var zoom = map.getZoom();
+    var ppc  = windParticlesPerCell(zoom);
+    var mapSz = map.getSize();
+    var W = mapSz.x, H = mapSz.y, PAD = 60;
 
     vectors.forEach(function(v) {
       var pt = map.latLngToContainerPoint([v.lat, v.lon]);
@@ -1720,18 +1780,20 @@
       var dx = Math.sin(angle);
       var dy = -Math.cos(angle); // canvas y is down
 
-      var cellLen = BASE_CELL_LEN + speed * 1.8; // longer cell at higher speeds
+      var cellLen = windCellLen(zoom, speed);
+      var color   = windSpeedColor(speed);
 
       windGridPoints.push({ lat: v.lat, lon: v.lon, bx: pt.x, by: pt.y, speed_ms: speed, dir_deg: v.dir_deg || 0 });
 
-      for (var i = 0; i < PARTICLES_PER_CELL; i++) {
+      for (var i = 0; i < ppc; i++) {
         windParticles.push({
           lat: v.lat, lon: v.lon,
-          bx: pt.x, by: pt.y,   // cached base pixel (updated on map.move)
+          bx: pt.x, by: pt.y,
           dx: dx, dy: dy,
           speed_ms: speed,
           cellLen: cellLen,
-          phase: (i / PARTICLES_PER_CELL) + (Math.random() * 0.08 - 0.04), // slight jitter
+          color: color,
+          phase: (i / ppc) + (Math.random() * 0.08 - 0.04),
         });
       }
     });
@@ -1767,7 +1829,7 @@
     var ctx = windCanvasEl.getContext("2d");
     ctx.clearRect(0, 0, windCanvasEl.width, windCanvasEl.height);
 
-    ctx.fillStyle = "#a8d8ea";
+    var zoom = map ? map.getZoom() : 7;
 
     windParticles.forEach(function(p) {
       // Advance phase (wraps 0–1)
@@ -1783,17 +1845,40 @@
       var fade = Math.sin(p.phase * Math.PI);
       ctx.globalAlpha = 0.2 + 0.75 * fade;
 
-      // Arrow size scales with wind speed
-      var sz = 5 + p.speed_ms * 0.5;  // tip half-length
-      var hw = sz * 0.55;             // base half-width
-      var nx = -p.dy, ny = p.dx;      // perpendicular (left of direction)
+      // Stroke + dot: dot at head, line trailing behind
+      var sz   = windArrowSz(zoom, p.speed_ms);
+      var dotR = Math.max(1.2, sz * 0.30);
+      var lw   = Math.max(0.8, sz * 0.16);
+      var hx   = cx + p.dx * sz * 0.65;  // dot centre (head)
+      var hy   = cy + p.dy * sz * 0.65;
+      var tx   = cx - p.dx * sz;          // tail end of line
+      var ty   = cy - p.dy * sz;
 
-      // Tip → two base corners
+      // Dark outline pass — makes particles readable on bright dayside backgrounds
+      ctx.shadowColor = "rgba(0,0,0,0)";
       ctx.beginPath();
-      ctx.moveTo(cx + p.dx * sz,        cy + p.dy * sz);         // tip
-      ctx.lineTo(cx - p.dx * sz + nx * hw, cy - p.dy * sz + ny * hw); // base-left
-      ctx.lineTo(cx - p.dx * sz - nx * hw, cy - p.dy * sz - ny * hw); // base-right
-      ctx.closePath();
+      ctx.moveTo(hx, hy);
+      ctx.lineTo(tx, ty);
+      ctx.strokeStyle = "rgba(0,0,0,0.55)";
+      ctx.lineWidth   = lw + 2;
+      ctx.stroke();
+
+      // Colored pass on top
+      ctx.beginPath();
+      ctx.moveTo(hx, hy);
+      ctx.lineTo(tx, ty);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth   = lw;
+      ctx.stroke();
+
+      // Head dot — dark ring first, then colored fill
+      ctx.beginPath();
+      ctx.arc(hx, hy, dotR + 1, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
       ctx.fill();
     });
 
@@ -4193,7 +4278,11 @@
       if (windOn && currentTimeUtcMs !== null) {
         adapterWindSetTime(currentTimeUtcMs);
       }
-      // Isobars: no profile switch on zoom (always widest profile), but bounds stay fixed
+      // Reload isobars for new zoom profile (world → eu_wide → eu_central → local)
+      if (isobarOn && currentTimeUtcMs !== null) {
+        isobarFrameIndex = -1;  // force reload for potentially different profile
+        adapterIsobarSetTime(currentTimeUtcMs);
+      }
     });
     map.on("resize", function () {
       setTimeout(function() {
