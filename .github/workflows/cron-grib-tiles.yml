@@ -80,12 +80,12 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin feat/grib-tile-pipeline 2>/dev/null || true
+          git pull --rebase origin main 2>/dev/null || true
           git add sites/staging/data/tile_manifests/
           git diff --cached --quiet && echo "No manifest changes" && exit 0
           git commit -m "data: grib tile manifest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git pull --rebase origin feat/grib-tile-pipeline
-          git push origin feat/grib-tile-pipeline
+          git pull --rebase origin main
+          git push origin main
 
       # Deploy staging site including generated tile WebPs (not in git) to Cloudflare Pages
       #
@@ -102,5 +102,5 @@ jobs:
           command: >
             pages deploy sites/staging
             --project-name=${{ vars.CF_PAGES_PROJECT }}
-            --branch=feat/grib-tile-pipeline
+            --branch=main
             --commit-dirty=true
