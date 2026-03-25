@@ -61,6 +61,22 @@ OM_CACHE_TTL = 3 * 3600  # 3 hours
 # Internal raster profiles (pipeline generates WebP frames for these)
 PROFILES: list[dict] = [
     {
+        "id":               "world",
+        "zoom_min":         0,
+        "zoom_max":         5,
+        "bbox":             {"lat_min": -80.0, "lat_max": 80.0, "lon_min": -180.0, "lon_max": 180.0},
+        "grid_lat_n":       5,   # placeholder — not used (skip_clouds=True)
+        "grid_lon_n":       10,  # placeholder
+        # Wind/isobar grid: 10° steps → 17 lat × 37 lon = 629 points
+        "wind_grid_lat_n":  17,
+        "wind_grid_lon_n":  37,
+        "render_size":      256,
+        "blur_radius":      14,  # heavy blur for global scale
+        "isobar_render_size": 512,
+        "isobar_step":      5,     # 5 hPa for global view
+        "skip_clouds":      True,  # world_tiles handles clouds; only wind+isobars generated
+    },
+    {
         "id":               "eu_wide",
         "zoom_min":         6,
         "zoom_max":         8,
@@ -73,6 +89,7 @@ PROFILES: list[dict] = [
         "render_size":      256,
         "blur_radius":      4,
         "isobar_render_size": 512,
+        "isobar_step":      2,     # 2 hPa for full Europe view
     },
     {
         "id":               "eu_central",
@@ -87,6 +104,7 @@ PROFILES: list[dict] = [
         "render_size":      256,
         "blur_radius":      3,
         "isobar_render_size": 512,
+        "isobar_step":      1,     # 1 hPa for regional view
     },
     {
         "id":               "local",
@@ -101,6 +119,7 @@ PROFILES: list[dict] = [
         "render_size":      256,
         "blur_radius":      2,
         "isobar_render_size": 512,
+        "isobar_step":      1,     # 1 hPa for local view
     },
 ]
 
@@ -126,13 +145,26 @@ ALPHA_MAP = [
 OM_BASE = "https://api.open-meteo.com/v1/forecast"
 
 
-def build_grid(bbox: dict, lat_n: int, lon_n: int) -> list[tuple[float, float]]:
-    """Return (lat, lon) sample points for given bbox and grid dimensions."""
+def build_grid(
+    bbox: dict, lat_n: int, lon_n: int, hexagonal: bool = False
+) -> list[tuple[float, float]]:
+    """Return (lat, lon) sample points for given bbox and grid dimensions.
+
+    hexagonal=True shifts every odd latitude row by half a longitude step,
+    producing a hex-packing layout instead of a regular square grid.
+    Odd rows may have one fewer point where the shift would exceed lon_max.
+    """
     lats = [bbox["lat_min"] + i * (bbox["lat_max"] - bbox["lat_min"]) / (lat_n - 1)
             for i in range(lat_n)]
-    lons = [bbox["lon_min"] + j * (bbox["lon_max"] - bbox["lon_min"]) / (lon_n - 1)
-            for j in range(lon_n)]
-    return [(lat, lon) for lat in lats for lon in lons]
+    lon_step = (bbox["lon_max"] - bbox["lon_min"]) / (lon_n - 1)
+    points: list[tuple[float, float]] = []
+    for i, lat in enumerate(lats):
+        offset = lon_step * 0.5 if (hexagonal and i % 2 == 1) else 0.0
+        for j in range(lon_n):
+            lon = bbox["lon_min"] + j * lon_step + offset
+            if lon <= bbox["lon_max"] + 1e-9:
+                points.append((lat, lon))
+    return points
 
 
 def _om_cache_path(url: str) -> Path:
@@ -470,6 +502,7 @@ def render_isobar_frame_json(
     lon_n:       int,
     render_size: int,
     dest:        Path,
+    isobar_step: int = 1,
 ) -> bool:
     """Extract pressure isobar contour lines as lat/lon JSON for Leaflet L.polyline.
 
@@ -519,7 +552,7 @@ def render_isobar_frame_json(
     # Extract contour paths (no rendering — data only)
     fig = plt.figure(figsize=(1, 1))
     ax  = fig.add_subplot(111)
-    levels = list(range(950, 1061, 5))
+    levels = list(range(950, 1061, isobar_step))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")      # suppress allsegs deprecation warning
         cs = ax.contour(X, Y, grid, levels=levels)
@@ -666,22 +699,39 @@ def run_profile(
     render_size       = profile.get("render_size", 256)
     blur_radius       = profile.get("blur_radius", 3)
     isobar_render_size = profile.get("isobar_render_size", 512)
+    isobar_step        = profile.get("isobar_step", 1)
+
+    skip_clouds = profile.get("skip_clouds", False)
 
     print(f"\n[weather-map] Profile: {pid}  zoom {profile['zoom_min']}–{profile['zoom_max']}", flush=True)
     print(f"  bbox: lat {bbox['lat_min']}–{bbox['lat_max']}, lon {bbox['lon_min']}–{bbox['lon_max']}", flush=True)
+    if skip_clouds:
+        print(f"  skip_clouds=True — wind+isobars only (world_tiles handles clouds)", flush=True)
 
-    # Cloud + pressure grid (coarse — used for raster interpolation and isobars)
-    points    = build_grid(bbox, lat_n, lon_n)
-    print(f"  Cloud/pressure grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
-    grid_data = fetch_open_meteo(points, past_days, forecast_days)
-    print(f"  Fetched {len(grid_data)} cloud/pressure series", flush=True)
-
-    cloud_matrix   = build_point_timeseries(grid_data, timeline)
-    isobar_matrix  = build_scalar_timeseries(grid_data, timeline, "pressure_msl")
+    if not skip_clouds:
+        # Cloud + pressure grid (coarse — used for raster interpolation and isobars)
+        points    = build_grid(bbox, lat_n, lon_n)
+        print(f"  Cloud/pressure grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
+        grid_data = fetch_open_meteo(points, past_days, forecast_days)
+        print(f"  Fetched {len(grid_data)} cloud/pressure series", flush=True)
+        cloud_matrix = build_point_timeseries(grid_data, timeline)
+    else:
+        points       = []
+        grid_data    = []
+        cloud_matrix = [[] for _ in timeline]
 
     # Wind grid (denser — used for particle animation layer AND pressure isobars)
-    if wind_lat_n != lat_n or wind_lon_n != lon_n:
-        wind_points = build_grid(bbox, wind_lat_n, wind_lon_n)
+    if skip_clouds:
+        # world profile: wind grid is the only data source (also used for isobars)
+        wind_points = build_grid(bbox, wind_lat_n, wind_lon_n, hexagonal=True)
+        print(f"  Wind/isobar grid: {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
+        wind_grid_data = fetch_open_meteo(
+            wind_points, past_days, forecast_days,
+            variables="wind_speed_10m,wind_direction_10m,pressure_msl",
+        )
+        print(f"  Fetched {len(wind_grid_data)} wind/pressure series", flush=True)
+    elif wind_lat_n != lat_n or wind_lon_n != lon_n:
+        wind_points = build_grid(bbox, wind_lat_n, wind_lon_n, hexagonal=True)
         print(f"  Wind grid:  {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
         wind_grid_data = fetch_open_meteo(
             wind_points, past_days, forecast_days,
@@ -697,12 +747,13 @@ def run_profile(
     # Isobars reuse the dense wind grid for much better spatial detail
     isobar_matrix = build_scalar_timeseries(wind_grid_data, timeline, "pressure_msl")
 
-    cloud_dir   = CLOUDS_DIR / pid
     wind_dir    = WIND_DIR / pid
     isobar_dir  = ISOBARS_DIR / pid
-    cloud_dir.mkdir(parents=True, exist_ok=True)
     wind_dir.mkdir(parents=True, exist_ok=True)
     isobar_dir.mkdir(parents=True, exist_ok=True)
+    if not skip_clouds:
+        cloud_dir = CLOUDS_DIR / pid
+        cloud_dir.mkdir(parents=True, exist_ok=True)
 
     cloud_refs:  list[dict] = []
     wind_refs:   list[dict] = []
@@ -711,28 +762,32 @@ def run_profile(
 
     for idx, slot_dt in enumerate(timeline):
         # ── Cloud frame ───────────────────────────────────────────────────────
-        values     = cloud_matrix[idx]
-        frame_name = f"cloud_{idx:03d}.webp"
-        frame_path = cloud_dir / frame_name
-        asset_url  = f"/data/clouds/{pid}/{frame_name}"
+        if not skip_clouds:
+            values     = cloud_matrix[idx]
+            frame_name = f"cloud_{idx:03d}.webp"
+            frame_path = cloud_dir / frame_name
+            asset_url  = f"/data/clouds/{pid}/{frame_name}"
 
-        grid      = interpolate_frame(values, points, bbox, lat_n, lon_n, render_size)
-        available = False
-        if grid is not None:
-            ok        = render_frame_webp(grid, frame_path, blur_radius=blur_radius)
-            available = ok
-            if ok: rendered += 1
-            else:  skipped  += 1
+            grid      = interpolate_frame(values, points, bbox, lat_n, lon_n, render_size)
+            available = False
+            if grid is not None:
+                ok        = render_frame_webp(grid, frame_path, blur_radius=blur_radius)
+                available = ok
+                if ok: rendered += 1
+                else:  skipped  += 1
+            else:
+                skipped += 1
+                if frame_path.exists():
+                    frame_path.unlink()
+
+            cloud_refs.append({
+                "index":     idx,
+                "available": available,
+                "asset_url": asset_url if available else None,
+            })
         else:
-            skipped += 1
-            if frame_path.exists():
-                frame_path.unlink()
-
-        cloud_refs.append({
-            "index":     idx,
-            "available": available,
-            "asset_url": asset_url if available else None,
-        })
+            # No cloud raster for world profile
+            cloud_refs.append({"index": idx, "available": False, "asset_url": None})
 
         # ── Wind frame ────────────────────────────────────────────────────────
         wind_frame = build_wind_frame_json(wind_matrix[idx], wind_points, idx, slot_dt)
@@ -770,7 +825,8 @@ def run_profile(
         else:
             iso_values = isobar_matrix[idx]
             iso_ok = render_isobar_frame_json(
-                iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path
+                iso_values, wind_points, bbox, wind_lat_n, wind_lon_n, isobar_render_size, iso_path,
+                isobar_step=isobar_step,
             )
             # never delete an existing file on render failure — stale data is better than no data
 
@@ -881,26 +937,28 @@ def run() -> None:
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]
-        profile_manifests.append({
-            "id":               profile["id"],
-            "kind":             "internal_raster",
-            "zoom_min":         profile["zoom_min"],
-            "zoom_max":         profile["zoom_max"],
-            "bbox":             bbox,
-            "bounds":           [[bbox["lat_min"], bbox["lon_min"]], [bbox["lat_max"], bbox["lon_max"]]],
-            "tile_url_template": None,
-            "width":            profile.get("render_size", 256),
-            "height":           profile.get("render_size", 256),
-            "available":        rendered > 0,
-            "frames":           cloud_refs,
-            "meta": {
-                "source_kind":   "internal_raster",
-                "source_name":   "nebulacast/open-meteo",
-                "timeline_mode": "time_addressable",
-                "styling_mode":  "internal_style",
-                "source_owned":  True,
-            },
-        })
+        # Skip cloud manifest entry for profiles that don't generate cloud rasters
+        if not profile.get("skip_clouds"):
+            profile_manifests.append({
+                "id":               profile["id"],
+                "kind":             "internal_raster",
+                "zoom_min":         profile["zoom_min"],
+                "zoom_max":         profile["zoom_max"],
+                "bbox":             bbox,
+                "bounds":           [[bbox["lat_min"], bbox["lon_min"]], [bbox["lat_max"], bbox["lon_max"]]],
+                "tile_url_template": None,
+                "width":            profile.get("render_size", 256),
+                "height":           profile.get("render_size", 256),
+                "available":        rendered > 0,
+                "frames":           cloud_refs,
+                "meta": {
+                    "source_kind":   "internal_raster",
+                    "source_name":   "nebulacast/open-meteo",
+                    "timeline_mode": "time_addressable",
+                    "styling_mode":  "internal_style",
+                    "source_owned":  True,
+                },
+            })
         wind_available = sum(1 for r in wind_refs if r["available"])
         wind_profile_manifests.append({
             "id":        profile["id"],
