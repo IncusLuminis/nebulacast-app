@@ -1,57 +1,64 @@
 {
-  "generated_utc": "2026-03-25T12:46:08Z",
+  "generated_utc": "2026-03-25T18:44:34Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-25T09:00:00Z",
-      "value": 3.67
+      "timestamp_utc": "2026-03-25T15:00:00Z",
+      "value": 1.33
     },
     "forecast_3h": [
       {
-        "timestamp_utc": "2026-03-25T12:00:00Z",
-        "value": 3.67
-      },
-      {
-        "timestamp_utc": "2026-03-25T15:00:00Z",
-        "value": 2.0
-      },
-      {
         "timestamp_utc": "2026-03-25T18:00:00Z",
-        "value": 2.67
+        "value": 2.0
       },
       {
         "timestamp_utc": "2026-03-25T21:00:00Z",
-        "value": 3.0
+        "value": 2.33
       },
       {
         "timestamp_utc": "2026-03-26T00:00:00Z",
-        "value": 3.0
+        "value": 4.67
       },
       {
         "timestamp_utc": "2026-03-26T03:00:00Z",
-        "value": 2.0
+        "value": 4.67
       },
       {
         "timestamp_utc": "2026-03-26T06:00:00Z",
-        "value": 2.0
+        "value": 4.0
       },
       {
         "timestamp_utc": "2026-03-26T09:00:00Z",
         "value": 2.67
+      },
+      {
+        "timestamp_utc": "2026-03-26T12:00:00Z",
+        "value": 2.67
+      },
+      {
+        "timestamp_utc": "2026-03-26T15:00:00Z",
+        "value": 3.0
       }
     ],
     "activity_label": "quiet"
   },
   "solar_wind": {
-    "timestamp_utc": "2026-03-25T12:43:00Z",
-    "speed_kms": 559.0,
-    "density_protons_cm3": 0.61
+    "timestamp_utc": "2026-03-25T18:42:00Z",
+    "speed_kms": 474.8,
+    "density_protons_cm3": 0.03
   },
   "xray": {
-    "timestamp_utc": "2026-03-25T12:43:00Z",
-    "flux_wm2": 1.4724466836923966e-06,
+    "timestamp_utc": "2026-03-25T18:41:00Z",
+    "flux_wm2": 1.5789371445862344e-06,
     "class": "C"
   },
   "alerts": [
+    {
+      "id": "A20F",
+      "timestamp_utc": "2026-03-25T15:58:47Z",
+      "title": "Space Weather Message Code: WATA20",
+      "level": "watch",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "K05A",
       "timestamp_utc": "2026-03-25T08:26:18Z",
