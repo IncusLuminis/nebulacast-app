@@ -125,10 +125,10 @@ PROFILES: list[dict] = [
 
 # ── Timeline ──────────────────────────────────────────────────────────────────
 
-TOTAL_FRAMES   = 121
+TOTAL_FRAMES   = 169
 HISTORY_SLOTS  = 48    # indices 0..47
 CURRENT_IDX    = 48    # index 48 = now
-FORECAST_SLOTS = 72    # indices 49..120
+FORECAST_SLOTS = 120   # indices 49..168
 
 # ── Alpha mapping (non-linear) ────────────────────────────────────────────────
 
@@ -194,7 +194,7 @@ def _om_cache_save(url: str, data: list) -> None:
 def fetch_open_meteo(
     points: list[tuple[float, float]],
     past_days: int = 2,
-    forecast_days: int = 3,
+    forecast_days: int = 6,
     variables: str = "cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m",
 ) -> list[dict]:
     """Fetch hourly fields for all grid points in batches of 10.
@@ -681,7 +681,7 @@ def run_profile(
     profile:       dict,
     timeline:      list[datetime],
     past_days:     int = 2,
-    forecast_days: int = 3,
+    forecast_days: int = 6,
 ) -> tuple[list[dict], list[dict], list[dict], int, int]:
     """
     Run full pipeline for one profile.

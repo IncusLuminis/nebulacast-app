@@ -6,9 +6,9 @@ tile pyramids aligned to the master weather-map timeline (spec #267).
 
 Pipeline:
   1. Resolve latest available GFS run (00/06/12/18 Z) via .idx probe (NOMADS / AWS S3)
-  2. Download TCDC GRIB2 message via .idx byte-range for f000–f072 (frames 48–120)
+  2. Download TCDC GRIB2 message via .idx byte-range for f000–f120 (frames 48–168)
   3. Parse + shift lon from [0,360) to [-180,180)
-  4. Render z/x/y WebP tile pyramid (zoom 0–3) per frame
+  4. Render z/x/y WebP tile pyramid (zoom 0–4) per frame
   5. Write per-run tile manifest + latest.json pointer
 
 Output paths (relative to repo root):
@@ -72,18 +72,18 @@ GRIB_CACHE   = DATA_DIR / "_cache" / "grib"
 
 TILE_SIZE    = 256
 ZOOM_MIN     = 0
-ZOOM_MAX     = 3
+ZOOM_MAX     = 4
 
-TOTAL_FRAMES = 121
+TOTAL_FRAMES = 169
 CURRENT_IDX  = 48   # master timeline frame index = t+0h
 
-# We generate frames CURRENT_IDX .. TOTAL_FRAMES-1 (73 frames: f000–f072)
+# We generate frames CURRENT_IDX .. TOTAL_FRAMES-1 (121 frames: f000–f120)
 TILE_FRAME_MIN = CURRENT_IDX       # 48
-TILE_FRAME_MAX = TOTAL_FRAMES - 1  # 120
+TILE_FRAME_MAX = TOTAL_FRAMES - 1  # 168
 
 # GFS forecast hour for a given master-timeline frame index
 def _fhour(frame_idx: int) -> int:
-    return frame_idx - CURRENT_IDX  # 0..72
+    return frame_idx - CURRENT_IDX  # 0..120
 
 # ── Cloud opacity mapping (matches raster pipeline ALPHA_MAP) ─────────────────
 
