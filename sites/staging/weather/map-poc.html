@@ -1513,6 +1513,19 @@
   }
 
   /**
+   * Returns true if the map viewport extends beyond the raster profile's bbox,
+   * meaning its rectangular edge would be visible as a box on screen.
+   */
+  function rasterBboxEdgesVisible(profile) {
+    if (!map || !profile || !profile.bounds) return false;
+    var mb = map.getBounds();
+    var b  = profile.bounds; // [[south, west], [north, east]]
+    var pS = b[0][0], pW = b[0][1], pN = b[1][0], pE = b[1][1];
+    return mb.getSouth() < pS || mb.getNorth() > pN ||
+           mb.getWest()  < pW || mb.getEast()  > pE;
+  }
+
+  /**
    * Layer adapter: update internal raster overlay to nearest frame for tUtcMs.
    */
   function adapterCloudsSetTime(tUtcMs) {
@@ -1520,6 +1533,13 @@
     adapterWorldTilesSetTime(tUtcMs);
 
     if (!rasterCloudsOn || !cloudManifest || !cloudOverlay) return;
+
+    // Hide raster if its bbox edges are visible in viewport (looks like a square patch)
+    var activeP = getActiveRasterProfile();
+    if (activeP && rasterBboxEdgesVisible(activeP)) {
+      if (map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
+      return;
+    }
 
     var idx = cloudFrameForTime(tUtcMs);
     if (idx === -1) return;
@@ -4273,6 +4293,8 @@
       if (windOn && windParticles.length) updateWindParticlePositions();
     });
     map.on("moveend", function () {
+      // Re-evaluate raster bbox visibility on pan
+      if (rasterCloudsOn && currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
       renderNightMaskDebounced();
       if (moonInfoOn && currentTimeUtcMs !== null) {
         layerAdapters.moon.setTime(currentTimeUtcMs);
