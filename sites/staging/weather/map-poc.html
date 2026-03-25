@@ -473,7 +473,7 @@
           <div class="layers-popover-title">Layers</div>
           <div class="layer-row" id="worldTilesRow">
             <label title="Global cloud tiles from GFS TCDC (NOAA), zoom 0–5, updated every 6h">
-              <input type="checkbox" id="toggleWorldTiles" checked> GFS Cloud Tiles <span class="layer-freq">6h</span>
+              <input type="checkbox" id="toggleWorldTiles" checked> GFS Cloud Tiles <span class="layer-freq" id="worldTilesAge">6h</span>
             </label>
           </div>
           <div class="layer-row">
@@ -1381,6 +1381,16 @@
               checkCloudProfileSwitch();
               console.log("[clouds] world_tiles manifest: run=" + tm.run_id
                 + " frames=" + (tm.frame_indexes ? tm.frame_indexes.length : 0));
+              // Update layer label with run timestamp
+              var ageEl = document.getElementById("worldTilesAge");
+              if (ageEl && tm.run_utc) {
+                var d = new Date(tm.run_utc);
+                var dd = String(d.getUTCDate()).padStart(2,"0");
+                var mo = String(d.getUTCMonth()+1).padStart(2,"0");
+                var hh = String(d.getUTCHours()).padStart(2,"0");
+                ageEl.textContent = dd+"/"+mo+" "+hh+"Z";
+                ageEl.title = "GFS run: " + tm.run_utc;
+              }
             })
             .catch(function(err) {
               console.warn("[clouds] world_tiles manifest load failed:", err);
