@@ -1444,12 +1444,16 @@
     var zoom = map ? map.getZoom() : 7;
 
     // ── world_tiles visibility ────────────────────────────────────────────────
-    // Show at zoom 0–7 (GFS native 0–4, upscaled 5–7); raster overlay takes over at 8+.
-    // maxNativeZoom:4 on the GridLayer handles tile upscaling automatically.
+    // Zoom bands:
+    //   0–5  → GFS tiles only  (native 0–4, upscaled at 5)
+    //   5–7  → GFS tiles + raster overlay  (raster starts at 5, tiles hide at 6)
+    //   8+   → nothing  (no meteo — only base map)
+    var TILES_OFF_ZOOM   = 6;   // GFS tiles hidden at zoom ≥ 6
+    var RASTER_ON_ZOOM   = 5;   // raster starts at zoom 5
+    var RASTER_OFF_ZOOM  = 8;   // raster hidden at zoom ≥ 8
+
     if (worldTilesLayer && worldTilesManifest) {
-      var RASTER_MIN_ZOOM = 8;  // raster takes over at zoom 8+; tiles visible at 0–7
-      if (worldTilesOn && zoom < RASTER_MIN_ZOOM) {
-        // Delegate show/hide to the adapter — it knows which frames are available
+      if (worldTilesOn && zoom < TILES_OFF_ZOOM) {
         if (currentTimeUtcMs !== null) adapterWorldTilesSetTime(currentTimeUtcMs);
       } else {
         if (map && map.hasLayer(worldTilesLayer)) map.removeLayer(worldTilesLayer);
@@ -1458,6 +1462,13 @@
 
     // ── Internal raster profile switch ────────────────────────────────────────
     if (!cloudManifest || !cloudOverlay) return;
+
+    // Outside raster zoom band → explicitly hide overlay
+    if (zoom < RASTER_ON_ZOOM || zoom >= RASTER_OFF_ZOOM) {
+      if (map && map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
+      return;
+    }
+
     var rasterP = selectRasterProfile(zoom);
     if (!rasterP || rasterP.id === cloudActiveProfileId) return;
 
@@ -1534,9 +1545,10 @@
 
     if (!rasterCloudsOn || !cloudManifest || !cloudOverlay) return;
 
-    // Hide raster if its bbox edges are visible in viewport (looks like a square patch)
+    // Hide raster outside its zoom band (5–7) or if bbox edges are visible
+    var curZoom = map ? map.getZoom() : 0;
     var activeP = getActiveRasterProfile();
-    if (activeP && rasterBboxEdgesVisible(activeP)) {
+    if (curZoom < 5 || curZoom >= 8 || (activeP && rasterBboxEdgesVisible(activeP))) {
       if (map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
       return;
     }

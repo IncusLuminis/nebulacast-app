@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8787", "--directory", "sites/staging"],
       "port": 8787
+    },
+    {
+      "name": "main",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8080", "--directory", "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging"],
+      "port": 8080
     }
   ]
 }
