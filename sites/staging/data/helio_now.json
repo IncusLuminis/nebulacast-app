@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-03-26T16:14:10Z",
+  "updated_utc": "2026-03-26T19:12:46Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -9,7 +9,6 @@
       "kp_forecast_3d",
       "solar_wind_plasma",
       "solar_wind_mag",
-      "xray_flux",
       "alerts",
       "donki_flr",
       "donki_cme",
@@ -17,13 +16,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 2.33,
-    "kp_time_utc": "2026-03-26T12:00:00Z",
+    "kp_latest": 3.33,
+    "kp_time_utc": "2026-03-26T15:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-03-26T18:00:00Z",
-        "kp": 2.33
-      },
       {
         "t_utc": "2026-03-26T21:00:00Z",
         "kp": 4.67
@@ -99,10 +94,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-03-25T18:00:00Z",
-        "kp": 2.67
-      },
-      {
         "t_utc": "2026-03-25T21:00:00Z",
         "kp": 1.0
       },
@@ -125,143 +116,25 @@
       {
         "t_utc": "2026-03-26T12:00:00Z",
         "kp": 2.33
-      }
-    ],
-    "xray_flux_wm2": 1.1777185591199668e-06,
-    "xray_class": "C",
-    "xray_history_1h": [
-      {
-        "t_utc": "2026-03-25T16:00:00Z",
-        "flux": 1.3411979580268962e-06
-      },
-      {
-        "t_utc": "2026-03-25T17:00:00Z",
-        "flux": 1.4297711989759895e-06
-      },
-      {
-        "t_utc": "2026-03-25T18:00:00Z",
-        "flux": 1.6486165994441156e-06
-      },
-      {
-        "t_utc": "2026-03-25T19:00:00Z",
-        "flux": 1.4812728333405781e-06
-      },
-      {
-        "t_utc": "2026-03-25T20:00:00Z",
-        "flux": 1.5542024982551084e-06
-      },
-      {
-        "t_utc": "2026-03-25T21:00:00Z",
-        "flux": 1.4290806708080103e-06
-      },
-      {
-        "t_utc": "2026-03-25T22:00:00Z",
-        "flux": 1.2402163254895033e-06
-      },
-      {
-        "t_utc": "2026-03-25T23:00:00Z",
-        "flux": 1.3459625980279573e-06
-      },
-      {
-        "t_utc": "2026-03-26T00:00:00Z",
-        "flux": 1.1667146831465894e-06
-      },
-      {
-        "t_utc": "2026-03-26T01:00:00Z",
-        "flux": 1.2439855386977192e-06
-      },
-      {
-        "t_utc": "2026-03-26T02:00:00Z",
-        "flux": 1.2126408231930932e-06
-      },
-      {
-        "t_utc": "2026-03-26T03:00:00Z",
-        "flux": 1.094912585131169e-06
-      },
-      {
-        "t_utc": "2026-03-26T04:00:00Z",
-        "flux": 1.0706037926411228e-06
-      },
-      {
-        "t_utc": "2026-03-26T05:00:00Z",
-        "flux": 1.329835456923926e-06
-      },
-      {
-        "t_utc": "2026-03-26T06:00:00Z",
-        "flux": 1.0248727083232249e-05
-      },
-      {
-        "t_utc": "2026-03-26T07:00:00Z",
-        "flux": 1.7519043183256144e-06
-      },
-      {
-        "t_utc": "2026-03-26T08:00:00Z",
-        "flux": 1.3353997069201352e-06
-      },
-      {
-        "t_utc": "2026-03-26T09:00:00Z",
-        "flux": 1.2510678458913356e-06
-      },
-      {
-        "t_utc": "2026-03-26T10:00:00Z",
-        "flux": 2.4901555529292333e-06
-      },
-      {
-        "t_utc": "2026-03-26T11:00:00Z",
-        "flux": 1.469558228942939e-06
-      },
-      {
-        "t_utc": "2026-03-26T12:00:00Z",
-        "flux": 1.3265123262347818e-06
-      },
-      {
-        "t_utc": "2026-03-26T13:00:00Z",
-        "flux": 1.7818869669857426e-06
-      },
-      {
-        "t_utc": "2026-03-26T14:00:00Z",
-        "flux": 1.1449307919519924e-06
       },
       {
         "t_utc": "2026-03-26T15:00:00Z",
-        "flux": 1.341171429203314e-06
-      },
-      {
-        "t_utc": "2026-03-26T16:00:00Z",
-        "flux": 1.2455569257478298e-06
+        "kp": 3.33
       }
     ],
-    "solar_wind_kms": 449.9,
-    "density": 0.01,
-    "pressure_npa": 0.0,
+    "xray_flux_wm2": null,
+    "xray_class": null,
+    "xray_history_1h": [],
+    "solar_wind_kms": 497.9,
+    "density": 0.07,
+    "pressure_npa": 0.03,
     "wind_history_1h": [
       {
-        "t_utc": "2026-03-25T16:00:00Z",
-        "kms": 534.0,
-        "density": 0.76,
-        "temp_kk": 84.5,
-        "pressure_npa": 0.36
-      },
-      {
-        "t_utc": "2026-03-25T17:00:00Z",
-        "kms": 527.5,
-        "density": 0.97,
-        "temp_kk": 60.7,
-        "pressure_npa": 0.45
-      },
-      {
-        "t_utc": "2026-03-25T18:00:00Z",
-        "kms": 493.3,
-        "density": 0.18,
-        "temp_kk": 94.4,
-        "pressure_npa": 0.07
-      },
-      {
         "t_utc": "2026-03-25T19:00:00Z",
-        "kms": 485.4,
-        "density": 0.33,
-        "temp_kk": 77.8,
-        "pressure_npa": 0.13
+        "kms": 488.8,
+        "density": 0.38,
+        "temp_kk": 75.1,
+        "pressure_npa": 0.15
       },
       {
         "t_utc": "2026-03-25T20:00:00Z",
@@ -405,30 +278,39 @@
       },
       {
         "t_utc": "2026-03-26T16:00:00Z",
-        "kms": 458.5,
+        "kms": 444.0,
         "density": 0.01,
-        "temp_kk": 122.6,
+        "temp_kk": 107.8,
         "pressure_npa": 0.0
+      },
+      {
+        "t_utc": "2026-03-26T17:00:00Z",
+        "kms": 457.1,
+        "density": 0.02,
+        "temp_kk": 126.8,
+        "pressure_npa": 0.01
+      },
+      {
+        "t_utc": "2026-03-26T18:00:00Z",
+        "kms": 487.6,
+        "density": 0.07,
+        "temp_kk": 122.0,
+        "pressure_npa": 0.03
+      },
+      {
+        "t_utc": "2026-03-26T19:00:00Z",
+        "kms": 497.4,
+        "density": 0.09,
+        "temp_kk": 120.4,
+        "pressure_npa": 0.04
       }
     ],
-    "imf_bz_nt": -1.24,
-    "imf_bt_nt": 5.24,
+    "imf_bz_nt": 2.24,
+    "imf_bt_nt": 5.08,
     "bz_history_1h": [
       {
-        "t_utc": "2026-03-25T16:00:00Z",
-        "bz": 3.12
-      },
-      {
-        "t_utc": "2026-03-25T17:00:00Z",
-        "bz": 3.76
-      },
-      {
-        "t_utc": "2026-03-25T18:00:00Z",
-        "bz": -1.17
-      },
-      {
         "t_utc": "2026-03-25T19:00:00Z",
-        "bz": 2.38
+        "bz": 2.47
       },
       {
         "t_utc": "2026-03-25T20:00:00Z",
@@ -512,154 +394,22 @@
       },
       {
         "t_utc": "2026-03-26T16:00:00Z",
-        "bz": -0.3
-      }
-    ],
-    "bz_history_5m": [
-      {
-        "t_utc": "2026-03-26T10:15:00Z",
-        "bz": -0.59
-      },
-      {
-        "t_utc": "2026-03-26T10:20:00Z",
         "bz": -1.11
       },
       {
-        "t_utc": "2026-03-26T10:25:00Z",
-        "bz": -0.69
+        "t_utc": "2026-03-26T17:00:00Z",
+        "bz": -0.42
       },
       {
-        "t_utc": "2026-03-26T10:30:00Z",
-        "bz": 0.11
+        "t_utc": "2026-03-26T18:00:00Z",
+        "bz": 2.8
       },
       {
-        "t_utc": "2026-03-26T10:35:00Z",
-        "bz": -0.79
-      },
-      {
-        "t_utc": "2026-03-26T10:40:00Z",
-        "bz": -1.88
-      },
-      {
-        "t_utc": "2026-03-26T10:45:00Z",
-        "bz": -2.02
-      },
-      {
-        "t_utc": "2026-03-26T10:50:00Z",
-        "bz": -2.5
-      },
-      {
-        "t_utc": "2026-03-26T10:55:00Z",
-        "bz": -2.92
-      },
-      {
-        "t_utc": "2026-03-26T11:00:00Z",
-        "bz": -3.28
-      },
-      {
-        "t_utc": "2026-03-26T11:05:00Z",
-        "bz": -4.06
-      },
-      {
-        "t_utc": "2026-03-26T11:10:00Z",
-        "bz": -3.71
-      },
-      {
-        "t_utc": "2026-03-26T11:15:00Z",
-        "bz": -3.69
-      },
-      {
-        "t_utc": "2026-03-26T11:20:00Z",
-        "bz": -3.39
-      },
-      {
-        "t_utc": "2026-03-26T11:25:00Z",
-        "bz": -3.34
-      },
-      {
-        "t_utc": "2026-03-26T11:30:00Z",
-        "bz": -2.83
-      },
-      {
-        "t_utc": "2026-03-26T11:35:00Z",
-        "bz": -4.11
-      },
-      {
-        "t_utc": "2026-03-26T11:40:00Z",
-        "bz": -3.8
-      },
-      {
-        "t_utc": "2026-03-26T11:45:00Z",
-        "bz": -3.84
-      },
-      {
-        "t_utc": "2026-03-26T11:50:00Z",
-        "bz": -4.01
-      },
-      {
-        "t_utc": "2026-03-26T11:55:00Z",
-        "bz": -4.47
-      },
-      {
-        "t_utc": "2026-03-26T12:00:00Z",
-        "bz": -3.54
-      },
-      {
-        "t_utc": "2026-03-26T12:05:00Z",
-        "bz": -3.25
-      },
-      {
-        "t_utc": "2026-03-26T12:10:00Z",
-        "bz": -2.12
-      },
-      {
-        "t_utc": "2026-03-26T12:15:00Z",
-        "bz": -1.88
-      },
-      {
-        "t_utc": "2026-03-26T12:20:00Z",
-        "bz": -3.07
-      },
-      {
-        "t_utc": "2026-03-26T12:25:00Z",
-        "bz": -2.33
-      },
-      {
-        "t_utc": "2026-03-26T12:30:00Z",
-        "bz": -0.89
-      },
-      {
-        "t_utc": "2026-03-26T12:35:00Z",
-        "bz": -0.8
-      },
-      {
-        "t_utc": "2026-03-26T12:40:00Z",
-        "bz": -1.97
-      },
-      {
-        "t_utc": "2026-03-26T12:45:00Z",
-        "bz": -2.2
-      },
-      {
-        "t_utc": "2026-03-26T12:50:00Z",
-        "bz": -1.73
-      },
-      {
-        "t_utc": "2026-03-26T12:55:00Z",
-        "bz": -2.07
-      },
-      {
-        "t_utc": "2026-03-26T13:00:00Z",
-        "bz": -2.92
-      },
-      {
-        "t_utc": "2026-03-26T13:05:00Z",
-        "bz": -2.53
-      },
-      {
-        "t_utc": "2026-03-26T13:10:00Z",
-        "bz": -2.61
-      },
+        "t_utc": "2026-03-26T19:00:00Z",
+        "bz": 1.71
+      }
+    ],
+    "bz_history_5m": [
       {
         "t_utc": "2026-03-26T13:15:00Z",
         "bz": -2.99
@@ -802,7 +552,139 @@
       },
       {
         "t_utc": "2026-03-26T16:10:00Z",
-        "bz": -0.69
+        "bz": -0.97
+      },
+      {
+        "t_utc": "2026-03-26T16:15:00Z",
+        "bz": -0.82
+      },
+      {
+        "t_utc": "2026-03-26T16:20:00Z",
+        "bz": -1.19
+      },
+      {
+        "t_utc": "2026-03-26T16:25:00Z",
+        "bz": -1.31
+      },
+      {
+        "t_utc": "2026-03-26T16:30:00Z",
+        "bz": -1.19
+      },
+      {
+        "t_utc": "2026-03-26T16:35:00Z",
+        "bz": -1.93
+      },
+      {
+        "t_utc": "2026-03-26T16:40:00Z",
+        "bz": -1.84
+      },
+      {
+        "t_utc": "2026-03-26T16:45:00Z",
+        "bz": -0.79
+      },
+      {
+        "t_utc": "2026-03-26T16:50:00Z",
+        "bz": -1.29
+      },
+      {
+        "t_utc": "2026-03-26T16:55:00Z",
+        "bz": -1.52
+      },
+      {
+        "t_utc": "2026-03-26T17:00:00Z",
+        "bz": -2.66
+      },
+      {
+        "t_utc": "2026-03-26T17:05:00Z",
+        "bz": -1.92
+      },
+      {
+        "t_utc": "2026-03-26T17:10:00Z",
+        "bz": -1.96
+      },
+      {
+        "t_utc": "2026-03-26T17:25:00Z",
+        "bz": -0.7
+      },
+      {
+        "t_utc": "2026-03-26T17:30:00Z",
+        "bz": -0.01
+      },
+      {
+        "t_utc": "2026-03-26T17:35:00Z",
+        "bz": -2.35
+      },
+      {
+        "t_utc": "2026-03-26T17:40:00Z",
+        "bz": -1.63
+      },
+      {
+        "t_utc": "2026-03-26T17:45:00Z",
+        "bz": 0.04
+      },
+      {
+        "t_utc": "2026-03-26T17:50:00Z",
+        "bz": 2.37
+      },
+      {
+        "t_utc": "2026-03-26T17:55:00Z",
+        "bz": 4.21
+      },
+      {
+        "t_utc": "2026-03-26T18:00:00Z",
+        "bz": 3.92
+      },
+      {
+        "t_utc": "2026-03-26T18:05:00Z",
+        "bz": 3.43
+      },
+      {
+        "t_utc": "2026-03-26T18:10:00Z",
+        "bz": 2.37
+      },
+      {
+        "t_utc": "2026-03-26T18:15:00Z",
+        "bz": 1.45
+      },
+      {
+        "t_utc": "2026-03-26T18:20:00Z",
+        "bz": 2.54
+      },
+      {
+        "t_utc": "2026-03-26T18:25:00Z",
+        "bz": 3.59
+      },
+      {
+        "t_utc": "2026-03-26T18:30:00Z",
+        "bz": 2.71
+      },
+      {
+        "t_utc": "2026-03-26T18:35:00Z",
+        "bz": 3.1
+      },
+      {
+        "t_utc": "2026-03-26T18:40:00Z",
+        "bz": 2.08
+      },
+      {
+        "t_utc": "2026-03-26T18:45:00Z",
+        "bz": 2.45
+      },
+      {
+        "t_utc": "2026-03-26T18:50:00Z",
+        "bz": 3.35
+      },
+      {
+        "t_utc": "2026-03-26T18:55:00Z",
+        "bz": 2.57
+      },
+      {
+        "t_utc": "2026-03-26T19:00:00Z",
+        "bz": 1.45
+      },
+      {
+        "t_utc": "2026-03-26T19:05:00Z",
+        "bz": 1.96
       }
     ]
   },
@@ -819,7 +701,7 @@
   "forecast": {
     "kp_max_next_24h": 4.67,
     "kp_max_at_utc": "2026-03-26T21:00:00Z",
-    "trend": "steady"
+    "trend": "falling"
   },
   "aurora_hint": {
     "aurora_possible": true,
@@ -842,14 +724,14 @@
     },
     {
       "kind": "solar_activity",
-      "level": "low",
+      "level": "none",
       "label": "Solar activity",
-      "summary": "Low flare activity."
+      "summary": "No significant flare signal."
     }
   ],
   "coronal_hole": {
     "status": "watch",
-    "estimated_speed_kms": 449.9,
+    "estimated_speed_kms": 497.9,
     "note": "Elevated solar wind — possible HSS"
   },
   "alerts_preview": [
@@ -865,7 +747,7 @@
       "source_code": "ALTTP2",
       "raw_title": "ALERT: Type II Radio Emission",
       "raw_body": "Space Weather Message Code: ALTTP2\r\nSerial Number: 1471\r\nIssue Time: 2026 Mar 26 1221 UTC\r\n\r\nALERT: Type II Radio Emission\r\nBegin Time: 2026 Mar 26 0617 UTC\r\nEstimated Velocity: 607 km/s\r\n\r\n\r\n\r\nDescription: Type II emissions occur in association with eruptions on the sun and typically indicate a coronal mass ejection is associated with a flare event.",
-      "relevance": 0.8326,
+      "relevance": 0.7962,
       "dedupe_key": "cme_watch|cme|na|warning|2026-03-26T12"
     },
     {
@@ -880,7 +762,7 @@
       "source_code": "WARK05",
       "raw_title": "WARNING: Geomagnetic K-index of 5 expected",
       "raw_body": "Space Weather Message Code: WARK05\r\nSerial Number: 2217\r\nIssue Time: 2026 Mar 25 0805 UTC\r\n\r\nWARNING: Geomagnetic K-index of 5 expected\r\nValid From: 2026 Mar 25 0805 UTC\r\nValid To: 2026 Mar 25 1200 UTC\r\nWarning Condition: Onset\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.6532,
+      "relevance": 0.6044,
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-03-25T06"
     },
     {
@@ -895,7 +777,7 @@
       "source_code": "WATA20",
       "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
       "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1102\r\nIssue Time: 2026 Mar 25 1558 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted\r\n\r\nHighest Storm Level Predicted by Day:\r\nMar 26:  G1 (Minor)   Mar 27:  None (Below G1)   Mar 28:  None (Below G1)\r\n\r\nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.6233,
+      "relevance": 0.5845,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-03-25T12"
     }
   ],
@@ -912,7 +794,7 @@
       "source_code": "ALTTP2",
       "raw_title": "ALERT: Type II Radio Emission",
       "raw_body": "Space Weather Message Code: ALTTP2\r\nSerial Number: 1471\r\nIssue Time: 2026 Mar 26 1221 UTC\r\n\r\nALERT: Type II Radio Emission\r\nBegin Time: 2026 Mar 26 0617 UTC\r\nEstimated Velocity: 607 km/s\r\n\r\n\r\n\r\nDescription: Type II emissions occur in association with eruptions on the sun and typically indicate a coronal mass ejection is associated with a flare event.",
-      "relevance": 0.8326,
+      "relevance": 0.7962,
       "dedupe_key": "cme_watch|cme|na|warning|2026-03-26T12"
     },
     {
@@ -927,7 +809,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3657\r\nIssue Time: 2026 Mar 26 0459 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3656\r\nBegin Time: 2026 Mar 22 1430 UTC\r\nYesterday Maximum 2MeV Flux: 8452 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.3376,
+      "relevance": 0.321,
       "dedupe_key": "space_weather_info|info|na|warning|2026-03-26T00"
     },
     {
@@ -942,7 +824,7 @@
       "source_code": "WATA20",
       "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
       "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1102\r\nIssue Time: 2026 Mar 25 1558 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted\r\n\r\nHighest Storm Level Predicted by Day:\r\nMar 26:  G1 (Minor)   Mar 27:  None (Below G1)   Mar 28:  None (Below G1)\r\n\r\nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.6233,
+      "relevance": 0.5845,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-03-25T12"
     },
     {
@@ -957,7 +839,7 @@
       "source_code": "ALTK05",
       "raw_title": "ALERT: Geomagnetic K-index of 5",
       "raw_body": "Space Weather Message Code: ALTK05\r\nSerial Number: 1995\r\nIssue Time: 2026 Mar 25 0826 UTC\r\n\r\nALERT: Geomagnetic K-index of 5\r\n Threshold Reached: 2026 Mar 25 0826 UTC\r\nSynoptic Period: 0600-0900 UTC\r\n \r\nActive Warning: Yes\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.5249,
+      "relevance": 0.486,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-03-25T06"
     },
     {
@@ -972,7 +854,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5301\r\nIssue Time: 2026 Mar 25 0823 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 Mar 25 0820 UTC\r\nValid To: 2026 Mar 25 1500 UTC\r\nWarning Condition: Persistence\r\n\r\nComment: Correction of the previous extension that was cancelled due to incorrect date. \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.6135,
+      "relevance": 0.568,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-25T06"
     },
     {
@@ -987,7 +869,7 @@
       "source_code": "WARK05",
       "raw_title": "WARNING: Geomagnetic K-index of 5 expected",
       "raw_body": "Space Weather Message Code: WARK05\r\nSerial Number: 2217\r\nIssue Time: 2026 Mar 25 0805 UTC\r\n\r\nWARNING: Geomagnetic K-index of 5 expected\r\nValid From: 2026 Mar 25 0805 UTC\r\nValid To: 2026 Mar 25 1200 UTC\r\nWarning Condition: Onset\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.6532,
+      "relevance": 0.6044,
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-03-25T06"
     },
     {
@@ -1002,7 +884,7 @@
       "source_code": "ALTK04",
       "raw_title": "ALERT: Geomagnetic K-index of 4",
       "raw_body": "Space Weather Message Code: ALTK04\r\nSerial Number: 2646\r\nIssue Time: 2026 Mar 25 0805 UTC\r\n\r\nALERT: Geomagnetic K-index of 4\r\n Threshold Reached: 2026 Mar 25 0805 UTC\r\nSynoptic Period: 0600-0900 UTC\r\n \r\nActive Warning: Yes\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.476,
+      "relevance": 0.4404,
       "dedupe_key": "geomagnetic_watch|G|na|watch|2026-03-25T06"
     },
     {
@@ -1017,7 +899,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3656\r\nIssue Time: 2026 Mar 25 0459 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3655\r\nBegin Time: 2026 Mar 22 1430 UTC\r\nYesterday Maximum 2MeV Flux: 11907 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.2042,
+      "relevance": 0.1876,
       "dedupe_key": "space_weather_info|info|na|warning|2026-03-25T00"
     },
     {
@@ -1032,7 +914,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5298\r\nIssue Time: 2026 Mar 25 0440 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 Mar 25 0440 UTC\r\nValid To: 2026 Mar 25 0900 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.5567,
+      "relevance": 0.5112,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-25T00"
     },
     {
@@ -1047,7 +929,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3655\r\nIssue Time: 2026 Mar 24 0500 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3654\r\nBegin Time: 2026 Mar 22 1430 UTC\r\nYesterday Maximum 2MeV Flux: 8285 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.0709,
+      "relevance": 0.06,
       "dedupe_key": "space_weather_info|info|na|warning|2026-03-24T00"
     },
     {
@@ -1062,7 +944,7 @@
       "source_code": "WARK04",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5297\r\nIssue Time: 2026 Mar 24 0420 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\r\nExtension to Serial Number: 5296\r\nValid From: 2026 Mar 23 1410 UTC\r\nNow Valid Until: 2026 Mar 24 2359 UTC\r\nWarning Condition: Persistence\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.1849,
+      "relevance": 0.165,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-24T00"
     },
     {
@@ -1077,7 +959,7 @@
       "source_code": "WARK05",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 5 expected",
       "raw_body": "Space Weather Message Code: WARK05\r\nSerial Number: 2216\r\nIssue Time: 2026 Mar 24 0420 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 5 expected\r\nExtension to Serial Number: 2215\r\nValid From: 2026 Mar 23 1440 UTC\r\nNow Valid Until: 2026 Mar 24 1200 UTC\r\nWarning Condition: Persistence\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.1984,
+      "relevance": 0.177,
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-03-24T00"
     },
     {
@@ -1109,54 +991,9 @@
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5296\r\nIssue Time: 2026 Mar 23 2058 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\r\nExtension to Serial Number: 5295\r\nValid From: 2026 Mar 23 1410 UTC\r\nNow Valid Until: 2026 Mar 24 1200 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
       "relevance": 0.165,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-03-23T18"
-    },
-    {
-      "t_utc": "2026-03-23T17:52:12Z",
-      "kind": "geomagnetic_watch",
-      "domain": "G",
-      "severity": 1,
-      "severity_label": "minor",
-      "level": "watch",
-      "title": "Geomagnetic storm watch",
-      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
-      "source_code": "ALTK05",
-      "raw_title": "ALERT: Geomagnetic K-index of 5",
-      "raw_body": "Space Weather Message Code: ALTK05\r\nSerial Number: 1994\r\nIssue Time: 2026 Mar 23 1752 UTC\r\n\r\nALERT: Geomagnetic K-index of 5\r\n Threshold Reached: 2026 Mar 23 1750 UTC\r\nSynoptic Period: 1500-1800 UTC\r\n \r\nActive Warning: Yes\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.141,
-      "dedupe_key": "geomagnetic_watch|G|1|watch|2026-03-23T12"
     }
   ],
   "timeline": [
-    {
-      "event_time": "2026-03-23T16:15:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 474 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 474 km/s\nHalf-angle: 13.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 474.0,
-        "half_angle": 13.0
-      }
-    },
-    {
-      "event_time": "2026-03-23T17:52:12Z",
-      "event_type": "geomagnetic_watch",
-      "event_title": "Geomagnetic storm watch",
-      "level": "watch",
-      "severity_label": "minor",
-      "description": "Geomagnetic conditions may intensify in the next forecast window.\nSpace Weather Message Code: ALTK05\r\nSerial Number: 1994\r\nIssue Time: 2026 Mar 23 1752 UTC\r\n\r\nALERT: Geomagnetic K-index of 5\r\n Threshold Reached: 2026 Mar 23 1750 UTC\r\nSynoptic Period: 1500-1800 UTC\r\n \r\nActive Warning: Yes\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found…",
-      "source": "NOAA_SWPC",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "source_code": "ALTK05",
-        "severity": 1
-      }
-    },
     {
       "event_time": "2026-03-23T20:58:30Z",
       "event_type": "geomagnetic_storm",
@@ -1484,6 +1321,36 @@
       }
     },
     {
+      "event_time": "2026-03-25T12:48:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 484 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 484 km/s\nHalf-angle: 12.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 484.0,
+        "half_angle": 12.0
+      }
+    },
+    {
+      "event_time": "2026-03-25T13:48:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 494 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 494 km/s\nHalf-angle: 14.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 494.0,
+        "half_angle": 14.0
+      }
+    },
+    {
       "event_time": "2026-03-25T15:48:00Z",
       "event_type": "cme_launch",
       "event_title": "CME Launch · 295 km/s",
@@ -1511,6 +1378,21 @@
       "metadata": {
         "source_code": "WATA20",
         "severity": 1
+      }
+    },
+    {
+      "event_time": "2026-03-26T00:48:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 333 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 333 km/s\nHalf-angle: 10.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 333.0,
+        "half_angle": 10.0
       }
     },
     {
