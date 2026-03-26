@@ -195,7 +195,7 @@ def fetch_open_meteo(
     points: list[tuple[float, float]],
     past_days: int = 2,
     forecast_days: int = 6,
-    variables: str = "cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m",
+    variables: str = "cloud_cover,precipitation,pressure_msl,wind_speed_10m,wind_direction_10m",
 ) -> list[dict]:
     """Fetch hourly fields for all grid points in batches of 10.
 
@@ -241,7 +241,7 @@ def fetch_open_meteo(
                     for lat, lon in batch:
                         results.append({
                             "lat": lat, "lon": lon, "times": [],
-                            "cloud_cover": [], "pressure_msl": [],
+                            "cloud_cover": [], "precipitation": [], "pressure_msl": [],
                             "wind_speed": [], "wind_direction": [],
                         })
                     continue
@@ -256,6 +256,7 @@ def fetch_open_meteo(
                 "lon":            lon,
                 "times":          hourly.get("time", []),
                 "cloud_cover":    hourly.get("cloud_cover", []),
+                "precipitation":  hourly.get("precipitation", []),
                 "pressure_msl":   hourly.get("pressure_msl", []),
                 "wind_speed":     hourly.get("wind_speed_10m", []),
                 "wind_direction": hourly.get("wind_direction_10m", []),
@@ -714,11 +715,13 @@ def run_profile(
         print(f"  Cloud/pressure grid: {len(points)} pts ({lat_n}×{lon_n})", flush=True)
         grid_data = fetch_open_meteo(points, past_days, forecast_days)
         print(f"  Fetched {len(grid_data)} cloud/pressure series", flush=True)
-        cloud_matrix = build_point_timeseries(grid_data, timeline)
+        cloud_matrix  = build_point_timeseries(grid_data, timeline)
+        precip_matrix = build_scalar_timeseries(grid_data, timeline, "precipitation")
     else:
-        points       = []
-        grid_data    = []
-        cloud_matrix = [[] for _ in timeline]
+        points        = []
+        grid_data     = []
+        cloud_matrix  = [[] for _ in timeline]
+        precip_matrix = [[] for _ in timeline]
 
     # Wind grid (denser — used for particle animation layer AND pressure isobars)
     if skip_clouds:
@@ -848,7 +851,7 @@ def run_profile(
         f"  isobars: {isobar_available}/{len(isobar_refs)} frames",
         flush=True,
     )
-    return cloud_refs, wind_refs, isobar_refs, rendered, skipped
+    return cloud_refs, wind_refs, isobar_refs, rendered, skipped, points, cloud_matrix, precip_matrix
 
 
 # ── Main pipeline ─────────────────────────────────────────────────────────────
@@ -932,8 +935,10 @@ def run() -> None:
         print(f"[weather-map] Tile profile: world_tiles (no manifest yet → available=false)", flush=True)
     profile_manifests.insert(0, world_tiles_manifest)
 
+    icon_profile_manifests: list[dict] = []
+
     for profile in PROFILES:
-        cloud_refs, wind_refs, isobar_refs, rendered, skipped = run_profile(profile, timeline)
+        cloud_refs, wind_refs, isobar_refs, rendered, skipped, pts, cloud_matrix, precip_matrix = run_profile(profile, timeline)
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]
@@ -981,6 +986,27 @@ def run() -> None:
             "available": isobar_available > 0,
             "frames":    isobar_refs,
         })
+
+        # ── Cloud icons: export raw grid point values for zoom 11+ icon layer ──
+        if not profile.get("skip_clouds") and pts:
+            # Icons start 2 zoom levels above raster (raster disappears at zoom 11)
+            icon_zoom_min = profile["zoom_max"] + 1
+            icon_frames = []
+            for idx in range(len(timeline)):
+                row        = cloud_matrix[idx]  if idx < len(cloud_matrix)  else []
+                precip_row = precip_matrix[idx] if idx < len(precip_matrix) else []
+                values      = [round(v, 0) if v is not None else None for v in row]
+                precip_vals = [round(v, 2) if v is not None else None for v in precip_row]
+                icon_frames.append({"index": idx, "values": values, "precip": precip_vals})
+            icon_profile_manifests.append({
+                "id":       profile["id"],
+                "zoom_min": icon_zoom_min,
+                "bbox":     bbox,
+                "bounds":   [[bbox["lat_min"], bbox["lon_min"]], [bbox["lat_max"], bbox["lon_max"]]],
+                "points":   [{"lat": round(lat, 4), "lon": round(lon, 4)} for lat, lon in pts],
+                "frames":   icon_frames,
+                "available": len(pts) > 0,
+            })
 
     elapsed = time.time() - t0
     print(f"\n[weather-map] Total: rendered={total_rendered} skipped={total_skipped}  ({elapsed:.1f}s)", flush=True)
@@ -1034,6 +1060,12 @@ def run() -> None:
                     "wind_unit":    "m/s",
                     "asset_type":   "vector",
                 },
+            },
+            "cloud_icons": {
+                "id":                 "cloud_icons",
+                "enabled_by_default": True,
+                "available":          len(icon_profile_manifests) > 0,
+                "profiles":           icon_profile_manifests,
             },
         },
         "playback": {

@@ -406,6 +406,30 @@
       white-space: nowrap !important;
       margin-left: 8px !important;
     }
+    /* Cloud icons layer (zoom 11+) */
+    .cloud-icon-marker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      pointer-events: none;
+    }
+    .cloud-icon-marker .ci-emoji {
+      font-size: 20px;
+      line-height: 1;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+      opacity: 0.85;
+    }
+    .cloud-icon-marker .ci-pct {
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(0,0,0,0.55);
+      padding: 1px 4px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
     /* Night mask canvas overlay */
     #nightMaskCanvas {
       position: absolute;
@@ -526,6 +550,11 @@
             <div class="layer-legend-panel" data-role="radar-legend-panel" aria-hidden="true" style="margin-top: 6px; margin-left: 20px; display: none;">
               <span class="layer-legend-short"><span class="legend-swatch" style="background:#4a90d9"></span> light · <span class="legend-swatch" style="background:#f0c030"></span> moderate · <span class="legend-swatch" style="background:#d03030"></span> heavy</span>
             </div>
+          </div>
+          <div class="layer-row">
+            <label style="display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="toggleCloudIcons" checked> ☁️ Cloud Icons <span class="layer-freq" style="font-size:10px;color:var(--muted)">zoom 11+</span>
+            </label>
           </div>
           <div class="layer-row">
             <label style="display: flex; align-items: center; gap: 6px;">
@@ -875,6 +904,7 @@
   let forecastUpdateTimer = null;
   let forecastLastUpdateTime = null;
   let radarLayer = null;
+  let radarLastPath = null;     // last displayed radar path — skip recreate if unchanged
   /** @type {{ time: number, path?: string }[]} */
   let radarFrames = [];
   /** Timeline: radar frames only */
@@ -912,6 +942,13 @@
   let worldTilesProfile    = null;  // world_tiles profile entry from weather_map_now.json
   let worldTilesFrameIndex = -1;    // currently displayed frame index
   let worldTilesOn         = true;  // user toggle for world_tiles layer
+  const WORLD_TILES_MAX_ZOOM = 8;   // world tiles hidden at zoom > this (raster takes over at 9)
+
+  // ── Cloud icons layer (zoom 11+, point grid) ───────────────────────────────
+  let cloudIconsOn         = true;   // user toggle
+  let cloudIconsLayer      = null;   // L.layerGroup holding current frame markers
+  let cloudIconsFrameIndex = -1;     // currently displayed frame index
+  const CLOUD_ICONS_MIN_ZOOM = 11;   // icons appear when raster disappears
 
   // ── Isobar layer ───────────────────────────────────────────────────────────
   let isobarOn = false;
@@ -949,9 +986,10 @@
     satellite: { enabled: true, setTime: null },
     nightMask: { enabled: true, setTime: null },
     moon: { enabled: true, setTime: null },
-    clouds:  { enabled: true,  setTime: null },
-    isobars: { enabled: false, setTime: null },
-    wind:    { enabled: false, setTime: null }
+    clouds:      { enabled: true,  setTime: null },
+    cloudIcons:  { enabled: true,  setTime: null },
+    isobars:     { enabled: false, setTime: null },
+    wind:        { enabled: false, setTime: null }
   };
 
   /**
@@ -1070,40 +1108,52 @@
   /**
    * Radar adapter: updates radar layer to nearest frame
    */
-  function adapterRadarSetTime(tUtcMs) {
+  /** Show radar frame by index into radarFrames[]. Path-cached to avoid flicker. */
+  function showRadarFrameByIndex(idx) {
     if (!radarOn || radarFrames.length === 0) {
       if (radarLayer && map.hasLayer(radarLayer)) {
         map.removeLayer(radarLayer);
         radarLayer = null;
       }
+      radarLastPath = null;
       return;
     }
-    
-    var idx = findNearestFrameByTime(radarFrames, tUtcMs);
-    if (idx < 0) return;
-    
     var frame = radarFrames[idx];
-    if (!frame.path) return;
-    
-    // Remove old layer
-    if (radarLayer) {
-      map.removeLayer(radarLayer);
-      radarLayer = null;
-    }
-    
-    // Create new layer with updated URL
+    if (!frame || !frame.path) return;
+    if (frame.path === radarLastPath && radarLayer && map.hasLayer(radarLayer)) return;
+    radarLastPath = frame.path;
+    if (radarLayer) { map.removeLayer(radarLayer); radarLayer = null; }
     var url = rainviewerRadarTileUrl(frame.path);
     radarLayer = L.tileLayer(url, {
-      opacity: 0.8,
-      maxZoom: 19,
-      maxNativeZoom: 7,
+      opacity: 0.8, maxZoom: 19, maxNativeZoom: 7,
       attribution: "Precipitation © RainViewer"
     });
+    radarLayer.addTo(map);
+    radarLayer.setZIndex(600);
+  }
 
-    if (radarOn) {
-      radarLayer.addTo(map);
-      radarLayer.setZIndex(600);
+  /**
+   * Radar adapter — shows the nearest observed radar frame when the player is within
+   * the ~2h observed window, hides the layer completely when outside.
+   */
+  function adapterRadarSetTime(tUtcMs) {
+    var hide = function() {
+      if (radarLayer && map.hasLayer(radarLayer)) { map.removeLayer(radarLayer); radarLayer = null; }
+      radarLastPath = null;
+    };
+    if (!radarOn || radarFrames.length === 0) { hide(); return; }
+    var tSec   = tUtcMs / 1000;
+    var tFirst = radarFrames[0].time;
+    var tLast  = radarFrames[radarFrames.length - 1].time;
+    var MARGIN = 600; // 10 min — one radar frame interval
+    if (tSec < tFirst - MARGIN || tSec > tLast + MARGIN) { hide(); return; }
+    // Find closest frame and show it
+    var best = 0, bestDiff = Math.abs(radarFrames[0].time - tSec);
+    for (var i = 1; i < radarFrames.length; i++) {
+      var d = Math.abs(radarFrames[i].time - tSec);
+      if (d < bestDiff) { bestDiff = d; best = i; }
     }
+    showRadarFrameByIndex(best);
   }
   
   /**
@@ -1228,6 +1278,7 @@
   layerAdapters.nightMask.setTime = adapterNightMaskSetTime;
   layerAdapters.moon.setTime = adapterMoonSetTime;
   layerAdapters.clouds.setTime = adapterCloudsSetTime;
+  layerAdapters.cloudIcons.setTime = adapterCloudIconsSetTime;
   layerAdapters.isobars.setTime = adapterIsobarSetTime;
   layerAdapters.wind.setTime = adapterWindSetTime;
 
@@ -1323,6 +1374,12 @@
    */
   function adapterWorldTilesSetTime(tUtcMs) {
     if (!worldTilesOn || !worldTilesLayer || !worldTilesManifest) return;
+    // Hide world tiles at zoom > WORLD_TILES_MAX_ZOOM — raster overlay takes over there
+    var curZoom = map ? map.getZoom() : 0;
+    if (curZoom > WORLD_TILES_MAX_ZOOM) {
+      if (map && map.hasLayer(worldTilesLayer)) map.removeLayer(worldTilesLayer);
+      return;
+    }
     var frameIndexes = worldTilesManifest.frame_indexes;
     if (!frameIndexes || !frameIndexes.length) return;
 
@@ -1406,7 +1463,7 @@
               opacity: opacity, interactive: false, className: "cloud-overlay",
               zIndex: 250, crossOrigin: true,
             });
-            if (rasterCloudsOn && !rasterBboxEdgesVisible(rasterP)) {
+            if (rasterCloudsOn && !rasterBboxEdgesVisible(rasterP) && zoom >= 9 && zoom < 11) {
               cloudOverlay.addTo(map);
               if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
             }
@@ -1422,7 +1479,7 @@
               opacity: opacity, interactive: false, className: "cloud-overlay",
               zIndex: 250, crossOrigin: true,
             });
-            if (rasterCloudsOn) cloudOverlay.addTo(map);
+            if (rasterCloudsOn && zoom >= 9 && zoom < 11) cloudOverlay.addTo(map);
             if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
           }
         }
@@ -1445,12 +1502,12 @@
 
     // ── world_tiles visibility ────────────────────────────────────────────────
     // Zoom bands:
-    //   0–5  → GFS tiles only  (native 0–4, upscaled at 5)
-    //   5–7  → GFS tiles + raster overlay  (raster starts at 5, tiles hide at 6)
-    //   8+   → nothing  (no meteo — only base map)
-    var TILES_OFF_ZOOM   = 6;   // GFS tiles hidden at zoom ≥ 6
-    var RASTER_ON_ZOOM   = 5;   // raster starts at zoom 5
-    var RASTER_OFF_ZOOM  = 8;   // raster hidden at zoom ≥ 8
+    //   0–8  → GFS tiles (native 0–4, upscaled 5–8)
+    //   9–10 → raster overlay
+    //   11+  → cloud icons only (no raster)
+    var TILES_OFF_ZOOM   = WORLD_TILES_MAX_ZOOM + 1;  // = 9
+    var RASTER_ON_ZOOM   = WORLD_TILES_MAX_ZOOM + 1;  // = 9
+    var RASTER_OFF_ZOOM  = CLOUD_ICONS_MIN_ZOOM;      // = 11
 
     if (worldTilesLayer && worldTilesManifest) {
       if (worldTilesOn && zoom < TILES_OFF_ZOOM) {
@@ -1470,12 +1527,17 @@
     }
 
     var rasterP = selectRasterProfile(zoom);
-    if (!rasterP || rasterP.id === cloudActiveProfileId) return;
+    if (!rasterP) return;
 
-    console.log("[clouds] raster profile switch: " + cloudActiveProfileId + " → " + rasterP.id);
-    cloudActiveProfileId = rasterP.id;
-    cloudOverlay.setBounds(rasterP.bounds);
-    cloudFrameIndex = -1;
+    // Profile switch: update bounds and reset frame cache
+    if (rasterP.id !== cloudActiveProfileId) {
+      console.log("[clouds] raster profile switch: " + cloudActiveProfileId + " → " + rasterP.id);
+      cloudActiveProfileId = rasterP.id;
+      cloudOverlay.setBounds(rasterP.bounds);
+      cloudFrameIndex = -1;
+    }
+
+    // Always sync time when entering or staying in raster zoom band
     if (rasterCloudsOn && currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
   }
 
@@ -1548,7 +1610,7 @@
     // Hide raster outside its zoom band (5–7) or if bbox edges are visible
     var curZoom = map ? map.getZoom() : 0;
     var activeP = getActiveRasterProfile();
-    if (curZoom < 5 || curZoom >= 8 || (activeP && rasterBboxEdgesVisible(activeP))) {
+    if (curZoom < 9 || curZoom >= 11 || (activeP && rasterBboxEdgesVisible(activeP))) {
       if (map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
       return;
     }
@@ -1562,8 +1624,8 @@
     var assetUrl  = frameData && frameData.asset_url;
     var available = frameData && frameData.available;
 
-    // Only skip if same index AND same profile (skip on profile switch even if same index)
-    if (idx === cloudFrameIndex && assetUrl) return;
+    // Only skip if same index AND overlay is already on the map (don't skip if layer was removed by zoom-out)
+    if (idx === cloudFrameIndex && assetUrl && map.hasLayer(cloudOverlay)) return;
     cloudFrameIndex = idx;
 
     if (available && assetUrl) {
@@ -1586,6 +1648,113 @@
       phaseEl.textContent = tlFrame.phase === "history" ? "▶ history"
                           : tlFrame.phase === "current" ? "▶ now"
                           : "▶ forecast";
+    }
+  }
+
+  // ── Cloud icons layer functions ─────────────────────────────────────────────
+
+  /** Return emoji + label for cloud cover percent. */
+  function cloudIconEmoji(pct, precip) {
+    if (pct === null || pct === undefined) return { emoji: "❓", cls: "ci-unknown" };
+    // Show rain cloud when precipitation is present (>0.1 mm/h) and sky is overcast
+    if (precip != null && precip > 0.1 && pct >= 70) return { emoji: "🌧️", cls: "ci-rain" };
+    if (pct < 20)  return { emoji: "☀️",  cls: "ci-sun" };
+    if (pct < 50)  return { emoji: "⛅",  cls: "ci-partly" };
+    if (pct < 85)  return { emoji: "🌥️", cls: "ci-cloudy" };
+    return           { emoji: "☁️",  cls: "ci-overcast" };
+  }
+
+  /** Pick the tightest icon profile whose bbox zoom_min ≤ current zoom. */
+  function selectCloudIconProfile(zoom) {
+    if (!cloudManifest) return null;
+    var layer = cloudManifest.layers && cloudManifest.layers.cloud_icons;
+    if (!layer || !layer.profiles) return null;
+    var best = null;
+    layer.profiles.forEach(function(p) {
+      if (!p.available || !p.points || !p.frames) return;
+      if (zoom >= p.zoom_min) {
+        // Pick tightest bbox (highest zoom_min)
+        if (!best || p.zoom_min > best.zoom_min) best = p;
+      }
+    });
+    return best;
+  }
+
+  /**
+   * Render cloud icons for the given UTC time at zoom ≥ CLOUD_ICONS_MIN_ZOOM.
+   */
+  function adapterCloudIconsSetTime(tUtcMs) {
+    if (!cloudIconsOn || !cloudManifest) return;
+    var curZoom = map ? map.getZoom() : 0;
+
+    // Ensure layer group exists on map
+    if (!cloudIconsLayer) {
+      cloudIconsLayer = L.layerGroup();
+      cloudIconsLayer.addTo(map);
+    }
+
+    if (curZoom < CLOUD_ICONS_MIN_ZOOM) {
+      cloudIconsLayer.clearLayers();
+      cloudIconsFrameIndex = -1;
+      return;
+    }
+
+    var profile = selectCloudIconProfile(curZoom);
+    if (!profile || !profile.points || !profile.frames) { cloudIconsLayer.clearLayers(); return; }
+
+    var idx = cloudFrameForTime(tUtcMs);
+    var frame = profile.frames[idx];
+    if (!frame || !frame.values) { cloudIconsLayer.clearLayers(); return; }
+
+    // Skip redraw only if same frame AND same zoom (pan always triggers via moveend reset)
+    if (idx === cloudIconsFrameIndex && curZoom === cloudIconsLayer._lastZoom) return;
+    cloudIconsFrameIndex = idx;
+    cloudIconsLayer._lastZoom = curZoom;
+
+    var values = frame.values;
+    var points = profile.points;
+
+    // ── Screen-pixel grid approach ───────────────────────────────────────────
+    // ── Hex grid layout ─────────────────────────────────────────────────────
+    // Alternate rows are offset by half a column — breaks the rigid square-grid
+    // look without randomness. Standard technique used on weather maps.
+    var mapSize   = map.getSize();
+    var colSpacing = 310;                      // px between columns
+    var rowSpacing = Math.round(colSpacing * 0.8); // px between rows (~80% of col)
+
+    cloudIconsLayer.clearLayers();
+    var row = 0;
+    for (var py = rowSpacing / 2; py < mapSize.y + rowSpacing; py += rowSpacing, row++) {
+      var hexOff = (row % 2 === 0) ? 0 : colSpacing / 2; // offset odd rows
+      for (var px = hexOff + colSpacing / 2; px < mapSize.x + colSpacing; px += colSpacing) {
+        var latlng = map.containerPointToLatLng(L.point(px, py));
+
+        // Find nearest profile grid point
+        var bestI = 0, bestDist = Infinity;
+        for (var i = 0; i < points.length; i++) {
+          var dlat = points[i].lat - latlng.lat;
+          var dlon = points[i].lon - latlng.lng;
+          var dist = dlat * dlat + dlon * dlon;
+          if (dist < bestDist) { bestDist = dist; bestI = i; }
+        }
+
+        var pct    = values[bestI];
+        var precip = frame.precip ? frame.precip[bestI] : null;
+        var ico    = cloudIconEmoji(pct, precip);
+        var marker = L.marker([latlng.lat, latlng.lng], {
+          icon: L.divIcon({
+            html: '<div class="cloud-icon-marker">'
+                + '<span class="ci-emoji">' + ico.emoji + '</span>'
+                + '</div>',
+            className: "",
+            iconSize:   [32, 28],
+            iconAnchor: [16, 14],
+          }),
+          interactive: false,
+          zIndexOffset: 500,
+        });
+        cloudIconsLayer.addLayer(marker);
+      }
     }
   }
 
@@ -3945,7 +4114,8 @@
         layerAdapters.clouds.enabled = this.checked;
         if (cloudOverlay) {
           if (rasterCloudsOn) {
-            if (!map.hasLayer(cloudOverlay)) cloudOverlay.addTo(map);
+            var _z = map ? map.getZoom() : 0;
+            if (_z >= 9 && _z < 11 && !map.hasLayer(cloudOverlay)) cloudOverlay.addTo(map);
             if (currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
           } else {
             if (map.hasLayer(cloudOverlay)) map.removeLayer(cloudOverlay);
@@ -4149,14 +4319,12 @@
       radarCb.addEventListener("change", function () {
         radarOn = this.checked;
         layerAdapters.radar.enabled = this.checked;
-        if (currentTimeUtcMs !== null) {
-          layerAdapters.radar.setTime(currentTimeUtcMs);
-        }
+        if (currentTimeUtcMs !== null) syncAllLayersToTime(currentTimeUtcMs);
         saveLayerState();
       });
     }
     layerAdapters.radar.enabled = radarOn;
-    
+
     // GIBS day controls removed - now controlled by unified timeline
 
     // Extra map controls
@@ -4276,6 +4444,24 @@
     }
     layerAdapters.nightMask.enabled = nightMaskOn;
 
+    // Cloud icons toggle
+    var toggleCloudIconsCb = document.getElementById("toggleCloudIcons");
+    if (toggleCloudIconsCb) {
+      toggleCloudIconsCb.checked = cloudIconsOn;
+      toggleCloudIconsCb.addEventListener("change", function () {
+        cloudIconsOn = this.checked;
+        layerAdapters.cloudIcons.enabled = this.checked;
+        if (cloudIconsOn) {
+          cloudIconsFrameIndex = -1;
+          if (currentTimeUtcMs !== null) adapterCloudIconsSetTime(currentTimeUtcMs);
+        } else {
+          if (cloudIconsLayer) cloudIconsLayer.clearLayers();
+        }
+        saveLayerState();
+      });
+    }
+    layerAdapters.cloudIcons.enabled = cloudIconsOn;
+
     // Moon info toggle
     var toggleMoonInfo = document.getElementById("toggleMoonInfo");
     if (toggleMoonInfo) {
@@ -4305,8 +4491,14 @@
       if (windOn && windParticles.length) updateWindParticlePositions();
     });
     map.on("moveend", function () {
-      // Re-evaluate raster bbox visibility on pan
-      if (rasterCloudsOn && currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
+      // Re-evaluate raster bbox visibility on pan (only within raster zoom band 5–7)
+      var _mz = map ? map.getZoom() : 0;
+      if (rasterCloudsOn && _mz >= 9 && _mz < 11 && currentTimeUtcMs !== null) adapterCloudsSetTime(currentTimeUtcMs);
+      // Cloud icons: re-render on pan (screen grid shifts with map centre)
+      if (cloudIconsOn && _mz >= CLOUD_ICONS_MIN_ZOOM && currentTimeUtcMs !== null) {
+        cloudIconsFrameIndex = -1;
+        adapterCloudIconsSetTime(currentTimeUtcMs);
+      }
       renderNightMaskDebounced();
       if (moonInfoOn && currentTimeUtcMs !== null) {
         layerAdapters.moon.setTime(currentTimeUtcMs);
@@ -4318,6 +4510,11 @@
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
       checkCloudProfileSwitch();  // handles world_tiles show/hide + raster profile switch
+      // Cloud icons: force re-render on zoom change (in/out of zone, different profile)
+      if (cloudIconsOn && currentTimeUtcMs !== null) {
+        cloudIconsFrameIndex = -1;
+        adapterCloudIconsSetTime(currentTimeUtcMs);
+      }
       // Reload wind for new zoom profile
       if (windOn && currentTimeUtcMs !== null) {
         adapterWindSetTime(currentTimeUtcMs);
@@ -4617,17 +4814,11 @@
         }
         setMapLoading("radar", false);
         if (radarFrames.length > 0) {
-          // Sync radar adapter with current time
-          if (currentTimeUtcMs !== null) {
-            syncAllLayersToTime(currentTimeUtcMs);
-          }
-          updateStatusIndicator(); // Обновляем индикатор после успешной загрузки
+          // Sync radar to current player time now that frames are loaded
+          if (currentTimeUtcMs !== null) syncAllLayersToTime(currentTimeUtcMs);
+          updateStatusIndicator();
         } else {
           setStatus("Radar unavailable", true);
-          // Still sync other layers even if radar unavailable
-          if (currentTimeUtcMs !== null) {
-            syncAllLayersToTime(currentTimeUtcMs);
-          }
         }
       })
       .catch(function (err) {
