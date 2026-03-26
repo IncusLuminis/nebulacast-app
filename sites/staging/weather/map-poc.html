@@ -1739,6 +1739,7 @@
         }
 
         var pct    = values[bestI];
+        if (pct === null || pct === undefined) continue;
         var precip = frame.precip ? frame.precip[bestI] : null;
         var ico    = cloudIconEmoji(pct, precip);
         var marker = L.marker([latlng.lat, latlng.lng], {
