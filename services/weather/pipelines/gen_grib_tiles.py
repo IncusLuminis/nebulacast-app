@@ -72,7 +72,7 @@ GRIB_CACHE   = DATA_DIR / "_cache" / "grib"
 
 TILE_SIZE    = 256
 ZOOM_MIN     = 0
-ZOOM_MAX     = 4
+ZOOM_MAX     = 3   # z=4 would produce ~41k tiles/run, exceeding CF Pages 20k limit
 
 TOTAL_FRAMES = 169
 CURRENT_IDX  = 48   # master timeline frame index = t+0h
