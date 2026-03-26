@@ -1,19 +1,11 @@
 {
-  "generated_utc": "2026-03-26T06:59:07Z",
+  "generated_utc": "2026-03-26T12:54:16Z",
   "kp": {
     "latest": {
-      "timestamp_utc": "2026-03-26T03:00:00Z",
-      "value": 1.67
+      "timestamp_utc": "2026-03-26T09:00:00Z",
+      "value": 2.33
     },
     "forecast_3h": [
-      {
-        "timestamp_utc": "2026-03-26T06:00:00Z",
-        "value": 4.0
-      },
-      {
-        "timestamp_utc": "2026-03-26T09:00:00Z",
-        "value": 2.67
-      },
       {
         "timestamp_utc": "2026-03-26T12:00:00Z",
         "value": 2.67
@@ -28,7 +20,7 @@
       },
       {
         "timestamp_utc": "2026-03-26T21:00:00Z",
-        "value": 2.0
+        "value": 4.67
       },
       {
         "timestamp_utc": "2026-03-27T00:00:00Z",
@@ -37,17 +29,36 @@
       {
         "timestamp_utc": "2026-03-27T03:00:00Z",
         "value": 2.67
+      },
+      {
+        "timestamp_utc": "2026-03-27T06:00:00Z",
+        "value": 2.0
+      },
+      {
+        "timestamp_utc": "2026-03-27T09:00:00Z",
+        "value": 2.0
       }
     ],
     "activity_label": "quiet"
   },
   "solar_wind": {
-    "timestamp_utc": "2026-03-26T06:56:00Z",
-    "speed_kms": 439.3,
+    "timestamp_utc": "2026-03-26T12:51:00Z",
+    "speed_kms": 448.7,
     "density_protons_cm3": 0.02
   },
-  "xray": null,
+  "xray": {
+    "timestamp_utc": "2026-03-26T12:51:00Z",
+    "flux_wm2": 1.6835050473673618e-06,
+    "class": "C"
+  },
   "alerts": [
+    {
+      "id": "TIIA",
+      "timestamp_utc": "2026-03-26T12:21:36Z",
+      "title": "Space Weather Message Code: ALTTP2",
+      "level": "info",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "EF3A",
       "timestamp_utc": "2026-03-26T04:59:50Z",
@@ -1143,13 +1154,6 @@
     {
       "id": "K04W",
       "timestamp_utc": "2026-02-25T01:35:08Z",
-      "title": "Space Weather Message Code: WARK04",
-      "level": "warning",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K04W",
-      "timestamp_utc": "2026-02-24T11:55:03Z",
       "title": "Space Weather Message Code: WARK04",
       "level": "warning",
       "source": "NOAA SWPC"
