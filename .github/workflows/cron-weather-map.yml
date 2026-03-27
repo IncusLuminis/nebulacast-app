@@ -54,7 +54,11 @@ jobs:
           print(f"OK: {rendered} total frames, updated {d['updated_utc']}")
           EOF
 
-      # Commit JSON manifest + isobar frames (WebP cloud/wind frames are .gitignored)
+      # Commit JSON manifest + isobar frames (WebP cloud/wind frames are .gitignored).
+      # NOTE: CF Pages deployment is intentionally NOT done here. The cron-grib-tiles
+      # workflow is the sole CF Pages deployer — it runs gen_weather_map.py too, so
+      # both cloud overlay frames AND tile WebPs are present in a single deploy.
+      # Deploying here would wipe the tile WebPs (not on disk in a fresh checkout).
       - name: Commit outputs
         run: |
           git config user.name  "github-actions[bot]"
@@ -66,23 +70,3 @@ jobs:
           git commit -m "data: weather map manifest + isobars $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git pull --rebase origin main
           git push
-
-      # Deploy the full staging site (git files + generated WebP) to Cloudflare Pages.
-      # This direct-upload deployment includes everything: static files from git checkout
-      # + freshly generated cloud frames that are not committed to git.
-      #
-      # Required secrets (Settings → Secrets → Actions):
-      #   CLOUDFLARE_API_TOKEN  — CF API token with Pages:Edit permission
-      #   CLOUDFLARE_ACCOUNT_ID — CF account ID
-      # Required variable (Settings → Variables → Actions):
-      #   CF_PAGES_PROJECT      — Cloudflare Pages project name (e.g. "nebulacast-app")
-      - name: Deploy to Cloudflare Pages (git files + generated frames)
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: >
-            pages deploy sites/staging
-            --project-name=${{ vars.CF_PAGES_PROJECT }}
-            --branch=main
-            --commit-dirty=true

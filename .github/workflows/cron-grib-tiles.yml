@@ -75,26 +75,37 @@ jobs:
                 f"spot tile {size} bytes, run={run_id}")
           EOF
 
-      # Commit tile manifests (WebP tiles are .gitignored — deployed via wrangler dirty)
+      # Run weather map pipeline so cloud overlay frames (canvas WebPs) are present on
+      # disk alongside the tile WebPs before the unified deploy below.
+      # cron-weather-map.yml no longer deploys to CF Pages — it only commits the manifest.
+      # This workflow is the sole CF Pages deployer, ensuring tiles + overlay frames
+      # are always deployed together in a single wrangler upload.
+      - name: Run weather map pipeline (cloud overlay frames)
+        run: PYTHONPATH=services/weather python services/weather/pipelines/gen_weather_map.py
+
+      # Commit tile manifests + weather map manifest (WebP tiles/frames are .gitignored)
       - name: Commit tile manifests
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git pull --rebase origin main 2>/dev/null || true
           git add sites/staging/data/tile_manifests/
+          git add sites/staging/data/weather_map_now.json
+          git add sites/staging/data/isobars/
           git diff --cached --quiet && echo "No manifest changes" && exit 0
-          git commit -m "data: grib tile manifest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git commit -m "data: grib tile manifest + weather map $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git pull --rebase origin main
           git push origin main
 
-      # Deploy staging site including generated tile WebPs (not in git) to Cloudflare Pages
+      # Deploy staging site: git files + tile WebPs + cloud/wind overlay frames.
+      # This is the sole wrangler deploy — cron-weather-map.yml only commits manifests.
       #
       # Required secrets (Settings → Secrets → Actions):
       #   CLOUDFLARE_API_TOKEN  — CF API token with Pages:Edit permission
       #   CLOUDFLARE_ACCOUNT_ID — CF account ID
       # Required variable (Settings → Variables → Actions):
       #   CF_PAGES_PROJECT      — Cloudflare Pages project name (e.g. "nebulacast-app")
-      - name: Deploy to Cloudflare Pages (manifests + tile WebPs)
+      - name: Deploy to Cloudflare Pages (tiles + cloud overlay frames)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
