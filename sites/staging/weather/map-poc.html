@@ -102,6 +102,7 @@
       border-radius: 12px;
       overflow: hidden;
     }
+
     @media (max-width: 560px) {
       #map { height: 280px; }
     }
@@ -429,6 +430,13 @@
       border-radius: 3px;
       white-space: nowrap;
     }
+    .cloud-icon-marker .ci-temp {
+      font-size: 10px;
+      font-weight: 600;
+      color: #f0d080;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      white-space: nowrap;
+    }
 
     /* Night mask canvas overlay */
     #nightMaskCanvas {
@@ -522,6 +530,16 @@
           </div>
           <div style="margin: 8px 0; border-top: 1px solid var(--line);"></div>
           <div class="layer-row">
+            <label style="display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="toggleCloudIcons" checked> ☁️ Cloud Icons <span class="layer-freq" style="font-size:10px;color:var(--muted)">zoom 11+</span>
+            </label>
+          </div>
+          <div class="layer-row">
+            <label>
+              <input type="checkbox" id="toggleIsobars"> Pressure <span class="layer-freq">3h</span>
+            </label>
+          </div>
+          <div class="layer-row">
             <label title="Wind direction arrows from weather model (Open-Meteo), updated every 3h" style="display:flex;align-items:center;gap:6px;">
               <button type="button" class="layer-expand-toggle" id="windExpandToggle"
                 data-role="wind-sub-toggle" aria-expanded="false" aria-label="Toggle wind options"
@@ -538,11 +556,6 @@
             </label>
           </div>
           <div class="layer-row">
-            <label>
-              <input type="checkbox" id="toggleIsobars"> Pressure <span class="layer-freq">3h</span>
-            </label>
-          </div>
-          <div class="layer-row">
             <label title="Radar shows rain/snow, not total cloud cover" style="display: flex; align-items: center; gap: 6px;">
               <button type="button" class="layer-expand-toggle" data-role="radar-legend-toggle" aria-expanded="false" aria-label="Toggle radar legend" style="background: none; border: none; color: var(--text); cursor: pointer; padding: 0; font-size: 10px; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;">▶</button>
               <input type="checkbox" id="toggleRadar"> Precipitation
@@ -550,11 +563,6 @@
             <div class="layer-legend-panel" data-role="radar-legend-panel" aria-hidden="true" style="margin-top: 6px; margin-left: 20px; display: none;">
               <span class="layer-legend-short"><span class="legend-swatch" style="background:#4a90d9"></span> light · <span class="legend-swatch" style="background:#f0c030"></span> moderate · <span class="legend-swatch" style="background:#d03030"></span> heavy</span>
             </div>
-          </div>
-          <div class="layer-row">
-            <label style="display: flex; align-items: center; gap: 6px;">
-              <input type="checkbox" id="toggleCloudIcons" checked> ☁️ Cloud Icons <span class="layer-freq" style="font-size:10px;color:var(--muted)">zoom 11+</span>
-            </label>
           </div>
           <div class="layer-row">
             <label style="display: flex; align-items: center; gap: 6px;">
@@ -581,7 +589,7 @@
           <div class="layer-row">
             <label style="display: flex; align-items: center; gap: 6px;">
               <button type="button" class="layer-expand-toggle" data-role="mooninfo-legend-toggle" aria-expanded="false" aria-label="Toggle moon info legend" style="background: none; border: none; color: var(--text); cursor: pointer; padding: 0; font-size: 10px; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;">▶</button>
-              <input type="checkbox" id="toggleMoonInfo" checked> Moon info
+              <input type="checkbox" id="toggleMoonInfo" checked> Messages
             </label>
             <div class="layer-legend-panel" data-role="mooninfo-legend-panel" aria-hidden="true" style="margin-top: 6px; margin-left: 20px; display: none;">
               <div style="font-size: 10px; color: var(--text); line-height: 1.6;">
@@ -608,6 +616,8 @@
           <div class="moon-info-line" id="sunAltLine" style="display:none;"></div>
           <div class="moon-info-line" id="moonInfoLine1">🌙 —</div>
           <div class="moon-info-line" id="moonInfoLine2">Alt: — Az: —</div>
+          <div style="margin: 6px 0 4px; border-top: 1px solid rgba(255,255,255,0.12);"></div>
+          <div id="msgPanel" style="font-size:10px;color:var(--muted);line-height:1.7;font-family:monospace;"></div>
         </div>
         <map-player id="mapPlayer" style="position:absolute;left:0;bottom:0;z-index:1000;transition:opacity 0.25s ease,transform 0.25s ease;"></map-player>
       </div>
@@ -1647,7 +1657,7 @@
       var tlFrame = cloudManifest.timeline.frames[idx];
       phaseEl.textContent = tlFrame.phase === "history" ? "▶ history"
                           : tlFrame.phase === "current" ? "▶ now"
-                          : "▶ forecast";
+                          : "";
     }
   }
 
@@ -1669,14 +1679,37 @@
     if (!cloudManifest) return null;
     var layer = cloudManifest.layers && cloudManifest.layers.cloud_icons;
     if (!layer || !layer.profiles) return null;
+    var center = map ? map.getCenter() : null;
+
+    // Among profiles whose zoom_min <= zoom AND whose bbox contains the map center,
+    // prefer the one with the smallest bbox area (densest grid for current location).
+    function bboxArea(p) {
+      var b = p.bbox;
+      return b ? (b.lat_max - b.lat_min) * (b.lon_max - b.lon_min) : Infinity;
+    }
+    function containsCenter(p) {
+      if (!center || !p.bbox) return true; // no bbox info → don't filter out
+      var b = p.bbox;
+      return center.lat >= b.lat_min && center.lat <= b.lat_max &&
+             center.lng >= b.lon_min && center.lng <= b.lon_max;
+    }
+
     var best = null;
     layer.profiles.forEach(function(p) {
       if (!p.available || !p.points || !p.frames) return;
-      if (zoom >= p.zoom_min) {
-        // Pick tightest bbox (highest zoom_min)
-        if (!best || p.zoom_min > best.zoom_min) best = p;
-      }
+      if (zoom < p.zoom_min) return;
+      if (!containsCenter(p)) return;
+      if (!best || bboxArea(p) < bboxArea(best)) best = p;
     });
+
+    // Fallback: ignore bbox, pick highest zoom_min
+    if (!best) {
+      layer.profiles.forEach(function(p) {
+        if (!p.available || !p.points || !p.frames) return;
+        if (zoom < p.zoom_min) return;
+        if (!best || p.zoom_min > best.zoom_min) best = p;
+      });
+    }
     return best;
   }
 
@@ -1719,7 +1752,7 @@
     // Alternate rows are offset by half a column — breaks the rigid square-grid
     // look without randomness. Standard technique used on weather maps.
     var mapSize   = map.getSize();
-    var colSpacing = 310;                      // px between columns
+    var colSpacing = 480;                      // px between columns
     var rowSpacing = Math.round(colSpacing * 0.8); // px between rows (~80% of col)
 
     cloudIconsLayer.clearLayers();
@@ -1741,15 +1774,20 @@
         var pct    = values[bestI];
         if (pct === null || pct === undefined) continue;
         var precip = frame.precip ? frame.precip[bestI] : null;
+        var temp   = frame.temp   ? frame.temp[bestI]   : null;
         var ico    = cloudIconEmoji(pct, precip);
+        var tempHtml = temp !== null && temp !== undefined
+          ? '<span class="ci-temp">' + (temp >= 0 ? '+' : '') + Math.round(temp) + '°</span>'
+          : '';
         var marker = L.marker([latlng.lat, latlng.lng], {
           icon: L.divIcon({
             html: '<div class="cloud-icon-marker">'
                 + '<span class="ci-emoji">' + ico.emoji + '</span>'
+                + tempHtml
                 + '</div>',
             className: "",
-            iconSize:   [32, 28],
-            iconAnchor: [16, 14],
+            iconSize:   [32, 36],
+            iconAnchor: [16, 18],
           }),
           interactive: false,
           zIndexOffset: 500,
@@ -1783,16 +1821,32 @@
     }, null);
   }
 
+  /** Chaikin curve smoothing — 4 iterations gives visually smooth isobars. */
+  function chaikinSmooth(pts, iters) {
+    for (var k = 0; k < iters; k++) {
+      var out = [pts[0]];
+      for (var j = 0; j < pts.length - 1; j++) {
+        var p0 = pts[j], p1 = pts[j + 1];
+        out.push([p0[0] * 0.75 + p1[0] * 0.25, p0[1] * 0.75 + p1[1] * 0.25]);
+        out.push([p0[0] * 0.25 + p1[0] * 0.75, p0[1] * 0.25 + p1[1] * 0.75]);
+      }
+      out.push(pts[pts.length - 1]);
+      pts = out;
+    }
+    return pts;
+  }
+
   /** Build Leaflet layer group from isobar JSON data. */
   function buildIsobarGroup(data) {
     var group = L.layerGroup();
     (data.isobars || []).forEach(function(iso) {
       (iso.paths || []).forEach(function(coords) {
-        L.polyline(coords, {
+        var smoothed = coords.length >= 3 ? chaikinSmooth(coords, 4) : coords;
+        L.polyline(smoothed, {
           color:         "#ffffff",
           weight:        1.5,
           opacity:       0.9,
-          smoothFactor:  1.5,
+          smoothFactor:  0,
           interactive:   false,
         }).addTo(group);
       });
@@ -2057,41 +2111,19 @@
       var fade = Math.sin(p.phase * Math.PI);
       ctx.globalAlpha = 0.2 + 0.75 * fade;
 
-      // Stroke + dot: dot at head, line trailing behind
-      var sz   = windArrowSz(zoom, p.speed_ms);
-      var dotR = Math.max(1.2, sz * 0.30);
-      var lw   = Math.max(0.8, sz * 0.16);
-      var hx   = cx + p.dx * sz * 0.65;  // dot centre (head)
-      var hy   = cy + p.dy * sz * 0.65;
-      var tx   = cx - p.dx * sz;          // tail end of line
-      var ty   = cy - p.dy * sz;
+      // Soft elongated oval in wind direction — calmer visual than dot+comet
+      var sz      = windArrowSz(zoom, p.speed_ms);
+      var halfLen = Math.max(7, sz * 0.85);
+      var halfW   = Math.max(2.5, sz * 0.28);
 
-      // Dark outline pass — makes particles readable on bright dayside backgrounds
-      ctx.shadowColor = "rgba(0,0,0,0)";
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(Math.atan2(p.dy, p.dx));
       ctx.beginPath();
-      ctx.moveTo(hx, hy);
-      ctx.lineTo(tx, ty);
-      ctx.strokeStyle = "rgba(0,0,0,0.55)";
-      ctx.lineWidth   = lw + 2;
-      ctx.stroke();
-
-      // Colored pass on top
-      ctx.beginPath();
-      ctx.moveTo(hx, hy);
-      ctx.lineTo(tx, ty);
-      ctx.strokeStyle = p.color;
-      ctx.lineWidth   = lw;
-      ctx.stroke();
-
-      // Head dot — dark ring first, then colored fill
-      ctx.beginPath();
-      ctx.arc(hx, hy, dotR + 1, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(0,0,0,0.55)";
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(hx, hy, dotR, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, halfLen, halfW, 0, 0, Math.PI * 2);
       ctx.fillStyle = p.color;
       ctx.fill();
+      ctx.restore();
     });
 
     // Static labels at each visible grid point
@@ -3168,6 +3200,7 @@
       maxNativeZoom: 6,
       crossOrigin: true,
       attribution: "Imagery © NASA GIBS",
+      errorTileUrl: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
       getTileUrl: function (coords) {
         return getGibsTileUrl(dateStr, coords);
       }
@@ -4505,6 +4538,8 @@
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
     });
+    map.on("zoomend", function() { updateMsgPanel(currentTimeUtcMs); });
+
     map.on("zoomend", function () {
       renderNightMaskDebounced();
       if (moonInfoOn && currentTimeUtcMs !== null) {
@@ -4727,6 +4762,15 @@
         }
       }
     });
+    updateMsgPanel(tUtcMs);
+  }
+
+  function updateMsgPanel(tUtcMs) {
+    var el = document.getElementById("msgPanel");
+    if (!el) return;
+    var z = map ? map.getZoom() : "—";
+    var dt = tUtcMs ? new Date(tUtcMs).toISOString().replace("T"," ").slice(0,16) + "Z" : "—";
+    el.innerHTML = 'time=' + dt + '<br>zoom=' + z;
   }
 
   /**

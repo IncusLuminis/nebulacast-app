@@ -195,7 +195,7 @@ def fetch_open_meteo(
     points: list[tuple[float, float]],
     past_days: int = 2,
     forecast_days: int = 6,
-    variables: str = "cloud_cover,precipitation,pressure_msl,wind_speed_10m,wind_direction_10m",
+    variables: str = "cloud_cover,precipitation,pressure_msl,wind_speed_10m,wind_direction_10m,temperature_2m",
 ) -> list[dict]:
     """Fetch hourly fields for all grid points in batches of 10.
 
@@ -242,7 +242,7 @@ def fetch_open_meteo(
                         results.append({
                             "lat": lat, "lon": lon, "times": [],
                             "cloud_cover": [], "precipitation": [], "pressure_msl": [],
-                            "wind_speed": [], "wind_direction": [],
+                            "wind_speed": [], "wind_direction": [], "temperature": [],
                         })
                     continue
 
@@ -260,6 +260,7 @@ def fetch_open_meteo(
                 "pressure_msl":   hourly.get("pressure_msl", []),
                 "wind_speed":     hourly.get("wind_speed_10m", []),
                 "wind_direction": hourly.get("wind_direction_10m", []),
+                "temperature":    hourly.get("temperature_2m", []),
             })
         time.sleep(0.2)
 
@@ -717,11 +718,13 @@ def run_profile(
         print(f"  Fetched {len(grid_data)} cloud/pressure series", flush=True)
         cloud_matrix  = build_point_timeseries(grid_data, timeline)
         precip_matrix = build_scalar_timeseries(grid_data, timeline, "precipitation")
+        temp_matrix   = build_scalar_timeseries(grid_data, timeline, "temperature")
     else:
         points        = []
         grid_data     = []
         cloud_matrix  = [[] for _ in timeline]
         precip_matrix = [[] for _ in timeline]
+        temp_matrix   = [[] for _ in timeline]
 
     # Wind grid (denser — used for particle animation layer AND pressure isobars)
     if skip_clouds:
@@ -851,7 +854,7 @@ def run_profile(
         f"  isobars: {isobar_available}/{len(isobar_refs)} frames",
         flush=True,
     )
-    return cloud_refs, wind_refs, isobar_refs, rendered, skipped, points, cloud_matrix, precip_matrix
+    return cloud_refs, wind_refs, isobar_refs, rendered, skipped, points, cloud_matrix, precip_matrix, temp_matrix
 
 
 # ── Main pipeline ─────────────────────────────────────────────────────────────
@@ -938,7 +941,7 @@ def run() -> None:
     icon_profile_manifests: list[dict] = []
 
     for profile in PROFILES:
-        cloud_refs, wind_refs, isobar_refs, rendered, skipped, pts, cloud_matrix, precip_matrix = run_profile(profile, timeline)
+        cloud_refs, wind_refs, isobar_refs, rendered, skipped, pts, cloud_matrix, precip_matrix, temp_matrix = run_profile(profile, timeline)
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]
@@ -990,14 +993,16 @@ def run() -> None:
         # ── Cloud icons: export raw grid point values for zoom 11+ icon layer ──
         if not profile.get("skip_clouds") and pts:
             # Icons start 2 zoom levels above raster (raster disappears at zoom 11)
-            icon_zoom_min = profile["zoom_max"] + 1
+            icon_zoom_min = profile["zoom_min"]
             icon_frames = []
             for idx in range(len(timeline)):
                 row        = cloud_matrix[idx]  if idx < len(cloud_matrix)  else []
                 precip_row = precip_matrix[idx] if idx < len(precip_matrix) else []
+                temp_row   = temp_matrix[idx]   if idx < len(temp_matrix)   else []
                 values      = [round(v, 0) if v is not None else None for v in row]
                 precip_vals = [round(v, 2) if v is not None else None for v in precip_row]
-                icon_frames.append({"index": idx, "values": values, "precip": precip_vals})
+                temp_vals   = [round(v, 1) if v is not None else None for v in temp_row]
+                icon_frames.append({"index": idx, "values": values, "precip": precip_vals, "temp": temp_vals})
             icon_profile_manifests.append({
                 "id":       profile["id"],
                 "zoom_min": icon_zoom_min,
