@@ -11,10 +11,38 @@
   var GROUP_BY_KEY = {};
   GROUPS.forEach(function (g) { GROUP_BY_KEY[g.key] = g; });
 
+  var STORAGE_KEY = 'nc-alerts-state';
   var state = { mode: 'type', dateDir: 'desc', hazardDir: 'desc', scoreDir: 'desc', collapsed: {} };
   var _data = null;
   var _listEl = null;
   var _maxPerGroup = 5;
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        mode: state.mode,
+        dateDir: state.dateDir,
+        hazardDir: state.hazardDir,
+        scoreDir: state.scoreDir,
+        collapsed: state.collapsed
+      }));
+    } catch (_) {}
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      var modes = ['type', 'date', 'hazard', 'score'];
+      var dirs  = ['asc', 'desc'];
+      if (modes.indexOf(s.mode) !== -1)         state.mode      = s.mode;
+      if (dirs.indexOf(s.dateDir) !== -1)        state.dateDir   = s.dateDir;
+      if (dirs.indexOf(s.hazardDir) !== -1)      state.hazardDir = s.hazardDir;
+      if (dirs.indexOf(s.scoreDir) !== -1)       state.scoreDir  = s.scoreDir;
+      if (s.collapsed && typeof s.collapsed === 'object') state.collapsed = s.collapsed;
+    } catch (_) {}
+  }
 
   window.runAlertsWidget = function (config) {
     var root = document.getElementById(config.rootId);
@@ -25,7 +53,9 @@
     var statusEl  = root.querySelector('[data-role="status"]');
     var sortBarEl = root.querySelector('[data-role="sort-bar"]');
 
+    loadState();
     buildSortBar(sortBarEl);
+    syncSortBar(sortBarEl);
 
     fetch(config.dataUrl || '/sky/data/alerts_now.json', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
@@ -79,6 +109,7 @@
         }
         syncSortBar(el);
         rerender();
+        saveState();
       });
     });
   }
@@ -107,7 +138,9 @@
       });
       renderFlat(items, 'date');
     } else if (state.mode === 'hazard') {
-      var items = flattenAll(_data.groups);
+      var items = flattenAll(_data.groups).filter(function (it) {
+        return it.group !== 'grb' && it.group !== 'transient';
+      });
       items.sort(function (a, b) {
         var d = externalScore(b) - externalScore(a);
         return state.hazardDir === 'desc' ? d : -d;
@@ -167,6 +200,7 @@
         var key = hdr.dataset.group;
         state.collapsed[key] = !state.collapsed[key];
         rerender();
+        saveState();
       });
     });
   }

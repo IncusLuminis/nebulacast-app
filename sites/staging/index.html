@@ -538,13 +538,25 @@
     }
     // Helio widget (Space Weather) — pass observer location from app state
     const helioEl = document.getElementById('w-helio');
+    let _helioInstance = null;
     if (helioEl && window.HelioWidget) {
       const _helioLoc = getState()?.location ?? {};
-      window.HelioWidget.mount(helioEl, {
+      _helioInstance = window.HelioWidget.mount(helioEl, {
         dataUrl:      '/data/helio_now.json',
         lat:          typeof _helioLoc.lat === 'number' ? _helioLoc.lat : undefined,
         lon:          typeof _helioLoc.lon === 'number' ? _helioLoc.lon : undefined,
         locationName: _helioLoc.name  || undefined,
+      });
+      // Keep Helio in sync when user changes location mid-session
+      subscribe((newState) => {
+        const loc = newState?.location;
+        if (_helioInstance && loc) {
+          _helioInstance.updateLocation(
+            typeof loc.lat === 'number' ? loc.lat : undefined,
+            typeof loc.lon === 'number' ? loc.lon : undefined,
+            loc.name || undefined
+          );
+        }
       });
     }
 
@@ -705,8 +717,22 @@
           'space-weather': 'Space Weather',
         };
         document.title = `Nebulacast — ${titles[targetTab] || 'Weather'}`;
+
+        // Persist active tab
+        try { localStorage.setItem('nc-active-tab', targetTab); } catch (_) {}
       });
     });
+
+    // Restore active tab from previous session
+    (function () {
+      const VALID_TABS = ['calendar','weather','map','sun','sky','news','observer-weather','space-weather'];
+      let saved;
+      try { saved = localStorage.getItem('nc-active-tab'); } catch (_) {}
+      if (saved && VALID_TABS.includes(saved) && saved !== 'weather') {
+        const target = document.querySelector(`.nebulacast-tab[data-tab="${saved}"]`);
+        if (target) target.click();
+      }
+    })();
   </script>
 
   <!-- Dev: resize controls + embed above each widget -->

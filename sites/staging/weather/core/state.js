@@ -4,6 +4,7 @@
 
 const DEBUG = false; // Set to true for console logging
 const STORAGE_KEY_LOCATION = "nc-weather-location";
+const STORAGE_KEY_PREFS    = "nc-weather-prefs";
 
 const DEFAULT_STATE = {
   location: {
@@ -73,6 +74,16 @@ export function setState(partial, meta = {}) {
     }
   } catch (e) {
     if (DEBUG) console.warn("[state] localStorage save failed:", e);
+  }
+
+  // Persist profile + range to localStorage
+  try {
+    localStorage.setItem(STORAGE_KEY_PREFS, JSON.stringify({
+      profile: state.profile,
+      range: state.range
+    }));
+  } catch (e) {
+    if (DEBUG) console.warn("[state] localStorage prefs save failed:", e);
   }
 
   // Notify subscribers
@@ -271,6 +282,22 @@ export function initState() {
     }
     if (!state.location.lat || !state.location.lon) {
       state = { ...DEFAULT_STATE };
+    }
+
+    // Restore profile + range from localStorage (URL params already handled above, no URL here)
+    try {
+      const storedPrefs = localStorage.getItem(STORAGE_KEY_PREFS);
+      if (storedPrefs) {
+        const prefs = JSON.parse(storedPrefs);
+        if (prefs.profile && ["default", "visual", "broadband", "planetary"].includes(prefs.profile)) {
+          state.profile = prefs.profile;
+        }
+        if (prefs.range && ["today", "48h", "7d"].includes(prefs.range)) {
+          state.range = prefs.range;
+        }
+      }
+    } catch (e) {
+      if (DEBUG) console.warn("[state] localStorage prefs restore failed:", e);
     }
   }
   

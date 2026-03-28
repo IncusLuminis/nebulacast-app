@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Nebulacast — Weather</title>
 
-  <link rel="stylesheet" href="./assets/weather.css?v=20260309c">
-  <link rel="stylesheet" href="./widgets/location/location.css?v=20260309c">
-  <link rel="stylesheet" href="./widgets/weather/weather.css?v=20260309c">
-  <link rel="stylesheet" href="./widgets/map/map.css?v=20260309c">
-  <link rel="stylesheet" href="./widgets/astro/astro.css?v=20260309c">
-  <link rel="stylesheet" href="./widgets/sun_moon/sun_moon.css?v=20260309c">
-  <link rel="stylesheet" href="./sky_integration.css?v=20260309c">
+  <link rel="stylesheet" href="./assets/weather.css?v=20260328a">
+  <link rel="stylesheet" href="./widgets/location/location.css?v=20260328a">
+  <link rel="stylesheet" href="./widgets/weather/weather.css?v=20260328a">
+  <link rel="stylesheet" href="./widgets/map/map.css?v=20260328a">
+  <link rel="stylesheet" href="./widgets/astro/astro.css?v=20260328a">
+  <link rel="stylesheet" href="./widgets/sun_moon/sun_moon.css?v=20260328a">
+  <link rel="stylesheet" href="./sky_integration.css?v=20260328a">
 </head>
 <body>
   <div class="page-wrap">
@@ -127,12 +127,12 @@
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
 
   <script type="module">
-    import { initState, getState, setState, subscribe } from "./core/state.js?v=20260309c";
-    import { mountLocation } from "./widgets/location/location.js?v=20260309c";
-    import { mountWeather } from "./widgets/weather/weather.js?v=20260309c";
-    import { mountMap } from "./widgets/map/map.js?v=20260309c";
-    import { mountSunMoon } from "./widgets/sun_moon/sun_moon.js?v=20260309c";
-    import { mountAstro } from "./widgets/astro/astro.js?v=20260309c";
+    import { initState, getState, setState, subscribe } from "./core/state.js?v=20260328a";
+    import { mountLocation } from "./widgets/location/location.js?v=20260328a";
+    import { mountWeather } from "./widgets/weather/weather.js?v=20260328c";
+    import { mountMap } from "./widgets/map/map.js?v=20260328a";
+    import { mountSunMoon } from "./widgets/sun_moon/sun_moon.js?v=20260328a";
+    import { mountAstro } from "./widgets/astro/astro.js?v=20260328a";
 
     // Create store API object
     const storeApi = { getState, setState, subscribe };
@@ -311,8 +311,22 @@
           const isTarget = content.id === `w-${targetTab}`;
           content.classList.toggle("active", isTarget);
         });
+
+        // Persist active tab
+        try { localStorage.setItem('nc-weather-tab', targetTab); } catch (_) {}
       });
     });
+
+    // Restore active tab from previous session
+    (function () {
+      const VALID_TABS = ['weather', 'map', 'sun', 'sky'];
+      let saved;
+      try { saved = localStorage.getItem('nc-weather-tab'); } catch (_) {}
+      if (saved && VALID_TABS.includes(saved) && saved !== 'weather') {
+        const target = document.querySelector(`.widget-tab[data-tab="${saved}"]`);
+        if (target) target.click();
+      }
+    })();
 
     // Initial render for all widgets (they subscribe to state changes)
     const initialState = getState();

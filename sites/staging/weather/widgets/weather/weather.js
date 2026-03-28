@@ -1199,6 +1199,9 @@ function formatBreakdownRawForV2(key, raw) {
 let currentMode = "today";
 let hourlyMode = "observing"; // "observing" | "weather"
 const STORAGE_KEY_VERTICAL_TAB = "nc-weather-vertical-tab";
+const STORAGE_KEY_PROFILE = "nc-weather-profile";
+const STORAGE_KEY_MATRIX_OVERLAYS = "nc-weather-matrix-overlays";
+const STORAGE_KEY_VERTICAL_PANELS = "nc-weather-vertical-panels";
 let matrixOverlayParams = new Set(["sun", "moon"]); // active overlay keys (multi)
 
 // Helper: FWHM seeing indicator for observing mode cards
@@ -1838,6 +1841,7 @@ function renderProfileSwitcher(rootEl) {
       const pill = e.target.closest(".profile-pill[data-profile]");
       if (!pill) return;
       activeProfile = pill.dataset.profile;
+      try { localStorage.setItem(STORAGE_KEY_PROFILE, activeProfile); } catch (_) {}
       const r = findNearestHour(weatherData && weatherData.hours || []);
       renderNow(rootEl, r.hour);
       renderHourly(rootEl, weatherData && weatherData.hours || []);
@@ -2098,12 +2102,14 @@ function toggleMatrixOverlay(key, hours, wrapEl) {
   } else {
     matrixOverlayParams.add(key);
   }
+  try { localStorage.setItem(STORAGE_KEY_MATRIX_OVERLAYS, JSON.stringify([...matrixOverlayParams])); } catch (_) {}
   applyMatrixOverlayState(hours, wrapEl);
 }
 
 // Clear all overlay layers (called on Esc)
 function clearAllMatrixOverlays(wrapEl) {
   matrixOverlayParams.clear();
+  try { localStorage.setItem(STORAGE_KEY_MATRIX_OVERLAYS, JSON.stringify([])); } catch (_) {}
   applyMatrixOverlayState([], wrapEl);
 }
 
@@ -2996,7 +3002,15 @@ async function loadWeather(rootEl, state, forceRefresh) {
       profileList = ["balanced", "visual", "broadband", "planetary"];
     }
     var def = typeof data.default_profile === "string" ? data.default_profile : "balanced";
-    activeProfile = (state && state.profile && state.profile !== "default") ? state.profile : "balanced";
+    // Priority: URL/state > localStorage > default "balanced"
+    if (state && state.profile && state.profile !== "default") {
+      activeProfile = state.profile;
+    } else {
+      try {
+        var _storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
+        activeProfile = (_storedProfile && PROFILE_IDS.includes(_storedProfile)) ? _storedProfile : "balanced";
+      } catch (_) { activeProfile = "balanced"; }
+    }
     currentMode = "7d"; // Always show full 7D view (issue #99)
     data.hours.sort(function(a,b){ var da=parseISO(a.time),db=parseISO(b.time); if(!da||!db)return 0; return da.getTime()-db.getTime(); });
     var nowHourResult = findNearestHour(data.hours || []);
@@ -3020,7 +3034,13 @@ async function loadWeather(rootEl, state, forceRefresh) {
     } else {
       renderNow(rootEl, nowHour);
       renderHourly(rootEl, data.hours);
-      if (hourlyMode === "matrix") renderForecastMatrix(rootEl, data.hours);
+      if (hourlyMode === "matrix") {
+        renderForecastMatrix(rootEl, data.hours);
+        var _hEl = rootEl.querySelector("[data-role=hourly]");
+        var _mEl = rootEl.querySelector("#forecastMatrix");
+        if (_hEl) _hEl.style.display = "none";
+        if (_mEl) _mEl.style.display = "";
+      }
     }
     lastWeatherFetchTime = Date.now();
   } catch (err) {
@@ -4301,6 +4321,16 @@ function setupEmbeddedInspectorToggles(weatherCard) {
     const isOpen = panel.style.display !== "none";
     panel.style.display = isOpen ? "none" : "";
     if (btn) btn.textContent = isOpen ? "▶" : "▼";
+    // Persist open panel IDs
+    try {
+      var allHeaders = container.querySelectorAll('.hi-gate-header[data-panel], .hi-section-title[data-panel], .hi-cat-header[data-panel]');
+      var openIds = [];
+      allHeaders.forEach(function(h) {
+        var p = document.getElementById(h.dataset.panel);
+        if (p && p.style.display !== 'none') openIds.push(h.dataset.panel);
+      });
+      localStorage.setItem(STORAGE_KEY_VERTICAL_PANELS, JSON.stringify(openIds));
+    } catch (_) {}
   });
   const chartSlot = container.querySelector("[data-role=v-hi-chart]");
   if (chartSlot) {
@@ -4354,6 +4384,23 @@ function renderNowVertical(rootEl, nowHour) {
       embeddedEls.sheet.dataset.activeChartParam = "clouds";
       renderHourInspector(r.idx, embeddedEls);
       setupEmbeddedInspectorToggles(weatherCard);
+      // Restore expanded panel state
+      try {
+        var _raw = localStorage.getItem(STORAGE_KEY_VERTICAL_PANELS);
+        if (_raw) {
+          var _openIds = JSON.parse(_raw);
+          var _container = weatherCard.querySelector("[data-role=v-inspector-embedded]");
+          if (Array.isArray(_openIds) && _container) {
+            _openIds.forEach(function(id) {
+              var _panel = document.getElementById(id);
+              if (!_panel) return;
+              _panel.style.display = '';
+              var _hdr = _container.querySelector('[data-panel="' + id + '"]');
+              if (_hdr) { var _btn = _hdr.querySelector('.hi-toggle-btn'); if (_btn) _btn.textContent = '▼'; }
+            });
+          }
+        }
+      } catch (_) {}
     }
   }
   const metricsEl = weatherCard.querySelector("[data-role=v-metrics-line]");
@@ -4589,20 +4636,23 @@ export function mountWeather(rootEl, storeApi, options) {
   }
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
 
-  if (layoutMode === "vertical") {
-    var tabParam = typeof window !== "undefined" && window.location.search
-      ? new URLSearchParams(window.location.search).get("tab") : null;
-    if (tabParam === "observing" || tabParam === "weather") {
-      hourlyMode = tabParam;
-    } else {
-      try {
-        var stored = localStorage.getItem(STORAGE_KEY_VERTICAL_TAB);
-        if (stored === "observing" || stored === "weather") hourlyMode = stored;
-      } catch (e) {}
-    }
+  var tabParam = typeof window !== "undefined" && window.location.search
+    ? new URLSearchParams(window.location.search).get("tab") : null;
+  if (tabParam === "observing" || tabParam === "weather" || tabParam === "matrix") {
+    hourlyMode = tabParam;
   } else {
-    hourlyMode = "observing";
+    try {
+      var stored = localStorage.getItem(STORAGE_KEY_VERTICAL_TAB);
+      if (stored === "observing" || stored === "weather" || stored === "matrix") hourlyMode = stored;
+    } catch (e) {}
   }
+  try {
+    var storedOverlays = localStorage.getItem(STORAGE_KEY_MATRIX_OVERLAYS);
+    if (storedOverlays) {
+      var overlayArr = JSON.parse(storedOverlays);
+      if (Array.isArray(overlayArr)) matrixOverlayParams = new Set(overlayArr);
+    }
+  } catch (_) {}
   weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(btn) {
     btn.removeAttribute("data-active");
     if (btn.dataset.hmode === hourlyMode) btn.setAttribute("data-active", "true");
@@ -4610,15 +4660,13 @@ export function mountWeather(rootEl, storeApi, options) {
       weatherCard.querySelectorAll(".htab[data-hmode]").forEach(function(b) { b.removeAttribute("data-active"); });
       btn.setAttribute("data-active", "true");
       hourlyMode = btn.dataset.hmode;
-      if (layoutMode === "vertical") {
+      try {
+        localStorage.setItem(STORAGE_KEY_VERTICAL_TAB, hourlyMode);
+      } catch (e) {}
+      if (layoutMode === "vertical" && typeof window !== "undefined" && window.self !== window.top) {
         try {
-          localStorage.setItem(STORAGE_KEY_VERTICAL_TAB, hourlyMode);
-        } catch (e) {}
-        if (typeof window !== "undefined" && window.self !== window.top) {
-          try {
-            window.parent.postMessage({ type: "nc-weather-state", tab: hourlyMode }, "*");
-          } catch (e2) {}
-        }
+          window.parent.postMessage({ type: "nc-weather-state", tab: hourlyMode }, "*");
+        } catch (e2) {}
       }
       if (layoutMode === "vertical") {
         if (weatherData && weatherData.hours) {

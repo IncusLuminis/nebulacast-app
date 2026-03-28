@@ -3596,7 +3596,17 @@
         radarOn: radarOn,
         hillshadeOn: hillshadeOn,
         gibsDayOffset: gibsDayOffset,
-        worldTilesOn: worldTilesOn
+        worldTilesOn: worldTilesOn,
+        windOn: windOn,
+        windShowSpeed: windShowSpeed,
+        windShowDir: windShowDir,
+        isobarOn: isobarOn,
+        cloudIconsOn: cloudIconsOn,
+        nightMaskOn: nightMaskOn,
+        moonInfoOn: moonInfoOn,
+        rasterCloudsOn: rasterCloudsOn,
+        mapCenter: map ? [map.getCenter().lat, map.getCenter().lng] : currentCenter,
+        mapZoom:   map ? map.getZoom() : currentZoom
       };
       window.localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
@@ -4217,6 +4227,7 @@
       windSpeedCb.checked = windShowSpeed;
       windSpeedCb.addEventListener("change", function () {
         windShowSpeed = this.checked;
+        saveLayerState();
       });
     }
 
@@ -4225,6 +4236,7 @@
       windDirCb.checked = windShowDir;
       windDirCb.addEventListener("change", function () {
         windShowDir = this.checked;
+        saveLayerState();
       });
     }
 
@@ -4474,6 +4486,7 @@
         if (currentTimeUtcMs !== null) {
           layerAdapters.nightMask.setTime(currentTimeUtcMs);
         }
+        saveLayerState();
       });
     }
     layerAdapters.nightMask.enabled = nightMaskOn;
@@ -4503,6 +4516,7 @@
       toggleMoonInfo.addEventListener("change", function () {
         moonInfoOn = this.checked;
         layerAdapters.moon.enabled = this.checked;
+        saveLayerState();
         if (moonInfoOn) {
           if (currentTimeUtcMs !== null) {
             layerAdapters.moon.setTime(currentTimeUtcMs);
@@ -4537,8 +4551,9 @@
       if (moonInfoOn && currentTimeUtcMs !== null) {
         layerAdapters.moon.setTime(currentTimeUtcMs);
       }
+      saveLayerState();
     });
-    map.on("zoomend", function() { updateMsgPanel(currentTimeUtcMs); });
+    map.on("zoomend", function() { updateMsgPanel(currentTimeUtcMs); saveLayerState(); });
 
     map.on("zoomend", function () {
       renderNightMaskDebounced();
@@ -5148,6 +5163,19 @@
       hillshadeOn = state.hillshadeOn !== false;
       gibsDayOffset = Math.min(state.gibsDayOffset || 0, 0); // Never allow future dates
       worldTilesOn = state.worldTilesOn !== false;
+      if (state.windOn !== undefined)       windOn         = !!state.windOn;
+      if (state.windShowSpeed !== undefined) windShowSpeed = !!state.windShowSpeed;
+      if (state.windShowDir !== undefined)   windShowDir   = !!state.windShowDir;
+      if (state.isobarOn !== undefined)      isobarOn      = !!state.isobarOn;
+      if (state.cloudIconsOn !== undefined)  cloudIconsOn  = !!state.cloudIconsOn;
+      if (state.nightMaskOn !== undefined)   nightMaskOn   = !!state.nightMaskOn;
+      if (state.moonInfoOn !== undefined)    moonInfoOn    = !!state.moonInfoOn;
+      if (state.rasterCloudsOn !== undefined) rasterCloudsOn = !!state.rasterCloudsOn;
+      if (Array.isArray(state.mapCenter) && state.mapCenter.length === 2) currentCenter = state.mapCenter;
+      if (typeof state.mapZoom === 'number') currentZoom = state.mapZoom;
+      if (map && (state.mapCenter || state.mapZoom)) {
+        map.setView(currentCenter, currentZoom, { animate: false });
+      }
     }
     
     // Обновляем checkbox'ы после загрузки состояния
@@ -5161,6 +5189,44 @@
     if (hillshadeCb) hillshadeCb.checked = hillshadeOn;
     var worldTilesCbInit = document.getElementById("toggleWorldTiles");
     if (worldTilesCbInit) worldTilesCbInit.checked = worldTilesOn;
+
+    // Apply restored state for layers added later
+    var isobarCbInit = document.getElementById("toggleIsobars");
+    if (isobarCbInit) isobarCbInit.checked = isobarOn;
+    layerAdapters.isobars.enabled = isobarOn;
+
+    var windCbInit = document.getElementById("toggleWind");
+    if (windCbInit) windCbInit.checked = windOn;
+    layerAdapters.wind.enabled = windOn;
+    var windSubOptsInit = document.getElementById("windSubOptions");
+    if (windSubOptsInit) {
+      windSubOptsInit.querySelectorAll("input[type='checkbox']").forEach(function(cb) { cb.disabled = !windOn; });
+      windSubOptsInit.style.opacity = windOn ? "" : "0.45";
+    }
+    var windSpeedCbInit = document.getElementById("toggleWindSpeed");
+    if (windSpeedCbInit) windSpeedCbInit.checked = windShowSpeed;
+    var windDirCbInit = document.getElementById("toggleWindDir");
+    if (windDirCbInit) windDirCbInit.checked = windShowDir;
+
+    var cloudIconsCbInit = document.getElementById("toggleCloudIcons");
+    if (cloudIconsCbInit) cloudIconsCbInit.checked = cloudIconsOn;
+    layerAdapters.cloudIcons.enabled = cloudIconsOn;
+
+    var nightMaskCbInit = document.getElementById("toggleNightMask");
+    if (nightMaskCbInit) nightMaskCbInit.checked = nightMaskOn;
+    layerAdapters.nightMask.enabled = nightMaskOn;
+
+    var moonInfoCbInit = document.getElementById("toggleMoonInfo");
+    if (moonInfoCbInit) moonInfoCbInit.checked = moonInfoOn;
+    layerAdapters.moon.enabled = moonInfoOn;
+    if (!moonInfoOn) {
+      var _moonPanel = document.getElementById("moonInfoPanel");
+      if (_moonPanel) _moonPanel.classList.add("hidden");
+    }
+
+    var rasterCbInit = document.getElementById("toggleRasterClouds");
+    if (rasterCbInit) rasterCbInit.checked = rasterCloudsOn;
+    layerAdapters.clouds.enabled = rasterCloudsOn;
     
     // Apply initial visibility for dynamic layers
     if (!terrainOn && baseLayer && map.hasLayer(baseLayer)) {
