@@ -1212,12 +1212,13 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 
 // ── Hero section ─────────────────────────────────────────────────────────────
 
-function renderSolarMini(activePopover: string | null, channelIdx: number): string {
+function renderSolarMini(activePopover: string | null, channelIdx: number, baseUrl?: string): string {
   const ch  = SOLAR_CHANNELS[channelIdx];
   const hmi = SUN_HMI_URL;
+  const src = resolveAssetUrl(ch.url, baseUrl);
   return `<div class="hw-solar-mini-wrap" style="cursor:default">
     <div class="hw-solar-mini-inner">
-      <img class="hw-solar-mini-img" src="${esc(ch.url)}" alt="${esc(ch.label)}"
+      <img class="hw-solar-mini-img" src="${esc(src)}" alt="${esc(ch.label)}"
         onerror="if(this.src!=='${esc(hmi)}')this.src='${esc(hmi)}'" />
       <video class="hw-solar-mini-video" autoplay loop muted playsinline
         oncanplay="this.style.opacity=1"
@@ -1314,7 +1315,7 @@ function renderHero(
         <div class="hw-info-col">
           <div class="hw-info-top-row">
             <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
-            ${renderSolarMini(activePopover, solarChannelIdx)}
+            ${renderSolarMini(activePopover, solarChannelIdx, opts.baseUrl)}
           </div>
         </div>
       </div>
@@ -1675,6 +1676,14 @@ const IMPACT_ICONS: Record<string, string> = {
   solar_activity: `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.25" style="flex-shrink:0"><circle cx="6" cy="6" r="2" fill="currentColor" stroke="none"/><path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11M2.6 2.6l1.1 1.1M8.3 8.3l1.1 1.1M9.4 2.6l-1.1 1.1M3.7 8.3l-1.1 1.1"/></svg>`,
 };
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
+
+const ASSET_BASE_DEFAULT = "https://staging.nebulacast.app";
+
+function resolveAssetUrl(path: string, baseUrl?: string): string {
+  if (!path || /^https?:\/\//.test(path) || path.startsWith("//")) return path;
+  const base = (baseUrl ?? ASSET_BASE_DEFAULT).replace(/\/$/, "");
+  return base + (path.startsWith("/") ? path : "/" + path);
+}
 
 const SOLAR_DISK_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 

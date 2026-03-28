@@ -166,4 +166,5 @@ export interface HelioWidgetOptions {
   lat?:          number;   // observer latitude °N
   lon?:          number;   // observer longitude °E
   locationName?: string;   // display name (e.g. "Moscow")
+  baseUrl?:      string;   // base URL for relative assets, e.g. "https://staging.nebulacast.app"
 }
