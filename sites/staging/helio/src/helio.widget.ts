@@ -2907,6 +2907,8 @@ function renderLoading(): string {
 
 // ── Widget state + lifecycle ─────────────────────────────────────────────────
 
+const HELIO_UI_STORAGE_KEY = "nc-helio-ui";
+
 class HelioWidgetInstance {
   private el:               HTMLElement;
   private opts:             HelioWidgetOptions;
@@ -2935,6 +2937,7 @@ class HelioWidgetInstance {
   constructor(el: HTMLElement, opts: HelioWidgetOptions) {
     this.el   = el;
     this.opts = opts;
+    this.loadUiState();
     this.el.innerHTML = renderLoading();
     this.el.addEventListener("click",  this.onClick.bind(this));
     this.el.addEventListener("input",  this.onInput.bind(this));
@@ -2948,11 +2951,13 @@ class HelioWidgetInstance {
     // Solar channel switcher
     if (target.closest("[data-solar-prev]")) {
       this.solarChannelIdx = (this.solarChannelIdx - 1 + SOLAR_CHANNELS.length) % SOLAR_CHANNELS.length;
+      this.saveUiState();
       this.render();
       return;
     }
     if (target.closest("[data-solar-next]")) {
       this.solarChannelIdx = (this.solarChannelIdx + 1) % SOLAR_CHANNELS.length;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -2967,6 +2972,7 @@ class HelioWidgetInstance {
     // CME Tracker: toggle detail panel
     if (target.closest("[data-cme-toggle]")) {
       this.cmeExpanded = !this.cmeExpanded;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -2974,6 +2980,7 @@ class HelioWidgetInstance {
     // Forecast section: collapse / expand
     if (target.closest("[data-forecast-toggle]")) {
       this.forecastOpen = !this.forecastOpen;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -2981,6 +2988,7 @@ class HelioWidgetInstance {
     // Indicators group: collapse / expand
     if (target.closest("[data-indicators-toggle]")) {
       this.indicatorsOpen = !this.indicatorsOpen;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -2988,6 +2996,7 @@ class HelioWidgetInstance {
     // Observer Impacts section: collapse / expand
     if (target.closest("[data-impacts-toggle]")) {
       this.impactsOpen = !this.impactsOpen;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -2998,6 +3007,7 @@ class HelioWidgetInstance {
       const kind = impactRowEl.dataset.impactRow ?? "";
       if (this.expandedImpacts.has(kind)) this.expandedImpacts.delete(kind);
       else this.expandedImpacts.add(kind);
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3008,6 +3018,7 @@ class HelioWidgetInstance {
       const layer = layerEl.dataset.solarLayer ?? "";
       if (this.solarLayers.has(layer)) this.solarLayers.delete(layer);
       else this.solarLayers.add(layer);
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3015,6 +3026,7 @@ class HelioWidgetInstance {
     // Solar activity row: toggle disk panel
     if (target.closest("[data-solar-toggle]")) {
       this.solarExpanded = !this.solarExpanded;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3022,6 +3034,7 @@ class HelioWidgetInstance {
     // SWPC Alerts section: collapse / expand
     if (target.closest("[data-alerts-toggle]")) {
       this.alertsExpanded = !this.alertsExpanded;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3047,6 +3060,7 @@ class HelioWidgetInstance {
           new Date(nowMs - 172_800_000).toISOString().slice(0, 10),
         ]);
       }
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3057,6 +3071,7 @@ class HelioWidgetInstance {
       const dk = dayEl.dataset.tlDay ?? "";
       if (this.collapsedDays.has(dk)) this.collapsedDays.delete(dk);
       else this.collapsedDays.add(dk);
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3089,6 +3104,7 @@ class HelioWidgetInstance {
     // Card-level expand (header + "▼ More" button)
     if (target.closest(".hw-toggle")) {
       this.expanded = !this.expanded;
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3096,6 +3112,7 @@ class HelioWidgetInstance {
     // Hero detail expand (HISTORY toggle)
     if (target.closest("[data-hero-toggle]")) {
       this.heroExpanded = !this.heroExpanded;
+      this.saveUiState();
       this.render();
     }
   }
@@ -3185,6 +3202,55 @@ class HelioWidgetInstance {
       this.impactsOpen, this.cmeExpanded, this.forecastOpen, this.indicatorsOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
       this.expandedImpacts, this.opts, this.ovationData, this.solarChannelIdx,
     );
+  }
+
+  /** Persist toggle/expand UI state to localStorage. */
+  private saveUiState(): void {
+    try {
+      localStorage.setItem(HELIO_UI_STORAGE_KEY, JSON.stringify({
+        expanded:       this.expanded,
+        heroExpanded:   this.heroExpanded,
+        alertsExpanded: this.alertsExpanded,
+        timelineOpen:   this.timelineOpen,
+        collapsedDays:  [...this.collapsedDays],
+        impactsOpen:    this.impactsOpen,
+        cmeExpanded:    this.cmeExpanded,
+        forecastOpen:   this.forecastOpen,
+        indicatorsOpen: this.indicatorsOpen,
+        solarExpanded:  this.solarExpanded,
+        solarLayers:    [...this.solarLayers],
+        solarChannelIdx: this.solarChannelIdx,
+        expandedImpacts: [...this.expandedImpacts],
+      }));
+    } catch (_) {}
+  }
+
+  /** Restore UI state from localStorage (called in constructor before first fetch). */
+  private loadUiState(): void {
+    try {
+      const raw = localStorage.getItem(HELIO_UI_STORAGE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (typeof s.expanded       === "boolean") this.expanded       = s.expanded;
+      if (typeof s.heroExpanded   === "boolean") this.heroExpanded   = s.heroExpanded;
+      if (typeof s.alertsExpanded === "boolean") this.alertsExpanded = s.alertsExpanded;
+      if (typeof s.timelineOpen   === "boolean") this.timelineOpen   = s.timelineOpen;
+      if (typeof s.impactsOpen    === "boolean") this.impactsOpen    = s.impactsOpen;
+      if (typeof s.cmeExpanded    === "boolean") this.cmeExpanded    = s.cmeExpanded;
+      if (typeof s.forecastOpen   === "boolean") this.forecastOpen   = s.forecastOpen;
+      if (typeof s.indicatorsOpen === "boolean") this.indicatorsOpen = s.indicatorsOpen;
+      if (typeof s.solarExpanded  === "boolean") this.solarExpanded  = s.solarExpanded;
+      if (typeof s.solarChannelIdx === "number") this.solarChannelIdx = s.solarChannelIdx;
+      if (Array.isArray(s.collapsedDays))  this.collapsedDays  = new Set(s.collapsedDays);
+      if (Array.isArray(s.solarLayers))    this.solarLayers    = new Set(s.solarLayers);
+      if (Array.isArray(s.expandedImpacts)) this.expandedImpacts = new Set(s.expandedImpacts);
+    } catch (_) {}
+  }
+
+  /** Update observer location and re-render the aurora section. */
+  updateLocation(lat: number | undefined, lon: number | undefined, locationName?: string): void {
+    this.opts = { ...this.opts, lat, lon, locationName };
+    this.render();
   }
 
   destroy(): void {

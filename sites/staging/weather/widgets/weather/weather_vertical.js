@@ -1,4 +1,4 @@
-import { mountWeather } from "./weather.js";
+import { mountWeather } from "./weather.js?v=20260328c";
 
 export function mountWeatherVertical(rootEl, storeApi) {
   return mountWeather(rootEl, storeApi, { layout: "vertical" });
