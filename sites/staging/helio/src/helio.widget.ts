@@ -2938,6 +2938,7 @@ class HelioWidgetInstance {
   private solarExpanded        = false;
   private solarLayers:         Set<string> = new Set(["X", "M", "C", "quiet"]);
   private solarChannelIdx      = 0;
+  private solarChannelAutoSet  = false; // true once auto-set from status or loaded from storage
   private expandedImpacts:     Set<string> = new Set();
   private ovationData:      OvationData | null = null;
   private timer:            ReturnType<typeof setTimeout> | null = null;
@@ -2960,12 +2961,14 @@ class HelioWidgetInstance {
     // Solar channel switcher
     if (target.closest("[data-solar-prev]")) {
       this.solarChannelIdx = (this.solarChannelIdx - 1 + SOLAR_CHANNELS.length) % SOLAR_CHANNELS.length;
+      this.solarChannelAutoSet = true;
       this.saveUiState();
       this.render();
       return;
     }
     if (target.closest("[data-solar-next]")) {
       this.solarChannelIdx = (this.solarChannelIdx + 1) % SOLAR_CHANNELS.length;
+      this.solarChannelAutoSet = true;
       this.saveUiState();
       this.render();
       return;
@@ -3151,6 +3154,11 @@ class HelioWidgetInstance {
       const res = await fetch(this.opts.dataUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.data = await res.json() as HelioNow;
+      if (!this.solarChannelAutoSet) {
+        const STATUS_CHANNEL: Record<string, number> = { quiet: 1, active: 0, elevated: 2, storm: 3 };
+        this.solarChannelIdx = STATUS_CHANNEL[this.data.summary?.status ?? "quiet"] ?? 0;
+        this.solarChannelAutoSet = true;
+      }
       this.render();
       this.fetchSolarRegions();  // parallel, re-renders when ready
       this.fetchOvationData();   // parallel, re-renders when ready
@@ -3249,7 +3257,7 @@ class HelioWidgetInstance {
       if (typeof s.forecastOpen   === "boolean") this.forecastOpen   = s.forecastOpen;
       if (typeof s.indicatorsOpen === "boolean") this.indicatorsOpen = s.indicatorsOpen;
       if (typeof s.solarExpanded  === "boolean") this.solarExpanded  = s.solarExpanded;
-      if (typeof s.solarChannelIdx === "number") this.solarChannelIdx = s.solarChannelIdx;
+      if (typeof s.solarChannelIdx === "number") { this.solarChannelIdx = s.solarChannelIdx; this.solarChannelAutoSet = true; }
       if (Array.isArray(s.collapsedDays))  this.collapsedDays  = new Set(s.collapsedDays);
       if (Array.isArray(s.solarLayers))    this.solarLayers    = new Set(s.solarLayers);
       if (Array.isArray(s.expandedImpacts)) this.expandedImpacts = new Set(s.expandedImpacts);
