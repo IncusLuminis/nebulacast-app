@@ -107,7 +107,9 @@
       });
       renderFlat(items, 'date');
     } else if (state.mode === 'hazard') {
-      var items = flattenAll(_data.groups);
+      var items = flattenAll(_data.groups).filter(function (it) {
+        return it.group !== 'grb' && it.group !== 'transient';
+      });
       items.sort(function (a, b) {
         var d = externalScore(b) - externalScore(a);
         return state.hazardDir === 'desc' ? d : -d;
