@@ -2,6 +2,18 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "staging-9191",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "9191", "--directory", "sites/staging"],
+      "port": 9191
+    },
+    {
+      "name": "staging-8181",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8181", "--directory", "sites/staging"],
+      "port": 8181
+    },
+    {
       "name": "staging",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8787", "--directory", "sites/staging"],
