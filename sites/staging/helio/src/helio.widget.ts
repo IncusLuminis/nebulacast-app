@@ -3236,7 +3236,6 @@ class HelioWidgetInstance {
         indicatorsOpen: this.indicatorsOpen,
         solarExpanded:  this.solarExpanded,
         solarLayers:    [...this.solarLayers],
-        solarChannelIdx: this.solarChannelIdx,
         expandedImpacts: [...this.expandedImpacts],
       }));
     } catch (_) {}
@@ -3257,7 +3256,6 @@ class HelioWidgetInstance {
       if (typeof s.forecastOpen   === "boolean") this.forecastOpen   = s.forecastOpen;
       if (typeof s.indicatorsOpen === "boolean") this.indicatorsOpen = s.indicatorsOpen;
       if (typeof s.solarExpanded  === "boolean") this.solarExpanded  = s.solarExpanded;
-      if (typeof s.solarChannelIdx === "number") { this.solarChannelIdx = s.solarChannelIdx; this.solarChannelAutoSet = true; }
       if (Array.isArray(s.collapsedDays))  this.collapsedDays  = new Set(s.collapsedDays);
       if (Array.isArray(s.solarLayers))    this.solarLayers    = new Set(s.solarLayers);
       if (Array.isArray(s.expandedImpacts)) this.expandedImpacts = new Set(s.expandedImpacts);
