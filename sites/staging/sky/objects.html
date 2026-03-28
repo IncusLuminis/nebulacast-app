@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nebulacast — Best Objects</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/widget_objects.css">
+</head>
+<body>
+  <div style="max-width:640px;margin:0 auto;padding:16px 12px 40px;">
+    <div id="nob-root-page" class="nob-root">
+        <div class="nob-header">
+          <div class="nob-title">Best Objects Tonight</div>
+          <div class="nob-refresh">Updated every 12 hrs</div>
+        </div>
+        <div class="nob-status" data-role="status">Loading…</div>
+        <div class="nob-list" data-role="list"></div>
+      </div>
+  </div>
+  <script src="/assets/js/widget_objects.js"></script>
+  <script>
+    (function () {
+      window.runObjectsWidget({
+        rootId:   'nob-root-page',
+        dataUrl:  '/sky/data/objects_today.json',
+        maxItems: 25
+      });
+    })();
+  </script>
+</body>
+</html>
