@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nebulacast</title>
-  
+  <title>Nebulacast — Console</title>
+
   <!-- Base styles -->
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/widget_news.css">
   <link rel="stylesheet" href="/assets/css/widget_calendar.css">
-  
+
   <!-- Weather widget styles -->
   <link rel="stylesheet" href="/weather/assets/weather.css">
   <link rel="stylesheet" href="/weather/widgets/location/location.css">
@@ -18,120 +18,385 @@
   <link rel="stylesheet" href="/weather/widgets/map/map.css">
   <link rel="stylesheet" href="/weather/widgets/sun_moon/sun_moon.css">
   <link rel="stylesheet" href="/weather/widgets/astro/astro.css">
-  
+
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
       margin: 0;
-      padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #0a0e14;
       color: #fff;
+      overflow: hidden;
     }
 
-    /* Main layout */
-    .nebulacast-layout {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    /* Vertical sidebar */
-    .nebulacast-sidebar {
-      width: 60px;
-      background: rgba(20, 24, 36, 0.95);
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      flex-direction: column;
-      padding: 12px 0;
-      gap: 4px;
-      flex-shrink: 0;
-      position: fixed;
-      left: 0;
-      top: 0;
+    /* ─── Console root grid ────────────────────────────────── */
+    .console-root {
+      display: grid;
+      grid-template-rows: 52px auto 1fr;
       height: 100vh;
-      z-index: 100;
+      overflow: hidden;
     }
 
-    .nebulacast-tab {
-      width: 44px;
-      height: 44px;
-      margin: 0 auto;
-      border: none;
-      background: transparent;
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 24px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    /* ─── Topbar ─────────────────────────────────────────────*/
+    .console-topbar {
+      background: rgba(16, 20, 32, 0.98);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 16px;
+      padding: 0 20px;
+      flex-shrink: 0;
+      z-index: 50;
     }
 
-    .nebulacast-tab:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(255, 255, 255, 0.8);
+    .console-brand {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.55);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .nebulacast-tab.is-active {
-      background: rgba(74, 111, 165, 0.2);
+    .console-brand span {
       color: #4a6fa5;
     }
 
-    /* Main content area */
-    .nebulacast-main {
-      margin-left: 60px;
+    .console-topbar #w-location {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      min-width: 0;
     }
 
-    /* Top bar with location */
-    .nebulacast-topbar {
-      background: rgba(20, 24, 36, 0.95);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 12px 20px;
+    /* ─── Hero Decision Band ─────────────────────────────────*/
+    .console-hero {
+      background: rgba(14, 18, 28, 0.97);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 20px;
+      display: flex;
+      align-items: stretch;
+      gap: 1px;
+      min-height: 84px;
       flex-shrink: 0;
     }
 
-    /* Content panels */
-    .nebulacast-content {
+    .hero-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 6px 18px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      gap: 4px;
+      min-width: 0;
+    }
+    .hero-card:last-child { border-right: none; }
+
+    .hero-card-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .hero-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-card-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      white-space: nowrap;
+    }
+
+    /* Score card colors */
+    .score-excellent .hero-card-value { color: #4caf50; }
+    .score-good      .hero-card-value { color: #8bc34a; }
+    .score-fair      .hero-card-value { color: #ff9800; }
+    .score-poor      .hero-card-value { color: #f44336; }
+
+    /* Risk chips */
+    .hero-risks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .risk-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .risk-chip.medium {
+      background: rgba(255, 152, 0, 0.15);
+      color: #ff9800;
+      border: 1px solid rgba(255,152,0,0.3);
+    }
+    .risk-chip.high {
+      background: rgba(244, 67, 54, 0.15);
+      color: #f44336;
+      border: 1px solid rgba(244,67,54,0.3);
+    }
+    .risk-chip.low {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.3);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* Space weather status */
+    .sw-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 2px;
+    }
+    .sw-badge.quiet   { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45); }
+    .sw-badge.active  { background: rgba(255,152,0,0.15); color: #ff9800; }
+    .sw-badge.storm   { background: rgba(244,67,54,0.15); color: #f44336; }
+    .sw-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .hero-skeleton {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 4px;
+      color: rgba(255,255,255,0.2);
+      font-size: 12px;
+    }
+
+    /* ─── Console Body ────────────────────────────────────── */
+    .console-body {
+      display: grid;
+      grid-template-columns: 272px 1fr;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ─── Priority Feed ──────────────────────────────────── */
+    .console-feed {
+      background: rgba(12, 16, 26, 0.98);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .feed-header {
+      padding: 10px 14px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+
+    .feed-list {
       flex: 1;
-      overflow: auto;
-      padding: 20px;
+      overflow-y: auto;
+      padding: 4px 0;
     }
 
-    .nebulacast-panel {
+    .feed-list::-webkit-scrollbar { width: 4px; }
+    .feed-list::-webkit-scrollbar-track { background: transparent; }
+    .feed-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .feed-item {
+      display: grid;
+      grid-template-columns: 22px 22px 1fr auto;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .feed-item:hover {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .feed-item:last-child { border-bottom: none; }
+
+    .feed-rank {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.2);
+      text-align: right;
+    }
+
+    .feed-icon {
+      font-size: 14px;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .feed-info {
+      min-width: 0;
+    }
+
+    .feed-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+
+    .feed-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    .feed-score-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .feed-time {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .feed-bar-track {
+      width: 42px;
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .feed-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: #4a6fa5;
+      transition: width 0.3s ease;
+    }
+
+    /* Group divider in feed */
+    .feed-divider {
+      padding: 5px 14px 2px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.15);
+    }
+
+    .feed-loading {
+      padding: 24px 14px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ─── Context Tools ──────────────────────────────────── */
+    .console-tools {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .tools-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 8px 16px 0;
+      background: rgba(14, 18, 28, 0.97);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+
+    .tools-tab {
+      padding: 6px 14px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      margin-bottom: -1px;
+    }
+
+    .tools-tab:hover {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .tools-tab.is-active {
+      color: #fff;
+      border-bottom-color: #4a6fa5;
+    }
+
+    .tools-content {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      min-height: 0;
+    }
+
+    .tools-panel {
       display: none;
+      height: 100%;
+      overflow: auto;
     }
 
-    .nebulacast-panel.is-active {
+    .tools-panel.is-active {
       display: block;
     }
 
-    /* Weather/Map/Sun widgets need widget-container wrapper */
-    .widget-container {
+    /* Weather panel needs padding */
+    #panel-weather {
+      padding: 0;
+    }
+
+    #panel-weather > #w-weather {
       max-width: 1200px;
       margin: 0 auto;
+      padding: 20px;
     }
 
-    /* Sky panel - full height and width like Map */
+    /* Sky panel – fullscreen canvas */
     #panel-sky {
       padding: 0;
-      height: calc(100vh - 100px);
-      max-width: none; /* Remove width restriction */
-    }
-
-    #panel-sky .widget-container {
-      height: 100%;
-      max-width: none;
+      overflow: hidden;
     }
 
     #w-sky {
+      width: 100%;
       height: 100%;
       background: #0a0e14;
-      border-radius: 12px;
-      overflow: hidden;
       position: relative;
     }
 
@@ -141,7 +406,6 @@
       position: relative;
     }
 
-    /* Ensure sky-root stays contained */
     #skyMount .sky-root {
       position: relative !important;
       width: 100% !important;
@@ -151,9 +415,8 @@
       overflow: hidden !important;
     }
 
-    /* Fullscreen mode */
-    .sky-root:fullscreen,
-    :fullscreen .sky-root {
+    :fullscreen .sky-root,
+    .sky-root:fullscreen {
       position: fixed !important;
       width: 100vw !important;
       height: 100vh !important;
@@ -165,17 +428,17 @@
       overflow: visible !important;
     }
 
-    /* News/Calendar widgets */
-    .widget-section {
-      max-width: 1200px;
-      margin: 0 auto;
+    /* Sun panel */
+    #panel-sun {
+      padding: 20px;
     }
 
-    /* Map iframe takes full height like Sky */
+    #w-sun { max-width: 1200px; margin: 0 auto; }
+
+    /* Map panel */
     #panel-map {
-      height: calc(100vh - 100px);
       padding: 0;
-      max-width: none; /* Remove width restriction */
+      overflow: hidden;
     }
 
     .map-iframe {
@@ -184,34 +447,170 @@
       border: none;
       display: block;
     }
+
+    /* Helio panel */
+    #panel-helio {
+      padding: 0;
+    }
+
+    #w-helio { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+    /* Events panel */
+    #panel-events {
+      overflow: auto;
+    }
+
+    .events-subtabs {
+      display: flex;
+      gap: 2px;
+      padding: 10px 20px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+      background: #0a0e14;
+      z-index: 2;
+    }
+
+    .events-subtab {
+      padding: 5px 12px 7px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: -1px;
+    }
+
+    .events-subtab:hover { color: rgba(255,255,255,0.7); }
+    .events-subtab.is-active { color: #fff; border-bottom-color: #4a6fa5; }
+
+    .events-subpanel { display: none; padding: 16px 20px; }
+    .events-subpanel.is-active { display: block; }
+
+    /* Observer weather in events */
+    #w-observer-weather { max-width: 1200px; margin: 0 auto; }
+
+    /* Resize bar (dev tool) */
+    .resize-bar {
+      display: flex; align-items: center; gap: 10px; padding: 6px 2px 10px;
+      font-size: 12px; color: rgba(255,255,255,0.35); font-family: monospace; user-select: none;
+    }
+    .resize-bar label { display: flex; align-items: center; gap: 5px; }
+    .resize-bar input[type=number] {
+      width: 72px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px; color: rgba(255,255,255,0.75); font-size: 12px; font-family: monospace;
+      padding: 3px 7px; outline: none; -moz-appearance: textfield;
+    }
+    .resize-bar input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+    .resize-bar input[type=number]:focus {
+      border-color: rgba(74,111,165,0.7); background: rgba(255,255,255,0.09); color: #fff;
+    }
+    .resize-bar .rz-reset {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 5px; color: rgba(255,255,255,0.35); font-size: 11px; font-family: monospace;
+      padding: 3px 9px; cursor: pointer; transition: all .15s;
+    }
+    .resize-bar .rz-reset:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+    .resize-bar .rz-presets { display: flex; gap: 4px; margin-left: 4px; }
+    .resize-bar .rz-preset {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px; color: rgba(255,255,255,0.3); font-size: 10px; font-family: monospace;
+      padding: 2px 6px; cursor: pointer; transition: all .15s;
+    }
+    .resize-bar .rz-preset:hover { background: rgba(74,111,165,0.2); color: rgba(255,255,255,0.6); border-color: rgba(74,111,165,0.4); }
+    .resize-bar .rz-embed {
+      background: rgba(74,111,165,0.18); border: 1px solid rgba(74,111,165,0.4);
+      border-radius: 5px; color: rgba(255,255,255,0.55); font-size: 11px; font-family: monospace;
+      padding: 3px 11px; cursor: pointer; transition: all .15s;
+    }
+    .resize-bar .rz-embed:hover { background: rgba(74,111,165,0.35); color: #fff; border-color: rgba(74,111,165,0.7); }
   </style>
 </head>
 <body>
-  <div class="nebulacast-layout">
-    <!-- Left sidebar navigation -->
-    <nav class="nebulacast-sidebar" role="tablist">
-      <button type="button" class="nebulacast-tab" data-tab="calendar" title="Calendar">📅</button>
-      <button type="button" class="nebulacast-tab is-active" data-tab="weather" title="Weather">☁️</button>
-      <button type="button" class="nebulacast-tab" data-tab="map" title="Map">🗺️</button>
-      <button type="button" class="nebulacast-tab" data-tab="sun" title="Sun">☀️</button>
-      <button type="button" class="nebulacast-tab" data-tab="sky" title="Sky">🌌</button>
-      <button type="button" class="nebulacast-tab" data-tab="news" title="News">📰</button>
-      <button type="button" class="nebulacast-tab" data-tab="observer-weather" title="Observer Weather">🔭</button>
-      <button type="button" class="nebulacast-tab" data-tab="space-weather" title="Space Weather">🌞</button>
-    </nav>
 
-    <!-- Main content -->
-    <div class="nebulacast-main">
-      <!-- Top bar with location widget -->
-      <div class="nebulacast-topbar">
-        <div id="w-location"></div>
+<div class="console-root">
+
+  <!-- ══════════ TOPBAR ══════════ -->
+  <header class="console-topbar">
+    <div class="console-brand"><span>★</span> NEBULACAST</div>
+    <div id="w-location"></div>
+  </header>
+
+  <!-- ══════════ LAYER 1: HERO DECISION ══════════ -->
+  <section class="console-hero" id="console-hero">
+    <div class="hero-skeleton">Loading conditions…</div>
+  </section>
+
+  <!-- ══════════ LAYERS 2+3: BODY ══════════ -->
+  <div class="console-body">
+
+    <!-- ── LAYER 2: PRIORITY FEED ── -->
+    <aside class="console-feed">
+      <div class="feed-header">Tonight's Targets</div>
+      <div class="feed-list" id="feed-list">
+        <div class="feed-loading">Loading…</div>
       </div>
+    </aside>
 
-      <!-- Content panels -->
-      <div class="nebulacast-content">
-        <!-- Calendar panel -->
-        <div id="panel-calendar" class="nebulacast-panel">
-          <section class="widget-section">
+    <!-- ── LAYER 3: CONTEXT TOOLS ── -->
+    <main class="console-tools">
+
+      <nav class="tools-tabs" role="tablist">
+        <button type="button" class="tools-tab is-active" data-tab="weather">Conditions</button>
+        <button type="button" class="tools-tab" data-tab="sky">Sky</button>
+        <button type="button" class="tools-tab" data-tab="sun">Sun &amp; Moon</button>
+        <button type="button" class="tools-tab" data-tab="map">Map</button>
+        <button type="button" class="tools-tab" data-tab="helio">Space Weather</button>
+        <button type="button" class="tools-tab" data-tab="events">Events</button>
+      </nav>
+
+      <div class="tools-content">
+
+        <!-- Conditions (Weather) -->
+        <div id="panel-weather" class="tools-panel is-active">
+          <div id="w-weather"></div>
+        </div>
+
+        <!-- Sky viewer -->
+        <div id="panel-sky" class="tools-panel">
+          <div id="w-sky">
+            <div id="skyMount"></div>
+          </div>
+        </div>
+
+        <!-- Sun & Moon -->
+        <div id="panel-sun" class="tools-panel">
+          <div id="w-sun"></div>
+        </div>
+
+        <!-- Map -->
+        <div id="panel-map" class="tools-panel">
+          <iframe
+            id="mapIframe"
+            src=""
+            class="map-iframe"
+            title="Weather Map"
+            frameborder="0"
+          ></iframe>
+        </div>
+
+        <!-- Space Weather (Helio) -->
+        <div id="panel-helio" class="tools-panel">
+          <div id="w-helio"></div>
+        </div>
+
+        <!-- Events: Calendar / News / Observer -->
+        <div id="panel-events" class="tools-panel">
+          <div class="events-subtabs">
+            <button type="button" class="events-subtab is-active" data-sub="calendar">Calendar</button>
+            <button type="button" class="events-subtab" data-sub="news">News</button>
+            <button type="button" class="events-subtab" data-sub="observer">Observer Conditions</button>
+          </div>
+
+          <div id="subpanel-calendar" class="events-subpanel is-active">
             <div id="nrc-main" class="nrc-root">
               <div class="nrc-filters" data-role="filters"></div>
               <div class="nrc-header">
@@ -220,53 +619,12 @@
                   <a class="nrc-link" href="/alerts/rss.xml" target="_blank" rel="noopener">RSS</a>
                 </div>
               </div>
-              <div class="nrc-status" data-role="status">Loading...</div>
+              <div class="nrc-status" data-role="status">Loading…</div>
               <div class="nrc-list" data-role="list"></div>
             </div>
-          </section>
-        </div>
-
-        <!-- Weather panel -->
-        <div id="panel-weather" class="nebulacast-panel is-active">
-          <div id="w-weather" class="widget-container"></div>
-        </div>
-
-        <!-- Map panel -->
-        <div id="panel-map" class="nebulacast-panel">
-          <iframe 
-            id="mapIframe" 
-            src="/weather/map-poc.html" 
-            class="map-iframe"
-            title="Weather Map"
-            frameborder="0"
-          ></iframe>
-        </div>
-
-        <!-- Sun panel -->
-        <div id="panel-sun" class="nebulacast-panel">
-          <div id="w-sun" class="widget-container"></div>
-        </div>
-
-        <!-- Sky panel -->
-        <div id="panel-sky" class="nebulacast-panel">
-          <div id="w-sky" class="widget-container">
-            <div id="skyMount"></div>
           </div>
-        </div>
 
-        <!-- Observer Weather panel -->
-        <div id="panel-observer-weather" class="nebulacast-panel">
-          <div id="w-observer-weather" class="widget-container"></div>
-        </div>
-
-        <!-- Space Weather panel -->
-        <div id="panel-space-weather" class="nebulacast-panel">
-          <div id="w-helio" class="widget-container"></div>
-        </div>
-
-        <!-- News panel -->
-        <div id="panel-news" class="nebulacast-panel">
-          <section class="widget-section">
+          <div id="subpanel-news" class="events-subpanel">
             <div id="nrw-main" class="nrw-root">
               <div class="nrw-filters" data-role="filters"></div>
               <div class="nrw-header">
@@ -274,637 +632,542 @@
                   <a class="nrw-rss" href="/news/rss.xml" target="_blank" rel="noopener">RSS</a>
                 </div>
               </div>
-              <div class="nrw-status" data-role="status">Loading...</div>
+              <div class="nrw-status" data-role="status">Loading…</div>
               <div class="nrw-list" data-role="list"></div>
             </div>
-          </section>
+          </div>
+
+          <div id="subpanel-observer" class="events-subpanel">
+            <div id="w-observer-weather"></div>
+          </div>
         </div>
+
+      </div><!-- .tools-content -->
+    </main>
+
+  </div><!-- .console-body -->
+</div><!-- .console-root -->
+
+<!-- ══════ Weather widget modals (required by weather.js internals) ══════ -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3 id="modal-title">Parameter Details</h3>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-content" id="modal-content"></div>
+  </div>
+</div>
+
+<div class="factor-tooltip" id="factorTooltip" role="tooltip" aria-hidden="true">
+  <div class="factor-tooltip-title" id="factorTooltipTitle"></div>
+  <div class="factor-tooltip-body" id="factorTooltipBody"></div>
+</div>
+
+<div class="chip-overlay" id="chipOverlay" role="dialog" aria-modal="true" aria-labelledby="chipSheetTitle">
+  <div class="chip-sheet" id="chipSheet">
+    <div class="sheet-hdr">
+      <h3 id="chipSheetTitle"></h3>
+    </div>
+    <div class="chip-sheet-body" id="chipSheetBody"></div>
+  </div>
+</div>
+
+<div class="chart-overlay" id="chartOverlay" role="dialog" aria-modal="true" aria-labelledby="chartOverlayTitle" aria-hidden="true">
+  <div class="chart-overlay-backdrop"></div>
+  <div class="chart-overlay-panel">
+    <div class="chart-overlay-header">
+      <h3 id="chartOverlayTitle">Score</h3>
+      <button class="chart-overlay-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="chart-overlay-subheader" id="chartOverlaySubheader">
+      Horizon: TONIGHT • Profile: Balanced • Updated: —
+    </div>
+    <div class="chart-overlay-canvas-wrapper">
+      <canvas id="chartCanvas" width="800" height="300"></canvas>
+      <div class="chart-tooltip" id="chartTooltip" aria-hidden="true"></div>
+    </div>
+    <div class="chart-overlay-footer">
+      <div class="chart-stat">
+        <span class="chart-stat-label">Now:</span>
+        <span class="chart-stat-value" id="chartStatNow">—</span>
+      </div>
+      <div class="chart-stat">
+        <span class="chart-stat-label">Min:</span>
+        <span class="chart-stat-value" id="chartStatMin">—</span>
+      </div>
+      <div class="chart-stat">
+        <span class="chart-stat-label">Max:</span>
+        <span class="chart-stat-value" id="chartStatMax">—</span>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Weather widget modals (required by weather.js) -->
-  <!-- Bottom sheet modal (legacy parameter details) -->
-  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-sheet">
-      <div class="modal-header">
-        <h3 id="modal-title">Parameter Details</h3>
-        <button class="modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="modal-content" id="modal-content"></div>
-    </div>
-  </div>
-
-  <!-- Factor tooltip (breakdown (i) icons) -->
-  <div class="factor-tooltip" id="factorTooltip" role="tooltip" aria-hidden="true">
-    <div class="factor-tooltip-title" id="factorTooltipTitle"></div>
-    <div class="factor-tooltip-body" id="factorTooltipBody"></div>
-  </div>
-
-  <!-- Chip popover (L1 details) -->
-  <div class="chip-overlay" id="chipOverlay" role="dialog" aria-modal="true" aria-labelledby="chipSheetTitle">
-    <div class="chip-sheet" id="chipSheet">
-      <div class="sheet-hdr">
-        <h3 id="chipSheetTitle"></h3>
-      </div>
-      <div class="chip-sheet-body" id="chipSheetBody"></div>
-    </div>
-  </div>
-
-  <!-- Chart overlay (mini-chart detail view) -->
-  <div class="chart-overlay" id="chartOverlay" role="dialog" aria-modal="true" aria-labelledby="chartOverlayTitle" aria-hidden="true">
-    <div class="chart-overlay-backdrop"></div>
-    <div class="chart-overlay-panel">
-      <div class="chart-overlay-header">
-        <h3 id="chartOverlayTitle">Score</h3>
-        <button class="chart-overlay-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="chart-overlay-subheader" id="chartOverlaySubheader">
-        Horizon: TONIGHT • Profile: Balanced • Updated: —
-      </div>
-      <div class="chart-overlay-canvas-wrapper">
-        <canvas id="chartCanvas" width="800" height="300"></canvas>
-        <div class="chart-tooltip" id="chartTooltip" aria-hidden="true"></div>
-      </div>
-      <div class="chart-overlay-footer">
-        <div class="chart-stat">
-          <span class="chart-stat-label">Now:</span>
-          <span class="chart-stat-value" id="chartStatNow">—</span>
-        </div>
-        <div class="chart-stat">
-          <span class="chart-stat-label">Min:</span>
-          <span class="chart-stat-value" id="chartStatMin">—</span>
-        </div>
-        <div class="chart-stat">
-          <span class="chart-stat-label">Max:</span>
-          <span class="chart-stat-value" id="chartStatMax">—</span>
-        </div>
+<div class="hour-inspector-backdrop" id="hourInspectorBackdrop" aria-hidden="true"></div>
+<div class="hour-inspector-sheet" id="hourInspectorSheet" role="dialog" aria-modal="true" aria-labelledby="hourInspectorTitle" aria-hidden="true">
+  <div class="hour-inspector-header" id="hourInspectorHeader">
+    <div class="hour-inspector-header-left">
+      <div class="hour-inspector-time" id="hourInspectorTime">—</div>
+      <div class="hour-inspector-score-val" id="hourInspectorScoreVal">—</div>
+      <div class="hour-inspector-score-label" id="hourInspectorScoreLabel">—</div>
+      <div id="hourInspectorMoonLine" class="hour-inspector-moon-line"></div>
+      <div id="hourInspectorScoreBar" class="hour-inspector-score-bar">
+        <div class="hour-inspector-score-bar-fill"></div>
       </div>
     </div>
-  </div>
-
-  <!-- Hour Inspector bottom sheet -->
-  <div class="hour-inspector-backdrop" id="hourInspectorBackdrop" aria-hidden="true"></div>
-  <div class="hour-inspector-sheet" id="hourInspectorSheet" role="dialog" aria-modal="true" aria-labelledby="hourInspectorTitle" aria-hidden="true">
-    <div class="hour-inspector-header" id="hourInspectorHeader">
-      <div class="hour-inspector-header-left">
-        <div class="hour-inspector-time" id="hourInspectorTime">—</div>
-        <div class="hour-inspector-score-val" id="hourInspectorScoreVal">—</div>
-        <div class="hour-inspector-score-label" id="hourInspectorScoreLabel">—</div>
-        <div id="hourInspectorMoonLine" class="hour-inspector-moon-line"></div>
-        <div id="hourInspectorScoreBar" class="hour-inspector-score-bar"><div class="hour-inspector-score-bar-fill"></div></div>
-      </div>
-      <div class="hour-inspector-header-right">
-        <div class="hour-inspector-summary" id="hourInspectorSummary">—</div>
-        <div id="hourInspectorChartSlot"></div>
-      </div>
-      <button class="hour-inspector-close" aria-label="Close">&times;</button>
+    <div class="hour-inspector-header-right">
+      <div class="hour-inspector-summary" id="hourInspectorSummary">—</div>
+      <div id="hourInspectorChartSlot"></div>
     </div>
-    <div class="hour-inspector-body" id="hourInspectorBody"></div>
+    <button class="hour-inspector-close" aria-label="Close">&times;</button>
   </div>
+  <div class="hour-inspector-body" id="hourInspectorBody"></div>
+</div>
 
-  <!-- Widget resize controls (dev tool) -->
-  <style>
-    .resize-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 2px 10px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.35);
-      font-family: monospace;
-      user-select: none;
-    }
-    .resize-bar label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .resize-bar input[type=number] {
-      width: 72px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 5px;
-      color: rgba(255,255,255,0.75);
-      font-size: 12px;
-      font-family: monospace;
-      padding: 3px 7px;
-      outline: none;
-      -moz-appearance: textfield;
-    }
-    .resize-bar input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
-    .resize-bar input[type=number]:focus {
-      border-color: rgba(74,111,165,0.7);
-      background: rgba(255,255,255,0.09);
-      color: #fff;
-    }
-    .resize-bar .rz-reset {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 5px;
-      color: rgba(255,255,255,0.35);
-      font-size: 11px;
-      font-family: monospace;
-      padding: 3px 9px;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .resize-bar .rz-reset:hover {
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.7);
-    }
-    .resize-bar .rz-presets {
-      display: flex;
-      gap: 4px;
-      margin-left: 4px;
-    }
-    .resize-bar .rz-preset {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 4px;
-      color: rgba(255,255,255,0.3);
-      font-size: 10px;
-      font-family: monospace;
-      padding: 2px 6px;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .resize-bar .rz-preset:hover {
-      background: rgba(74,111,165,0.2);
-      color: rgba(255,255,255,0.6);
-      border-color: rgba(74,111,165,0.4);
-    }
-    .resize-bar .rz-embed {
-      background: rgba(74,111,165,0.18);
-      border: 1px solid rgba(74,111,165,0.4);
-      border-radius: 5px;
-      color: rgba(255,255,255,0.55);
-      font-size: 11px;
-      font-family: monospace;
-      padding: 3px 11px;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .resize-bar .rz-embed:hover {
-      background: rgba(74,111,165,0.35);
-      color: #fff;
-      border-color: rgba(74,111,165,0.7);
-    }
-  </style>
+<!-- ══════ Scripts ══════ -->
+<script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
 
-  <!-- Sun/Moon calculations -->
-  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+<!-- News/Calendar widgets -->
+<script src="/assets/js/widget_runtime.js"></script>
+<!-- Observer weather -->
+<script src="/assets/js/widget_observer_weather.js"></script>
+<!-- Helio widget (Space Weather) -->
+<script src="/helio/dist/helio.widget.js"></script>
 
-  <!-- News/Calendar widgets -->
-  <script src="/assets/js/widget_runtime.js"></script>
-  <!-- Observer weather panel -->
-  <script src="/assets/js/widget_observer_weather.js"></script>
-  <!-- Helio widget (Space Weather) -->
-  <script src="/helio/dist/helio.widget.js"></script>
+<!-- Main app: state, widgets, console logic -->
+<script type="module">
+  import { initState, getState, setState, subscribe } from "/weather/core/state.js";
+  import { mountLocation } from "/weather/widgets/location/location.js";
+  import { mountWeather } from "/weather/widgets/weather/weather.js";
+  import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js";
 
-  <!-- Weather app state and widgets -->
-  <script type="module">
-    import { initState, getState, setState, subscribe } from "/weather/core/state.js";
-    import { mountLocation } from "/weather/widgets/location/location.js";
-    import { mountWeather } from "/weather/widgets/weather/weather.js";
-    import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js";
+  // ── State ──────────────────────────────────────────────
+  initState();
+  const storeApi = { getState, setState, subscribe };
 
-    // Initialize state
-    initState();
-    const storeApi = { getState, setState, subscribe };
+  // ── Topbar: Location ────────────────────────────────────
+  const locationEl = document.getElementById("w-location");
+  if (locationEl) mountLocation(locationEl, storeApi);
 
-    // Mount location widget (always visible in topbar)
-    const locationEl = document.getElementById("w-location");
-    if (locationEl) mountLocation(locationEl, storeApi);
+  // ── Weather (Conditions tab) ────────────────────────────
+  const weatherEl = document.getElementById("w-weather");
+  if (weatherEl) mountWeather(weatherEl, storeApi);
 
-    // Mount weather widgets
-    const weatherEl = document.getElementById("w-weather");
-    const sunEl = document.getElementById("w-sun");
+  // ── Sun & Moon tab ──────────────────────────────────────
+  const sunEl = document.getElementById("w-sun");
+  if (sunEl) mountSunMoon(sunEl, storeApi);
 
-    if (weatherEl) mountWeather(weatherEl, storeApi);
-    if (sunEl) mountSunMoon(sunEl, storeApi);
+  // ── Calendar & News (always init, DOM ready) ────────────
+  window.runCalendarWidget({
+    rootId:   'nrc-main',
+    jsonUrl:  '/calendar/daily_signal.json',
+    maxItems: 25,
+    filters:  ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"],
+    iconBase: '/assets/icons/alerts'
+  });
 
-    // Map is now loaded via iframe from /weather/map-poc.html
-    // Listen for location changes and send to iframe
-    const mapIframe = document.getElementById("mapIframe");
-    if (mapIframe) {
-      // When iframe loads, inject minimal CSS to make it fullwidth
-      mapIframe.addEventListener('load', () => {
-        try {
-          const iframeDoc = mapIframe.contentDocument || mapIframe.contentWindow.document;
-          const style = iframeDoc.createElement('style');
-          style.textContent = `
-            /* Remove width restriction, keep all structure intact */
-            .page-wrap {
-              max-width: none !important;
-              width: 100% !important;
-              padding: 12px !important;
-            }
-            
-            /* Make map taller to use available space */
-            #map {
-              height: calc(100vh - 250px) !important;
-            }
-            
-            /* Remove rounded corners for cleaner look */
-            .card,
-            .map-wrapper,
-            #map {
-              border-radius: 0 !important;
-            }
-          `;
-          iframeDoc.head.appendChild(style);
-        } catch (e) {
-          console.warn('Could not inject CSS into map iframe:', e);
-        }
-      });
-      
-      subscribe(() => {
-        const state = getState();
-        const location = state?.location;
-        if (location && mapIframe.contentWindow) {
-          mapIframe.contentWindow.postMessage({
-            type: "update-location",
-            location: location
-          }, "*");
-        }
-      });
+  window.runNewsWidget({
+    rootId:   'nrw-main',
+    rssUrl:   '/news/rss.xml',
+    maxItems: 15,
+    parseMax: 300,
+    filters:  ["All", "News", "Science", "Videos", "Images", "Nebulacast"]
+  });
+
+  // ── Observer Weather (lazy – inside Events tab) ─────────
+  let obsInited = false;
+  function initObsIfNeeded() {
+    if (obsInited) return;
+    obsInited = true;
+    const obsEl = document.getElementById('w-observer-weather');
+    if (obsEl && window.runObserverWeatherPanel) {
+      window.runObserverWeatherPanel(obsEl, { jsonUrl: '/data/observer_weather_now.json' });
     }
+  }
 
-    // Observer weather panel
-    const obsWeatherEl = document.getElementById('w-observer-weather');
-    if (obsWeatherEl && window.runObserverWeatherPanel) {
-      window.runObserverWeatherPanel(obsWeatherEl, { jsonUrl: '/data/observer_weather_now.json' });
-    }
-    // Helio widget (Space Weather) — pass observer location from app state
+  // ── Helio (lazy – Space Weather tab) ───────────────────
+  let helioInited = false;
+  let _helioInstance = null;
+  function initHelioIfNeeded() {
+    if (helioInited) return;
+    helioInited = true;
     const helioEl = document.getElementById('w-helio');
-    let _helioInstance = null;
     if (helioEl && window.HelioWidget) {
-      const _helioLoc = getState()?.location ?? {};
+      const loc = getState()?.location ?? {};
       _helioInstance = window.HelioWidget.mount(helioEl, {
         dataUrl:      '/data/helio_now.json',
-        lat:          typeof _helioLoc.lat === 'number' ? _helioLoc.lat : undefined,
-        lon:          typeof _helioLoc.lon === 'number' ? _helioLoc.lon : undefined,
-        locationName: _helioLoc.name  || undefined,
-      });
-      // Keep Helio in sync when user changes location mid-session
-      subscribe((newState) => {
-        const loc = newState?.location;
-        if (_helioInstance && loc) {
-          _helioInstance.updateLocation(
-            typeof loc.lat === 'number' ? loc.lat : undefined,
-            typeof loc.lon === 'number' ? loc.lon : undefined,
-            loc.name || undefined
-          );
-        }
+        lat:          typeof loc.lat === 'number' ? loc.lat : undefined,
+        lon:          typeof loc.lon === 'number' ? loc.lon : undefined,
+        locationName: loc.name || undefined,
       });
     }
+  }
 
-    window.runCalendarWidget({
-      rootId: 'nrc-main',
-      jsonUrl: '/calendar/daily_signal.json', 
-      maxItems: 20, 
-      filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], 
-      iconBase: '/assets/icons/alerts' 
-    });
-
-    window.runNewsWidget({ 
-      rootId: 'nrw-main', 
-      rssUrl: '/news/rss.xml', 
-      maxItems: 12, 
-      parseMax: 300, 
-      filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"] 
-    });
-
-    // ------------------------------
-    // SKY widget (lazy load)
-    // ------------------------------
-    let skyInited = false;
-
-    function clampMs(t, a, b) { return Math.max(a, Math.min(b, t)); }
-
-    function pickLatLonFromState(s) {
-      const lat = s?.location?.lat ?? s?.loc?.lat ?? s?.coords?.lat ?? s?.geo?.lat ?? null;
-      const lon = s?.location?.lon ?? s?.location?.lng ?? s?.loc?.lon ?? s?.loc?.lng ?? 
-                  s?.coords?.lon ?? s?.coords?.lng ?? s?.geo?.lon ?? s?.geo?.lng ?? null;
-      return {
-        lat: (typeof lat === "number" && isFinite(lat)) ? lat : null,
-        lon: (typeof lon === "number" && isFinite(lon)) ? lon : null
-      };
+  subscribe((newState) => {
+    const loc = newState?.location;
+    if (_helioInstance && loc) {
+      _helioInstance.updateLocation(
+        typeof loc.lat === 'number' ? loc.lat : undefined,
+        typeof loc.lon === 'number' ? loc.lon : undefined,
+        loc.name || undefined
+      );
     }
+  });
 
-    function pickDatetimeISOFromState(s) {
-      const v = s?.time?.datetimeISO ?? s?.time?.iso ?? s?.time?.selectedISO ?? 
-                s?.controls?.datetimeISO ?? s?.controls?.iso ?? s?.selectedTimeISO ?? null;
-      if (typeof v === "string" && v.trim()) return v.trim();
-      return null;
-    }
-
-    async function initSkyIfNeeded() {
-      if (skyInited) return;
-      skyInited = true;
-
-      // Load Sky CSS
-      const css = document.createElement("link");
-      css.rel = "stylesheet";
-      css.href = "/sky/assets/sky.css";
-      document.head.appendChild(css);
-
-      const state = getState();
-      const { lat, lon } = pickLatLonFromState(state);
-
-      const now = Date.now();
-      const max = now + 7 * 24 * 60 * 60 * 1000;
-
-      let dtISO = pickDatetimeISOFromState(state);
-      if (dtISO) {
-        const t = Date.parse(dtISO);
-        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
-        else dtISO = null;
+  // ── Map (lazy iframe) ───────────────────────────────────
+  let mapInited = false;
+  function initMapIfNeeded() {
+    if (mapInited) return;
+    mapInited = true;
+    const iframe = document.getElementById("mapIframe");
+    if (!iframe) return;
+    iframe.src = "/weather/map-poc.html";
+    iframe.addEventListener('load', () => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        const s = doc.createElement('style');
+        s.textContent = `.page-wrap{max-width:none!important;width:100%!important;padding:12px!important}#map{height:calc(100vh - 250px)!important}.card,.map-wrapper,#map{border-radius:0!important}`;
+        doc.head.appendChild(s);
+      } catch (_) {}
+      const loc = getState()?.location;
+      if (loc && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: "update-location", location: loc }, "*");
       }
-
-      window.SKY_CONFIG = {
-        baseUrl: "/sky",
-        mountId: "skyMount",
-        lat: (lat != null ? lat : 52.2297),
-        lon: (lon != null ? lon : 21.0122),
-        datetimeISO: dtISO,
-        options: {
-          showSunMoon: true,
-          showMilkyWay: true,
-          showGridEq: true,
-          showConstellations: true,
-          showObjects: true,
-          showAlerts: true
-        }
-      };
-
-      await import("/sky/widget.js");
-
-      setTimeout(() => {
-        try { window.__skyWidget?.resize?.(); } catch (_) {}
-      }, 0);
-    }
-
-    function syncSkyFromState() {
-      if (!window.__skyWidget || typeof window.__skyWidget.update !== "function") return;
-
-      const s = getState();
-      const { lat, lon } = pickLatLonFromState(s);
-
-      const now = Date.now();
-      const max = now + 7 * 24 * 60 * 60 * 1000;
-
-      let dtISO = pickDatetimeISOFromState(s);
-      if (dtISO) {
-        const t = Date.parse(dtISO);
-        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
-        else dtISO = null;
-      }
-
-      const patch = {};
-      if (lat != null) patch.lat = lat;
-      if (lon != null) patch.lon = lon;
-      patch.datetimeISO = dtISO;
-
-      try { window.__skyWidget.update(patch); } catch (_) {}
-    }
-
+    });
     subscribe(() => {
-      if (!skyInited) return;
-      syncSkyFromState();
-    });
-
-    // ------------------------------
-    // Tab switching
-    // ------------------------------
-    const tabs = document.querySelectorAll('.nebulacast-tab');
-    const panels = document.querySelectorAll('.nebulacast-panel');
-
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const targetTab = tab.dataset.tab;
-
-        // Lazy init Sky on first open
-        if (targetTab === 'sky') {
-          initSkyIfNeeded().then(() => {
-            syncSkyFromState();
-            setTimeout(() => {
-              try { window.__skyWidget?.resize?.(); } catch (_) {}
-            }, 100);
-          });
-        }
-
-        // Update active tab
-        tabs.forEach(t => t.classList.remove('is-active'));
-        tab.classList.add('is-active');
-
-        // Show/hide panels
-        panels.forEach(panel => {
-          const isTarget = panel.id === `panel-${targetTab}`;
-          panel.classList.toggle('is-active', isTarget);
-        });
-
-        // Update page title
-        const titles = {
-          calendar: 'Calendar',
-          weather: 'Weather',
-          map: 'Map',
-          sun: 'Sun',
-          sky: 'Sky',
-          news: 'News',
-          'observer-weather': 'Observer Weather',
-          'space-weather': 'Space Weather',
-        };
-        document.title = `Nebulacast — ${titles[targetTab] || 'Weather'}`;
-
-        // Persist active tab
-        try { localStorage.setItem('nc-active-tab', targetTab); } catch (_) {}
-      });
-    });
-
-    // Restore active tab from previous session
-    (function () {
-      const VALID_TABS = ['calendar','weather','map','sun','sky','news','observer-weather','space-weather'];
-      let saved;
-      try { saved = localStorage.getItem('nc-active-tab'); } catch (_) {}
-      if (saved && VALID_TABS.includes(saved) && saved !== 'weather') {
-        const target = document.querySelector(`.nebulacast-tab[data-tab="${saved}"]`);
-        if (target) target.click();
+      const loc = getState()?.location;
+      if (loc && iframe.contentWindow && iframe.src) {
+        iframe.contentWindow.postMessage({ type: "update-location", location: loc }, "*");
       }
-    })();
-  </script>
+    });
+  }
 
-  <!-- Dev: resize controls + embed above each widget -->
-  <script>
-    (function () {
-      const PRESETS = [320, 480, 768, 1024];
-      const ORIGIN  = window.location.origin;
+  // ── Sky (lazy) ──────────────────────────────────────────
+  let skyInited = false;
 
-      // Map panel-id → { sel: CSS selector to resize, embed: fn(w,h,base) → code string }
-      const PANELS = {
-        'panel-calendar':         { sel: '#panel-calendar .widget-section',  embed: (w,h,b) => iframeEmbed('calendar', w, h, b) },
-        'panel-weather':          { sel: '#w-weather',                        embed: (w,h,b) => iframeEmbed('weather', w, h, b) },
-        'panel-map':              { sel: '#mapIframe',                        embed: (w,h,b) => iframeEmbed('map', w, h, b) },
-        'panel-sun':              { sel: '#w-sun',                            embed: (w,h,b) => iframeEmbed('sun', w, h, b) },
-        'panel-sky':              { sel: '#w-sky',                            embed: (w,h,b) => iframeEmbed('sky', w, h, b) },
-        'panel-observer-weather': { sel: '#w-observer-weather',               embed: (w,h,b) => iframeEmbed('observer-weather', w, h, b) },
-        'panel-space-weather':    { sel: '#w-helio', defaultW: 400,            embed: (w,h,b) => helioEmbed(w, h, b) },
-        'panel-news':             { sel: '#panel-news .widget-section',       embed: (w,h,b) => iframeEmbed('news', w, h, b) },
+  function clampMs(t, a, b) { return Math.max(a, Math.min(b, t)); }
+
+  function pickLatLon(s) {
+    const lat = s?.location?.lat ?? s?.loc?.lat ?? s?.coords?.lat ?? null;
+    const lon = s?.location?.lon ?? s?.location?.lng ?? s?.loc?.lon ?? s?.loc?.lng ?? s?.coords?.lon ?? s?.coords?.lng ?? null;
+    return {
+      lat: (typeof lat === 'number' && isFinite(lat)) ? lat : null,
+      lon: (typeof lon === 'number' && isFinite(lon)) ? lon : null,
+    };
+  }
+
+  function pickDatetimeISO(s) {
+    const v = s?.time?.datetimeISO ?? s?.time?.iso ?? s?.controls?.datetimeISO ?? s?.selectedTimeISO ?? null;
+    if (typeof v === 'string' && v.trim()) return v.trim();
+    return null;
+  }
+
+  async function initSkyIfNeeded() {
+    if (skyInited) return;
+    skyInited = true;
+
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = '/sky/assets/sky.css';
+    document.head.appendChild(css);
+
+    const state = getState();
+    const { lat, lon } = pickLatLon(state);
+    const now = Date.now();
+    const max = now + 7 * 24 * 60 * 60 * 1000;
+    let dtISO = pickDatetimeISO(state);
+    if (dtISO) {
+      const t = Date.parse(dtISO);
+      dtISO = isFinite(t) ? new Date(clampMs(t, now, max)).toISOString() : null;
+    }
+
+    window.SKY_CONFIG = {
+      baseUrl:     '/sky',
+      mountId:     'skyMount',
+      lat:         (lat != null ? lat : 52.2297),
+      lon:         (lon != null ? lon : 21.0122),
+      datetimeISO: dtISO,
+      options: {
+        showSunMoon:       true,
+        showMilkyWay:      true,
+        showGridEq:        true,
+        showConstellations: true,
+        showObjects:       true,
+        showAlerts:        true,
+      }
+    };
+
+    await import('/sky/widget.js');
+    setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 0);
+  }
+
+  function syncSkyFromState() {
+    if (!window.__skyWidget || typeof window.__skyWidget.update !== 'function') return;
+    const s = getState();
+    const { lat, lon } = pickLatLon(s);
+    const now = Date.now(), max = now + 7 * 24 * 60 * 60 * 1000;
+    let dtISO = pickDatetimeISO(s);
+    if (dtISO) {
+      const t = Date.parse(dtISO);
+      dtISO = isFinite(t) ? new Date(clampMs(t, now, max)).toISOString() : null;
+    }
+    const patch = {};
+    if (lat != null) patch.lat = lat;
+    if (lon != null) patch.lon = lon;
+    patch.datetimeISO = dtISO;
+    try { window.__skyWidget.update(patch); } catch (_) {}
+  }
+
+  subscribe(() => { if (skyInited) syncSkyFromState(); });
+
+  // ── Context Tools tab switching ─────────────────────────
+  const toolTabs    = document.querySelectorAll('.tools-tab');
+  const toolPanels  = document.querySelectorAll('.tools-panel');
+
+  toolTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const id = tab.dataset.tab;
+
+      // Lazy-init heavy panels
+      if (id === 'sky')    { initSkyIfNeeded().then(() => { syncSkyFromState(); setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 100); }); }
+      if (id === 'map')    { initMapIfNeeded(); }
+      if (id === 'helio')  { initHelioIfNeeded(); }
+      if (id === 'events') { initObsIfNeeded(); }
+
+      toolTabs.forEach(t => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+
+      toolPanels.forEach(p => p.classList.toggle('is-active', p.id === `panel-${id}`));
+
+      const titles = { weather: 'Conditions', sky: 'Sky', sun: 'Sun & Moon', map: 'Map', helio: 'Space Weather', events: 'Events' };
+      document.title = `Nebulacast — ${titles[id] || id}`;
+    });
+  });
+
+  // ── Events sub-tabs ─────────────────────────────────────
+  const subTabs   = document.querySelectorAll('.events-subtab');
+  const subPanels = document.querySelectorAll('.events-subpanel');
+
+  subTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      if (tab.dataset.sub === 'observer') initObsIfNeeded();
+      subTabs.forEach(t => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+      subPanels.forEach(p => p.classList.toggle('is-active', p.id === `subpanel-${tab.dataset.sub}`));
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════
+  //  HERO DECISION BAND
+  // ══════════════════════════════════════════════════════════
+  async function loadHero() {
+    let wx = null, sw = null;
+    try {
+      [wx, sw] = await Promise.all([
+        fetch('/data/observer_weather_now.json').then(r => r.ok ? r.json() : null),
+        fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
+      ]);
+    } catch (_) {}
+
+    const hero = document.getElementById('console-hero');
+    if (!hero) return;
+
+    const cards = [];
+
+    // ── Score card ──
+    if (wx?.decision?.mode_scores) {
+      const modes = wx.decision.mode_scores;
+      const best  = Object.entries(modes).reduce((a, b) => b[1] > a[1] ? b : a);
+      const score = Math.round(best[1]);
+      const mode  = best[0].charAt(0).toUpperCase() + best[0].slice(1);
+      const cls   = score >= 85 ? 'score-excellent' : score >= 70 ? 'score-good' : score >= 50 ? 'score-fair' : 'score-poor';
+      cards.push(`
+        <div class="hero-card ${cls}">
+          <div class="hero-card-label">Observing Score</div>
+          <div class="hero-card-value">${score}</div>
+          <div class="hero-card-sub">${mode} profile</div>
+        </div>
+      `);
+
+      // All mode scores compact
+      const modeList = Object.entries(modes).map(([k, v]) =>
+        `<span style="color:rgba(255,255,255,0.5)">${k.charAt(0).toUpperCase()+k.slice(1)}</span>&nbsp;${Math.round(v)}`
+      ).join('<span style="color:rgba(255,255,255,0.15);margin:0 6px">·</span>');
+      cards.push(`
+        <div class="hero-card" style="min-width:180px">
+          <div class="hero-card-label">Mode Scores</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.6;margin-top:4px">${modeList}</div>
+        </div>
+      `);
+    }
+
+    // ── Best window tonight ──
+    if (wx?.decision?.best_tonight) {
+      const w = wx.decision.best_tonight;
+      const fmt = iso => {
+        const d = new Date(iso);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
       };
+      const cloud = Math.round(w.cloud_avg ?? 0);
+      const cloudColor = cloud < 30 ? '#4caf50' : cloud < 60 ? '#ff9800' : '#f44336';
+      cards.push(`
+        <div class="hero-card">
+          <div class="hero-card-label">Best Tonight</div>
+          <div class="hero-card-value" style="font-size:20px;color:rgba(255,255,255,0.85)">${fmt(w.start)}–${fmt(w.end)}</div>
+          <div class="hero-card-sub" style="color:${cloudColor}">☁ ${cloud}% clouds</div>
+        </div>
+      `);
+    }
 
-      function iframeEmbed(tab, w, h, base) {
-        const wAttr = w || 800, hAttr = h || 600;
-        return [
-          `<iframe`,
-          `  src="${base}/?tab=${tab}"`,
-          `  width="${wAttr}"`,
-          `  height="${hAttr}"`,
-          `  style="border:none;border-radius:12px"`,
-          `  loading="lazy"`,
-          `></iframe>`,
-        ].join('\n');
-      }
-
-      function helioEmbed(w, h, base) {
-        const sizeAttr = w ? ` style="width:${w}px${h ? `;height:${h}px` : ''}"` : '';
-        return [
-          `<div id="helio-widget"${sizeAttr}></div>`,
-          ``,
-          `<script src="${base}/helio/dist/helio.widget.js"><\/script>`,
-          `<script>`,
-          `  HelioWidget.mount(document.getElementById('helio-widget'), {`,
-          `    dataUrl: '${base}/data/helio_now.json',`,
-          `  });`,
-          `<\/script>`,
-        ].join('\n');
-      }
-
-      // ── Embed modal ──────────────────────────────────────────────────────
-      const modal = document.createElement('div');
-      modal.id = 'embed-modal';
-      modal.style.cssText = [
-        'display:none', 'position:fixed', 'inset:0', 'z-index:9999',
-        'background:rgba(0,0,0,.72)', 'align-items:center', 'justify-content:center',
-      ].join(';');
-      modal.innerHTML = `
-        <div style="background:#1a1f2e;border:1px solid rgba(255,255,255,.15);border-radius:12px;
-                    padding:24px;max-width:640px;width:92%;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.6)">
-          <button id="em-close" style="position:absolute;top:10px;right:14px;background:none;border:none;
-                  color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;line-height:1">&times;</button>
-          <div style="font-size:11px;font-family:monospace;color:rgba(255,255,255,.4);margin-bottom:14px;letter-spacing:.05em">
-            EMBED CODE
+    // ── Risks ──
+    if (wx?.decision?.risks) {
+      const risks = wx.decision.risks;
+      const ICONS = { dew: '💧', fog: '🌫', wind: '💨' };
+      const chips = Object.entries(risks)
+        .filter(([, v]) => v !== 'low')
+        .map(([k, v]) => `<span class="risk-chip ${v}">${ICONS[k] || ''}${k.charAt(0).toUpperCase()+k.slice(1)}</span>`)
+        .join('');
+      const allLow = Object.values(risks).every(v => v === 'low');
+      cards.push(`
+        <div class="hero-card">
+          <div class="hero-card-label">Risks</div>
+          <div class="hero-risks" style="margin-top:6px">
+            ${allLow
+              ? '<span style="font-size:11px;color:rgba(255,255,255,0.35)">None significant</span>'
+              : chips}
           </div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <label style="font-size:11px;font-family:monospace;color:rgba(255,255,255,.35);white-space:nowrap">Base URL</label>
-            <input id="em-origin" type="text" spellcheck="false"
-              style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-                border-radius:5px;color:rgba(255,255,255,.75);font-size:12px;font-family:monospace;
-                padding:4px 9px;outline:none;min-width:0"
-              placeholder="https://your-domain.com">
+        </div>
+      `);
+    }
+
+    // ── Moon ──
+    if (wx?.moon) {
+      const m = wx.moon;
+      const moonUp = m.moon_up_now
+        ? '<span style="color:#ff9800;font-size:10px">● Up</span>'
+        : '<span style="color:rgba(255,255,255,0.25);font-size:10px">● Below horizon</span>';
+      cards.push(`
+        <div class="hero-card">
+          <div class="hero-card-label">Moon</div>
+          <div class="hero-card-value" style="font-size:20px;color:rgba(255,255,255,0.75)">${Math.round(m.illumination_percent)}%</div>
+          <div class="hero-card-sub">${m.phase_name} &nbsp;${moonUp}</div>
+        </div>
+      `);
+    }
+
+    // ── Space Weather ──
+    if (sw?.summary) {
+      const s  = sw.summary;
+      const kp = sw.metrics?.kp_latest != null ? `Kp ${sw.metrics.kp_latest.toFixed(1)}` : '';
+      cards.push(`
+        <div class="hero-card">
+          <div class="hero-card-label">Space Weather</div>
+          <div style="margin-top:6px"><span class="sw-badge ${s.status}">${s.label}</span></div>
+          <div class="hero-card-sub" style="margin-top:4px">${kp}</div>
+        </div>
+      `);
+    }
+
+    hero.innerHTML = cards.join('');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  PRIORITY FEED
+  // ══════════════════════════════════════════════════════════
+  const DSO_CLASS = {
+    SG:'Galaxy', EG:'Galaxy', IG:'Galaxy', GG:'Galaxy', CG:'Galaxy',
+    GC:'Glob. Cluster', OC:'Open Cluster',
+    EN:'Em. Nebula', RN:'Refl. Nebula', PN:'Plan. Nebula', BN:'Dark Nebula', SNR:'SNR',
+  };
+
+  const TYPE_ICON = {
+    planet: '🪐',
+    dso:    '🌌',
+    alert:  '⚠️',
+    comet:  '☄️',
+    star:   '⭐',
+  };
+
+  function fmtBestTime(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    } catch (_) { return '—'; }
+  }
+
+  async function loadFeed() {
+    const feedEl = document.getElementById('feed-list');
+    if (!feedEl) return;
+
+    let data = null;
+    try { data = await fetch('/sky/data/ranking.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+
+    if (!data?.items?.length) {
+      feedEl.innerHTML = '<div class="feed-loading">No targets available.</div>';
+      return;
+    }
+
+    const items = data.items;
+    const maxScore = items[0].score || 1;
+
+    // Group items
+    const groups = {};
+    items.forEach(item => {
+      const g = item.group || 'other';
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(item);
+    });
+
+    const ORDER = ['alerts', 'calendar', 'planets', 'dso', 'other'];
+    const GROUP_LABEL = { planets: 'Planets', dso: 'Deep Sky', alerts: 'Alerts', calendar: 'Events', other: 'Other' };
+
+    let html = '';
+    let rank = 1;
+    for (const g of ORDER) {
+      if (!groups[g]?.length) continue;
+      html += `<div class="feed-divider">${GROUP_LABEL[g] || g}</div>`;
+      for (const item of groups[g]) {
+        const pct    = Math.round((item.score / maxScore) * 100);
+        const icon   = TYPE_ICON[item.type] || TYPE_ICON[item.group] || '·';
+        const time   = fmtBestTime(item.vis?.best_time_local_quality || item.vis?.best_time_local);
+        const sub    = item.meta?.comment || DSO_CLASS[item.meta?.class] || item.type || '';
+        const barW   = Math.max(5, pct);
+
+        html += `
+          <div class="feed-item" data-id="${item.id}" data-group="${g}" title="${item.name}${sub ? ' — '+sub : ''}">
+            <div class="feed-rank">${rank}</div>
+            <div class="feed-icon">${icon}</div>
+            <div class="feed-info">
+              <div class="feed-name">${item.name}</div>
+              ${sub ? `<div class="feed-sub">${sub}</div>` : ''}
+            </div>
+            <div class="feed-score-col">
+              <div class="feed-time">${time}</div>
+              <div class="feed-bar-track"><div class="feed-bar-fill" style="width:${barW}%"></div></div>
+            </div>
           </div>
-          <textarea id="em-code" readonly style="width:100%;height:160px;background:rgba(0,0,0,.45);
-            border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#7ec8e3;
-            font-family:monospace;font-size:12px;line-height:1.6;padding:12px;
-            resize:vertical;outline:none;box-sizing:border-box"></textarea>
-          <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
-            <button id="em-copy" style="padding:7px 20px;background:rgba(74,111,165,.35);
-              border:1px solid rgba(74,111,165,.5);border-radius:6px;color:#fff;
-              font-family:monospace;font-size:12px;cursor:pointer">
-              Copy
-            </button>
-            <span id="em-copied" style="font-size:11px;font-family:monospace;color:#5cce8c;
-              opacity:0;transition:opacity .3s">Copied!</span>
-          </div>
-        </div>`;
-      document.body.appendChild(modal);
-
-      const emCode   = modal.querySelector('#em-code');
-      const emOrigin = modal.querySelector('#em-origin');
-      const emCopy   = modal.querySelector('#em-copy');
-      const emCopied = modal.querySelector('#em-copied');
-
-      modal.querySelector('#em-close').addEventListener('click', () => {
-        modal.style.display = 'none';
-      });
-      modal.addEventListener('click', e => {
-        if (e.target === modal) modal.style.display = 'none';
-      });
-      emCopy.addEventListener('click', () => {
-        navigator.clipboard.writeText(emCode.value).then(() => {
-          emCopied.style.opacity = '1';
-          setTimeout(() => { emCopied.style.opacity = '0'; }, 1800);
-        });
-      });
-
-      let _embedFn = null;
-      let _embedW = null, _embedH = null;
-
-      emOrigin.addEventListener('input', () => {
-        if (_embedFn) emCode.value = _embedFn(_embedW, _embedH, emOrigin.value.replace(/\/$/, '') || ORIGIN);
-      });
-
-      function openEmbed(fn, w, h) {
-        _embedFn = fn; _embedW = w; _embedH = h;
-        // Pre-fill Base URL: replace localhost with placeholder hint
-        if (!emOrigin.value || emOrigin.value.startsWith('http://localhost')) {
-          emOrigin.value = ORIGIN.startsWith('http://localhost') ? '' : ORIGIN;
-          emOrigin.placeholder = ORIGIN.startsWith('http://localhost')
-            ? 'https://your-domain.com  (localhost detected)'
-            : ORIGIN;
-        }
-        const base = emOrigin.value.replace(/\/$/, '') || ORIGIN;
-        emCode.value = fn(w, h, base);
-        modal.style.display = 'flex';
-        setTimeout(() => emCode.select(), 50);
+        `;
+        rank++;
       }
+    }
 
-      // ── Per-panel bars ───────────────────────────────────────────────────
-      Object.entries(PANELS).forEach(([panelId, { sel, embed, defaultW }]) => {
-        const panel = document.getElementById(panelId);
-        const target = panel && document.querySelector(sel);
-        if (!panel || !target) return;
+    feedEl.innerHTML = html;
 
-        const bar = document.createElement('div');
-        bar.className = 'resize-bar';
-        bar.innerHTML =
-          '<label>W <input type="number" class="rz-w" placeholder="auto" min="100" step="10"></label>' +
-          '<label>H <input type="number" class="rz-h" placeholder="auto" min="100" step="10"></label>' +
-          '<button class="rz-reset">reset</button>' +
-          '<span class="rz-presets">' +
-            PRESETS.map(w => `<button class="rz-preset" data-w="${w}">${w}</button>`).join('') +
-          '</span>' +
-          '<button class="rz-embed">Embed</button>';
-
-        const wIn = bar.querySelector('.rz-w');
-        const hIn = bar.querySelector('.rz-h');
-
-        function apply() {
-          target.style.width    = wIn.value ? wIn.value + 'px' : '';
-          target.style.maxWidth = wIn.value ? 'none' : '';
-          target.style.height   = hIn.value ? hIn.value + 'px' : '';
-        }
-
-        if (defaultW) { wIn.value = defaultW; apply(); }
-
-        wIn.addEventListener('input', apply);
-        hIn.addEventListener('input', apply);
-
-        bar.querySelector('.rz-reset').addEventListener('click', () => {
-          wIn.value = ''; hIn.value = ''; apply();
-        });
-
-        bar.querySelectorAll('.rz-preset').forEach(btn => {
-          btn.addEventListener('click', () => { wIn.value = btn.dataset.w; apply(); });
-        });
-
-        bar.querySelector('.rz-embed').addEventListener('click', () => {
-          openEmbed(embed, wIn.value ? +wIn.value : null, hIn.value ? +hIn.value : null);
-        });
-
-        panel.insertBefore(bar, target);
+    // Click → open Sky tab focused on that object
+    feedEl.querySelectorAll('.feed-item').forEach(el => {
+      el.addEventListener('click', () => {
+        // Switch to Sky tab
+        document.querySelector('[data-tab="sky"]')?.click();
+        // TODO: forward target ID to sky widget when supported
       });
-    })();
-  </script>
+    });
+  }
+
+  // ── Boot ───────────────────────────────────────────────
+  loadHero();
+  loadFeed();
+
+</script>
 </body>
 </html>
