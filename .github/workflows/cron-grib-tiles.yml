@@ -2,7 +2,7 @@ name: Cron — GRIB tile pipeline (GFS → WebP cloud tiles)
 
 on:
   schedule:
-    - cron: "30 1,7,13,19 * * *"  # ~1.5h after GFS 00/06/12/18Z runs; data is ready by then
+    - cron: "30 1,9,17 * * *"  # 3×/day (saves ~25% GH Actions minutes vs 4×); GFS data ready well before each slot
   workflow_dispatch:
 
 jobs:

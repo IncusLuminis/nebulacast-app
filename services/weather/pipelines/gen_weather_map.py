@@ -56,6 +56,12 @@ OM_CACHE_DIR = DATA_DIR / "_cache" / "open_meteo"
 # How long a cached batch response is considered fresh (seconds)
 OM_CACHE_TTL = 3 * 3600  # 3 hours
 
+# When set to "1", skip cloud WebP rendering (manifest-only mode).
+# Used by cron-weather-map.yml which only commits JSON — WebP frames are
+# never deployed from that workflow (no CF Pages deploy there).
+# Full rendering still happens in cron-grib-tiles.yml before the unified deploy.
+SKIP_RENDER = os.environ.get("WEATHER_MAP_SKIP_RENDER", "0") == "1"
+
 # ── Profile definitions ───────────────────────────────────────────────────────
 
 # Internal raster profiles (pipeline generates WebP frames for these)
@@ -684,6 +690,7 @@ def run_profile(
     timeline:      list[datetime],
     past_days:     int = 2,
     forecast_days: int = 6,
+    skip_render:   bool = False,
 ) -> tuple[list[dict], list[dict], list[dict], int, int]:
     """
     Run full pipeline for one profile.
@@ -709,6 +716,8 @@ def run_profile(
     print(f"  bbox: lat {bbox['lat_min']}–{bbox['lat_max']}, lon {bbox['lon_min']}–{bbox['lon_max']}", flush=True)
     if skip_clouds:
         print(f"  skip_clouds=True — wind+isobars only (world_tiles handles clouds)", flush=True)
+    if skip_render:
+        print(f"  skip_render=True — cloud WebP rendering skipped (manifest-only mode)", flush=True)
 
     if not skip_clouds:
         # Cloud + pressure grid (coarse — used for raster interpolation and isobars)
@@ -769,28 +778,32 @@ def run_profile(
     for idx, slot_dt in enumerate(timeline):
         # ── Cloud frame ───────────────────────────────────────────────────────
         if not skip_clouds:
-            values     = cloud_matrix[idx]
             frame_name = f"cloud_{idx:03d}.webp"
-            frame_path = cloud_dir / frame_name
             asset_url  = f"/data/clouds/{pid}/{frame_name}"
 
-            grid      = interpolate_frame(values, points, bbox, lat_n, lon_n, render_size)
-            available = False
-            if grid is not None:
-                ok        = render_frame_webp(grid, frame_path, blur_radius=blur_radius)
-                available = ok
-                if ok: rendered += 1
-                else:  skipped  += 1
-            else:
+            if skip_render:
+                # Manifest-only mode: no WebP on disk, frontend will fall back.
+                cloud_refs.append({"index": idx, "available": False, "asset_url": None})
                 skipped += 1
-                if frame_path.exists():
-                    frame_path.unlink()
-
-            cloud_refs.append({
-                "index":     idx,
-                "available": available,
-                "asset_url": asset_url if available else None,
-            })
+            else:
+                frame_path = cloud_dir / frame_name
+                values     = cloud_matrix[idx]
+                grid       = interpolate_frame(values, points, bbox, lat_n, lon_n, render_size)
+                available  = False
+                if grid is not None:
+                    ok        = render_frame_webp(grid, frame_path, blur_radius=blur_radius)
+                    available = ok
+                    if ok: rendered += 1
+                    else:  skipped  += 1
+                else:
+                    skipped += 1
+                    if frame_path.exists():
+                        frame_path.unlink()
+                cloud_refs.append({
+                    "index":     idx,
+                    "available": available,
+                    "asset_url": asset_url if available else None,
+                })
         else:
             # No cloud raster for world profile
             cloud_refs.append({"index": idx, "available": False, "asset_url": None})
@@ -941,7 +954,7 @@ def run() -> None:
     icon_profile_manifests: list[dict] = []
 
     for profile in PROFILES:
-        cloud_refs, wind_refs, isobar_refs, rendered, skipped, pts, cloud_matrix, precip_matrix, temp_matrix = run_profile(profile, timeline)
+        cloud_refs, wind_refs, isobar_refs, rendered, skipped, pts, cloud_matrix, precip_matrix, temp_matrix = run_profile(profile, timeline, skip_render=SKIP_RENDER)
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]

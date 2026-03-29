@@ -23,6 +23,8 @@ jobs:
         run: pip install -r services/weather/requirements.txt
 
       - name: Run weather map pipeline
+        env:
+          WEATHER_MAP_SKIP_RENDER: "1"
         run: PYTHONPATH=services/weather python services/weather/pipelines/gen_weather_map.py
 
       - name: Validate output
