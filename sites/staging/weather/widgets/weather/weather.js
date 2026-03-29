@@ -156,7 +156,13 @@ function pickIcon(hour) {
   if (code != null) {
     if (code === 0 || code === 1)             return isNight ? "night.svg" : "sun.svg";
     if (code === 2)                            return "partly-cloudy.svg";
-    if (code === 3)                            return "cloud.svg";
+    if (code === 3) {
+      // Overcast, but still check if actual precipitation is expected
+      const mm3 = hour.precip_mm != null && hour.precip_mm !== -9999 ? hour.precip_mm : 0;
+      const prob3 = (hour.precip_prob != null && hour.precip_prob <= 1) ? hour.precip_prob * 100 : (hour.precip_prob ?? 0);
+      if (mm3 > 0 || prob3 >= 50) return "rain.svg";
+      return "cloud.svg";
+    }
     if (code === 45 || code === 48)            return "fog.svg";
     if (code >= 51 && code <= 67)             return "rain.svg";
     if (code >= 71 && code <= 77)             return "rain.svg";   // snow → rain fallback (no snow.svg yet)
@@ -171,6 +177,7 @@ function pickIcon(hour) {
   const prob = (hour.precip_prob != null && hour.precip_prob <= 1) ? hour.precip_prob * 100 : (hour.precip_prob ?? 0);
   const mm = hour.precip_mm != null && hour.precip_mm !== -9999 ? hour.precip_mm : 0;
   if (prob >= 60 && mm > 0) return "thunderstorm.svg";
+  if (mm > 0 || prob >= 50) return "rain.svg";
   const c = (hour.cloud_total != null && hour.cloud_total <= 1) ? hour.cloud_total * 100 : (hour.cloud_total ?? 0);
   if (isNight && c < 20) return "night.svg";
   if (c >= 80) return "cloud.svg";
@@ -1278,6 +1285,7 @@ function renderWeatherCard(hour, hourIdx) {
   const cond = weatherConditionLabel(hour);
   const paramLines = [
     `☁️ ${cloud}%`,
+    prob > 0 ? `🌧️ ${prob}%` : null,
     cond ? `${cond.icon} ${cond.label}` : null,
     wind != null ? `💨 ${wind}m/s` : null,
     visKm != null ? `👁️ ${visKm}km` : null
