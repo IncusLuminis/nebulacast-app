@@ -15,7 +15,11 @@ async function fetchOpenMeteo(lat, lon, tz, hours, cache) {
       "windspeed_10m",
       "winddirection_10m",
       "visibility",
-      "temperature_2m"
+      "temperature_2m",
+      "relativehumidity_2m",
+      "dewpoint_2m",
+      "rain",
+      "snowfall"
     ].join(","),
     timezone: tz,
     forecast_days: String(forecastDays),
@@ -89,8 +93,76 @@ async function fetchSevenTimer(lat, lon) {
   }
 }
 
+// services/astro_weather/ephemeris.ts
+var DEG = Math.PI / 180;
+var RAD = 180 / Math.PI;
+function julianDay(dt) {
+  return dt.getTime() / 864e5 + 24405875e-1;
+}
+function norm360(deg) {
+  return (deg % 360 + 360) % 360;
+}
+function gmst(JD) {
+  const T = (JD - 2451545) / 36525;
+  const gmst0 = 6.697374558 + 2400.0513369 * T + 258622e-10 * T * T - 17222e-13 * T * T * T;
+  const utFraction = (JD % 1 + 0.5) % 1;
+  return ((gmst0 + utFraction * 24.06570982441908) % 24 + 24) % 24;
+}
+function altitude(RA, Dec, lat, lon, JD) {
+  const GMST = gmst(JD);
+  const LST = (GMST + lon / 15 + 24) % 24;
+  const HA = LST * 15 * DEG - RA;
+  const latR = lat * DEG;
+  const sinAlt = Math.sin(latR) * Math.sin(Dec) + Math.cos(latR) * Math.cos(Dec) * Math.cos(HA);
+  return Math.asin(Math.max(-1, Math.min(1, sinAlt))) * RAD;
+}
+function sunAltitudeDeg(dt, lat, lon) {
+  const JD = julianDay(dt);
+  const n = JD - 2451545;
+  const L = norm360(280.46 + 0.9856474 * n);
+  const g = norm360(357.528 + 0.9856003 * n) * DEG;
+  const lambda = norm360(L + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * DEG;
+  const eps = 23.439 * DEG;
+  const sinDec = Math.sin(eps) * Math.sin(lambda);
+  const Dec = Math.asin(Math.max(-1, Math.min(1, sinDec)));
+  const RA = Math.atan2(Math.cos(eps) * Math.sin(lambda), Math.cos(lambda));
+  return altitude(RA, Dec, lat, lon, JD);
+}
+function moonPositionDeg(dt, lat, lon) {
+  const JD = julianDay(dt);
+  const d = JD - 2451545;
+  const L0 = norm360(218.316 + 13.176396 * d);
+  const M = norm360(134.963 + 13.064993 * d) * DEG;
+  const F = norm360(93.272 + 13.22935 * d) * DEG;
+  const lambdaMoon = norm360(
+    L0 + 6.289 * Math.sin(M) - 1.274 * Math.sin(2 * F - M) + 0.658 * Math.sin(2 * F) - 0.186 * Math.sin((357.528 + 0.9856 * d) * DEG) - // Sun's mean anomaly
+    0.114 * Math.sin(2 * F)
+  ) * DEG;
+  const betaMoon = (5.128 * Math.sin(F) + 0.28 * Math.sin(M + F) - 0.277 * Math.sin(M - F)) * DEG;
+  const eps = 23.439 * DEG;
+  const sinDec = Math.sin(betaMoon) * Math.cos(eps) + Math.cos(betaMoon) * Math.sin(eps) * Math.sin(lambdaMoon);
+  const Dec = Math.asin(Math.max(-1, Math.min(1, sinDec)));
+  const RA = Math.atan2(
+    Math.cos(betaMoon) * Math.cos(eps) * Math.sin(lambdaMoon) - Math.sin(betaMoon) * Math.sin(eps),
+    Math.cos(betaMoon) * Math.cos(lambdaMoon)
+  );
+  const altDeg = altitude(RA, Dec, lat, lon, JD);
+  const n = d;
+  const gSun = norm360(357.528 + 0.9856003 * n) * DEG;
+  const LSun = norm360(280.46 + 0.9856474 * n);
+  const lambdaSun = norm360(LSun + 1.915 * Math.sin(gSun) + 0.02 * Math.sin(2 * gSun)) * DEG;
+  const elong = Math.acos(
+    Math.max(-1, Math.min(
+      1,
+      Math.sin(betaMoon) * Math.sin(0) + Math.cos(betaMoon) * Math.cos(0) * Math.cos(lambdaMoon - lambdaSun)
+    ))
+  );
+  const illumPct = (1 - Math.cos(elong)) / 2 * 100;
+  return { altDeg, illumPct: Math.max(0, Math.min(100, illumPct)) };
+}
+
 // services/astro_weather/merge.ts
-function mergeHourlyData(omData, stData, tz, hours) {
+function mergeHourlyData(omData, stData, tz, hours, lat, lon) {
   const hourly = omData.hourly;
   if (!hourly || !hourly.time || hourly.time.length === 0) {
     return [];
@@ -107,6 +179,10 @@ function mergeHourlyData(omData, stData, tz, hours) {
   const windDir = hourly.winddirection_10m || [];
   const visibility = hourly.visibility || [];
   const temp = hourly.temperature_2m || [];
+  const humidity = hourly.relativehumidity_2m || [];
+  const dewpoint = hourly.dewpoint_2m || [];
+  const rain = hourly.rain || [];
+  const snowfall = hourly.snowfall || [];
   const stMap = /* @__PURE__ */ new Map();
   if (stData && stData.init && Array.isArray(stData.dataseries)) {
     try {
@@ -134,6 +210,8 @@ function mergeHourlyData(omData, stData, tz, hours) {
       if (isNaN(dt.getTime()) || dt.getTime() > cutoff) break;
       const stIndex = Math.floor(i / 3);
       const stPoint = stMap.get(stIndex * 3) || { seeing: null, transparency: null };
+      const sunAlt = sunAltitudeDeg(dt, lat, lon);
+      const moon = moonPositionDeg(dt, lat, lon);
       records.push({
         time: dt.toISOString(),
         cloud_total: cloudTotal[i] ?? null,
@@ -147,15 +225,28 @@ function mergeHourlyData(omData, stData, tz, hours) {
         wind_dir_deg: windDir[i] ?? null,
         temp_c: temp[i] ?? null,
         visibility_m: visibility[i] ?? null,
+        humidity_pct: humidity[i] ?? null,
+        dewpoint_c: dewpoint[i] ?? null,
+        rain_mm: rain[i] ?? null,
+        snowfall_mm: snowfall[i] ?? null,
         seeing: stPoint.seeing,
         transparency: stPoint.transparency,
+        // Ephemeris fields
+        sun_alt_deg: sunAlt,
+        moon_alt_deg: moon.altDeg,
+        moon_illum_pct: moon.illumPct,
+        // Scoring (computed later in astro-weather.ts)
+        gate: "OPEN",
         score: 0,
-        // Will be computed later
         score_breakdown: {
-          components: [],
+          categories: [],
           total: 0,
           clamped_total: 0
-        }
+        },
+        atmosphere_score: 0,
+        sky_darkness_score: 0,
+        dew_safety_score: 0,
+        stability_score: 0
       });
     } catch (e) {
       console.warn(`Failed to process hour ${i}:`, e);
@@ -167,165 +258,314 @@ function mergeHourlyData(omData, stData, tz, hours) {
 
 // services/astro_weather/score.ts
 var PROFILE_WEIGHTS = {
-  default: {
-    clouds: 30,
-    wind: 15,
-    seeing: 20,
-    transparency: 15,
-    visibility: 10,
-    pressure_trend: 5,
-    precip_risk: 10,
-    temp: 5
-  },
-  visual: {
-    clouds: 35,
-    wind: 12,
-    seeing: 18,
-    transparency: 18,
-    visibility: 10,
-    pressure_trend: 3,
-    precip_risk: 8,
-    temp: 6
-  },
-  broadband: {
-    clouds: 25,
-    wind: 10,
-    seeing: 15,
-    transparency: 30,
-    visibility: 8,
-    pressure_trend: 5,
-    precip_risk: 10,
-    temp: 7
-  },
-  planetary: {
-    clouds: 25,
-    wind: 20,
-    seeing: 30,
-    transparency: 10,
-    visibility: 8,
-    pressure_trend: 3,
-    precip_risk: 7,
-    temp: 7
-  }
+  balanced: { atmosphere: 0.35, sky_darkness: 0.3, dew_safety: 0.2, stability: 0.15 },
+  visual: { atmosphere: 0.4, sky_darkness: 0.25, dew_safety: 0.2, stability: 0.15 },
+  broadband: { atmosphere: 0.3, sky_darkness: 0.45, dew_safety: 0.15, stability: 0.1 },
+  planetary: { atmosphere: 0.55, sky_darkness: 0.1, dew_safety: 0.2, stability: 0.15 }
+};
+var BORTLE_BASE = {
+  1: 100,
+  2: 95,
+  3: 90,
+  4: 80,
+  5: 70,
+  6: 55,
+  7: 40,
+  8: 25,
+  9: 10
 };
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
-function computeCloudPoints(cloudTotal, weight) {
-  if (cloudTotal === null) return weight * 0.5;
-  const pct = cloudTotal > 1 ? cloudTotal : cloudTotal * 100;
-  return weight * (1 - clamp(pct / 100, 0, 1));
-}
-function computeWindPoints(windMs, weight) {
-  if (windMs === null) return weight * 0.5;
-  const thresh = 4;
-  if (windMs <= thresh) return weight;
-  const excess = windMs - thresh;
-  return weight * Math.max(0, 1 - excess / 8);
-}
-function computeSeeingPoints(seeing, weight) {
-  if (seeing === null) return weight * 0.5;
-  if (seeing < 1) return weight;
-  if (seeing > 7) return 0;
-  return weight * (1 - (seeing - 1) / 6);
-}
-function computeTransparencyPoints(transparency, weight) {
-  if (transparency === null) return weight * 0.5;
-  if (transparency < 1) return weight;
-  if (transparency > 4) return 0;
-  return weight * (1 - (transparency - 1) / 3);
-}
-function computeVisibilityPoints(visibilityM, weight) {
-  if (visibilityM === null) return weight * 0.5;
-  const km = visibilityM / 1e3;
-  if (km >= 20) return weight;
-  if (km < 2) return 0;
-  return weight * clamp((km - 2) / 18, 0, 1);
-}
-function computePressureTrendPoints(pressureTrend, weight) {
-  if (pressureTrend === null) return weight * 0.5;
-  const normalized = clamp((pressureTrend + 5) / 10, 0, 1);
-  return weight * normalized;
-}
-function computePrecipRiskPoints(precipProb, precipMm, weight) {
-  if (precipProb === null && precipMm === null) return weight * 0.5;
-  const prob = precipProb !== null ? precipProb > 1 ? precipProb : precipProb * 100 : 0;
-  const mm = precipMm !== null ? precipMm : 0;
-  if (prob === 0 && mm === 0) return weight;
-  if (prob > 50 || mm > 0.5) return 0;
-  return weight * (1 - clamp(prob / 50, 0, 1));
-}
-function computeTempPoints(tempC, weight) {
-  if (tempC === null) return weight * 0.5;
-  if (tempC < -10) return weight * 0.3;
-  if (tempC > 30) return weight * 0.5;
-  if (tempC >= -5 && tempC <= 25) return weight;
-  if (tempC < -5) {
-    return weight * clamp(0.3 + (tempC + 10) / 5 * 0.7, 0.3, 1);
+function interpolate(x, table) {
+  if (x <= table[0][0]) return table[0][1];
+  if (x >= table[table.length - 1][0]) return table[table.length - 1][1];
+  for (let i = 0; i < table.length - 1; i++) {
+    const [x0, y0] = table[i];
+    const [x1, y1] = table[i + 1];
+    if (x >= x0 && x <= x1) {
+      return y0 + (x - x0) / (x1 - x0) * (y1 - y0);
+    }
   }
-  return weight * clamp(1 - (tempC - 25) / 5 * 0.5, 0.5, 1);
+  return table[table.length - 1][1];
 }
-function computeScore(hour, pressureTrend, profile = "default") {
-  const weights = PROFILE_WEIGHTS[profile] || PROFILE_WEIGHTS.default;
-  const components = [
+function cloudsScore(cloud_low, cloud_mid, cloud_high, cloud_total) {
+  if (cloud_low !== null && cloud_mid !== null && cloud_high !== null) {
+    return clamp(100 - 0.6 * cloud_low - 0.3 * cloud_mid - 0.1 * cloud_high, 0, 100);
+  }
+  if (cloud_total !== null) {
+    return clamp(100 - cloud_total, 0, 100);
+  }
+  return 50;
+}
+var SEEING_TO_FWHM = [
+  [1, 0.7],
+  [2, 0.9],
+  [3, 1.1],
+  [4, 1.4],
+  [5, 1.8],
+  [6, 2.5],
+  [7, 3.5]
+];
+var FWHM_QUALITY = [
+  [0.7, 100],
+  [1, 90],
+  [1.3, 80],
+  [1.6, 70],
+  [2, 60],
+  [2.5, 45],
+  [3, 30],
+  [3.5, 15]
+];
+function seeingScore(seeing_1_7) {
+  if (seeing_1_7 === null) return 50;
+  const fwhm = clamp(interpolate(clamp(seeing_1_7, 1, 7), SEEING_TO_FWHM), 0.7, 3.5);
+  return interpolate(fwhm, FWHM_QUALITY);
+}
+function transparencyScore(visibility_m, humidity_pct) {
+  let score = 100;
+  if (humidity_pct !== null) {
+    if (humidity_pct > 90) score -= 25;
+    else if (humidity_pct > 80) score -= 15;
+    else if (humidity_pct > 70) score -= 5;
+  }
+  if (visibility_m !== null) {
+    const vis_km = visibility_m / 1e3;
+    if (vis_km < 5) score -= 30;
+    else if (vis_km < 10) score -= 15;
+    else if (vis_km < 20) score -= 5;
+  }
+  return clamp(score, 0, 100);
+}
+function computeAtmosphere(hour) {
+  const cq = cloudsScore(hour.cloud_low, hour.cloud_mid, hour.cloud_high, hour.cloud_total);
+  const sq = seeingScore(hour.seeing);
+  const tq = transparencyScore(hour.visibility_m, hour.humidity_pct);
+  const score = clamp(Math.round(0.4 * cq + 0.35 * sq + 0.25 * tq), 0, 100);
+  return {
+    score,
+    parameters: [
+      { key: "clouds", label: "Clouds", value: Math.round(cq), points: Math.round(0.4 * cq) },
+      { key: "seeing", label: "Seeing", value: Math.round(sq), points: Math.round(0.35 * sq) },
+      { key: "transparency", label: "Transparency", value: Math.round(tq), points: Math.round(0.25 * tq) }
+    ]
+  };
+}
+function computeSkyDarkness(hour, bortle) {
+  const bortleClamped = clamp(Math.round(bortle), 1, 9);
+  const base = BORTLE_BASE[bortleClamped] ?? 70;
+  const sunAlt = hour.sun_alt_deg;
+  if (sunAlt !== null && sunAlt > 0) {
+    return {
+      score: 0,
+      parameters: [
+        { key: "bortle", label: `Bortle ${bortleClamped}`, value: bortleClamped, points: 0 },
+        { key: "sun", label: "Daylight", value: Math.round(sunAlt), points: -base },
+        { key: "moon", label: "Moon", value: 0, points: 0 }
+      ]
+    };
+  }
+  let twilightPenalty = 0;
+  if (sunAlt !== null) {
+    if (sunAlt > -6) twilightPenalty = 70;
+    else if (sunAlt > -12) twilightPenalty = 40;
+    else if (sunAlt > -18) twilightPenalty = 20;
+  }
+  let moonPenalty = 0;
+  const moonAlt = hour.moon_alt_deg;
+  const moonIllum = hour.moon_illum_pct;
+  if (moonAlt !== null && moonAlt > 0 && moonIllum !== null) {
+    if (moonAlt > 60 && moonIllum > 75) moonPenalty = 45;
+    else if (moonAlt > 40 && moonIllum > 50) moonPenalty = 30;
+    else if (moonAlt > 20 && moonIllum > 25) moonPenalty = 15;
+    else if (moonAlt <= 10) moonPenalty = 5;
+  }
+  const score = clamp(base - twilightPenalty - moonPenalty, 0, 100);
+  return {
+    score,
+    parameters: [
+      {
+        key: "bortle",
+        label: `Bortle ${bortleClamped}`,
+        value: bortleClamped,
+        points: base
+      },
+      {
+        key: "twilight",
+        label: sunAlt !== null ? `Sun ${sunAlt.toFixed(1)}\xB0` : "Sun unknown",
+        value: Math.round(sunAlt ?? -90),
+        points: -twilightPenalty
+      },
+      {
+        key: "moon",
+        label: moonAlt !== null && moonAlt > 0 ? `Moon ${moonAlt.toFixed(0)}\xB0 / ${(moonIllum ?? 0).toFixed(0)}%` : "Moon below horizon",
+        value: Math.round(moonIllum ?? 0),
+        points: -moonPenalty
+      }
+    ]
+  };
+}
+var DEW_SPREAD_TABLE = [
+  [0, 5],
+  [1, 20],
+  [2, 40],
+  [3, 60],
+  [4, 80],
+  [6, 100]
+];
+function computeDewSafety(hour) {
+  let spreadScore = 60;
+  let spread = null;
+  if (hour.temp_c !== null && hour.dewpoint_c !== null) {
+    spread = hour.temp_c - hour.dewpoint_c;
+    spreadScore = Math.round(interpolate(spread, DEW_SPREAD_TABLE));
+  }
+  const windKmh = (hour.wind_m_s ?? 0) * 3.6;
+  const windMod = windKmh > 10 ? 5 : windKmh < 2 ? -5 : 0;
+  const score = clamp(spreadScore + windMod, 0, 100);
+  return {
+    score,
+    parameters: [
+      {
+        key: "dew_spread",
+        label: spread !== null ? `Spread ${spread.toFixed(1)}\xB0C` : "Dew spread unknown",
+        value: spread !== null ? Math.round(spread * 10) / 10 : 0,
+        points: spreadScore
+      },
+      {
+        key: "wind_modifier",
+        label: `Wind (${windKmh.toFixed(0)} km/h)`,
+        value: Math.round(windKmh),
+        points: windMod
+      }
+    ]
+  };
+}
+var WIND_KMH_TABLE = [
+  [0, 100],
+  [5, 100],
+  [10, 85],
+  [15, 70],
+  [20, 50],
+  [30, 30],
+  [50, 10]
+];
+var HUMIDITY_STAB_TABLE = [
+  [0, 100],
+  [50, 100],
+  [60, 90],
+  [70, 80],
+  [80, 60],
+  [90, 40],
+  [100, 20]
+];
+function pressureTrendScore(trend) {
+  if (trend === null) return 70;
+  if (trend >= -1 && trend <= 1) return 100;
+  if (trend > 1 && trend <= 3) return 80;
+  if (trend < -1 && trend >= -3) return 80;
+  if (trend > 3 && trend <= 6) return 60;
+  if (trend < -3 && trend >= -6) return 50;
+  return 30;
+}
+function computeStability(hour, pressureTrend) {
+  const windKmh = hour.wind_m_s !== null ? hour.wind_m_s * 3.6 : null;
+  const wq = windKmh !== null ? interpolate(windKmh, WIND_KMH_TABLE) : 70;
+  const hq = interpolate(hour.humidity_pct ?? 65, HUMIDITY_STAB_TABLE);
+  const pq = pressureTrendScore(pressureTrend);
+  const score = clamp(Math.round(0.45 * wq + 0.35 * hq + 0.2 * pq), 0, 100);
+  return {
+    score,
+    parameters: [
+      {
+        key: "wind",
+        label: windKmh !== null ? `Wind ${windKmh.toFixed(0)} km/h` : "Wind unknown",
+        value: Math.round(wq),
+        points: Math.round(0.45 * wq)
+      },
+      {
+        key: "humidity",
+        label: `Humidity ${hour.humidity_pct ?? "?"}%`,
+        value: Math.round(hq),
+        points: Math.round(0.35 * hq)
+      },
+      {
+        key: "pressure_trend",
+        label: pressureTrend !== null ? `Pressure ${pressureTrend > 0 ? "+" : ""}${pressureTrend.toFixed(1)} hPa/6h` : "Pressure unknown",
+        value: Math.round(pq),
+        points: Math.round(0.2 * pq)
+      }
+    ]
+  };
+}
+function computeGate(hour) {
+  const vis_km = (hour.visibility_m ?? 1e4) / 1e3;
+  if ((hour.rain_mm ?? 0) > 0 || (hour.snowfall_mm ?? 0) > 0 || (hour.cloud_low ?? 0) >= 95 || (hour.cloud_mid ?? 0) >= 95 || vis_km <= 1) {
+    return "CLOSED";
+  }
+  if ((hour.cloud_low ?? 0) >= 70 || (hour.cloud_mid ?? 0) >= 70 || (hour.cloud_high ?? 0) >= 80 || vis_km <= 5 || (hour.humidity_pct ?? 0) >= 90) {
+    return "MARGINAL";
+  }
+  return "OPEN";
+}
+function computeScore(hour, pressureTrend, profile = "balanced", bortle = 5) {
+  const weights = PROFILE_WEIGHTS[profile] ?? PROFILE_WEIGHTS.balanced;
+  const atm = computeAtmosphere(hour);
+  const sky = computeSkyDarkness(hour, bortle);
+  const dew = computeDewSafety(hour);
+  const stab = computeStability(hour, pressureTrend);
+  const weightedSum = atm.score * weights.atmosphere + sky.score * weights.sky_darkness + dew.score * weights.dew_safety + stab.score * weights.stability;
+  const gate = computeGate(hour);
+  let cappedScore = weightedSum;
+  if (gate === "CLOSED") cappedScore = Math.min(cappedScore, 20);
+  else if (gate === "MARGINAL") cappedScore = Math.min(cappedScore, 69);
+  const finalScore = clamp(Math.round(cappedScore), 0, 100);
+  const categories = [
     {
-      key: "clouds",
-      label: "Clouds",
-      value: hour.cloud_total ?? 0,
-      points: computeCloudPoints(hour.cloud_total, weights.clouds)
+      key: "atmosphere",
+      label: "Atmosphere",
+      score: atm.score,
+      weight: weights.atmosphere,
+      points: Math.round(atm.score * weights.atmosphere * 10) / 10,
+      parameters: atm.parameters
     },
     {
-      key: "wind",
-      label: "Wind",
-      value: hour.wind_m_s ?? 0,
-      points: computeWindPoints(hour.wind_m_s, weights.wind)
+      key: "sky_darkness",
+      label: "Sky Darkness",
+      score: sky.score,
+      weight: weights.sky_darkness,
+      points: Math.round(sky.score * weights.sky_darkness * 10) / 10,
+      parameters: sky.parameters
     },
     {
-      key: "seeing",
-      label: "Seeing",
-      value: hour.seeing ?? 0,
-      points: computeSeeingPoints(hour.seeing, weights.seeing)
+      key: "dew_safety",
+      label: "Dew Safety",
+      score: dew.score,
+      weight: weights.dew_safety,
+      points: Math.round(dew.score * weights.dew_safety * 10) / 10,
+      parameters: dew.parameters
     },
     {
-      key: "transparency",
-      label: "Transparency",
-      value: hour.transparency ?? 0,
-      points: computeTransparencyPoints(hour.transparency, weights.transparency)
-    },
-    {
-      key: "visibility",
-      label: "Visibility",
-      value: hour.visibility_m ?? 0,
-      points: computeVisibilityPoints(hour.visibility_m, weights.visibility)
-    },
-    {
-      key: "pressure_trend",
-      label: "Pressure trend",
-      value: pressureTrend ?? 0,
-      points: computePressureTrendPoints(pressureTrend, weights.pressure_trend)
-    },
-    {
-      key: "precip_risk",
-      label: "Precip risk",
-      value: hour.precip_prob ?? 0,
-      points: computePrecipRiskPoints(hour.precip_prob, hour.precip_mm, weights.precip_risk)
-    },
-    {
-      key: "temp",
-      label: "Temperature",
-      value: hour.temp_c ?? 0,
-      points: computeTempPoints(hour.temp_c, weights.temp)
+      key: "stability",
+      label: "Stability",
+      score: stab.score,
+      weight: weights.stability,
+      points: Math.round(stab.score * weights.stability * 10) / 10,
+      parameters: stab.parameters
     }
   ];
-  const total = components.reduce((sum, c) => sum + c.points, 0);
-  const clampedTotal = clamp(Math.round(total), 0, 100);
   return {
-    score: clampedTotal,
+    score: finalScore,
     breakdown: {
-      components,
-      total: Math.round(total * 10) / 10,
-      clamped_total: clampedTotal
-    }
+      categories,
+      total: Math.round(weightedSum * 10) / 10,
+      clamped_total: finalScore
+    },
+    gate,
+    atmosphere_score: atm.score,
+    sky_darkness_score: sky.score,
+    dew_safety_score: dew.score,
+    stability_score: stab.score
   };
 }
 
@@ -437,7 +677,7 @@ function computeDerived(hours) {
 }
 
 // functions/api/astro-weather.ts
-var VALID_PROFILES = ["default", "visual", "broadband", "planetary"];
+var VALID_PROFILES = ["balanced", "visual", "broadband", "planetary"];
 var HOURS_MIN = 1;
 var HOURS_MAX = 168;
 function parseQueryParams(url) {
@@ -447,7 +687,9 @@ function parseQueryParams(url) {
   const tz = typeof tzRaw === "string" && tzRaw.length > 0 ? tzRaw : "Europe/Warsaw";
   const hoursRaw = parseInt(url.searchParams.get("hours") ?? "72", 10);
   const hours = Math.min(Math.max(Number.isFinite(hoursRaw) ? hoursRaw : 72, HOURS_MIN), HOURS_MAX);
-  const profile = url.searchParams.get("profile") ?? "default";
+  const profile = url.searchParams.get("profile") ?? "balanced";
+  const bortleRaw = parseInt(url.searchParams.get("bortle") ?? "5", 10);
+  const bortle = Math.min(9, Math.max(1, Number.isFinite(bortleRaw) ? bortleRaw : 5));
   const name = url.searchParams.get("name") ?? void 0;
   if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
     throw new Error("Invalid lat: must be number in [-90, 90]");
@@ -458,7 +700,7 @@ function parseQueryParams(url) {
   if (!VALID_PROFILES.includes(profile)) {
     throw new Error(`Invalid profile: must be one of ${VALID_PROFILES.join(", ")}`);
   }
-  return { lat, lon, tz, hours, profile, name };
+  return { lat, lon, tz, hours, profile, bortle, name };
 }
 function jsonHeaders(cfRay) {
   const h = {
@@ -515,7 +757,7 @@ async function onRequest(context) {
   try {
     const url = new URL(request.url);
     const parsed = parseQueryParams(url);
-    const { lat, lon, tz, hours, profile, name } = parsed;
+    const { lat, lon, tz, hours, profile, bortle, name } = parsed;
     reqParams = { lat, lon, tz, hours, profile, name };
     const cache = caches.default;
     const cacheKey = new Request(url.toString(), request);
@@ -560,7 +802,7 @@ async function onRequest(context) {
       }
     }
     const stData = await fetchSevenTimer(lat, lon);
-    let hourRecords = mergeHourlyData(omResult.data, stData, tz, hours);
+    let hourRecords = mergeHourlyData(omResult.data, stData, tz, hours, lat, lon);
     if (!hourRecords || hourRecords.length === 0) {
       console.error("[astro-weather] mergeHourlyData returned empty array", {
         omData: omResult.data,
@@ -573,9 +815,22 @@ async function onRequest(context) {
     for (let i = 0; i < hourRecords.length; i++) {
       const hour = hourRecords[i];
       const pressureTrend = i + 6 < hourRecords.length ? (hourRecords[i + 6].pressure_hpa ?? null) - (hour.pressure_hpa ?? 0) : null;
-      const { score, breakdown } = computeScore(hour, pressureTrend, profile);
+      const {
+        score,
+        breakdown,
+        gate,
+        atmosphere_score,
+        sky_darkness_score,
+        dew_safety_score,
+        stability_score
+      } = computeScore(hour, pressureTrend, profile, bortle);
       hour.score = score;
       hour.score_breakdown = breakdown;
+      hour.gate = gate;
+      hour.atmosphere_score = atmosphere_score;
+      hour.sky_darkness_score = sky_darkness_score;
+      hour.dew_safety_score = dew_safety_score;
+      hour.stability_score = stability_score;
     }
     const derived = computeDerived(hourRecords);
     const location = { lat, lon, tz };
@@ -584,6 +839,7 @@ async function onRequest(context) {
       location,
       horizon_hours: hourRecords.length,
       profile,
+      bortle,
       hours: hourRecords,
       derived
     };

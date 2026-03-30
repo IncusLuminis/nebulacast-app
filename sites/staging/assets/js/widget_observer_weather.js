@@ -25,8 +25,8 @@
   // ── Score badge colour ───────────────────────────────────────────────────
   function scoreColor(score) {
     if (score == null) return '#888';
-    if (score >= 70) return '#5cce8c';
-    if (score >= 45) return '#e0a84a';
+    if (score >= 75) return '#5cce8c';
+    if (score >= 50) return '#e0a84a';
     return '#e05c5c';
   }
 
@@ -115,8 +115,8 @@
       + '</div>';
 
     // ── Mode scores
-    var modeOrder = ['balanced','visual','photography','planetary'];
-    var modeLabels = { balanced:'Balanced', visual:'Visual', photography:'Photo', planetary:'Planetary' };
+    var modeOrder = ['balanced','visual','broadband','planetary'];
+    var modeLabels = { balanced:'Balanced', visual:'Visual', broadband:'Broadband', planetary:'Planetary' };
     var modeHtml = '<div class="owp-decision-section">'
       + '<div class="owp-section-label">Mode scores (best 3h / next 24h)</div>'
       + '<div class="owp-modes-row">';
