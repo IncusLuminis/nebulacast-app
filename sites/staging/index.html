@@ -196,8 +196,12 @@
       border-right: 1px solid rgba(255,255,255,0.06);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
+    .console-feed::-webkit-scrollbar { width: 4px; }
+    .console-feed::-webkit-scrollbar-track { background: transparent; }
+    .console-feed::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     .feed-header {
       padding: 10px 14px 8px;
@@ -321,36 +325,27 @@
 
     /* ─── Feed Sections (collapsible) ──────────────────── */
     .feed-section {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
+      flex-shrink: 0;
     }
 
-    #fs-ranking { flex: 1; }
-    #fs-ranking.is-collapsed { flex: 0 0 auto; }
+    /* Space Weather Alerts */
+    #fs-swx { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    #fsb-swx { overflow-y: auto; max-height: 230px; }
+    #fsb-swx::-webkit-scrollbar { width: 4px; }
+    #fsb-swx::-webkit-scrollbar-track { background: transparent; }
+    #fsb-swx::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
-    #fsb-ranking {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      min-height: 0;
-    }
+    /* Best Objects Today — natural block height */
+    #fsb-ranking .feed-list { overflow: visible; }
+
+    /* Sky Alerts */
+    #fs-sky { border-top: 1px solid rgba(255,255,255,0.06); }
+    #fsb-sky { overflow-y: auto; max-height: 230px; }
+    #fsb-sky::-webkit-scrollbar { width: 4px; }
+    #fsb-sky::-webkit-scrollbar-track { background: transparent; }
+    #fsb-sky::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     .feed-section.is-collapsed .feed-section-body { display: none !important; }
-
-    #fs-alerts {
-      flex-shrink: 0;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
-
-    #fsb-alerts {
-      overflow-y: auto;
-      max-height: 260px;
-    }
-    #fsb-alerts::-webkit-scrollbar { width: 4px; }
-    #fsb-alerts::-webkit-scrollbar-track { background: transparent; }
-    #fsb-alerts::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     .feed-section-hdr {
       padding: 8px 14px;
@@ -381,9 +376,11 @@
       display: none;
     }
     .fsh-chevron {
-      font-size: 11px;
+      font-size: 15px;
+      line-height: 1;
       transition: transform 0.2s;
-      opacity: 0.45;
+      opacity: 0.65;
+      flex-shrink: 0;
     }
     .feed-section.is-collapsed .fsh-chevron { transform: rotate(-90deg); }
 
@@ -445,6 +442,11 @@
       font-size: 11px;
       color: rgba(255,255,255,0.4);
     }
+    /* Sky alert group colors */
+    .sky-risk .alert-badge  { color: #f44336; background: rgba(244,67,54,0.15); }
+    .sky-neo .alert-badge   { color: #42a5f5; background: rgba(66,165,245,0.12); }
+    .sky-tran .alert-badge  { color: #ab47bc; background: rgba(171,71,188,0.13); }
+    .sky-nova .alert-badge  { color: #ffee58; background: rgba(255,238,88,0.11); }
 
     /* ─── Context Tools ──────────────────────────────────── */
     .console-tools {
@@ -677,11 +679,25 @@
     <!-- ── LAYER 2: PRIORITY FEED ── -->
     <aside class="console-feed">
 
-      <!-- Ranking section -->
+      <!-- 1. Space Weather Alerts -->
+      <div class="feed-section" id="fs-swx">
+        <div class="feed-section-hdr" data-toggle="swx">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Space Weather Alerts</span>
+          <span class="fsh-badge" id="swx-badge"></span>
+        </div>
+        <div class="feed-section-body" id="fsb-swx">
+          <div class="alerts-list" id="swx-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Best Objects Today -->
       <div class="feed-section" id="fs-ranking">
         <div class="feed-section-hdr" data-toggle="ranking">
-          <span class="fsh-title">Ranking</span>
           <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Best Objects Today</span>
         </div>
         <div class="feed-section-body" id="fsb-ranking">
           <div class="feed-list" id="feed-list">
@@ -690,15 +706,15 @@
         </div>
       </div>
 
-      <!-- Alerts section -->
-      <div class="feed-section" id="fs-alerts">
-        <div class="feed-section-hdr" data-toggle="alerts">
-          <span class="fsh-title">Alerts</span>
-          <span class="fsh-badge" id="alerts-badge"></span>
+      <!-- 3. Sky Alerts -->
+      <div class="feed-section" id="fs-sky">
+        <div class="feed-section-hdr" data-toggle="sky">
           <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Sky Alerts</span>
+          <span class="fsh-badge" id="sky-badge"></span>
         </div>
-        <div class="feed-section-body" id="fsb-alerts">
-          <div class="alerts-list" id="alerts-list">
+        <div class="feed-section-body" id="fsb-sky">
+          <div class="alerts-list" id="sky-list">
             <div class="feed-loading">Loading…</div>
           </div>
         </div>
@@ -1323,45 +1339,42 @@
     });
   });
 
-  // ── Alerts ──────────────────────────────────────────────
-  async function loadAlerts() {
-    const alertsList = document.getElementById('alerts-list');
-    const alertsBadge = document.getElementById('alerts-badge');
-    if (!alertsList) return;
+  // ── Shared age formatter ────────────────────────────────
+  function fmtAge(iso) {
+    if (!iso) return '';
+    try {
+      const diff = (Date.now() - new Date(iso)) / 1000;
+      if (diff < 3600) return `${Math.round(diff / 60)}m`;
+      if (diff < 86400) return `${Math.round(diff / 3600)}h`;
+      return `${Math.round(diff / 86400)}d`;
+    } catch (_) { return ''; }
+  }
+
+  // ── Space Weather Alerts ────────────────────────────────
+  async function loadSwxAlerts() {
+    const list = document.getElementById('swx-list');
+    const badge = document.getElementById('swx-badge');
+    if (!list) return;
 
     let sw = null;
     try { sw = await fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
 
     const alerts = (sw?.alerts_preview || []).slice(0, 8);
     if (!alerts.length) {
-      alertsList.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
       return;
     }
-
-    if (alertsBadge) {
-      alertsBadge.textContent = alerts.length;
-      alertsBadge.style.display = '';
-    }
-
-    function fmtAlertTime(iso) {
-      if (!iso) return '';
-      try {
-        const diff = (Date.now() - new Date(iso)) / 1000;
-        if (diff < 3600) return `${Math.round(diff / 60)}m`;
-        if (diff < 86400) return `${Math.round(diff / 3600)}h`;
-        return `${Math.round(diff / 86400)}d`;
-      } catch (_) { return ''; }
-    }
+    if (badge) { badge.textContent = alerts.length; badge.style.display = ''; }
 
     let html = '';
     for (const a of alerts) {
       const sev = Math.min(5, Math.max(1, a.severity || 1));
-      const badge = `${a.domain || '?'}${sev}`;
-      const time = fmtAlertTime(a.t_utc);
+      const lbl = `${a.domain || '?'}${sev}`;
+      const time = fmtAge(a.t_utc);
       const title = (a.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const sub = (a.summary_short || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       html += `<div class="alert-item alert-sev-${sev}">
-        <div class="alert-badge">${badge}</div>
+        <div class="alert-badge">${lbl}</div>
         <div class="alert-info">
           <div class="alert-title">${title}</div>
           ${sub ? `<div class="alert-sub">${sub}</div>` : ''}
@@ -1369,13 +1382,55 @@
         ${time ? `<div class="alert-time-col">${time}</div>` : ''}
       </div>`;
     }
-    alertsList.innerHTML = html;
+    list.innerHTML = html;
+  }
+
+  // ── Sky Alerts ──────────────────────────────────────────
+  async function loadSkyAlerts() {
+    const list = document.getElementById('sky-list');
+    const badge = document.getElementById('sky-badge');
+    if (!list) return;
+
+    let data = null;
+    try { data = await fetch('/sky/data/alerts_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+
+    const items = (data?.items || []).slice(0, 10);
+    if (!items.length) {
+      list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      return;
+    }
+    if (badge) { badge.textContent = items.length; badge.style.display = ''; }
+
+    const GRP_LABEL = { risk: 'RISK', neo: 'NEO', neocp: 'NEO?', transient: 'TRAN', nova: 'NOVA' };
+    const GRP_CLS   = { risk: 'sky-risk', neo: 'sky-neo', neocp: 'sky-neo', transient: 'sky-tran', nova: 'sky-nova' };
+
+    let html = '';
+    for (const a of items) {
+      const grp = a.group || a.type || 'neo';
+      const lbl = GRP_LABEL[grp] || grp.toUpperCase().slice(0, 4);
+      const cls = GRP_CLS[grp] || 'sky-neo';
+      const time = fmtAge(a.updated_utc || a.ingested_utc);
+      const title = (a.title || a.id || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const note = (a.note || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const mag = a.mag != null ? `mag&nbsp;${a.mag.toFixed(1)}` : '';
+      const sub = [note, mag].filter(Boolean).join(' · ');
+      html += `<div class="alert-item ${cls}">
+        <div class="alert-badge">${lbl}</div>
+        <div class="alert-info">
+          <div class="alert-title">${title}</div>
+          ${sub ? `<div class="alert-sub">${sub}</div>` : ''}
+        </div>
+        ${time ? `<div class="alert-time-col">${time}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
   }
 
   // ── Boot ───────────────────────────────────────────────
   loadHero();
   loadFeed();
-  loadAlerts();
+  loadSwxAlerts();
+  loadSkyAlerts();
 
 </script>
 </body>
