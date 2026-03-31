@@ -54,7 +54,7 @@
       font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.7);
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -96,7 +96,7 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.45);
     }
 
     .hero-card-value {
@@ -108,7 +108,7 @@
 
     .hero-card-sub {
       font-size: 11px;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.55);
       white-space: nowrap;
     }
 
@@ -178,7 +178,7 @@
       align-items: center;
       gap: 12px;
       padding: 0 4px;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.4);
       font-size: 12px;
     }
 
@@ -205,7 +205,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.4);
       border-bottom: 1px solid rgba(255,255,255,0.05);
       flex-shrink: 0;
     }
@@ -240,7 +240,7 @@
     .feed-rank {
       font-size: 10px;
       font-weight: 700;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.35);
       text-align: right;
     }
 
@@ -266,7 +266,7 @@
 
     .feed-sub {
       font-size: 10px;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.5);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -284,7 +284,7 @@
     .feed-time {
       font-size: 10px;
       font-weight: 600;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.6);
       font-variant-numeric: tabular-nums;
     }
 
@@ -310,13 +310,140 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.28);
     }
 
     .feed-loading {
       padding: 24px 14px;
       font-size: 11px;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ─── Feed Sections (collapsible) ──────────────────── */
+    .feed-section {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    #fs-ranking { flex: 1; }
+    #fs-ranking.is-collapsed { flex: 0 0 auto; }
+
+    #fsb-ranking {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .feed-section.is-collapsed .feed-section-body { display: none !important; }
+
+    #fs-alerts {
+      flex-shrink: 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    #fsb-alerts {
+      overflow-y: auto;
+      max-height: 260px;
+    }
+    #fsb-alerts::-webkit-scrollbar { width: 4px; }
+    #fsb-alerts::-webkit-scrollbar-track { background: transparent; }
+    #fsb-alerts::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .feed-section-hdr {
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      user-select: none;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .feed-section-hdr:hover { color: rgba(255,255,255,0.65); }
+    .fsh-title { flex: 1; }
+    .fsh-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 8px;
+      background: rgba(244,67,54,0.2);
+      color: #f44336;
+      letter-spacing: 0.03em;
+      display: none;
+    }
+    .fsh-chevron {
+      font-size: 11px;
+      transition: transform 0.2s;
+      opacity: 0.45;
+    }
+    .feed-section.is-collapsed .fsh-chevron { transform: rotate(-90deg); }
+
+    /* ─── Alerts in left panel ──────────────────────────── */
+    .alerts-list { padding: 4px 0; }
+    .alert-item {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: start;
+      gap: 7px;
+      padding: 7px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .alert-badge {
+      font-size: 9px;
+      font-weight: 800;
+      text-align: center;
+      padding: 3px 0;
+      border-radius: 4px;
+      line-height: 1.3;
+      letter-spacing: 0.02em;
+      margin-top: 1px;
+    }
+    .alert-sev-1 .alert-badge { color: #ffcc02; background: rgba(255,204,2,0.1); }
+    .alert-sev-2 .alert-badge { color: #ff9800; background: rgba(255,152,0,0.12); }
+    .alert-sev-3 .alert-badge { color: #ff5722; background: rgba(255,87,34,0.15); }
+    .alert-sev-4 .alert-badge { color: #f44336; background: rgba(244,67,54,0.18); }
+    .alert-sev-5 .alert-badge { color: #e040fb; background: rgba(224,64,251,0.15); }
+    .alert-info { min-width: 0; }
+    .alert-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.82);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .alert-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .alert-time-col {
+      font-size: 10px;
+      color: rgba(255,255,255,0.38);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      padding-top: 1px;
+      flex-shrink: 0;
+    }
+    .alerts-empty {
+      padding: 16px 14px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
     }
 
     /* ─── Context Tools ──────────────────────────────────── */
@@ -340,7 +467,7 @@
       padding: 6px 14px 8px;
       font-size: 12px;
       font-weight: 500;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.55);
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
@@ -351,7 +478,7 @@
     }
 
     .tools-tab:hover {
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,0.85);
     }
 
     .tools-tab.is-active {
@@ -475,7 +602,7 @@
       padding: 5px 12px 7px;
       font-size: 12px;
       font-weight: 500;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.55);
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
@@ -484,7 +611,7 @@
       margin-bottom: -1px;
     }
 
-    .events-subtab:hover { color: rgba(255,255,255,0.7); }
+    .events-subtab:hover { color: rgba(255,255,255,0.85); }
     .events-subtab.is-active { color: #fff; border-bottom-color: #4a6fa5; }
 
     .events-subpanel { display: none; padding: 16px 20px; }
@@ -549,10 +676,34 @@
 
     <!-- ── LAYER 2: PRIORITY FEED ── -->
     <aside class="console-feed">
-      <div class="feed-header">Tonight's Targets</div>
-      <div class="feed-list" id="feed-list">
-        <div class="feed-loading">Loading…</div>
+
+      <!-- Ranking section -->
+      <div class="feed-section" id="fs-ranking">
+        <div class="feed-section-hdr" data-toggle="ranking">
+          <span class="fsh-title">Ranking</span>
+          <span class="fsh-chevron">▾</span>
+        </div>
+        <div class="feed-section-body" id="fsb-ranking">
+          <div class="feed-list" id="feed-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
       </div>
+
+      <!-- Alerts section -->
+      <div class="feed-section" id="fs-alerts">
+        <div class="feed-section-hdr" data-toggle="alerts">
+          <span class="fsh-title">Alerts</span>
+          <span class="fsh-badge" id="alerts-badge"></span>
+          <span class="fsh-chevron">▾</span>
+        </div>
+        <div class="feed-section-body" id="fsb-alerts">
+          <div class="alerts-list" id="alerts-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
     </aside>
 
     <!-- ── LAYER 3: CONTEXT TOOLS ── -->
@@ -1164,9 +1315,67 @@
     });
   }
 
+  // ── Section toggles ────────────────────────────────────
+  document.querySelectorAll('.feed-section-hdr[data-toggle]').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const section = document.getElementById(`fs-${hdr.dataset.toggle}`);
+      if (section) section.classList.toggle('is-collapsed');
+    });
+  });
+
+  // ── Alerts ──────────────────────────────────────────────
+  async function loadAlerts() {
+    const alertsList = document.getElementById('alerts-list');
+    const alertsBadge = document.getElementById('alerts-badge');
+    if (!alertsList) return;
+
+    let sw = null;
+    try { sw = await fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+
+    const alerts = (sw?.alerts_preview || []).slice(0, 8);
+    if (!alerts.length) {
+      alertsList.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      return;
+    }
+
+    if (alertsBadge) {
+      alertsBadge.textContent = alerts.length;
+      alertsBadge.style.display = '';
+    }
+
+    function fmtAlertTime(iso) {
+      if (!iso) return '';
+      try {
+        const diff = (Date.now() - new Date(iso)) / 1000;
+        if (diff < 3600) return `${Math.round(diff / 60)}m`;
+        if (diff < 86400) return `${Math.round(diff / 3600)}h`;
+        return `${Math.round(diff / 86400)}d`;
+      } catch (_) { return ''; }
+    }
+
+    let html = '';
+    for (const a of alerts) {
+      const sev = Math.min(5, Math.max(1, a.severity || 1));
+      const badge = `${a.domain || '?'}${sev}`;
+      const time = fmtAlertTime(a.t_utc);
+      const title = (a.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const sub = (a.summary_short || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      html += `<div class="alert-item alert-sev-${sev}">
+        <div class="alert-badge">${badge}</div>
+        <div class="alert-info">
+          <div class="alert-title">${title}</div>
+          ${sub ? `<div class="alert-sub">${sub}</div>` : ''}
+        </div>
+        ${time ? `<div class="alert-time-col">${time}</div>` : ''}
+      </div>`;
+    }
+    alertsList.innerHTML = html;
+  }
+
   // ── Boot ───────────────────────────────────────────────
   loadHero();
   loadFeed();
+  loadAlerts();
 
 </script>
 </body>
