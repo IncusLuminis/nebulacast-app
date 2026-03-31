@@ -1273,6 +1273,10 @@
   //  NIGHT OVERVIEW PANEL
   // ══════════════════════════════════════════════════════════
 
+  // Preload moon bitmap
+  const _moonImg = new Image();
+  _moonImg.src = '/assets/bitmaps/Moon.png';
+
   // Module state for interactive NOP elements
   let _nopProfiles = {}, _nopActiveProfile = 'balanced';
   let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'cloud';
@@ -1293,47 +1297,83 @@
     if (!canvas) return;
     const size = canvas.width, r = size/2 - 1, cx = size/2, cy = size/2;
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, size, size);
-    // Background disk
-    ctx.fillStyle = 'rgba(18,22,38,0.9)';
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
-    // Clip to disk
-    ctx.save();
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.clip();
-    const litColor = 'rgba(220,215,178,0.88)';
-    // termX: positive = shadow ellipse on same side as lit hemisphere (crescent)
-    //        negative = light ellipse extends to opposite side (gibbous)
-    const termX = r * Math.cos(phase * 2 * Math.PI);
-    if (phase < 0.5) {
-      // Waxing: right side lit
-      ctx.fillStyle = litColor;
-      ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2,false); ctx.closePath(); ctx.fill();
-      if (termX < 0) {
-        ctx.fillStyle = litColor;
-        ctx.beginPath(); ctx.ellipse(cx,cy,Math.abs(termX),r,0,0,Math.PI*2); ctx.fill();
-      } else if (termX > 0.5) {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath(); ctx.ellipse(cx,cy,termX,r,0,0,Math.PI*2); ctx.fill();
-        ctx.globalCompositeOperation = 'source-over';
+
+    const render = () => {
+      ctx.clearRect(0, 0, size, size);
+
+      // 1. Clip to circle and draw bitmap
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+      ctx.drawImage(_moonImg, cx-r, cy-r, r*2, r*2);
+      ctx.restore();
+
+      // 2. Build shadow on offscreen canvas, then composite over moon
+      //    Using offscreen avoids destination-out eating the bitmap
+      const os = document.createElement('canvas');
+      os.width = size; os.height = size;
+      const oc = os.getContext('2d');
+      const DARK = 'rgba(4, 8, 20, 0.89)';
+      oc.fillStyle = DARK;
+
+      // ex = r * cos(2π*phase):
+      //   phase=0    → ex= r   (new moon — full shadow)
+      //   phase=0.25 → ex= 0   (first quarter — half shadow)
+      //   phase=0.5  → ex=-r   (full moon — no shadow)
+      //   phase=0.75 → ex= 0   (last quarter — half shadow)
+      //   phase=1    → ex= r   (new moon again)
+      const ex = r * Math.cos(2 * Math.PI * phase);
+
+      if (phase <= 0.02 || phase >= 0.98) {
+        // New moon: full shadow disk
+        oc.beginPath(); oc.arc(cx, cy, r, 0, Math.PI*2); oc.fill();
+
+      } else if (phase > 0.02 && phase < 0.48) {
+        // Waxing: shadow on left half
+        oc.beginPath(); oc.moveTo(cx, cy-r);
+        oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, true); // left semicircle
+        oc.closePath(); oc.fill();
+        if (ex > 0) {
+          // Crescent: shadow ellipse also covers part of right
+          oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
+        } else {
+          // Gibbous: cut shadow back — lit area extends into left
+          oc.globalCompositeOperation = 'destination-out';
+          oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
+        }
+
+      } else if (phase > 0.52 && phase < 0.98) {
+        // Waning: shadow on right half
+        oc.beginPath(); oc.moveTo(cx, cy-r);
+        oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, false); // right semicircle
+        oc.closePath(); oc.fill();
+        if (ex > 0) {
+          // Crescent: shadow ellipse also covers part of left
+          oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
+        } else {
+          // Gibbous: cut shadow back — lit area extends into right
+          oc.globalCompositeOperation = 'destination-out';
+          oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
+        }
       }
+      // Full moon (0.48–0.52): no shadow drawn
+
+      // 3. Clip offscreen shadow to moon circle before compositing
+      const os2 = document.createElement('canvas');
+      os2.width = size; os2.height = size;
+      const oc2 = os2.getContext('2d');
+      oc2.beginPath(); oc2.arc(cx, cy, r, 0, Math.PI*2);
+      oc2.fillStyle = '#000'; oc2.fill(); // mask
+      oc2.globalCompositeOperation = 'source-in';
+      oc2.drawImage(os, 0, 0);
+
+      ctx.drawImage(os2, 0, 0);
+    };
+
+    if (_moonImg.complete && _moonImg.naturalWidth) {
+      render();
     } else {
-      // Waning: left side lit
-      ctx.fillStyle = litColor;
-      ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2,true); ctx.closePath(); ctx.fill();
-      if (termX < -0.5) {
-        ctx.fillStyle = litColor;
-        ctx.beginPath(); ctx.ellipse(cx,cy,Math.abs(termX),r,0,0,Math.PI*2); ctx.fill();
-      } else if (termX > 0) {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath(); ctx.ellipse(cx,cy,termX,r,0,0,Math.PI*2); ctx.fill();
-        ctx.globalCompositeOperation = 'source-over';
-      }
+      _moonImg.onload = render;
     }
-    ctx.restore();
-    // Border
-    ctx.strokeStyle = 'rgba(200,200,180,0.12)';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
   }
 
   function _nopRenderChart(metric) {
@@ -1495,7 +1535,7 @@
       ? `<div style="font-size:9px;color:rgba(255,255,255,0.38);margin-top:2px">${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''  }${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>` : '';
     const p4 = `<div class="hero-card" style="min-width:88px;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Moon</div>
-      <canvas id="nop-moon-canvas" width="42" height="42" style="flex-shrink:0;margin:3px 0 2px"></canvas>
+      <canvas id="nop-moon-canvas" width="54" height="54" style="flex-shrink:0;margin:3px 0 2px;width:54px;height:54px"></canvas>
       <div class="nop-moon-times">
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.78)">${Math.round(moonIllum)}%${moonUpStr}</div>
         <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:1px">${wx?.moon?.phase_name||''}</div>
