@@ -209,20 +209,8 @@
       border-radius: 3px; letter-spacing: 0.04em;
     }
 
-    .nop-sun-disk {
-      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-      background: radial-gradient(circle at 38% 38%, #fff8e1 0%, #ffeb3b 30%, #ff9800 65%, rgba(255,130,0,0.35) 85%, transparent);
-      box-shadow: 0 0 14px var(--sun-glow1), 0 0 30px var(--sun-glow2);
-      animation: nop-sun-pulse var(--sun-pulse) ease-in-out infinite;
-      margin: 4px 0 2px;
-    }
-    @keyframes nop-sun-pulse {
-      0%, 100% { transform: scale(1);    box-shadow: 0 0 14px var(--sun-glow1), 0 0 30px var(--sun-glow2); }
-      50%       { transform: scale(1.05); box-shadow: 0 0 21px var(--sun-glow1), 0 0 44px var(--sun-glow2); }
-    }
     .nop-sun-times {
-      display: flex; flex-direction: column; gap: 1px;
-      font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; line-height: 1.5;
+      font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; white-space: nowrap;
     }
 
     .nop-summary-text {
@@ -1514,17 +1502,18 @@
     </div>`;
 
     // ── Panel 2: Sun ──
-    const swSt = sw?.summary?.status || 'quiet';
-    const g1 = swSt==='storm'?'rgba(244,67,54,0.7)':swSt==='active'?'rgba(255,152,0,0.7)':'rgba(255,200,0,0.65)';
-    const g2 = swSt==='storm'?'rgba(244,67,54,0.35)':swSt==='active'?'rgba(255,140,0,0.35)':'rgba(255,140,0,0.3)';
-    const spd = swSt==='storm'?'1.5s':swSt==='active'?'2s':'3s';
-    const p2 = `<div class="hero-card" style="min-width:78px;align-items:center">
+    // Kp → glow border colour, same mapping as helio widget STATUS_TONE
+    const kpNum = kp ?? 0;
+    const sunBorder = kpNum>=6?'#e05c5c':kpNum>=5?'#e0a84a':kpNum>=4?'#d4cc5c':'#5cce8c';
+    const p2 = `<div class="hero-card" style="min-width:110px;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Sun</div>
-      <div class="nop-sun-disk" style="--sun-glow1:${g1};--sun-glow2:${g2};--sun-pulse:${spd}"></div>
-      <div class="nop-sun-times">
-        <span>↓ ${_nopFmtT(sunsetT)}</span>
-        <span>↑ ${_nopFmtT(sunriseT)}</span>
+      <div style="position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;
+                  border:1px solid ${sunBorder}44;background:#0a0a0a;flex-shrink:0;margin:4px 0 3px;
+                  box-shadow:0 0 10px ${sunBorder}55,0 0 24px ${sunBorder}22">
+        <img src="/assets/gifs/current_eit_304.gif" alt="Sun EIT 304"
+             style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center">
       </div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap">↓ ${_nopFmtT(sunsetT)} &nbsp; ↑ ${_nopFmtT(sunriseT)}</div>
     </div>`;
 
     // ── Panel 3: Night Summary ──
