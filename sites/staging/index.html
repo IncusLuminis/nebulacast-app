@@ -1281,7 +1281,8 @@
     return new Date(Date.UTC(+m[1], MO[m[2]]||0, +m[3], +m[4], +m[5]));
   }
 
-  function _nopDrawMoon(canvas, phase, illum) {
+  // illum: 0..1 (illumination fraction), waxing: true/false
+  function _nopDrawMoon(canvas, illum, waxing) {
     if (!canvas) return;
     const size = canvas.width, r = size/2 - 1, cx = size/2, cy = size/2;
     const ctx = canvas.getContext('2d');
@@ -1289,75 +1290,72 @@
     const render = () => {
       ctx.clearRect(0, 0, size, size);
 
-      // 1. Draw bitmap clipped to circle
+      // Step 1: draw bitmap clipped to circle (lit side stays at full brightness)
       ctx.save();
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
       ctx.drawImage(_moonImg, cx-r, cy-r, r*2, r*2);
       ctx.restore();
 
-      // 2. Phase shadow — offscreen canvas clipped to disk, composited over bitmap
-      // ex = r * cos(2π*phase):
-      //   0 → full shadow (new), 0.25 → half (first qtr), 0.5 → no shadow (full), 0.75 → half (last qtr)
-      const ex = r * Math.cos(2 * Math.PI * phase);
+      // Full moon — no shadow needed
+      if (illum > 0.98) return;
 
-      if (phase <= 0.02 || phase >= 0.98) {
-        // New moon: full shadow
-        ctx.save();
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
-        ctx.fillStyle = 'rgba(4,8,20,0.92)';
-        ctx.fill();
-        ctx.restore();
-      } else if (phase > 0.48 && phase < 0.52) {
-        // Full moon: no shadow
-      } else {
-        // Build shadow on offscreen, then composite
-        const os = document.createElement('canvas');
-        os.width = size; os.height = size;
-        const oc = os.getContext('2d');
-        oc.fillStyle = 'rgba(4,8,20,0.92)';
+      // Step 2: build shadow shape on offscreen canvas, then stamp it over bitmap
+      // Terminator semi-minor axis: ex = r * cos(π * illum)
+      //   illum=0   → ex= r  → full shadow
+      //   illum=0.5 → ex= 0  → straight line (quarter)
+      //   illum=1   → ex=-r  → no shadow (full)
+      const ex = r * Math.cos(Math.PI * illum);
 
-        if (phase < 0.5) {
-          // Waxing: lit on right → shadow on left semicircle
-          oc.beginPath();
-          oc.moveTo(cx, cy - r);
-          oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, true); // left half
-          oc.closePath();
-          oc.fill();
-          if (ex > 0) {
-            // Crescent: terminator ellipse adds more shadow on right
-            oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
-          } else {
-            // Gibbous: cut back shadow — terminator ellipse on left side
-            oc.globalCompositeOperation = 'destination-out';
-            oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
-          }
-        } else {
-          // Waning: lit on left → shadow on right semicircle
-          oc.beginPath();
-          oc.moveTo(cx, cy - r);
-          oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, false); // right half
-          oc.closePath();
-          oc.fill();
-          if (ex > 0) {
-            // Crescent: terminator ellipse adds more shadow on left
-            oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
-          } else {
-            // Gibbous: cut back shadow
-            oc.globalCompositeOperation = 'destination-out';
-            oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
-          }
+      // Shadow offscreen
+      const os = document.createElement('canvas');
+      os.width = size; os.height = size;
+      const oc = os.getContext('2d');
+      oc.fillStyle = 'rgba(4,8,20,0.93)';
+
+      if (illum < 0.02) {
+        // New moon: full disk shadow
+        oc.beginPath(); oc.arc(cx, cy, r, 0, Math.PI*2); oc.fill();
+      } else if (waxing) {
+        // Waxing: right side lit → shadow on LEFT semicircle
+        oc.beginPath();
+        oc.moveTo(cx, cy - r);
+        oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, true); // left half CCW
+        oc.closePath();
+        oc.fill();
+        if (ex > 0) {
+          // Crescent: terminator bulges right → shadow also covers part of right
+          oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
+        } else if (ex < 0) {
+          // Gibbous: terminator bulges left → cut ellipse from left shadow
+          oc.globalCompositeOperation = 'destination-out';
+          oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
         }
-
-        // Clip shadow to disk and composite over bitmap
-        const mask = document.createElement('canvas');
-        mask.width = size; mask.height = size;
-        const mc = mask.getContext('2d');
-        mc.beginPath(); mc.arc(cx, cy, r, 0, Math.PI*2);
-        mc.fillStyle = '#000'; mc.fill();
-        mc.globalCompositeOperation = 'source-in';
-        mc.drawImage(os, 0, 0);
-        ctx.drawImage(mask, 0, 0);
+      } else {
+        // Waning: left side lit → shadow on RIGHT semicircle
+        oc.beginPath();
+        oc.moveTo(cx, cy - r);
+        oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, false); // right half CW
+        oc.closePath();
+        oc.fill();
+        if (ex > 0) {
+          // Crescent: terminator bulges left → shadow also covers part of left
+          oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
+        } else if (ex < 0) {
+          // Gibbous: terminator bulges right → cut ellipse from right shadow
+          oc.globalCompositeOperation = 'destination-out';
+          oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
+        }
       }
+
+      // Step 3: clip shadow to disk, then draw over bitmap
+      const mask = document.createElement('canvas');
+      mask.width = size; mask.height = size;
+      const mc = mask.getContext('2d');
+      mc.beginPath(); mc.arc(cx, cy, r, 0, Math.PI*2);
+      mc.fillStyle = '#000'; mc.fill();
+      mc.globalCompositeOperation = 'source-in';
+      mc.drawImage(os, 0, 0);
+      ctx.drawImage(mask, 0, 0);
     };
 
     if (_moonImg.complete && _moonImg.naturalWidth) {
@@ -1413,7 +1411,7 @@
 
     // ── Sun/moon crossings from sun_moon.json ──
     let sunsetT = null, sunriseT = null, moonriseT = null, moonsetT = null;
-    let moonPhase = 0, moonIllum = wx?.moon?.illumination_percent ?? 0;
+    let moonIllum = wx?.moon?.illumination_percent ?? 0, moonWaxing = true;
 
     if (sunMoon?.frames?.length) {
       const frames = sunMoon.frames;
@@ -1449,8 +1447,8 @@
         if (d < minD) { minD = d; closest = f; }
       }
       if (closest?.moon) {
-        moonPhase = closest.moon.phase ?? 0;
         if (!moonIllum) moonIllum = closest.moon.illum_pct ?? 0;
+        moonWaxing = closest.moon.waxing !== false; // default true
       }
     }
 
@@ -1574,7 +1572,7 @@
     hero.innerHTML = [p1, p2, p3, p4, p5, p6].join('');
 
     // Post-render
-    _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonPhase, moonIllum);
+    _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonIllum / 100, moonWaxing);
     _nopRenderChart(_nopActiveMetric);
   }
 
