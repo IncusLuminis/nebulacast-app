@@ -24,6 +24,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8080", "--directory", "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging"],
       "port": 8080
+    },
+    {
+      "name": "preview-abs",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "9292", "--directory", "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging"],
+      "port": 9292
     }
   ]
 }

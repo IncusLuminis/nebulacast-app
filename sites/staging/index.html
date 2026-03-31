@@ -33,39 +33,57 @@
     /* ─── Console root grid ────────────────────────────────── */
     .console-root {
       display: grid;
-      grid-template-rows: 52px auto 1fr;
+      grid-template-rows: 52px 1fr;
+      grid-template-columns: 272px 1fr;
+      row-gap: 8px;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* ─── Topbar ─────────────────────────────────────────────*/
-    .console-topbar {
+    /* ─── Topbar cells ───────────────────────────────────────*/
+    .console-topbar-brand {
+      background: rgba(16, 20, 32, 0.98);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      z-index: 50;
+    }
+
+    .console-topbar-location {
       background: rgba(16, 20, 32, 0.98);
       border-bottom: 1px solid rgba(255,255,255,0.07);
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 0 20px;
-      flex-shrink: 0;
+      padding: 9px 20px 0;
       z-index: 50;
+      min-width: 0;
+    }
+
+    .console-topbar-location #w-location {
+      flex: 1;
+      min-width: 0;
     }
 
     .console-brand {
       font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.7);
       white-space: nowrap;
-      flex-shrink: 0;
     }
 
     .console-brand span {
       color: #4a6fa5;
     }
 
-    .console-topbar #w-location {
-      flex: 1;
-      min-width: 0;
+    /* ─── Brand bar at top of left feed column ───────────── */
+    .console-brand-bar {
+      background: rgba(16, 20, 32, 0.98);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 13px 14px 11px;
+      flex-shrink: 0;
     }
 
     /* ─── Hero Decision Band ─────────────────────────────────*/
@@ -83,7 +101,7 @@
     .hero-card {
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       padding: 6px 18px;
       border-right: 1px solid rgba(255,255,255,0.06);
       gap: 4px;
@@ -96,7 +114,7 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.45);
     }
 
     .hero-card-value {
@@ -108,7 +126,7 @@
 
     .hero-card-sub {
       font-size: 11px;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.55);
       white-space: nowrap;
     }
 
@@ -178,14 +196,63 @@
       align-items: center;
       gap: 12px;
       padding: 0 4px;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.4);
       font-size: 12px;
     }
 
-    /* ─── Console Body ────────────────────────────────────── */
-    .console-body {
-      display: grid;
-      grid-template-columns: 272px 1fr;
+    /* ─── Night Overview Panel ──────────────────────────── */
+    .console-hero { min-height: 110px; overflow-x: auto; }
+
+    .nop-scales { display: flex; gap: 3px; margin-top: 5px; }
+    .nop-scale-badge {
+      font-size: 9px; font-weight: 700; padding: 2px 6px;
+      border-radius: 3px; letter-spacing: 0.04em;
+    }
+
+    .nop-sun-times {
+      font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; white-space: nowrap;
+    }
+
+    .nop-summary-text {
+      font-size: 11px; color: rgba(255,255,255,0.62); line-height: 1.55; margin-top: 5px;
+    }
+
+    .nop-moon-times { margin-top: 4px; text-align: center; }
+
+    .nop-profiles { display: flex; flex-direction: column; gap: 3px; }
+    .nop-profile-btn {
+      font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.1); background: transparent;
+      color: rgba(255,255,255,0.38); cursor: pointer; letter-spacing: 0.02em; line-height: 1.4;
+      transition: all 0.15s; text-align: left; width: 100%;
+    }
+    .nop-profile-btn.is-active, .nop-profile-btn:hover {
+      background: rgba(74,111,165,0.2); border-color: rgba(74,111,165,0.4); color: rgba(255,255,255,0.82);
+    }
+
+    .nop-window-time {
+      font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.82); margin-top: 3px; white-space: nowrap;
+    }
+    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 28px; margin-top: 5px; }
+    .nop-bar {
+      flex: 1; min-width: 3px; border-radius: 1px 1px 0 0;
+      background: rgba(255,255,255,0.12); transition: height 0.25s, background 0.2s;
+    }
+    .nop-bar.in-window { background: rgba(74,111,165,0.55); }
+    .nop-chips { display: flex; gap: 4px; margin-top: 5px; }
+    .nop-chip {
+      font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.1); background: transparent;
+      color: rgba(255,255,255,0.35); cursor: pointer; line-height: 1.4; transition: all 0.15s;
+    }
+    .nop-chip.is-active, .nop-chip:hover {
+      background: rgba(74,111,165,0.18); border-color: rgba(74,111,165,0.4); color: rgba(255,255,255,0.72);
+    }
+
+    /* ─── Right column (topbar + hero + tools) ─────────────── */
+    .console-right {
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       min-height: 0;
     }
@@ -196,8 +263,12 @@
       border-right: 1px solid rgba(255,255,255,0.06);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
+    .console-feed::-webkit-scrollbar { width: 4px; }
+    .console-feed::-webkit-scrollbar-track { background: transparent; }
+    .console-feed::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     .feed-header {
       padding: 10px 14px 8px;
@@ -205,7 +276,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.4);
       border-bottom: 1px solid rgba(255,255,255,0.05);
       flex-shrink: 0;
     }
@@ -240,7 +311,7 @@
     .feed-rank {
       font-size: 10px;
       font-weight: 700;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.35);
       text-align: right;
     }
 
@@ -266,7 +337,7 @@
 
     .feed-sub {
       font-size: 10px;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.5);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -284,7 +355,7 @@
     .feed-time {
       font-size: 10px;
       font-weight: 600;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.6);
       font-variant-numeric: tabular-nums;
     }
 
@@ -310,14 +381,170 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.28);
     }
 
     .feed-loading {
       padding: 24px 14px;
       font-size: 11px;
-      color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.4);
     }
+
+    /* ─── Feed Sections (collapsible) ──────────────────── */
+    .feed-section {
+      flex-shrink: 0;
+    }
+
+    /* Space Weather Alerts */
+    #fs-swx { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    #fsb-swx { overflow-y: auto; max-height: 230px; }
+    #fsb-swx::-webkit-scrollbar { width: 4px; }
+    #fsb-swx::-webkit-scrollbar-track { background: transparent; }
+    #fsb-swx::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    /* Best Objects Today — natural block height */
+    #fsb-ranking .feed-list { overflow: visible; }
+
+    /* Sky Alerts */
+    #fs-sky { border-top: 1px solid rgba(255,255,255,0.06); }
+    #fsb-sky { overflow-y: auto; max-height: 230px; }
+    #fsb-sky::-webkit-scrollbar { width: 4px; }
+    #fsb-sky::-webkit-scrollbar-track { background: transparent; }
+    #fsb-sky::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .feed-section.is-collapsed .feed-section-body { display: none !important; }
+
+    .feed-section-hdr {
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      user-select: none;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .feed-section-hdr:hover { color: rgba(255,255,255,0.65); }
+    .fsh-title { flex: 1; }
+    .fsh-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 8px;
+      background: rgba(244,67,54,0.2);
+      color: #f44336;
+      letter-spacing: 0.03em;
+      display: none;
+    }
+    .fsh-chevron {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      font-size: 13px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.75);
+      transition: transform 0.2s, background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .feed-section-hdr:hover .fsh-chevron {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+    .feed-section.is-collapsed .fsh-chevron { transform: rotate(-90deg); }
+
+    /* ─── Alerts in left panel ──────────────────────────── */
+    .alerts-list { padding: 4px 0; }
+    .alert-item {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: start;
+      gap: 7px;
+      padding: 7px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .alert-badge {
+      font-size: 9px;
+      font-weight: 800;
+      text-align: center;
+      padding: 3px 0;
+      border-radius: 4px;
+      line-height: 1.3;
+      letter-spacing: 0.02em;
+      margin-top: 1px;
+    }
+    .alert-sev-1 .alert-badge { color: #ffcc02; background: rgba(255,204,2,0.1); }
+    .alert-sev-2 .alert-badge { color: #ff9800; background: rgba(255,152,0,0.12); }
+    .alert-sev-3 .alert-badge { color: #ff5722; background: rgba(255,87,34,0.15); }
+    .alert-sev-4 .alert-badge { color: #f44336; background: rgba(244,67,54,0.18); }
+    .alert-sev-5 .alert-badge { color: #e040fb; background: rgba(224,64,251,0.15); }
+    .alert-info { min-width: 0; }
+    .alert-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.82);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .alert-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .alert-time-col {
+      font-size: 10px;
+      color: rgba(255,255,255,0.38);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      padding-top: 1px;
+      flex-shrink: 0;
+    }
+    .alerts-empty {
+      padding: 16px 14px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+    /* Sky alert group colors */
+    .sky-risk .alert-badge  { color: #f44336; background: rgba(244,67,54,0.15); }
+    .sky-neo .alert-badge   { color: #42a5f5; background: rgba(66,165,245,0.12); }
+    .sky-tran .alert-badge  { color: #ab47bc; background: rgba(171,71,188,0.13); }
+    .sky-nova .alert-badge  { color: #ffee58; background: rgba(255,238,88,0.11); }
+    /* Calendar event category colors */
+    .cal-comets .alert-badge       { color: #26c6da; background: rgba(38,198,218,0.12); }
+    .cal-eclipses .alert-badge     { color: #ffd54f; background: rgba(255,213,79,0.11); }
+    .cal-meteors .alert-badge      { color: #ff8a65; background: rgba(255,138,101,0.12); }
+    .cal-occultations .alert-badge { color: #ba68c8; background: rgba(186,104,200,0.12); }
+    .cal-conjunctions .alert-badge { color: #81c784; background: rgba(129,199,132,0.11); }
+    /* News category colors */
+    .news-science .alert-badge    { color: #42a5f5; background: rgba(66,165,245,0.12); }
+    .news-news .alert-badge       { color: #66bb6a; background: rgba(102,187,106,0.11); }
+    .news-nebulacast .alert-badge { color: #ce93d8; background: rgba(206,147,216,0.12); }
+    .news-images .alert-badge     { color: #26c6da; background: rgba(38,198,218,0.11); }
+    .news-videos .alert-badge     { color: #ff8a65; background: rgba(255,138,101,0.12); }
+    /* Calendar & News section scroll */
+    #fs-cal, #fs-news { border-top: 1px solid rgba(255,255,255,0.06); }
+    #fsb-cal, #fsb-news { overflow-y: auto; max-height: 230px; }
+    #fsb-cal::-webkit-scrollbar,
+    #fsb-news::-webkit-scrollbar  { width: 4px; }
+    #fsb-cal::-webkit-scrollbar-track,
+    #fsb-news::-webkit-scrollbar-track { background: transparent; }
+    #fsb-cal::-webkit-scrollbar-thumb,
+    #fsb-news::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     /* ─── Context Tools ──────────────────────────────────── */
     .console-tools {
@@ -325,6 +552,7 @@
       flex-direction: column;
       overflow: hidden;
       min-height: 0;
+      flex: 1;
     }
 
     .tools-tabs {
@@ -340,7 +568,7 @@
       padding: 6px 14px 8px;
       font-size: 12px;
       font-weight: 500;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.55);
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
@@ -351,7 +579,7 @@
     }
 
     .tools-tab:hover {
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,0.85);
     }
 
     .tools-tab.is-active {
@@ -475,7 +703,7 @@
       padding: 5px 12px 7px;
       font-size: 12px;
       font-weight: 500;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.55);
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
@@ -484,7 +712,7 @@
       margin-bottom: -1px;
     }
 
-    .events-subtab:hover { color: rgba(255,255,255,0.7); }
+    .events-subtab:hover { color: rgba(255,255,255,0.85); }
     .events-subtab.is-active { color: #fff; border-bottom-color: #4a6fa5; }
 
     .events-subpanel { display: none; padding: 16px 20px; }
@@ -533,29 +761,99 @@
 
 <div class="console-root">
 
-  <!-- ══════════ TOPBAR ══════════ -->
-  <header class="console-topbar">
+  <!-- ══════════ TOPBAR: brand (left col) ══════════ -->
+  <div class="console-topbar-brand">
     <div class="console-brand"><span>★</span> NEBULACAST</div>
+  </div>
+
+  <!-- ══════════ TOPBAR: location (right col) ══════════ -->
+  <div class="console-topbar-location">
     <div id="w-location"></div>
-  </header>
+  </div>
 
-  <!-- ══════════ LAYER 1: HERO DECISION ══════════ -->
-  <section class="console-hero" id="console-hero">
-    <div class="hero-skeleton">Loading conditions…</div>
-  </section>
+  <!-- ══════════ LEFT COLUMN: PRIORITY FEED ══════════ -->
+  <aside class="console-feed">
 
-  <!-- ══════════ LAYERS 2+3: BODY ══════════ -->
-  <div class="console-body">
-
-    <!-- ── LAYER 2: PRIORITY FEED ── -->
-    <aside class="console-feed">
-      <div class="feed-header">Tonight's Targets</div>
-      <div class="feed-list" id="feed-list">
-        <div class="feed-loading">Loading…</div>
+      <!-- 1. Space Weather Alerts -->
+      <div class="feed-section" id="fs-swx">
+        <div class="feed-section-hdr" data-toggle="swx">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Space Weather Alerts</span>
+          <span class="fsh-badge" id="swx-badge"></span>
+        </div>
+        <div class="feed-section-body" id="fsb-swx">
+          <div class="alerts-list" id="swx-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
       </div>
-    </aside>
 
-    <!-- ── LAYER 3: CONTEXT TOOLS ── -->
+      <!-- 2. Best Objects Today -->
+      <div class="feed-section" id="fs-ranking">
+        <div class="feed-section-hdr" data-toggle="ranking">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Best Objects Today</span>
+        </div>
+        <div class="feed-section-body" id="fsb-ranking">
+          <div class="feed-list" id="feed-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Sky Alerts -->
+      <div class="feed-section" id="fs-sky">
+        <div class="feed-section-hdr" data-toggle="sky">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Sky Alerts</span>
+          <span class="fsh-badge" id="sky-badge"></span>
+        </div>
+        <div class="feed-section-body" id="fsb-sky">
+          <div class="alerts-list" id="sky-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Calendar Events -->
+      <div class="feed-section" id="fs-cal">
+        <div class="feed-section-hdr" data-toggle="cal">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Calendar Events</span>
+          <span class="fsh-badge" id="cal-badge"></span>
+        </div>
+        <div class="feed-section-body" id="fsb-cal">
+          <div class="alerts-list" id="cal-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. News -->
+      <div class="feed-section" id="fs-news">
+        <div class="feed-section-hdr" data-toggle="news">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">News</span>
+          <span class="fsh-badge" id="news-badge"></span>
+        </div>
+        <div class="feed-section-body" id="fsb-news">
+          <div class="alerts-list" id="news-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+  </aside>
+
+  <!-- ══════════ RIGHT COLUMN ══════════ -->
+  <div class="console-right">
+
+    <!-- ── HERO DECISION BAND ── -->
+    <section class="console-hero" id="console-hero">
+      <div class="hero-skeleton">Loading conditions…</div>
+    </section>
+
+    <!-- ── CONTEXT TOOLS ── -->
     <main class="console-tools">
 
       <nav class="tools-tabs" role="tablist">
@@ -645,7 +943,8 @@
       </div><!-- .tools-content -->
     </main>
 
-  </div><!-- .console-body -->
+  </div><!-- .console-right -->
+
 </div><!-- .console-root -->
 
 <!-- ══════ Weather widget modals (required by weather.js internals) ══════ -->
@@ -959,117 +1258,327 @@
   });
 
   // ══════════════════════════════════════════════════════════
-  //  HERO DECISION BAND
+  //  NIGHT OVERVIEW PANEL
   // ══════════════════════════════════════════════════════════
-  async function loadHero() {
-    let wx = null, sw = null;
-    try {
-      [wx, sw] = await Promise.all([
-        fetch('/data/observer_weather_now.json').then(r => r.ok ? r.json() : null),
-        fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
-      ]);
-    } catch (_) {}
 
+  // Preload moon bitmap
+  const _moonImg = new Image();
+  _moonImg.src = '/assets/bitmaps/Moon.png';
+
+  // Module state for interactive NOP elements
+  let _nopProfiles = {}, _nopActiveProfile = 'balanced';
+  let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'cloud';
+
+  function _nopScoreCls(s) { return s>=85?'score-excellent':s>=70?'score-good':s>=50?'score-fair':'score-poor'; }
+  function _nopScoreLbl(s) { return s>=85?'Excellent':s>=70?'Good':s>=50?'Fair':'Poor'; }
+  function _nopScoreColor(s) { return s>=85?'#4caf50':s>=70?'#8bc34a':s>=50?'#ff9800':'#f44336'; }
+  function _nopFmtT(iso)   { try { return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}); } catch(_){return'—';} }
+
+  // Parse "2026-Mar-30 07:06Z" format from sun_moon.json
+  function _parseSMTime(s) {
+    const MO = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    const m = s && s.match(/^(\d{4})-(\w{3})-(\d{2})\s+(\d{2}):(\d{2})Z?$/);
+    if (!m) return null;
+    return new Date(Date.UTC(+m[1], MO[m[2]]||0, +m[3], +m[4], +m[5]));
+  }
+
+  // illum: 0..1 (illumination fraction), waxing: true/false
+  function _nopDrawMoon(canvas, illum, waxing) {
+    if (!canvas) return;
+    const size = canvas.width, r = size/2 - 1, cx = size/2, cy = size/2;
+    const ctx = canvas.getContext('2d');
+
+    const render = () => {
+      ctx.clearRect(0, 0, size, size);
+
+      // Step 1: draw bitmap clipped to circle (lit side stays at full brightness)
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+      ctx.drawImage(_moonImg, cx-r, cy-r, r*2, r*2);
+      ctx.restore();
+
+      // Full moon — no shadow needed
+      if (illum > 0.98) return;
+
+      // Step 2: build shadow shape on offscreen canvas, then stamp it over bitmap
+      // Terminator semi-minor axis: ex = r * cos(π * illum)
+      //   illum=0   → ex= r  → full shadow
+      //   illum=0.5 → ex= 0  → straight line (quarter)
+      //   illum=1   → ex=-r  → no shadow (full)
+      const ex = r * Math.cos(Math.PI * illum);
+
+      // Shadow offscreen
+      const os = document.createElement('canvas');
+      os.width = size; os.height = size;
+      const oc = os.getContext('2d');
+      oc.fillStyle = 'rgba(4,8,20,0.93)';
+
+      if (illum < 0.02) {
+        // New moon: full disk shadow
+        oc.beginPath(); oc.arc(cx, cy, r, 0, Math.PI*2); oc.fill();
+      } else if (waxing) {
+        // Waxing: right side lit → shadow on LEFT semicircle
+        oc.beginPath();
+        oc.moveTo(cx, cy - r);
+        oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, true); // left half CCW
+        oc.closePath();
+        oc.fill();
+        if (ex > 0) {
+          // Crescent: terminator bulges right → shadow also covers part of right
+          oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
+        } else if (ex < 0) {
+          // Gibbous: terminator bulges left → cut ellipse from left shadow
+          oc.globalCompositeOperation = 'destination-out';
+          oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
+        }
+      } else {
+        // Waning: left side lit → shadow on RIGHT semicircle
+        oc.beginPath();
+        oc.moveTo(cx, cy - r);
+        oc.arc(cx, cy, r, -Math.PI/2, Math.PI/2, false); // right half CW
+        oc.closePath();
+        oc.fill();
+        if (ex > 0) {
+          // Crescent: terminator bulges left → shadow also covers part of left
+          oc.beginPath(); oc.ellipse(cx, cy, ex, r, 0, 0, Math.PI*2); oc.fill();
+        } else if (ex < 0) {
+          // Gibbous: terminator bulges right → cut ellipse from right shadow
+          oc.globalCompositeOperation = 'destination-out';
+          oc.beginPath(); oc.ellipse(cx, cy, -ex, r, 0, 0, Math.PI*2); oc.fill();
+        }
+      }
+
+      // Step 3: clip shadow to disk, then draw over bitmap
+      const mask = document.createElement('canvas');
+      mask.width = size; mask.height = size;
+      const mc = mask.getContext('2d');
+      mc.beginPath(); mc.arc(cx, cy, r, 0, Math.PI*2);
+      mc.fillStyle = '#000'; mc.fill();
+      mc.globalCompositeOperation = 'source-in';
+      mc.drawImage(os, 0, 0);
+      ctx.drawImage(mask, 0, 0);
+    };
+
+    if (_moonImg.complete && _moonImg.naturalWidth) {
+      render();
+    } else {
+      _moonImg.onload = render;
+    }
+  }
+
+  function _nopRenderChart(metric) {
+    const chart = document.getElementById('nop-chart');
+    if (!chart || !_nopNightHours.length) return;
+    const bars = chart.querySelectorAll('.nop-bar');
+    _nopNightHours.forEach((h, i) => {
+      if (!bars[i]) return;
+      let val = 0;
+      if (metric === 'cloud') val = h.cloud?.total_percent ?? 0;
+      else if (metric === 'wind') val = Math.min((h.wind?.speed_mps ?? 0) * 5, 100);
+      else if (metric === 'dew') {
+        const spread = (h.air?.temperature_c ?? 5) - (h.air?.dewpoint_c ?? 0);
+        val = Math.max(0, Math.min(100, (8 - spread) * 12.5));
+      }
+      bars[i].style.height = Math.max(2, Math.round(val * 0.28)) + 'px';
+      const t = h.timestamp_utc;
+      const inWin = _nopBestWindow && t &&
+        t >= _nopBestWindow.start && t < _nopBestWindow.end;
+      bars[i].classList.toggle('in-window', !!inWin);
+    });
+  }
+
+  async function loadHero() {
     const hero = document.getElementById('console-hero');
     if (!hero) return;
 
-    const cards = [];
+    let wx = null, sw = null, sunMoon = null;
+    try {
+      [wx, sw, sunMoon] = await Promise.all([
+        fetch('/data/observer_weather_now.json').then(r => r.ok ? r.json() : null),
+        fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
+        fetch('/sky/data/sun_moon.json').then(r => r.ok ? r.json() : null),
+      ]);
+    } catch (_) {}
 
-    // ── Score card ──
-    if (wx?.decision?.mode_scores) {
-      const modes = wx.decision.mode_scores;
-      const best  = Object.entries(modes).reduce((a, b) => b[1] > a[1] ? b : a);
-      const score = Math.round(best[1]);
-      const mode  = best[0].charAt(0).toUpperCase() + best[0].slice(1);
-      const cls   = score >= 85 ? 'score-excellent' : score >= 70 ? 'score-good' : score >= 50 ? 'score-fair' : 'score-poor';
-      cards.push(`
-        <div class="hero-card ${cls}">
-          <div class="hero-card-label">Observing Score</div>
-          <div class="hero-card-value">${score}</div>
-          <div class="hero-card-sub">${mode} profile</div>
-        </div>
-      `);
+    // ── Night hours & best window ──
+    _nopNightHours = (wx?.hourly || []).filter(h => h.night === true).slice(0, 24);
+    _nopBestWindow = wx?.decision?.best_tonight || null;
 
-      // All mode scores compact
-      const modeList = Object.entries(modes).map(([k, v]) =>
-        `<span style="color:rgba(255,255,255,0.5)">${k.charAt(0).toUpperCase()+k.slice(1)}</span>&nbsp;${Math.round(v)}`
-      ).join('<span style="color:rgba(255,255,255,0.15);margin:0 6px">·</span>');
-      cards.push(`
-        <div class="hero-card" style="min-width:180px">
-          <div class="hero-card-label">Mode Scores</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.6;margin-top:4px">${modeList}</div>
-        </div>
-      `);
+    // ── Profile scores ──
+    _nopProfiles = wx?.decision?.mode_scores || {};
+    const profileKeys = Object.keys(_nopProfiles);
+    if (profileKeys.length && !_nopProfiles[_nopActiveProfile])
+      _nopActiveProfile = profileKeys[0];
+
+    // ── Sun/moon crossings from sun_moon.json ──
+    let sunsetT = null, sunriseT = null, moonriseT = null, moonsetT = null;
+    let moonIllum = wx?.moon?.illumination_percent ?? 0, moonWaxing = true;
+
+    if (sunMoon?.frames?.length) {
+      const frames = sunMoon.frames;
+      const now = Date.now();
+      const scanStart = now - 8 * 3600e3, scanEnd = now + 32 * 3600e3;
+
+      for (let i = 1; i < frames.length; i++) {
+        const t = _parseSMTime(frames[i].t_utc);
+        if (!t) continue;
+        const ms = t.getTime();
+        if (ms < scanStart || ms > scanEnd) continue;
+        const prevS = frames[i-1].sun?.alt_deg ?? 0, currS = frames[i].sun?.alt_deg ?? 0;
+        if (prevS > 0 && currS <= 0 && !sunsetT)               sunsetT  = t.toISOString();
+        if (prevS <= 0 && currS > 0 && sunsetT && !sunriseT)   sunriseT = t.toISOString();
+      }
+      // Moon crossings around tonight
+      const nightS = sunsetT  ? new Date(sunsetT).getTime()  - 2*3600e3 : now;
+      const nightE = sunriseT ? new Date(sunriseT).getTime() + 2*3600e3 : now + 14*3600e3;
+      for (let i = 1; i < frames.length; i++) {
+        const t = _parseSMTime(frames[i].t_utc);
+        if (!t) continue;
+        const ms = t.getTime();
+        if (ms < nightS || ms > nightE) continue;
+        const prevM = frames[i-1].moon?.alt_deg ?? 0, currM = frames[i].moon?.alt_deg ?? 0;
+        if (prevM <= 0 && currM > 0 && !moonriseT) moonriseT = t.toISOString();
+        if (prevM > 0 && currM <= 0 && !moonsetT)  moonsetT  = t.toISOString();
+      }
+      // Moon phase at nearest frame to now
+      let closest = null, minD = Infinity;
+      for (const f of frames) {
+        const t = _parseSMTime(f.t_utc); if (!t) continue;
+        const d = Math.abs(t.getTime() - now);
+        if (d < minD) { minD = d; closest = f; }
+      }
+      if (closest?.moon) {
+        if (!moonIllum) moonIllum = closest.moon.illum_pct ?? 0;
+        moonWaxing = closest.moon.waxing !== false; // default true
+      }
     }
 
-    // ── Best window tonight ──
-    if (wx?.decision?.best_tonight) {
-      const w = wx.decision.best_tonight;
-      const fmt = iso => {
-        const d = new Date(iso);
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      };
-      const cloud = Math.round(w.cloud_avg ?? 0);
-      const cloudColor = cloud < 30 ? '#4caf50' : cloud < 60 ? '#ff9800' : '#f44336';
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Best Tonight</div>
-          <div class="hero-card-value" style="font-size:20px;color:rgba(255,255,255,0.85)">${fmt(w.start)}–${fmt(w.end)}</div>
-          <div class="hero-card-sub" style="color:${cloudColor}">☁ ${cloud}% clouds</div>
-        </div>
-      `);
+    // ── Text summary ──
+    function buildSummary() {
+      if (!_nopNightHours.length) return 'Weather data unavailable for tonight.';
+      const cloudAvg = _nopNightHours.reduce((s,h) => s+(h.cloud?.total_percent||0), 0) / _nopNightHours.length;
+      const windMax  = Math.max(..._nopNightHours.map(h => h.wind?.speed_mps||0));
+      const hasPrecip = _nopNightHours.some(h => (h.precip?.probability_percent||0) > 30);
+      const dewRisk  = wx?.decision?.risks?.dew || 'low';
+      const s1 = cloudAvg < 20 ? 'Clear skies expected throughout the night.' :
+                 cloudAvg < 40 ? 'Mostly clear with occasional cloud patches.' :
+                 cloudAvg < 60 ? 'Partly cloudy — some patches will affect views.' :
+                 cloudAvg < 80 ? 'Significant cloud cover will limit observations.' :
+                                 'Heavy overcast. Observing not recommended.';
+      const s2 = hasPrecip     ? 'Precipitation possible, limiting clear windows.' :
+                 windMax > 10  ? `Winds up to ${Math.round(windMax*3.6)} km/h may affect stability.` :
+                 dewRisk==='high' ? 'High dew risk — protect optics.' :
+                 cloudAvg < 30 ? 'Conditions are favorable for most observations.' :
+                                 'Observing windows will be limited.';
+      const s3 = (sw?.summary?.status==='storm'||sw?.summary?.status==='active')
+        ? 'Elevated geomagnetic activity may affect radio observations.' : '';
+      return [s1, s2, s3].filter(Boolean).join(' ');
     }
 
-    // ── Risks ──
-    if (wx?.decision?.risks) {
-      const risks = wx.decision.risks;
-      const ICONS = { dew: '💧', fog: '🌫', wind: '💨' };
-      const chips = Object.entries(risks)
-        .filter(([, v]) => v !== 'low')
-        .map(([k, v]) => `<span class="risk-chip ${v}">${ICONS[k] || ''}${k.charAt(0).toUpperCase()+k.slice(1)}</span>`)
-        .join('');
-      const allLow = Object.values(risks).every(v => v === 'low');
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Risks</div>
-          <div class="hero-risks" style="margin-top:6px">
-            ${allLow
-              ? '<span style="font-size:11px;color:rgba(255,255,255,0.35)">None significant</span>'
-              : chips}
-          </div>
-        </div>
-      `);
+    // ── Panel 1: Space Weather ──
+    const kp = sw?.metrics?.kp_latest ?? null;
+    const scales = sw?.scales || {};
+    const gLvl = parseInt((scales.g_scale||'G0').replace(/\D/g,'')) || 0;
+    const rLvl = parseInt((scales.r_scale||'R0').replace(/\D/g,'')) || 0;
+    const sLvl = parseInt((scales.s_scale||'S0').replace(/\D/g,'')) || 0;
+    const trend = sw?.forecast?.trend || 'steady';
+    const trendArrow = trend==='rising'?'↑':trend==='falling'?'↓':'→';
+    const swStatus = sw?.summary?.status || 'quiet';
+    const swLabel  = sw?.summary?.label  || 'Quiet';
+    function scaleBadge(l, lvl, max) {
+      const on = lvl > 0;
+      const hi = lvl / max;
+      const c  = !on?'rgba(255,255,255,0.2)':hi>=0.6?'#f44336':'#ff9800';
+      const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
+      return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
-
-    // ── Moon ──
-    if (wx?.moon) {
-      const m = wx.moon;
-      const moonUp = m.moon_up_now
-        ? '<span style="color:#ff9800;font-size:10px">● Up</span>'
-        : '<span style="color:rgba(255,255,255,0.25);font-size:10px">● Below horizon</span>';
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Moon</div>
-          <div class="hero-card-value" style="font-size:20px;color:rgba(255,255,255,0.75)">${Math.round(m.illumination_percent)}%</div>
-          <div class="hero-card-sub">${m.phase_name} &nbsp;${moonUp}</div>
+    const p1 = `<div class="hero-card" style="min-width:118px;flex-shrink:0">
+      <div class="hero-card-label">Kp</div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
+          <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${trendArrow}</span>
         </div>
-      `);
-    }
+        <div><span class="sw-badge ${swStatus}">${swLabel}</span></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.3)">Current conditions</div>
+      </div>
+      <div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
+    </div>`;
 
-    // ── Space Weather ──
-    if (sw?.summary) {
-      const s  = sw.summary;
-      const kp = sw.metrics?.kp_latest != null ? `Kp ${sw.metrics.kp_latest.toFixed(1)}` : '';
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Space Weather</div>
-          <div style="margin-top:6px"><span class="sw-badge ${s.status}">${s.label}</span></div>
-          <div class="hero-card-sub" style="margin-top:4px">${kp}</div>
+    // ── Panel 2: Sun ──
+    // Kp → glow border colour, same mapping as helio widget STATUS_TONE
+    const kpNum = kp ?? 0;
+    const sunBorder = kpNum>=6?'#e05c5c':kpNum>=5?'#e0a84a':kpNum>=4?'#d4cc5c':'#5cce8c';
+    const p2 = `<div class="hero-card" style="min-width:110px;flex-shrink:0;align-items:center">
+      <div class="hero-card-label" style="align-self:flex-start">Sun</div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center">
+        <div style="position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;
+                    border:1px solid ${sunBorder}44;background:#0a0a0a;flex-shrink:0;
+                    box-shadow:0 0 10px ${sunBorder}55,0 0 24px ${sunBorder}22">
+          <img src="/assets/gifs/current_eit_304.gif" alt="Sun EIT 304"
+               style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center">
         </div>
-      `);
-    }
+      </div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap">↓ ${_nopFmtT(sunsetT)} &nbsp; ↑ ${_nopFmtT(sunriseT)}</div>
+    </div>`;
 
-    hero.innerHTML = cards.join('');
+    // ── Panel 3: Night Summary ──
+    const p3 = `<div class="hero-card" style="flex:1;min-width:155px;max-width:255px">
+      <div class="hero-card-label">Tonight</div>
+      <div class="nop-summary-text">${buildSummary()}</div>
+    </div>`;
+
+    // ── Panel 4: Moon ──
+    const moonUpStr = wx?.moon?.moon_up_now===true
+      ? '<span style="color:#ff9800;font-size:9px"> ↑up</span>'
+      : wx?.moon?.moon_up_now===false
+        ? '<span style="color:rgba(255,255,255,0.22);font-size:9px"> ↓below</span>' : '';
+    const moonRiseSet = (moonriseT||moonsetT)
+      ? `<div style="font-size:9px;color:rgba(255,255,255,0.38);margin-top:2px">${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''  }${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>` : '';
+    const p4 = `<div class="hero-card" style="min-width:110px;flex-shrink:0;align-items:center">
+      <div class="hero-card-label" style="align-self:flex-start">Moon</div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center">
+        <canvas id="nop-moon-canvas" width="72" height="72" style="flex-shrink:0;width:72px;height:72px"></canvas>
+      </div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap">${Math.round(moonIllum)}% &nbsp;${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''}${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>
+    </div>`;
+
+    // ── Panel 5: Night Score ──
+    const activeScore = Math.round(_nopProfiles[_nopActiveProfile] ?? 0);
+    const PLBL = { balanced:'Balanced', visual:'Visual', photography:'Photo', broadband:'Broadband', planetary:'Planetary' };
+    const profileBtns = profileKeys.map(k =>
+      `<button class="nop-profile-btn${k===_nopActiveProfile?' is-active':''}" data-profile="${k}">${PLBL[k]||k}</button>`
+    ).join('');
+    const p5 = `<div class="hero-card" style="min-width:165px;flex-shrink:0">
+      <div class="hero-card-label">Avg Observing Quality</div>
+      <div style="flex:1;display:flex;align-items:center;gap:10px;margin-top:4px">
+        <div id="nop-score-val" class="hero-card-value" style="font-size:48px;line-height:1;color:${_nopScoreColor(activeScore)};flex-shrink:0">${activeScore}</div>
+        <div class="nop-profiles" style="flex:1">${profileBtns}</div>
+      </div>
+      <div id="nop-score-lbl" class="hero-card-sub">${_nopScoreLbl(activeScore)}</div>
+    </div>`;
+
+    // ── Panel 6: Best Observing Window ──
+    const bw = _nopBestWindow;
+    const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '— no data —';
+    const barCount = _nopNightHours.length || 10;
+    const bars = Array.from({length:barCount}, () => `<div class="nop-bar" style="height:2px"></div>`).join('');
+    const p6 = `<div class="hero-card" style="flex:1;min-width:145px">
+      <div class="hero-card-label">Best Window</div>
+      <div class="nop-window-time">${winStr}</div>
+      <div id="nop-chart" class="nop-bar-chart" style="margin-top:auto">${bars}</div>
+      <div class="nop-chips">
+        <button class="nop-chip${_nopActiveMetric==='cloud'?' is-active':''}" data-metric="cloud">Cloud</button>
+        <button class="nop-chip${_nopActiveMetric==='dew'?' is-active':''}"   data-metric="dew">Dew</button>
+        <button class="nop-chip${_nopActiveMetric==='wind'?' is-active':''}"  data-metric="wind">Wind</button>
+      </div>
+    </div>`;
+
+    hero.innerHTML = [p1, p2, p4, p5, p3, p6].join('');
+
+    // Post-render
+    _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonIllum / 100, moonWaxing);
+    _nopRenderChart(_nopActiveMetric);
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1164,9 +1673,234 @@
     });
   }
 
+  // ── Section toggles ────────────────────────────────────
+  document.querySelectorAll('.feed-section-hdr[data-toggle]').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const section = document.getElementById(`fs-${hdr.dataset.toggle}`);
+      if (section) section.classList.toggle('is-collapsed');
+    });
+  });
+
+  // ── Shared age formatter ────────────────────────────────
+  function fmtAge(iso) {
+    if (!iso) return '';
+    try {
+      const diff = (Date.now() - new Date(iso)) / 1000;
+      if (diff < 3600) return `${Math.round(diff / 60)}m`;
+      if (diff < 86400) return `${Math.round(diff / 3600)}h`;
+      return `${Math.round(diff / 86400)}d`;
+    } catch (_) { return ''; }
+  }
+
+  // ── Space Weather Alerts ────────────────────────────────
+  async function loadSwxAlerts() {
+    const list = document.getElementById('swx-list');
+    const badge = document.getElementById('swx-badge');
+    if (!list) return;
+
+    let sw = null;
+    try { sw = await fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+
+    const alerts = (sw?.alerts_preview || []).slice(0, 8);
+    if (!alerts.length) {
+      list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      return;
+    }
+    if (badge) { badge.textContent = alerts.length; badge.style.display = ''; }
+
+    let html = '';
+    for (const a of alerts) {
+      const sev = Math.min(5, Math.max(1, a.severity || 1));
+      const lbl = `${a.domain || '?'}${sev}`;
+      const time = fmtAge(a.t_utc);
+      const title = (a.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const sub = (a.summary_short || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      html += `<div class="alert-item alert-sev-${sev}">
+        <div class="alert-badge">${lbl}</div>
+        <div class="alert-info">
+          <div class="alert-title">${title}</div>
+          ${sub ? `<div class="alert-sub">${sub}</div>` : ''}
+        </div>
+        ${time ? `<div class="alert-time-col">${time}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // ── Sky Alerts ──────────────────────────────────────────
+  async function loadSkyAlerts() {
+    const list = document.getElementById('sky-list');
+    const badge = document.getElementById('sky-badge');
+    if (!list) return;
+
+    let data = null;
+    try { data = await fetch('/sky/data/alerts_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+
+    const items = (data?.items || []).slice(0, 10);
+    if (!items.length) {
+      list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      return;
+    }
+    if (badge) { badge.textContent = items.length; badge.style.display = ''; }
+
+    const GRP_LABEL = { risk: 'RISK', neo: 'NEO', neocp: 'NEO?', transient: 'TRAN', nova: 'NOVA' };
+    const GRP_CLS   = { risk: 'sky-risk', neo: 'sky-neo', neocp: 'sky-neo', transient: 'sky-tran', nova: 'sky-nova' };
+
+    let html = '';
+    for (const a of items) {
+      const grp = a.group || a.type || 'neo';
+      const lbl = GRP_LABEL[grp] || grp.toUpperCase().slice(0, 4);
+      const cls = GRP_CLS[grp] || 'sky-neo';
+      const time = fmtAge(a.updated_utc || a.ingested_utc);
+      const title = (a.title || a.id || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const note = (a.note || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const mag = a.mag != null ? `mag&nbsp;${a.mag.toFixed(1)}` : '';
+      const sub = [note, mag].filter(Boolean).join(' · ');
+      html += `<div class="alert-item ${cls}">
+        <div class="alert-badge">${lbl}</div>
+        <div class="alert-info">
+          <div class="alert-title">${title}</div>
+          ${sub ? `<div class="alert-sub">${sub}</div>` : ''}
+        </div>
+        ${time ? `<div class="alert-time-col">${time}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // ── Calendar Events ─────────────────────────────────────
+  async function loadCalendarEvents() {
+    const list = document.getElementById('cal-list');
+    const badge = document.getElementById('cal-badge');
+    if (!list) return;
+
+    let data = null;
+    try { data = await fetch('/calendar/daily_signal.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+
+    const items = (data?.items || []).slice(0, 20);
+    if (!items.length) {
+      list.innerHTML = '<div class="alerts-empty">No upcoming events.</div>';
+      return;
+    }
+    if (badge) { badge.textContent = items.length; badge.style.display = ''; }
+
+    const CAT_LABEL = { COMETS: 'CMT', ECLIPSES: 'ECL', METEORS: 'MTR', OCCULTATIONS: 'OCC', CONJUNCTIONS: 'CNJ' };
+    const CAT_CLS   = { COMETS: 'cal-comets', ECLIPSES: 'cal-eclipses', METEORS: 'cal-meteors', OCCULTATIONS: 'cal-occultations', CONJUNCTIONS: 'cal-conjunctions' };
+
+    // Sort by published_at ascending (nearest first)
+    const sorted = [...items].sort((a, b) => {
+      const da = a.published_at || '', db = b.published_at || '';
+      return da < db ? -1 : da > db ? 1 : 0;
+    });
+
+    let html = '';
+    for (const ev of sorted) {
+      const cat = (ev.category || ev.stream || '').toUpperCase();
+      const lbl = CAT_LABEL[cat] || cat.slice(0, 3);
+      const cls = CAT_CLS[cat] || 'cal-conjunctions';
+      // Strip leading date prefix like "02 Aug 2027 (490 days away): "
+      const rawTitle = ev.title || '';
+      const title = (rawTitle.replace(/^\d{2}\s+\w+\s+\d{4}\s*\([^)]+\)\s*:\s*/, '') || rawTitle)
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      // Days relative label from published_at
+      let timeLabel = '';
+      if (ev.published_at) {
+        const evDate = new Date(ev.published_at + 'T00:00:00Z');
+        const nowDate = new Date();
+        nowDate.setUTCHours(0, 0, 0, 0);
+        const diffDays = Math.round((evDate - nowDate) / 86400000);
+        if (diffDays === 0) timeLabel = 'today';
+        else if (diffDays === 1) timeLabel = 'tmrw';
+        else if (diffDays === -1) timeLabel = '1d ago';
+        else if (diffDays > 0) timeLabel = `+${diffDays}d`;
+        else timeLabel = `${Math.abs(diffDays)}d ago`;
+      }
+      html += `<div class="alert-item ${cls}">
+        <div class="alert-badge">${lbl}</div>
+        <div class="alert-info">
+          <div class="alert-title">${title}</div>
+        </div>
+        ${timeLabel ? `<div class="alert-time-col">${timeLabel}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // ── News ────────────────────────────────────────────────
+  async function loadNewsItems() {
+    const list = document.getElementById('news-list');
+    const badge = document.getElementById('news-badge');
+    if (!list) return;
+
+    let xmlText = null;
+    try { xmlText = await fetch('/news/rss.xml').then(r => r.ok ? r.text() : null); } catch (_) {}
+
+    if (!xmlText) {
+      list.innerHTML = '<div class="alerts-empty">No news available.</div>';
+      return;
+    }
+
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    const itemEls = Array.from(doc.querySelectorAll('item')).slice(0, 20);
+    if (!itemEls.length) {
+      list.innerHTML = '<div class="alerts-empty">No news available.</div>';
+      return;
+    }
+    if (badge) { badge.textContent = itemEls.length; badge.style.display = ''; }
+
+    const CAT_LABEL = { SCIENCE: 'SCI', NEWS: 'NEWS', NEBULACAST: 'NBC', IMAGES: 'IMG', VIDEOS: 'VID' };
+    const CAT_CLS   = { SCIENCE: 'news-science', NEWS: 'news-news', NEBULACAST: 'news-nebulacast', IMAGES: 'news-images', VIDEOS: 'news-videos' };
+
+    let html = '';
+    for (const el of itemEls) {
+      const title = (el.querySelector('title')?.textContent || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const link  = el.querySelector('link')?.textContent || '';
+      const cat   = (el.querySelector('category')?.textContent || '').trim().toUpperCase();
+      const pubDate = el.querySelector('pubDate')?.textContent || '';
+      const lbl = CAT_LABEL[cat] || cat.slice(0, 3) || 'NEWS';
+      const cls = CAT_CLS[cat] || 'news-news';
+      const time = pubDate ? fmtAge(new Date(pubDate).toISOString()) : '';
+      html += `<div class="alert-item ${cls}">
+        <div class="alert-badge">${lbl}</div>
+        <div class="alert-info">
+          <div class="alert-title">${link ? `<a href="${link}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">${title}</a>` : title}</div>
+        </div>
+        ${time ? `<div class="alert-time-col">${time}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // ── NOP interactive: profile & chart chip clicks ───────
+  document.getElementById('console-hero').addEventListener('click', e => {
+    const pb = e.target.closest('.nop-profile-btn');
+    if (pb) {
+      const p = pb.dataset.profile;
+      if (!_nopProfiles[p]) return;
+      _nopActiveProfile = p;
+      const s = Math.round(_nopProfiles[p]);
+      const sv = document.getElementById('nop-score-val');
+      const sl = document.getElementById('nop-score-lbl');
+      if (sv) { sv.textContent = s; sv.className = 'hero-card-value'; sv.style.color = _nopScoreColor(s); }
+      if (sl) sl.textContent = _nopScoreLbl(s);
+      document.querySelectorAll('.nop-profile-btn').forEach(b => b.classList.toggle('is-active', b.dataset.profile === p));
+      return;
+    }
+    const ch = e.target.closest('.nop-chip');
+    if (ch) {
+      _nopActiveMetric = ch.dataset.metric;
+      _nopRenderChart(_nopActiveMetric);
+      document.querySelectorAll('.nop-chip').forEach(c => c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
+    }
+  });
+
   // ── Boot ───────────────────────────────────────────────
   loadHero();
   loadFeed();
+  loadSwxAlerts();
+  loadSkyAlerts();
+  loadCalendarEvents();
+  loadNewsItems();
 
 </script>
 </body>
