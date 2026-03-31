@@ -35,21 +35,35 @@
       display: grid;
       grid-template-rows: 52px 1fr;
       grid-template-columns: 272px 1fr;
+      row-gap: 8px;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* ─── Topbar ─────────────────────────────────────────────*/
-    .console-topbar {
-      grid-column: 1 / -1;
+    /* ─── Topbar cells ───────────────────────────────────────*/
+    .console-topbar-brand {
+      background: rgba(16, 20, 32, 0.98);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      z-index: 50;
+    }
+
+    .console-topbar-location {
       background: rgba(16, 20, 32, 0.98);
       border-bottom: 1px solid rgba(255,255,255,0.07);
       display: flex;
       align-items: center;
-      gap: 16px;
       padding: 9px 20px 0;
-      flex-shrink: 0;
       z-index: 50;
+      min-width: 0;
+    }
+
+    .console-topbar-location #w-location {
+      flex: 1;
+      min-width: 0;
     }
 
     .console-brand {
@@ -58,16 +72,10 @@
       letter-spacing: 0.05em;
       color: rgba(255,255,255,0.7);
       white-space: nowrap;
-      flex-shrink: 0;
     }
 
     .console-brand span {
       color: #4a6fa5;
-    }
-
-    .console-topbar #w-location {
-      flex: 1;
-      min-width: 0;
     }
 
     /* ─── Brand bar at top of left feed column ───────────── */
@@ -704,11 +712,15 @@
 
 <div class="console-root">
 
-  <!-- ══════════ TOPBAR (full width) ══════════ -->
-  <header class="console-topbar">
+  <!-- ══════════ TOPBAR: brand (left col) ══════════ -->
+  <div class="console-topbar-brand">
     <div class="console-brand"><span>★</span> NEBULACAST</div>
+  </div>
+
+  <!-- ══════════ TOPBAR: location (right col) ══════════ -->
+  <div class="console-topbar-location">
     <div id="w-location"></div>
-  </header>
+  </div>
 
   <!-- ══════════ LEFT COLUMN: PRIORITY FEED ══════════ -->
   <aside class="console-feed">
