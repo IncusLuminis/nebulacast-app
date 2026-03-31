@@ -1532,12 +1532,8 @@
       ? `<div style="font-size:9px;color:rgba(255,255,255,0.38);margin-top:2px">${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''  }${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>` : '';
     const p4 = `<div class="hero-card" style="min-width:110px;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Moon</div>
-      <canvas id="nop-moon-canvas" width="54" height="54" style="flex-shrink:0;margin:3px 0 2px;width:54px;height:54px"></canvas>
-      <div class="nop-moon-times">
-        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.78)">${Math.round(moonIllum)}%${moonUpStr}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:1px">${wx?.moon?.phase_name||''}</div>
-        ${moonRiseSet}
-      </div>
+      <canvas id="nop-moon-canvas" width="86" height="86" style="flex-shrink:0;margin:4px 0 3px;width:86px;height:86px"></canvas>
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap">${Math.round(moonIllum)}% &nbsp;${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''}${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>
     </div>`;
 
     // ── Panel 5: Night Score ──
