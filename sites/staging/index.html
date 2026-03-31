@@ -376,11 +376,21 @@
       display: none;
     }
     .fsh-chevron {
-      font-size: 15px;
-      line-height: 1;
-      transition: transform 0.2s;
-      opacity: 0.65;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      font-size: 13px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.75);
+      transition: transform 0.2s, background 0.15s, color 0.15s;
       flex-shrink: 0;
+    }
+    .feed-section-hdr:hover .fsh-chevron {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
     }
     .feed-section.is-collapsed .fsh-chevron { transform: rotate(-90deg); }
 
