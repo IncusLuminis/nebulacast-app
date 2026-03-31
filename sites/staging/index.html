@@ -457,6 +457,27 @@
     .sky-neo .alert-badge   { color: #42a5f5; background: rgba(66,165,245,0.12); }
     .sky-tran .alert-badge  { color: #ab47bc; background: rgba(171,71,188,0.13); }
     .sky-nova .alert-badge  { color: #ffee58; background: rgba(255,238,88,0.11); }
+    /* Calendar event category colors */
+    .cal-comets .alert-badge       { color: #26c6da; background: rgba(38,198,218,0.12); }
+    .cal-eclipses .alert-badge     { color: #ffd54f; background: rgba(255,213,79,0.11); }
+    .cal-meteors .alert-badge      { color: #ff8a65; background: rgba(255,138,101,0.12); }
+    .cal-occultations .alert-badge { color: #ba68c8; background: rgba(186,104,200,0.12); }
+    .cal-conjunctions .alert-badge { color: #81c784; background: rgba(129,199,132,0.11); }
+    /* News category colors */
+    .news-science .alert-badge    { color: #42a5f5; background: rgba(66,165,245,0.12); }
+    .news-news .alert-badge       { color: #66bb6a; background: rgba(102,187,106,0.11); }
+    .news-nebulacast .alert-badge { color: #ce93d8; background: rgba(206,147,216,0.12); }
+    .news-images .alert-badge     { color: #26c6da; background: rgba(38,198,218,0.11); }
+    .news-videos .alert-badge     { color: #ff8a65; background: rgba(255,138,101,0.12); }
+    /* Calendar & News section scroll */
+    #fs-cal, #fs-news { border-top: 1px solid rgba(255,255,255,0.06); }
+    #fsb-cal, #fsb-news { overflow-y: auto; max-height: 230px; }
+    #fsb-cal::-webkit-scrollbar,
+    #fsb-news::-webkit-scrollbar  { width: 4px; }
+    #fsb-cal::-webkit-scrollbar-track,
+    #fsb-news::-webkit-scrollbar-track { background: transparent; }
+    #fsb-cal::-webkit-scrollbar-thumb,
+    #fsb-news::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     /* ─── Context Tools ──────────────────────────────────── */
     .console-tools {
@@ -725,6 +746,34 @@
         </div>
         <div class="feed-section-body" id="fsb-sky">
           <div class="alerts-list" id="sky-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Calendar Events -->
+      <div class="feed-section" id="fs-cal">
+        <div class="feed-section-hdr" data-toggle="cal">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">Calendar Events</span>
+          <span class="fsh-badge" id="cal-badge"></span>
+        </div>
+        <div class="feed-section-body" id="fsb-cal">
+          <div class="alerts-list" id="cal-list">
+            <div class="feed-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. News -->
+      <div class="feed-section" id="fs-news">
+        <div class="feed-section-hdr" data-toggle="news">
+          <span class="fsh-chevron">▾</span>
+          <span class="fsh-title">News</span>
+          <span class="fsh-badge" id="news-badge"></span>
+        </div>
+        <div class="feed-section-body" id="fsb-news">
+          <div class="alerts-list" id="news-list">
             <div class="feed-loading">Loading…</div>
           </div>
         </div>
@@ -1436,11 +1485,116 @@
     list.innerHTML = html;
   }
 
+  // ── Calendar Events ─────────────────────────────────────
+  async function loadCalendarEvents() {
+    const list = document.getElementById('cal-list');
+    const badge = document.getElementById('cal-badge');
+    if (!list) return;
+
+    let data = null;
+    try { data = await fetch('/calendar/daily_signal.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+
+    const items = (data?.items || []).slice(0, 20);
+    if (!items.length) {
+      list.innerHTML = '<div class="alerts-empty">No upcoming events.</div>';
+      return;
+    }
+    if (badge) { badge.textContent = items.length; badge.style.display = ''; }
+
+    const CAT_LABEL = { COMETS: 'CMT', ECLIPSES: 'ECL', METEORS: 'MTR', OCCULTATIONS: 'OCC', CONJUNCTIONS: 'CNJ' };
+    const CAT_CLS   = { COMETS: 'cal-comets', ECLIPSES: 'cal-eclipses', METEORS: 'cal-meteors', OCCULTATIONS: 'cal-occultations', CONJUNCTIONS: 'cal-conjunctions' };
+
+    // Sort by published_at ascending (nearest first)
+    const sorted = [...items].sort((a, b) => {
+      const da = a.published_at || '', db = b.published_at || '';
+      return da < db ? -1 : da > db ? 1 : 0;
+    });
+
+    let html = '';
+    for (const ev of sorted) {
+      const cat = (ev.category || ev.stream || '').toUpperCase();
+      const lbl = CAT_LABEL[cat] || cat.slice(0, 3);
+      const cls = CAT_CLS[cat] || 'cal-conjunctions';
+      // Strip leading date prefix like "02 Aug 2027 (490 days away): "
+      const rawTitle = ev.title || '';
+      const title = (rawTitle.replace(/^\d{2}\s+\w+\s+\d{4}\s*\([^)]+\)\s*:\s*/, '') || rawTitle)
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      // Days relative label from published_at
+      let timeLabel = '';
+      if (ev.published_at) {
+        const evDate = new Date(ev.published_at + 'T00:00:00Z');
+        const nowDate = new Date();
+        nowDate.setUTCHours(0, 0, 0, 0);
+        const diffDays = Math.round((evDate - nowDate) / 86400000);
+        if (diffDays === 0) timeLabel = 'today';
+        else if (diffDays === 1) timeLabel = 'tmrw';
+        else if (diffDays === -1) timeLabel = '1d ago';
+        else if (diffDays > 0) timeLabel = `+${diffDays}d`;
+        else timeLabel = `${Math.abs(diffDays)}d ago`;
+      }
+      html += `<div class="alert-item ${cls}">
+        <div class="alert-badge">${lbl}</div>
+        <div class="alert-info">
+          <div class="alert-title">${title}</div>
+        </div>
+        ${timeLabel ? `<div class="alert-time-col">${timeLabel}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // ── News ────────────────────────────────────────────────
+  async function loadNewsItems() {
+    const list = document.getElementById('news-list');
+    const badge = document.getElementById('news-badge');
+    if (!list) return;
+
+    let xmlText = null;
+    try { xmlText = await fetch('/news/rss.xml').then(r => r.ok ? r.text() : null); } catch (_) {}
+
+    if (!xmlText) {
+      list.innerHTML = '<div class="alerts-empty">No news available.</div>';
+      return;
+    }
+
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    const itemEls = Array.from(doc.querySelectorAll('item')).slice(0, 20);
+    if (!itemEls.length) {
+      list.innerHTML = '<div class="alerts-empty">No news available.</div>';
+      return;
+    }
+    if (badge) { badge.textContent = itemEls.length; badge.style.display = ''; }
+
+    const CAT_LABEL = { SCIENCE: 'SCI', NEWS: 'NEWS', NEBULACAST: 'NBC', IMAGES: 'IMG', VIDEOS: 'VID' };
+    const CAT_CLS   = { SCIENCE: 'news-science', NEWS: 'news-news', NEBULACAST: 'news-nebulacast', IMAGES: 'news-images', VIDEOS: 'news-videos' };
+
+    let html = '';
+    for (const el of itemEls) {
+      const title = (el.querySelector('title')?.textContent || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const link  = el.querySelector('link')?.textContent || '';
+      const cat   = (el.querySelector('category')?.textContent || '').trim().toUpperCase();
+      const pubDate = el.querySelector('pubDate')?.textContent || '';
+      const lbl = CAT_LABEL[cat] || cat.slice(0, 3) || 'NEWS';
+      const cls = CAT_CLS[cat] || 'news-news';
+      const time = pubDate ? fmtAge(new Date(pubDate).toISOString()) : '';
+      html += `<div class="alert-item ${cls}">
+        <div class="alert-badge">${lbl}</div>
+        <div class="alert-info">
+          <div class="alert-title">${link ? `<a href="${link}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">${title}</a>` : title}</div>
+        </div>
+        ${time ? `<div class="alert-time-col">${time}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
   // ── Boot ───────────────────────────────────────────────
   loadHero();
   loadFeed();
   loadSwxAlerts();
   loadSkyAlerts();
+  loadCalendarEvents();
+  loadNewsItems();
 
 </script>
 </body>
