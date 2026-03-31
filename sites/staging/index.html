@@ -1491,7 +1491,10 @@
     const gLvl = parseInt((scales.g_scale||'G0').replace(/\D/g,'')) || 0;
     const rLvl = parseInt((scales.r_scale||'R0').replace(/\D/g,'')) || 0;
     const sLvl = parseInt((scales.s_scale||'S0').replace(/\D/g,'')) || 0;
-    const kpColor = !kp?'rgba(255,255,255,0.7)':kp>=7?'#f44336':kp>=5?'#ff9800':kp>=3?'#ffd54f':'#4caf50';
+    const trend = sw?.forecast?.trend || 'steady';
+    const trendArrow = trend==='rising'?'↑':trend==='falling'?'↓':'→';
+    const swStatus = sw?.summary?.status || 'quiet';
+    const swLabel  = sw?.summary?.label  || 'Quiet';
     function scaleBadge(l, lvl, max) {
       const on = lvl > 0;
       const hi = lvl / max;
@@ -1499,10 +1502,14 @@
       const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
       return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
-    const p1 = `<div class="hero-card" style="min-width:88px">
-      <div class="hero-card-label">Storm Risk</div>
-      <div class="hero-card-value" style="color:${kpColor};font-size:30px;line-height:1;margin:3px 0 1px">${kp!=null?kp.toFixed(1):'—'}</div>
-      <div style="font-size:9px;color:rgba(255,255,255,0.28);margin-bottom:3px">Kp index</div>
+    const p1 = `<div class="hero-card" style="min-width:108px">
+      <div class="hero-card-label">Kp</div>
+      <div style="display:flex;align-items:baseline;gap:5px;margin:3px 0 1px">
+        <span style="font-size:32px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
+        <span style="font-size:18px;color:rgba(255,255,255,0.55)">${trendArrow}</span>
+      </div>
+      <div style="margin-bottom:5px"><span class="sw-badge ${swStatus}">${swLabel}</span></div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:4px">Current conditions</div>
       <div class="nop-scales">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
     </div>`;
 
