@@ -200,6 +200,67 @@
       font-size: 12px;
     }
 
+    /* ─── Night Overview Panel ──────────────────────────── */
+    .console-hero { min-height: 110px; overflow-x: auto; }
+
+    .nop-scales { display: flex; gap: 3px; margin-top: 5px; }
+    .nop-scale-badge {
+      font-size: 9px; font-weight: 700; padding: 2px 6px;
+      border-radius: 3px; letter-spacing: 0.04em;
+    }
+
+    .nop-sun-disk {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: radial-gradient(circle at 38% 38%, #fff8e1 0%, #ffeb3b 30%, #ff9800 65%, rgba(255,130,0,0.35) 85%, transparent);
+      box-shadow: 0 0 14px var(--sun-glow1), 0 0 30px var(--sun-glow2);
+      animation: nop-sun-pulse var(--sun-pulse) ease-in-out infinite;
+      margin: 4px 0 2px;
+    }
+    @keyframes nop-sun-pulse {
+      0%, 100% { transform: scale(1);    box-shadow: 0 0 14px var(--sun-glow1), 0 0 30px var(--sun-glow2); }
+      50%       { transform: scale(1.05); box-shadow: 0 0 21px var(--sun-glow1), 0 0 44px var(--sun-glow2); }
+    }
+    .nop-sun-times {
+      display: flex; flex-direction: column; gap: 1px;
+      font-size: 10px; color: rgba(255,255,255,0.5); text-align: center; line-height: 1.5;
+    }
+
+    .nop-summary-text {
+      font-size: 11px; color: rgba(255,255,255,0.62); line-height: 1.55; margin-top: 5px;
+    }
+
+    .nop-moon-times { margin-top: 4px; text-align: center; }
+
+    .nop-profiles { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+    .nop-profile-btn {
+      font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.1); background: transparent;
+      color: rgba(255,255,255,0.38); cursor: pointer; letter-spacing: 0.02em; line-height: 1.4;
+      transition: all 0.15s;
+    }
+    .nop-profile-btn.is-active, .nop-profile-btn:hover {
+      background: rgba(74,111,165,0.2); border-color: rgba(74,111,165,0.4); color: rgba(255,255,255,0.82);
+    }
+
+    .nop-window-time {
+      font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.82); margin-top: 3px; white-space: nowrap;
+    }
+    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 28px; margin-top: 5px; }
+    .nop-bar {
+      flex: 1; min-width: 3px; border-radius: 1px 1px 0 0;
+      background: rgba(255,255,255,0.12); transition: height 0.25s, background 0.2s;
+    }
+    .nop-bar.in-window { background: rgba(74,111,165,0.55); }
+    .nop-chips { display: flex; gap: 4px; margin-top: 5px; }
+    .nop-chip {
+      font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.1); background: transparent;
+      color: rgba(255,255,255,0.35); cursor: pointer; line-height: 1.4; transition: all 0.15s;
+    }
+    .nop-chip.is-active, .nop-chip:hover {
+      background: rgba(74,111,165,0.18); border-color: rgba(74,111,165,0.4); color: rgba(255,255,255,0.72);
+    }
+
     /* ─── Right column (topbar + hero + tools) ─────────────── */
     .console-right {
       display: flex;
@@ -1209,117 +1270,273 @@
   });
 
   // ══════════════════════════════════════════════════════════
-  //  HERO DECISION BAND
+  //  NIGHT OVERVIEW PANEL
   // ══════════════════════════════════════════════════════════
-  async function loadHero() {
-    let wx = null, sw = null;
-    try {
-      [wx, sw] = await Promise.all([
-        fetch('/data/observer_weather_now.json').then(r => r.ok ? r.json() : null),
-        fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
-      ]);
-    } catch (_) {}
 
+  // Module state for interactive NOP elements
+  let _nopProfiles = {}, _nopActiveProfile = 'balanced';
+  let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'cloud';
+
+  function _nopScoreCls(s) { return s>=85?'score-excellent':s>=70?'score-good':s>=50?'score-fair':'score-poor'; }
+  function _nopScoreLbl(s) { return s>=85?'Excellent':s>=70?'Good':s>=50?'Fair':'Poor'; }
+  function _nopFmtT(iso)   { try { return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}); } catch(_){return'—';} }
+
+  // Parse "2026-Mar-30 07:06Z" format from sun_moon.json
+  function _parseSMTime(s) {
+    const MO = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    const m = s && s.match(/^(\d{4})-(\w{3})-(\d{2})\s+(\d{2}):(\d{2})Z?$/);
+    if (!m) return null;
+    return new Date(Date.UTC(+m[1], MO[m[2]]||0, +m[3], +m[4], +m[5]));
+  }
+
+  function _nopDrawMoon(canvas, phase, illum) {
+    if (!canvas) return;
+    const size = canvas.width, r = size/2 - 1, cx = size/2, cy = size/2;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    // Background disk
+    ctx.fillStyle = 'rgba(18,22,38,0.9)';
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+    // Clip to disk
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.clip();
+    const litColor = 'rgba(220,215,178,0.88)';
+    // termX: positive = shadow ellipse on same side as lit hemisphere (crescent)
+    //        negative = light ellipse extends to opposite side (gibbous)
+    const termX = r * Math.cos(phase * 2 * Math.PI);
+    if (phase < 0.5) {
+      // Waxing: right side lit
+      ctx.fillStyle = litColor;
+      ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2,false); ctx.closePath(); ctx.fill();
+      if (termX < 0) {
+        ctx.fillStyle = litColor;
+        ctx.beginPath(); ctx.ellipse(cx,cy,Math.abs(termX),r,0,0,Math.PI*2); ctx.fill();
+      } else if (termX > 0.5) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath(); ctx.ellipse(cx,cy,termX,r,0,0,Math.PI*2); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    } else {
+      // Waning: left side lit
+      ctx.fillStyle = litColor;
+      ctx.beginPath(); ctx.moveTo(cx, cy-r); ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2,true); ctx.closePath(); ctx.fill();
+      if (termX < -0.5) {
+        ctx.fillStyle = litColor;
+        ctx.beginPath(); ctx.ellipse(cx,cy,Math.abs(termX),r,0,0,Math.PI*2); ctx.fill();
+      } else if (termX > 0) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath(); ctx.ellipse(cx,cy,termX,r,0,0,Math.PI*2); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+    ctx.restore();
+    // Border
+    ctx.strokeStyle = 'rgba(200,200,180,0.12)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  }
+
+  function _nopRenderChart(metric) {
+    const chart = document.getElementById('nop-chart');
+    if (!chart || !_nopNightHours.length) return;
+    const bars = chart.querySelectorAll('.nop-bar');
+    _nopNightHours.forEach((h, i) => {
+      if (!bars[i]) return;
+      let val = 0;
+      if (metric === 'cloud') val = h.cloud?.total_percent ?? 0;
+      else if (metric === 'wind') val = Math.min((h.wind?.speed_mps ?? 0) * 5, 100);
+      else if (metric === 'dew') {
+        const spread = (h.air?.temperature_c ?? 5) - (h.air?.dewpoint_c ?? 0);
+        val = Math.max(0, Math.min(100, (8 - spread) * 12.5));
+      }
+      bars[i].style.height = Math.max(2, Math.round(val * 0.28)) + 'px';
+      const t = h.timestamp_utc;
+      const inWin = _nopBestWindow && t &&
+        t >= _nopBestWindow.start && t < _nopBestWindow.end;
+      bars[i].classList.toggle('in-window', !!inWin);
+    });
+  }
+
+  async function loadHero() {
     const hero = document.getElementById('console-hero');
     if (!hero) return;
 
-    const cards = [];
+    let wx = null, sw = null, sunMoon = null;
+    try {
+      [wx, sw, sunMoon] = await Promise.all([
+        fetch('/data/observer_weather_now.json').then(r => r.ok ? r.json() : null),
+        fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
+        fetch('/sky/data/sun_moon.json').then(r => r.ok ? r.json() : null),
+      ]);
+    } catch (_) {}
 
-    // ── Score card ──
-    if (wx?.decision?.mode_scores) {
-      const modes = wx.decision.mode_scores;
-      const best  = Object.entries(modes).reduce((a, b) => b[1] > a[1] ? b : a);
-      const score = Math.round(best[1]);
-      const mode  = best[0].charAt(0).toUpperCase() + best[0].slice(1);
-      const cls   = score >= 85 ? 'score-excellent' : score >= 70 ? 'score-good' : score >= 50 ? 'score-fair' : 'score-poor';
-      cards.push(`
-        <div class="hero-card ${cls}">
-          <div class="hero-card-label">Observing Score</div>
-          <div class="hero-card-value">${score}</div>
-          <div class="hero-card-sub">${mode} profile</div>
-        </div>
-      `);
+    // ── Night hours & best window ──
+    _nopNightHours = (wx?.hourly || []).filter(h => h.night === true).slice(0, 24);
+    _nopBestWindow = wx?.decision?.best_tonight || null;
 
-      // All mode scores compact
-      const modeList = Object.entries(modes).map(([k, v]) =>
-        `<span style="color:rgba(255,255,255,0.5)">${k.charAt(0).toUpperCase()+k.slice(1)}</span>&nbsp;${Math.round(v)}`
-      ).join('<span style="color:rgba(255,255,255,0.15);margin:0 6px">·</span>');
-      cards.push(`
-        <div class="hero-card" style="min-width:180px">
-          <div class="hero-card-label">Mode Scores</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.6;margin-top:4px">${modeList}</div>
-        </div>
-      `);
+    // ── Profile scores ──
+    _nopProfiles = wx?.decision?.mode_scores || {};
+    const profileKeys = Object.keys(_nopProfiles);
+    if (profileKeys.length && !_nopProfiles[_nopActiveProfile])
+      _nopActiveProfile = profileKeys[0];
+
+    // ── Sun/moon crossings from sun_moon.json ──
+    let sunsetT = null, sunriseT = null, moonriseT = null, moonsetT = null;
+    let moonPhase = 0, moonIllum = wx?.moon?.illumination_percent ?? 0;
+
+    if (sunMoon?.frames?.length) {
+      const frames = sunMoon.frames;
+      const now = Date.now();
+      const scanStart = now - 8 * 3600e3, scanEnd = now + 32 * 3600e3;
+
+      for (let i = 1; i < frames.length; i++) {
+        const t = _parseSMTime(frames[i].t_utc);
+        if (!t) continue;
+        const ms = t.getTime();
+        if (ms < scanStart || ms > scanEnd) continue;
+        const prevS = frames[i-1].sun?.alt_deg ?? 0, currS = frames[i].sun?.alt_deg ?? 0;
+        if (prevS > 0 && currS <= 0 && !sunsetT)               sunsetT  = t.toISOString();
+        if (prevS <= 0 && currS > 0 && sunsetT && !sunriseT)   sunriseT = t.toISOString();
+      }
+      // Moon crossings around tonight
+      const nightS = sunsetT  ? new Date(sunsetT).getTime()  - 2*3600e3 : now;
+      const nightE = sunriseT ? new Date(sunriseT).getTime() + 2*3600e3 : now + 14*3600e3;
+      for (let i = 1; i < frames.length; i++) {
+        const t = _parseSMTime(frames[i].t_utc);
+        if (!t) continue;
+        const ms = t.getTime();
+        if (ms < nightS || ms > nightE) continue;
+        const prevM = frames[i-1].moon?.alt_deg ?? 0, currM = frames[i].moon?.alt_deg ?? 0;
+        if (prevM <= 0 && currM > 0 && !moonriseT) moonriseT = t.toISOString();
+        if (prevM > 0 && currM <= 0 && !moonsetT)  moonsetT  = t.toISOString();
+      }
+      // Moon phase at nearest frame to now
+      let closest = null, minD = Infinity;
+      for (const f of frames) {
+        const t = _parseSMTime(f.t_utc); if (!t) continue;
+        const d = Math.abs(t.getTime() - now);
+        if (d < minD) { minD = d; closest = f; }
+      }
+      if (closest?.moon) {
+        moonPhase = closest.moon.phase ?? 0;
+        if (!moonIllum) moonIllum = closest.moon.illum_pct ?? 0;
+      }
     }
 
-    // ── Best window tonight ──
-    if (wx?.decision?.best_tonight) {
-      const w = wx.decision.best_tonight;
-      const fmt = iso => {
-        const d = new Date(iso);
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      };
-      const cloud = Math.round(w.cloud_avg ?? 0);
-      const cloudColor = cloud < 30 ? '#4caf50' : cloud < 60 ? '#ff9800' : '#f44336';
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Best Tonight</div>
-          <div class="hero-card-value" style="font-size:20px;color:rgba(255,255,255,0.85)">${fmt(w.start)}–${fmt(w.end)}</div>
-          <div class="hero-card-sub" style="color:${cloudColor}">☁ ${cloud}% clouds</div>
-        </div>
-      `);
+    // ── Text summary ──
+    function buildSummary() {
+      if (!_nopNightHours.length) return 'Weather data unavailable for tonight.';
+      const cloudAvg = _nopNightHours.reduce((s,h) => s+(h.cloud?.total_percent||0), 0) / _nopNightHours.length;
+      const windMax  = Math.max(..._nopNightHours.map(h => h.wind?.speed_mps||0));
+      const hasPrecip = _nopNightHours.some(h => (h.precip?.probability_percent||0) > 30);
+      const dewRisk  = wx?.decision?.risks?.dew || 'low';
+      const s1 = cloudAvg < 20 ? 'Clear skies expected throughout the night.' :
+                 cloudAvg < 40 ? 'Mostly clear with occasional cloud patches.' :
+                 cloudAvg < 60 ? 'Partly cloudy — some patches will affect views.' :
+                 cloudAvg < 80 ? 'Significant cloud cover will limit observations.' :
+                                 'Heavy overcast. Observing not recommended.';
+      const s2 = hasPrecip     ? 'Precipitation possible, limiting clear windows.' :
+                 windMax > 10  ? `Winds up to ${Math.round(windMax*3.6)} km/h may affect stability.` :
+                 dewRisk==='high' ? 'High dew risk — protect optics.' :
+                 cloudAvg < 30 ? 'Conditions are favorable for most observations.' :
+                                 'Observing windows will be limited.';
+      const s3 = (sw?.summary?.status==='storm'||sw?.summary?.status==='active')
+        ? 'Elevated geomagnetic activity may affect radio observations.' : '';
+      return [s1, s2, s3].filter(Boolean).join(' ');
     }
 
-    // ── Risks ──
-    if (wx?.decision?.risks) {
-      const risks = wx.decision.risks;
-      const ICONS = { dew: '💧', fog: '🌫', wind: '💨' };
-      const chips = Object.entries(risks)
-        .filter(([, v]) => v !== 'low')
-        .map(([k, v]) => `<span class="risk-chip ${v}">${ICONS[k] || ''}${k.charAt(0).toUpperCase()+k.slice(1)}</span>`)
-        .join('');
-      const allLow = Object.values(risks).every(v => v === 'low');
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Risks</div>
-          <div class="hero-risks" style="margin-top:6px">
-            ${allLow
-              ? '<span style="font-size:11px;color:rgba(255,255,255,0.35)">None significant</span>'
-              : chips}
-          </div>
-        </div>
-      `);
+    // ── Panel 1: Space Weather ──
+    const kp = sw?.metrics?.kp_latest ?? null;
+    const scales = sw?.scales || {};
+    const gLvl = parseInt((scales.g_scale||'G0').replace(/\D/g,'')) || 0;
+    const rLvl = parseInt((scales.r_scale||'R0').replace(/\D/g,'')) || 0;
+    const sLvl = parseInt((scales.s_scale||'S0').replace(/\D/g,'')) || 0;
+    const kpColor = !kp?'rgba(255,255,255,0.7)':kp>=7?'#f44336':kp>=5?'#ff9800':kp>=3?'#ffd54f':'#4caf50';
+    function scaleBadge(l, lvl, max) {
+      const on = lvl > 0;
+      const hi = lvl / max;
+      const c  = !on?'rgba(255,255,255,0.2)':hi>=0.6?'#f44336':'#ff9800';
+      const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
+      return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
+    const p1 = `<div class="hero-card" style="min-width:88px">
+      <div class="hero-card-label">Storm Risk</div>
+      <div class="hero-card-value" style="color:${kpColor};font-size:30px;line-height:1;margin:3px 0 1px">${kp!=null?kp.toFixed(1):'—'}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.28);margin-bottom:3px">Kp index</div>
+      <div class="nop-scales">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
+    </div>`;
 
-    // ── Moon ──
-    if (wx?.moon) {
-      const m = wx.moon;
-      const moonUp = m.moon_up_now
-        ? '<span style="color:#ff9800;font-size:10px">● Up</span>'
-        : '<span style="color:rgba(255,255,255,0.25);font-size:10px">● Below horizon</span>';
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Moon</div>
-          <div class="hero-card-value" style="font-size:20px;color:rgba(255,255,255,0.75)">${Math.round(m.illumination_percent)}%</div>
-          <div class="hero-card-sub">${m.phase_name} &nbsp;${moonUp}</div>
-        </div>
-      `);
-    }
+    // ── Panel 2: Sun ──
+    const swSt = sw?.summary?.status || 'quiet';
+    const g1 = swSt==='storm'?'rgba(244,67,54,0.7)':swSt==='active'?'rgba(255,152,0,0.7)':'rgba(255,200,0,0.65)';
+    const g2 = swSt==='storm'?'rgba(244,67,54,0.35)':swSt==='active'?'rgba(255,140,0,0.35)':'rgba(255,140,0,0.3)';
+    const spd = swSt==='storm'?'1.5s':swSt==='active'?'2s':'3s';
+    const p2 = `<div class="hero-card" style="min-width:78px;align-items:center">
+      <div class="hero-card-label" style="align-self:flex-start">Sun</div>
+      <div class="nop-sun-disk" style="--sun-glow1:${g1};--sun-glow2:${g2};--sun-pulse:${spd}"></div>
+      <div class="nop-sun-times">
+        <span>↓ ${_nopFmtT(sunsetT)}</span>
+        <span>↑ ${_nopFmtT(sunriseT)}</span>
+      </div>
+    </div>`;
 
-    // ── Space Weather ──
-    if (sw?.summary) {
-      const s  = sw.summary;
-      const kp = sw.metrics?.kp_latest != null ? `Kp ${sw.metrics.kp_latest.toFixed(1)}` : '';
-      cards.push(`
-        <div class="hero-card">
-          <div class="hero-card-label">Space Weather</div>
-          <div style="margin-top:6px"><span class="sw-badge ${s.status}">${s.label}</span></div>
-          <div class="hero-card-sub" style="margin-top:4px">${kp}</div>
-        </div>
-      `);
-    }
+    // ── Panel 3: Night Summary ──
+    const p3 = `<div class="hero-card" style="flex:1;min-width:155px;max-width:255px;justify-content:flex-start;padding-top:10px">
+      <div class="hero-card-label">Tonight</div>
+      <div class="nop-summary-text">${buildSummary()}</div>
+    </div>`;
 
-    hero.innerHTML = cards.join('');
+    // ── Panel 4: Moon ──
+    const moonUpStr = wx?.moon?.moon_up_now===true
+      ? '<span style="color:#ff9800;font-size:9px"> ↑up</span>'
+      : wx?.moon?.moon_up_now===false
+        ? '<span style="color:rgba(255,255,255,0.22);font-size:9px"> ↓below</span>' : '';
+    const moonRiseSet = (moonriseT||moonsetT)
+      ? `<div style="font-size:9px;color:rgba(255,255,255,0.38);margin-top:2px">${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''  }${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>` : '';
+    const p4 = `<div class="hero-card" style="min-width:88px;align-items:center">
+      <div class="hero-card-label" style="align-self:flex-start">Moon</div>
+      <canvas id="nop-moon-canvas" width="42" height="42" style="flex-shrink:0;margin:3px 0 2px"></canvas>
+      <div class="nop-moon-times">
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.78)">${Math.round(moonIllum)}%${moonUpStr}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:1px">${wx?.moon?.phase_name||''}</div>
+        ${moonRiseSet}
+      </div>
+    </div>`;
+
+    // ── Panel 5: Night Score ──
+    const activeScore = Math.round(_nopProfiles[_nopActiveProfile] ?? 0);
+    const PLBL = { balanced:'Balanced', visual:'Visual', photography:'Photo', broadband:'Broadband', planetary:'Planetary' };
+    const profileBtns = profileKeys.map(k =>
+      `<button class="nop-profile-btn${k===_nopActiveProfile?' is-active':''}" data-profile="${k}">${PLBL[k]||k}</button>`
+    ).join('');
+    const p5 = `<div class="hero-card" style="min-width:110px">
+      <div class="hero-card-label">Night Score</div>
+      <div id="nop-score-val" class="hero-card-value ${_nopScoreCls(activeScore)}" style="font-size:32px;line-height:1;margin:3px 0 1px">${activeScore}</div>
+      <div id="nop-score-lbl" class="hero-card-sub">${_nopScoreLbl(activeScore)}</div>
+      <div class="nop-profiles">${profileBtns}</div>
+    </div>`;
+
+    // ── Panel 6: Best Observing Window ──
+    const bw = _nopBestWindow;
+    const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '— no data —';
+    const barCount = _nopNightHours.length || 10;
+    const bars = Array.from({length:barCount}, () => `<div class="nop-bar" style="height:2px"></div>`).join('');
+    const p6 = `<div class="hero-card" style="flex:1;min-width:145px">
+      <div class="hero-card-label">Best Window</div>
+      <div class="nop-window-time">${winStr}</div>
+      <div id="nop-chart" class="nop-bar-chart">${bars}</div>
+      <div class="nop-chips">
+        <button class="nop-chip${_nopActiveMetric==='cloud'?' is-active':''}" data-metric="cloud">Cloud</button>
+        <button class="nop-chip${_nopActiveMetric==='dew'?' is-active':''}"   data-metric="dew">Dew</button>
+        <button class="nop-chip${_nopActiveMetric==='wind'?' is-active':''}"  data-metric="wind">Wind</button>
+      </div>
+    </div>`;
+
+    hero.innerHTML = [p1, p2, p3, p4, p5, p6].join('');
+
+    // Post-render
+    _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonPhase, moonIllum);
+    _nopRenderChart(_nopActiveMetric);
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1611,6 +1828,29 @@
     }
     list.innerHTML = html;
   }
+
+  // ── NOP interactive: profile & chart chip clicks ───────
+  document.getElementById('console-hero').addEventListener('click', e => {
+    const pb = e.target.closest('.nop-profile-btn');
+    if (pb) {
+      const p = pb.dataset.profile;
+      if (!_nopProfiles[p]) return;
+      _nopActiveProfile = p;
+      const s = Math.round(_nopProfiles[p]);
+      const sv = document.getElementById('nop-score-val');
+      const sl = document.getElementById('nop-score-lbl');
+      if (sv) { sv.textContent = s; sv.className = `hero-card-value ${_nopScoreCls(s)}`; }
+      if (sl) sl.textContent = _nopScoreLbl(s);
+      document.querySelectorAll('.nop-profile-btn').forEach(b => b.classList.toggle('is-active', b.dataset.profile === p));
+      return;
+    }
+    const ch = e.target.closest('.nop-chip');
+    if (ch) {
+      _nopActiveMetric = ch.dataset.metric;
+      _nopRenderChart(_nopActiveMetric);
+      document.querySelectorAll('.nop-chip').forEach(c => c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
+    }
+  });
 
   // ── Boot ───────────────────────────────────────────────
   loadHero();
