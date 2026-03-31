@@ -155,8 +155,6 @@ def render_from_outputs(
 
     nebulacast_records = [r for r in records if (r.get("category") or r.get("stream", "")).upper() == "NEBULACAST"]
     other_records = [r for r in records if (r.get("category") or r.get("stream", "")).upper() != "NEBULACAST"]
-    selected_nebulacast = nebulacast_records[:nebulacast_min_items]
-    selected_nebulacast_urls = {r.get("url", "").strip() for r in selected_nebulacast if r.get("url")}
 
     def get_sort_key(record: dict) -> float:
         pub_str = record.get("published_at") or ""
@@ -167,8 +165,12 @@ def render_from_outputs(
         except Exception:
             return 0.0
 
+    # Sort nebulacast by date before slicing so we always take the N newest, not N oldest
+    nebulacast_records.sort(key=get_sort_key, reverse=True)
+    selected_nebulacast = nebulacast_records[:nebulacast_min_items]
+    selected_nebulacast_urls = {r.get("url", "").strip() for r in selected_nebulacast if r.get("url")}
+
     # Sort all records by published_at descending (newest first)
-    selected_nebulacast.sort(key=get_sort_key, reverse=True)
     other_records.sort(key=get_sort_key, reverse=True)
     remaining_other = [r for r in other_records if r.get("url", "").strip() not in selected_nebulacast_urls]
     final_records = (selected_nebulacast + remaining_other)[:max_items]
