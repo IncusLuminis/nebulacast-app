@@ -33,7 +33,7 @@
     /* ─── Console root grid ────────────────────────────────── */
     .console-root {
       display: grid;
-      grid-template-rows: 52px auto 1fr;
+      grid-template-columns: 272px 1fr;
       height: 100vh;
       overflow: hidden;
     }
@@ -66,6 +66,14 @@
     .console-topbar #w-location {
       flex: 1;
       min-width: 0;
+    }
+
+    /* ─── Brand bar at top of left feed column ───────────── */
+    .console-brand-bar {
+      background: rgba(16, 20, 32, 0.98);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 13px 14px 11px;
+      flex-shrink: 0;
     }
 
     /* ─── Hero Decision Band ─────────────────────────────────*/
@@ -182,10 +190,10 @@
       font-size: 12px;
     }
 
-    /* ─── Console Body ────────────────────────────────────── */
-    .console-body {
-      display: grid;
-      grid-template-columns: 272px 1fr;
+    /* ─── Right column (topbar + hero + tools) ─────────────── */
+    .console-right {
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       min-height: 0;
     }
@@ -485,6 +493,7 @@
       flex-direction: column;
       overflow: hidden;
       min-height: 0;
+      flex: 1;
     }
 
     .tools-tabs {
@@ -693,22 +702,13 @@
 
 <div class="console-root">
 
-  <!-- ══════════ TOPBAR ══════════ -->
-  <header class="console-topbar">
-    <div class="console-brand"><span>★</span> NEBULACAST</div>
-    <div id="w-location"></div>
-  </header>
+  <!-- ══════════ LEFT COLUMN: PRIORITY FEED ══════════ -->
+  <aside class="console-feed">
 
-  <!-- ══════════ LAYER 1: HERO DECISION ══════════ -->
-  <section class="console-hero" id="console-hero">
-    <div class="hero-skeleton">Loading conditions…</div>
-  </section>
-
-  <!-- ══════════ LAYERS 2+3: BODY ══════════ -->
-  <div class="console-body">
-
-    <!-- ── LAYER 2: PRIORITY FEED ── -->
-    <aside class="console-feed">
+    <!-- Brand bar -->
+    <div class="console-brand-bar">
+      <div class="console-brand"><span>★</span> NEBULACAST</div>
+    </div>
 
       <!-- 1. Space Weather Alerts -->
       <div class="feed-section" id="fs-swx">
@@ -779,9 +779,22 @@
         </div>
       </div>
 
-    </aside>
+  </aside>
 
-    <!-- ── LAYER 3: CONTEXT TOOLS ── -->
+  <!-- ══════════ RIGHT COLUMN ══════════ -->
+  <div class="console-right">
+
+    <!-- ── TOPBAR ── -->
+    <header class="console-topbar">
+      <div id="w-location"></div>
+    </header>
+
+    <!-- ── HERO DECISION BAND ── -->
+    <section class="console-hero" id="console-hero">
+      <div class="hero-skeleton">Loading conditions…</div>
+    </section>
+
+    <!-- ── CONTEXT TOOLS ── -->
     <main class="console-tools">
 
       <nav class="tools-tabs" role="tablist">
@@ -871,7 +884,8 @@
       </div><!-- .tools-content -->
     </main>
 
-  </div><!-- .console-body -->
+  </div><!-- .console-right -->
+
 </div><!-- .console-root -->
 
 <!-- ══════ Weather widget modals (required by weather.js internals) ══════ -->
