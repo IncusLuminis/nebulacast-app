@@ -33,6 +33,7 @@
     /* ─── Console root grid ────────────────────────────────── */
     .console-root {
       display: grid;
+      grid-template-rows: 52px 1fr;
       grid-template-columns: 272px 1fr;
       height: 100vh;
       overflow: hidden;
@@ -40,6 +41,7 @@
 
     /* ─── Topbar ─────────────────────────────────────────────*/
     .console-topbar {
+      grid-column: 1 / -1;
       background: rgba(16, 20, 32, 0.98);
       border-bottom: 1px solid rgba(255,255,255,0.07);
       display: flex;
@@ -702,13 +704,14 @@
 
 <div class="console-root">
 
+  <!-- ══════════ TOPBAR (full width) ══════════ -->
+  <header class="console-topbar">
+    <div class="console-brand"><span>★</span> NEBULACAST</div>
+    <div id="w-location"></div>
+  </header>
+
   <!-- ══════════ LEFT COLUMN: PRIORITY FEED ══════════ -->
   <aside class="console-feed">
-
-    <!-- Brand bar -->
-    <div class="console-brand-bar">
-      <div class="console-brand"><span>★</span> NEBULACAST</div>
-    </div>
 
       <!-- 1. Space Weather Alerts -->
       <div class="feed-section" id="fs-swx">
@@ -783,11 +786,6 @@
 
   <!-- ══════════ RIGHT COLUMN ══════════ -->
   <div class="console-right">
-
-    <!-- ── TOPBAR ── -->
-    <header class="console-topbar">
-      <div id="w-location"></div>
-    </header>
 
     <!-- ── HERO DECISION BAND ── -->
     <section class="console-hero" id="console-hero">
