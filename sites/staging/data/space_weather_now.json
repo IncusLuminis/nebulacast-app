@@ -1,21 +1,42 @@
 {
-  "generated_utc": "2026-04-01T09:02:53Z",
+  "generated_utc": "2026-04-01T12:58:25Z",
   "kp": {
     "latest": null,
     "forecast_3h": [],
     "activity_label": null
   },
   "solar_wind": {
-    "timestamp_utc": "2026-04-01T09:01:00Z",
-    "speed_kms": 368.2,
-    "density_protons_cm3": 2.66
+    "timestamp_utc": "2026-04-01T12:54:00Z",
+    "speed_kms": 470.0,
+    "density_protons_cm3": 6.14
   },
   "xray": {
-    "timestamp_utc": "2026-04-01T08:43:00Z",
-    "flux_wm2": 2.0976360204372213e-08,
-    "class": "A"
+    "timestamp_utc": "2026-04-01T12:55:00Z",
+    "flux_wm2": 1.1848494523292175e-06,
+    "class": "C"
   },
   "alerts": [
+    {
+      "id": "MSIS",
+      "timestamp_utc": "2026-04-01T12:33:06Z",
+      "title": "Space Weather Message Code: SUMSUD",
+      "level": "info",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "K04W",
+      "timestamp_utc": "2026-04-01T12:10:32Z",
+      "title": "Space Weather Message Code: WARK04",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
+    {
+      "id": "SGIW",
+      "timestamp_utc": "2026-04-01T11:39:09Z",
+      "title": "Space Weather Message Code: WARSUD",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "A30F",
       "timestamp_utc": "2026-03-31T22:13:34Z",
