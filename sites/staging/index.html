@@ -1302,6 +1302,21 @@
   let _nopClockInterval = null;
   let _nopClockFontSet  = false;
 
+  // Scale "Good / Excellent / …" label to match the pixel width of the NQI value ("7.0")
+  function _nopScaleNqiLabel() {
+    const lEl = document.getElementById('nop-nqi-lbl');
+    if (lEl) lEl.style.fontSize = '14px';   // reset before measuring
+    requestAnimationFrame(() => {
+      const vEl = document.getElementById('nop-nqi-val');
+      const lEl = document.getElementById('nop-nqi-lbl');
+      if (!vEl || !lEl) return;
+      const vW = vEl.getBoundingClientRect().width;
+      const lW = lEl.getBoundingClientRect().width;
+      if (vW > 0 && lW > 0)
+        lEl.style.fontSize = Math.min(48, 14 * vW / lW).toFixed(1) + 'px';
+    });
+  }
+
   function _nopScoreCls(s) { return s>=85?'score-excellent':s>=70?'score-good':s>=50?'score-fair':'score-poor'; }
   function _nopScoreLbl(s) { return s>=85?'Excellent':s>=70?'Good':s>=50?'Fair':'Poor'; }
   function _nopScoreColor(s) { return s>=85?'#4caf50':s>=70?'#8bc34a':s>=50?'#ff9800':'#f44336'; }
@@ -1674,16 +1689,16 @@
       ? `<span id="nop-nqi-avg" style="font-size:9px;color:rgba(255,255,255,0.28)">avg ${_nopAvgScore[_nopActiveProfile]}/100</span>` : '<span id="nop-nqi-avg"></span>';
     const p5 = `<div class="hero-card" style="min-width:165px;flex-shrink:0">
       <div class="hero-card-label">Night Quality</div>
-      <div style="flex:1;display:flex;align-items:center;gap:10px;margin-top:4px">
-        <div style="flex-shrink:0;display:flex;align-items:baseline;gap:3px">
-          <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr}">${nqiVal}</span>
-          <span style="font-size:14px;color:rgba(255,255,255,0.3);font-weight:500">/10</span>
+      <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:4px">
+        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="display:flex;align-items:baseline;gap:3px">
+            <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr}">${nqiVal}</span>
+            <span style="font-size:14px;color:rgba(255,255,255,0.3);font-weight:500">/10</span>
+          </div>
+          <span id="nop-nqi-lbl" style="font-size:14px;font-weight:700;line-height:1;color:${nqiClr};white-space:nowrap">${_nqiLabel(nqiCls)}</span>
+          ${nqiAvgTxt}
         </div>
         <div class="nop-profiles" style="flex:1">${profileBtns}</div>
-      </div>
-      <div style="display:flex;align-items:baseline;gap:5px">
-        <span id="nop-nqi-lbl" class="hero-card-sub" style="color:${nqiClr}">${_nqiLabel(nqiCls)}</span>
-        ${nqiAvgTxt}
       </div>
     </div>`;
 
@@ -1714,9 +1729,10 @@
         `<span class="nop-tonight-text">${p3Summary}</span>`;
     }
 
-    // Post-render: moon canvas + chart
+    // Post-render: moon canvas + chart + NQI label scaling
     _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonIllum / 100, moonWaxing);
     _nopRenderChart(_nopActiveMetric);
+    _nopScaleNqiLabel();
 
     // Live clock: update every second; auto-scale time font to match date width
     _nopClockFontSet = false;
@@ -2054,6 +2070,7 @@
       if (sl) { sl.textContent = _nqiLabel(cls); sl.style.color = clr; }
       if (sa) { const avg = _nopAvgScore[p]; sa.textContent = avg != null ? `avg ${avg}/100` : ''; }
       document.querySelectorAll('.nop-profile-btn').forEach(b => b.classList.toggle('is-active', b.dataset.profile === p));
+      _nopScaleNqiLabel();
       return;
     }
     const ch = e.target.closest('.nop-chip');
