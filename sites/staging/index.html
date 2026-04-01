@@ -233,15 +233,22 @@
     .nop-window-time {
       font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.82); margin-top: 3px; white-space: nowrap;
     }
-    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 28px; margin-top: 5px; }
+    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 44px; position: relative; }
     .nop-bar {
-      flex: 1; min-width: 3px; border-radius: 1px 1px 0 0;
-      background: rgba(255,255,255,0.12); transition: height 0.25s, background 0.2s;
+      flex: 1; min-width: 4px; border-radius: 1px 1px 0 0;
+      transition: height 0.25s, background 0.2s; cursor: default;
     }
-    .nop-bar.in-window { background: rgba(74,111,165,0.55); }
-    .nop-chips { display: flex; gap: 4px; margin-top: 5px; }
+    .nop-bar:hover { filter: brightness(1.4); }
+    .nop-tooltip {
+      position: fixed; z-index: 999; pointer-events: none;
+      background: rgba(16,20,32,0.96); border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85); font-size: 10px; font-weight: 500;
+      padding: 3px 7px; border-radius: 4px; white-space: nowrap;
+      display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .nop-chips { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
     .nop-chip {
-      font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 3px;
+      font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px;
       border: 1px solid rgba(255,255,255,0.1); background: transparent;
       color: rgba(255,255,255,0.35); cursor: pointer; line-height: 1.4; transition: all 0.15s;
     }
@@ -759,6 +766,7 @@
 </head>
 <body>
 
+<div id="nop-tooltip" class="nop-tooltip"></div>
 <div class="console-root">
 
   <!-- ══════════ TOPBAR: brand (left col) ══════════ -->
@@ -1366,25 +1374,75 @@
     }
   }
 
+  // ── NOP chart metric definitions ──────────────────────────────────────────
+  const _NOP_METRICS = {
+    cloud:    { label:'Cloud',    color:'rgba(143,182,255,0.55)', hiColor:'rgba(143,182,255,0.92)',
+                get: h => h.cloud?.total_percent ?? null,
+                fmt: v => Math.round(v) + '%',
+                fixMin: 0, fixMax: 100 },
+    dew:      { label:'Dew',     color:'rgba(80,210,220,0.55)',  hiColor:'rgba(80,210,220,0.92)',
+                get: h => { const t=h.air?.temperature_c, d=h.air?.dewpoint_c; return (t!=null&&d!=null)?+(t-d).toFixed(1):null; },
+                fmt: v => v.toFixed(1) + '° spread',
+                fixMin: 0, fixMax: null },
+    wind:     { label:'Wind',    color:'rgba(190,150,255,0.55)', hiColor:'rgba(190,150,255,0.92)',
+                get: h => h.wind?.speed_mps ?? null,
+                fmt: v => v.toFixed(1) + ' m/s',
+                fixMin: 0, fixMax: null },
+    pressure: { label:'Pressure',color:'rgba(100,210,130,0.55)', hiColor:'rgba(100,210,130,0.92)',
+                get: h => h.air?.pressure_hpa ?? null,
+                fmt: v => Math.round(v) + ' hPa',
+                fixMin: null, fixMax: null },
+    temp:     { label:'Temp',    color:'rgba(255,160,80,0.55)',  hiColor:'rgba(255,160,80,0.92)',
+                get: h => h.air?.temperature_c ?? null,
+                fmt: v => v.toFixed(1) + '°C',
+                fixMin: null, fixMax: null },
+  };
+
   function _nopRenderChart(metric) {
     const chart = document.getElementById('nop-chart');
-    if (!chart || !_nopNightHours.length) return;
-    const bars = chart.querySelectorAll('.nop-bar');
-    _nopNightHours.forEach((h, i) => {
-      if (!bars[i]) return;
-      let val = 0;
-      if (metric === 'cloud') val = h.cloud?.total_percent ?? 0;
-      else if (metric === 'wind') val = Math.min((h.wind?.speed_mps ?? 0) * 5, 100);
-      else if (metric === 'dew') {
-        const spread = (h.air?.temperature_c ?? 5) - (h.air?.dewpoint_c ?? 0);
-        val = Math.max(0, Math.min(100, (8 - spread) * 12.5));
-      }
-      bars[i].style.height = Math.max(2, Math.round(val * 0.28)) + 'px';
-      const t = h.timestamp_utc;
-      const inWin = _nopBestWindow && t &&
-        t >= _nopBestWindow.start && t < _nopBestWindow.end;
-      bars[i].classList.toggle('in-window', !!inWin);
-    });
+    if (!chart) return;
+    if (!_nopNightHours.length) { chart.innerHTML = ''; return; }
+
+    const m = _NOP_METRICS[metric] || _NOP_METRICS.cloud;
+    const vals = _nopNightHours.map(h => m.get(h));
+    const defined = vals.filter(v => v != null);
+
+    let minV = m.fixMin ?? (defined.length ? Math.min(...defined) : 0);
+    let maxV = m.fixMax ?? (defined.length ? Math.max(...defined) : 1);
+    // Ensure minimum visible range
+    if (maxV - minV < 1) { const mid=(maxV+minV)/2; minV=mid-1; maxV=mid+1; }
+
+    const MAX_H = 40;
+    chart.innerHTML = _nopNightHours.map((h, i) => {
+      const val = vals[i];
+      const norm = val != null ? Math.max(0, Math.min(1, (val - minV) / (maxV - minV))) : null;
+      const hpx  = norm != null ? Math.max(3, Math.round(norm * MAX_H)) : 3;
+      const inWin = _nopBestWindow && h.timestamp_utc &&
+        h.timestamp_utc >= _nopBestWindow.start && h.timestamp_utc < _nopBestWindow.end;
+      const bg = inWin ? m.hiColor : m.color;
+      const timeStr = _nopFmtT(h.timestamp_utc);
+      const valStr  = val != null ? m.fmt(val) : '—';
+      return `<div class="nop-bar" style="height:${hpx}px;background:${bg}"
+        data-tip="${timeStr}: ${valStr}"></div>`;
+    }).join('');
+
+    // Attach tooltip behaviour on first render
+    if (!chart._tipBound) {
+      chart._tipBound = true;
+      const tip = document.getElementById('nop-tooltip');
+      chart.addEventListener('mouseover', e => {
+        const bar = e.target.closest('.nop-bar');
+        if (!bar || !tip) return;
+        tip.textContent = bar.dataset.tip || '';
+        tip.style.display = 'block';
+      });
+      chart.addEventListener('mousemove', e => {
+        if (!tip) return;
+        tip.style.left = (e.clientX + 10) + 'px';
+        tip.style.top  = (e.clientY - 28) + 'px';
+      });
+      chart.addEventListener('mouseleave', () => { if (tip) tip.style.display = 'none'; });
+    }
   }
 
   async function loadHero() {
@@ -1400,8 +1458,13 @@
       ]);
     } catch (_) {}
 
-    // ── Night hours & best window ──
-    _nopNightHours = (wx?.hourly || []).filter(h => h.night === true).slice(0, 24);
+    // ── Night hours — first continuous block only (sunset → sunrise) ──
+    _nopNightHours = [];
+    let _inNight = false;
+    for (const h of (wx?.hourly || [])) {
+      if (h.night === true)  { _inNight = true; _nopNightHours.push(h); }
+      else if (_inNight)     { break; } // first night ended
+    }
     _nopBestWindow = wx?.decision?.best_tonight || null;
 
     // ── Profile scores ──
@@ -1561,17 +1624,16 @@
     // ── Panel 6: Best Observing Window ──
     const bw = _nopBestWindow;
     const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '— no data —';
-    const barCount = _nopNightHours.length || 10;
-    const bars = Array.from({length:barCount}, () => `<div class="nop-bar" style="height:2px"></div>`).join('');
-    const p6 = `<div class="hero-card" style="flex:1;min-width:145px">
+    const chipKeys = ['cloud','dew','wind','pressure','temp'];
+    const chipLabels = { cloud:'☁ Cloud', dew:'💧 Dew', wind:'💨 Wind', pressure:'⬆ Pressure', temp:'🌡 Temp' };
+    const chipBtns = chipKeys.map(k =>
+      `<button class="nop-chip${_nopActiveMetric===k?' is-active':''}" data-metric="${k}">${chipLabels[k]}</button>`
+    ).join('');
+    const p6 = `<div class="hero-card" style="flex:1;min-width:160px">
       <div class="hero-card-label">Best Window</div>
       <div class="nop-window-time">${winStr}</div>
-      <div id="nop-chart" class="nop-bar-chart" style="margin-top:auto">${bars}</div>
-      <div class="nop-chips">
-        <button class="nop-chip${_nopActiveMetric==='cloud'?' is-active':''}" data-metric="cloud">Cloud</button>
-        <button class="nop-chip${_nopActiveMetric==='dew'?' is-active':''}"   data-metric="dew">Dew</button>
-        <button class="nop-chip${_nopActiveMetric==='wind'?' is-active':''}"  data-metric="wind">Wind</button>
-      </div>
+      <div id="nop-chart" class="nop-bar-chart" style="margin-top:auto"></div>
+      <div class="nop-chips">${chipBtns}</div>
     </div>`;
 
     hero.innerHTML = [p1, p2, p4, p5, p3, p6].join('');
