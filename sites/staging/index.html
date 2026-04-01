@@ -1276,10 +1276,18 @@
   // Module state for interactive NOP elements
   let _nopProfiles = {}, _nopActiveProfile = 'balanced';
   let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'cloud';
+  let _nopNQI = {};       // night_summary.nqi  per profile: {value, class}
+  let _nopAvgScore = {};  // night_summary.avg_score per profile: int 0-100
 
   function _nopScoreCls(s) { return s>=85?'score-excellent':s>=70?'score-good':s>=50?'score-fair':'score-poor'; }
   function _nopScoreLbl(s) { return s>=85?'Excellent':s>=70?'Good':s>=50?'Fair':'Poor'; }
   function _nopScoreColor(s) { return s>=85?'#4caf50':s>=70?'#8bc34a':s>=50?'#ff9800':'#f44336'; }
+
+  // NQI helpers (0–10 scale)
+  function _nqiColor(cls) {
+    return cls==='excellent'?'#4caf50':cls==='good'?'#8bc34a':cls==='usable'?'#ff9800':cls==='marginal'?'#f44336':'#9e3a3a';
+  }
+  function _nqiLabel(cls) { return cls ? cls.charAt(0).toUpperCase()+cls.slice(1) : '—'; }
   function _nopFmtT(iso)   { try { return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}); } catch(_){return'—';} }
 
   // Parse "2026-Mar-30 07:06Z" format from sun_moon.json
@@ -1452,7 +1460,7 @@
     let wx = null, sw = null, sunMoon = null;
     try {
       [wx, sw, sunMoon] = await Promise.all([
-        fetch('/data/observer_weather_now.json').then(r => r.ok ? r.json() : null),
+        fetch('/data/observer_weather_now.json', {cache:'no-store'}).then(r => r.ok ? r.json() : null),
         fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
         fetch('/sky/data/sun_moon.json').then(r => r.ok ? r.json() : null),
       ]);
@@ -1467,10 +1475,14 @@
     }
     _nopBestWindow = wx?.decision?.best_tonight || null;
 
-    // ── Profile scores ──
+    // ── Profile scores & NQI ──
     _nopProfiles = wx?.decision?.mode_scores || {};
-    const profileKeys = Object.keys(_nopProfiles);
-    if (profileKeys.length && !_nopProfiles[_nopActiveProfile])
+    _nopNQI      = wx?.night_summary?.nqi        || {};
+    _nopAvgScore = wx?.night_summary?.avg_score   || {};
+    const profileKeys = Object.keys(_nopProfiles).length
+      ? Object.keys(_nopProfiles)
+      : Object.keys(_nopNQI);
+    if (profileKeys.length && !(_nopProfiles[_nopActiveProfile] || _nopNQI[_nopActiveProfile]))
       _nopActiveProfile = profileKeys[0];
 
     // ── Sun/moon crossings from sun_moon.json ──
@@ -1606,19 +1618,30 @@
       <div style="font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap">${Math.round(moonIllum)}% &nbsp;${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''}${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>
     </div>`;
 
-    // ── Panel 5: Night Score ──
-    const activeScore = Math.round(_nopProfiles[_nopActiveProfile] ?? 0);
+    // ── Panel 5: Night Quality (NQI) ──
     const PLBL = { balanced:'Balanced', visual:'Visual', photography:'Photo', broadband:'Broadband', planetary:'Planetary' };
     const profileBtns = profileKeys.map(k =>
       `<button class="nop-profile-btn${k===_nopActiveProfile?' is-active':''}" data-profile="${k}">${PLBL[k]||k}</button>`
     ).join('');
+    const activeNqi  = _nopNQI[_nopActiveProfile] || {};
+    const nqiVal     = activeNqi.value != null ? activeNqi.value.toFixed(1) : '—';
+    const nqiCls     = activeNqi.class || 'poor';
+    const nqiClr     = _nqiColor(nqiCls);
+    const nqiAvgTxt  = (_nopAvgScore[_nopActiveProfile] != null)
+      ? `<span id="nop-nqi-avg" style="font-size:9px;color:rgba(255,255,255,0.28)">avg ${_nopAvgScore[_nopActiveProfile]}/100</span>` : '<span id="nop-nqi-avg"></span>';
     const p5 = `<div class="hero-card" style="min-width:165px;flex-shrink:0">
-      <div class="hero-card-label">Avg Observing Quality</div>
+      <div class="hero-card-label">Night Quality</div>
       <div style="flex:1;display:flex;align-items:center;gap:10px;margin-top:4px">
-        <div id="nop-score-val" class="hero-card-value" style="font-size:48px;line-height:1;color:${_nopScoreColor(activeScore)};flex-shrink:0">${activeScore}</div>
+        <div style="flex-shrink:0;display:flex;align-items:baseline;gap:3px">
+          <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr}">${nqiVal}</span>
+          <span style="font-size:14px;color:rgba(255,255,255,0.3);font-weight:500">/10</span>
+        </div>
         <div class="nop-profiles" style="flex:1">${profileBtns}</div>
       </div>
-      <div id="nop-score-lbl" class="hero-card-sub">${_nopScoreLbl(activeScore)}</div>
+      <div style="display:flex;align-items:baseline;gap:5px">
+        <span id="nop-nqi-lbl" class="hero-card-sub" style="color:${nqiClr}">${_nqiLabel(nqiCls)}</span>
+        ${nqiAvgTxt}
+      </div>
     </div>`;
 
     // ── Panel 6: Best Observing Window ──
@@ -1938,13 +1961,18 @@
     const pb = e.target.closest('.nop-profile-btn');
     if (pb) {
       const p = pb.dataset.profile;
-      if (!_nopProfiles[p]) return;
       _nopActiveProfile = p;
-      const s = Math.round(_nopProfiles[p]);
-      const sv = document.getElementById('nop-score-val');
-      const sl = document.getElementById('nop-score-lbl');
-      if (sv) { sv.textContent = s; sv.className = 'hero-card-value'; sv.style.color = _nopScoreColor(s); }
-      if (sl) sl.textContent = _nopScoreLbl(s);
+      // Update NQI display
+      const nqi = _nopNQI[p] || {};
+      const val = nqi.value != null ? nqi.value.toFixed(1) : '—';
+      const cls = nqi.class || 'poor';
+      const clr = _nqiColor(cls);
+      const sv = document.getElementById('nop-nqi-val');
+      const sl = document.getElementById('nop-nqi-lbl');
+      const sa = document.getElementById('nop-nqi-avg');
+      if (sv) { sv.textContent = val; sv.style.color = clr; }
+      if (sl) { sl.textContent = _nqiLabel(cls); sl.style.color = clr; }
+      if (sa) { const avg = _nopAvgScore[p]; sa.textContent = avg != null ? `avg ${avg}/100` : ''; }
       document.querySelectorAll('.nop-profile-btn').forEach(b => b.classList.toggle('is-active', b.dataset.profile === p));
       return;
     }

@@ -462,6 +462,114 @@ def _load_bortle() -> Tuple[int, str]:
     return bortle, hint
 
 
+# ── Night Quality Index summary ───────────────────────────────────────────────
+
+def _compute_night_summary(
+    hourly_out: List[Dict],
+    now_utc: datetime,
+) -> Optional[Dict]:
+    """
+    Compute the night_summary block (NQI + supporting fields) for the
+    current/upcoming night window.  Returns None on any failure.
+
+    Additive only — does not modify any existing fields.
+    """
+    try:
+        from engine.night_quality import compute_nqi
+    except ImportError as exc:
+        print(f"[observer_weather] WARNING: night_quality import failed: {exc}")
+        return None
+
+    # ── Identify night window: first continuous block of night==True ──────────
+    night_bins: List[Dict] = []
+    in_night = False
+    for h in hourly_out:
+        ts = _safe_parse_utc(h.get("timestamp_utc"))
+        if ts is None or ts < now_utc:
+            continue
+        if h.get("night") is True:
+            in_night = True
+            night_bins.append(h)
+        elif in_night:
+            break  # first night block ended
+
+    if not night_bins:
+        return None
+
+    # Derive UTC window bounds from the first/last night bin
+    try:
+        start_utc = night_bins[0]["timestamp_utc"]
+        # end_utc = start of first post-night bin; approximate as last_bin + 1h
+        from datetime import timedelta as _td
+        last_ts = _safe_parse_utc(night_bins[-1]["timestamp_utc"])
+        end_utc = (last_ts + _td(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ") if last_ts else None
+    except Exception:
+        start_utc = None
+        end_utc = None
+
+    # ── NQI per profile ───────────────────────────────────────────────────────
+    profiles = ["balanced", "visual", "photography", "planetary"]
+    nqi_block: Dict[str, Dict] = {}
+    avg_score_block: Dict[str, Optional[float]] = {}
+    components_block: Dict[str, Dict] = {}
+
+    for p in profiles:
+        try:
+            result = compute_nqi(night_bins, p)
+            nqi_block[p] = {
+                "value": result["value"],
+                "class": result["class"],
+            }
+            components_block[p] = result.get("components", {})
+        except Exception as exc:
+            print(f"[observer_weather] WARNING: NQI failed for profile '{p}': {exc}")
+            nqi_block[p] = {"value": 0.0, "class": "poor"}
+            components_block[p] = {}
+
+        # avg_score: simple mean of per-hour scores (secondary metric)
+        try:
+            from engine.score_engine import load_profile, compute_score
+
+            _profile_map = {
+                "balanced": "default", "visual": "visual",
+                "photography": "photography", "planetary": "planetary",
+            }
+            ep = _profile_map.get(p, "default")
+            prof = load_profile(profile_name=ep)
+            hrs: List[float] = []
+            for h in night_bins:
+                flat = _flatten_for_score(h)
+                try:
+                    hrs.append(float(compute_score(flat, {}, prof).get("score", 0)))
+                except Exception:
+                    pass
+            avg_score_block[p] = round(sum(hrs) / len(hrs)) if hrs else None
+        except Exception:
+            avg_score_block[p] = None
+
+    # ── Best window (reuse existing helper, night-only) ───────────────────────
+    try:
+        bw = _best_window(night_bins, window_h=2, night_only=False)
+    except Exception:
+        bw = None
+    best_window_out: Optional[Dict] = None
+    if bw:
+        best_window_out = {
+            "start_utc": bw.get("start"),
+            "end_utc":   bw.get("end"),
+        }
+
+    return {
+        "generated_at": now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "start_utc":    start_utc,
+        "end_utc":      end_utc,
+        "nqi":          nqi_block,
+        "avg_score":    avg_score_block,
+        "best_window":  best_window_out,
+        "components":   components_block,
+    }
+
+
 # ── Main decision builder ─────────────────────────────────────────────────────
 
 def _build_decision(
@@ -619,6 +727,7 @@ def build_observer_weather(
     decision = _build_decision(hourly_out, now_utc)
     moon = _moon_meta(sm_index, now_utc)
     bortle_class, bortle_hint = _load_bortle()
+    night_summary = _compute_night_summary(hourly_out, now_utc)
 
     return {
         "generated_utc": generated_utc,
@@ -629,6 +738,7 @@ def build_observer_weather(
         },
         "hourly": hourly_out,
         "decision": decision,
+        "night_summary": night_summary,
         "moon": moon,
         "bortle": {
             "class": bortle_class,
