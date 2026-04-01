@@ -712,6 +712,19 @@ a:hover{text-decoration:underline}
   background:rgba(255,255,255,.02);
   scroll-snap-align:start;
 }
+.hour.is-current{
+  border-color:rgba(255,255,255,0.28);
+  background:rgba(255,255,255,0.055);
+  box-shadow:0 0 0 1px rgba(255,255,255,0.08) inset;
+}
+.now-marker{
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:0.09em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.5);
+  margin-bottom:2px;
+}
 .hour .t{font-size:11px;color:var(--muted)}
 .hour .s{font-size:18px;font-weight:950;color:var(--title);margin-top:6px}
 .hour .b{font-size:10px;color:var(--muted);margin-top:4px}
@@ -1412,11 +1425,15 @@ a:hover{text-decoration:underline}
    ═══════════════════════════════════════════════════════════ */
 
 .top-panel-v2{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
+  display:flex;
+  align-items:stretch;
   gap:10px;
   margin:10px 0 12px;
 }
+.tp-quality,
+.tp-sky-status   { flex-shrink:0; }
+.tp-best-window  { flex:1; min-width:0; }
+.tp-time-location{ display:none; }
 
 .tp-panel{
   border:1px solid var(--line);
@@ -1426,7 +1443,6 @@ a:hover{text-decoration:underline}
   display:flex;
   flex-direction:column;
   gap:6px;
-  min-height:110px;
 }
 
 /* Panel header label */
@@ -1526,7 +1542,7 @@ a:hover{text-decoration:underline}
 }
 .tp-explain-toggle{
   align-self:flex-start;
-  margin-top:auto;
+  margin-top:2px;
   background:transparent;
   border:1px solid rgba(255,255,255,.12);
   border-radius:6px;
@@ -1550,12 +1566,7 @@ a:hover{text-decoration:underline}
   color:var(--muted);
 }
 .tp-window-bar-wrap{
-  position:relative;
-  height:6px;
-  background:rgba(255,255,255,.08);
-  border-radius:999px;
-  margin-top:auto;
-  overflow:hidden;
+  display:none;
 }
 .tp-window-bar{
   height:100%;
@@ -1610,7 +1621,7 @@ a:hover{text-decoration:underline}
   display:flex;
   flex-wrap:wrap;
   gap:6px;
-  margin-top:auto;
+  margin-top:10px;
 }
 .tp-diag-row span{
   font-size:10px;
@@ -1619,11 +1630,11 @@ a:hover{text-decoration:underline}
 }
 
 /* ── Responsive breakpoints ── */
-@media(max-width:900px){
-  .top-panel-v2{ grid-template-columns:repeat(2,1fr); }
+@media(max-width:700px){
+  .top-panel-v2{ flex-wrap:wrap; }
+  .tp-best-window{ flex-basis:100%; }
 }
 @media(max-width:500px){
-  .top-panel-v2{ grid-template-columns:1fr; }
   .tp-panel{ min-height:unset; }
 }
 

@@ -233,7 +233,7 @@
     .nop-window-time {
       font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.82); margin-top: 3px; white-space: nowrap;
     }
-    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 44px; position: relative; }
+    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 28px; position: relative; }
     .nop-bar {
       flex: 1; min-width: 4px; border-radius: 1px 1px 0 0;
       transition: height 0.25s, background 0.2s; cursor: default;
@@ -256,22 +256,11 @@
       background: rgba(74,111,165,0.18); border-color: rgba(74,111,165,0.4); color: rgba(255,255,255,0.72);
     }
 
-    /* ─── Tonight full-width bar ────────────────────────── */
-    .nop-tonight-bar {
-      background: rgba(14,18,28,0.95);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 8px 20px 10px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-    .nop-tonight-label {
-      font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-      color: rgba(255,255,255,0.45); white-space: nowrap; padding-top: 1px; flex-shrink: 0;
-    }
-    .nop-tonight-text {
-      font-size: 11px; color: rgba(255,255,255,0.62); line-height: 1.55;
+    /* ─── Night chart section inside widget ─────────────── */
+    .nop-widget-chart-section {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
     }
 
     /* ─── Right column (topbar + hero + tools) ─────────────── */
@@ -879,9 +868,6 @@
       <div class="hero-skeleton">Loading conditions…</div>
     </section>
 
-    <!-- ── TONIGHT SUMMARY BAR ── -->
-    <div id="nop-tonight-bar" class="nop-tonight-bar" style="display:none"></div>
-
     <!-- ── CONTEXT TOOLS ── -->
     <main class="console-tools">
 
@@ -1442,6 +1428,10 @@
                 get: h => h.air?.temperature_c ?? null,
                 fmt: v => v.toFixed(1) + '°C',
                 fixMin: null, fixMax: null },
+    moon:     { label:'Moon',    color:'rgba(210,210,165,0.50)', hiColor:'rgba(210,210,165,0.88)',
+                get: h => h._moon_alt ?? null,
+                fmt: v => v.toFixed(1) + '° alt',
+                fixMin: 0, fixMax: null },
   };
 
   function _nopRenderChart(metric) {
@@ -1458,7 +1448,7 @@
     // Ensure minimum visible range
     if (maxV - minV < 1) { const mid=(maxV+minV)/2; minV=mid-1; maxV=mid+1; }
 
-    const MAX_H = 40;
+    const MAX_H = 24;
     chart.innerHTML = _nopNightHours.map((h, i) => {
       const val = vals[i];
       const norm = val != null ? Math.max(0, Math.min(1, (val - minV) / (maxV - minV))) : null;
@@ -1491,6 +1481,44 @@
     }
   }
 
+  const _NOP_CHIP_KEYS   = ['moon','cloud','dew','wind','pressure','temp'];
+  const _NOP_CHIP_LABELS = { moon:'🌙 Moon', cloud:'☁ Cloud', dew:'💧 Dew', wind:'💨 Wind', pressure:'⬆ Pressure', temp:'🌡 Temp' };
+
+  function _nopInjectWidgetChart() {
+    const tpPanel = document.querySelector('[data-role="tp-best-window"]');
+    if (!tpPanel) return;
+
+    // Remove previous injection to allow re-render on auto-refresh
+    const prev = tpPanel.querySelector('.nop-widget-chart-section');
+    if (prev) prev.remove();
+
+    const chipBtns = _NOP_CHIP_KEYS.map(k =>
+      `<button class="nop-chip${_nopActiveMetric===k?' is-active':''}" data-metric="${k}">${_NOP_CHIP_LABELS[k]}</button>`
+    ).join('');
+
+    const section = document.createElement('div');
+    section.className = 'nop-widget-chart-section';
+    section.innerHTML =
+      `<div id="nop-chart" class="nop-bar-chart"></div>` +
+      `<div class="nop-chips">${chipBtns}</div>`;
+    tpPanel.appendChild(section);
+
+    _nopRenderChart(_nopActiveMetric);
+
+    // Chip click delegation (bound once per panel lifetime)
+    if (!tpPanel._nopChipsBound) {
+      tpPanel._nopChipsBound = true;
+      tpPanel.addEventListener('click', e => {
+        const ch = e.target.closest('.nop-chip');
+        if (!ch) return;
+        _nopActiveMetric = ch.dataset.metric;
+        _nopRenderChart(_nopActiveMetric);
+        tpPanel.querySelectorAll('.nop-chip').forEach(c =>
+          c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
+      });
+    }
+  }
+
   async function loadHero() {
     const hero = document.getElementById('console-hero');
     if (!hero) return;
@@ -1519,6 +1547,24 @@
       }
     }
     _nopBestWindow = wx?.decision?.best_tonight || null;
+
+    // ── Enrich night hours with moon altitude from sun_moon frames ──
+    if (sunMoon?.frames?.length) {
+      for (const h of _nopNightHours) {
+        const hMs = new Date(h.timestamp_utc).getTime();
+        if (!hMs) continue;
+        let bestFrame = null, minD = Infinity;
+        for (const f of sunMoon.frames) {
+          const ft = _parseSMTime(f.t_utc);
+          if (!ft) continue;
+          const d = Math.abs(ft.getTime() - hMs);
+          if (d < minD) { minD = d; bestFrame = f; }
+        }
+        h._moon_alt = bestFrame?.moon?.alt_deg != null
+          ? Math.max(0, bestFrame.moon.alt_deg)
+          : null;
+      }
+    }
 
     // ── Profile scores & NQI ──
     _nopProfiles = wx?.decision?.mode_scores || {};
@@ -1699,37 +1745,24 @@
       </div>
     </div>`;
 
-    // ── Panel 6: Best Observing Window ──
+    // ── Panel 6: Tonight (merged Best Window + summary) ──
     const bw = _nopBestWindow;
-    const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '— no data —';
-    const chipKeys = ['cloud','dew','wind','pressure','temp'];
-    const chipLabels = { cloud:'☁ Cloud', dew:'💧 Dew', wind:'💨 Wind', pressure:'⬆ Pressure', temp:'🌡 Temp' };
-    const chipBtns = chipKeys.map(k =>
-      `<button class="nop-chip${_nopActiveMetric===k?' is-active':''}" data-metric="${k}">${chipLabels[k]}</button>`
-    ).join('');
-    const p6 = `<div class="hero-card" style="flex:1;min-width:160px">
-      <div class="hero-card-label">Best Window</div>
-      <div class="nop-window-time">${winStr}</div>
-      <div id="nop-chart" class="nop-bar-chart" style="margin-top:auto"></div>
-      <div class="nop-chips">${chipBtns}</div>
+    const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '—';
+    const p6 = `<div class="hero-card" style="flex:1;min-width:180px">
+      <div class="hero-card-label">Tonight</div>
+      <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.65);margin-top:4px;white-space:nowrap">
+        Best window: ${winStr}
+      </div>
+      <div class="nop-summary-text" style="margin-top:5px">${p3Summary}</div>
     </div>`;
 
-    // New order: Date | Night Quality | Best Window | Moon | Kp | Sun
+    // New order: Date | Night Quality | Tonight | Moon | Kp | Sun
     hero.innerHTML = [p0, p5, p6, p4, p1, p2].join('');
 
-    // Populate Tonight bar below hero
-    const tonightBar = document.getElementById('nop-tonight-bar');
-    if (tonightBar) {
-      tonightBar.style.display = 'flex';
-      tonightBar.innerHTML =
-        `<span class="nop-tonight-label">Tonight</span>` +
-        `<span class="nop-tonight-text">${p3Summary}</span>`;
-    }
-
-    // Post-render: moon canvas + chart + NQI label scaling
+    // Post-render: moon canvas + NQI label scaling
     _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonIllum / 100, moonWaxing);
-    _nopRenderChart(_nopActiveMetric);
     _nopScaleNqiLabel();
+    _nopInjectWidgetChart();
 
     // Live clock: update every second; auto-scale time font to match date width
     _nopClockFontSet = false;
