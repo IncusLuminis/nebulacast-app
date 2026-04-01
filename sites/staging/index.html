@@ -1653,7 +1653,7 @@
         <div class="hero-card-label" style="align-self:flex-start">Date &amp; Time</div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
           <div id="nop-clock-date" style="font-size:20px;font-weight:600;line-height:1;color:#fff;letter-spacing:0.01em;white-space:nowrap">${_dateStr}</div>
-          <div id="nop-clock-time" style="font-size:20px;font-weight:700;line-height:1;color:rgba(255,255,255,0.42);letter-spacing:-0.02em;white-space:nowrap">${_timeStr}</div>
+          <div id="nop-clock-time" style="font-size:20px;font-weight:700;line-height:1;color:rgba(255,255,255,0.42);letter-spacing:-0.02em;white-space:nowrap;font-variant-numeric:tabular-nums">${_timeStr}</div>
         </div>
       </div>`;
     }
@@ -1690,7 +1690,7 @@
       <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:4px">
         <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px">
           <div style="display:flex;align-items:baseline;gap:3px">
-            <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr}">${nqiVal}</span>
+            <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr};font-variant-numeric:tabular-nums">${nqiVal}</span>
             <span style="font-size:14px;color:rgba(255,255,255,0.3);font-weight:500">/10</span>
           </div>
           <span id="nop-nqi-lbl" style="font-size:14px;font-weight:700;line-height:1;color:${nqiClr};white-space:nowrap">${_nqiLabel(nqiCls)}</span>
