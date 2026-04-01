@@ -1566,12 +1566,7 @@ a:hover{text-decoration:underline}
   color:var(--muted);
 }
 .tp-window-bar-wrap{
-  position:relative;
-  height:6px;
-  background:rgba(255,255,255,.08);
-  border-radius:999px;
-  margin-top:auto;
-  overflow:hidden;
+  display:none;
 }
 .tp-window-bar{
   height:100%;
