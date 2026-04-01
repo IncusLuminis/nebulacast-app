@@ -1431,7 +1431,7 @@
     moon:     { label:'Moon',    color:'rgba(210,210,165,0.50)', hiColor:'rgba(210,210,165,0.88)',
                 get: h => h._moon_alt ?? null,
                 fmt: v => v.toFixed(1) + '° alt',
-                fixMin: 0, fixMax: 90 },
+                fixMin: 0, fixMax: null },
   };
 
   function _nopRenderChart(metric) {
