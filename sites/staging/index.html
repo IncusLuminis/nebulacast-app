@@ -256,6 +256,24 @@
       background: rgba(74,111,165,0.18); border-color: rgba(74,111,165,0.4); color: rgba(255,255,255,0.72);
     }
 
+    /* ─── Tonight full-width bar ────────────────────────── */
+    .nop-tonight-bar {
+      background: rgba(14,18,28,0.95);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 8px 20px 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .nop-tonight-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: rgba(255,255,255,0.45); white-space: nowrap; padding-top: 1px; flex-shrink: 0;
+    }
+    .nop-tonight-text {
+      font-size: 11px; color: rgba(255,255,255,0.62); line-height: 1.55;
+    }
+
     /* ─── Right column (topbar + hero + tools) ─────────────── */
     .console-right {
       display: flex;
@@ -861,6 +879,9 @@
       <div class="hero-skeleton">Loading conditions…</div>
     </section>
 
+    <!-- ── TONIGHT SUMMARY BAR ── -->
+    <div id="nop-tonight-bar" class="nop-tonight-bar" style="display:none"></div>
+
     <!-- ── CONTEXT TOOLS ── -->
     <main class="console-tools">
 
@@ -1278,6 +1299,7 @@
   let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'cloud';
   let _nopNQI = {};       // night_summary.nqi  per profile: {value, class}
   let _nopAvgScore = {};  // night_summary.avg_score per profile: int 0-100
+  let _nopClockInterval = null;
 
   function _nopScoreCls(s) { return s>=85?'score-excellent':s>=70?'score-good':s>=50?'score-fair':'score-poor'; }
   function _nopScoreLbl(s) { return s>=85?'Excellent':s>=70?'Good':s>=50?'Fair':'Poor'; }
@@ -1466,12 +1488,19 @@
       ]);
     } catch (_) {}
 
-    // ── Night hours — first continuous block only (sunset → sunrise) ──
-    _nopNightHours = [];
-    let _inNight = false;
-    for (const h of (wx?.hourly || [])) {
-      if (h.night === true)  { _inNight = true; _nopNightHours.push(h); }
-      else if (_inNight)     { break; } // first night ended
+    // ── Night hours: smart selection ──────────────────────────────────────────
+    // If it's currently night (before sunrise), show remaining hours of this night.
+    // If it's daytime, skip ahead and show the next full night (sunset → sunrise).
+    {
+      const _nowHourStr = new Date().toISOString().slice(0, 13); // 'YYYY-MM-DDTHH'
+      _nopNightHours = [];
+      let _inNight = false;
+      for (const h of (wx?.hourly || [])) {
+        const hStr = (h.timestamp_utc || '').slice(0, 13);
+        if (hStr < _nowHourStr) continue;           // skip past hours
+        if (h.night === true)  { _inNight = true; _nopNightHours.push(h); }
+        else if (_inNight)     { break; }            // first night block ended
+      }
     }
     _nopBestWindow = wx?.decision?.best_tonight || null;
 
@@ -1597,11 +1626,22 @@
       <div style="font-size:10px;color:rgba(255,255,255,0.5);white-space:nowrap">↓ ${_nopFmtT(sunsetT)} &nbsp; ↑ ${_nopFmtT(sunriseT)}</div>
     </div>`;
 
-    // ── Panel 3: Night Summary ──
-    const p3 = `<div class="hero-card" style="flex:1;min-width:155px;max-width:255px">
-      <div class="hero-card-label">Tonight</div>
-      <div class="nop-summary-text">${buildSummary()}</div>
-    </div>`;
+    // ── Panel 0: Date / Time ──
+    {
+      const _now = new Date();
+      const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      var p0 = `<div class="hero-card" style="min-width:130px;flex-shrink:0">
+        <div class="hero-card-label">Date &amp; Time</div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:3px">
+          <div id="nop-clock-date" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)">${_dateStr}</div>
+          <div id="nop-clock-time" style="font-size:34px;font-weight:700;line-height:1;color:#fff;letter-spacing:-0.02em">${_timeStr}</div>
+        </div>
+      </div>`;
+    }
+
+    // ── Panel 3: Tonight text (rendered below hero, not in flex row) ──
+    const p3Summary = buildSummary();
 
     // ── Panel 4: Moon ──
     const moonUpStr = wx?.moon?.moon_up_now===true
@@ -1659,11 +1699,31 @@
       <div class="nop-chips">${chipBtns}</div>
     </div>`;
 
-    hero.innerHTML = [p1, p2, p4, p5, p3, p6].join('');
+    // New order: Date | Night Quality | Best Window | Moon | Kp | Sun
+    hero.innerHTML = [p0, p5, p6, p4, p1, p2].join('');
 
-    // Post-render
+    // Populate Tonight bar below hero
+    const tonightBar = document.getElementById('nop-tonight-bar');
+    if (tonightBar) {
+      tonightBar.style.display = 'flex';
+      tonightBar.innerHTML =
+        `<span class="nop-tonight-label">Tonight</span>` +
+        `<span class="nop-tonight-text">${p3Summary}</span>`;
+    }
+
+    // Post-render: moon canvas + chart
     _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonIllum / 100, moonWaxing);
     _nopRenderChart(_nopActiveMetric);
+
+    // Live clock: update every second
+    if (_nopClockInterval) clearInterval(_nopClockInterval);
+    _nopClockInterval = setInterval(() => {
+      const now = new Date();
+      const dEl = document.getElementById('nop-clock-date');
+      const tEl = document.getElementById('nop-clock-time');
+      if (dEl) dEl.textContent = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      if (tEl) tEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }, 1000);
   }
 
   // ══════════════════════════════════════════════════════════
