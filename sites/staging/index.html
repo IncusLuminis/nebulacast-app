@@ -1428,6 +1428,10 @@
                 get: h => h.air?.temperature_c ?? null,
                 fmt: v => v.toFixed(1) + '°C',
                 fixMin: null, fixMax: null },
+    moon:     { label:'Moon',    color:'rgba(210,210,165,0.50)', hiColor:'rgba(210,210,165,0.88)',
+                get: h => h._moon_alt ?? null,
+                fmt: v => v.toFixed(1) + '° alt',
+                fixMin: 0, fixMax: 90 },
   };
 
   function _nopRenderChart(metric) {
@@ -1477,8 +1481,8 @@
     }
   }
 
-  const _NOP_CHIP_KEYS   = ['cloud','dew','wind','pressure','temp'];
-  const _NOP_CHIP_LABELS = { cloud:'☁ Cloud', dew:'💧 Dew', wind:'💨 Wind', pressure:'⬆ Pressure', temp:'🌡 Temp' };
+  const _NOP_CHIP_KEYS   = ['moon','cloud','dew','wind','pressure','temp'];
+  const _NOP_CHIP_LABELS = { moon:'🌙 Moon', cloud:'☁ Cloud', dew:'💧 Dew', wind:'💨 Wind', pressure:'⬆ Pressure', temp:'🌡 Temp' };
 
   function _nopInjectWidgetChart() {
     const tpPanel = document.querySelector('[data-role="tp-best-window"]');
@@ -1543,6 +1547,24 @@
       }
     }
     _nopBestWindow = wx?.decision?.best_tonight || null;
+
+    // ── Enrich night hours with moon altitude from sun_moon frames ──
+    if (sunMoon?.frames?.length) {
+      for (const h of _nopNightHours) {
+        const hMs = new Date(h.timestamp_utc).getTime();
+        if (!hMs) continue;
+        let bestFrame = null, minD = Infinity;
+        for (const f of sunMoon.frames) {
+          const ft = _parseSMTime(f.t_utc);
+          if (!ft) continue;
+          const d = Math.abs(ft.getTime() - hMs);
+          if (d < minD) { minD = d; bestFrame = f; }
+        }
+        h._moon_alt = bestFrame?.moon?.alt_deg != null
+          ? Math.max(0, bestFrame.moon.alt_deg)
+          : null;
+      }
+    }
 
     // ── Profile scores & NQI ──
     _nopProfiles = wx?.decision?.mode_scores || {};
