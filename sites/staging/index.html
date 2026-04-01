@@ -1632,13 +1632,13 @@
       const _now = new Date();
       const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
       const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      // Date: same 48px hero weight as NQI value.
-      // Time: initial 36px; after render JS measures date width and scales time to match exactly.
-      var p0 = `<div class="hero-card" style="flex-shrink:0">
-        <div class="hero-card-label">Date &amp; Time</div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px">
-          <div id="nop-clock-date" style="font-size:48px;font-weight:700;line-height:1;color:#fff;letter-spacing:-0.02em;white-space:nowrap">${_dateStr}</div>
-          <div id="nop-clock-time" style="font-size:36px;font-weight:700;line-height:1;color:rgba(255,255,255,0.45);letter-spacing:-0.01em;white-space:nowrap">${_timeStr}</div>
+      // Date: secondary label, same size/style as the previous time appearance.
+      // Time: hero element, auto-scaled to exactly match date's rendered width.
+      var p0 = `<div class="hero-card" style="flex-shrink:0;align-items:center">
+        <div class="hero-card-label" style="align-self:flex-start">Date &amp; Time</div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div id="nop-clock-date" style="font-size:20px;font-weight:600;line-height:1;color:rgba(255,255,255,0.42);letter-spacing:0.01em;white-space:nowrap">${_dateStr}</div>
+          <div id="nop-clock-time" style="font-size:20px;font-weight:700;line-height:1;color:#fff;letter-spacing:-0.02em;white-space:nowrap">${_timeStr}</div>
         </div>
       </div>`;
     }
