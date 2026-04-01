@@ -1229,7 +1229,7 @@ function scoreLabelText(sc, score) {
 }
 
 // Card renderer: Observing mode
-function renderObservingCard(hour, hourIdx) {
+function renderObservingCard(hour, hourIdx, isCurrent = false) {
   const timeStr = formatTime(hour.time);
   const score = formatScore(getHourScore(hour));
   const sc = scoreClass(score);
@@ -1252,7 +1252,8 @@ function renderObservingCard(hour, hourIdx) {
   if (paramLines.length === 0) paramLines.push("—");
 
   return `
-    <div class="hour gate-${gateStatus} ${solarCls}" data-hour-idx="${hourIdx}" style="cursor:pointer">
+    <div class="hour gate-${gateStatus} ${solarCls}${isCurrent ? ' is-current' : ''}" data-hour-idx="${hourIdx}" style="cursor:pointer">
+      ${isCurrent ? '<div class="now-marker">Now</div>' : ''}
       <div class="hour-top-row">
         <div class="t">${escapeHtml(timeStr)}</div>
         ${renderCelestialBadges(hour)}
@@ -1269,7 +1270,7 @@ function renderObservingCard(hour, hourIdx) {
 }
 
 // Card renderer: Weather mode
-function renderWeatherCard(hour, hourIdx) {
+function renderWeatherCard(hour, hourIdx, isCurrent = false) {
   const timeStr = formatTime(hour.time);
   const score = formatScore(getHourScore(hour));
   const sc = scoreClass(score);
@@ -1297,7 +1298,8 @@ function renderWeatherCard(hour, hourIdx) {
   const iconPath = (iconBase.charAt(iconBase.length - 1) === "/" ? iconBase : iconBase + "/") + iconName;
 
   return `
-    <div class="hour gate-${gateStatus} ${solarCls}" data-hour-idx="${hourIdx}" style="cursor:pointer">
+    <div class="hour gate-${gateStatus} ${solarCls}${isCurrent ? ' is-current' : ''}" data-hour-idx="${hourIdx}" style="cursor:pointer">
+      ${isCurrent ? '<div class="now-marker">Now</div>' : ''}
       <div class="t">${escapeHtml(timeStr)}</div>
       <img class="wx-ico" src="${escapeHtml(iconPath)}" alt="" aria-hidden="true">
       <div class="wx-temp">${escapeHtml(tempStr)}</div>
@@ -1320,9 +1322,11 @@ function renderHourly(rootEl, hours) {
   const tz = weatherData?.location?.tz || "UTC";
   const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
+  // Include the current hour (floor now to hour boundary)
+  const currentHourStart = Math.floor(now / 3600000) * 3600000;
   let futureHours = hours.filter(h => {
     const dt = parseISO(h.time);
-    return dt && dt.getTime() > now;
+    return dt && dt.getTime() >= currentHourStart;
   });
 
   // Apply mode filter
@@ -1353,9 +1357,11 @@ function renderHourly(rootEl, hours) {
     // Find index in full hours array
     const fullIdx = hours.findIndex(h => h.time === hour.time);
     const hourIdx = fullIdx >= 0 ? fullIdx : futureIdx;
+    const dt = parseISO(hour.time);
+    const isCurrent = dt && dt.getTime() >= currentHourStart && dt.getTime() < currentHourStart + 3600000;
     return hourlyMode === "weather"
-      ? renderWeatherCard(hour, hourIdx)
-      : renderObservingCard(hour, hourIdx);
+      ? renderWeatherCard(hour, hourIdx, isCurrent)
+      : renderObservingCard(hour, hourIdx, isCurrent);
   }).join("");
 
   // Add click handlers to hourly cards
