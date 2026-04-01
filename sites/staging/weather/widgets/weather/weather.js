@@ -1790,10 +1790,13 @@ function renderTpSkyStatus(rootEl, nowHour, hours) {
     catsEl.innerHTML = CATS.map(c => {
       const sc = nowHour?.[c.key] ?? null;
       const pct = sc ?? 0;
+      const barStyle = pct > 0
+        ? `width:${pct}%;background:${_fbColor(pct)}`
+        : `width:0%;background:transparent`;
       return `<div class="cat-score-row">
         <span class="cat-ico">${c.ico}</span>
         <span class="cat-label">${c.label}</span>
-        <div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:${pct}%;background:${_fbColor(pct)}"></div></div>
+        <div class="cat-bar-wrap"><div class="cat-bar-fill" style="${barStyle}"></div></div>
         <span class="cat-val">${sc != null ? sc : "—"}</span>
       </div>`;
     }).join("");
