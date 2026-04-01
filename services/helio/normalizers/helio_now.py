@@ -48,7 +48,7 @@ def _normalize_kp_latest(
 ) -> Tuple[Optional[float], Optional[str]]:
     """
     Extract the latest Kp value and its UTC timestamp from the observed array.
-    First row is always the header — skipped.
+    Supports both list-of-lists (header first) and list-of-dicts formats.
     Returns (kp_value, kp_time_utc) or (None, None).
     """
     if not rows:
@@ -57,12 +57,19 @@ def _normalize_kp_latest(
     kp_val: Optional[float] = None
     kp_ts: Optional[str] = None
 
-    for row in rows[1:]:
-        if not isinstance(row, (list, tuple)) or len(row) < 2:
-            continue
+    # Detect format: list-of-dicts (new NOAA format) vs list-of-lists (legacy)
+    iter_rows = rows if isinstance(rows[0], dict) else rows[1:]
+
+    for row in iter_rows:
         try:
-            val = float(row[1])
-            ts = _parse_swpc_ts(str(row[0]))
+            if isinstance(row, dict):
+                val = float(row.get("Kp") or row.get("kp") or 0)
+                ts = _parse_swpc_ts(str(row.get("time_tag", "")))
+            else:
+                if not isinstance(row, (list, tuple)) or len(row) < 2:
+                    continue
+                val = float(row[1])
+                ts = _parse_swpc_ts(str(row[0]))
             if ts is not None:
                 kp_val = val
                 kp_ts = ts
@@ -76,7 +83,8 @@ def _normalize_kp_forecast(rows: Optional[List]) -> List[Dict[str, Any]]:
     """
     Extract future 3h Kp forecast points from the SWPC forecast product.
 
-    Skips rows flagged as "observed" (3rd column) and rows with past timestamps.
+    Skips rows flagged as "observed" and rows with past timestamps.
+    Supports both list-of-dicts (new NOAA format) and list-of-lists (legacy).
     Returns list of {t_utc, kp} dicts, ascending by time.
     """
     if not rows:
@@ -85,12 +93,29 @@ def _normalize_kp_forecast(rows: Optional[List]) -> List[Dict[str, Any]]:
     now_utc = datetime.now(timezone.utc)
     points: List[Dict[str, Any]] = []
 
-    for row in rows[1:]:  # skip header
-        if not isinstance(row, (list, tuple)) or len(row) < 2:
-            continue
+    # Detect format
+    iter_rows = rows if isinstance(rows[0], dict) else rows[1:]
 
-        ts = _parse_swpc_ts(str(row[0]))
-        if ts is None:
+    for row in iter_rows:
+        try:
+            if isinstance(row, dict):
+                ts = _parse_swpc_ts(str(row.get("time_tag", "")))
+                if ts is None:
+                    continue
+                # Skip observed rows
+                if str(row.get("observed", "")).strip().lower() == "observed":
+                    continue
+                kp = float(row.get("kp") or row.get("Kp") or 0)
+            else:
+                if not isinstance(row, (list, tuple)) or len(row) < 2:
+                    continue
+                ts = _parse_swpc_ts(str(row[0]))
+                if ts is None:
+                    continue
+                if len(row) >= 3 and str(row[2]).strip().lower() == "observed":
+                    continue
+                kp = float(row[1])
+        except (TypeError, ValueError):
             continue
 
         try:
@@ -98,16 +123,8 @@ def _normalize_kp_forecast(rows: Optional[List]) -> List[Dict[str, Any]]:
         except ValueError:
             continue
 
-        # Skip rows explicitly labelled "observed"
-        if len(row) >= 3 and str(row[2]).strip().lower() == "observed":
-            continue
         # Skip past timestamps
         if dt <= now_utc:
-            continue
-
-        try:
-            kp = float(row[1])
-        except (TypeError, ValueError):
             continue
 
         points.append({"t_utc": ts, "kp": kp})
@@ -296,21 +313,30 @@ def _five_min_floor(ts: str) -> str:
 def _normalize_kp_history_1h(rows: Optional[List]) -> List[Dict[str, Any]]:
     """
     Produce 1-hour averaged Kp values for the last 24h.
-    Input: kp_observed rows  [[time_tag, kp_index], ...]  (header first).
+    Supports both list-of-dicts (new NOAA format) and list-of-lists (legacy).
     Returns [{t_utc, kp}] ascending, one point per completed hour.
     """
     if not rows:
         return []
     cutoff = _history_cutoff()
     buckets: Dict[str, List[float]] = {}
-    for row in rows[1:]:
-        if not isinstance(row, (list, tuple)) or len(row) < 2:
-            continue
-        ts = _parse_swpc_ts(str(row[0]))
-        if not ts or ts < cutoff:
-            continue
+
+    iter_rows = rows if isinstance(rows[0], dict) else rows[1:]
+
+    for row in iter_rows:
         try:
-            val = float(row[1])
+            if isinstance(row, dict):
+                ts = _parse_swpc_ts(str(row.get("time_tag", "")))
+                if not ts or ts < cutoff:
+                    continue
+                val = float(row.get("Kp") or row.get("kp") or 0)
+            else:
+                if not isinstance(row, (list, tuple)) or len(row) < 2:
+                    continue
+                ts = _parse_swpc_ts(str(row[0]))
+                if not ts or ts < cutoff:
+                    continue
+                val = float(row[1])
         except (TypeError, ValueError):
             continue
         key = _hour_floor(ts)
