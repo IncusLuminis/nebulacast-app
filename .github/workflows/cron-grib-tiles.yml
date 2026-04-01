@@ -94,7 +94,10 @@ jobs:
           git add sites/staging/data/isobars/
           git diff --cached --quiet && echo "No manifest changes" && exit 0
           git commit -m "data: grib tile manifest + weather map $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git pull --rebase origin main
+          # Use merge (not rebase) with -X ours so that concurrent writes to
+          # weather_map_now.json from cron-weather-map don't cause rebase conflicts.
+          # Our freshly generated version always wins on conflict.
+          git pull --no-rebase -X ours origin main
           git push origin main
 
       # Deploy staging site: git files + tile WebPs + cloud/wind overlay frames.
