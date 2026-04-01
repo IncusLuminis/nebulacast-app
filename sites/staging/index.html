@@ -1672,16 +1672,18 @@
     </div>`;
 
     // ── Panel 2: Sun ──
-    // Kp → glow border colour, same mapping as helio widget STATUS_TONE
-    const kpNum = kp ?? 0;
-    const sunBorder = kpNum>=6?'#e05c5c':kpNum>=5?'#e0a84a':kpNum>=4?'#d4cc5c':'#5cce8c';
+    // status → glow border colour + EIT gif, same mapping as helio widget STATUS_TONE
+    const sunBorderMap = { quiet:'#5cce8c', active:'#d4cc5c', elevated:'#e0a84a', storm:'#e05c5c' };
+    const sunGifMap    = { quiet:'171',     active:'195',     elevated:'284',     storm:'304'      };
+    const sunBorder = sunBorderMap[swStatus] ?? '#5cce8c';
+    const sunWave   = sunGifMap[swStatus]    ?? '171';
     const p2 = `<div class="hero-card" style="min-width:110px;flex-shrink:0;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Sun</div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <div style="position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;
                     border:1px solid ${sunBorder}44;background:#0a0a0a;flex-shrink:0;
                     box-shadow:0 0 10px ${sunBorder}55,0 0 24px ${sunBorder}22">
-          <img src="/assets/gifs/current_eit_304.gif" alt="Sun EIT 304"
+          <img src="/assets/gifs/current_eit_${sunWave}.gif" alt="Sun EIT ${sunWave}"
                style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center">
         </div>
       </div>
