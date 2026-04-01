@@ -1685,18 +1685,15 @@
     const nqiVal     = activeNqi.value != null ? activeNqi.value.toFixed(1) : '—';
     const nqiCls     = activeNqi.class || 'poor';
     const nqiClr     = _nqiColor(nqiCls);
-    const nqiAvgTxt  = (_nopAvgScore[_nopActiveProfile] != null)
-      ? `<span id="nop-nqi-avg" style="font-size:9px;color:rgba(255,255,255,0.28)">avg ${_nopAvgScore[_nopActiveProfile]}/100</span>` : '<span id="nop-nqi-avg"></span>';
     const p5 = `<div class="hero-card" style="min-width:165px;flex-shrink:0">
       <div class="hero-card-label">Night Quality</div>
       <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:4px">
-        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px">
+        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px">
           <div style="display:flex;align-items:baseline;gap:3px">
             <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr}">${nqiVal}</span>
             <span style="font-size:14px;color:rgba(255,255,255,0.3);font-weight:500">/10</span>
           </div>
           <span id="nop-nqi-lbl" style="font-size:14px;font-weight:700;line-height:1;color:${nqiClr};white-space:nowrap">${_nqiLabel(nqiCls)}</span>
-          ${nqiAvgTxt}
         </div>
         <div class="nop-profiles" style="flex:1">${profileBtns}</div>
       </div>
@@ -2068,7 +2065,6 @@
       const sa = document.getElementById('nop-nqi-avg');
       if (sv) { sv.textContent = val; sv.style.color = clr; }
       if (sl) { sl.textContent = _nqiLabel(cls); sl.style.color = clr; }
-      if (sa) { const avg = _nopAvgScore[p]; sa.textContent = avg != null ? `avg ${avg}/100` : ''; }
       document.querySelectorAll('.nop-profile-btn').forEach(b => b.classList.toggle('is-active', b.dataset.profile === p));
       _nopScaleNqiLabel();
       return;
