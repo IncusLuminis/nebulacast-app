@@ -4563,11 +4563,13 @@ function renderWeatherHTML(rootEl) {
 
         <!-- Panel 2: Sky Status -->
         <div class="tp-panel tp-sky-status" data-role="tp-sky-status">
-          <div class="tp-label">Sky Status
-            <span class="tp-trend" data-role="tp-trend"></span>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;flex-wrap:wrap">
+            <div class="tp-label">Sky Status
+              <span class="tp-trend" data-role="tp-trend"></span>
+            </div>
+            <div class="tp-diag-row" data-role="tp-diag-row"></div>
           </div>
           <div class="tp-categories" data-role="tp-categories"></div>
-          <div class="tp-diag-row"   data-role="tp-diag-row"></div>
         </div>
 
         <!-- Panel 3: Best Observing Window (flex:1) -->

@@ -233,7 +233,7 @@
     .nop-window-time {
       font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.82); margin-top: 3px; white-space: nowrap;
     }
-    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 44px; position: relative; }
+    .nop-bar-chart { display: flex; align-items: flex-end; gap: 1px; height: 28px; position: relative; }
     .nop-bar {
       flex: 1; min-width: 4px; border-radius: 1px 1px 0 0;
       transition: height 0.25s, background 0.2s; cursor: default;
@@ -1448,7 +1448,7 @@
     // Ensure minimum visible range
     if (maxV - minV < 1) { const mid=(maxV+minV)/2; minV=mid-1; maxV=mid+1; }
 
-    const MAX_H = 40;
+    const MAX_H = 24;
     chart.innerHTML = _nopNightHours.map((h, i) => {
       const val = vals[i];
       const norm = val != null ? Math.max(0, Math.min(1, (val - minV) / (maxV - minV))) : null;
