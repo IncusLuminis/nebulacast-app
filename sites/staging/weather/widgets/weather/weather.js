@@ -4554,6 +4554,8 @@ function renderWeatherHTML(rootEl) {
               <div class="score-bar tp-score-bar" data-role="score-bar">
                 <div class="score-bar-fill" style="width:0%"></div>
               </div>
+              <button type="button" class="tp-explain-toggle"
+                      data-role="explain-toggle" aria-expanded="false">Details ▶</button>
             </div>
             <div class="profile-switcher tp-profiles" data-role="profile-switcher"></div>
           </div>
@@ -4566,8 +4568,6 @@ function renderWeatherHTML(rootEl) {
           </div>
           <div class="tp-categories" data-role="tp-categories"></div>
           <div class="tp-diag-row"   data-role="tp-diag-row"></div>
-          <button type="button" class="tp-explain-toggle"
-                  data-role="explain-toggle" aria-expanded="false">Details ▶</button>
         </div>
 
         <!-- Panel 3: Best Observing Window (flex:1) -->
