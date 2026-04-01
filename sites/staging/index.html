@@ -1300,6 +1300,7 @@
   let _nopNQI = {};       // night_summary.nqi  per profile: {value, class}
   let _nopAvgScore = {};  // night_summary.avg_score per profile: int 0-100
   let _nopClockInterval = null;
+  let _nopClockFontSet  = false;
 
   function _nopScoreCls(s) { return s>=85?'score-excellent':s>=70?'score-good':s>=50?'score-fair':'score-poor'; }
   function _nopScoreLbl(s) { return s>=85?'Excellent':s>=70?'Good':s>=50?'Fair':'Poor'; }
@@ -1631,11 +1632,13 @@
       const _now = new Date();
       const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
       const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      var p0 = `<div class="hero-card" style="min-width:130px;flex-shrink:0">
+      // Date: same 48px hero weight as NQI value.
+      // Time: initial 36px; after render JS measures date width and scales time to match exactly.
+      var p0 = `<div class="hero-card" style="flex-shrink:0">
         <div class="hero-card-label">Date &amp; Time</div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:3px">
-          <div id="nop-clock-date" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)">${_dateStr}</div>
-          <div id="nop-clock-time" style="font-size:34px;font-weight:700;line-height:1;color:#fff;letter-spacing:-0.02em">${_timeStr}</div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px">
+          <div id="nop-clock-date" style="font-size:48px;font-weight:700;line-height:1;color:#fff;letter-spacing:-0.02em;white-space:nowrap">${_dateStr}</div>
+          <div id="nop-clock-time" style="font-size:36px;font-weight:700;line-height:1;color:rgba(255,255,255,0.45);letter-spacing:-0.01em;white-space:nowrap">${_timeStr}</div>
         </div>
       </div>`;
     }
@@ -1715,15 +1718,32 @@
     _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonIllum / 100, moonWaxing);
     _nopRenderChart(_nopActiveMetric);
 
-    // Live clock: update every second
+    // Live clock: update every second; auto-scale time font to match date width
+    _nopClockFontSet = false;
+    function _nopTickClock() {
+      const now  = new Date();
+      const dEl  = document.getElementById('nop-clock-date');
+      const tEl  = document.getElementById('nop-clock-time');
+      if (!dEl || !tEl) return;
+      const newDate = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      if (dEl.textContent !== newDate) { dEl.textContent = newDate; _nopClockFontSet = false; }
+      tEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      // Scale time font-size so its rendered width matches the date width
+      if (!_nopClockFontSet) {
+        requestAnimationFrame(() => {
+          const dW = dEl.getBoundingClientRect().width;
+          const tW = tEl.getBoundingClientRect().width;
+          if (dW > 0 && tW > 0) {
+            const cur = parseFloat(getComputedStyle(tEl).fontSize);
+            tEl.style.fontSize = (cur * dW / tW).toFixed(1) + 'px';
+            _nopClockFontSet = true;
+          }
+        });
+      }
+    }
     if (_nopClockInterval) clearInterval(_nopClockInterval);
-    _nopClockInterval = setInterval(() => {
-      const now = new Date();
-      const dEl = document.getElementById('nop-clock-date');
-      const tEl = document.getElementById('nop-clock-time');
-      if (dEl) dEl.textContent = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-      if (tEl) tEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    }, 1000);
+    _nopTickClock();  // immediate first tick + measure
+    _nopClockInterval = setInterval(_nopTickClock, 1000);
   }
 
   // ══════════════════════════════════════════════════════════
