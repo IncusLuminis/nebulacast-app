@@ -4533,14 +4533,7 @@ function renderWeatherHTML(rootEl) {
     <section class="card" id="poc-weather">
       <div class="top-panel-v2">
 
-        <!-- Panel 1: Time & Location -->
-        <div class="tp-panel tp-time-location" data-role="tp-time-location">
-          <div class="tp-label">Time &amp; Location</div>
-          <div class="tp-loc-line"      data-role="tp-loc-line">—</div>
-          <div class="tp-datetime-line" data-role="tp-datetime-line">—</div>
-        </div>
-
-        <!-- Panel 2: Observing Quality -->
+        <!-- Panel 1: Observing Quality -->
         <div class="tp-panel tp-quality" data-role="tp-quality">
           <div class="tp-label">Observing Quality</div>
           <div class="tp-quality-body">
@@ -4562,7 +4555,16 @@ function renderWeatherHTML(rootEl) {
           </div>
         </div>
 
-        <!-- Panel 3: Best Observing Window -->
+        <!-- Panel 2: Sky Status -->
+        <div class="tp-panel tp-sky-status" data-role="tp-sky-status">
+          <div class="tp-label">Sky Status
+            <span class="tp-trend" data-role="tp-trend"></span>
+          </div>
+          <div class="tp-categories" data-role="tp-categories"></div>
+          <div class="tp-diag-row"   data-role="tp-diag-row"></div>
+        </div>
+
+        <!-- Panel 3: Best Observing Window (flex:1) -->
         <div class="tp-panel tp-best-window" data-role="tp-best-window">
           <div class="tp-label">Best Observing Window</div>
           <div class="tp-window-range" data-role="tp-window-range">—</div>
@@ -4572,13 +4574,11 @@ function renderWeatherHTML(rootEl) {
           </div>
         </div>
 
-        <!-- Panel 4: Sky Status -->
-        <div class="tp-panel tp-sky-status" data-role="tp-sky-status">
-          <div class="tp-label">Sky Status
-            <span class="tp-trend" data-role="tp-trend"></span>
-          </div>
-          <div class="tp-categories" data-role="tp-categories"></div>
-          <div class="tp-diag-row"   data-role="tp-diag-row"></div>
+        <!-- Hidden: Time & Location (kept for possible future use) -->
+        <div class="tp-panel tp-time-location" data-role="tp-time-location" style="display:none">
+          <div class="tp-label">Time &amp; Location</div>
+          <div class="tp-loc-line"      data-role="tp-loc-line">—</div>
+          <div class="tp-datetime-line" data-role="tp-datetime-line">—</div>
         </div>
 
       </div>
