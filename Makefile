@@ -9,7 +9,7 @@
 -include .env
 export
 
-.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front sky sky-back helio helio-back weather-map weather-map-back grib-tiles server server-8081 deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
+.PHONY: news news-back news-front calendar calendar-back calendar-front weather weather-back weather-front weather-observer sky sky-back helio helio-back weather-map weather-map-back grib-tiles server server-8081 deps-news deps-calendar deps-weather deps-sky deps-helio test-news help functions functions-build
 
 # Python: prefer venv if present
 PYTHON ?= python
@@ -92,10 +92,16 @@ deps-weather:
 weather-back:
 	PYTHONPATH=$(PYTHONPATH_WEATHER) $(RUN) $(SERVICE_WEATHER)/pipelines/run_weather.py
 
+# Phase 1 observer pipeline: observer_weather_now.json + space_weather_now.json + NQI (night_summary)
+# Mirrors what cron-weather.yml runs after weather-back. Safe to run standalone for local NQI refresh.
+weather-observer:
+	PYTHONPATH=$(PYTHONPATH_WEATHER) $(RUN) $(SERVICE_WEATHER)/pipelines/run_phase1.py
+
 weather-front: functions-build
 	$(RUN) frontend/build.py
 
-weather: weather-back weather-front
+# Full weather refresh: raw forecast + observer scores + NQI (mirrors cron sequence)
+weather: weather-back weather-observer weather-front
 
 # Weather Map v1.1: 3 zoom profiles → data/clouds/{eu_wide,eu_central,local}/ + data/weather_map_now.json
 weather-map-back:
@@ -133,9 +139,10 @@ help:
 	@echo "  make calendar   — calendar backend + frontend (alerts rss + calendar JSON + HTML/JS)"
 	@echo "  make calendar-back  — calendar pipeline only (outputs → alerts/rss.xml, calendar/*.json)"
 	@echo "  make calendar-front — frontend build only (index, calendar/index.html, calendar/widget.js, assets)"
-	@echo "  make weather   — weather backend + frontend (outputs + sites/staging/weather/daily_weather.json)"
-	@echo "  make weather-back  — weather pipeline only"
-	@echo "  make weather-front — functions-build + frontend build (preserves index.html, weather/)"
+	@echo "  make weather          — full refresh: weather-back + weather-observer + frontend"
+	@echo "  make weather-back     — raw forecast pipeline only (daily_weather.json)"
+	@echo "  make weather-observer — Phase 1: observer_weather_now.json + NQI (night_summary)"
+	@echo "  make weather-front    — functions-build + frontend build (preserves index.html, weather/)"
 	@echo "  make helio        — helio pipeline → sites/staging/data/helio_now.json"
 	@echo "  make helio-back   — same (alias)"
 	@echo "  make deps-helio   — install helio deps (run once)"
