@@ -1763,7 +1763,7 @@ function renderTpBestWindow(rootEl, hours) {
 }
 
 const CATS = [
-  { key: "sky_darkness_score", label: "Sky Darkness", ico: "🌌" },
+  { key: "sky_darkness_score", label: "Dark Sky Level", ico: "🌌" },
   { key: "atmosphere_score",   label: "Atmosphere",   ico: "🌫" },
   { key: "dew_safety_score",   label: "Dew Safety",   ico: "💧" },
   { key: "stability_score",    label: "Stability",    ico: "🧭" },
@@ -3830,9 +3830,9 @@ const HI_FALLBACK_PARAMS = {
     { label: "Visibility",    val: formatVisibility(h.visibility_m) != null ? formatVisibility(h.visibility_m) + " km" : "—", pts: null },
   ],
   sky_darkness: (h) => [
-    { label: "Sun Altitude",  val: h.sun_alt_deg  != null ? Math.round(h.sun_alt_deg)  + "°" : "—",  pts: null },
-    { label: "Moon Altitude", val: h.moon_alt_deg != null ? Math.round(h.moon_alt_deg) + "°" : "—",  pts: null },
-    { label: "Moon Phase",    val: h.moon_phase_pct != null ? Math.round(h.moon_phase_pct) + "%" : "—", pts: null },
+    { label: "Sun",           val: h.sun_alt_deg  != null ? Math.round(h.sun_alt_deg)  + "°" : "—",  pts: null },
+    { label: "Moon",          val: h.moon_alt_deg != null ? Math.round(h.moon_alt_deg) + "°" : "—",  pts: null },
+    { label: "Moon illum.",   val: h.moon_phase_pct != null ? Math.round(h.moon_phase_pct) + "%" : "—", pts: null },
   ],
   dew_safety: (h) => [
     { label: "Humidity",  val: h.humidity_pct  != null ? Math.round(h.humidity_pct)  + "%" : "—",  pts: null },
