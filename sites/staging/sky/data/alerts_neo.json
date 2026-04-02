@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-04-01T13:07:59.208918Z",
+  "generated_utc": "2026-04-02T01:50:28.829503Z",
   "source": "JPL SSD CAD API + JPL Horizons + JPL SBDB",
   "counts": {
     "pha_rows": 1,
-    "ld10_rows": 11,
-    "items": 12
+    "ld10_rows": 10,
+    "items": 11
   },
   "items": [
     {
@@ -20,7 +20,7 @@
       "dec_deg": 30.32434,
       "mag": 18.91,
       "updated_utc": "2026-04-07T19:11:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-07 19:11Z",
         "t_utc_iso": "2026-04-07T19:11:00Z",
@@ -34,8 +34,8 @@
         "dist_ld": 13.394511,
         "v_rel_km_s": 9.24189221143193,
         "h_cad": 21.68,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -76,7 +76,7 @@
           "21.68"
         ],
         "alt_deg": 37.430994,
-        "az_deg": 272.940369,
+        "az_deg": 272.94037,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -100,98 +100,6 @@
       }
     },
     {
-      "id": "2026 FH7",
-      "source": "jpl-cad+horizons+sbdb",
-      "group": "neo",
-      "type": "neo",
-      "title": "2026 FH7",
-      "note": "Close approach within 10 lunar distances",
-      "score_raw": 71.67,
-      "score_norm": 0.7167,
-      "ra_deg": 36.8352,
-      "dec_deg": 45.17603,
-      "mag": 21.0,
-      "updated_utc": "2026-04-01T21:51:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
-      "meta": {
-        "t_utc": "2026-Apr-01 21:51Z",
-        "t_utc_iso": "2026-04-01T21:51:00Z",
-        "date_local": "2026-04-01",
-        "neo_event_id": "neo:2026 FH7:2026-Apr-01 21:51",
-        "bucket": "10ld",
-        "pha": false,
-        "pha_cad_flag": false,
-        "pha_sbdb_flag": false,
-        "dist_au": 0.00480757353991148,
-        "dist_ld": 1.870975,
-        "v_rel_km_s": 8.27035953982315,
-        "h_cad": 26.804,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
-        "cad_fields_pha": [
-          "des",
-          "orbit_id",
-          "jd",
-          "cd",
-          "dist",
-          "dist_min",
-          "dist_max",
-          "v_rel",
-          "v_inf",
-          "t_sigma_f",
-          "h"
-        ],
-        "cad_fields_10ld": [
-          "des",
-          "orbit_id",
-          "jd",
-          "cd",
-          "dist",
-          "dist_min",
-          "dist_max",
-          "v_rel",
-          "v_inf",
-          "t_sigma_f",
-          "h"
-        ],
-        "cad_row": [
-          "2026 FH7",
-          "1",
-          "2461132.410569656",
-          "2026-Apr-01 21:51",
-          "0.00480757353991148",
-          "0.00471976844694324",
-          "0.00489533230609643",
-          "8.27035953982315",
-          "8.20307235921101",
-          "00:13",
-          "26.804"
-        ],
-        "alt_deg": 12.904266,
-        "az_deg": 333.479183,
-        "horizons_ok": true,
-        "horizons_error": null,
-        "horizons_query": {
-          "id": "2026 FH7",
-          "jd": 2461132.410416667,
-          "site": {
-            "lat": 52.2297,
-            "lon": 21.0122,
-            "elev_km": 0.1
-          }
-        },
-        "sbdb_ok": true,
-        "sbdb_error": null,
-        "sbdb_moid_au": 0.00517,
-        "sbdb_h": null,
-        "sbdb_albedo": null,
-        "sbdb_diameter_km": null,
-        "sbdb_diameter_est_km": 0.015476079895382055,
-        "sbdb_diameter_source": "h_cad",
-        "risk_score": 0.5001
-      }
-    },
-    {
       "id": "2023 DZ2",
       "source": "jpl-cad+horizons+sbdb",
       "group": "neo",
@@ -204,7 +112,7 @@
       "dec_deg": 10.67062,
       "mag": 33.0,
       "updated_utc": "2026-04-04T02:04:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-04 02:04Z",
         "t_utc_iso": "2026-04-04T02:04:00Z",
@@ -218,8 +126,8 @@
         "dist_ld": 2.633771,
         "v_rel_km_s": 7.23932950840708,
         "h_cad": 24.28,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -259,8 +167,8 @@
           "< 00:01",
           "24.28"
         ],
-        "alt_deg": -16.152626,
-        "az_deg": 46.170017,
+        "alt_deg": -16.152625,
+        "az_deg": 46.170018,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -296,7 +204,7 @@
       "dec_deg": 55.07361,
       "mag": 19.49,
       "updated_utc": "2026-04-07T00:22:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-07 00:22Z",
         "t_utc_iso": "2026-04-07T00:22:00Z",
@@ -310,8 +218,8 @@
         "dist_ld": 3.436967,
         "v_rel_km_s": 5.87152577651615,
         "h_cad": 26.2,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -351,7 +259,7 @@
           "< 00:01",
           "26.2"
         ],
-        "alt_deg": 49.917002,
+        "alt_deg": 49.917003,
         "az_deg": 56.866815,
         "horizons_ok": true,
         "horizons_error": null,
@@ -388,7 +296,7 @@
       "dec_deg": -78.7705,
       "mag": 20.68,
       "updated_utc": "2026-04-04T19:50:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-04 19:50Z",
         "t_utc_iso": "2026-04-04T19:50:00Z",
@@ -402,8 +310,8 @@
         "dist_ld": 4.608384,
         "v_rel_km_s": 13.0685168655792,
         "h_cad": 27.472,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -480,7 +388,7 @@
       "dec_deg": -11.83181,
       "mag": 22.63,
       "updated_utc": "2026-04-07T14:21:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-07 14:21Z",
         "t_utc_iso": "2026-04-07T14:21:00Z",
@@ -494,8 +402,8 @@
         "dist_ld": 4.848319,
         "v_rel_km_s": 7.52371624359749,
         "h_cad": 29.23,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -536,7 +444,7 @@
           "29.23"
         ],
         "alt_deg": -43.117069,
-        "az_deg": 318.65981,
+        "az_deg": 318.659811,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -572,7 +480,7 @@
       "dec_deg": -56.90781,
       "mag": 19.72,
       "updated_utc": "2026-04-06T08:49:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-06 08:49Z",
         "t_utc_iso": "2026-04-06T08:49:00Z",
@@ -586,8 +494,8 @@
         "dist_ld": 5.770119,
         "v_rel_km_s": 7.0487671412451,
         "h_cad": 26.96,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -664,7 +572,7 @@
       "dec_deg": 74.76702,
       "mag": 22.05,
       "updated_utc": "2026-04-02T10:33:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-02 10:33Z",
         "t_utc_iso": "2026-04-02T10:33:00Z",
@@ -678,8 +586,8 @@
         "dist_ld": 7.925989,
         "v_rel_km_s": 5.98783230923465,
         "h_cad": 27.754,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -720,7 +628,7 @@
           "27.754"
         ],
         "alt_deg": 36.976979,
-        "az_deg": 2.799741,
+        "az_deg": 2.799742,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -756,7 +664,7 @@
       "dec_deg": -44.17097,
       "mag": 19.23,
       "updated_utc": "2026-04-02T02:25:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-02 02:25Z",
         "t_utc_iso": "2026-04-02T02:25:00Z",
@@ -770,8 +678,8 @@
         "dist_ld": 8.021829,
         "v_rel_km_s": 8.08182717780025,
         "h_cad": 25.921,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -848,7 +756,7 @@
       "dec_deg": 28.17986,
       "mag": 19.73,
       "updated_utc": "2026-04-04T03:27:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-04 03:27Z",
         "t_utc_iso": "2026-04-04T03:27:00Z",
@@ -862,8 +770,8 @@
         "dist_ld": 8.576993,
         "v_rel_km_s": 24.9058421495052,
         "h_cad": 25.037,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -940,7 +848,7 @@
       "dec_deg": 28.84165,
       "mag": 22.23,
       "updated_utc": "2026-04-03T04:39:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-03 04:39Z",
         "t_utc_iso": "2026-04-03T04:39:00Z",
@@ -954,8 +862,8 @@
         "dist_ld": 9.551139,
         "v_rel_km_s": 10.0972695530225,
         "h_cad": 27.2,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -996,7 +904,7 @@
           "27.2"
         ],
         "alt_deg": 66.440856,
-        "az_deg": 188.723411,
+        "az_deg": 188.723413,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -1032,7 +940,7 @@
       "dec_deg": 31.04769,
       "mag": 24.69,
       "updated_utc": "2026-04-03T01:39:00Z",
-      "ingested_utc": "2026-04-01T13:07:50.193261Z",
+      "ingested_utc": "2026-04-02T01:50:19.977332Z",
       "meta": {
         "t_utc": "2026-Apr-03 01:39Z",
         "t_utc_iso": "2026-04-03T01:39:00Z",
@@ -1046,8 +954,8 @@
         "dist_ld": 9.765735,
         "v_rel_km_s": 6.36946573423658,
         "h_cad": 29.46,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-01&date-max=2026-04-08&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-02&date-max=2026-04-09&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": [
           "des",
           "orbit_id",
@@ -1088,7 +996,7 @@
           "29.46"
         ],
         "alt_deg": 2.032258,
-        "az_deg": 322.761644,
+        "az_deg": 322.761645,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
