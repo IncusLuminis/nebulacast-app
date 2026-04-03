@@ -488,10 +488,10 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "bala
     sun_alt = hour.get("sun_alt_deg")
     if sun_alt is None or sun_alt >= 0:
         sun_factor = 1.00
-        sun_label  = "Daylight (100%)" if sun_alt is None or sun_alt >= 0 else "Daylight"
+        sun_label  = "Sunlight (100%)" if sun_alt is None or sun_alt >= 0 else "Sunlight"
     elif sun_alt <= -18:
         sun_factor = 0.00
-        sun_label  = "Night (0%)"
+        sun_label  = "Sunlight (0%)"
     elif sun_alt > -6:
         # civil: 1.0 at 0° → 0.70 at -6°
         sun_factor = round(1.0 + sun_alt * (0.30 / 6), 3)
@@ -525,7 +525,9 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "bala
     moon_contrib = round(moon_factor * 0.15, 3)
 
     # ── 3. Bortle / light pollution factor ───────────────────────────────────
-    bortle_factor = round(bc / 9, 3)
+    # (9 - bortle) / 9: Bortle 1 (dark) → 0.89, Bortle 9 (city) → 0.0
+    # Icons show 9-bortle out of 9 — more icons = more light pollution
+    bortle_factor = round((9 - bc) / 9, 3)
     bortle_contrib = round(bortle_factor * 0.05, 3)
     bortle_label  = f"Light pollution (Bortle:{bc})"
 
