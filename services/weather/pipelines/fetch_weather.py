@@ -108,9 +108,10 @@ def compute_gate(hour: dict) -> dict:
 
     # ── CLOSED — precipitation / heavy overcast / fog ─────────────────────────
     # low/mid > 90% → CLOSED; vis ≤ 1 km → CLOSED.
-    if rain > 0:
+    # precipitation threshold: ≥ 0.3mm rain or ≥ 0.2mm snow (avoids model noise/dew).
+    if rain >= 0.3:
         reasons.append(f"Rain {rain:.1f}mm")
-    elif snow > 0:
+    elif snow >= 0.2:
         reasons.append(f"Snow {snow:.1f}mm")
     if low > 90:
         reasons.append(f"Low cloud {low:.0f}%")
@@ -119,7 +120,7 @@ def compute_gate(hour: dict) -> dict:
     if vis_km and vis_km <= 1.0:
         reasons.append(f"Visibility {vis_km:.1f}km")
 
-    if rain > 0 or snow > 0:
+    if rain >= 0.3 or snow >= 0.2:
         return {"status": "CLOSED", "score": max(0, 10 - len(reasons) * 3), "reasons": reasons}
     if low > 90 or mid > 90 or (vis_km and vis_km <= 1.0):
         return {"status": "CLOSED", "score": max(0, 15 - len(reasons) * 4), "reasons": reasons}
