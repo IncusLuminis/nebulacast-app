@@ -3872,9 +3872,6 @@ const HI_CHART_PARAMS = [
   { key: 'wind',     ico: '💨', label: 'Wind',
     get: h => h.wind_m_s,            fmt: v => (Math.round(v * 10) / 10) + ' m/s',
     color: 'rgba(190,150,255,.5)',   colorSel: 'rgba(190,150,255,.95)' },
-  { key: 'moon_alt', ico: '🌙', label: 'Moon altitude',
-    get: h => h.moon_alt_deg,        fmt: v => Math.round(v) + '°',
-    color: 'rgba(224,224,160,.4)',   colorSel: 'rgba(224,224,160,.95)' },
 ];
 
 function renderHiChart(els, hours, hourIdx, paramKey) {
