@@ -456,16 +456,16 @@ def compute_atmosphere_score(hour: dict) -> dict:
         trans_q = 65.0  # unknown → neutral
         trans_label = "Transparency"
 
-    score = max(0, min(100, round(0.40 * clouds_q + 0.30 * seeing_q + 0.30 * trans_q)))
+    score = max(0, min(100, round(0.60 * clouds_q + 0.25 * trans_q + 0.15 * seeing_q)))
     return {
         "score": score,
         "parameters": [
-            {"key": "clouds",       "label": f"Clouds (Low:{round(low)}/Mid:{round(mid)}/High:{round(high)}%)",
-             "value": round(clouds_q), "score": round(clouds_q), "weight": 0.40, "points": round(0.40 * clouds_q)},
-            {"key": "seeing",       "label": seeing_label,
-             "value": round(seeing_q), "score": round(seeing_q), "weight": 0.30, "points": round(0.30 * seeing_q)},
+            {"key": "clouds",       "label": f"Clouds (L:{round(low)}/M:{round(mid)}/H:{round(high)}%)",
+             "value": round(clouds_q), "score": round(clouds_q), "weight": 0.60, "points": round(0.60 * clouds_q)},
             {"key": "transparency", "label": trans_label,
-             "value": round(trans_q),  "score": round(trans_q),  "weight": 0.30, "points": round(0.30 * trans_q)},
+             "value": round(trans_q),  "score": round(trans_q),  "weight": 0.25, "points": round(0.25 * trans_q)},
+            {"key": "seeing",       "label": seeing_label,
+             "value": round(seeing_q), "score": round(seeing_q), "weight": 0.15, "points": round(0.15 * seeing_q)},
         ],
     }
 
