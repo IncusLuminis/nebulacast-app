@@ -107,34 +107,33 @@ def compute_gate(hour: dict) -> dict:
     reasons: list = []
 
     # ── CLOSED — precipitation / heavy overcast / fog ─────────────────────────
-    # v8: low/mid threshold lowered 95→85 — heavy overcast blocks observations
-    # even before reaching near-total coverage.
+    # low/mid > 90% → CLOSED; vis ≤ 1 km → CLOSED.
     if rain > 0:
         reasons.append(f"Rain {rain:.1f}mm")
     elif snow > 0:
         reasons.append(f"Snow {snow:.1f}mm")
-    if low >= 85:
+    if low > 90:
         reasons.append(f"Low cloud {low:.0f}%")
-    if mid >= 85:
+    if mid > 90:
         reasons.append(f"Mid cloud {mid:.0f}%")
     if vis_km and vis_km <= 1.0:
         reasons.append(f"Visibility {vis_km:.1f}km")
 
     if rain > 0 or snow > 0:
         return {"status": "CLOSED", "score": max(0, 10 - len(reasons) * 3), "reasons": reasons}
-    if low >= 85 or mid >= 85 or (vis_km and vis_km <= 1.0):
+    if low > 90 or mid > 90 or (vis_km and vis_km <= 1.0):
         return {"status": "CLOSED", "score": max(0, 15 - len(reasons) * 4), "reasons": reasons}
 
     # ── MARGINAL — twilight and/or broken cloud / haze ────────────────────────
-    # v8: low/mid threshold lowered 70→65; high cloud kept at 80 (cirrus = MARGINAL only).
+    # low/mid > 70% → MARGINAL; high > 80% → MARGINAL (cirrus).
     marginal = False
     if sun_alt is not None and -12 < sun_alt <= -6:
         reasons.append("Civil/Nautical twilight"); marginal = True
-    if low >= 65:
+    if low > 70:
         reasons.append(f"Broken low cloud {low:.0f}%");  marginal = True
-    if mid >= 65:
+    if mid > 70:
         reasons.append(f"Broken mid cloud {mid:.0f}%");  marginal = True
-    if high >= 80:
+    if high > 80:
         reasons.append(f"High cirrus {high:.0f}%");      marginal = True
     if vis_km and vis_km <= 5.0:
         reasons.append(f"Visibility {vis_km:.1f}km");    marginal = True
@@ -416,159 +415,153 @@ def _load_bortle_class() -> int:
 
 
 def compute_atmosphere_score(hour: dict) -> dict:
-    """v5.1 Category 1 — Atmosphere.
+    """Category 1 — Atmosphere.
 
-    Formula: 0.40 × Clouds + 0.30 × Seeing + 0.30 × Transparency
-    All sub-scores normalised 0..100; each parameter carries score + weight + points.
+    Cloudness = low/100×0.4 + mid/100×0.4 + high/100×0.2  (0.0 … 1.0)
+    Atmosphere score = (1 − cloudness) × 100
+
+    Display parameters:
+      - Cloudness row: bar showing cloudness%; formula = sum of layer contributions
+      - Low/Mid/High rows: cloud icons + each layer's contribution value
     """
     low  = hour.get("cloud_low",  0) or 0
     mid  = hour.get("cloud_mid",  0) or 0
     high = hour.get("cloud_high", 0) or 0
 
-    # Clouds: weighted layer penalty (spec §5.1.1)
-    clouds_q = max(0.0, min(100.0, 100 - 0.60 * low - 0.30 * mid - 0.10 * high))
+    low_contrib  = round(low  / 100.0 * 0.4, 3)
+    mid_contrib  = round(mid  / 100.0 * 0.4, 3)
+    high_contrib = round(high / 100.0 * 0.2, 3)
+    cloudness    = min(1.0, low_contrib + mid_contrib + high_contrib)
 
-    # Seeing: 7Timer index → FWHM → quality  (spec §5.1.2, updated _V5_FWHM_Q)
-    fwhm = hour.get("seeing_fwhm_arcsec_est")
-    if fwhm is not None:
-        seeing_q = _piecewise(fwhm, _V5_FWHM_Q)
-        seeing_label = f"Seeing {fwhm:.1f}\""
-    else:
-        idx = hour.get("seeing")
-        if idx is not None:
-            fwhm_est = _piecewise(float(idx), _V5_SEEING_FWHM)
-            seeing_q = _piecewise(fwhm_est, _V5_FWHM_Q)
-            seeing_label = f"Seeing ~{fwhm_est:.1f}\""
-        else:
-            seeing_q = 50.0
-            seeing_label = "Seeing"
+    score = max(0, min(100, round((1.0 - cloudness) * 100)))
 
-    # Transparency: visibility-only table  (spec §5.1.3)
-    vis_m = hour.get("visibility_m")
-    if vis_m is None:
-        vis_km_val = float(hour.get("visibility_km") or 0)
-    else:
-        vis_km_val = vis_m / 1000.0
-    if vis_km_val > 0:
-        trans_q = max(0.0, min(100.0, _piecewise(vis_km_val, _V5_TRANS_VIS)))
-        trans_label = f"Visibility {vis_km_val:.0f} km"
-    else:
-        trans_q = 65.0  # unknown → neutral
-        trans_label = "Transparency"
-
-    score = max(0, min(100, round(0.60 * clouds_q + 0.25 * trans_q + 0.15 * seeing_q)))
     return {
         "score": score,
         "parameters": [
-            {"key": "clouds",       "label": f"Clouds (L:{round(low)}/M:{round(mid)}/H:{round(high)}%)",
-             "value": round(clouds_q), "score": round(clouds_q), "weight": 0.60, "points": round(0.60 * clouds_q)},
-            {"key": "transparency", "label": trans_label,
-             "value": round(trans_q),  "score": round(trans_q),  "weight": 0.25, "points": round(0.25 * trans_q)},
-            {"key": "seeing",       "label": seeing_label,
-             "value": round(seeing_q), "score": round(seeing_q), "weight": 0.15, "points": round(0.15 * seeing_q)},
+            {"key": "cloudness",
+             "label": "Cloudness",
+             "display": "cloudness_bar",
+             "value": round(cloudness * 100),       # 0-100 %
+             "low_c": low_contrib, "mid_c": mid_contrib, "high_c": high_contrib,
+             "weight": None, "points": None},
+            {"key": "cloud_low",
+             "label": f"Low clouds {round(low)}%",
+             "display": "cloud_icons",
+             "value": round(low),
+             "contribution": low_contrib,
+             "weight": 0.4, "points": None},
+            {"key": "cloud_mid",
+             "label": f"Mid clouds {round(mid)}%",
+             "display": "cloud_icons",
+             "value": round(mid),
+             "contribution": mid_contrib,
+             "weight": 0.4, "points": None},
+            {"key": "cloud_high",
+             "label": f"High clouds {round(high)}%",
+             "display": "cloud_icons",
+             "value": round(high),
+             "contribution": high_contrib,
+             "weight": 0.2, "points": None},
         ],
     }
 
 
 def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "balanced") -> dict:
-    """v7.2 Category 2 — Dark Sky Level.
+    """Category 2 — Dark Sky Level (v9).
 
-    Sun acts as a gating multiplier — daylight hard-locks score to 0.
-    Moon and Bortle are the actual sub-factors (weights renormalised to 1.0).
+    Sky Darkness = (1 − Sky Brightness) × 100
+    Sky Brightness = sun_factor×0.80 + moon_factor×0.15 + bortle_factor×0.05
 
-    Sun gate:
-      alt >= 0°         → 0.00  (daylight — hard zero)
-      0° … −6°          → 0.33  (civil twilight)
-      −6° … −12°        → 0.55  (nautical twilight)
-      −12° … −18°       → 0.66  (astronomical twilight)
-      < −18°            → 1.00  (astronomical night)
+    sun_factor (piecewise linear, alt → brightness):
+      alt >= 0°          → 1.00  (daylight)
+      0° … −6°           → 1.00 … 0.70  (civil twilight)
+      −6° … −12°         → 0.70 … 0.40  (nautical twilight)
+      −12° … −18°        → 0.40 … 0.00  (astro twilight)
+      < −18°             → 0.00  (night)
 
-    Moon contribution (continuous, higher = better):
-      below horizon              → 100
-      impact = illum × (alt/90)
-      score  = (1 − impact) × 100
-
-    Bortle contribution (darker site = higher score):
-      formula: (9 − bortle) / 8 × 100
-      Bortle 1 → 100, Bortle 9 → 0
+    moon_factor = illum × sqrt(alt/90)  (v8 sqrt curve, profile-sensitivity aware)
+    bortle_factor = bortle / 9
     """
     bc = max(1, min(9, bortle))
 
-    # ── 1. Sun gate (multiplier, not a weighted sub-factor) ──────────────────
+    # ── 1. Sun brightness factor ──────────────────────────────────────────────
     sun_alt = hour.get("sun_alt_deg")
     if sun_alt is None or sun_alt >= 0:
-        sun_gate  = 0.00
-        sun_label = "Daytime" if (sun_alt is None or sun_alt >= 0) else "Sun unknown"
-        sun_label = "Daytime" if sun_alt is not None and sun_alt >= 0 else "Sun unknown"
+        sun_factor = 1.00
+        sun_label  = "Daylight (100%)" if sun_alt is None or sun_alt >= 0 else "Daylight"
     elif sun_alt <= -18:
-        sun_gate  = 1.00
-        sun_label = "Astronomical night"
+        sun_factor = 0.00
+        sun_label  = "Night (0%)"
     elif sun_alt > -6:
-        sun_gate  = 0.33
-        sun_label = f"Civil twilight ({sun_alt:.1f}°)"
+        # civil: 1.0 at 0° → 0.70 at -6°
+        sun_factor = round(1.0 + sun_alt * (0.30 / 6), 3)
+        sun_label  = f"Civil twilight ({sun_alt:.0f}°)"
     elif sun_alt > -12:
-        sun_gate  = 0.55
-        sun_label = f"Nautical twilight ({sun_alt:.1f}°)"
+        # nautical: 0.70 at -6° → 0.40 at -12°
+        sun_factor = round(0.70 + (sun_alt + 6) * (0.30 / 6), 3)
+        sun_label  = f"Nautical twilight ({sun_alt:.0f}°)"
     else:
-        sun_gate  = 0.66
-        sun_label = f"Astro twilight ({sun_alt:.1f}°)"
+        # astro: 0.40 at -12° → 0.00 at -18°
+        sun_factor = round(0.40 + (sun_alt + 12) * (0.40 / 6), 3)
+        sun_factor = max(0.0, sun_factor)
+        sun_label  = f"Astro twilight ({sun_alt:.0f}°)"
 
-    # ── 2. Bortle contribution ────────────────────────────────────────────────
-    bortle_score = round((9 - bc) / 8 * 100)
-    bortle_hints = {
-        1: "excellent dark sky", 2: "typical dark site", 3: "rural sky",
-        4: "rural/suburban",     5: "suburban sky",       6: "bright suburban",
-        7: "suburban/urban",     8: "city sky",            9: "inner-city sky",
-    }
-    bortle_label = f"Light pollution: {bortle_hints.get(bc, 'unknown')}"
+    sun_contrib = round(sun_factor * 0.80, 3)
 
-    # ── 3. Moon contribution (continuous) ────────────────────────────────────
+    # ── 2. Moon brightness factor ─────────────────────────────────────────────
     moon_alt   = hour.get("moon_alt_deg")
     moon_illum = hour.get("moon_illum_pct")
 
     if moon_alt is None or moon_alt <= 0:
-        moon_score = 100
-        moon_label = "Moon: no impact"
+        moon_factor = 0.0
+        moon_label  = "Moonlight (0%)"
     else:
-        illum           = (moon_illum or 0) / 100.0
-        # v8: sqrt curve — more aggressive at lower altitudes.
-        # Linear gave only ~21% impact at 19°; sqrt gives ~46%, matching
-        # real-world sky-brightness degradation at low-to-mid moon elevations.
-        alt_factor      = min(1.0, (moon_alt / 90.0) ** 0.5)
-        raw_impact      = illum * alt_factor
-        sensitivity     = _MOON_SENSITIVITY.get(profile, 1.0)
-        impact          = min(1.0, raw_impact * sensitivity)
-        moon_score      = round(max(0, min(100, (1.0 - impact) * 100)))
-        # Label thresholds based on raw (profile-neutral) impact for consistent wording
-        if raw_impact < 0.10:
-            moon_label = "Moon: low impact"
-        elif raw_impact < 0.35:
-            moon_label = "Moon: moderate impact"
-        elif raw_impact < 0.65:
-            moon_label = "Moon: strong impact"
-        else:
-            moon_label = "Moon: very strong impact"
+        illum       = (moon_illum or 0) / 100.0
+        alt_f       = min(1.0, (moon_alt / 90.0) ** 0.5)
+        sensitivity = _MOON_SENSITIVITY.get(profile, 1.0)
+        moon_factor = round(min(1.0, illum * alt_f * sensitivity), 3)
+        moon_label  = f"Moonlight ({round(moon_factor * 100)}%)"
 
-    # ── Weighted combination gated by sun ────────────────────────────────────
-    # Moon + Bortle weights renormalised to sum = 1.0
-    W_MOON   = 0.55   # 0.25 / 0.45 renorm → keep original ratio 25:20 = 5:4
-    W_BORTLE = 0.45
-    # Exact renorm: original 0.25 and 0.20 → 0.25/0.45 ≈ 0.556, 0.20/0.45 ≈ 0.444
-    W_MOON   = round(0.25 / 0.45, 4)
-    W_BORTLE = round(0.20 / 0.45, 4)
+    moon_contrib = round(moon_factor * 0.15, 3)
 
-    base_score = W_MOON * moon_score + W_BORTLE * bortle_score
-    score = max(0, min(100, round(sun_gate * base_score)))
+    # ── 3. Bortle / light pollution factor ───────────────────────────────────
+    bortle_factor = round(bc / 9, 3)
+    bortle_contrib = round(bortle_factor * 0.05, 3)
+    bortle_label  = f"Light pollution (Bortle:{bc})"
 
-    # For display: show sun gate as a percent (so inspector reads naturally)
-    sun_display_pct = round(sun_gate * 100)
+    # ── Sky Brightness & score ────────────────────────────────────────────────
+    sky_brightness = min(1.0, sun_contrib + moon_contrib + bortle_contrib)
+    score = max(0, min(100, round((1.0 - sky_brightness) * 100)))
+
+    brightness_pct = round(sky_brightness * 100)
 
     return {
         "score": score,
         "parameters": [
-            {"key": "twilight", "label": sun_label,    "value": round(sun_alt or 0),    "score": sun_display_pct, "weight": None,     "points": None},
-            {"key": "moon",     "label": moon_label,   "value": round(moon_illum or 0), "score": moon_score,      "weight": W_MOON,   "points": round(W_MOON   * moon_score   * sun_gate)},
-            {"key": "bortle",   "label": bortle_label, "value": bc,                     "score": bortle_score,    "weight": W_BORTLE, "points": round(W_BORTLE * bortle_score * sun_gate)},
+            {"key": "sky_brightness",
+             "label": "Sky Brightness",
+             "display": "skybrightness_bar",
+             "value": brightness_pct,
+             "sun_c": sun_contrib, "moon_c": moon_contrib, "bortle_c": bortle_contrib,
+             "weight": None, "points": None},
+            {"key": "sun",
+             "label": sun_label,
+             "display": "sky_icons", "icon": "🌞",
+             "value": sun_factor,
+             "contribution": sun_contrib,
+             "weight": 0.80, "points": None},
+            {"key": "moon",
+             "label": moon_label,
+             "display": "sky_icons", "icon": "🌗",
+             "value": moon_factor,
+             "contribution": moon_contrib,
+             "weight": 0.15, "points": None},
+            {"key": "light_pollution",
+             "label": bortle_label,
+             "display": "sky_icons", "icon": "☀",
+             "value": bortle_factor,
+             "contribution": bortle_contrib,
+             "weight": 0.05, "points": None},
         ],
     }
 
