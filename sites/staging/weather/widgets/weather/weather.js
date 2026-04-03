@@ -945,9 +945,10 @@ function getHourScore(hour) {
       dewW  = w.dew_safety + w.sky_darkness * (w.dew_safety / rest);
       stabW = w.stability  + w.sky_darkness * (w.stability  / rest);
     }
+    const skyScore = hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score;
     const raw =
       atmW  * hour.atmosphere_score   +
-      skyW  * hour.sky_darkness_score +
+      skyW  * skyScore                +
       dewW  * hour.dew_safety_score   +
       stabW * hour.stability_score;
     return Math.max(0, Math.min(100, Math.round(raw)));
@@ -1788,7 +1789,9 @@ function renderTpSkyStatus(rootEl, nowHour, hours) {
   const catsEl = weatherCard.querySelector('[data-role="tp-categories"]');
   if (catsEl) {
     catsEl.innerHTML = CATS.map(c => {
-      const sc = nowHour?.[c.key] ?? null;
+      const sc = c.key === 'sky_darkness_score'
+        ? (nowHour?.sky_darkness_score_by_profile?.[activeProfile] ?? nowHour?.[c.key] ?? null)
+        : nowHour?.[c.key] ?? null;
       const pct = sc ?? 0;
       const barStyle = pct > 0
         ? `width:${pct}%;background:${_fbColor(pct)}`

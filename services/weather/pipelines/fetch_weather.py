@@ -369,6 +369,18 @@ _V5_PROF_W = {
     "planetary": (0.55, 0.10, 0.20, 0.15),
 }
 
+# v7.2 — profile-specific moon sensitivity multiplier.
+# Amplifies (>1) or dampens (<1) the raw lunar impact before computing moon_score.
+# full moon high alt, visual:    adjusted_impact = min(1, 0.67 × 1.5) = 1.0 → moon_score = 0
+# full moon high alt, broadband: adjusted_impact = min(1, 0.67 × 1.8) = 1.0 → moon_score = 0
+# full moon high alt, planetary: adjusted_impact = min(1, 0.67 × 0.3) = 0.20 → moon_score = 80
+_MOON_SENSITIVITY = {
+    "balanced":  1.0,
+    "visual":    1.5,   # DSO contrast destroyed by moonlight
+    "broadband": 1.8,   # Sky background raised even more for wideband imaging
+    "planetary": 0.3,   # Bright target — moon is nearly irrelevant
+}
+
 # v5.1: 7Timer index → FWHM arcsec (unchanged)
 _V5_SEEING_FWHM = [(1, 0.7), (2, 0.9), (3, 1.1), (4, 1.4), (5, 1.8), (6, 2.5), (7, 3.5)]
 # v5.1: FWHM arcsec → seeing quality  (spec §5.1.2)
@@ -451,8 +463,8 @@ def compute_atmosphere_score(hour: dict) -> dict:
     }
 
 
-def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
-    """v7.1 Category 2 — Dark Sky Level.
+def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "balanced") -> dict:
+    """v7.2 Category 2 — Dark Sky Level.
 
     Sun acts as a gating multiplier — daylight hard-locks score to 0.
     Moon and Bortle are the actual sub-factors (weights renormalised to 1.0).
@@ -511,15 +523,18 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
         moon_score = 100
         moon_label = "Moon: no impact"
     else:
-        illum      = (moon_illum or 0) / 100.0
-        alt_factor = min(1.0, moon_alt / 90.0)
-        impact     = illum * alt_factor
-        moon_score = round(max(0, min(100, (1.0 - impact) * 100)))
-        if impact < 0.10:
+        illum           = (moon_illum or 0) / 100.0
+        alt_factor      = min(1.0, moon_alt / 90.0)
+        raw_impact      = illum * alt_factor
+        sensitivity     = _MOON_SENSITIVITY.get(profile, 1.0)
+        impact          = min(1.0, raw_impact * sensitivity)
+        moon_score      = round(max(0, min(100, (1.0 - impact) * 100)))
+        # Label thresholds based on raw (profile-neutral) impact for consistent wording
+        if raw_impact < 0.10:
             moon_label = "Moon: low impact"
-        elif impact < 0.35:
+        elif raw_impact < 0.35:
             moon_label = "Moon: moderate impact"
-        elif impact < 0.65:
+        elif raw_impact < 0.65:
             moon_label = "Moon: strong impact"
         else:
             moon_label = "Moon: very strong impact"
@@ -1201,13 +1216,17 @@ def build_weather_payload(
             hour["seeing_fwhm_arcsec_est"] = fwhm_est
 
         atm  = compute_atmosphere_score(hour)
-        sky  = compute_sky_darkness_score(hour, bortle)
         dew  = compute_dew_safety_score(hour)
         stab = compute_stability_score(hour)
 
+        # Compute sky darkness per profile (moon sensitivity differs)
+        sky_by_profile = {pname: compute_sky_darkness_score(hour, bortle, pname) for pname in _V5_PROF_W}
+        sky = sky_by_profile["balanced"]
+
         hour["gate"]              = gate
         hour["atmosphere_score"]  = atm["score"]
-        hour["sky_darkness_score"]= sky["score"]
+        hour["sky_darkness_score"]= sky["score"]   # balanced — backward compat
+        hour["sky_darkness_score_by_profile"] = {pname: sky_by_profile[pname]["score"] for pname in sky_by_profile}
         hour["dew_safety_score"]  = dew["score"]
         hour["stability_score"]   = stab["score"]
 
@@ -1220,10 +1239,11 @@ def build_weather_payload(
 
         hour["score_breakdown"] = _build_v5_score_breakdown(hour, gate, atm, sky, dew, stab, "balanced")
 
-        # Profile scores for all profiles
+        # Profile scores — use per-profile sky darkness
         ps = hour.setdefault("profile_scores", {})
         for pname, (pwa, pws, pwd, pwst) in _V5_PROF_W.items():
-            prof_raw = pwa * atm["score"] + pws * sky["score"] + pwd * dew["score"] + pwst * stab["score"]
+            psky = sky_by_profile[pname]["score"]
+            prof_raw = pwa * atm["score"] + pws * psky + pwd * dew["score"] + pwst * stab["score"]
             if gate["status"] == "CLOSED":   prof_raw = min(prof_raw, 20)
             elif gate["status"] == "MARGINAL": prof_raw = min(prof_raw, 69)
             ps[pname] = max(0, min(100, round(prof_raw)))
