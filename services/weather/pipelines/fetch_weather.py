@@ -369,6 +369,18 @@ _V5_PROF_W = {
     "planetary": (0.55, 0.10, 0.20, 0.15),
 }
 
+# v7.2 — profile-specific moon sensitivity multiplier.
+# Amplifies (>1) or dampens (<1) the raw lunar impact before computing moon_score.
+# full moon high alt, visual:    adjusted_impact = min(1, 0.67 × 1.5) = 1.0 → moon_score = 0
+# full moon high alt, broadband: adjusted_impact = min(1, 0.67 × 1.8) = 1.0 → moon_score = 0
+# full moon high alt, planetary: adjusted_impact = min(1, 0.67 × 0.3) = 0.20 → moon_score = 80
+_MOON_SENSITIVITY = {
+    "balanced":  1.0,
+    "visual":    1.5,   # DSO contrast destroyed by moonlight
+    "broadband": 1.8,   # Sky background raised even more for wideband imaging
+    "planetary": 0.3,   # Bright target — moon is nearly irrelevant
+}
+
 # v5.1: 7Timer index → FWHM arcsec (unchanged)
 _V5_SEEING_FWHM = [(1, 0.7), (2, 0.9), (3, 1.1), (4, 1.4), (5, 1.8), (6, 2.5), (7, 3.5)]
 # v5.1: FWHM arcsec → seeing quality  (spec §5.1.2)
@@ -451,81 +463,102 @@ def compute_atmosphere_score(hour: dict) -> dict:
     }
 
 
-def compute_sky_darkness_score(hour: dict, bortle: int = 5) -> dict:
-    """v5 Category 2 — Sky Darkness.
+def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "balanced") -> dict:
+    """v7.2 Category 2 — Dark Sky Level.
 
-    All three sub-scores live in 0..100 — no negative penalties.
-    Final score = 0.55 * solar + 0.25 * moon + 0.20 * bortle.
+    Sun acts as a gating multiplier — daylight hard-locks score to 0.
+    Moon and Bortle are the actual sub-factors (weights renormalised to 1.0).
 
-    Solar darkness:
-      day (sun > 0°)          →   0
-      civil twilight (>−6°)   →  25
-      nautical twilight (>−12°)→  50
-      astro twilight (>−18°)  →  75
-      dark night (< −18°)     → 100
+    Sun gate:
+      alt >= 0°         → 0.00  (daylight — hard zero)
+      0° … −6°          → 0.33  (civil twilight)
+      −6° … −12°        → 0.55  (nautical twilight)
+      −12° … −18°       → 0.66  (astronomical twilight)
+      < −18°            → 1.00  (astronomical night)
 
-    Moon darkness (100 = no interference):
-      below horizon           → 100
-      barely up               →  90
-      up + moderate illum     →  75
-      up + bright             →  60
-      high + very bright      →  40
+    Moon contribution (continuous, higher = better):
+      below horizon              → 100
+      impact = illum × (alt/90)
+      score  = (1 − impact) × 100
+
+    Bortle contribution (darker site = higher score):
+      formula: (9 − bortle) / 8 × 100
+      Bortle 1 → 100, Bortle 9 → 0
     """
     bc = max(1, min(9, bortle))
 
-    # ── 1. Solar darkness sub-score ─────────────────────────────────────────
+    # ── 1. Sun gate (multiplier, not a weighted sub-factor) ──────────────────
     sun_alt = hour.get("sun_alt_deg")
-    if sun_alt is None:
-        solar_score = 0
-        sun_label   = "Sun unknown"
-    elif sun_alt > 0:
-        solar_score = 0
-        sun_label   = "Daylight"
+    if sun_alt is None or sun_alt >= 0:
+        sun_gate  = 0.00
+        sun_label = "Daytime" if (sun_alt is None or sun_alt >= 0) else "Sun unknown"
+        sun_label = "Daytime" if sun_alt is not None and sun_alt >= 0 else "Sun unknown"
+    elif sun_alt <= -18:
+        sun_gate  = 1.00
+        sun_label = "Astronomical night"
     elif sun_alt > -6:
-        solar_score = 25
-        sun_label   = f"Civil twilight ({sun_alt:.1f}°)"
+        sun_gate  = 0.33
+        sun_label = f"Civil twilight ({sun_alt:.1f}°)"
     elif sun_alt > -12:
-        solar_score = 50
-        sun_label   = f"Nautical twilight ({sun_alt:.1f}°)"
-    elif sun_alt > -18:
-        solar_score = 75
-        sun_label   = f"Astro twilight ({sun_alt:.1f}°)"
+        sun_gate  = 0.55
+        sun_label = f"Nautical twilight ({sun_alt:.1f}°)"
     else:
-        solar_score = 100
-        sun_label   = f"Dark night ({sun_alt:.1f}°)"
+        sun_gate  = 0.66
+        sun_label = f"Astro twilight ({sun_alt:.1f}°)"
 
-    # ── 2. Bortle darkness sub-score (already 0..100) ───────────────────────
-    bortle_score = _BORTLE_BASE.get(bc, 70)
-    bortle_label = f"Bortle {bc}"
+    # ── 2. Bortle contribution ────────────────────────────────────────────────
+    bortle_score = round((9 - bc) / 8 * 100)
+    bortle_hints = {
+        1: "excellent dark sky", 2: "typical dark site", 3: "rural sky",
+        4: "rural/suburban",     5: "suburban sky",       6: "bright suburban",
+        7: "suburban/urban",     8: "city sky",            9: "inner-city sky",
+    }
+    bortle_label = f"Light pollution: {bortle_hints.get(bc, 'unknown')}"
 
-    # ── 3. Moon darkness sub-score  (spec §5.2.2) ───────────────────────────
+    # ── 3. Moon contribution (continuous) ────────────────────────────────────
     moon_alt   = hour.get("moon_alt_deg")
     moon_illum = hour.get("moon_illum_pct")
+
     if moon_alt is None or moon_alt <= 0:
         moon_score = 100
-        moon_label = "Moon below horizon"
+        moon_label = "Moon: no impact"
     else:
-        illum = moon_illum or 0
-        if   moon_alt > 60 and illum > 75: moon_score = 20
-        elif moon_alt > 40 and illum > 50: moon_score = 45
-        elif moon_alt > 20 and illum > 50: moon_score = 45
-        elif moon_alt > 20 and illum > 25: moon_score = 70
-        elif illum > 50:                   moon_score = 70
-        else:                              moon_score = 85
-        moon_label = f"Moon {moon_alt:.0f}° / {illum:.0f}%"
+        illum           = (moon_illum or 0) / 100.0
+        alt_factor      = min(1.0, moon_alt / 90.0)
+        raw_impact      = illum * alt_factor
+        sensitivity     = _MOON_SENSITIVITY.get(profile, 1.0)
+        impact          = min(1.0, raw_impact * sensitivity)
+        moon_score      = round(max(0, min(100, (1.0 - impact) * 100)))
+        # Label thresholds based on raw (profile-neutral) impact for consistent wording
+        if raw_impact < 0.10:
+            moon_label = "Moon: low impact"
+        elif raw_impact < 0.35:
+            moon_label = "Moon: moderate impact"
+        elif raw_impact < 0.65:
+            moon_label = "Moon: strong impact"
+        else:
+            moon_label = "Moon: very strong impact"
 
-    # ── Weighted combination ─────────────────────────────────────────────────
-    W_SOLAR  = 0.55
-    W_MOON   = 0.25
-    W_BORTLE = 0.20
-    score = max(0, min(100, round(W_SOLAR * solar_score + W_MOON * moon_score + W_BORTLE * bortle_score)))
+    # ── Weighted combination gated by sun ────────────────────────────────────
+    # Moon + Bortle weights renormalised to sum = 1.0
+    W_MOON   = 0.55   # 0.25 / 0.45 renorm → keep original ratio 25:20 = 5:4
+    W_BORTLE = 0.45
+    # Exact renorm: original 0.25 and 0.20 → 0.25/0.45 ≈ 0.556, 0.20/0.45 ≈ 0.444
+    W_MOON   = round(0.25 / 0.45, 4)
+    W_BORTLE = round(0.20 / 0.45, 4)
+
+    base_score = W_MOON * moon_score + W_BORTLE * bortle_score
+    score = max(0, min(100, round(sun_gate * base_score)))
+
+    # For display: show sun gate as a percent (so inspector reads naturally)
+    sun_display_pct = round(sun_gate * 100)
 
     return {
         "score": score,
         "parameters": [
-            {"key": "twilight", "label": sun_label,    "value": round(sun_alt or 0),    "score": solar_score,  "weight": W_SOLAR,  "points": round(W_SOLAR  * solar_score)},
-            {"key": "moon",     "label": moon_label,   "value": round(moon_illum or 0), "score": moon_score,   "weight": W_MOON,   "points": round(W_MOON   * moon_score)},
-            {"key": "bortle",   "label": bortle_label, "value": bc,                     "score": bortle_score, "weight": W_BORTLE, "points": round(W_BORTLE * bortle_score)},
+            {"key": "twilight", "label": sun_label,    "value": round(sun_alt or 0),    "score": sun_display_pct, "weight": None,     "points": None},
+            {"key": "moon",     "label": moon_label,   "value": round(moon_illum or 0), "score": moon_score,      "weight": W_MOON,   "points": round(W_MOON   * moon_score   * sun_gate)},
+            {"key": "bortle",   "label": bortle_label, "value": bc,                     "score": bortle_score,    "weight": W_BORTLE, "points": round(W_BORTLE * bortle_score * sun_gate)},
         ],
     }
 
@@ -1183,13 +1216,17 @@ def build_weather_payload(
             hour["seeing_fwhm_arcsec_est"] = fwhm_est
 
         atm  = compute_atmosphere_score(hour)
-        sky  = compute_sky_darkness_score(hour, bortle)
         dew  = compute_dew_safety_score(hour)
         stab = compute_stability_score(hour)
 
+        # Compute sky darkness per profile (moon sensitivity differs)
+        sky_by_profile = {pname: compute_sky_darkness_score(hour, bortle, pname) for pname in _V5_PROF_W}
+        sky = sky_by_profile["balanced"]
+
         hour["gate"]              = gate
         hour["atmosphere_score"]  = atm["score"]
-        hour["sky_darkness_score"]= sky["score"]
+        hour["sky_darkness_score"]= sky["score"]   # balanced — backward compat
+        hour["sky_darkness_score_by_profile"] = {pname: sky_by_profile[pname]["score"] for pname in sky_by_profile}
         hour["dew_safety_score"]  = dew["score"]
         hour["stability_score"]   = stab["score"]
 
@@ -1202,10 +1239,11 @@ def build_weather_payload(
 
         hour["score_breakdown"] = _build_v5_score_breakdown(hour, gate, atm, sky, dew, stab, "balanced")
 
-        # Profile scores for all profiles
+        # Profile scores — use per-profile sky darkness
         ps = hour.setdefault("profile_scores", {})
         for pname, (pwa, pws, pwd, pwst) in _V5_PROF_W.items():
-            prof_raw = pwa * atm["score"] + pws * sky["score"] + pwd * dew["score"] + pwst * stab["score"]
+            psky = sky_by_profile[pname]["score"]
+            prof_raw = pwa * atm["score"] + pws * psky + pwd * dew["score"] + pwst * stab["score"]
             if gate["status"] == "CLOSED":   prof_raw = min(prof_raw, 20)
             elif gate["status"] == "MARGINAL": prof_raw = min(prof_raw, 69)
             ps[pname] = max(0, min(100, round(prof_raw)))
