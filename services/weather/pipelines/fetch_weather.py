@@ -107,29 +107,32 @@ def compute_gate(hour: dict) -> dict:
     reasons: list = []
 
     # ── CLOSED — precipitation / heavy overcast / fog ─────────────────────────
+    # v8: low/mid threshold lowered 95→85 — heavy overcast blocks observations
+    # even before reaching near-total coverage.
     if rain > 0:
         reasons.append(f"Rain {rain:.1f}mm")
     elif snow > 0:
         reasons.append(f"Snow {snow:.1f}mm")
-    if low >= 95:
+    if low >= 85:
         reasons.append(f"Low cloud {low:.0f}%")
-    if mid >= 95:
+    if mid >= 85:
         reasons.append(f"Mid cloud {mid:.0f}%")
     if vis_km and vis_km <= 1.0:
         reasons.append(f"Visibility {vis_km:.1f}km")
 
     if rain > 0 or snow > 0:
         return {"status": "CLOSED", "score": max(0, 10 - len(reasons) * 3), "reasons": reasons}
-    if low >= 95 or mid >= 95 or (vis_km and vis_km <= 1.0):
+    if low >= 85 or mid >= 85 or (vis_km and vis_km <= 1.0):
         return {"status": "CLOSED", "score": max(0, 15 - len(reasons) * 4), "reasons": reasons}
 
     # ── MARGINAL — twilight and/or broken cloud / haze ────────────────────────
+    # v8: low/mid threshold lowered 70→65; high cloud kept at 80 (cirrus = MARGINAL only).
     marginal = False
     if sun_alt is not None and -12 < sun_alt <= -6:
         reasons.append("Civil/Nautical twilight"); marginal = True
-    if low >= 70:
+    if low >= 65:
         reasons.append(f"Broken low cloud {low:.0f}%");  marginal = True
-    if mid >= 70:
+    if mid >= 65:
         reasons.append(f"Broken mid cloud {mid:.0f}%");  marginal = True
     if high >= 80:
         reasons.append(f"High cirrus {high:.0f}%");      marginal = True
@@ -363,10 +366,14 @@ _BORTLE_BASE = {1: 100, 2: 95, 3: 90, 4: 80, 5: 65, 6: 50, 7: 35, 8: 20, 9: 10} 
 
 # v5 profile weights: (atmosphere, sky_darkness, dew_safety, stability)
 _V5_PROF_W = {
-    "balanced":  (0.35, 0.30, 0.20, 0.15),
-    "visual":    (0.40, 0.25, 0.20, 0.15),
-    "broadband": (0.30, 0.45, 0.15, 0.10),
-    "planetary": (0.55, 0.10, 0.20, 0.15),
+    # (atm, sky, dew, stab) — must sum to 1.0
+    # v8: dew 0.20→0.15, stab 0.15→0.10 for balanced/visual/planetary;
+    #     freed 0.10 redistributed equally to atm (+0.05) and sky (+0.05).
+    #     broadband already had dew=0.15, stab=0.10 — unchanged.
+    "balanced":  (0.40, 0.35, 0.15, 0.10),  # was (0.35, 0.30, 0.20, 0.15)
+    "visual":    (0.45, 0.30, 0.15, 0.10),  # was (0.40, 0.25, 0.20, 0.15)
+    "broadband": (0.30, 0.45, 0.15, 0.10),  # unchanged
+    "planetary": (0.60, 0.15, 0.15, 0.10),  # was (0.55, 0.10, 0.20, 0.15)
 }
 
 # v7.2 — profile-specific moon sensitivity multiplier.
@@ -449,16 +456,16 @@ def compute_atmosphere_score(hour: dict) -> dict:
         trans_q = 65.0  # unknown → neutral
         trans_label = "Transparency"
 
-    score = max(0, min(100, round(0.40 * clouds_q + 0.30 * seeing_q + 0.30 * trans_q)))
+    score = max(0, min(100, round(0.60 * clouds_q + 0.25 * trans_q + 0.15 * seeing_q)))
     return {
         "score": score,
         "parameters": [
-            {"key": "clouds",       "label": f"Clouds ({round(low)}/{round(mid)}/{round(high)}%)",
-             "value": round(clouds_q), "score": round(clouds_q), "weight": 0.40, "points": round(0.40 * clouds_q)},
-            {"key": "seeing",       "label": seeing_label,
-             "value": round(seeing_q), "score": round(seeing_q), "weight": 0.30, "points": round(0.30 * seeing_q)},
+            {"key": "clouds",       "label": f"Clouds (L:{round(low)}/M:{round(mid)}/H:{round(high)}%)",
+             "value": round(clouds_q), "score": round(clouds_q), "weight": 0.60, "points": round(0.60 * clouds_q)},
             {"key": "transparency", "label": trans_label,
-             "value": round(trans_q),  "score": round(trans_q),  "weight": 0.30, "points": round(0.30 * trans_q)},
+             "value": round(trans_q),  "score": round(trans_q),  "weight": 0.25, "points": round(0.25 * trans_q)},
+            {"key": "seeing",       "label": seeing_label,
+             "value": round(seeing_q), "score": round(seeing_q), "weight": 0.15, "points": round(0.15 * seeing_q)},
         ],
     }
 
@@ -524,7 +531,10 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "bala
         moon_label = "Moon: no impact"
     else:
         illum           = (moon_illum or 0) / 100.0
-        alt_factor      = min(1.0, moon_alt / 90.0)
+        # v8: sqrt curve — more aggressive at lower altitudes.
+        # Linear gave only ~21% impact at 19°; sqrt gives ~46%, matching
+        # real-world sky-brightness degradation at low-to-mid moon elevations.
+        alt_factor      = min(1.0, (moon_alt / 90.0) ** 0.5)
         raw_impact      = illum * alt_factor
         sensitivity     = _MOON_SENSITIVITY.get(profile, 1.0)
         impact          = min(1.0, raw_impact * sensitivity)
