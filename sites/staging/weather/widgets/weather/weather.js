@@ -3869,6 +3869,9 @@ const HI_CHART_PARAMS = [
   { key: 'wind',     ico: '💨', label: 'Wind',
     get: h => h.wind_m_s,            fmt: v => (Math.round(v * 10) / 10) + ' m/s',
     color: 'rgba(190,150,255,.5)',   colorSel: 'rgba(190,150,255,.95)' },
+  { key: 'moon_alt', ico: '🌙', label: 'Moon altitude',
+    get: h => h.moon_alt_deg,        fmt: v => Math.round(v) + '°',
+    color: 'rgba(224,224,160,.4)',   colorSel: 'rgba(224,224,160,.95)' },
 ];
 
 function renderHiChart(els, hours, hourIdx, paramKey) {
@@ -3885,7 +3888,8 @@ function renderHiChart(els, hours, hourIdx, paramKey) {
   const defined = vals.filter(v => v != null && isFinite(v));
   let minV = defined.length ? Math.min(...defined) : 0;
   let maxV = defined.length ? Math.max(...defined) : 1;
-  if (param.key === 'clouds') { minV = 0; maxV = 100; }   // clouds: fixed 0-100%
+  if (param.key === 'clouds')   { minV = 0;   maxV = 100; } // clouds: fixed 0-100%
+  if (param.key === 'moon_alt') { minV = -10; maxV = 90;  } // moon: fixed -10..90°
   if (maxV - minV < 0.5) { minV -= 0.5; maxV += 0.5; }    // avoid zero-range
 
   // Chart bars
