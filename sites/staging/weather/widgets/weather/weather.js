@@ -3848,6 +3848,9 @@ const HI_FALLBACK_PARAMS = {
 
 // ── Hour Inspector — mini-chart parameter switcher ───────────────────────────
 const HI_CHART_PARAMS = [
+  { key: 'moon_alt', ico: '🌙', label: 'Moon altitude',
+    get: h => h.moon_alt_deg,        fmt: v => Math.round(v) + '°',
+    color: 'rgba(224,224,160,.4)',   colorSel: 'rgba(224,224,160,.95)' },
   { key: 'clouds',   ico: '☁',  label: 'Clouds',
     get: h => h.cloud_total,         fmt: v => Math.round(v) + '%',
     color: 'rgba(143,182,255,.45)',   colorSel: 'rgba(143,182,255,.95)' },
@@ -3879,7 +3882,8 @@ function renderHiChart(els, hours, hourIdx, paramKey) {
   const defined = vals.filter(v => v != null && isFinite(v));
   let minV = defined.length ? Math.min(...defined) : 0;
   let maxV = defined.length ? Math.max(...defined) : 1;
-  if (param.key === 'clouds') { minV = 0; maxV = 100; }   // clouds: fixed 0-100%
+  if (param.key === 'clouds')   { minV = 0;   maxV = 100; } // clouds: fixed 0-100%
+  if (param.key === 'moon_alt') { minV = -10; maxV = 90;  } // moon: fixed -10..90°
   if (maxV - minV < 0.5) { minV -= 0.5; maxV += 0.5; }    // avoid zero-range
 
   // Chart bars
@@ -4023,7 +4027,7 @@ function renderHourInspector(hourIdx, overrideEls) {
 
   // ── Mini-chart (±3 h) — param switchable via icon chips ──────────────────────
   if (els.sheet) els.sheet.dataset.currentHourIdx = hourIdx;
-  const activeChartParam = els.sheet?.dataset.activeChartParam || 'clouds';
+  const activeChartParam = els.sheet?.dataset.activeChartParam || 'moon_alt';
   renderHiChart(els, hours, hourIdx, activeChartParam);
 
   // ── Body ────────────────────────────────────────────────────────────────────
@@ -4392,10 +4396,10 @@ function renderNowVertical(rootEl, nowHour) {
       const container = weatherCard.querySelector("[data-role=v-inspector-embedded]");
       if (container) {
         container.dataset.currentHourIdx = r.idx;
-        container.dataset.activeChartParam = "clouds";
+        container.dataset.activeChartParam = "moon_alt";
       }
       embeddedEls.sheet.dataset.currentHourIdx = r.idx;
-      embeddedEls.sheet.dataset.activeChartParam = "clouds";
+      embeddedEls.sheet.dataset.activeChartParam = "moon_alt";
       renderHourInspector(r.idx, embeddedEls);
       setupEmbeddedInspectorToggles(weatherCard);
       // Restore expanded panel state
