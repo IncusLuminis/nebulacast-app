@@ -460,7 +460,7 @@ def compute_atmosphere_score(hour: dict) -> dict:
     return {
         "score": score,
         "parameters": [
-            {"key": "clouds",       "label": f"Clouds ({round(low)}/{round(mid)}/{round(high)}%)",
+            {"key": "clouds",       "label": f"Clouds (Low:{round(low)}/Mid:{round(mid)}/High:{round(high)}%)",
              "value": round(clouds_q), "score": round(clouds_q), "weight": 0.40, "points": round(0.40 * clouds_q)},
             {"key": "seeing",       "label": seeing_label,
              "value": round(seeing_q), "score": round(seeing_q), "weight": 0.30, "points": round(0.30 * seeing_q)},
