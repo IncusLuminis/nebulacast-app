@@ -1,21 +1,28 @@
 {
-  "generated_utc": "2026-04-02T18:43:29Z",
+  "generated_utc": "2026-04-03T01:26:14Z",
   "kp": {
     "latest": null,
     "forecast_3h": [],
     "activity_label": null
   },
   "solar_wind": {
-    "timestamp_utc": "2026-04-02T18:40:00Z",
-    "speed_kms": 653.0,
-    "density_protons_cm3": 1.11
+    "timestamp_utc": "2026-04-03T01:23:00Z",
+    "speed_kms": 657.8,
+    "density_protons_cm3": 2.1
   },
   "xray": {
-    "timestamp_utc": "2026-04-02T18:39:00Z",
-    "flux_wm2": 1.3122166819812264e-05,
-    "class": "M"
+    "timestamp_utc": "2026-04-03T01:23:00Z",
+    "flux_wm2": 3.2504851787962252e-06,
+    "class": "C"
   },
   "alerts": [
+    {
+      "id": "K05A",
+      "timestamp_utc": "2026-04-02T20:52:06Z",
+      "title": "Space Weather Message Code: ALTK05",
+      "level": "warning",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "A30F",
       "timestamp_utc": "2026-04-02T17:43:18Z",
@@ -1274,48 +1281,6 @@
       "timestamp_utc": "2026-03-06T17:53:00Z",
       "title": "Space Weather Message Code: WATA20",
       "level": "watch",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "A20F",
-      "timestamp_utc": "2026-03-03T23:05:46Z",
-      "title": "Space Weather Message Code: WATA20",
-      "level": "watch",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K05A",
-      "timestamp_utc": "2026-03-03T22:48:29Z",
-      "title": "Space Weather Message Code: ALTK05",
-      "level": "warning",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K05W",
-      "timestamp_utc": "2026-03-03T22:32:24Z",
-      "title": "Space Weather Message Code: WARK05",
-      "level": "warning",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K05W",
-      "timestamp_utc": "2026-03-03T22:30:25Z",
-      "title": "Space Weather Message Code: WARK05",
-      "level": "warning",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K04A",
-      "timestamp_utc": "2026-03-03T22:28:38Z",
-      "title": "Space Weather Message Code: ALTK04",
-      "level": "warning",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K04W",
-      "timestamp_utc": "2026-03-03T22:08:18Z",
-      "title": "Space Weather Message Code: WARK04",
-      "level": "warning",
       "source": "NOAA SWPC"
     }
   ]
