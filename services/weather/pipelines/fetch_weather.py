@@ -368,9 +368,9 @@ _BORTLE_BASE = {1: 100, 2: 95, 3: 90, 4: 80, 5: 65, 6: 50, 7: 35, 8: 20, 9: 10} 
 _V5_PROF_W = {
     # (atm, sky, dew, stab) — must sum to 1.0
     "balanced":  (0.40, 0.40, 0.10, 0.10),
-    "visual":    (0.40, 0.40, 0.10, 0.10),
-    "broadband": (0.40, 0.40, 0.10, 0.10),
-    "planetary": (0.40, 0.40, 0.10, 0.10),
+    "visual":    (0.30, 0.40, 0.10, 0.20),  # darker sky priority, more stability
+    "broadband": (0.30, 0.30, 0.20, 0.20),  # dew matters for long exposures
+    "planetary": (0.20, 0.20, 0.10, 0.50),  # seeing/wind dominate
 }
 
 # v7.2 — profile-specific moon sensitivity multiplier.

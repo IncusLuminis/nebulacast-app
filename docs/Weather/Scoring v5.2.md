@@ -8,23 +8,28 @@
 ## 1. Иерархия модели
 
 ```
-Observing Quality (0–100)
-├── Dark Sky Level   × 0.40
-├── Atmosphere       × 0.40
-├── Dew Safety       × 0.10
-└── Stability        × 0.10
+Score = DarkSky_raw × W_sky
+      + Atmosphere_raw × W_atm
+      + DewSafety_raw × W_dew
+      + Stability_raw × W_stab
 ```
 
-Все профили (Balanced, Visual, Broadband, Planetary) используют одинаковые веса категорий.
+### Веса по профилям
 
-Итоговый скоринг:
+| Профиль    | Dark Sky | Atmosphere | Dew Safety | Stability |
+|------------|----------|------------|------------|-----------|
+| Balanced   | 0.40     | 0.40       | 0.10       | 0.10      |
+| Visual     | 0.40     | 0.30       | 0.10       | 0.20      |
+| Broadband  | 0.30     | 0.30       | 0.20       | 0.20      |
+| Planetary  | 0.20     | 0.20       | 0.10       | 0.50      |
 
-```
-Score = DarkSky_raw × 0.40
-      + Atmosphere_raw × 0.40
-      + DewSafety_raw × 0.10
-      + Stability_raw × 0.10
-```
+Сумма весов всегда = 1.0. Итоговый скоринг всегда в диапазоне 0–100.
+
+**Логика профилей:**
+- **Balanced** — универсальный, равный вес темноты и атмосферы
+- **Visual** — приоритет тёмного неба, повышенный вес стабильности (DSO наблюдения)
+- **Broadband** — длинные экспозиции требуют защиты от росы и стабильного трекинга
+- **Planetary** — seeing и ветер критичны (Stability 50%), темнота и облака менее важны
 
 ---
 
@@ -304,8 +309,8 @@ Score = 94×0.40 + 84×0.40 + 84×0.10 + 84×0.10
 
 | Что изменилось | v5.1 | v5.2 |
 |----------------|------|------|
-| Веса категорий | Balanced: atm=0.40, sky=0.35, dew=0.15, stab=0.10 | Все профили: atm=0.40, sky=0.40, dew=0.10, stab=0.10 |
-| Профили (веса) | Разные для каждого профиля | Унифицированы (одинаковые) |
+| Веса категорий (Balanced) | atm=0.40, sky=0.35, dew=0.15, stab=0.10 | atm=0.40, sky=0.40, dew=0.10, stab=0.10 |
+| Профили (веса) | Разные v2-логикой | Профиль-специфичные (Visual/Broadband/Planetary отличаются) |
 | Atmosphere формула | Clouds/Seeing/Transparency weighted | Только облака (cloudness 3-layer model) |
 | Dark Sky Level | Additive penalties | Sky Brightness = sun×0.80 + moon×0.15 + bortle×0.05 |
 | Bortle factor | `bc/9` (инвертированный!) | `(9−bc)/9` (исправлено) |
