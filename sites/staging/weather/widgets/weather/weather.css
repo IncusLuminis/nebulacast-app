@@ -1502,19 +1502,18 @@ a:hover{text-decoration:underline}
 }
 .tp-score-row{
   display:flex;
-  align-items:baseline;
-  gap:8px;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
 }
 .tp-score-val{
-  font-size:38px;
+  font-size:56px;
   font-weight:800;
-  color:var(--title);
   line-height:1;
 }
 .tp-score-rank{
   font-size:12px;
   font-weight:700;
-  color:var(--muted);
   text-transform:uppercase;
   letter-spacing:.04em;
 }

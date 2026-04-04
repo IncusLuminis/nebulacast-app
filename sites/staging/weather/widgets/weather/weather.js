@@ -71,24 +71,27 @@ function parseISO(d) {
   return Number.isNaN(t.getTime()) ? null : t;
 }
 
-// Helper: find nearest hour to now (returns hour, dt, and index i0)
+/// Helper: find the current hour (floor to hour boundary, same logic as hourly "NOW" card)
 function findNearestHour(hours) {
   if (!hours || !hours.length) return { hour: null, dt: null, idx: 0 };
-  const now = Date.now();
-  let best = null;
-  let bestDt = null;
-  let bestIdx = 0;
-  let bestDiff = Infinity;
+  const currentHourStart = Math.floor(Date.now() / 3600000) * 3600000;
 
+  // Prefer the hour whose timestamp falls within the current hour window
+  let best = null, bestDt = null, bestIdx = 0, bestDiff = Infinity;
   hours.forEach((h, i) => {
     const dt = parseISO(h.time);
     if (!dt) return;
-    const diff = Math.abs(dt.getTime() - now);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = h;
-      bestDt = dt;
-      bestIdx = i;
+    const ms = dt.getTime();
+    // Exact match: this slot IS the current hour
+    if (ms >= currentHourStart && ms < currentHourStart + 3600000) {
+      if (ms - currentHourStart < bestDiff) {
+        bestDiff = ms - currentHourStart;
+        best = h; bestDt = dt; bestIdx = i;
+      }
+    } else if (best === null) {
+      // Fallback: nearest by abs diff
+      const diff = Math.abs(ms - currentHourStart);
+      if (diff < bestDiff) { bestDiff = diff; best = h; bestDt = dt; bestIdx = i; }
     }
   });
   return { hour: best, dt: bestDt, idx: bestIdx };
@@ -916,15 +919,22 @@ function computeProfileScores(hour) {
 
 // v5 category weights (mirrors backend score.ts) — profile_weight × category_score
 const V5_CATEGORY_WEIGHTS = {
-  balanced:  { atmosphere:0.35, sky_darkness:0.30, dew_safety:0.20, stability:0.15 },
-  visual:    { atmosphere:0.40, sky_darkness:0.25, dew_safety:0.20, stability:0.15 },
-  broadband: { atmosphere:0.30, sky_darkness:0.45, dew_safety:0.15, stability:0.10 },
-  planetary: { atmosphere:0.55, sky_darkness:0.10, dew_safety:0.20, stability:0.15 },
+  balanced:  { atmosphere:0.40, sky_darkness:0.40, dew_safety:0.10, stability:0.10 },
+  visual:    { atmosphere:0.30, sky_darkness:0.40, dew_safety:0.10, stability:0.20 },
+  broadband: { atmosphere:0.30, sky_darkness:0.30, dew_safety:0.20, stability:0.20 },
+  planetary: { atmosphere:0.20, sky_darkness:0.20, dew_safety:0.10, stability:0.50 },
 };
 
 function getHourScore(hour) {
   if (!hour) return 0;
   const profile = getActiveProfile();
+
+  // Prefer pre-computed sentinel from Python backend (score_breakdown_by_profile[profile])
+  const profBd = hour.score_breakdown_by_profile?.[profile];
+  if (Array.isArray(profBd)) {
+    const sentinel = profBd.find(b => b._final_score != null);
+    if (sentinel != null) return sentinel._final_score;
+  }
 
   // v5: recompute from the 4 category scores stored on each hour
   if (
@@ -934,18 +944,8 @@ function getHourScore(hour) {
     hour.stability_score != null
   ) {
     const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
-    // During daylight, redistribute sky_darkness weight to the other 3 categories
-    // so the score reflects conditions quality without a daylight penalty.
-    const isDaylight = hour.sun_alt_deg != null && hour.sun_alt_deg > 0;
-    let atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
-    if (isDaylight) {
-      const rest = w.atmosphere + w.dew_safety + w.stability;
-      atmW  = w.atmosphere + w.sky_darkness * (w.atmosphere / rest);
-      skyW  = 0;
-      dewW  = w.dew_safety + w.sky_darkness * (w.dew_safety / rest);
-      stabW = w.stability  + w.sky_darkness * (w.stability  / rest);
-    }
     const skyScore = hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score;
+    const atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
     const raw =
       atmW  * hour.atmosphere_score   +
       skyW  * skyScore                +
@@ -1436,6 +1436,101 @@ function renderNow(rootEl, nowHour) {
   renderExplainPanel(rootEl, nowHour, hours);
 }
 
+// Shared param row renderer — used in both renderExplainPanel and Hour Inspector
+function renderScoreParamRow(p) {
+  const label = escapeHtml(p.label || '');
+
+  if (p.display === 'skybrightness_bar') {
+    const bPct = typeof p.value === 'number' ? p.value : 0;
+    const barClr = _fbColor(100 - bPct);
+    const wtStr = p.weight != null ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>' : '<span class="hi-param-weight"></span>';
+    const sum = (p.sun_c ?? 0) + (p.moon_c ?? 0) + (p.bortle_c ?? 0);
+    const ptsStr = '<span class="hi-param-pts">' + Math.round(sum * 100) + '</span>';
+    return '<div class="hi-param-row">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<div class="hi-param-bar-wrap">'
+      + '<div class="hi-param-bar-fill" style="width:' + bPct + '%;background:' + barClr + '"></div>'
+      + '<span class="hi-param-bar-text">' + bPct + '%</span>'
+      + '</div>'
+      + wtStr + ptsStr
+      + '</div>';
+  }
+
+  if (p.display === 'sky_icons') {
+    const factor = typeof p.value === 'number' ? p.value : 0;
+    const count  = Math.min(10, Math.round(factor * 10));
+    const ico    = p.icon || '●';
+    const filled = ico.repeat(count);
+    const empty  = count < 10 ? '<span style="opacity:0.18">' + ico.repeat(10 - count) + '</span>' : '';
+    const contrib = p.contribution != null
+      ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">=' + p.contribution.toFixed(2) + '</span>'
+      : '<span class="hi-param-pts hi-param-pts-na"></span>';
+    const wt = p.weight != null
+      ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>'
+      : '<span class="hi-param-weight"></span>';
+    return '<div class="hi-param-row hi-param-row-icons">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
+      + wt + contrib
+      + '</div>';
+  }
+
+  if (p.display === 'cloudness_bar') {
+    const cPct = typeof p.value === 'number' ? p.value : 0;
+    const barClr = _fbColor(100 - cPct);
+    const wtStr = p.weight != null ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>' : '<span class="hi-param-weight"></span>';
+    const sum = (p.low_c ?? 0) + (p.mid_c ?? 0) + (p.high_c ?? 0);
+    const ptsStr = '<span class="hi-param-pts">' + Math.round(sum * 100) + '</span>';
+    return '<div class="hi-param-row">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<div class="hi-param-bar-wrap">'
+      + '<div class="hi-param-bar-fill" style="width:' + cPct + '%;background:' + barClr + '"></div>'
+      + '<span class="hi-param-bar-text">' + cPct + '%</span>'
+      + '</div>'
+      + wtStr + ptsStr
+      + '</div>';
+  }
+
+  if (p.display === 'cloud_icons') {
+    const pct   = typeof p.value === 'number' ? p.value : 0;
+    const count = Math.min(10, Math.round(pct / 10));
+    const filled = '☁'.repeat(count);
+    const empty  = count < 10 ? '<span style="opacity:0.18">' + '☁'.repeat(10 - count) + '</span>' : '';
+    const contrib = p.contribution != null
+      ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">=' + p.contribution.toFixed(2) + '</span>'
+      : '<span class="hi-param-pts hi-param-pts-na"></span>';
+    const wt = p.weight != null
+      ? '<span class="hi-param-weight">×' + p.weight.toFixed(1) + '</span>'
+      : '<span class="hi-param-weight"></span>';
+    return '<div class="hi-param-row hi-param-row-icons">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
+      + wt + contrib
+      + '</div>';
+  }
+
+  // Default: bar row
+  const pts      = p.points != null ? Math.round(p.points)  : null;
+  const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
+  const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
+  const paramClr = paramPct != null ? _fbColor(paramPct) : '#555';
+  const wt       = p.weight != null ? p.weight.toFixed(2) : null;
+  const wtStr    = wt != null ? '<span class="hi-param-weight">×' + wt + '</span>' : '<span class="hi-param-weight"></span>';
+  const ptsStr   = pts != null
+    ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+  pts + '</span>'
+    : '<span class="hi-param-pts hi-param-pts-na">—</span>';
+  return '<div class="hi-param-row">'
+    + '<span class="hi-param-label">' + label + '</span>'
+    + '<div class="hi-param-bar-wrap">'
+    + (paramPct != null
+        ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
+          + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
+        : '')
+    + '</div>'
+    + wtStr + ptsStr
+    + '</div>';
+}
+
 function renderExplainPanel(rootEl, nowHour, hours) {
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
   const { idx: i0 } = findNearestHour(hours);
@@ -1450,28 +1545,21 @@ function renderExplainPanel(rootEl, nowHour, hours) {
   if (scoreTitle) scoreTitle.textContent = "How this score was calculated" + (weatherData?.scoring_version === "v5" ? " (v5)" : weatherData?.scoring_version === "v2" ? " (additive v2)" : weatherData?.scoring_version === "v1" ? " (legacy)" : "");
   const profile = getActiveProfile();
   const profileKey = profile === "balanced" ? "balanced" : (profile === "broadband" ? "broadband" : profile);
-  const breakdown = nowHour?.score_breakdown_by_profile?.[profileKey] || nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
+  // Prefer v5 score_breakdown (has display fields) over score_breakdown_by_profile (v2 engine format)
+  const _bdV5 = nowHour?.score_breakdown;
+  const _bdByProfile = nowHour?.score_breakdown_by_profile?.[profileKey] || nowHour?.score_breakdown_by_profile?.[profile];
+  const breakdown = (Array.isArray(_bdV5?.categories) && _bdV5.categories.length > 0) ? _bdV5 : (_bdByProfile || _bdV5);
   const isV2Breakdown = Array.isArray(breakdown);
   const isV5Breakdown = breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0;
   const hasPenaltyBreakdown = breakdown && typeof breakdown.penalties === "object";
 
   if (totalLine) {
-    if (isV5Breakdown) {
-      // v5: show weighted total using same profile weights as the category bars
+    if (isV5Breakdown || isV2Breakdown) {
+      // Always show v5 getHourScore so Details total matches the panel and hourly cards
       const finalScore = formatScore(getHourScore(nowHour));
       const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
       const gateInfo = gate !== "OPEN" ? ` (gate: ${gate})` : "";
       totalLine.textContent = `Score: ${finalScore}${gateInfo}`;
-      totalLine.style.display = "block";
-    } else if (isV2Breakdown && breakdown.length > 0) {
-      // v2 model: use _final_score sentinel if present (accounts for caps/multipliers)
-      const sentinelItem = breakdown.find(b => b._final_score != null);
-      if (sentinelItem) {
-        totalLine.textContent = "Score: " + sentinelItem._final_score;
-      } else {
-        const sum = breakdown.filter(b => !b.is_info).reduce((s, b) => s + (b.earned || 0), 0);
-        totalLine.textContent = "Score: " + sum;
-      }
       totalLine.style.display = "block";
     } else if (hasPenaltyBreakdown) {
       const breakdownScore = breakdown.score != null ? breakdown.score : formatScore(getHourScore(nowHour));
@@ -1531,38 +1619,34 @@ function renderExplainPanel(rootEl, nowHour, hours) {
         const panelId   = 'tp-cat-' + cat.key;
         let paramsHTML  = '';
         if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
+          // Details panel always uses bar display (icons don't scale; icons only in Hour Inspector)
           paramsHTML = cat.parameters.map(p => {
-            const label    = escapeHtml(p.label || '');
-            const pts      = p.points != null ? Math.round(p.points)  : null;
-            const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
-            const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
-            const paramClr = paramPct != null ? _fbColor(paramPct) : '#555';
-            const wt       = p.weight != null ? p.weight.toFixed(2) : null;
-            const wtStr    = wt != null
-              ? '<span class="hi-param-weight">×' + wt + '</span>'
-              : '<span class="hi-param-weight"></span>';
-            const ptsStr   = pts != null
-              ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+pts+'</span>'
-              : '<span class="hi-param-pts hi-param-pts-na">—</span>';
-            return '<div class="hi-param-row">'
-              + '<span class="hi-param-label">' + label + '</span>'
-              + '<div class="hi-param-bar-wrap">'
-              + (paramPct != null
-                  ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
-                    + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
-                  : '')
-              + '</div>'
-              + wtStr + ptsStr
-              + '</div>';
+            if (p.display === 'sky_icons') {
+              // sky_icons: value is 0-1 factor, contribution is 0-1. Use default bar renderer.
+              const pct = Math.round((p.value ?? 0) * 100);
+              const pts = p.contribution != null ? Math.round(p.contribution * 100) : null;
+              return renderScoreParamRow(Object.assign({}, p, { display: null, score: pct, points: pts, weight: p.weight ?? null }));
+            }
+            if (p.display === 'cloud_icons') {
+              // cloud_icons value is already 0-100 (percent)
+              return renderScoreParamRow(Object.assign({}, p, { display: 'cloudness_bar' }));
+            }
+            return renderScoreParamRow(p);
           }).join('');
         } else {
           paramsHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
         }
+        const catClosed = (cat.key === 'sky_darkness' && nowHour?.sky_cat_closed)
+                        || (cat.key === 'atmosphere'   && nowHour?.atm_cat_closed);
+        const catClosedBadge = catClosed
+          ? '<span class="gate-badge gate-closed" style="font-size:9px;padding:1px 5px;margin-left:4px">CLOSED</span>'
+          : '';
         return '<div class="hi-cat-card">'
           + '<div class="hi-cat-header" data-panel="' + panelId + '">'
           +   '<span class="hi-toggle-btn">▶</span>'
           +   '<span class="hi-cat-ico">' + ico + '</span>'
           +   '<span class="hi-cat-name">' + escapeHtml(cat.label) + '</span>'
+          +   catClosedBadge
           +   '<div class="hi-cat-bar-wrap"><div class="hi-cat-bar-fill" style="width:' + catScore + '%;background:' + fc + '"></div></div>'
           +   '<span class="hi-cat-formula">'
           +     '<span class="hi-cat-score" style="color:' + fc + '">' + catScore + '</span>'
@@ -1675,26 +1759,15 @@ function renderTpQuality(rootEl, nowHour) {
 
   const gateRaw    = nowHour?.gate || { status: "OPEN" };
   const gateStatus = typeof gateRaw === "string" ? gateRaw : (gateRaw.status || "OPEN");
-  // Use the same score source as the Details panel: v2 final/sum when breakdown is v2, otherwise getHourScore
-  const profile    = getActiveProfile();
-  const bd         = nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
-  const isV2       = Array.isArray(bd);
-  const isV5       = bd && Array.isArray(bd.categories) && bd.categories.length > 0;
-  let score;
-  if (isV5) {
-    score = formatScore(getHourScore(nowHour));
-  } else if (isV2 && bd.length > 0) {
-    const sentinel = bd.find(b => b._final_score != null);
-    score = sentinel ? sentinel._final_score : bd.filter(b => !b.is_info).reduce((s, b) => s + (b.earned || 0), 0);
-  } else {
-    score = formatScore(getHourScore(nowHour));
-  }
+  // Always use v5 getHourScore so the panel matches hourly cards
+  const score      = formatScore(getHourScore(nowHour));
   const rank = scoreRank(score);
 
   const scoreValEl = weatherCard.querySelector('[data-role="score-val"]');
   const scoreRankEl = weatherCard.querySelector('[data-role="score-rank"]');
-  if (scoreValEl) scoreValEl.textContent = score;
-  if (scoreRankEl) scoreRankEl.textContent = rank;
+  const scoreClr = _fbColor(score);
+  if (scoreValEl) { scoreValEl.textContent = score; scoreValEl.style.color = scoreClr; }
+  if (scoreRankEl) { scoreRankEl.textContent = rank; scoreRankEl.style.color = scoreClr; }
 
   // Gate badge
   const gateBadge = weatherCard.querySelector('[data-role="gate-badge"]');
@@ -1706,17 +1779,15 @@ function renderTpQuality(rootEl, nowHour) {
   // Score bar
   const scoreBar = weatherCard.querySelector('[data-role="score-bar"]');
   if (scoreBar) {
-    let barClass = "poor";
-    if (score >= 75) barClass = "good";
-    else if (score >= 60) barClass = "fair";
     let fillEl = scoreBar.querySelector(".score-bar-fill");
     if (!fillEl) {
       fillEl = document.createElement("div");
       fillEl.className = "score-bar-fill";
       scoreBar.appendChild(fillEl);
     }
-    fillEl.className = "score-bar-fill " + barClass;
+    fillEl.className = "score-bar-fill";
     fillEl.style.width = Math.max(0, Math.min(100, score)) + "%";
+    fillEl.style.background = scoreClr;
   }
 }
 
@@ -1785,24 +1856,44 @@ function renderTpSkyStatus(rootEl, nowHour, hours) {
     trendEl.className = "tp-trend " + cls;
   }
 
-  // Category mini-bars
+  // Category mini-bars — update in-place to avoid layout jitter
   const catsEl = weatherCard.querySelector('[data-role="tp-categories"]');
   if (catsEl) {
-    catsEl.innerHTML = CATS.map(c => {
-      const sc = c.key === 'sky_darkness_score'
-        ? (nowHour?.sky_darkness_score_by_profile?.[activeProfile] ?? nowHour?.[c.key] ?? null)
-        : nowHour?.[c.key] ?? null;
-      const pct = sc ?? 0;
-      const barStyle = pct > 0
-        ? `width:${pct}%;background:${_fbColor(pct)}`
-        : `width:0%;background:transparent`;
-      return `<div class="cat-score-row">
-        <span class="cat-ico">${c.ico}</span>
-        <span class="cat-label">${c.label}</span>
-        <div class="cat-bar-wrap"><div class="cat-bar-fill" style="${barStyle}"></div></div>
-        <span class="cat-val">${sc != null ? sc : "—"}</span>
-      </div>`;
-    }).join("");
+    const existingRows = catsEl.querySelectorAll(".cat-score-row");
+    if (existingRows.length !== CATS.length) {
+      // First render: build DOM
+      catsEl.innerHTML = CATS.map(c => {
+        const sc = c.key === 'sky_darkness_score'
+          ? (nowHour?.sky_darkness_score_by_profile?.[activeProfile] ?? nowHour?.[c.key] ?? null)
+          : nowHour?.[c.key] ?? null;
+        const pct = sc ?? 0;
+        const barStyle = pct > 0
+          ? `width:${pct}%;background:${_fbColor(pct)}`
+          : `width:0%;background:transparent`;
+        return `<div class="cat-score-row" data-cat="${c.key}">
+          <span class="cat-ico">${c.ico}</span>
+          <span class="cat-label">${c.label}</span>
+          <div class="cat-bar-wrap"><div class="cat-bar-fill" style="${barStyle}"></div></div>
+          <span class="cat-val">${sc != null ? sc : "—"}</span>
+        </div>`;
+      }).join("");
+    } else {
+      // Subsequent renders: patch fills and values in-place
+      CATS.forEach((c, i) => {
+        const sc = c.key === 'sky_darkness_score'
+          ? (nowHour?.sky_darkness_score_by_profile?.[activeProfile] ?? nowHour?.[c.key] ?? null)
+          : nowHour?.[c.key] ?? null;
+        const pct = sc ?? 0;
+        const row = existingRows[i];
+        const fill = row.querySelector(".cat-bar-fill");
+        if (fill) {
+          fill.style.width = pct > 0 ? `${pct}%` : "0%";
+          fill.style.background = pct > 0 ? _fbColor(pct) : "transparent";
+        }
+        const valEl = row.querySelector(".cat-val");
+        if (valEl) valEl.textContent = sc != null ? sc : "—";
+      });
+    }
   }
 
   // Diagnostic sub-row
@@ -3974,7 +4065,9 @@ function renderHourInspector(hourIdx, overrideEls) {
 
   // Score + rank — for CLOSED gate use breakdown.total (actual sky quality)
   const hiProfile = getActiveProfile();
-  const hiBd      = hour.score_breakdown_by_profile?.[hiProfile] || hour.score_breakdown;
+  // Prefer v5 score_breakdown (has display fields) over score_breakdown_by_profile (v2 engine format)
+  const _hiV5bd = hour.score_breakdown;
+  const hiBd = (Array.isArray(_hiV5bd?.categories) && _hiV5bd.categories.length > 0) ? _hiV5bd : (hour.score_breakdown_by_profile?.[hiProfile] || _hiV5bd);
   const score = formatScore(getHourScore(hour));
   const rank  = scoreRank(score);
   const scoreClr = _fbColor(score);
@@ -4041,8 +4134,8 @@ function renderHourInspector(hourIdx, overrideEls) {
 
   // ── Section — Gate header (collapsible) + Category Cards inside ────────────
   const profile = getActiveProfile();
-  const bd      = hour.score_breakdown_by_profile?.[profile] || hour.score_breakdown;
-  const bdCats  = (bd && Array.isArray(bd.categories)) ? bd.categories : [];
+  // hiBd is already prioritized correctly (v5 score_breakdown preferred, computed above at line ~4077)
+  const bdCats  = (hiBd && Array.isArray(hiBd.categories)) ? hiBd.categories : [];
 
   // Compute category scores for limiting factor detection
   const catScores = CATS.map(c => ({ key: c.key, bdKey: c.bdKey || c.key.replace("_score",""), label: c.label, ico: c.ico, score: hour[c.key] ?? null }));
@@ -4074,6 +4167,10 @@ function renderHourInspector(hourIdx, overrideEls) {
     const limiting  = isLimiting(cat);
     const panelId   = idPrefix + "hi-cat-" + cat.bdKey;
 
+    // Per-category gate flags from Python
+    const catClosed = (cat.bdKey === 'sky_darkness' && hour.sky_cat_closed)
+                   || (cat.bdKey === 'atmosphere'   && hour.atm_cat_closed);
+
     // Get params from breakdown or fallback
     const bdCat = bdCats.find(c => c.key === cat.bdKey);
     let params  = [];
@@ -4090,11 +4187,16 @@ function renderHourInspector(hourIdx, overrideEls) {
       : (catScore != null ? Math.round(catScore * effWeight) : null);
     const weightFmt  = effWeight.toFixed(2);
 
+    const catClosedBadge = catClosed
+      ? '<span class="gate-badge gate-closed" style="font-size:9px;padding:1px 5px;margin-left:4px">CLOSED</span>'
+      : '';
+
     bodyHTML += '<div class="hi-cat-card' + (limiting ? ' hi-limiting' : '') + '">';
     bodyHTML += '<div class="hi-cat-header" data-panel="' + panelId + '">'
       + '<span class="hi-toggle-btn">▶</span>'
       + '<span class="hi-cat-ico">' + cat.ico + '</span>'
       + '<span class="hi-cat-name">' + escapeHtml(cat.label) + '</span>'
+      + catClosedBadge
       + '<div class="hi-cat-bar-wrap"><div class="hi-cat-bar-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
       + '<span class="hi-cat-formula">'
       +   '<span class="hi-cat-score" style="color:' + clr + '">' + (catScore != null ? catScore : "—") + '</span>'
@@ -4108,128 +4210,7 @@ function renderHourInspector(hourIdx, overrideEls) {
     bodyHTML += '<div class="hi-cat-params" id="' + panelId + '" style="display:none">';
     if (params.length > 0) {
       params.forEach(p => {
-        const label = escapeHtml(p.label || "");
-
-        // Sky Brightness bar — fills with brightness %, coloured inverse (more bright = red)
-        if (p.display === 'skybrightness_bar') {
-          const bPct = typeof p.value === 'number' ? p.value : 0;
-          const barClr = _fbColor(100 - bPct);
-          const sc = p.sun_c    != null ? p.sun_c    : 0;
-          const mc = p.moon_c   != null ? p.moon_c   : 0;
-          const bc = p.bortle_c != null ? p.bortle_c : 0;
-          const formula = escapeHtml(
-            sc.toFixed(2) + '+' + mc.toFixed(2) + '+' + bc.toFixed(2)
-            + '=' + (sc + mc + bc).toFixed(2)
-          );
-          bodyHTML += '<div class="hi-param-row">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<div class="hi-param-bar-wrap">'
-            + '<div class="hi-param-bar-fill" style="width:' + bPct + '%;background:' + barClr + '"></div>'
-            + '<span class="hi-param-bar-text">' + bPct + '%</span>'
-            + '</div>'
-            + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
-            + '<span class="hi-param-pts hi-param-pts-na"></span>'
-            + '</div>';
-          return;
-        }
-
-        // Sky icon rows (🌞/🌗/☀) — same pattern as cloud icons
-        if (p.display === 'sky_icons') {
-          const factor = typeof p.value === 'number' ? p.value : 0;
-          const count  = Math.min(10, Math.round(factor * 10));
-          const ico    = p.icon || '●';
-          const filled = ico.repeat(count);
-          const empty  = count < 10
-            ? '<span style="opacity:0.18">' + ico.repeat(10 - count) + '</span>'
-            : '';
-          const contrib = p.contribution != null
-            ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">'
-              + '=' + p.contribution.toFixed(2) + '</span>'
-            : '<span class="hi-param-pts hi-param-pts-na"></span>';
-          const wt = p.weight != null
-            ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>'
-            : '<span class="hi-param-weight"></span>';
-          bodyHTML += '<div class="hi-param-row hi-param-row-icons">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
-            + wt
-            + contrib
-            + '</div>';
-          return;
-        }
-
-        // Cloudness bar — fills with cloudness %, coloured inverse (more cloud = red)
-        if (p.display === 'cloudness_bar') {
-          const cPct = typeof p.value === 'number' ? p.value : 0;
-          const barClr = _fbColor(100 - cPct);
-          const lowC  = p.low_c  != null ? p.low_c  : 0;
-          const midC  = p.mid_c  != null ? p.mid_c  : 0;
-          const highC = p.high_c != null ? p.high_c : 0;
-          const formula = escapeHtml(
-            lowC.toFixed(2) + '+' + midC.toFixed(2) + '+' + highC.toFixed(2)
-            + '=' + (lowC + midC + highC).toFixed(2)
-          );
-          bodyHTML += '<div class="hi-param-row">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<div class="hi-param-bar-wrap">'
-            + '<div class="hi-param-bar-fill" style="width:' + cPct + '%;background:' + barClr + '"></div>'
-            + '<span class="hi-param-bar-text">' + cPct + '%</span>'
-            + '</div>'
-            + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
-            + '<span class="hi-param-pts hi-param-pts-na"></span>'
-            + '</div>';
-          return;
-        }
-
-        // Cloud icon display mode — show ☁ icons + contribution value
-        if (p.display === 'cloud_icons') {
-          const pct   = typeof p.value === 'number' ? p.value : 0;
-          const count = Math.min(10, Math.round(pct / 10));  // 1 icon = 10%
-          const filled = '☁'.repeat(count);
-          const empty  = count < 10
-            ? '<span style="opacity:0.18">' + '☁'.repeat(10 - count) + '</span>'
-            : '';
-          const contrib = p.contribution != null
-            ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">'
-              + '=' + p.contribution.toFixed(2) + '</span>'
-            : '<span class="hi-param-pts hi-param-pts-na"></span>';
-          const wt = p.weight != null
-            ? '<span class="hi-param-weight">×' + p.weight.toFixed(1) + '</span>'
-            : '<span class="hi-param-weight"></span>';
-          bodyHTML += '<div class="hi-param-row hi-param-row-icons">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
-            + wt
-            + contrib
-            + '</div>';
-          return;
-        }
-
-        // Default: bar row
-        // p.score = 0-100 sub-score for bar; p.weight = param weight; p.points = score × weight
-        const pts      = p.points != null ? Math.round(p.points)  : null;
-        const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
-        const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
-        const paramClr = paramPct != null ? _fbColor(paramPct) : "#555";
-        const wt       = p.weight != null ? p.weight.toFixed(2) : null;
-        const wtStr    = wt != null
-          ? '<span class="hi-param-weight">×' + wt + '</span>'
-          : '<span class="hi-param-weight"></span>';
-        const ptsStr   = pts != null
-          ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+  pts + '</span>'
-          : '<span class="hi-param-pts hi-param-pts-na">—</span>';
-
-        bodyHTML += '<div class="hi-param-row">'
-          + '<span class="hi-param-label">' + label + '</span>'
-          + '<div class="hi-param-bar-wrap">'
-          + (paramPct != null
-              ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
-                + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
-              : '')
-          + '</div>'
-          + wtStr
-          + ptsStr
-          + '</div>';
+        bodyHTML += renderScoreParamRow(p);
       });
     } else {
       bodyHTML += '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
