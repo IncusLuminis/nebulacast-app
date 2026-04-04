@@ -4045,11 +4045,9 @@ function renderHourInspector(hourIdx, overrideEls) {
       params = HI_FALLBACK_PARAMS[cat.bdKey](hour);
     }
 
-    // Weighted contribution: use breakdown data (has daylight-corrected weights) or profile fallback
-    const effWeight  = bdCat?.weight  ?? profileWeights[cat.bdKey] ?? 0;
-    const contribution = bdCat?.points != null
-      ? Math.round(bdCat.points)
-      : (catScore != null ? Math.round(catScore * effWeight) : null);
+    // Weighted contribution: always use active profile weights (breakdown.weight is always Balanced)
+    const effWeight    = profileWeights[cat.bdKey] ?? 0;
+    const contribution = catScore != null ? Math.round(catScore * effWeight) : null;
     const weightFmt  = effWeight.toFixed(2);
 
     const catClosedBadge = catClosed
