@@ -1454,7 +1454,8 @@ function renderScoreParamRow(p) {
     const bPct = typeof p.value === 'number' ? p.value : 0;
     const barClr = _fbColor(100 - bPct);
     const wtStr = p.weight != null ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>' : '<span class="hi-param-weight"></span>';
-    const ptsStr = p.points != null ? '<span class="hi-param-pts">' + Math.round(p.points) + '</span>' : '<span class="hi-param-pts hi-param-pts-na"></span>';
+    const sum = (p.sun_c ?? 0) + (p.moon_c ?? 0) + (p.bortle_c ?? 0);
+    const ptsStr = '<span class="hi-param-pts">' + Math.round(sum * 100) + '</span>';
     return '<div class="hi-param-row">'
       + '<span class="hi-param-label">' + label + '</span>'
       + '<div class="hi-param-bar-wrap">'
@@ -1488,7 +1489,8 @@ function renderScoreParamRow(p) {
     const cPct = typeof p.value === 'number' ? p.value : 0;
     const barClr = _fbColor(100 - cPct);
     const wtStr = p.weight != null ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>' : '<span class="hi-param-weight"></span>';
-    const ptsStr = p.points != null ? '<span class="hi-param-pts">' + Math.round(p.points) + '</span>' : '<span class="hi-param-pts hi-param-pts-na"></span>';
+    const sum = (p.low_c ?? 0) + (p.mid_c ?? 0) + (p.high_c ?? 0);
+    const ptsStr = '<span class="hi-param-pts">' + Math.round(sum * 100) + '</span>';
     return '<div class="hi-param-row">'
       + '<span class="hi-param-label">' + label + '</span>'
       + '<div class="hi-param-bar-wrap">'
