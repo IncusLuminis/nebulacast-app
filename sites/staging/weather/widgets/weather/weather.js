@@ -1864,24 +1864,44 @@ function renderTpSkyStatus(rootEl, nowHour, hours) {
     trendEl.className = "tp-trend " + cls;
   }
 
-  // Category mini-bars
+  // Category mini-bars — update in-place to avoid layout jitter
   const catsEl = weatherCard.querySelector('[data-role="tp-categories"]');
   if (catsEl) {
-    catsEl.innerHTML = CATS.map(c => {
-      const sc = c.key === 'sky_darkness_score'
-        ? (nowHour?.sky_darkness_score_by_profile?.[activeProfile] ?? nowHour?.[c.key] ?? null)
-        : nowHour?.[c.key] ?? null;
-      const pct = sc ?? 0;
-      const barStyle = pct > 0
-        ? `width:${pct}%;background:${_fbColor(pct)}`
-        : `width:0%;background:transparent`;
-      return `<div class="cat-score-row">
-        <span class="cat-ico">${c.ico}</span>
-        <span class="cat-label">${c.label}</span>
-        <div class="cat-bar-wrap"><div class="cat-bar-fill" style="${barStyle}"></div></div>
-        <span class="cat-val">${sc != null ? sc : "—"}</span>
-      </div>`;
-    }).join("");
+    const existingRows = catsEl.querySelectorAll(".cat-score-row");
+    if (existingRows.length !== CATS.length) {
+      // First render: build DOM
+      catsEl.innerHTML = CATS.map(c => {
+        const sc = c.key === 'sky_darkness_score'
+          ? (nowHour?.sky_darkness_score_by_profile?.[activeProfile] ?? nowHour?.[c.key] ?? null)
+          : nowHour?.[c.key] ?? null;
+        const pct = sc ?? 0;
+        const barStyle = pct > 0
+          ? `width:${pct}%;background:${_fbColor(pct)}`
+          : `width:0%;background:transparent`;
+        return `<div class="cat-score-row" data-cat="${c.key}">
+          <span class="cat-ico">${c.ico}</span>
+          <span class="cat-label">${c.label}</span>
+          <div class="cat-bar-wrap"><div class="cat-bar-fill" style="${barStyle}"></div></div>
+          <span class="cat-val">${sc != null ? sc : "—"}</span>
+        </div>`;
+      }).join("");
+    } else {
+      // Subsequent renders: patch fills and values in-place
+      CATS.forEach((c, i) => {
+        const sc = c.key === 'sky_darkness_score'
+          ? (nowHour?.sky_darkness_score_by_profile?.[activeProfile] ?? nowHour?.[c.key] ?? null)
+          : nowHour?.[c.key] ?? null;
+        const pct = sc ?? 0;
+        const row = existingRows[i];
+        const fill = row.querySelector(".cat-bar-fill");
+        if (fill) {
+          fill.style.width = pct > 0 ? `${pct}%` : "0%";
+          fill.style.background = pct > 0 ? _fbColor(pct) : "transparent";
+        }
+        const valEl = row.querySelector(".cat-val");
+        if (valEl) valEl.textContent = sc != null ? sc : "—";
+      });
+    }
   }
 
   // Diagnostic sub-row
