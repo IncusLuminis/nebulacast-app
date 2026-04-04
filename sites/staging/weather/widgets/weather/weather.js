@@ -1436,6 +1436,105 @@ function renderNow(rootEl, nowHour) {
   renderExplainPanel(rootEl, nowHour, hours);
 }
 
+// Shared param row renderer — used in both renderExplainPanel and Hour Inspector
+function renderScoreParamRow(p) {
+  const label = escapeHtml(p.label || '');
+
+  if (p.display === 'skybrightness_bar') {
+    const bPct = typeof p.value === 'number' ? p.value : 0;
+    const barClr = _fbColor(100 - bPct);
+    const sc = p.sun_c    != null ? p.sun_c    : 0;
+    const mc = p.moon_c   != null ? p.moon_c   : 0;
+    const bc = p.bortle_c != null ? p.bortle_c : 0;
+    const formula = escapeHtml(sc.toFixed(2) + '+' + mc.toFixed(2) + '+' + bc.toFixed(2) + '=' + (sc + mc + bc).toFixed(2));
+    return '<div class="hi-param-row">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<div class="hi-param-bar-wrap">'
+      + '<div class="hi-param-bar-fill" style="width:' + bPct + '%;background:' + barClr + '"></div>'
+      + '<span class="hi-param-bar-text">' + bPct + '%</span>'
+      + '</div>'
+      + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
+      + '<span class="hi-param-pts hi-param-pts-na"></span>'
+      + '</div>';
+  }
+
+  if (p.display === 'sky_icons') {
+    const factor = typeof p.value === 'number' ? p.value : 0;
+    const count  = Math.min(10, Math.round(factor * 10));
+    const ico    = p.icon || '●';
+    const filled = ico.repeat(count);
+    const empty  = count < 10 ? '<span style="opacity:0.18">' + ico.repeat(10 - count) + '</span>' : '';
+    const contrib = p.contribution != null
+      ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">=' + p.contribution.toFixed(2) + '</span>'
+      : '<span class="hi-param-pts hi-param-pts-na"></span>';
+    const wt = p.weight != null
+      ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>'
+      : '<span class="hi-param-weight"></span>';
+    return '<div class="hi-param-row hi-param-row-icons">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
+      + wt + contrib
+      + '</div>';
+  }
+
+  if (p.display === 'cloudness_bar') {
+    const cPct = typeof p.value === 'number' ? p.value : 0;
+    const barClr = _fbColor(100 - cPct);
+    const lowC  = p.low_c  != null ? p.low_c  : 0;
+    const midC  = p.mid_c  != null ? p.mid_c  : 0;
+    const highC = p.high_c != null ? p.high_c : 0;
+    const formula = escapeHtml(lowC.toFixed(2) + '+' + midC.toFixed(2) + '+' + highC.toFixed(2) + '=' + (lowC + midC + highC).toFixed(2));
+    return '<div class="hi-param-row">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<div class="hi-param-bar-wrap">'
+      + '<div class="hi-param-bar-fill" style="width:' + cPct + '%;background:' + barClr + '"></div>'
+      + '<span class="hi-param-bar-text">' + cPct + '%</span>'
+      + '</div>'
+      + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
+      + '<span class="hi-param-pts hi-param-pts-na"></span>'
+      + '</div>';
+  }
+
+  if (p.display === 'cloud_icons') {
+    const pct   = typeof p.value === 'number' ? p.value : 0;
+    const count = Math.min(10, Math.round(pct / 10));
+    const filled = '☁'.repeat(count);
+    const empty  = count < 10 ? '<span style="opacity:0.18">' + '☁'.repeat(10 - count) + '</span>' : '';
+    const contrib = p.contribution != null
+      ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">=' + p.contribution.toFixed(2) + '</span>'
+      : '<span class="hi-param-pts hi-param-pts-na"></span>';
+    const wt = p.weight != null
+      ? '<span class="hi-param-weight">×' + p.weight.toFixed(1) + '</span>'
+      : '<span class="hi-param-weight"></span>';
+    return '<div class="hi-param-row hi-param-row-icons">'
+      + '<span class="hi-param-label">' + label + '</span>'
+      + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
+      + wt + contrib
+      + '</div>';
+  }
+
+  // Default: bar row
+  const pts      = p.points != null ? Math.round(p.points)  : null;
+  const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
+  const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
+  const paramClr = paramPct != null ? _fbColor(paramPct) : '#555';
+  const wt       = p.weight != null ? p.weight.toFixed(2) : null;
+  const wtStr    = wt != null ? '<span class="hi-param-weight">×' + wt + '</span>' : '<span class="hi-param-weight"></span>';
+  const ptsStr   = pts != null
+    ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+  pts + '</span>'
+    : '<span class="hi-param-pts hi-param-pts-na">—</span>';
+  return '<div class="hi-param-row">'
+    + '<span class="hi-param-label">' + label + '</span>'
+    + '<div class="hi-param-bar-wrap">'
+    + (paramPct != null
+        ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
+          + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
+        : '')
+    + '</div>'
+    + wtStr + ptsStr
+    + '</div>';
+}
+
 function renderExplainPanel(rootEl, nowHour, hours) {
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
   const { idx: i0 } = findNearestHour(hours);
@@ -1450,7 +1549,10 @@ function renderExplainPanel(rootEl, nowHour, hours) {
   if (scoreTitle) scoreTitle.textContent = "How this score was calculated" + (weatherData?.scoring_version === "v5" ? " (v5)" : weatherData?.scoring_version === "v2" ? " (additive v2)" : weatherData?.scoring_version === "v1" ? " (legacy)" : "");
   const profile = getActiveProfile();
   const profileKey = profile === "balanced" ? "balanced" : (profile === "broadband" ? "broadband" : profile);
-  const breakdown = nowHour?.score_breakdown_by_profile?.[profileKey] || nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
+  // Prefer v5 score_breakdown (has display fields) over score_breakdown_by_profile (v2 engine format)
+  const _bdV5 = nowHour?.score_breakdown;
+  const _bdByProfile = nowHour?.score_breakdown_by_profile?.[profileKey] || nowHour?.score_breakdown_by_profile?.[profile];
+  const breakdown = (Array.isArray(_bdV5?.categories) && _bdV5.categories.length > 0) ? _bdV5 : (_bdByProfile || _bdV5);
   const isV2Breakdown = Array.isArray(breakdown);
   const isV5Breakdown = breakdown && Array.isArray(breakdown.categories) && breakdown.categories.length > 0;
   const hasPenaltyBreakdown = breakdown && typeof breakdown.penalties === "object";
@@ -1531,30 +1633,7 @@ function renderExplainPanel(rootEl, nowHour, hours) {
         const panelId   = 'tp-cat-' + cat.key;
         let paramsHTML  = '';
         if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
-          paramsHTML = cat.parameters.map(p => {
-            const label    = escapeHtml(p.label || '');
-            const pts      = p.points != null ? Math.round(p.points)  : null;
-            const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
-            const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
-            const paramClr = paramPct != null ? _fbColor(paramPct) : '#555';
-            const wt       = p.weight != null ? p.weight.toFixed(2) : null;
-            const wtStr    = wt != null
-              ? '<span class="hi-param-weight">×' + wt + '</span>'
-              : '<span class="hi-param-weight"></span>';
-            const ptsStr   = pts != null
-              ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+pts+'</span>'
-              : '<span class="hi-param-pts hi-param-pts-na">—</span>';
-            return '<div class="hi-param-row">'
-              + '<span class="hi-param-label">' + label + '</span>'
-              + '<div class="hi-param-bar-wrap">'
-              + (paramPct != null
-                  ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
-                    + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
-                  : '')
-              + '</div>'
-              + wtStr + ptsStr
-              + '</div>';
-          }).join('');
+          paramsHTML = cat.parameters.map(p => renderScoreParamRow(p)).join('');
         } else {
           paramsHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
         }
@@ -3974,7 +4053,9 @@ function renderHourInspector(hourIdx, overrideEls) {
 
   // Score + rank — for CLOSED gate use breakdown.total (actual sky quality)
   const hiProfile = getActiveProfile();
-  const hiBd      = hour.score_breakdown_by_profile?.[hiProfile] || hour.score_breakdown;
+  // Prefer v5 score_breakdown (has display fields) over score_breakdown_by_profile (v2 engine format)
+  const _hiV5bd = hour.score_breakdown;
+  const hiBd = (Array.isArray(_hiV5bd?.categories) && _hiV5bd.categories.length > 0) ? _hiV5bd : (hour.score_breakdown_by_profile?.[hiProfile] || _hiV5bd);
   const score = formatScore(getHourScore(hour));
   const rank  = scoreRank(score);
   const scoreClr = _fbColor(score);
@@ -4108,128 +4189,7 @@ function renderHourInspector(hourIdx, overrideEls) {
     bodyHTML += '<div class="hi-cat-params" id="' + panelId + '" style="display:none">';
     if (params.length > 0) {
       params.forEach(p => {
-        const label = escapeHtml(p.label || "");
-
-        // Sky Brightness bar — fills with brightness %, coloured inverse (more bright = red)
-        if (p.display === 'skybrightness_bar') {
-          const bPct = typeof p.value === 'number' ? p.value : 0;
-          const barClr = _fbColor(100 - bPct);
-          const sc = p.sun_c    != null ? p.sun_c    : 0;
-          const mc = p.moon_c   != null ? p.moon_c   : 0;
-          const bc = p.bortle_c != null ? p.bortle_c : 0;
-          const formula = escapeHtml(
-            sc.toFixed(2) + '+' + mc.toFixed(2) + '+' + bc.toFixed(2)
-            + '=' + (sc + mc + bc).toFixed(2)
-          );
-          bodyHTML += '<div class="hi-param-row">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<div class="hi-param-bar-wrap">'
-            + '<div class="hi-param-bar-fill" style="width:' + bPct + '%;background:' + barClr + '"></div>'
-            + '<span class="hi-param-bar-text">' + bPct + '%</span>'
-            + '</div>'
-            + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
-            + '<span class="hi-param-pts hi-param-pts-na"></span>'
-            + '</div>';
-          return;
-        }
-
-        // Sky icon rows (🌞/🌗/☀) — same pattern as cloud icons
-        if (p.display === 'sky_icons') {
-          const factor = typeof p.value === 'number' ? p.value : 0;
-          const count  = Math.min(10, Math.round(factor * 10));
-          const ico    = p.icon || '●';
-          const filled = ico.repeat(count);
-          const empty  = count < 10
-            ? '<span style="opacity:0.18">' + ico.repeat(10 - count) + '</span>'
-            : '';
-          const contrib = p.contribution != null
-            ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">'
-              + '=' + p.contribution.toFixed(2) + '</span>'
-            : '<span class="hi-param-pts hi-param-pts-na"></span>';
-          const wt = p.weight != null
-            ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>'
-            : '<span class="hi-param-weight"></span>';
-          bodyHTML += '<div class="hi-param-row hi-param-row-icons">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
-            + wt
-            + contrib
-            + '</div>';
-          return;
-        }
-
-        // Cloudness bar — fills with cloudness %, coloured inverse (more cloud = red)
-        if (p.display === 'cloudness_bar') {
-          const cPct = typeof p.value === 'number' ? p.value : 0;
-          const barClr = _fbColor(100 - cPct);
-          const lowC  = p.low_c  != null ? p.low_c  : 0;
-          const midC  = p.mid_c  != null ? p.mid_c  : 0;
-          const highC = p.high_c != null ? p.high_c : 0;
-          const formula = escapeHtml(
-            lowC.toFixed(2) + '+' + midC.toFixed(2) + '+' + highC.toFixed(2)
-            + '=' + (lowC + midC + highC).toFixed(2)
-          );
-          bodyHTML += '<div class="hi-param-row">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<div class="hi-param-bar-wrap">'
-            + '<div class="hi-param-bar-fill" style="width:' + cPct + '%;background:' + barClr + '"></div>'
-            + '<span class="hi-param-bar-text">' + cPct + '%</span>'
-            + '</div>'
-            + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
-            + '<span class="hi-param-pts hi-param-pts-na"></span>'
-            + '</div>';
-          return;
-        }
-
-        // Cloud icon display mode — show ☁ icons + contribution value
-        if (p.display === 'cloud_icons') {
-          const pct   = typeof p.value === 'number' ? p.value : 0;
-          const count = Math.min(10, Math.round(pct / 10));  // 1 icon = 10%
-          const filled = '☁'.repeat(count);
-          const empty  = count < 10
-            ? '<span style="opacity:0.18">' + '☁'.repeat(10 - count) + '</span>'
-            : '';
-          const contrib = p.contribution != null
-            ? '<span class="hi-param-pts" style="color:var(--muted);font-weight:400">'
-              + '=' + p.contribution.toFixed(2) + '</span>'
-            : '<span class="hi-param-pts hi-param-pts-na"></span>';
-          const wt = p.weight != null
-            ? '<span class="hi-param-weight">×' + p.weight.toFixed(1) + '</span>'
-            : '<span class="hi-param-weight"></span>';
-          bodyHTML += '<div class="hi-param-row hi-param-row-icons">'
-            + '<span class="hi-param-label">' + label + '</span>'
-            + '<span class="hi-param-icons-val">' + filled + empty + '</span>'
-            + wt
-            + contrib
-            + '</div>';
-          return;
-        }
-
-        // Default: bar row
-        // p.score = 0-100 sub-score for bar; p.weight = param weight; p.points = score × weight
-        const pts      = p.points != null ? Math.round(p.points)  : null;
-        const rawPct   = p.score  != null ? Math.round(p.score)   : pts;
-        const paramPct = rawPct   != null ? Math.max(0, Math.min(100, rawPct)) : null;
-        const paramClr = paramPct != null ? _fbColor(paramPct) : "#555";
-        const wt       = p.weight != null ? p.weight.toFixed(2) : null;
-        const wtStr    = wt != null
-          ? '<span class="hi-param-weight">×' + wt + '</span>'
-          : '<span class="hi-param-weight"></span>';
-        const ptsStr   = pts != null
-          ? '<span class="hi-param-pts" style="color:' + paramClr + '">='+  pts + '</span>'
-          : '<span class="hi-param-pts hi-param-pts-na">—</span>';
-
-        bodyHTML += '<div class="hi-param-row">'
-          + '<span class="hi-param-label">' + label + '</span>'
-          + '<div class="hi-param-bar-wrap">'
-          + (paramPct != null
-              ? '<div class="hi-param-bar-fill" style="width:' + paramPct + '%;background:' + paramClr + '"></div>'
-                + '<span class="hi-param-bar-text">' + paramPct + '%</span>'
-              : '')
-          + '</div>'
-          + wtStr
-          + ptsStr
-          + '</div>';
+        bodyHTML += renderScoreParamRow(p);
       });
     } else {
       bodyHTML += '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
