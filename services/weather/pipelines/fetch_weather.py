@@ -108,9 +108,10 @@ def compute_gate(hour: dict) -> dict:
 
     # ── CLOSED — precipitation / heavy overcast / fog ─────────────────────────
     # low/mid > 90% → CLOSED; vis ≤ 1 km → CLOSED.
-    if rain > 0:
+    # precipitation threshold: ≥ 0.3mm rain or ≥ 0.2mm snow (avoids model noise/dew).
+    if rain >= 0.3:
         reasons.append(f"Rain {rain:.1f}mm")
-    elif snow > 0:
+    elif snow >= 0.2:
         reasons.append(f"Snow {snow:.1f}mm")
     if low > 90:
         reasons.append(f"Low cloud {low:.0f}%")
@@ -119,7 +120,7 @@ def compute_gate(hour: dict) -> dict:
     if vis_km and vis_km <= 1.0:
         reasons.append(f"Visibility {vis_km:.1f}km")
 
-    if rain > 0 or snow > 0:
+    if rain >= 0.3 or snow >= 0.2:
         return {"status": "CLOSED", "score": max(0, 10 - len(reasons) * 3), "reasons": reasons}
     if low > 90 or mid > 90 or (vis_km and vis_km <= 1.0):
         return {"status": "CLOSED", "score": max(0, 15 - len(reasons) * 4), "reasons": reasons}
@@ -488,10 +489,10 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "bala
     sun_alt = hour.get("sun_alt_deg")
     if sun_alt is None or sun_alt >= 0:
         sun_factor = 1.00
-        sun_label  = "Daylight (100%)" if sun_alt is None or sun_alt >= 0 else "Daylight"
+        sun_label  = "Sunlight (100%)" if sun_alt is None or sun_alt >= 0 else "Sunlight"
     elif sun_alt <= -18:
         sun_factor = 0.00
-        sun_label  = "Night (0%)"
+        sun_label  = "Sunlight (0%)"
     elif sun_alt > -6:
         # civil: 1.0 at 0° → 0.70 at -6°
         sun_factor = round(1.0 + sun_alt * (0.30 / 6), 3)
@@ -525,7 +526,9 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "bala
     moon_contrib = round(moon_factor * 0.15, 3)
 
     # ── 3. Bortle / light pollution factor ───────────────────────────────────
-    bortle_factor = round(bc / 9, 3)
+    # (9 - bortle) / 9: Bortle 1 (dark) → 0.89, Bortle 9 (city) → 0.0
+    # Icons show 9-bortle out of 9 — more icons = more light pollution
+    bortle_factor = round((9 - bc) / 9, 3)
     bortle_contrib = round(bortle_factor * 0.05, 3)
     bortle_label  = f"Light pollution (Bortle:{bc})"
 
@@ -567,10 +570,11 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "bala
 
 
 def compute_dew_safety_score(hour: dict) -> dict:
-    """v5.1 Category 3 — Dew Safety.
+    """v5.2 Category 3 — Dew Safety.
 
-    Formula: 0.80 × DewSpread_score + 0.20 × DewWind_score
+    Formula: 0.80 × DewSpread_score + 0.20 × Humidity_score
     Both sub-scores normalised 0..100 (spec §5.3).
+    Wind removed (now in Stability); replaced by Humidity which directly affects dew risk.
     """
     temp = hour.get("temp_c")
     dew  = hour.get("dewpoint_c")
@@ -579,32 +583,44 @@ def compute_dew_safety_score(hour: dict) -> dict:
     spread_score = round(_piecewise(spread, _V5_DEW_TABLE)) if spread is not None else 50
     spread_label = f"Spread {spread:.1f}°C" if spread is not None else "Spread unknown"
 
-    wind_kmh  = (hour.get("wind_m_s") or 0) * 3.6
-    wind_score = round(_piecewise(wind_kmh, _V5_DEW_WIND))
+    hum_val = hour.get("humidity_pct")
+    hum_score = round(_piecewise(hum_val or 65, _V5_HUM_STAB))
 
-    score = max(0, min(100, round(0.80 * spread_score + 0.20 * wind_score)))
+    score = max(0, min(100, round(0.80 * spread_score + 0.20 * hum_score)))
     return {
         "score": score,
         "parameters": [
             {"key": "dew_spread", "label": spread_label,
              "value": round(spread, 1) if spread is not None else 0,
              "score": spread_score, "weight": 0.80, "points": round(0.80 * spread_score)},
-            {"key": "dew_wind",   "label": f"Wind {wind_kmh:.0f} km/h",
-             "value": round(wind_kmh),
-             "score": wind_score,   "weight": 0.20, "points": round(0.20 * wind_score)},
+            {"key": "humidity",   "label": f"Humidity {hum_val}%" if hum_val is not None else "Humidity",
+             "value": hum_val or 65,
+             "score": hum_score,   "weight": 0.20, "points": round(0.20 * hum_score)},
         ],
     }
 
 
 def compute_stability_score(hour: dict) -> dict:
-    """v5.1 Category 4 — Stability.
+    """v5.3 Category 4 — Stability.
 
-    Formula: 0.45 × Wind + 0.35 × Humidity + 0.20 × PressureTrend
+    Formula: 0.40 × Wind + 0.30 × Transparency + 0.20 × Seeing + 0.10 × PressureTrend
     All sub-scores normalised 0..100 (spec §5.4).
     """
     wind_kmh = (hour.get("wind_m_s") or 0) * 3.6
     wq = _piecewise(wind_kmh, _V5_WIND_STAB)
-    hq = _piecewise(hour.get("humidity_pct") or 65, _V5_HUM_STAB)
+
+    # Transparency (visibility)
+    vis_m = hour.get("visibility_m")
+    vis_km = (vis_m / 1000.0) if vis_m else (hour.get("visibility_km") or 0)
+    vq = _piecewise(vis_km, _V5_TRANS_VIS)
+
+    # Seeing — FWHM preferred, fallback to 7Timer index
+    fwhm = hour.get("seeing_fwhm_arcsec_est")
+    if fwhm is not None:
+        sq = round(_piecewise(fwhm, _V5_FWHM_Q))
+    else:
+        idx = hour.get("seeing")
+        sq = round(max(5, min(95, 95 - (idx - 1) * 15))) if idx else 50
 
     # Pressure trend  (spec §5.4.3 — 4-tier by absolute change per 6h)
     trend = hour.get("pressure_trend_6h_hpa")
@@ -614,20 +630,24 @@ def compute_stability_score(hour: dict) -> dict:
     elif abs(trend) <= 3.0:   pq = 65
     else:                     pq = 40
 
-    score = max(0, min(100, round(0.45 * wq + 0.35 * hq + 0.20 * pq)))
+    score = max(0, min(100, round(0.40 * wq + 0.30 * vq + 0.20 * sq + 0.10 * pq)))
     trend_label = (f"Pressure {'+' if trend >= 0 else ''}{trend:.1f} hPa/6h"
                    if trend is not None else "Pressure unknown")
-    hum_val = hour.get("humidity_pct")
+    fwhm_label = f'Seeing {fwhm:.1f}"' if fwhm is not None else "Seeing"
+    trans_label = f"Transparency {vis_km:.0f} km" if vis_km else "Transparency"
     return {
         "score": score,
         "parameters": [
             {"key": "wind",           "label": f"Wind {wind_kmh:.0f} km/h",
-             "value": round(wind_kmh), "score": round(wq), "weight": 0.45, "points": round(0.45 * wq)},
-            {"key": "humidity",       "label": f"Humidity {hum_val}%" if hum_val is not None else "Humidity",
-             "value": hum_val or 65,  "score": round(hq), "weight": 0.35, "points": round(0.35 * hq)},
+             "value": round(wind_kmh), "score": round(wq), "weight": 0.40, "points": round(0.40 * wq)},
+            {"key": "transparency",   "label": trans_label,
+             "value": round(vis_km, 1), "score": round(vq), "weight": 0.30, "points": round(0.30 * vq)},
+            {"key": "seeing",         "label": fwhm_label,
+             "value": round(fwhm, 2) if fwhm is not None else sq,
+             "score": round(sq), "weight": 0.20, "points": round(0.20 * sq)},
             {"key": "pressure_trend", "label": trend_label,
              "value": round(trend, 1) if trend is not None else 0,
-             "score": round(pq), "weight": 0.20, "points": round(0.20 * pq)},
+             "score": round(pq), "weight": 0.10, "points": round(0.10 * pq)},
         ],
     }
 
