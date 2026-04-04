@@ -916,10 +916,10 @@ function computeProfileScores(hour) {
 
 // v5 category weights (mirrors backend score.ts) — profile_weight × category_score
 const V5_CATEGORY_WEIGHTS = {
-  balanced:  { atmosphere:0.35, sky_darkness:0.30, dew_safety:0.20, stability:0.15 },
-  visual:    { atmosphere:0.40, sky_darkness:0.25, dew_safety:0.20, stability:0.15 },
-  broadband: { atmosphere:0.30, sky_darkness:0.45, dew_safety:0.15, stability:0.10 },
-  planetary: { atmosphere:0.55, sky_darkness:0.10, dew_safety:0.20, stability:0.15 },
+  balanced:  { atmosphere:0.40, sky_darkness:0.40, dew_safety:0.10, stability:0.10 },
+  visual:    { atmosphere:0.30, sky_darkness:0.40, dew_safety:0.10, stability:0.20 },
+  broadband: { atmosphere:0.30, sky_darkness:0.30, dew_safety:0.20, stability:0.20 },
+  planetary: { atmosphere:0.20, sky_darkness:0.20, dew_safety:0.10, stability:0.50 },
 };
 
 function getHourScore(hour) {
