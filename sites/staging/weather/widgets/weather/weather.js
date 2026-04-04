@@ -1772,8 +1772,9 @@ function renderTpQuality(rootEl, nowHour) {
 
   const scoreValEl = weatherCard.querySelector('[data-role="score-val"]');
   const scoreRankEl = weatherCard.querySelector('[data-role="score-rank"]');
-  if (scoreValEl) scoreValEl.textContent = score;
-  if (scoreRankEl) scoreRankEl.textContent = rank;
+  const scoreClr = _fbColor(score);
+  if (scoreValEl) { scoreValEl.textContent = score; scoreValEl.style.color = scoreClr; }
+  if (scoreRankEl) { scoreRankEl.textContent = rank; scoreRankEl.style.color = scoreClr; }
 
   // Gate badge
   const gateBadge = weatherCard.querySelector('[data-role="gate-badge"]');
@@ -1785,17 +1786,15 @@ function renderTpQuality(rootEl, nowHour) {
   // Score bar
   const scoreBar = weatherCard.querySelector('[data-role="score-bar"]');
   if (scoreBar) {
-    let barClass = "poor";
-    if (score >= 75) barClass = "good";
-    else if (score >= 60) barClass = "fair";
     let fillEl = scoreBar.querySelector(".score-bar-fill");
     if (!fillEl) {
       fillEl = document.createElement("div");
       fillEl.className = "score-bar-fill";
       scoreBar.appendChild(fillEl);
     }
-    fillEl.className = "score-bar-fill " + barClass;
+    fillEl.className = "score-bar-fill";
     fillEl.style.width = Math.max(0, Math.min(100, score)) + "%";
+    fillEl.style.background = scoreClr;
   }
 }
 
