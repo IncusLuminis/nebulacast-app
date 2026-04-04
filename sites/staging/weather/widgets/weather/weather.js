@@ -71,24 +71,27 @@ function parseISO(d) {
   return Number.isNaN(t.getTime()) ? null : t;
 }
 
-// Helper: find nearest hour to now (returns hour, dt, and index i0)
+/// Helper: find the current hour (floor to hour boundary, same logic as hourly "NOW" card)
 function findNearestHour(hours) {
   if (!hours || !hours.length) return { hour: null, dt: null, idx: 0 };
-  const now = Date.now();
-  let best = null;
-  let bestDt = null;
-  let bestIdx = 0;
-  let bestDiff = Infinity;
+  const currentHourStart = Math.floor(Date.now() / 3600000) * 3600000;
 
+  // Prefer the hour whose timestamp falls within the current hour window
+  let best = null, bestDt = null, bestIdx = 0, bestDiff = Infinity;
   hours.forEach((h, i) => {
     const dt = parseISO(h.time);
     if (!dt) return;
-    const diff = Math.abs(dt.getTime() - now);
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = h;
-      bestDt = dt;
-      bestIdx = i;
+    const ms = dt.getTime();
+    // Exact match: this slot IS the current hour
+    if (ms >= currentHourStart && ms < currentHourStart + 3600000) {
+      if (ms - currentHourStart < bestDiff) {
+        bestDiff = ms - currentHourStart;
+        best = h; bestDt = dt; bestIdx = i;
+      }
+    } else if (best === null) {
+      // Fallback: nearest by abs diff
+      const diff = Math.abs(ms - currentHourStart);
+      if (diff < bestDiff) { bestDiff = diff; best = h; bestDt = dt; bestIdx = i; }
     }
   });
   return { hour: best, dt: bestDt, idx: bestIdx };
@@ -926,6 +929,13 @@ function getHourScore(hour) {
   if (!hour) return 0;
   const profile = getActiveProfile();
 
+  // Prefer pre-computed sentinel from Python backend (score_breakdown_by_profile[profile])
+  const profBd = hour.score_breakdown_by_profile?.[profile];
+  if (Array.isArray(profBd)) {
+    const sentinel = profBd.find(b => b._final_score != null);
+    if (sentinel != null) return sentinel._final_score;
+  }
+
   // v5: recompute from the 4 category scores stored on each hour
   if (
     hour.atmosphere_score != null &&
@@ -1558,22 +1568,12 @@ function renderExplainPanel(rootEl, nowHour, hours) {
   const hasPenaltyBreakdown = breakdown && typeof breakdown.penalties === "object";
 
   if (totalLine) {
-    if (isV5Breakdown) {
-      // v5: show weighted total using same profile weights as the category bars
+    if (isV5Breakdown || isV2Breakdown) {
+      // Always show v5 getHourScore so Details total matches the panel and hourly cards
       const finalScore = formatScore(getHourScore(nowHour));
       const gate = typeof nowHour?.gate === "string" ? nowHour.gate : (nowHour?.gate?.status ?? "OPEN");
       const gateInfo = gate !== "OPEN" ? ` (gate: ${gate})` : "";
       totalLine.textContent = `Score: ${finalScore}${gateInfo}`;
-      totalLine.style.display = "block";
-    } else if (isV2Breakdown && breakdown.length > 0) {
-      // v2 model: use _final_score sentinel if present (accounts for caps/multipliers)
-      const sentinelItem = breakdown.find(b => b._final_score != null);
-      if (sentinelItem) {
-        totalLine.textContent = "Score: " + sentinelItem._final_score;
-      } else {
-        const sum = breakdown.filter(b => !b.is_info).reduce((s, b) => s + (b.earned || 0), 0);
-        totalLine.textContent = "Score: " + sum;
-      }
       totalLine.style.display = "block";
     } else if (hasPenaltyBreakdown) {
       const breakdownScore = breakdown.score != null ? breakdown.score : formatScore(getHourScore(nowHour));
@@ -1633,7 +1633,13 @@ function renderExplainPanel(rootEl, nowHour, hours) {
         const panelId   = 'tp-cat-' + cat.key;
         let paramsHTML  = '';
         if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
-          paramsHTML = cat.parameters.map(p => renderScoreParamRow(p)).join('');
+          // Details panel always uses bar display (icons don't scale; icons only in Hour Inspector)
+          paramsHTML = cat.parameters.map(p => {
+            const pBar = (p.display === 'sky_icons' || p.display === 'cloud_icons')
+              ? Object.assign({}, p, { display: p.display === 'sky_icons' ? 'skybrightness_bar' : 'cloudness_bar' })
+              : p;
+            return renderScoreParamRow(pBar);
+          }).join('');
         } else {
           paramsHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
         }
@@ -1754,20 +1760,8 @@ function renderTpQuality(rootEl, nowHour) {
 
   const gateRaw    = nowHour?.gate || { status: "OPEN" };
   const gateStatus = typeof gateRaw === "string" ? gateRaw : (gateRaw.status || "OPEN");
-  // Use the same score source as the Details panel: v2 final/sum when breakdown is v2, otherwise getHourScore
-  const profile    = getActiveProfile();
-  const bd         = nowHour?.score_breakdown_by_profile?.[profile] || nowHour?.score_breakdown;
-  const isV2       = Array.isArray(bd);
-  const isV5       = bd && Array.isArray(bd.categories) && bd.categories.length > 0;
-  let score;
-  if (isV5) {
-    score = formatScore(getHourScore(nowHour));
-  } else if (isV2 && bd.length > 0) {
-    const sentinel = bd.find(b => b._final_score != null);
-    score = sentinel ? sentinel._final_score : bd.filter(b => !b.is_info).reduce((s, b) => s + (b.earned || 0), 0);
-  } else {
-    score = formatScore(getHourScore(nowHour));
-  }
+  // Always use v5 getHourScore so the panel matches hourly cards
+  const score      = formatScore(getHourScore(nowHour));
   const rank = scoreRank(score);
 
   const scoreValEl = weatherCard.querySelector('[data-role="score-val"]');
@@ -4141,8 +4135,8 @@ function renderHourInspector(hourIdx, overrideEls) {
 
   // ── Section — Gate header (collapsible) + Category Cards inside ────────────
   const profile = getActiveProfile();
-  const bd      = hour.score_breakdown_by_profile?.[profile] || hour.score_breakdown;
-  const bdCats  = (bd && Array.isArray(bd.categories)) ? bd.categories : [];
+  // hiBd is already prioritized correctly (v5 score_breakdown preferred, computed above at line ~4077)
+  const bdCats  = (hiBd && Array.isArray(hiBd.categories)) ? hiBd.categories : [];
 
   // Compute category scores for limiting factor detection
   const catScores = CATS.map(c => ({ key: c.key, bdKey: c.bdKey || c.key.replace("_score",""), label: c.label, ico: c.ico, score: hour[c.key] ?? null }));
