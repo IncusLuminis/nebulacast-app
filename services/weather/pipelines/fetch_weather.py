@@ -600,13 +600,27 @@ def compute_dew_safety_score(hour: dict) -> dict:
 
 
 def compute_stability_score(hour: dict) -> dict:
-    """v5.1 Category 4 — Stability.
+    """v5.2 Category 4 — Stability.
 
-    Formula: 0.45 × Wind + 0.35 × Humidity + 0.20 × PressureTrend
+    Formula: 0.30 × Wind + 0.25 × Visibility + 0.25 × Seeing + 0.10 × Humidity + 0.10 × PressureTrend
     All sub-scores normalised 0..100 (spec §5.4).
     """
     wind_kmh = (hour.get("wind_m_s") or 0) * 3.6
     wq = _piecewise(wind_kmh, _V5_WIND_STAB)
+
+    # Visibility
+    vis_m = hour.get("visibility_m")
+    vis_km = (vis_m / 1000.0) if vis_m else (hour.get("visibility_km") or 0)
+    vq = _piecewise(vis_km, _V5_TRANS_VIS)
+
+    # Seeing — FWHM preferred, fallback to 7Timer index
+    fwhm = hour.get("seeing_fwhm_arcsec_est")
+    if fwhm is not None:
+        sq = round(_piecewise(fwhm, _V5_FWHM_Q))
+    else:
+        idx = hour.get("seeing")
+        sq = round(max(5, min(95, 95 - (idx - 1) * 15))) if idx else 50
+
     hq = _piecewise(hour.get("humidity_pct") or 65, _V5_HUM_STAB)
 
     # Pressure trend  (spec §5.4.3 — 4-tier by absolute change per 6h)
@@ -617,20 +631,27 @@ def compute_stability_score(hour: dict) -> dict:
     elif abs(trend) <= 3.0:   pq = 65
     else:                     pq = 40
 
-    score = max(0, min(100, round(0.45 * wq + 0.35 * hq + 0.20 * pq)))
+    score = max(0, min(100, round(0.30 * wq + 0.25 * vq + 0.25 * sq + 0.10 * hq + 0.10 * pq)))
     trend_label = (f"Pressure {'+' if trend >= 0 else ''}{trend:.1f} hPa/6h"
                    if trend is not None else "Pressure unknown")
     hum_val = hour.get("humidity_pct")
+    fwhm_label = f'Seeing {fwhm:.1f}"' if fwhm is not None else "Seeing"
+    vis_label = f"Visibility {vis_km:.0f} km" if vis_km else "Visibility"
     return {
         "score": score,
         "parameters": [
             {"key": "wind",           "label": f"Wind {wind_kmh:.0f} km/h",
-             "value": round(wind_kmh), "score": round(wq), "weight": 0.45, "points": round(0.45 * wq)},
+             "value": round(wind_kmh), "score": round(wq), "weight": 0.30, "points": round(0.30 * wq)},
+            {"key": "visibility",     "label": vis_label,
+             "value": round(vis_km, 1), "score": round(vq), "weight": 0.25, "points": round(0.25 * vq)},
+            {"key": "seeing",         "label": fwhm_label,
+             "value": round(fwhm, 2) if fwhm is not None else sq,
+             "score": round(sq), "weight": 0.25, "points": round(0.25 * sq)},
             {"key": "humidity",       "label": f"Humidity {hum_val}%" if hum_val is not None else "Humidity",
-             "value": hum_val or 65,  "score": round(hq), "weight": 0.35, "points": round(0.35 * hq)},
+             "value": hum_val or 65,  "score": round(hq), "weight": 0.10, "points": round(0.10 * hq)},
             {"key": "pressure_trend", "label": trend_label,
              "value": round(trend, 1) if trend is not None else 0,
-             "score": round(pq), "weight": 0.20, "points": round(0.20 * pq)},
+             "score": round(pq), "weight": 0.10, "points": round(0.10 * pq)},
         ],
     }
 
