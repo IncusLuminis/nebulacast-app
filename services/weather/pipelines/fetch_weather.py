@@ -570,10 +570,11 @@ def compute_sky_darkness_score(hour: dict, bortle: int = 5, profile: str = "bala
 
 
 def compute_dew_safety_score(hour: dict) -> dict:
-    """v5.1 Category 3 — Dew Safety.
+    """v5.2 Category 3 — Dew Safety.
 
-    Formula: 0.80 × DewSpread_score + 0.20 × DewWind_score
+    Formula: 0.80 × DewSpread_score + 0.20 × Humidity_score
     Both sub-scores normalised 0..100 (spec §5.3).
+    Wind removed (now in Stability); replaced by Humidity which directly affects dew risk.
     """
     temp = hour.get("temp_c")
     dew  = hour.get("dewpoint_c")
@@ -582,19 +583,19 @@ def compute_dew_safety_score(hour: dict) -> dict:
     spread_score = round(_piecewise(spread, _V5_DEW_TABLE)) if spread is not None else 50
     spread_label = f"Spread {spread:.1f}°C" if spread is not None else "Spread unknown"
 
-    wind_kmh  = (hour.get("wind_m_s") or 0) * 3.6
-    wind_score = round(_piecewise(wind_kmh, _V5_DEW_WIND))
+    hum_val = hour.get("humidity_pct")
+    hum_score = round(_piecewise(hum_val or 65, _V5_HUM_STAB))
 
-    score = max(0, min(100, round(0.80 * spread_score + 0.20 * wind_score)))
+    score = max(0, min(100, round(0.80 * spread_score + 0.20 * hum_score)))
     return {
         "score": score,
         "parameters": [
             {"key": "dew_spread", "label": spread_label,
              "value": round(spread, 1) if spread is not None else 0,
              "score": spread_score, "weight": 0.80, "points": round(0.80 * spread_score)},
-            {"key": "dew_wind",   "label": f"Wind {wind_kmh:.0f} km/h",
-             "value": round(wind_kmh),
-             "score": wind_score,   "weight": 0.20, "points": round(0.20 * wind_score)},
+            {"key": "humidity",   "label": f"Humidity {hum_val}%" if hum_val is not None else "Humidity",
+             "value": hum_val or 65,
+             "score": hum_score,   "weight": 0.20, "points": round(0.20 * hum_score)},
         ],
     }
 
