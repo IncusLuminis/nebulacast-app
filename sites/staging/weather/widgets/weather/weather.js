@@ -1453,18 +1453,15 @@ function renderScoreParamRow(p) {
   if (p.display === 'skybrightness_bar') {
     const bPct = typeof p.value === 'number' ? p.value : 0;
     const barClr = _fbColor(100 - bPct);
-    const sc = p.sun_c    != null ? p.sun_c    : 0;
-    const mc = p.moon_c   != null ? p.moon_c   : 0;
-    const bc = p.bortle_c != null ? p.bortle_c : 0;
-    const formula = escapeHtml(sc.toFixed(2) + '+' + mc.toFixed(2) + '+' + bc.toFixed(2) + '=' + (sc + mc + bc).toFixed(2));
+    const wtStr = p.weight != null ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>' : '<span class="hi-param-weight"></span>';
+    const ptsStr = p.points != null ? '<span class="hi-param-pts">' + Math.round(p.points) + '</span>' : '<span class="hi-param-pts hi-param-pts-na"></span>';
     return '<div class="hi-param-row">'
       + '<span class="hi-param-label">' + label + '</span>'
       + '<div class="hi-param-bar-wrap">'
       + '<div class="hi-param-bar-fill" style="width:' + bPct + '%;background:' + barClr + '"></div>'
       + '<span class="hi-param-bar-text">' + bPct + '%</span>'
       + '</div>'
-      + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
-      + '<span class="hi-param-pts hi-param-pts-na"></span>'
+      + wtStr + ptsStr
       + '</div>';
   }
 
@@ -1490,18 +1487,15 @@ function renderScoreParamRow(p) {
   if (p.display === 'cloudness_bar') {
     const cPct = typeof p.value === 'number' ? p.value : 0;
     const barClr = _fbColor(100 - cPct);
-    const lowC  = p.low_c  != null ? p.low_c  : 0;
-    const midC  = p.mid_c  != null ? p.mid_c  : 0;
-    const highC = p.high_c != null ? p.high_c : 0;
-    const formula = escapeHtml(lowC.toFixed(2) + '+' + midC.toFixed(2) + '+' + highC.toFixed(2) + '=' + (lowC + midC + highC).toFixed(2));
+    const wtStr = p.weight != null ? '<span class="hi-param-weight">×' + p.weight.toFixed(2) + '</span>' : '<span class="hi-param-weight"></span>';
+    const ptsStr = p.points != null ? '<span class="hi-param-pts">' + Math.round(p.points) + '</span>' : '<span class="hi-param-pts hi-param-pts-na"></span>';
     return '<div class="hi-param-row">'
       + '<span class="hi-param-label">' + label + '</span>'
       + '<div class="hi-param-bar-wrap">'
       + '<div class="hi-param-bar-fill" style="width:' + cPct + '%;background:' + barClr + '"></div>'
       + '<span class="hi-param-bar-text">' + cPct + '%</span>'
       + '</div>'
-      + '<span class="hi-param-weight" style="width:auto;font-size:9px;color:var(--muted);">' + formula + '</span>'
-      + '<span class="hi-param-pts hi-param-pts-na"></span>'
+      + wtStr + ptsStr
       + '</div>';
   }
 
