@@ -944,18 +944,8 @@ function getHourScore(hour) {
     hour.stability_score != null
   ) {
     const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
-    // During daylight, redistribute sky_darkness weight to the other 3 categories
-    // so the score reflects conditions quality without a daylight penalty.
-    const isDaylight = hour.sun_alt_deg != null && hour.sun_alt_deg > 0;
-    let atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
-    if (isDaylight) {
-      const rest = w.atmosphere + w.dew_safety + w.stability;
-      atmW  = w.atmosphere + w.sky_darkness * (w.atmosphere / rest);
-      skyW  = 0;
-      dewW  = w.dew_safety + w.sky_darkness * (w.dew_safety / rest);
-      stabW = w.stability  + w.sky_darkness * (w.stability  / rest);
-    }
     const skyScore = hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score;
+    const atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
     const raw =
       atmW  * hour.atmosphere_score   +
       skyW  * skyScore                +
@@ -1646,11 +1636,17 @@ function renderExplainPanel(rootEl, nowHour, hours) {
         } else {
           paramsHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
         }
+        const catClosed = (cat.key === 'sky_darkness' && nowHour?.sky_cat_closed)
+                        || (cat.key === 'atmosphere'   && nowHour?.atm_cat_closed);
+        const catClosedBadge = catClosed
+          ? '<span class="gate-badge gate-closed" style="font-size:9px;padding:1px 5px;margin-left:4px">CLOSED</span>'
+          : '';
         return '<div class="hi-cat-card">'
           + '<div class="hi-cat-header" data-panel="' + panelId + '">'
           +   '<span class="hi-toggle-btn">▶</span>'
           +   '<span class="hi-cat-ico">' + ico + '</span>'
           +   '<span class="hi-cat-name">' + escapeHtml(cat.label) + '</span>'
+          +   catClosedBadge
           +   '<div class="hi-cat-bar-wrap"><div class="hi-cat-bar-fill" style="width:' + catScore + '%;background:' + fc + '"></div></div>'
           +   '<span class="hi-cat-formula">'
           +     '<span class="hi-cat-score" style="color:' + fc + '">' + catScore + '</span>'
@@ -4171,6 +4167,10 @@ function renderHourInspector(hourIdx, overrideEls) {
     const limiting  = isLimiting(cat);
     const panelId   = idPrefix + "hi-cat-" + cat.bdKey;
 
+    // Per-category gate flags from Python
+    const catClosed = (cat.bdKey === 'sky_darkness' && hour.sky_cat_closed)
+                   || (cat.bdKey === 'atmosphere'   && hour.atm_cat_closed);
+
     // Get params from breakdown or fallback
     const bdCat = bdCats.find(c => c.key === cat.bdKey);
     let params  = [];
@@ -4187,11 +4187,16 @@ function renderHourInspector(hourIdx, overrideEls) {
       : (catScore != null ? Math.round(catScore * effWeight) : null);
     const weightFmt  = effWeight.toFixed(2);
 
+    const catClosedBadge = catClosed
+      ? '<span class="gate-badge gate-closed" style="font-size:9px;padding:1px 5px;margin-left:4px">CLOSED</span>'
+      : '';
+
     bodyHTML += '<div class="hi-cat-card' + (limiting ? ' hi-limiting' : '') + '">';
     bodyHTML += '<div class="hi-cat-header" data-panel="' + panelId + '">'
       + '<span class="hi-toggle-btn">▶</span>'
       + '<span class="hi-cat-ico">' + cat.ico + '</span>'
       + '<span class="hi-cat-name">' + escapeHtml(cat.label) + '</span>'
+      + catClosedBadge
       + '<div class="hi-cat-bar-wrap"><div class="hi-cat-bar-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>'
       + '<span class="hi-cat-formula">'
       +   '<span class="hi-cat-score" style="color:' + clr + '">' + (catScore != null ? catScore : "—") + '</span>'

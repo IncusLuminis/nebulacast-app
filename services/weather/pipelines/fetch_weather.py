@@ -1243,12 +1243,31 @@ def build_weather_payload(
         sky_by_profile = {pname: compute_sky_darkness_score(hour, bortle, pname) for pname in _V5_PROF_W}
         sky = sky_by_profile["balanced"]
 
+        # ── Per-category gates ────────────────────────────────────────────────
+        # Sky Darkness → 0 when sun is up (daytime observing is impossible)
+        sun_alt = hour.get("sun_alt_deg")
+        sky_cat_closed = sun_alt is not None and sun_alt >= 0
+        if sky_cat_closed:
+            for pname in sky_by_profile:
+                sky_by_profile[pname] = dict(sky_by_profile[pname], score=0)
+            sky = sky_by_profile["balanced"]
+
+        # Atmosphere → 0 when low or mid clouds ≥ 90% (opaque overcast)
+        low  = hour.get("cloud_low",  0) or 0
+        mid  = hour.get("cloud_mid",  0) or 0
+        atm_cat_closed = low >= 90 or mid >= 90
+        if atm_cat_closed:
+            atm = dict(atm, score=0)
+        # ─────────────────────────────────────────────────────────────────────
+
         hour["gate"]              = gate
         hour["atmosphere_score"]  = atm["score"]
         hour["sky_darkness_score"]= sky["score"]   # balanced — backward compat
         hour["sky_darkness_score_by_profile"] = {pname: sky_by_profile[pname]["score"] for pname in sky_by_profile}
         hour["dew_safety_score"]  = dew["score"]
         hour["stability_score"]   = stab["score"]
+        hour["sky_cat_closed"]    = sky_cat_closed
+        hour["atm_cat_closed"]    = atm_cat_closed
 
         # Final score: balanced profile weighted sum, gate-capped
         wa, ws, wd, wst = _V5_PROF_W["balanced"]
