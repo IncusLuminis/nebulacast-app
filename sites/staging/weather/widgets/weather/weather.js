@@ -1635,10 +1635,17 @@ function renderExplainPanel(rootEl, nowHour, hours) {
         if (Array.isArray(cat.parameters) && cat.parameters.length > 0) {
           // Details panel always uses bar display (icons don't scale; icons only in Hour Inspector)
           paramsHTML = cat.parameters.map(p => {
-            const pBar = (p.display === 'sky_icons' || p.display === 'cloud_icons')
-              ? Object.assign({}, p, { display: p.display === 'sky_icons' ? 'skybrightness_bar' : 'cloudness_bar' })
-              : p;
-            return renderScoreParamRow(pBar);
+            if (p.display === 'sky_icons') {
+              // sky_icons: value is 0-1 factor, contribution is 0-1. Use default bar renderer.
+              const pct = Math.round((p.value ?? 0) * 100);
+              const pts = p.contribution != null ? Math.round(p.contribution * 100) : null;
+              return renderScoreParamRow(Object.assign({}, p, { display: null, score: pct, points: pts, weight: p.weight ?? null }));
+            }
+            if (p.display === 'cloud_icons') {
+              // cloud_icons value is already 0-100 (percent)
+              return renderScoreParamRow(Object.assign({}, p, { display: 'cloudness_bar' }));
+            }
+            return renderScoreParamRow(p);
           }).join('');
         } else {
           paramsHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0">No parameter detail available.</div>';
