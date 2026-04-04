@@ -1821,6 +1821,9 @@ function renderProfileSwitcher(rootEl) {
       const r = findNearestHour(weatherData && weatherData.hours || []);
       renderNow(rootEl, r.hour);
       renderHourly(rootEl, weatherData && weatherData.hours || []);
+      if (hourInspectorOpen && currentInspectorHourIdx >= 0) {
+        renderHourInspector(currentInspectorHourIdx);
+      }
     });
   }
 }
@@ -3536,6 +3539,7 @@ function renderChart(paramKey) {
 
 // Hour Inspector functionality
 let hourInspectorOpen = false;
+let currentInspectorHourIdx = -1;
 
 function getHourInspectorElements() {
   return {
@@ -3597,19 +3601,21 @@ function openHourInspector(hourIdx) {
   }
   
   hourInspectorOpen = true;
+  currentInspectorHourIdx = hourIdx;
   document.body.style.overflow = "hidden";
-  
+
   els.backdrop.setAttribute("aria-hidden", "false");
   els.sheet.setAttribute("aria-hidden", "false");
-  
+
   renderHourInspector(hourIdx);
 }
 
 function closeHourInspector() {
   const els = getHourInspectorElements();
   if (!els.backdrop || !els.sheet) return;
-  
+
   hourInspectorOpen = false;
+  currentInspectorHourIdx = -1;
   document.body.style.overflow = "";
   
   els.backdrop.setAttribute("aria-hidden", "true");
