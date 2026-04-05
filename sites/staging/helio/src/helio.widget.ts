@@ -3188,6 +3188,59 @@ class HelioWidgetInstance {
     }
   }
 
+  /** Collapse rows opened from a hero chip (inverse of expandHeroLinkedPanels). */
+  private collapseHeroLinkedPanels(domIds: readonly string[]): void {
+    for (const domId of domIds) {
+      switch (domId) {
+        case "storm_risk":
+          this.expandedImpacts.delete("geomag_storm");
+          break;
+        case "radio":
+          this.expandedImpacts.delete("radio");
+          break;
+        case "satellite_drag":
+          this.expandedImpacts.delete("sat_drag");
+          break;
+        case "gnss":
+          this.expandedImpacts.delete("gnss");
+          break;
+        case "aurora":
+          this.expandedImpacts.delete("aurora");
+          break;
+        case "xray":
+          this.expandedImpacts.delete("xray");
+          break;
+        case "solar":
+          this.solarExpanded = false;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  private heroDomIdExpanded(domId: string): boolean {
+    switch (domId) {
+      case "storm_risk":    return this.expandedImpacts.has("geomag_storm");
+      case "radio":       return this.expandedImpacts.has("radio");
+      case "satellite_drag": return this.expandedImpacts.has("sat_drag");
+      case "gnss":          return this.expandedImpacts.has("gnss");
+      case "aurora":        return this.expandedImpacts.has("aurora");
+      case "xray":          return this.expandedImpacts.has("xray");
+      case "solar":         return this.solarExpanded;
+      default:              return false;
+    }
+  }
+
+  /** True when Indicators is open and every row linked to this chip is expanded. */
+  private heroChipLinkedAllOpen(chip: HeroScaleChipKey): boolean {
+    if (!this.impactsOpen) return false;
+    for (const domId of HERO_SCALE_LINKS[chip]) {
+      if (!this.heroDomIdExpanded(domId)) return false;
+    }
+    return true;
+  }
+
   private onClick(e: Event): void {
     const target = e.target as Element;
 
@@ -3196,6 +3249,12 @@ class HelioWidgetInstance {
       const chip = heroChipEl.dataset.heroChip;
       if (chip === "G" || chip === "R" || chip === "S" || chip === "X") {
         const ids = HERO_SCALE_LINKS[chip];
+        if (this.heroChipLinkedAllOpen(chip)) {
+          this.collapseHeroLinkedPanels(ids);
+          this.saveUiState();
+          this.render();
+          return;
+        }
         this.impactsOpen = true;
         this.expandHeroLinkedPanels(ids);
         this.saveUiState();
