@@ -298,18 +298,20 @@ const WIDGET_CSS = `
 .hw-gstorm-fill{height:100%;border-radius:3px;transition:width .3s}
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
-/* Storm Risk: NOW | FORECAST 24h (grid: left stack + full-height forecast rail) */
+/* Storm Risk: NOW | FORECAST 24h (3-row grid: titles | gauges aligned | captions) */
 .hw-storm-risk-grid{display:grid;grid-template-columns:minmax(120px,168px) minmax(0,1fr);column-gap:8px;row-gap:5px;align-items:start;margin:6px 0 0}
 .hw-storm-risk-head-now{grid-column:1;grid-row:1;font-size:.80em;font-weight:600;color:#a8bac6;letter-spacing:.055em;text-transform:uppercase;padding:0 2px;text-align:center;justify-self:stretch}
-.hw-storm-risk-head-fc{font-size:.80em;font-weight:600;color:#a8bac6;letter-spacing:.055em;text-transform:uppercase;width:100%;text-align:center;align-self:stretch}
-.hw-storm-risk-now{grid-column:1;grid-row:2;min-width:0;justify-self:stretch;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 2px}
+.hw-storm-risk-head-fc{grid-column:2;grid-row:1;font-size:.80em;font-weight:600;color:#a8bac6;letter-spacing:.055em;text-transform:uppercase;width:100%;text-align:center;justify-self:stretch;min-width:0}
+.hw-storm-risk-rail-edge{border-left:1px solid #1e2c30;padding-left:10px;min-width:0}
+.hw-storm-risk-now-gauge-cell{grid-column:1;grid-row:2;display:flex;justify-content:center;padding:0 2px;min-width:0}
+.hw-storm-risk-fc-gauge-cell{grid-column:2;grid-row:2;display:flex;justify-content:center;min-width:0}
+.hw-storm-risk-now-only{grid-column:1;grid-row:3;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 2px;min-width:0}
+.hw-storm-risk-fc-foot{grid-column:2;grid-row:3;min-width:0}
 .hw-storm-risk-gauge{display:block;width:100%;max-width:168px;height:auto;margin:0 auto;flex-shrink:0}
 .hw-storm-risk-gauge svg{display:block;width:100%;height:auto}
-.hw-storm-risk-now-gauge{margin:0 auto;width:100%;max-width:168px}
-.hw-storm-risk-fc-gauge{margin:2px auto 4px;width:100%;max-width:168px}
-.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:3px;line-height:1.2;word-wrap:break-word;max-width:100%}
-.hw-storm-risk-rail{grid-column:2;grid-row:1 / span 2;border-left:1px solid #1e2c30;padding-left:10px;min-width:0;display:flex;flex-direction:column;gap:5px;align-self:stretch}
-.hw-storm-risk-fc{min-width:0}
+.hw-storm-risk-now-gauge{margin:0;width:100%;max-width:168px}
+.hw-storm-risk-fc-gauge{margin:0;width:100%;max-width:168px}
+.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:0;line-height:1.2;word-wrap:break-word;max-width:100%}
 .hw-gstorm-slot{display:none}
 /* Storm Progress Indicator */
 @keyframes hw-spi-pulse{0%,100%{opacity:.35}50%{opacity:1}}
@@ -2131,18 +2133,13 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
   const sp     = deriveStormPhase(data);
   const fc     = sr.forecast_24h;
 
-  const nowCol = `
-    <div class="hw-storm-risk-now">
-      <div class="hw-storm-risk-now-gauge">${buildStormRiskGaugeSvg(sr.now.g_level, "Current observed geomagnetic storm level", { showDialCode: true })}</div>
-      <div class="hw-storm-risk-now-lbl">${escText(sr.now.label)}</div>
-    </div>`;
-
   /** Forecast 24h: single categorical level from JSON `max_expected` (Kp→G on server / fallback). */
   const forecastG = Math.max(0, Math.min(5, Math.round(fc.max_expected)));
 
-  const fcInner = `
-        <div class="hw-storm-risk-fc-gauge">${buildStormRiskGaugeSvg(forecastG, "Max expected geomagnetic level in next 24 hours", { showDialCode: false })}</div>
-        <div class="hw-gstorm-footer" style="margin-top:5px;line-height:1.35">Max expected in next 24h</div>
+  const nowGauge = `<div class="hw-storm-risk-now-gauge">${buildStormRiskGaugeSvg(sr.now.g_level, "Current observed geomagnetic storm level", { showDialCode: true })}</div>`;
+  const fcGauge = `<div class="hw-storm-risk-fc-gauge">${buildStormRiskGaugeSvg(forecastG, "Max expected geomagnetic level in next 24 hours", { showDialCode: false })}</div>`;
+  const fcFoot = `
+        <div class="hw-gstorm-footer" style="margin-top:2px;line-height:1.35">Max expected in next 24h</div>
         <div class="hw-gstorm-footer" style="margin-top:2px">From Kp forecast: G${forecastG}</div>`;
 
   const openClass = isOpen ? " hw-impact-tip-open" : "";
@@ -2150,11 +2147,13 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
     ${renderStormProgress(sp)}
     <div class="hw-storm-risk-grid">
       <div class="hw-storm-risk-head-now">Now</div>
-      ${nowCol}
-      <div class="hw-storm-risk-rail">
-        <div class="hw-storm-risk-head-fc">Forecast 24h</div>
-        <div class="hw-storm-risk-fc">${fcInner}</div>
+      <div class="hw-storm-risk-head-fc hw-storm-risk-rail-edge">Forecast 24h</div>
+      <div class="hw-storm-risk-now-gauge-cell">${nowGauge}</div>
+      <div class="hw-storm-risk-fc-gauge-cell hw-storm-risk-rail-edge">${fcGauge}</div>
+      <div class="hw-storm-risk-now-only">
+        <div class="hw-storm-risk-now-lbl">${escText(sr.now.label)}</div>
       </div>
+      <div class="hw-storm-risk-fc-foot hw-storm-risk-rail-edge">${fcFoot}</div>
     </div>
   </div>`;
 }
