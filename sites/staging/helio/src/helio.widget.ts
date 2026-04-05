@@ -301,12 +301,11 @@ const WIDGET_CSS = `
 /* Storm Risk: NOW | FORECAST 24h */
 .hw-storm-risk-head{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;margin:6px 0 5px}
 .hw-storm-risk-head span{color:#3a4c52;padding:0 5px;font-weight:400;letter-spacing:0}
-.hw-storm-risk-cols{display:grid;grid-template-columns:minmax(5.25rem,7.75rem) minmax(0,1fr);gap:8px 12px;align-items:start}
-.hw-storm-risk-now{padding:0 6px 0 0;min-width:0}
-.hw-storm-risk-now-num{font-size:48px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.02em}
-.hw-storm-risk-now-lbl{font-size:.68em;color:#96a8b8;margin-top:4px;line-height:1.25}
-.hw-storm-risk-fc{border-left:1px solid #1e2c30;padding-left:12px;margin-left:0;min-width:0}
-.hw-storm-risk-fc-cap{font-size:.60em;color:#7a9298;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.hw-storm-risk-cols{display:grid;grid-template-columns:minmax(5rem,6.2rem) minmax(0,1fr);gap:6px 10px;align-items:start}
+.hw-storm-risk-now{padding:0 4px 0 0;min-width:0}
+.hw-storm-risk-now-num{font-size:48px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.05em}
+.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:5px;line-height:1.22;word-wrap:break-word}
+.hw-storm-risk-fc{border-left:1px solid #1e2c30;padding-left:10px;margin-left:0;min-width:0}
 .hw-storm-severe{border:1px solid #e05c5c66;background:linear-gradient(165deg,#e05c5c14,#1a1216);border-radius:4px;padding:9px 10px}
 .hw-storm-severe-title{font-size:.65em;font-weight:700;color:#e07a7a;letter-spacing:.08em;text-transform:uppercase}
 .hw-storm-severe-g{font-size:.85em;color:#e8c8c8;margin-top:6px;font-weight:600}
@@ -2085,7 +2084,6 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
     const pct = Math.round(sevProb * 100);
     fcCol = `
       <div class="hw-storm-risk-fc">
-        <div class="hw-storm-risk-fc-cap">Forecast 24h</div>
         <div class="hw-storm-severe" role="alert">
           <div class="hw-storm-severe-title">Severe storm risk</div>
           <div class="hw-storm-severe-g">${sevKey} expected · ${escText(sevName)}</div>
@@ -2102,7 +2100,6 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
     ].join("");
     fcCol = `
       <div class="hw-storm-risk-fc">
-        <div class="hw-storm-risk-fc-cap">Forecast 24h</div>
         <div class="hw-gstorm-rows">${rows}</div>
         <div class="hw-gstorm-footer" style="margin-top:6px">From Kp forecast · max implied G${fc.max_expected}</div>
       </div>`;
