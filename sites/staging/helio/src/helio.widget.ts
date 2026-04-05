@@ -121,7 +121,7 @@ function escText(s: string): string {
 }
 /** Hero chip → Indicators panel section ids (scroll to first, flash all). */
 const HERO_SCALE_LINKS = {
-  G: ["storm_risk"],
+  G: ["aurora", "storm_risk"],
   R: ["radio"],
   S: ["satellite_drag", "gnss"],
   X: ["xray", "solar"],
