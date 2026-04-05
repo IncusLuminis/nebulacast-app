@@ -467,15 +467,10 @@ const WIDGET_CSS = `
 .hw-info-top-row{display:flex;gap:8px;align-items:flex-start}
 .hw-magnet-mini{flex-shrink:0;cursor:pointer;border-radius:4px;border:1px solid #1e2c30;padding:1px;transition:background .12s;display:flex;flex-direction:column;align-items:center;width:80px}
 .hw-magnet-mini:hover,.hw-magnet-mini.hw-kpi-active{background:#ffffff0d;border-color:#2a3c42}
-/* Solar Disk Mini Loop */
+/* Solar disk mini — single GIF (sites/staging/index.html sunGifMap + current_eit_*.gif) */
 .hw-solar-mini-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;border-radius:4px;border:1px solid #1e2c30;padding:1px}
 .hw-solar-mini-inner{position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;border:1px solid #2a3c42;background:#0a0a0a;flex-shrink:0}
 .hw-solar-mini-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;object-position:center}
-.hw-solar-mini-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s;background:transparent}
-.hw-solar-mini-switcher{display:flex;align-items:center;gap:3px;margin-top:3px}
-.hw-solar-mini-btn{background:none;border:none;color:#607880;font-size:.75em;cursor:pointer;padding:0 2px;line-height:1;transition:color .12s;font-family:inherit}
-.hw-solar-mini-btn:hover{color:#b4c6cc}
-.hw-solar-mini-lbl{font-size:.60em;color:#96a8b8;letter-spacing:.02em;min-width:52px;text-align:center;font-weight:600}
 .hw-magnet-state{font-size:.64em;text-align:center;margin-top:2px;font-weight:600;letter-spacing:.03em}
 @keyframes hw-wind{0%{transform:translateX(0);opacity:.85}100%{transform:translateX(14px);opacity:0}}
 .hw-wg{animation:hw-wind 1.5s linear infinite}
@@ -1334,41 +1329,39 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 
 // ── Hero section ─────────────────────────────────────────────────────────────
 
-/** NASA SDO rolling ~24h MP4 (512²) aligned with each hero solar channel. */
-function sdoLoopMp4ForSolarChannel(channelId: string): string {
-  const base = "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/";
-  const fileById: Record<string, string> = {
-    eit171: "latest_512_0171.mp4",
-    eit195: "latest_512_0193.mp4",
-    eit284: "latest_512_0211.mp4",
-    eit304: "latest_512_0304.mp4",
-    cont:   "latest_512_HMID.mp4",
-    mag:    "latest_512_HMIB.mp4",
-  };
-  return base + (fileById[channelId] ?? "latest_512_0171.mp4");
+/** Same EIT suffix mapping as `sites/staging/index.html` (`sunGifMap` keyed by `summary.status`). */
+const HERO_SUN_GIF_SUFFIX: Record<HelioStatus, string> = {
+  quiet:    "171",
+  active:   "195",
+  elevated: "284",
+  storm:    "304",
+};
+
+/**
+ * Live: `data.summary.status` (matches NOP hero). Scrub: approximate same four bands from forecast Kp/G
+ * (G3+ → storm, G1+ → elevated, Kp≥4 → active, else quiet) so the GIF tracks the scrubbed Kp readout.
+ */
+function helioHeroSunStatus(data: HelioNow, scrubData: ScrubData | null): HelioStatus {
+  if (scrubData == null) return data.summary?.status ?? "quiet";
+  const gNum = parseInt((scrubData.gScale ?? "G0").replace(/\D/g, ""), 10) || 0;
+  if (gNum >= 3) return "storm";
+  if (gNum >= 1) return "elevated";
+  if (scrubData.kp >= 4) return "active";
+  return "quiet";
 }
 
-function renderSolarMini(channelIdx: number, baseUrl?: string): string {
-  const ch  = SOLAR_CHANNELS[channelIdx];
-  const hmi = SUN_HMI_URL;
-  const src = resolveAssetUrl(ch.url, baseUrl);
-  const loopSrc = sdoLoopMp4ForSolarChannel(ch.id);
+function renderHeroSunGif(status: HelioStatus, baseUrl?: string): string {
+  const wave  = HERO_SUN_GIF_SUFFIX[status] ?? "171";
+  const path  = `/assets/gifs/current_eit_${wave}.gif`;
+  const src   = resolveAssetUrl(path, baseUrl);
+  const hmi   = SUN_HMI_URL;
+  const tone  = STATUS_TONE[status] ?? STATUS_TONE.quiet;
+  const br    = `${tone.accent}44`;
+  const glow  = `0 0 10px ${tone.accent}55,0 0 24px ${tone.accent}22`;
   return `<div class="hw-solar-mini-wrap" style="cursor:default">
-    <div class="hw-solar-mini-inner">
-      <img class="hw-solar-mini-img" src="${esc(src)}" alt="${esc(ch.label)}"
+    <div class="hw-solar-mini-inner" style="border-color:${br};box-shadow:${glow}">
+      <img class="hw-solar-mini-img" src="${esc(src)}" alt="Sun EIT ${esc(wave)}"
         onerror="if(this.src!=='${esc(hmi)}')this.src='${esc(hmi)}'" />
-      <video class="hw-solar-mini-video" autoplay loop muted playsinline preload="auto"
-        onplaying="this.style.opacity=1"
-        oncanplay="void this.play().catch(function(){})"
-        onerror="this.style.display='none'"
-        aria-label="Solar disk · ${esc(ch.label)} · last 24h">
-        <source src="${esc(loopSrc)}" type="video/mp4">
-      </video>
-    </div>
-    <div class="hw-solar-mini-switcher">
-      <button class="hw-solar-mini-btn" data-solar-prev>&#8249;</button>
-      <span class="hw-solar-mini-lbl">${esc(ch.label)}</span>
-      <button class="hw-solar-mini-btn" data-solar-next>&#8250;</button>
     </div>
   </div>`;
 }
@@ -1376,7 +1369,6 @@ function renderSolarMini(channelIdx: number, baseUrl?: string): string {
 function renderHero(
   data: HelioNow, heroExpanded: boolean,
   scrubData: ScrubData | null, opts: HelioWidgetOptions, _ovationData: OvationData | null,
-  solarChannelIdx: number = 0,
 ): string {
   const { summary, metrics } = data;
   const tone = STATUS_TONE[summary.status] ?? STATUS_TONE.quiet;
@@ -1416,6 +1408,8 @@ function renderHero(
     ? `linear-gradient(160deg, #0d2a1a 0%, ${tone.bg}22 75%)`
     : `${tone.bg}18`;
 
+  const sunGifStatus = helioHeroSunStatus(data, scrubData);
+
   const ovationJpg = "https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg";
   const auroraBanner = isAuroraAlert ? `
     <div class="hw-aurora-banner">
@@ -1435,7 +1429,7 @@ function renderHero(
         <div class="hw-info-col">
           <div class="hw-info-top-row">
             <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
-            ${renderSolarMini(solarChannelIdx, opts.baseUrl)}
+            ${renderHeroSunGif(sunGifStatus, opts.baseUrl)}
           </div>
         </div>
       </div>
@@ -1801,15 +1795,6 @@ function resolveAssetUrl(path: string, baseUrl?: string): string {
 }
 
 const SOLAR_DISK_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
-
-const SOLAR_CHANNELS = [
-  { id: "eit171", label: "EIT 171",    url: "/assets/gifs/current_eit_171.gif" },
-  { id: "eit195", label: "EIT 195",    url: "/assets/gifs/current_eit_195.gif" },
-  { id: "eit284", label: "EIT 284",    url: "/assets/gifs/current_eit_284.gif" },
-  { id: "eit304", label: "EIT 304",    url: "/assets/gifs/current_eit_304.gif" },
-  { id: "cont",   label: "Continuum",  url: "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg" },
-  { id: "mag",    label: "Magnetogram",url: "https://soho.nascom.nasa.gov/data/realtime/hmi_mag/512/latest.jpg" },
-] as const;
 
 const SUN_HMI_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
 const SOLAR_DISK_PX  = 240;
@@ -3093,7 +3078,6 @@ function renderCard(
   expandedImpacts:       Set<string>,
   opts:                  HelioWidgetOptions,
   ovationData:           OvationData | null,
-  solarChannelIdx:       number = 0,
 ): string {
   const scrubData   = buildScrubData(data, scrubOffset);
   const histPts     = data.metrics.kp_history_1h ?? [];
@@ -3107,7 +3091,7 @@ function renderCard(
   return `
     <div class="hw-root">
       ${renderHeader(data)}
-      ${renderHero(data, heroExpanded, scrubData, opts, ovationData, solarChannelIdx)}
+      ${renderHero(data, heroExpanded, scrubData, opts, ovationData)}
       ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${histToggle}
       ${histDetail}
@@ -3153,8 +3137,6 @@ class HelioWidgetInstance {
   private solarRegions:        SolarRegion[] | null = null;
   private solarExpanded        = false;
   private solarLayers:         Set<string> = new Set(["X", "M", "C", "quiet"]);
-  private solarChannelIdx      = 0;
-  private solarChannelAutoSet  = false; // true once auto-set from status or loaded from storage
   private expandedImpacts:     Set<string> = new Set();
   private ovationData:      OvationData | null = null;
   private timer:            ReturnType<typeof setTimeout> | null = null;
@@ -3275,22 +3257,6 @@ class HelioWidgetInstance {
         this.render();
         requestAnimationFrame(() => requestAnimationFrame(() => runHeroScaleNav(ids)));
       }
-      return;
-    }
-
-    // Solar channel switcher
-    if (target.closest("[data-solar-prev]")) {
-      this.solarChannelIdx = (this.solarChannelIdx - 1 + SOLAR_CHANNELS.length) % SOLAR_CHANNELS.length;
-      this.solarChannelAutoSet = true;
-      this.saveUiState();
-      this.render();
-      return;
-    }
-    if (target.closest("[data-solar-next]")) {
-      this.solarChannelIdx = (this.solarChannelIdx + 1) % SOLAR_CHANNELS.length;
-      this.solarChannelAutoSet = true;
-      this.saveUiState();
-      this.render();
       return;
     }
 
@@ -3460,11 +3426,6 @@ class HelioWidgetInstance {
       const res = await fetch(this.opts.dataUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.data = await res.json() as HelioNow;
-      if (!this.solarChannelAutoSet) {
-        const STATUS_CHANNEL: Record<string, number> = { quiet: 1, active: 0, elevated: 2, storm: 3 };
-        this.solarChannelIdx = STATUS_CHANNEL[this.data.summary?.status ?? "quiet"] ?? 0;
-        this.solarChannelAutoSet = true;
-      }
       this.render();
       this.fetchSolarRegions();  // parallel, re-renders when ready
       this.fetchOvationData();   // parallel, re-renders when ready
@@ -3523,7 +3484,7 @@ class HelioWidgetInstance {
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
       this.expandedTimelineKey, this.timelineOpen, this.collapsedDays,
       this.impactsOpen, this.cmeExpanded, this.forecastOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
-      this.expandedImpacts, this.opts, this.ovationData, this.solarChannelIdx,
+      this.expandedImpacts, this.opts, this.ovationData,
     );
   }
 
