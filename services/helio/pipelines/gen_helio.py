@@ -116,6 +116,7 @@ def main() -> int:
         },
         "metrics":          metrics,
         "summary":          aggregate["summary"],
+        "hero":             aggregate["hero"],
         "scales":           aggregate["scales"],
         "forecast":         aggregate["forecast"],
         "aurora_hint":      aggregate["aurora_hint"],

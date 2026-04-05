@@ -132,6 +132,14 @@ This section is the most implementation-critical part of the spec.
 
 ⸻
 
+5a. Helio Data Contract v1.3
+
+Additive amendments: optional **`hero`** object (hero scale labels + optional KPI mirrors), widget scroll **`id`** map for G/R/S/X chips, and notes for local verification on **port 8080**.
+
+See: `docs/Helio/Helio Data Contract v1.3.md`
+
+⸻
+
 6. Alert Event Schema
 
 Defines the normalized structure used for all alerts.

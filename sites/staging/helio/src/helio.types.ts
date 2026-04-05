@@ -1,6 +1,7 @@
 /**
  * TypeScript types for the helio_now.json data contract.
- * Source of truth: docs/Helio/Helio Data Contract v1.md
+ * Baseline: docs/Helio/Helio Data Contract v1.md
+ * Additive (hero, etc.): docs/Helio/Helio Data Contract v1.3.md
  */
 
 export type HelioStatus = "quiet" | "active" | "elevated" | "storm";
@@ -56,6 +57,20 @@ export interface HelioScales {
   g_scale: ScaleValue;
   r_scale: ScaleValue;
   s_scale: ScaleValue;
+}
+
+/** Optional UI mirror for the Space Weather hero (additive; never required). */
+export interface HelioHeroScales {
+  g?: string;
+  r?: string;
+  s?: string;
+  x?: string;
+}
+
+export interface HelioHeroBlock {
+  kp?:           number;
+  status_label?: string;
+  scales?:       HelioHeroScales;
 }
 
 export interface HelioForecast {
@@ -139,6 +154,7 @@ export interface CmeTrackerEvent {
 export interface HelioNow {
   schema_version:   string;
   updated_utc:      string;
+  hero?:            HelioHeroBlock;
   source: {
     domain:   string;
     provider: string;
