@@ -1,4 +1,4 @@
-"use strict";var HelioWidgetModule=(()=>{var he=Object.defineProperty,it=Object.defineProperties,rt=Object.getOwnPropertyDescriptor,lt=Object.getOwnPropertyDescriptors,ct=Object.getOwnPropertyNames,Ae=Object.getOwnPropertySymbols;var ze=Object.prototype.hasOwnProperty,dt=Object.prototype.propertyIsEnumerable;var Re=(e,s,t)=>s in e?he(e,s,{enumerable:!0,configurable:!0,writable:!0,value:t}):e[s]=t,Fe=(e,s)=>{for(var t in s||(s={}))ze.call(s,t)&&Re(e,t,s[t]);if(Ae)for(var t of Ae(s))dt.call(s,t)&&Re(e,t,s[t]);return e},Ie=(e,s)=>it(e,lt(s));var pt=(e,s)=>{for(var t in s)he(e,t,{get:s[t],enumerable:!0})},ht=(e,s,t,o)=>{if(s&&typeof s=="object"||typeof s=="function")for(let n of ct(s))!ze.call(e,n)&&n!==t&&he(e,n,{get:()=>s[n],enumerable:!(o=rt(s,n))||o.enumerable});return e};var mt=e=>ht(he({},"__esModule",{value:!0}),e);var zs={};pt(zs,{HelioWidget:()=>nt});var Oe={quiet:{bg:"#1a2e22",accent:"#5cce8c"},active:{bg:"#2e2a1a",accent:"#d4cc5c"},elevated:{bg:"#2e1f10",accent:"#e0a84a"},storm:{bg:"#2e1212",accent:"#e05c5c"}},gt={none:"#666",low:"#5cce8c",moderate:"#e0a84a",high:"#e05c5c"},ut={info:"#666",watch:"#d4cc5c",warning:"#e05c5c"},we={A:"#888",B:"#5cce8c",C:"#aad47a",M:"#e0a84a",X:"#e05c5c"},wt={low:"#5cce8c",moderate:"#d4cc5c",high:"#e05c5c",unknown:"#96a8b8"},xt={detected:"Detected",inbound:"Inbound",arrival_window:"Arriving",arrived:"Arrived"};function ft(e){if(!e)return"Update time unavailable";try{let s=Math.round((Date.now()-new Date(e).getTime())/6e4);if(s<1)return"Updated just now";if(s<60)return`Updated ${s} min ago`;let t=Math.floor(s/60);return t<24?`Updated ${t}h ago`:`Updated ${Math.floor(t/24)}d ago`}catch(s){return"Updated recently"}}function bt(e){if(!e)return"\u2014";try{return new Date(e).toLocaleString("en-GB",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC",hour12:!1})+" UTC"}catch(s){return e}}function me(e){if(!e)return"";try{return new Date(e).toLocaleString("en-GB",{hour:"2-digit",minute:"2-digit",hour12:!1})}catch(s){return e}}function ue(e){try{return new Date(e).toLocaleString("en-GB",{hour:"2-digit",minute:"2-digit",hour12:!1})}catch(s){return e.slice(11,16)}}function Ne(e){if(!e)return"\u2014";try{return new Date(e).toLocaleString("en-GB",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC",hour12:!1})+" UTC"}catch(s){return e}}function T(e){return e.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function g(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}var $t={G:["storm_risk"],R:["radio"],S:["satellite_drag","gnss"],X:["xray","solar"]},vt=2400;function Ge(){var e,s;try{let t=(s=(e=globalThis.location)==null?void 0:e.hostname)!=null?s:"";return t==="localhost"||t==="127.0.0.1"||t.endsWith(".local")}catch(t){return!1}}function yt(e){let s=[],t=null;for(let o of e){let n=document.getElementById(o);n instanceof HTMLElement?(t||(t=n),s.push(n)):Ge()&&console.warn(`[Helio] Hero chip nav: missing element #${o}`)}t&&t.scrollIntoView({behavior:"smooth",block:"start"});for(let o of s)o.classList.add("section-flash"),window.setTimeout(()=>o.classList.remove("section-flash"),vt)}function Be(e){let s=e.trim();return s.toUpperCase().startsWith("X:")?s.slice(2).trim()||"\u2014":s||"\u2014"}function ye(e,s){let t=e.trim().toUpperCase();if(t.length<2||t[0]!==s)return 0;let o=parseInt(t.slice(1),10);return!isFinite(o)||o<0?0:Math.min(5,o)}function ke(e){return e<=0?{color:"#96a8b8",background:"#1e2830",borderColor:"#2a3c42"}:e===1?{color:"#d4cc5c",background:"#2a2616",borderColor:"#5a5028"}:e===2?{color:"#e0a84a",background:"#2c2214",borderColor:"#6a5018"}:e===3?{color:"#e8a060",background:"#301810",borderColor:"#744018"}:e===4?{color:"#e07058",background:"#2c1412",borderColor:"#762820"}:{color:"#e05c5c",background:"#2e1214",borderColor:"#7a2828"}}function kt(e){var r,i,l;let s=e.trim().toUpperCase();if(s==="\u2014"||s===""||s==="-")return{color:"#607880",background:"#1e2830",borderColor:"#2a3c42"};let t=(r=we[s])!=null?r:"#a0b4b8",o={A:"#242628",B:"#15221c",C:"#1a2215",M:"#221a10",X:"#281416"},n={A:"#404448",B:"#2a5a40",C:"#3e6a30",M:"#6a5018",X:"#7a2828"};return{color:t,background:(i=o[s])!=null?i:"#1e2830",borderColor:(l=n[s])!=null?l:"#3a4c52"}}function _t(e,s){var r,i,l,a,c,d;let t=e.metrics.xray_class!=null?String(e.metrics.xray_class):"\u2014",o={g:(r=s==null?void 0:s.gScale)!=null?r:e.scales.g_scale,r:e.scales.r_scale,s:e.scales.s_scale,x:Be(t)},n=(i=e.hero)==null?void 0:i.scales;return n?{g:(l=n.g)!=null?l:o.g,r:(a=n.r)!=null?a:o.r,s:(c=n.s)!=null?c:o.s,x:Be((d=n.x)!=null?d:o.x)}:o}var St=`
+"use strict";var HelioWidgetModule=(()=>{var ue=Object.defineProperty,ht=Object.defineProperties,mt=Object.getOwnPropertyDescriptor,ut=Object.getOwnPropertyDescriptors,gt=Object.getOwnPropertyNames,Re=Object.getOwnPropertySymbols;var Fe=Object.prototype.hasOwnProperty,wt=Object.prototype.propertyIsEnumerable;var Ie=(e,s,t)=>s in e?ue(e,s,{enumerable:!0,configurable:!0,writable:!0,value:t}):e[s]=t,ze=(e,s)=>{for(var t in s||(s={}))Fe.call(s,t)&&Ie(e,t,s[t]);if(Re)for(var t of Re(s))wt.call(s,t)&&Ie(e,t,s[t]);return e},Ne=(e,s)=>ht(e,ut(s));var xt=(e,s)=>{for(var t in s)ue(e,t,{get:s[t],enumerable:!0})},ft=(e,s,t,o)=>{if(s&&typeof s=="object"||typeof s=="function")for(let n of gt(s))!Fe.call(e,n)&&n!==t&&ue(e,n,{get:()=>s[n],enumerable:!(o=mt(s,n))||o.enumerable});return e};var bt=e=>ft(ue({},"__esModule",{value:!0}),e);var Ns={};xt(Ns,{HelioWidget:()=>ct});var Pe={quiet:{bg:"#1a2e22",accent:"#5cce8c"},active:{bg:"#2e2a1a",accent:"#d4cc5c"},elevated:{bg:"#2e1f10",accent:"#e0a84a"},storm:{bg:"#2e1212",accent:"#e05c5c"}},Ke={none:"#666",low:"#5cce8c",moderate:"#e0a84a",high:"#e05c5c"},$t={info:"#666",watch:"#d4cc5c",warning:"#e05c5c"},fe={A:"#888",B:"#5cce8c",C:"#aad47a",M:"#e0a84a",X:"#e05c5c"},vt={low:"#5cce8c",moderate:"#d4cc5c",high:"#e05c5c",unknown:"#96a8b8"},yt={detected:"Detected",inbound:"Inbound",arrival_window:"Arriving",arrived:"Arrived"};function kt(e){if(!e)return"Update time unavailable";try{let s=Math.round((Date.now()-new Date(e).getTime())/6e4);if(s<1)return"Updated just now";if(s<60)return`Updated ${s} min ago`;let t=Math.floor(s/60);return t<24?`Updated ${t}h ago`:`Updated ${Math.floor(t/24)}d ago`}catch(s){return"Updated recently"}}function _t(e){if(!e)return"\u2014";try{return new Date(e).toLocaleString("en-GB",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC",hour12:!1})+" UTC"}catch(s){return e}}function ge(e){if(!e)return"";try{return new Date(e).toLocaleString("en-GB",{hour:"2-digit",minute:"2-digit",hour12:!1})}catch(s){return e}}function xe(e){try{return new Date(e).toLocaleString("en-GB",{hour:"2-digit",minute:"2-digit",hour12:!1})}catch(s){return e.slice(11,16)}}function Be(e){if(!e)return"\u2014";try{return new Date(e).toLocaleString("en-GB",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC",hour12:!1})+" UTC"}catch(s){return e}}function A(e){return e.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function u(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}var St={G:["storm_risk"],R:["radio"],S:["satellite_drag","gnss"],X:["xray","solar"]},Ct=2400;function qe(){var e,s;try{let t=(s=(e=globalThis.location)==null?void 0:e.hostname)!=null?s:"";return t==="localhost"||t==="127.0.0.1"||t.endsWith(".local")}catch(t){return!1}}function Mt(e){let s=[],t=null;for(let o of e){let n=document.getElementById(o);n instanceof HTMLElement?(t||(t=n),s.push(n)):qe()&&console.warn(`[Helio] Hero chip nav: missing element #${o}`)}t&&t.scrollIntoView({behavior:"smooth",block:"start"});for(let o of s)o.classList.add("section-flash"),window.setTimeout(()=>o.classList.remove("section-flash"),Ct)}function De(e){let s=e.trim();return s.toUpperCase().startsWith("X:")?s.slice(2).trim()||"\u2014":s||"\u2014"}function ke(e,s){let t=e.trim().toUpperCase();if(t.length<2||t[0]!==s)return 0;let o=parseInt(t.slice(1),10);return!isFinite(o)||o<0?0:Math.min(5,o)}function _e(e){return e<=0?{color:"#96a8b8",background:"#1e2830",borderColor:"#2a3c42"}:e===1?{color:"#d4cc5c",background:"#2a2616",borderColor:"#5a5028"}:e===2?{color:"#e0a84a",background:"#2c2214",borderColor:"#6a5018"}:e===3?{color:"#e8a060",background:"#301810",borderColor:"#744018"}:e===4?{color:"#e07058",background:"#2c1412",borderColor:"#762820"}:{color:"#e05c5c",background:"#2e1214",borderColor:"#7a2828"}}function Lt(e){var r,i,l;let s=e.trim().toUpperCase();if(s==="\u2014"||s===""||s==="-")return{color:"#607880",background:"#1e2830",borderColor:"#2a3c42"};let t=(r=fe[s])!=null?r:"#a0b4b8",o={A:"#242628",B:"#15221c",C:"#1a2215",M:"#221a10",X:"#281416"},n={A:"#404448",B:"#2a5a40",C:"#3e6a30",M:"#6a5018",X:"#7a2828"};return{color:t,background:(i=o[s])!=null?i:"#1e2830",borderColor:(l=n[s])!=null?l:"#3a4c52"}}function Ht(e,s){var r,i,l,a,c,d;let t=e.metrics.xray_class!=null?String(e.metrics.xray_class):"\u2014",o={g:(r=s==null?void 0:s.gScale)!=null?r:e.scales.g_scale,r:e.scales.r_scale,s:e.scales.s_scale,x:De(t)},n=(i=e.hero)==null?void 0:i.scales;return n?{g:(l=n.g)!=null?l:o.g,r:(a=n.r)!=null?a:o.r,s:(c=n.s)!=null?c:o.s,x:De((d=n.x)!=null?d:o.x)}:o}var Et=`
 .hw-root{font-family:inherit;color:#e0e0e0;background:#161c1e;border-radius:6px;overflow:hidden}
 /* Hero chip deep-links: keep targets clear of sticky page chrome */
 .hw-root #aurora,.hw-root #storm_risk,.hw-root #radio,.hw-root #satellite_drag,.hw-root #gnss,.hw-root #xray,.hw-root #solar{scroll-margin-top:14px}
@@ -271,81 +271,81 @@
 .hw-error-title{font-size:.82em;font-weight:600;color:#b4c6cc;margin-bottom:4px}
 .hw-error-body{font-size:.75em}
 .hw-loading{padding:16px;text-align:center;color:#405058;font-size:.78em}
-`,Pe=!1;function Ct(){if(Pe)return;let e=document.createElement("style");e.id="helio-widget-css",e.textContent=St,document.head.appendChild(e),Pe=!0}function Mt(e){if(!e.length)return'<div style="color:#405058;font-size:.72em;padding:4px">No data</div>';let s=200,t=32,o=e.length,n=s/o,r=e.map((i,l)=>{let a=Math.max(2,Math.min(t,i.kp/9*t)),c=t-a,d=l*n,p=i.kp>=6?"#e05c5c":i.kp>=5?"#e0a84a":i.kp>=4?"#d4cc5c":"#5cce8c";return`<rect x="${d.toFixed(1)}" y="${c.toFixed(1)}" width="${(n-1).toFixed(1)}" height="${a.toFixed(1)}" fill="${p}" rx="1"><title>Kp ${i.kp.toFixed(1)} \xB7 ${g(ue(i.t_utc))} UTC</title></rect>`}).join("");return`<svg viewBox="0 0 ${s} ${t}" style="width:100%;height:${t}px;display:block" preserveAspectRatio="none">${r}</svg>`}function De(e,s,t,o,n){if(e.length<2)return'<div style="color:#405058;font-size:.72em;padding:4px">No data</div>';let r=200,i=Math.min(...e),l=Math.max(...e),a=l-i||1,c=u=>o-2-(u-i)/a*(o-4),d=e.map((u,h)=>`${(h/(e.length-1)*r).toFixed(1)},${c(u).toFixed(1)}`).join(" "),p="";if(n&&i<0&&l>0){let u=c(0);p=`<line x1="0" y1="${u.toFixed(1)}" x2="${r}" y2="${u.toFixed(1)}" stroke="#2a3438" stroke-width="0.8" stroke-dasharray="3,2"/>`}let m=e.map((u,h)=>`<rect x="${(h/(e.length-1)*r-4).toFixed(1)}" y="0" width="8" height="${o}" fill="transparent"><title>${g(s[h]||"")} \xB7 ${u.toFixed(1)}</title></rect>`).join("");return`<svg viewBox="0 0 ${r} ${o}" style="width:100%;height:${o}px;display:block" preserveAspectRatio="none">
+`,Ye=!1;function At(){if(Ye)return;let e=document.createElement("style");e.id="helio-widget-css",e.textContent=Et,document.head.appendChild(e),Ye=!0}function Tt(e){if(!e.length)return'<div style="color:#405058;font-size:.72em;padding:4px">No data</div>';let s=200,t=32,o=e.length,n=s/o,r=e.map((i,l)=>{let a=Math.max(2,Math.min(t,i.kp/9*t)),c=t-a,d=l*n,p=i.kp>=6?"#e05c5c":i.kp>=5?"#e0a84a":i.kp>=4?"#d4cc5c":"#5cce8c";return`<rect x="${d.toFixed(1)}" y="${c.toFixed(1)}" width="${(n-1).toFixed(1)}" height="${a.toFixed(1)}" fill="${p}" rx="1"><title>Kp ${i.kp.toFixed(1)} \xB7 ${u(xe(i.t_utc))} UTC</title></rect>`}).join("");return`<svg viewBox="0 0 ${s} ${t}" style="width:100%;height:${t}px;display:block" preserveAspectRatio="none">${r}</svg>`}function je(e,s,t,o,n){if(e.length<2)return'<div style="color:#405058;font-size:.72em;padding:4px">No data</div>';let r=200,i=Math.min(...e),l=Math.max(...e),a=l-i||1,c=g=>o-2-(g-i)/a*(o-4),d=e.map((g,h)=>`${(h/(e.length-1)*r).toFixed(1)},${c(g).toFixed(1)}`).join(" "),p="";if(n&&i<0&&l>0){let g=c(0);p=`<line x1="0" y1="${g.toFixed(1)}" x2="${r}" y2="${g.toFixed(1)}" stroke="#2a3438" stroke-width="0.8" stroke-dasharray="3,2"/>`}let m=e.map((g,h)=>`<rect x="${(h/(e.length-1)*r-4).toFixed(1)}" y="0" width="8" height="${o}" fill="transparent"><title>${u(s[h]||"")} \xB7 ${g.toFixed(1)}</title></rect>`).join("");return`<svg viewBox="0 0 ${r} ${o}" style="width:100%;height:${o}px;display:block" preserveAspectRatio="none">
     ${p}
     <polyline points="${d}" fill="none" stroke="${t}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
     ${m}
-  </svg>`}function Lt(e){if(e.length<2)return'<div style="color:#405058;font-size:.72em;padding:4px">No data</div>';let s=200,t=32,o=e.map(d=>Math.max(-9,Math.min(-3,Math.log10(d.flux)))),n=Math.min(...o),i=Math.max(...o)-n||1,l=d=>t-2-(d-n)/i*(t-4),a=o.map((d,p)=>`${(p/(o.length-1)*s).toFixed(1)},${l(d).toFixed(1)}`).join(" "),c=e.map((d,p)=>{let m=p/(o.length-1)*s,u=d.flux>=1e-4?"X":d.flux>=1e-5?"M":d.flux>=1e-6?"C":d.flux>=1e-7?"B":"A";return`<rect x="${(m-4).toFixed(1)}" y="0" width="8" height="${t}" fill="transparent"><title>${g(ue(d.t_utc))} \xB7 ${u}-class (${d.flux.toExponential(2)})</title></rect>`}).join("");return`<svg viewBox="0 0 ${s} ${t}" style="width:100%;height:${t}px;display:block" preserveAspectRatio="none">
+  </svg>`}function Ot(e){if(e.length<2)return'<div style="color:#405058;font-size:.72em;padding:4px">No data</div>';let s=200,t=32,o=e.map(d=>Math.max(-9,Math.min(-3,Math.log10(d.flux)))),n=Math.min(...o),i=Math.max(...o)-n||1,l=d=>t-2-(d-n)/i*(t-4),a=o.map((d,p)=>`${(p/(o.length-1)*s).toFixed(1)},${l(d).toFixed(1)}`).join(" "),c=e.map((d,p)=>{let m=p/(o.length-1)*s,g=d.flux>=1e-4?"X":d.flux>=1e-5?"M":d.flux>=1e-6?"C":d.flux>=1e-7?"B":"A";return`<rect x="${(m-4).toFixed(1)}" y="0" width="8" height="${t}" fill="transparent"><title>${u(xe(d.t_utc))} \xB7 ${g}-class (${d.flux.toExponential(2)})</title></rect>`}).join("");return`<svg viewBox="0 0 ${s} ${t}" style="width:100%;height:${t}px;display:block" preserveAspectRatio="none">
     <polyline points="${a}" fill="none" stroke="#e0a84a" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
     ${c}
-  </svg>`}function ce(e){return`<div class="hw-kpi-popover-title">
+  </svg>`}function he(e){return`<div class="hw-kpi-popover-title">
     <span>${e}</span>
     <button class="hw-kpi-popover-close hw-kpi-close" aria-label="Close">\u2715</button>
-  </div>`}function Ht(e){var c;let s=(c=e.metrics.wind_history_1h)!=null?c:[],t=s[s.length-1],o=e.metrics.solar_wind_kms,n=o!=null?`${Math.round(o)} km/s`:"\u2014",r=o!=null?o>=700?"#e05c5c":o>=500?"#e0a84a":o>=400?"#d4cc5c":"#5cce8c":"#607880",i=(t==null?void 0:t.density)!=null?`${t.density.toFixed(2)} cm\u207B\xB3`:"\u2014",l=(t==null?void 0:t.temp_kk)!=null?`${t.temp_kk.toFixed(0)} kK`:"\u2014",a=(t==null?void 0:t.pressure_npa)!=null?`${t.pressure_npa.toFixed(2)} nPa`:"\u2014";return`<div class="hw-kpi-popover">
-    ${ce("Solar Wind \xB7 Current")}
+  </div>`}function Rt(e){var c;let s=(c=e.metrics.wind_history_1h)!=null?c:[],t=s[s.length-1],o=e.metrics.solar_wind_kms,n=o!=null?`${Math.round(o)} km/s`:"\u2014",r=o!=null?o>=700?"#e05c5c":o>=500?"#e0a84a":o>=400?"#d4cc5c":"#5cce8c":"#607880",i=(t==null?void 0:t.density)!=null?`${t.density.toFixed(2)} cm\u207B\xB3`:"\u2014",l=(t==null?void 0:t.temp_kk)!=null?`${t.temp_kk.toFixed(0)} kK`:"\u2014",a=(t==null?void 0:t.pressure_npa)!=null?`${t.pressure_npa.toFixed(2)} nPa`:"\u2014";return`<div class="hw-kpi-popover">
+    ${he("Solar Wind \xB7 Current")}
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Speed</span>
-        <span class="hw-kpi-stat-value" style="color:${r}">${g(n)}</span>
+        <span class="hw-kpi-stat-value" style="color:${r}">${u(n)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Density</span>
-        <span class="hw-kpi-stat-value">${g(i)}</span>
+        <span class="hw-kpi-stat-value">${u(i)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Temperature</span>
-        <span class="hw-kpi-stat-value">${g(l)}</span>
+        <span class="hw-kpi-stat-value">${u(l)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Dyn. pressure</span>
-        <span class="hw-kpi-stat-value">${g(a)}</span>
+        <span class="hw-kpi-stat-value">${u(a)}</span>
       </div>
     </div>
     <div class="hw-kpi-hint" style="margin-top:4px">Trend history: \u25B6 HISTORY</div>
-  </div>`}function Et(e){var l,a;let s=(l=e.metrics.xray_class)!=null?l:"A",t=e.metrics.xray_flux_wm2,o=t!=null?t.toExponential(2)+" W/m\xB2":"\u2014",n=[{label:"A",color:"#888"},{label:"B",color:"#5cce8c"},{label:"C",color:"#aad47a"},{label:"M",color:"#e0a84a"},{label:"X",color:"#e05c5c"}],r=n.map(c=>{let d=c.label===s,p=d?'<div class="hw-xray-scale-marker"></div>':"";return`<div class="hw-xray-scale-band" style="background:${c.color}${d?"cc":"44"}">${p}</div>`}).join(""),i=n.map(c=>`<div class="hw-xray-scale-label" style="color:${c.label===s?"#c8d8dc":"#607880"}">${c.label}</div>`).join("");return`<div class="hw-kpi-popover">
-    ${ce("X-Ray \xB7 Current")}
+  </div>`}function It(e){var l,a;let s=(l=e.metrics.xray_class)!=null?l:"A",t=e.metrics.xray_flux_wm2,o=t!=null?t.toExponential(2)+" W/m\xB2":"\u2014",n=[{label:"A",color:"#888"},{label:"B",color:"#5cce8c"},{label:"C",color:"#aad47a"},{label:"M",color:"#e0a84a"},{label:"X",color:"#e05c5c"}],r=n.map(c=>{let d=c.label===s,p=d?'<div class="hw-xray-scale-marker"></div>':"";return`<div class="hw-xray-scale-band" style="background:${c.color}${d?"cc":"44"}">${p}</div>`}).join(""),i=n.map(c=>`<div class="hw-xray-scale-label" style="color:${c.label===s?"#c8d8dc":"#607880"}">${c.label}</div>`).join("");return`<div class="hw-kpi-popover">
+    ${he("X-Ray \xB7 Current")}
     <div style="margin-bottom:8px">
       <div class="hw-xray-scale">${r}</div>
       <div class="hw-xray-scale-labels">${i}</div>
     </div>
-    <div class="hw-kpi-hint">Class: <b style="color:${(a=we[s])!=null?a:"#a0b4b8"}">${g(s)}-class</b> \xB7 ${g(o)}</div>
+    <div class="hw-kpi-hint">Class: <b style="color:${(a=fe[s])!=null?a:"#a0b4b8"}">${u(s)}-class</b> \xB7 ${u(o)}</div>
     <div class="hw-kpi-hint" style="margin-top:4px">Trend history: \u25B6 HISTORY</div>
-  </div>`}function Tt(e){let a='<rect x="0" y="16" width="200" height="6" rx="3" fill="#1e2c30"/>',c=[-10,-5,5,10].map(k=>{let _=100+k/20*100;return`<line x1="${_.toFixed(1)}" y1="16" x2="${_.toFixed(1)}" y2="22" stroke="#2a3c42" stroke-width="1"/>`}).join(""),d='<line x1="100" y1="14" x2="100" y2="24" stroke="#3a4c52" stroke-width="1.5"/>';if(e==null)return`<svg viewBox="0 0 200 36" style="width:100%;height:36px;display:block">${a}${c}${d}</svg>`;let p=e<=-10?"#e05c5c":e<=-5?"#e0a84a":e<0?"#d4b84a":e>=5?"#5cce8c":"#7acca8",m=Math.max(-20,Math.min(20,e)),u=100+m/20*100,h=3,w=m<0?u-h:100-h,v=Math.max(2*h,Math.abs(u-100)+2*h),f=`<rect x="${w.toFixed(1)}" y="16" width="${v.toFixed(1)}" height="6" rx="${h}" fill="${p}" opacity="0.82"/>`,x=5,b=15,$=b-x*1.1,y=`<polygon points="${u.toFixed(1)},${b.toFixed(1)} ${(u-x).toFixed(1)},${$.toFixed(1)} ${(u+x).toFixed(1)},${$.toFixed(1)}" fill="${p}"/>`,C=`<line x1="${u.toFixed(1)}" y1="${b.toFixed(1)}" x2="${u.toFixed(1)}" y2="${19 .toFixed(1)}" stroke="${p}" stroke-width="1" opacity="0.6"/>`,L=`<text x="${u.toFixed(1)}" y="31" text-anchor="middle" font-size="8" fill="${p}" font-weight="600">${e>=0?"+":""}${e.toFixed(1)}</text>`;return`<svg viewBox="0 0 200 36" style="width:100%;height:36px;display:block">
-    ${a}${c}${d}${f}${y}${C}${L}
-  </svg>`}function At(e){var m;let s=e.metrics.imf_bz_nt,t=e.metrics.imf_bt_nt,o=e.metrics.solar_wind_kms,n=(m=e.metrics.pressure_npa)!=null?m:null,r=s!=null?s<=-10?"#e05c5c":s<=-5?"#e0a84a":s>=5?"#5cce8c":"#a0b4b8":"#607880",i=s!=null?(s>=0?"+":"")+s.toFixed(1)+" nT":"\u2014",l=t!=null?t.toFixed(1)+" nT":"\u2014",a=o!=null?`${Math.round(o)} km/s`:"\u2014",c=n!=null?`${n.toFixed(2)} nPa`:"\u2014",d=xe(e),p=s!=null&&s<-5?{msg:"Southward IMF \xB7 Aurora favorable",color:"#5cce8c"}:s!=null&&s<0?{msg:"Weakly southward \xB7 Conditions may improve",color:"#d4cc5c"}:{msg:"Northward IMF \xB7 Stable magnetosphere",color:"#96a8b8"};return`<div class="hw-kpi-popover">
-    ${ce("IMF Bz \xB7 Coupling")}
+  </div>`}function Ft(e){let a='<rect x="0" y="16" width="200" height="6" rx="3" fill="#1e2c30"/>',c=[-10,-5,5,10].map(_=>{let y=100+_/20*100;return`<line x1="${y.toFixed(1)}" y1="16" x2="${y.toFixed(1)}" y2="22" stroke="#2a3c42" stroke-width="1"/>`}).join(""),d='<line x1="100" y1="14" x2="100" y2="24" stroke="#3a4c52" stroke-width="1.5"/>';if(e==null)return`<svg viewBox="0 0 200 36" style="width:100%;height:36px;display:block">${a}${c}${d}</svg>`;let p=e<=-10?"#e05c5c":e<=-5?"#e0a84a":e<0?"#d4b84a":e>=5?"#5cce8c":"#7acca8",m=Math.max(-20,Math.min(20,e)),g=100+m/20*100,h=3,w=m<0?g-h:100-h,v=Math.max(2*h,Math.abs(g-100)+2*h),$=`<rect x="${w.toFixed(1)}" y="16" width="${v.toFixed(1)}" height="6" rx="${h}" fill="${p}" opacity="0.82"/>`,x=5,f=15,b=f-x*1.1,S=`<polygon points="${g.toFixed(1)},${f.toFixed(1)} ${(g-x).toFixed(1)},${b.toFixed(1)} ${(g+x).toFixed(1)},${b.toFixed(1)}" fill="${p}"/>`,C=`<line x1="${g.toFixed(1)}" y1="${f.toFixed(1)}" x2="${g.toFixed(1)}" y2="${19 .toFixed(1)}" stroke="${p}" stroke-width="1" opacity="0.6"/>`,L=`<text x="${g.toFixed(1)}" y="31" text-anchor="middle" font-size="8" fill="${p}" font-weight="600">${e>=0?"+":""}${e.toFixed(1)}</text>`;return`<svg viewBox="0 0 200 36" style="width:100%;height:36px;display:block">
+    ${a}${c}${d}${$}${S}${C}${L}
+  </svg>`}function zt(e){var m;let s=e.metrics.imf_bz_nt,t=e.metrics.imf_bt_nt,o=e.metrics.solar_wind_kms,n=(m=e.metrics.pressure_npa)!=null?m:null,r=s!=null?s<=-10?"#e05c5c":s<=-5?"#e0a84a":s>=5?"#5cce8c":"#a0b4b8":"#607880",i=s!=null?(s>=0?"+":"")+s.toFixed(1)+" nT":"\u2014",l=t!=null?t.toFixed(1)+" nT":"\u2014",a=o!=null?`${Math.round(o)} km/s`:"\u2014",c=n!=null?`${n.toFixed(2)} nPa`:"\u2014",d=be(e),p=s!=null&&s<-5?{msg:"Southward IMF \xB7 Aurora favorable",color:"#5cce8c"}:s!=null&&s<0?{msg:"Weakly southward \xB7 Conditions may improve",color:"#d4cc5c"}:{msg:"Northward IMF \xB7 Stable magnetosphere",color:"#96a8b8"};return`<div class="hw-kpi-popover">
+    ${he("IMF Bz \xB7 Coupling")}
     <div class="hw-bz-gauge-wrap">
-      ${Tt(s)}
+      ${Ft(s)}
       <div class="hw-bz-gauge-labels"><span>\u221220 nT</span><span>\u221210</span><span>0</span><span>+10</span><span>+20 nT</span></div>
     </div>
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Bz</span>
-        <span class="hw-kpi-stat-value" style="color:${r}">${g(i)}</span>
+        <span class="hw-kpi-stat-value" style="color:${r}">${u(i)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Bt total</span>
-        <span class="hw-kpi-stat-value">${g(l)}</span>
+        <span class="hw-kpi-stat-value">${u(l)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Solar wind</span>
-        <span class="hw-kpi-stat-value">${g(a)}</span>
+        <span class="hw-kpi-stat-value">${u(a)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Pressure</span>
-        <span class="hw-kpi-stat-value">${g(c)}</span>
+        <span class="hw-kpi-stat-value">${u(c)}</span>
       </div>
     </div>
-    <div class="hw-kpi-hint" style="color:${p.color};font-weight:600;margin-bottom:4px">${g(p.msg)}</div>
-    <div style="font-size:.65em;color:#607880">Coupling: <span style="color:${d.color};font-weight:600">${g(d.coupling)}</span> \xB7 Trend history: \u25B6 Details</div>
-  </div>`}function xe(e){var a,c;let s=e.metrics.imf_bz_nt,t=(a=e.metrics.kp_latest)!=null?a:0,o=(c=e.metrics.solar_wind_kms)!=null?c:0,n,r,i;if(s!=null&&s<-5||t>=6)n="storm",r="#e05c5c",i="Storm conditions";else if(s!=null&&s<0||t>=4||o>=400){let d=s!=null&&s<0;n="active",r="#e0a84a",i=d?"Active coupling":"Elevated"}else n="stable",r="#5cce8c",i="Stable";let l;return s==null?l="Unknown":s>2?l="Closed":s>0?l="Minimal":s>-5?l="Moderate":s>-10?l="Strong":l="Very strong",{state:n,color:r,label:i,coupling:l}}function Rt(e,s,t,o){let n=o?"mc":"mf",r=e.color,i=t!=null?t:0,l=i>500,a=i<350,c=l?.9:a?1.8:1.3;if(o){let h=45-(e.state==="storm"?11:e.state==="active"?16:21),w=e.state==="storm"?12:e.state==="active"?10:8,v=50-w,f=76,x=[`M ${h},25`,`C ${h-2},15 41,${w} 45,${w}`,`C 53,${w} ${f-8},${w+4} ${f},20`,`C ${f+1},23 ${f+1},27 ${f},30`,`C ${f-8},${v-4} 53,${v} 45,${v}`,`C 41,${v} ${h-2},35 ${h},25`,"Z"].join(" "),b=l?3:2,$=[14,25,36],y=k=>`<path d="M 0,${k} L ${l?8:6},${k} M ${l?6:4},${k-2} L ${l?8:6},${k} L ${l?6:4},${k+2}" stroke="${r}bb" stroke-width="${l?1.4:1}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,C=$.map(k=>y(k)).join(""),S=Array.from({length:b},(k,_)=>`<g class="hw-wg" style="animation-duration:${c}s;animation-delay:${(c/b*_).toFixed(2)}s">${C}</g>`).join(""),L=s==null?"":s>0?`<path d="M 45,27 L 45,23 M ${45-1.5},${25-.5} L 45,23 L ${45+1.5},${25-.5}" stroke="#5cce8c" stroke-width="1" fill="none" stroke-linecap="round"/>`:`<path d="M 45,23 L 45,27 M ${45-1.5},${25+.5} L 45,27 L ${45+1.5},${25+.5}" stroke="#e05c5c" stroke-width="1" fill="none" stroke-linecap="round"/>`;return`<svg viewBox="0 0 80 50" style="width:78px;height:49px;display:block" xmlns="http://www.w3.org/2000/svg">
+    <div class="hw-kpi-hint" style="color:${p.color};font-weight:600;margin-bottom:4px">${u(p.msg)}</div>
+    <div style="font-size:.65em;color:#607880">Coupling: <span style="color:${d.color};font-weight:600">${u(d.coupling)}</span> \xB7 Trend history: \u25B6 Details</div>
+  </div>`}function be(e){var a,c;let s=e.metrics.imf_bz_nt,t=(a=e.metrics.kp_latest)!=null?a:0,o=(c=e.metrics.solar_wind_kms)!=null?c:0,n,r,i;if(s!=null&&s<-5||t>=6)n="storm",r="#e05c5c",i="Storm conditions";else if(s!=null&&s<0||t>=4||o>=400){let d=s!=null&&s<0;n="active",r="#e0a84a",i=d?"Active coupling":"Elevated"}else n="stable",r="#5cce8c",i="Stable";let l;return s==null?l="Unknown":s>2?l="Closed":s>0?l="Minimal":s>-5?l="Moderate":s>-10?l="Strong":l="Very strong",{state:n,color:r,label:i,coupling:l}}function Nt(e,s,t,o){let n=o?"mc":"mf",r=e.color,i=t!=null?t:0,l=i>500,a=i<350,c=l?.9:a?1.8:1.3;if(o){let h=45-(e.state==="storm"?11:e.state==="active"?16:21),w=e.state==="storm"?12:e.state==="active"?10:8,v=50-w,$=76,x=[`M ${h},25`,`C ${h-2},15 41,${w} 45,${w}`,`C 53,${w} ${$-8},${w+4} ${$},20`,`C ${$+1},23 ${$+1},27 ${$},30`,`C ${$-8},${v-4} 53,${v} 45,${v}`,`C 41,${v} ${h-2},35 ${h},25`,"Z"].join(" "),f=l?3:2,b=[14,25,36],S=_=>`<path d="M 0,${_} L ${l?8:6},${_} M ${l?6:4},${_-2} L ${l?8:6},${_} L ${l?6:4},${_+2}" stroke="${r}bb" stroke-width="${l?1.4:1}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,C=b.map(_=>S(_)).join(""),k=Array.from({length:f},(_,y)=>`<g class="hw-wg" style="animation-duration:${c}s;animation-delay:${(c/f*y).toFixed(2)}s">${C}</g>`).join(""),L=s==null?"":s>0?`<path d="M 45,27 L 45,23 M ${45-1.5},${25-.5} L 45,23 L ${45+1.5},${25-.5}" stroke="#5cce8c" stroke-width="1" fill="none" stroke-linecap="round"/>`:`<path d="M 45,23 L 45,27 M ${45-1.5},${25+.5} L 45,27 L ${45+1.5},${25+.5}" stroke="#e05c5c" stroke-width="1" fill="none" stroke-linecap="round"/>`;return`<svg viewBox="0 0 80 50" style="width:78px;height:49px;display:block" xmlns="http://www.w3.org/2000/svg">
       <defs><clipPath id="${n}-wclip"><rect x="0" y="0" width="26" height="50"/></clipPath></defs>
       <circle cx="2" cy="25" r="5" fill="#f0c040" opacity=".7"/>
-      <g clip-path="url(#${n}-wclip)">${S}</g>
+      <g clip-path="url(#${n}-wclip)">${k}</g>
       <path d="${x}" fill="${r}14" stroke="${r}b0" stroke-width="0.9"/>
       <circle cx="45" cy="25" r="${4.5}" fill="#2a4a6a" stroke="#4a7090" stroke-width="0.8"/>
       ${L}
-    </svg>`}else{let f=e.state==="storm"?16:e.state==="active"?26:38,x=155-f,b=e.state==="storm"?22:e.state==="active"?30:40,$=120-b,y=240,C=[`M ${x},60`,`C ${x-4},42 150,${b} 155,${b}`,`C 173,${b} ${y-5},${b+18} ${y},60`,`C ${y-5},${$-18} 173,${$} 155,${$}`,`C 150,${$} ${x-4},78 ${x},60`,"Z"].join(" "),S=`M ${x+2},60 C ${x+2},${60-f*.4} 152,54 150,60 C 152,66 ${x+2},${60+f*.4} ${x+2},60 Z`,L=i>700?"#e05c5c":i>500?"#e0a84a":i>350?"#d4c840":"#5cce8c",k=i>700?.4:i>500?.65:i>350?1.1:1.8,_=i>500?[10,24,40,57,74,90,106]:i>350?[14,34,57,82,104]:[20,50,82,108],H=16,O=22,U=x-6,G=Math.ceil((U-O)/H)+2,X=Array.from({length:G},(A,E)=>O-H+E*H),F=12,D=8,Y=X.flatMap(A=>_.map(E=>`<path d="M ${A},${E} L ${A+F},${E} M ${A+D},${E-3} L ${A+F},${E} L ${A+D},${E+3}" stroke="${L}cc" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)).join(""),M=`<g class="hw-wg-full" style="animation-duration:${k}s">${Y}</g>`,I=s==null?"":s>0?'<path d="M 155,64 L 155,56 M 153,58 L 155,56 L 157,58" stroke="#5cce8c" stroke-width="1.3" fill="none" stroke-linecap="round"/>':'<path d="M 155,56 L 155,64 M 153,62 L 155,64 L 157,62" stroke="#e05c5c" stroke-width="1.3" fill="none" stroke-linecap="round"/>',q=s==null?"":`<text x="163" y="62" font-size="6" fill="${s>0?"#5cce8c":"#e05c5c"}" font-family="monospace">Bz${s>0?"\u2191":"\u2193"}</text>`;return fe("magnetosphere",{magnetInfo:e,bz:s,windKms:t,uid:n})}}function fe(e,s={}){var M,I,q,A,E,ne;let r=(M=s.uid)!=null?M:"hse",i=0,l=160,a=800,c=17,d=a-c,p=s.magnetInfo,m=(I=p==null?void 0:p.state)!=null?I:"stable",u=(q=p==null?void 0:p.color)!=null?q:"#e0a84a",w=a-(m==="storm"?55:m==="active"?80:110),v=m==="storm"?58:m==="active"?76:95,f=1120,x=20,b=[`M ${w},130`,`C ${w-8},${130-v*.55} ${a-18},${130-v} ${a},${130-v}`,`C ${a+120},${130-v} ${f-180},${130-x} ${f},${130-x}`,`L ${f},${130+x}`,`C ${f-180},${130+x} ${a+120},${130+v} ${a},${130+v}`,`C ${a-18},${130+v} ${w-8},${130+v*.55} ${w},130`,"Z"].join(" "),$=e==="magnetosphere",y=$?m==="storm"?"0.12":"0.08":"0.04",C=$?"0.75":"0.28",S=`<g id="${r}-base-sun">
+    </svg>`}else{let $=e.state==="storm"?16:e.state==="active"?26:38,x=155-$,f=e.state==="storm"?22:e.state==="active"?30:40,b=120-f,S=240,C=[`M ${x},60`,`C ${x-4},42 150,${f} 155,${f}`,`C 173,${f} ${S-5},${f+18} ${S},60`,`C ${S-5},${b-18} 173,${b} 155,${b}`,`C 150,${b} ${x-4},78 ${x},60`,"Z"].join(" "),k=`M ${x+2},60 C ${x+2},${60-$*.4} 152,54 150,60 C 152,66 ${x+2},${60+$*.4} ${x+2},60 Z`,L=i>700?"#e05c5c":i>500?"#e0a84a":i>350?"#d4c840":"#5cce8c",_=i>700?.4:i>500?.65:i>350?1.1:1.8,y=i>500?[10,24,40,57,74,90,106]:i>350?[14,34,57,82,104]:[20,50,82,108],H=16,I=22,G=x-6,X=Math.ceil((G-I)/H)+2,K=Array.from({length:X},(F,O)=>I-H+O*H),N=12,Y=8,j=K.flatMap(F=>y.map(O=>`<path d="M ${F},${O} L ${F+N},${O} M ${F+Y},${O-3} L ${F+N},${O} L ${F+Y},${O+3}" stroke="${L}cc" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)).join(""),M=`<g class="hw-wg-full" style="animation-duration:${_}s">${j}</g>`,E=s==null?"":s>0?'<path d="M 155,64 L 155,56 M 153,58 L 155,56 L 157,58" stroke="#5cce8c" stroke-width="1.3" fill="none" stroke-linecap="round"/>':'<path d="M 155,56 L 155,64 M 153,62 L 155,64 L 157,62" stroke="#e05c5c" stroke-width="1.3" fill="none" stroke-linecap="round"/>',q=s==null?"":`<text x="163" y="62" font-size="6" fill="${s>0?"#5cce8c":"#e05c5c"}" font-family="monospace">Bz${s>0?"\u2191":"\u2193"}</text>`;return $e("magnetosphere",{magnetInfo:e,bz:s,windKms:t,uid:n})}}function $e(e,s={}){var M,E,q,F,O,Z;let r=(M=s.uid)!=null?M:"hse",i=0,l=160,a=800,c=17,d=a-c,p=s.magnetInfo,m=(E=p==null?void 0:p.state)!=null?E:"stable",g=(q=p==null?void 0:p.color)!=null?q:"#e0a84a",w=a-(m==="storm"?55:m==="active"?80:110),v=m==="storm"?58:m==="active"?76:95,$=1120,x=20,f=[`M ${w},130`,`C ${w-8},${130-v*.55} ${a-18},${130-v} ${a},${130-v}`,`C ${a+120},${130-v} ${$-180},${130-x} ${$},${130-x}`,`L ${$},${130+x}`,`C ${$-180},${130+x} ${a+120},${130+v} ${a},${130+v}`,`C ${a-18},${130+v} ${w-8},${130+v*.55} ${w},130`,"Z"].join(" "),b=e==="magnetosphere",S=b?m==="storm"?"0.12":"0.08":"0.04",C=b?"0.75":"0.28",k=`<g id="${r}-base-sun">
     <circle cx="${i}" cy="130" r="${l+18}" fill="none"
             stroke="#f0c040" stroke-width="2.5" opacity="0.12"/>
     <circle cx="${i}" cy="130" r="${l}" fill="#f0c040" opacity="0.88"/>
@@ -355,36 +355,36 @@
     <line x1="${a}" y1="${130-c}" x2="${a}" y2="${130+c}"
           stroke="#4a8ab0" stroke-width="1.2" opacity="0.6"/>
     <line x1="${d}" y1="130" x2="${a+c}" y2="130"
-          stroke="#4a8ab0" stroke-width="1.2" opacity="0.35"/>`,k=`<g id="${r}-base-earth">
+          stroke="#4a8ab0" stroke-width="1.2" opacity="0.35"/>`,_=`<g id="${r}-base-earth">
     <circle cx="${a}" cy="130" r="${c}" fill="#1a4a6e" opacity="0.92"/>
     ${L}
-  </g>`,_=`<g id="${r}-base-magnetosphere">
-    <path d="${b}" fill="${u}" fill-opacity="${y}"
-          stroke="${u}" stroke-opacity="${C}" stroke-width="1.8"/>
-    ${p?`<text x="${w+5}" y="${130-v-7}" font-size="12" fill="${u}"
+  </g>`,y=`<g id="${r}-base-magnetosphere">
+    <path d="${f}" fill="${g}" fill-opacity="${S}"
+          stroke="${g}" stroke-opacity="${C}" stroke-width="1.8"/>
+    ${p?`<text x="${w+5}" y="${130-v-7}" font-size="12" fill="${g}"
           opacity="0.85" font-family="sans-serif">${p.label}</text>`:""}
   </g>`,H=`<g id="${r}-base-axis">
     <line x1="${l}" y1="130" x2="${w}" y2="130"
           stroke="rgba(255,255,255,0.10)" stroke-width="1.5" stroke-dasharray="8 5"/>
-  </g>`,O="";if(e==="magnetosphere"){let N=(A=s.windKms)!=null?A:0,P=N>500,R=N<350,z=(P?.5:R?1.4:.9)*1.3,J=N>700?"#e05c5c":N>500?"#e0a84a":N>350?"#d4c840":"#5cce8c",ee=l+8,K=w-14,B=8,Q=6,j=(K-ee)/(B-1),V=260/(Q+1),te=38,be=24,de=2,se=Array.from({length:B},(ae,ie)=>{let Z=ee+ie*j,pe=Array.from({length:Q},(Ce,re)=>{let W=V*(re+1);return`<path d="M ${Z.toFixed(1)},${W.toFixed(1)} L ${(Z+te).toFixed(1)},${W.toFixed(1)} M ${(Z+be).toFixed(1)},${(W-6).toFixed(1)} L ${(Z+te).toFixed(1)},${W.toFixed(1)} L ${(Z+be).toFixed(1)},${(W+6).toFixed(1)}"
-          stroke="${J}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`}).join("");return Array.from({length:de},(Ce,re)=>{let W=-((B-ie)/B*z)-re*z/de;return`<g style="opacity:.12;animation:hw-arrow-chase ${z}s linear ${W.toFixed(3)}s infinite">${pe}</g>`}).join("")}).join(""),oe=(E=s.bz)!=null?E:null,$e=oe==null?"":(()=>{let ae=oe>0?"#5cce8c":"#e05c5c";return`${oe>0?`<path d="M ${a},137 L ${a},123 M ${a-3},126 L ${a},123 L ${a+3},126"
-           stroke="${ae}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`:`<path d="M ${a},123 L ${a},137 M ${a-3},134 L ${a},137 L ${a+3},134"
-           stroke="${ae}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`}<text x="${a+22}" y="135" font-size="13"
-        fill="${ae}" font-family="monospace">Bz${oe>0?"\u2191":"\u2193"}</text>`})();O=`${se}${$e}`}let U=`<g id="${r}-overlay-solar-wind">${O}</g>`,G="";if(e==="coronal_hole"&&s.hssState){let N=s.hssState,P=(ne=N.speed)!=null?ne:0,R=P>=420,z=N.color,J=R?"0.85":"0.25",ee=P>=500?"0.18":R?"0.10":"0.04",K=l+8,B=d-16,Q=60,j=`${K},130 ${B},${130-Q} ${B},${130+Q}`,V=B+6,te=`${V},120 ${V+18},130 ${V},140`;G=`
-    <polygon points="${j}" fill="${z}" opacity="${ee}"/>
-    <line x1="${K}" y1="130" x2="${B-5}" y2="130"
-          stroke="${z}" stroke-width="3.5" stroke-dasharray="10 6"
-          stroke-linecap="round" opacity="${J}"/>
-    <polygon points="${te}" fill="${z}" opacity="${R?"0.9":"0.25"}"/>`}let X=`<g id="${r}-overlay-coronal-hole">${G}</g>`,F="";if(e==="cme_cone"&&s.cmeState){let N=s.cmeState,P=l,R=d-10,z=R-P,J=j=>Math.tan(j*Math.PI/180),ee=Math.round(J(9)*z),K=Math.round(J(6)*z),B=Math.round(J(3)*z),Q=j=>`${P},130 ${R},${130-j} ${R},${130+j}`;if(N.status!=="quiet"){let j=N.status==="impact"?"#e05c5c":"#d4cc5c";F=`
-    <polygon points="${Q(ee)}" fill="#253238" opacity="0.85"/>
-    <polygon points="${Q(K)}"   fill="#d4cc5c" opacity="0.14"/>
-    <polygon points="${Q(B)}" fill="#e0a84a" opacity="0.28"/>
-    <line x1="${P+14}" y1="130" x2="${R-5}" y2="130"
+  </g>`,I="";if(e==="magnetosphere"){let T=(F=s.windKms)!=null?F:0,P=T>500,W=T<350,R=(P?.5:W?1.4:.9)*1.3,U=T>700?"#e05c5c":T>500?"#e0a84a":T>350?"#d4c840":"#5cce8c",Q=l+8,J=w-14,B=8,z=6,D=(J-Q)/(B-1),oe=260/(z+1),ne=38,ee=24,ce=2,Le=Array.from({length:B},(se,de)=>{let ie=Q+de*D,ve=Array.from({length:z},(re,le)=>{let V=oe*(le+1);return`<path d="M ${ie.toFixed(1)},${V.toFixed(1)} L ${(ie+ne).toFixed(1)},${V.toFixed(1)} M ${(ie+ee).toFixed(1)},${(V-6).toFixed(1)} L ${(ie+ne).toFixed(1)},${V.toFixed(1)} L ${(ie+ee).toFixed(1)},${(V+6).toFixed(1)}"
+          stroke="${U}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`}).join("");return Array.from({length:ce},(re,le)=>{let V=-((B-de)/B*R)-le*R/ce;return`<g style="opacity:.12;animation:hw-arrow-chase ${R}s linear ${V.toFixed(3)}s infinite">${ve}</g>`}).join("")}).join(""),ae=(O=s.bz)!=null?O:null,te=ae==null?"":(()=>{let se=ae>0?"#5cce8c":"#e05c5c";return`${ae>0?`<path d="M ${a},137 L ${a},123 M ${a-3},126 L ${a},123 L ${a+3},126"
+           stroke="${se}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`:`<path d="M ${a},123 L ${a},137 M ${a-3},134 L ${a},137 L ${a+3},134"
+           stroke="${se}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`}<text x="${a+22}" y="135" font-size="13"
+        fill="${se}" font-family="monospace">Bz${ae>0?"\u2191":"\u2193"}</text>`})();I=`${Le}${te}`}let G=`<g id="${r}-overlay-solar-wind">${I}</g>`,X="";if(e==="coronal_hole"&&s.hssState){let T=s.hssState,P=(Z=T.speed)!=null?Z:0,W=P>=420,R=T.color,U=W?"0.85":"0.25",Q=P>=500?"0.18":W?"0.10":"0.04",J=l+8,B=d-16,z=60,D=`${J},130 ${B},${130-z} ${B},${130+z}`,oe=B+6,ne=`${oe},120 ${oe+18},130 ${oe},140`;X=`
+    <polygon points="${D}" fill="${R}" opacity="${Q}"/>
+    <line x1="${J}" y1="130" x2="${B-5}" y2="130"
+          stroke="${R}" stroke-width="3.5" stroke-dasharray="10 6"
+          stroke-linecap="round" opacity="${U}"/>
+    <polygon points="${ne}" fill="${R}" opacity="${W?"0.9":"0.25"}"/>`}let K=`<g id="${r}-overlay-coronal-hole">${X}</g>`,N="";if(e==="cme_cone"&&s.cmeState){let T=s.cmeState,P=l,W=d-10,R=W-P,U=D=>Math.tan(D*Math.PI/180),Q=Math.round(U(9)*R),J=Math.round(U(6)*R),B=Math.round(U(3)*R),z=D=>`${P},130 ${W},${130-D} ${W},${130+D}`;if(T.status!=="quiet"){let D=T.status==="impact"?"#e05c5c":"#d4cc5c";N=`
+    <polygon points="${z(Q)}" fill="#253238" opacity="0.85"/>
+    <polygon points="${z(J)}"   fill="#d4cc5c" opacity="0.14"/>
+    <polygon points="${z(B)}" fill="#e0a84a" opacity="0.28"/>
+    <line x1="${P+14}" y1="130" x2="${W-5}" y2="130"
           stroke="#3a5058" stroke-dasharray="6 5" stroke-width="2"/>
     <circle cx="${a}" cy="130" r="${c+8}" fill="none"
-            stroke="${j}" stroke-width="7" opacity="0.16"/>`}else F=`
+            stroke="${D}" stroke-width="7" opacity="0.16"/>`}else N=`
     <line x1="${P+14}" y1="130" x2="${d-14}" y2="130"
-          stroke="#1e2c30" stroke-dasharray="7 5" stroke-width="2"/>`}let D=`<g id="${r}-overlay-cme-cone">${F}</g>`,Y=`<g id="${r}-overlay-labels">
+          stroke="#1e2c30" stroke-dasharray="7 5" stroke-width="2"/>`}let Y=`<g id="${r}-overlay-cme-cone">${N}</g>`,j=`<g id="${r}-overlay-labels">
     <text x="18" y="250" font-size="13" fill="#f0c04055"
           font-family="sans-serif">Sun</text>
     <text x="${a}" y="252" font-size="13" fill="#4a709055"
@@ -393,120 +393,120 @@
       style="width:100%;height:80px;display:block" preserveAspectRatio="none" aria-hidden="true">
     <rect width="1000" height="260" fill="#0a1014"/>
     ${H}
-    ${U}
-    ${X}
-    ${D}
-    ${S}
-    ${_}
-    ${k}
+    ${G}
+    ${K}
     ${Y}
-  </svg>`}function zt(e){let s=xe(e),t=e.metrics.imf_bz_nt,o=e.metrics.solar_wind_kms,n=e.metrics.kp_latest,r=e.metrics.density,i=e.metrics.pressure_npa,l=t!=null?(t>=0?"+":"")+t.toFixed(1)+" nT":"\u2014",a=o!=null?`${Math.round(o)} km/s`:"\u2014",c=r!=null?`${r.toFixed(1)} p/cm\xB3`:"\u2014",d=i!=null?`${i.toFixed(2)} nPa`:"\u2014",p=t!=null?t<=-10?"#e05c5c":t<=-5?"#e0a84a":t>=5?"#5cce8c":"#a0b4b8":"#607880",m=o!=null?o>700?"#e05c5c":o>500?"#e0a84a":o>350?"#d4c840":"#5cce8c":"#607880",u=t!=null&&t<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":t!=null&&t<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-kpi-popover">
-    ${ce("Magnetosphere")}
-    <div class="hw-spark-wrap" style="border-radius:3px;overflow:hidden">${Rt(s,t,o,!1)}</div>
+    ${k}
+    ${y}
+    ${_}
+    ${j}
+  </svg>`}function Pt(e){let s=be(e),t=e.metrics.imf_bz_nt,o=e.metrics.solar_wind_kms,n=e.metrics.kp_latest,r=e.metrics.density,i=e.metrics.pressure_npa,l=t!=null?(t>=0?"+":"")+t.toFixed(1)+" nT":"\u2014",a=o!=null?`${Math.round(o)} km/s`:"\u2014",c=r!=null?`${r.toFixed(1)} p/cm\xB3`:"\u2014",d=i!=null?`${i.toFixed(2)} nPa`:"\u2014",p=t!=null?t<=-10?"#e05c5c":t<=-5?"#e0a84a":t>=5?"#5cce8c":"#a0b4b8":"#607880",m=o!=null?o>700?"#e05c5c":o>500?"#e0a84a":o>350?"#d4c840":"#5cce8c":"#607880",g=t!=null&&t<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":t!=null&&t<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-kpi-popover">
+    ${he("Magnetosphere")}
+    <div class="hw-spark-wrap" style="border-radius:3px;overflow:hidden">${Nt(s,t,o,!1)}</div>
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Solar wind</span>
-        <span class="hw-kpi-stat-value" style="color:${m}">${g(a)}</span>
+        <span class="hw-kpi-stat-value" style="color:${m}">${u(a)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">IMF Bz</span>
-        <span class="hw-kpi-stat-value" style="color:${p}">${g(l)}</span>
+        <span class="hw-kpi-stat-value" style="color:${p}">${u(l)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Coupling</span>
-        <span class="hw-kpi-stat-value" style="color:${s.color}">${g(s.coupling)}</span>
+        <span class="hw-kpi-stat-value" style="color:${s.color}">${u(s.coupling)}</span>
       </div>
     </div>
     <div class="hw-kpi-stat-row" style="margin-top:4px">
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Density</span>
-        <span class="hw-kpi-stat-value">${g(c)}</span>
+        <span class="hw-kpi-stat-value">${u(c)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Pressure</span>
-        <span class="hw-kpi-stat-value">${g(d)}</span>
+        <span class="hw-kpi-stat-value">${u(d)}</span>
       </div>
     </div>
-    <div class="hw-kpi-hint" style="margin-bottom:0">${g(u)}</div>
-  </div>`}function Ft(e,s){if(!s)return"";let t=xe(e),o=e.metrics.imf_bz_nt,n=e.metrics.solar_wind_kms,r=e.metrics.density,i=e.metrics.pressure_npa,l=o!=null?(o>=0?"+":"")+o.toFixed(1)+" nT":"\u2014",a=n!=null?`${Math.round(n)} km/s`:"\u2014",c=r!=null?`${r.toFixed(1)} p/cm\xB3`:"\u2014",d=i!=null?`${i.toFixed(2)} nPa`:"\u2014",p=o!=null?o<=-10?"#e05c5c":o<=-5?"#e0a84a":o>=5?"#5cce8c":"#a0b4b8":"#607880",m=n!=null?n>700?"#e05c5c":n>500?"#e0a84a":n>350?"#d4c840":"#5cce8c":"#607880",u=o!=null&&o<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":o!=null&&o<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-impact-tip hw-impact-tip-open">
-    <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${fe("magnetosphere",{windKms:n!=null?n:void 0,bz:o!=null?o:void 0})}</div>
+    <div class="hw-kpi-hint" style="margin-bottom:0">${u(g)}</div>
+  </div>`}function Bt(e,s){if(!s)return"";let t=be(e),o=e.metrics.imf_bz_nt,n=e.metrics.solar_wind_kms,r=e.metrics.density,i=e.metrics.pressure_npa,l=o!=null?(o>=0?"+":"")+o.toFixed(1)+" nT":"\u2014",a=n!=null?`${Math.round(n)} km/s`:"\u2014",c=r!=null?`${r.toFixed(1)} p/cm\xB3`:"\u2014",d=i!=null?`${i.toFixed(2)} nPa`:"\u2014",p=o!=null?o<=-10?"#e05c5c":o<=-5?"#e0a84a":o>=5?"#5cce8c":"#a0b4b8":"#607880",m=n!=null?n>700?"#e05c5c":n>500?"#e0a84a":n>350?"#d4c840":"#5cce8c":"#607880",g=o!=null&&o<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":o!=null&&o<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-impact-tip hw-impact-tip-open">
+    <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${$e("magnetosphere",{windKms:n!=null?n:void 0,bz:o!=null?o:void 0})}</div>
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Solar wind</span>
-        <span class="hw-kpi-stat-value" style="color:${m}">${g(a)}</span>
+        <span class="hw-kpi-stat-value" style="color:${m}">${u(a)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">IMF Bz</span>
-        <span class="hw-kpi-stat-value" style="color:${p}">${g(l)}</span>
+        <span class="hw-kpi-stat-value" style="color:${p}">${u(l)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Coupling</span>
-        <span class="hw-kpi-stat-value" style="color:${t.color}">${g(t.coupling)}</span>
+        <span class="hw-kpi-stat-value" style="color:${t.color}">${u(t.coupling)}</span>
       </div>
     </div>
     <div class="hw-kpi-stat-row" style="margin-top:4px">
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Density</span>
-        <span class="hw-kpi-stat-value">${g(c)}</span>
+        <span class="hw-kpi-stat-value">${u(c)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Pressure</span>
-        <span class="hw-kpi-stat-value">${g(d)}</span>
+        <span class="hw-kpi-stat-value">${u(d)}</span>
       </div>
     </div>
-    <div class="hw-kpi-hint" style="margin-bottom:0">${g(u)}</div>
-  </div>`}function It(e,s,t){if(!e.length)return null;let o=(t%360+360)%360,n=-1,r=1/0,i=Math.cos(s*Math.PI/180);for(let l of e){let a=l.lat-s,c=(l.lon-o+180+360)%360-180,d=a*a+c*i*(c*i);d<r&&(r=d,n=l.prob)}return n>=0?n:null}function Ot(e){return`<svg viewBox="0 0 100 100" width="100%" height="100%"
-    style="position:absolute;top:0;left:0;pointer-events:none">${['<text x="50" y="4"   font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">N</text>','<text x="96"  y="51" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">W</text>','<text x="50" y="97"  font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">S</text>','<text x="4"   y="51" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">E</text>'].join("")}</svg>`}function Nt(e,s){let t=`https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`,o=null;s&&e.lat!=null&&e.lon!=null&&(o=It(s.entries,e.lat,e.lon));let n=e.lat!=null&&e.lon!=null,r=o!=null?o>=30?"#5cce8c":o>=10?"#d4cc5c":"#9ab4bc":"#607880",i=o!=null?`${o}%`:s?"n/a":"\u2026",l=n?`
+    <div class="hw-kpi-hint" style="margin-bottom:0">${u(g)}</div>
+  </div>`}function Qe(e,s,t){if(!e.length)return null;let o=(t%360+360)%360,n=-1,r=1/0,i=Math.cos(s*Math.PI/180);for(let l of e){let a=l.lat-s,c=(l.lon-o+180+360)%360-180,d=a*a+c*i*(c*i);d<r&&(r=d,n=l.prob)}return n>=0?n:null}function Ve(e){return`<svg viewBox="0 0 100 100" width="100%" height="100%"
+    style="position:absolute;top:0;left:0;pointer-events:none">${['<text x="50" y="4"   font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">N</text>','<text x="96"  y="51" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">W</text>','<text x="50" y="97"  font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">S</text>','<text x="4"   y="51" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">E</text>'].join("")}</svg>`}function Dt(e,s){let t=`https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`,o=null;s&&e.lat!=null&&e.lon!=null&&(o=Qe(s.entries,e.lat,e.lon));let n=e.lat!=null&&e.lon!=null,r=o!=null?o>=30?"#5cce8c":o>=10?"#d4cc5c":"#9ab4bc":"#607880",i=o!=null?`${o}%`:s?"n/a":"\u2026",l=n?`
     <div class="hw-aurora-obs-panel">
       <span>\u{1F4CD}</span>
-      <span>${e.locationName?g(e.locationName)+" \xB7 ":""}${e.lat.toFixed(1)}\xB0${e.lat>=0?"N":"S"} ${Math.abs(e.lon).toFixed(1)}\xB0${e.lon>=0?"E":"W"}</span>
+      <span>${e.locationName?u(e.locationName)+" \xB7 ":""}${e.lat.toFixed(1)}\xB0${e.lat>=0?"N":"S"} ${Math.abs(e.lon).toFixed(1)}\xB0${e.lon>=0?"E":"W"}</span>
       <span class="hw-aurora-prob" style="color:${r}">Aurora: ${i}</span>
     </div>`:"";return`<div class="hw-kpi-popover">
-    ${ce("Aurora Oval \xB7 Northern Hemisphere")}
+    ${he("Aurora Oval \xB7 Northern Hemisphere")}
     <div class="hw-aurora-map-wrap">
-      <img class="hw-aurora-img" src="${T(t)}" alt="NOAA Aurora Oval" loading="lazy" />
-      ${Ot(e)}
+      <img class="hw-aurora-img" src="${A(t)}" alt="NOAA Aurora Oval" loading="lazy" />
+      ${Ve(e)}
     </div>
     ${l}
     <div class="hw-aurora-caption">NOAA OVATION Prime model \xB7 updates every 5 min</div>
-  </div>`}function Bt(e,s,t,o){switch(s){case"solar_wind":return Ht(e);case"xray":return Et(e);case"imf_bz":return At(e);case"aurora":return Nt(t,o);case"magnetosphere":return zt(e);default:return""}}function Pt(e,s){if(e.length<2)return"\u2192";let t=e[e.length-1],o=Math.max(0,e.length-4),n=e[o];if(!isFinite(t)||!isFinite(n))return"\u2192";let r=t-n;return r>s?"\u2191":r<-s?"\u2193":"\u2192"}function Dt(e,s){let t=le[e],o=ls,n=is(t.url,s);return`<div class="hw-solar-mini-wrap" style="cursor:default">
+  </div>`}function Yt(e,s,t,o){switch(s){case"solar_wind":return Rt(e);case"xray":return It(e);case"imf_bz":return zt(e);case"aurora":return Dt(t,o);case"magnetosphere":return Pt(e);default:return""}}function jt(e,s){if(e.length<2)return"\u2192";let t=e[e.length-1],o=Math.max(0,e.length-4),n=e[o];if(!isFinite(t)||!isFinite(n))return"\u2192";let r=t-n;return r>s?"\u2191":r<-s?"\u2193":"\u2192"}function Wt(e,s){let t=pe[e],o=ds,n=ls(t.url,s);return`<div class="hw-solar-mini-wrap" style="cursor:default">
     <div class="hw-solar-mini-inner">
-      <img class="hw-solar-mini-img" src="${T(n)}" alt="${T(t.label)}"
-        onerror="if(this.src!=='${T(o)}')this.src='${T(o)}'" />
+      <img class="hw-solar-mini-img" src="${A(n)}" alt="${A(t.label)}"
+        onerror="if(this.src!=='${A(o)}')this.src='${A(o)}'" />
       <video class="hw-solar-mini-video" autoplay loop muted playsinline
         oncanplay="this.style.opacity=1"
-        aria-label="Solar disk \xB7 ${T(t.label)} \xB7 last 24h">
-        <source src="${T(cs)}" type="video/mp4">
+        aria-label="Solar disk \xB7 ${A(t.label)} \xB7 last 24h">
+        <source src="${A(ps)}" type="video/mp4">
       </video>
     </div>
     <div class="hw-solar-mini-switcher">
       <button class="hw-solar-mini-btn" data-solar-prev>&#8249;</button>
-      <span class="hw-solar-mini-lbl">${T(t.label)}</span>
+      <span class="hw-solar-mini-lbl">${A(t.label)}</span>
       <button class="hw-solar-mini-btn" data-solar-next>&#8250;</button>
     </div>
-  </div>`}function Yt(e,s,t,o,n,r=0){var b,$,y;let{summary:i,metrics:l}=e,a=(b=Oe[i.status])!=null?b:Oe.quiet,c=t!=null?t.kp.toFixed(1):l.kp_latest!=null?l.kp_latest.toFixed(1):"\u2014",d=_t(e,t),m=[{key:"G",text:d.g,title:"Geomagnetic storm level. Based on Kp index.",aria:"Geomagnetic storm level"},{key:"R",text:d.r,title:"Radio blackout level. Based on solar X-ray flux.",aria:"Radio blackout level"},{key:"S",text:d.s,title:"Solar radiation storm level. Based on energetic proton flux.",aria:"Solar radiation storm level"},{key:"X",text:`X:${d.x}`,title:"Current solar X-ray activity class.",aria:"Solar X-ray activity"}].map(C=>{let S;return C.key==="G"?S=ke(ye(d.g,"G")):C.key==="R"?S=ke(ye(d.r,"R")):C.key==="S"?S=ke(ye(d.s,"S")):S=kt(d.x),`<button type="button" class="hw-scale-chip hw-hero-scale-chip"
-      style="${`color:${S.color};background:${S.background};border-color:${S.borderColor}`}" data-hero-chip="${C.key}" title="${T(C.title)}" aria-label="${T(C.aria)}">${g(C.text)}</button>`}).join(""),u=Pt((($=l.kp_history_1h)!=null?$:[]).map(C=>C.kp),.5),h=(y=l.kp_latest)!=null?y:0,w=h>=5,v=w?`linear-gradient(160deg, #0d2a1a 0%, ${a.bg}22 75%)`:`${a.bg}18`,x=w?`
+  </div>`}function Ut(e,s,t,o,n,r=0){var f,b,S;let{summary:i,metrics:l}=e,a=(f=Pe[i.status])!=null?f:Pe.quiet,c=t!=null?t.kp.toFixed(1):l.kp_latest!=null?l.kp_latest.toFixed(1):"\u2014",d=Ht(e,t),m=[{key:"G",text:d.g,title:"Geomagnetic storm level. Based on Kp index.",aria:"Geomagnetic storm level"},{key:"R",text:d.r,title:"Radio blackout level. Based on solar X-ray flux.",aria:"Radio blackout level"},{key:"S",text:d.s,title:"Solar radiation storm level. Based on energetic proton flux.",aria:"Solar radiation storm level"},{key:"X",text:`X:${d.x}`,title:"Current solar X-ray activity class.",aria:"Solar X-ray activity"}].map(C=>{let k;return C.key==="G"?k=_e(ke(d.g,"G")):C.key==="R"?k=_e(ke(d.r,"R")):C.key==="S"?k=_e(ke(d.s,"S")):k=Lt(d.x),`<button type="button" class="hw-scale-chip hw-hero-scale-chip"
+      style="${`color:${k.color};background:${k.background};border-color:${k.borderColor}`}" data-hero-chip="${C.key}" title="${A(C.title)}" aria-label="${A(C.aria)}">${u(C.text)}</button>`}).join(""),g=jt(((b=l.kp_history_1h)!=null?b:[]).map(C=>C.kp),.5),h=(S=l.kp_latest)!=null?S:0,w=h>=5,v=w?`linear-gradient(160deg, #0d2a1a 0%, ${a.bg}22 75%)`:`${a.bg}18`,x=w?`
     <div class="hw-aurora-banner">
       <span class="hw-aurora-banner-text">\u2726 Aurora alert \xB7 Kp ${h.toFixed(1)}</span>
-      <a class="hw-aurora-map-btn" href="${T("https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg")}" target="_blank" rel="noopener noreferrer">View aurora map \u2192</a>
+      <a class="hw-aurora-map-btn" href="${A("https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg")}" target="_blank" rel="noopener noreferrer">View aurora map \u2192</a>
     </div>`:"";return`
     <div class="hw-hero" style="background:${v}">
       <div class="hw-hero-main">
         <div class="hw-kp-col">
-          <div class="hw-kp-big" style="${t?"color:#9acf60":""}">Kp <b>${g(c)}</b>${t?"":`<span class="hw-trend">${u}</span>`}</div>
-          <span class="hw-status-badge" style="background:${a.accent}22;color:${a.accent};display:block;text-align:center">${g(i.label)}</span>
+          <div class="hw-kp-big" style="${t?"color:#9acf60":""}">Kp <b>${u(c)}</b>${t?"":`<span class="hw-trend">${g}</span>`}</div>
+          <span class="hw-status-badge" style="background:${a.accent}22;color:${a.accent};display:block;text-align:center">${u(i.label)}</span>
           <div style="font-size:.62em;color:#607880;text-align:center;margin-top:1px;letter-spacing:.03em">Current conditions</div>
           <div class="hw-scales-row">${m}</div>
         </div>
         <div class="hw-info-col">
           <div class="hw-info-top-row">
-            <div class="hw-summary-text" style="flex:1">${g(i.text)}</div>
-            ${Dt(r,o.baseUrl)}
+            <div class="hw-summary-text" style="flex:1">${u(i.text)}</div>
+            ${Wt(r,o.baseUrl)}
           </div>
         </div>
       </div>
       ${x}
-    </div>`}function jt(e){var d,p,m,u;let{metrics:s}=e,t=(d=s.kp_history_1h)!=null?d:[],o=(p=s.wind_history_1h)!=null?p:[],n=(m=s.bz_history_1h)!=null?m:[],r=(u=s.xray_history_1h)!=null?u:[],i=Mt(t),l=De(o.map(h=>{var w;return(w=h.kms)!=null?w:0}).filter(h=>h>0),o.map(h=>ue(h.t_utc)),"#5cce8c",28,!1),a=De(n.map(h=>h.bz),n.map(h=>ue(h.t_utc)),"#d4cc5c",28,!0),c=Lt(r);return`
+    </div>`}function Gt(e){var d,p,m,g;let{metrics:s}=e,t=(d=s.kp_history_1h)!=null?d:[],o=(p=s.wind_history_1h)!=null?p:[],n=(m=s.bz_history_1h)!=null?m:[],r=(g=s.xray_history_1h)!=null?g:[],i=Tt(t),l=je(o.map(h=>{var w;return(w=h.kms)!=null?w:0}).filter(h=>h>0),o.map(h=>xe(h.t_utc)),"#5cce8c",28,!1),a=je(n.map(h=>h.bz),n.map(h=>xe(h.t_utc)),"#d4cc5c",28,!0),c=Ot(r);return`
     <div class="hw-hero-detail">
       <div class="hw-spark-row">
         <div class="hw-spark-label">Kp \xB7 Last 24h</div>
@@ -524,34 +524,34 @@
         <div class="hw-spark-label">X-Ray \xB7 Last 24h</div>
         <div class="hw-spark-wrap">${c}</div>
       </div>
-    </div>`}function Wt(e){let s=ft(e.updated_utc);return`
+    </div>`}function Xt(e){let s=kt(e.updated_utc);return`
     <div class="hw-header">
       <span class="hw-header-title">Space Weather</span>
-      <span class="hw-freshness">${g(s)}</span>
-    </div>`}function Ut(e){return e.map((s,t)=>t===0?(s+e[1])/2:t===e.length-1?(e[t-1]+s)/2:(e[t-1]+s+e[t+1])/3)}function Gt(e){return e>=9?"G5":e>=8?"G4":e>=7?"G3":e>=6?"G2":e>=5?"G1":"G0"}function Xt(e){return e>=5?"good":e>=3?"possible":"none"}function Xe(e){return e>=9?40:e>=8?45:e>=7?50:e>=6?55:e>=5?60:null}function Kt(e){let s=e>=7?"high":e>=5?"moderate":e>=3?"low":"none",t=Xe(e),o=s==="none"?"No aurora expected at mid-latitudes":t!=null?`Aurora possible equatorward of ~${t}\xB0 lat`:"Minor aurora possible at high latitudes",n=e>=7?"moderate":e>=5?"low":"none",r=n==="none"?"No significant HF degradation expected":n==="low"?"Minor HF degradation at high latitudes":"Moderate HF degradation, possible blackouts at high latitudes",i=e>=8?"high":e>=6?"moderate":e>=4?"low":"none";return[{kind:"aurora",level:s,label:"Aurora",summary:o},{kind:"radio",level:n,label:"HF Radio",summary:r},{kind:"solar_activity",level:i,label:"Solar Activity",summary:i==="none"?"Quiet geomagnetic conditions expected":i==="low"?"Active geomagnetic conditions possible":i==="moderate"?"Minor to moderate storm conditions":"Major geomagnetic storm conditions"}]}function qt(e,s){var p;if(s<=0)return null;let t=(p=e.metrics.kp_forecast_3h)!=null?p:[];if(!t.length)return null;let o=Date.now()+s*36e5,n=t[0],r=1/0;for(let m of t){let u=Math.abs(new Date(m.t_utc).getTime()-o);u<r&&(r=u,n=m)}let i=n.kp,l=Gt(i),a=Xt(i),c=Xe(i),d=Kt(i);return{offsetH:s,kp:i,gScale:l,auroraLabel:a,auroraMinLat:c,impacts:d}}function Qt(e,s,t,o){var Y;let{forecast:n,metrics:r}=e,{kp_max_next_24h:i,kp_max_at_utc:l,trend:a}=n,c=((Y=r.kp_forecast_3h)!=null?Y:[]).slice(0,16),d=c.length,p=d*3,m=p>0?`${(s/p*100).toFixed(0)}%`:"0%",u=s>0?`\u23F1 +${Math.round(s)}h`:"Timeline",h="Kp forecast unavailable";if(i!=null){let M=me(l),I=a==="rising"?"rising":a==="falling"?"falling":"steady";h=`Peak Kp ${i.toFixed(1)} next 24h${M?` at ${M}`:""} \xB7 ${I}`}let w=c.length?me(c[0].t_utc):null,v=w?`Forecast \xB7 Next step ${w}`:"Forecast";if(!c.length)return`
+      <span class="hw-freshness">${u(s)}</span>
+    </div>`}function Kt(e){return e.map((s,t)=>t===0?(s+e[1])/2:t===e.length-1?(e[t-1]+s)/2:(e[t-1]+s+e[t+1])/3)}function qt(e){return e>=9?"G5":e>=8?"G4":e>=7?"G3":e>=6?"G2":e>=5?"G1":"G0"}function Qt(e){return e>=5?"good":e>=3?"possible":"none"}function Ze(e){return e>=9?40:e>=8?45:e>=7?50:e>=6?55:e>=5?60:null}function Vt(e){let s=e>=7?"high":e>=5?"moderate":e>=3?"low":"none",t=Ze(e),o=s==="none"?"No aurora expected at mid-latitudes":t!=null?`Aurora possible equatorward of ~${t}\xB0 lat`:"Minor aurora possible at high latitudes",n=e>=7?"moderate":e>=5?"low":"none",r=n==="none"?"No significant HF degradation expected":n==="low"?"Minor HF degradation at high latitudes":"Moderate HF degradation, possible blackouts at high latitudes",i=e>=8?"high":e>=6?"moderate":e>=4?"low":"none";return[{kind:"aurora",level:s,label:"Aurora",summary:o},{kind:"radio",level:n,label:"HF Radio",summary:r},{kind:"solar_activity",level:i,label:"Solar Activity",summary:i==="none"?"Quiet geomagnetic conditions expected":i==="low"?"Active geomagnetic conditions possible":i==="moderate"?"Minor to moderate storm conditions":"Major geomagnetic storm conditions"}]}function Zt(e,s){var p;if(s<=0)return null;let t=(p=e.metrics.kp_forecast_3h)!=null?p:[];if(!t.length)return null;let o=Date.now()+s*36e5,n=t[0],r=1/0;for(let m of t){let g=Math.abs(new Date(m.t_utc).getTime()-o);g<r&&(r=g,n=m)}let i=n.kp,l=qt(i),a=Qt(i),c=Ze(i),d=Vt(i);return{offsetH:s,kp:i,gScale:l,auroraLabel:a,auroraMinLat:c,impacts:d}}function Jt(e,s,t,o){var j;let{forecast:n,metrics:r}=e,{kp_max_next_24h:i,kp_max_at_utc:l,trend:a}=n,c=((j=r.kp_forecast_3h)!=null?j:[]).slice(0,16),d=c.length,p=d*3,m=p>0?`${(s/p*100).toFixed(0)}%`:"0%",g=s>0?`\u23F1 +${Math.round(s)}h`:"Timeline",h="Kp forecast unavailable";if(i!=null){let M=ge(l),E=a==="rising"?"rising":a==="falling"?"falling":"steady";h=`Peak Kp ${i.toFixed(1)} next 24h${M?` at ${M}`:""} \xB7 ${E}`}let w=c.length?ge(c[0].t_utc):null,v=w?`Forecast \xB7 Next step ${w}`:"Forecast";if(!c.length)return`
     <div class="hw-forecast">
       <div class="hw-section-row" data-forecast-toggle>
         <span class="hw-section-caret">${o?"\u25BC":"\u25B6"}</span>
-        <span class="hw-section-label" style="margin-bottom:0">${g(v)}</span>
+        <span class="hw-section-label" style="margin-bottom:0">${u(v)}</span>
       </div>
-      ${o?`<div class="hw-forecast-text">${g(h)}</div>`:""}
-    </div>`;let f=320,x=38,b=14,$=x+b,y=f/d,C=M=>x-Math.max(2,Math.min(x-2,M/9*(x-2))),S="",L=c.map(M=>M.kp),k=Ut(L);c.forEach((M,I)=>{let q=C(M.kp),A=x-q,E=I*y,ne=E+y/2,N=M.kp>=6?"#e05c5c":M.kp>=5?"#e0a84a":M.kp>=4?"#d4cc5c":"#5cce8c",P=`Kp ${M.kp.toFixed(1)} \xB7 ${me(M.t_utc)}`;if(S+=`<rect x="${E.toFixed(1)}" y="${q.toFixed(1)}" width="${(y-1.5).toFixed(1)}" height="${A.toFixed(1)}" fill="${N}" fill-opacity="0.85" rx="1.5"/>`,S+=`<rect x="${E.toFixed(1)}" y="0" width="${y.toFixed(1)}" height="${x}" fill="transparent"><title>${T(P)}</title></rect>`,d<=8||I%2===0){let z=new Date(M.t_utc).getHours();S+=`<text x="${ne.toFixed(1)}" y="${($-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#7a9098">${z.toString().padStart(2,"0")}</text>`}});let H=`<polyline points="${c.map((M,I)=>{let q=I*y+y/2,A=C(k[I]);return`${q.toFixed(1)},${A.toFixed(1)}`}).join(" ")}" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>`,O="";if(s>0&&d>0){let M=Math.min(f-1,s/(d*3)*f);O=`
+      ${o?`<div class="hw-forecast-text">${u(h)}</div>`:""}
+    </div>`;let $=320,x=38,f=14,b=x+f,S=$/d,C=M=>x-Math.max(2,Math.min(x-2,M/9*(x-2))),k="",L=c.map(M=>M.kp),_=Kt(L);c.forEach((M,E)=>{let q=C(M.kp),F=x-q,O=E*S,Z=O+S/2,T=M.kp>=6?"#e05c5c":M.kp>=5?"#e0a84a":M.kp>=4?"#d4cc5c":"#5cce8c",P=`Kp ${M.kp.toFixed(1)} \xB7 ${ge(M.t_utc)}`;if(k+=`<rect x="${O.toFixed(1)}" y="${q.toFixed(1)}" width="${(S-1.5).toFixed(1)}" height="${F.toFixed(1)}" fill="${T}" fill-opacity="0.85" rx="1.5"/>`,k+=`<rect x="${O.toFixed(1)}" y="0" width="${S.toFixed(1)}" height="${x}" fill="transparent"><title>${A(P)}</title></rect>`,d<=8||E%2===0){let R=new Date(M.t_utc).getHours();k+=`<text x="${Z.toFixed(1)}" y="${(b-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#7a9098">${R.toString().padStart(2,"0")}</text>`}});let H=`<polyline points="${c.map((M,E)=>{let q=E*S+S/2,F=C(_[E]);return`${q.toFixed(1)},${F.toFixed(1)}`}).join(" ")}" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>`,I="";if(s>0&&d>0){let M=Math.min($-1,s/(d*3)*$);I=`
       <line x1="${M.toFixed(1)}" y1="0" x2="${M.toFixed(1)}" y2="${x}" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-dasharray="3,2"/>
-      <polygon points="${M.toFixed(1)},${x} ${(M-4).toFixed(1)},${(x-7).toFixed(1)} ${(M+4).toFixed(1)},${(x-7).toFixed(1)}" fill="rgba(255,255,255,0.75)"/>`}let U=Math.round(p/4),G=Math.round(p/2),X=Math.round(p*3/4),F=`
+      <polygon points="${M.toFixed(1)},${x} ${(M-4).toFixed(1)},${(x-7).toFixed(1)} ${(M+4).toFixed(1)},${(x-7).toFixed(1)}" fill="rgba(255,255,255,0.75)"/>`}let G=Math.round(p/4),X=Math.round(p/2),K=Math.round(p*3/4),N=`
     <div class="hw-scrub-wrap">
       <div class="hw-scrub-header">
-        <span class="hw-scrub-title">${g(u)}</span>
+        <span class="hw-scrub-title">${u(g)}</span>
         ${s>0?'<button class="hw-scrub-reset">\u21BA Live</button>':""}
       </div>
       <input type="range" class="hw-scrub-slider" data-scrub min="0" max="${p}" step="1" value="${s}" style="--pct:${m}">
       <div class="hw-scrub-tick-row">
         <span class="hw-scrub-tick">Now</span>
-        <span class="hw-scrub-tick">+${U}h</span>
         <span class="hw-scrub-tick">+${G}h</span>
         <span class="hw-scrub-tick">+${X}h</span>
+        <span class="hw-scrub-tick">+${K}h</span>
         <span class="hw-scrub-tick">+${p}h</span>
       </div>
-    </div>`,D=t?`
+    </div>`,Y=t?`
     <div class="hw-sim-banner">
       <span class="hw-sim-badge">\u23F1 +${Math.round(t.offsetH)}h forecast</span>
       <span class="hw-sim-kp">Kp ${t.kp.toFixed(1)} \xB7 ${t.gScale}</span>
@@ -559,67 +559,67 @@
     <div class="hw-forecast">
       <div class="hw-section-row" data-forecast-toggle>
         <span class="hw-section-caret">${o?"\u25BC":"\u25B6"}</span>
-        <span class="hw-section-label" style="margin-bottom:0">${g(v)}</span>
+        <span class="hw-section-label" style="margin-bottom:0">${u(v)}</span>
       </div>
       ${o?`
-      ${D}
-      <div class="hw-forecast-text">${g(h)}</div>
-      <svg viewBox="0 0 ${f} ${$}" style="width:100%;height:${$}px;display:block" preserveAspectRatio="none">
-        ${S}
+      ${Y}
+      <div class="hw-forecast-text">${u(h)}</div>
+      <svg viewBox="0 0 ${$} ${b}" style="width:100%;height:${b}px;display:block" preserveAspectRatio="none">
+        ${k}
         ${H}
-        ${O}
+        ${I}
       </svg>
-      ${F}`:""}
-    </div>`}function Vt(e){let s=/([NS])(\d+)([EW])(\d+)/i.exec(e);return s?{lat:(s[1].toUpperCase()==="N"?1:-1)*parseInt(s[2],10),lon:(s[3].toUpperCase()==="E"?1:-1)*parseInt(s[4],10)}:null}var Ke=[{id:"X",label:"X-risk",color:"#e05c5c"},{id:"M",label:"M-risk",color:"#e0a84a"},{id:"C",label:"C-risk",color:"#d4cc5c"},{id:"quiet",label:"Quiet",color:"#5cce8c"}];function Zt(e){return e.x_flare_probability>0?"X":e.m_flare_probability>0?"M":e.c_flare_probability>0?"C":"quiet"}function Jt(e,s,t){let o=s/2,n=o*.87,r=s*.03,i=s*.009,l=e.map(a=>{var f,x;let c=Vt(a.location);if(!c||Math.abs(c.lon)>88||a.location.includes("*"))return"";let d=Zt(a);if(!t.has(d))return"";let p=Ke.find(b=>b.id===d).color,m=c.lat*Math.PI/180,u=c.lon*Math.PI/180,h=(o+n*Math.cos(m)*Math.sin(u)).toFixed(1),w=(o-n*Math.sin(m)).toFixed(1),v=`AR ${a.region} \xB7 ${a.location}
-Class: ${(f=a.spot_class)!=null?f:"\u2014"} / ${(x=a.mag_class)!=null?x:"\u2014"}
+      ${N}`:""}
+    </div>`}function es(e){let s=/([NS])(\d+)([EW])(\d+)/i.exec(e);return s?{lat:(s[1].toUpperCase()==="N"?1:-1)*parseInt(s[2],10),lon:(s[3].toUpperCase()==="E"?1:-1)*parseInt(s[4],10)}:null}var Je=[{id:"X",label:"X-risk",color:"#e05c5c"},{id:"M",label:"M-risk",color:"#e0a84a"},{id:"C",label:"C-risk",color:"#d4cc5c"},{id:"quiet",label:"Quiet",color:"#5cce8c"}];function ts(e){return e.x_flare_probability>0?"X":e.m_flare_probability>0?"M":e.c_flare_probability>0?"C":"quiet"}function ss(e,s,t){let o=s/2,n=o*.87,r=s*.03,i=s*.009,l=e.map(a=>{var $,x;let c=es(a.location);if(!c||Math.abs(c.lon)>88||a.location.includes("*"))return"";let d=ts(a);if(!t.has(d))return"";let p=Je.find(f=>f.id===d).color,m=c.lat*Math.PI/180,g=c.lon*Math.PI/180,h=(o+n*Math.cos(m)*Math.sin(g)).toFixed(1),w=(o-n*Math.sin(m)).toFixed(1),v=`AR ${a.region} \xB7 ${a.location}
+Class: ${($=a.spot_class)!=null?$:"\u2014"} / ${(x=a.mag_class)!=null?x:"\u2014"}
 C: ${a.c_flare_probability}%  M: ${a.m_flare_probability}%  X: ${a.x_flare_probability}%`;return`<g style="pointer-events:all">
-      <title>${g(v)}</title>
+      <title>${u(v)}</title>
       <circle cx="${h}" cy="${w}" r="${(r+i+1).toFixed(1)}" fill="none" stroke="#000000" stroke-width="${(i*2.5).toFixed(1)}" opacity="0.45"/>
       <circle cx="${h}" cy="${w}" r="${r.toFixed(1)}" fill="none" stroke="${p}" stroke-width="${i.toFixed(1)}"/>
     </g>`}).join("");return`<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"
-    style="position:absolute;top:0;left:0;border-radius:50%;pointer-events:none">${l}</svg>`}var qe={aurora:'<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><path d="M6 1L6.8 5.2L11 6L6.8 6.8L6 11L5.2 6.8L1 6L5.2 5.2Z" fill="currentColor" opacity=".85"/></svg>',radio:'<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.35" style="flex-shrink:0"><path d="M3.8 9.8 a3.1 3.1 0 0 1 4.4 0"/><path d="M1.5 7.4 A6 6 0 0 1 10.5 7.4"/><circle cx="6" cy="11.2" r="1" fill="currentColor" stroke="none"/></svg>',solar_activity:'<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.25" style="flex-shrink:0"><circle cx="6" cy="6" r="2" fill="currentColor" stroke="none"/><path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11M2.6 2.6l1.1 1.1M8.3 8.3l1.1 1.1M9.4 2.6l-1.1 1.1M3.7 8.3l-1.1 1.1"/></svg>'},es='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>',ts=qe.solar_activity,ss='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><path d="M2 6 Q2 2.5 6 2.5 Q10 2.5 10 6 Q10 9.5 6 9.5 Q2 9.5 2 6"/><ellipse cx="6" cy="6" rx="2.2" ry="1.9"/><circle cx="6" cy="6" r="0.65" fill="currentColor" stroke="none"/></svg>',os='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><circle cx="3.2" cy="6" r="2.2"/><line x1="5.8" y1="6" x2="11" y2="6"/><polyline points="9.2,4.3 11,6 9.2,7.7" fill="currentColor" stroke="none"/></svg>',ns=13,as="https://staging.nebulacast.app";function is(e,s){return!e||/^https?:\/\//.test(e)||e.startsWith("//")?e:(s!=null?s:as).replace(/\/$/,"")+(e.startsWith("/")?e:"/"+e)}var rs="https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg",le=[{id:"eit171",label:"EIT 171",url:"/assets/gifs/current_eit_171.gif"},{id:"eit195",label:"EIT 195",url:"/assets/gifs/current_eit_195.gif"},{id:"eit284",label:"EIT 284",url:"/assets/gifs/current_eit_284.gif"},{id:"eit304",label:"EIT 304",url:"/assets/gifs/current_eit_304.gif"},{id:"cont",label:"Continuum",url:"https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg"},{id:"mag",label:"Magnetogram",url:"https://soho.nascom.nasa.gov/data/realtime/hmi_mag/512/latest.jpg"}],ls="https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg",Os=le[0].url,cs="https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_512_0171.mp4",ds=240;function ps(e,s){var c,d,p;let t=parseInt(((c=e.scales.r_scale)!=null?c:"R0").slice(1),10),o=(d=e.metrics.xray_class)!=null?d:"A",n=e.metrics.xray_flux_wm2,r=n!=null?n.toExponential(2)+" W/m\xB2":"\u2014",l=[{r:0,color:"#5cce8c",desc:"Quiet"},{r:1,color:"#d4cc5c",desc:"Minor"},{r:2,color:"#e0a84a",desc:"Moderate"},{r:3,color:"#e05c5c",desc:"Strong"},{r:4,color:"#c0407a",desc:"Severe"},{r:5,color:"#8c3cc0",desc:"Extreme"}].map(m=>{let u=m.r===t,h=m.r<=t,w=h?m.color:"#1e2c30",v=u?"1":h?"0.5":"1",f=u?m.color:h?m.color+"99":"#566068",x=u?m.color:h?m.color+"88":"#566068";return`<div class="hw-radio-block">
-      <span class="hw-radio-blabel" style="color:${f}">R${m.r}</span>
+    style="position:absolute;top:0;left:0;border-radius:50%;pointer-events:none">${l}</svg>`}var Me={aurora:'<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><path d="M6 1L6.8 5.2L11 6L6.8 6.8L6 11L5.2 6.8L1 6L5.2 5.2Z" fill="currentColor" opacity=".85"/></svg>',radio:'<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.35" style="flex-shrink:0"><path d="M3.8 9.8 a3.1 3.1 0 0 1 4.4 0"/><path d="M1.5 7.4 A6 6 0 0 1 10.5 7.4"/><circle cx="6" cy="11.2" r="1" fill="currentColor" stroke="none"/></svg>',solar_activity:'<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.25" style="flex-shrink:0"><circle cx="6" cy="6" r="2" fill="currentColor" stroke="none"/><path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11M2.6 2.6l1.1 1.1M8.3 8.3l1.1 1.1M9.4 2.6l-1.1 1.1M3.7 8.3l-1.1 1.1"/></svg>'},et='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>',os=Me.solar_activity,ns='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><path d="M2 6 Q2 2.5 6 2.5 Q10 2.5 10 6 Q10 9.5 6 9.5 Q2 9.5 2 6"/><ellipse cx="6" cy="6" rx="2.2" ry="1.9"/><circle cx="6" cy="6" r="0.65" fill="currentColor" stroke="none"/></svg>',as='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><circle cx="3.2" cy="6" r="2.2"/><line x1="5.8" y1="6" x2="11" y2="6"/><polyline points="9.2,4.3 11,6 9.2,7.7" fill="currentColor" stroke="none"/></svg>',is=14,rs="https://staging.nebulacast.app";function ls(e,s){return!e||/^https?:\/\//.test(e)||e.startsWith("//")?e:(s!=null?s:rs).replace(/\/$/,"")+(e.startsWith("/")?e:"/"+e)}var cs="https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg",pe=[{id:"eit171",label:"EIT 171",url:"/assets/gifs/current_eit_171.gif"},{id:"eit195",label:"EIT 195",url:"/assets/gifs/current_eit_195.gif"},{id:"eit284",label:"EIT 284",url:"/assets/gifs/current_eit_284.gif"},{id:"eit304",label:"EIT 304",url:"/assets/gifs/current_eit_304.gif"},{id:"cont",label:"Continuum",url:"https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg"},{id:"mag",label:"Magnetogram",url:"https://soho.nascom.nasa.gov/data/realtime/hmi_mag/512/latest.jpg"}],ds="https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg",Ds=pe[0].url,ps="https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_512_0171.mp4",hs=240;function ms(e,s){var c,d,p;let t=parseInt(((c=e.scales.r_scale)!=null?c:"R0").slice(1),10),o=(d=e.metrics.xray_class)!=null?d:"A",n=e.metrics.xray_flux_wm2,r=n!=null?n.toExponential(2)+" W/m\xB2":"\u2014",l=[{r:0,color:"#5cce8c",desc:"Quiet"},{r:1,color:"#d4cc5c",desc:"Minor"},{r:2,color:"#e0a84a",desc:"Moderate"},{r:3,color:"#e05c5c",desc:"Strong"},{r:4,color:"#c0407a",desc:"Severe"},{r:5,color:"#8c3cc0",desc:"Extreme"}].map(m=>{let g=m.r===t,h=m.r<=t,w=h?m.color:"#1e2c30",v=g?"1":h?"0.5":"1",$=g?m.color:h?m.color+"99":"#566068",x=g?m.color:h?m.color+"88":"#566068";return`<div class="hw-radio-block">
+      <span class="hw-radio-blabel" style="color:${$}">R${m.r}</span>
       <div class="hw-radio-bbar" style="background:${w};opacity:${v}"></div>
       <span class="hw-radio-bdesc" style="color:${x}">${m.desc}</span>
     </div>`}).join("");return`<div class="hw-impact-tip${s?" hw-impact-tip-open":""}">
     <div class="hw-radio-scale">${l}</div>
-    <div class="hw-radio-meta">X-ray: <b style="color:${(p=we[o])!=null?p:"#a0b4b8"}">${g(o)}-class</b> \xB7 ${g(r)}</div>
-  </div>`}var Qe={g1:"#d4cc5c",g2:"#e0a84a",g3:"#e05c5c"};function Ve(e){var l;let s=(l=e.metrics.kp_forecast_3h)!=null?l:[],t=Date.now(),o=t+24*60*60*1e3,n=s.filter(a=>{let c=new Date(a.t_utc).getTime();return c>=t-3*60*60*1e3&&c<=o});if(n.length===0)return{g1:0,g2:0,g3:0};let r=Math.max(...n.map(a=>a.kp)),i=a=>{if(r<a-.7)return 0;if(r>a+1)return 90;let c=(r-(a-.7))/1.7;return Math.round(Math.pow(Math.max(0,c),.7)*90)};return{g1:i(5),g2:i(6),g3:i(7)}}var Ye={rising:"#e0884a",peak:"#e05c5c",decline:"#d4cc5c"};function hs(e){var c,d,p;let s=(c=e.metrics.kp_latest)!=null?c:0,t=e.metrics.imf_bz_nt,o=e.metrics.solar_wind_kms,n=parseInt(((d=e.scales.g_scale)!=null?d:"G0").replace("G",""),10)||0,r=s>=5||n>=1,i=(p=e.metrics.kp_history_1h)!=null?p:[],l=0;if(i.length>=2&&(l=i[i.length-1].kp-i[i.length-2].kp),!r)return{active:!1,phase:"quiet",kp_current:s,kp_trend:l,bz_nt:t,solar_wind_kms:o};let a;return l>.3&&(t==null||t<-5)?a="rising":l<-.5?a="decline":a="peak",{active:!0,phase:a,kp_current:s,kp_trend:l,bz_nt:t,solar_wind_kms:o}}function ms(e){if(!e.active)return"";let s=[{key:"rising",label:"Rising"},{key:"peak",label:"Peak"},{key:"decline",label:"Decline"}],t=s.findIndex(l=>l.key===e.phase),o=Ye[e.phase],n=s[t].label,r=s.map((l,a)=>{let c=a===t,d=a<t,p=Ye[l.key],m=c?`background:${p};border-color:${p};box-shadow:0 0 6px ${p}88`:d?`background:${p}44;border-color:${p}66`:"background:#111b1e;border-color:#1e2c30",u=c?" hw-spi-dot-active":"",h=c?`color:${p};font-weight:700`:d?`color:${p}66`:"color:#2e4248",w=a<s.length-1?`<div class="hw-spi-arr">${d?`<span style="color:${p}55">\u2192</span>`:"\u2192"}</div>`:"";return`<div class="hw-spi-node">
-        <div class="hw-spi-dot${u}" style="${m}"></div>
+    <div class="hw-radio-meta">X-ray: <b style="color:${(p=fe[o])!=null?p:"#a0b4b8"}">${u(o)}-class</b> \xB7 ${u(r)}</div>
+  </div>`}var tt={g1:"#d4cc5c",g2:"#e0a84a",g3:"#e05c5c"};function st(e){var l;let s=(l=e.metrics.kp_forecast_3h)!=null?l:[],t=Date.now(),o=t+24*60*60*1e3,n=s.filter(a=>{let c=new Date(a.t_utc).getTime();return c>=t-3*60*60*1e3&&c<=o});if(n.length===0)return{g1:0,g2:0,g3:0};let r=Math.max(...n.map(a=>a.kp)),i=a=>{if(r<a-.7)return 0;if(r>a+1)return 90;let c=(r-(a-.7))/1.7;return Math.round(Math.pow(Math.max(0,c),.7)*90)};return{g1:i(5),g2:i(6),g3:i(7)}}var We={rising:"#e0884a",peak:"#e05c5c",decline:"#d4cc5c"};function us(e){var c,d,p;let s=(c=e.metrics.kp_latest)!=null?c:0,t=e.metrics.imf_bz_nt,o=e.metrics.solar_wind_kms,n=parseInt(((d=e.scales.g_scale)!=null?d:"G0").replace("G",""),10)||0,r=s>=5||n>=1,i=(p=e.metrics.kp_history_1h)!=null?p:[],l=0;if(i.length>=2&&(l=i[i.length-1].kp-i[i.length-2].kp),!r)return{active:!1,phase:"quiet",kp_current:s,kp_trend:l,bz_nt:t,solar_wind_kms:o};let a;return l>.3&&(t==null||t<-5)?a="rising":l<-.5?a="decline":a="peak",{active:!0,phase:a,kp_current:s,kp_trend:l,bz_nt:t,solar_wind_kms:o}}function gs(e){if(!e.active)return"";let s=[{key:"rising",label:"Rising"},{key:"peak",label:"Peak"},{key:"decline",label:"Decline"}],t=s.findIndex(l=>l.key===e.phase),o=We[e.phase],n=s[t].label,r=s.map((l,a)=>{let c=a===t,d=a<t,p=We[l.key],m=c?`background:${p};border-color:${p};box-shadow:0 0 6px ${p}88`:d?`background:${p}44;border-color:${p}66`:"background:#111b1e;border-color:#1e2c30",g=c?" hw-spi-dot-active":"",h=c?`color:${p};font-weight:700`:d?`color:${p}66`:"color:#2e4248",w=a<s.length-1?`<div class="hw-spi-arr">${d?`<span style="color:${p}55">\u2192</span>`:"\u2192"}</div>`:"";return`<div class="hw-spi-node">
+        <div class="hw-spi-dot${g}" style="${m}"></div>
         <div class="hw-spi-txt" style="${h}">${l.label}</div>
       </div>${w}`}).join(""),i=[`Kp ${e.kp_current.toFixed(1)}`];return e.bz_nt!=null&&i.push(`Bz ${e.bz_nt>0?"+":""}${e.bz_nt.toFixed(1)} nT`),e.solar_wind_kms!=null&&i.push(`Wind ${Math.round(e.solar_wind_kms)} km/s`),`<div class="hw-spi-wrap">
     <div class="hw-spi-hdr">Geomagnetic Storm \xB7 <span style="color:${o};font-weight:700">${n}</span></div>
     <div class="hw-spi-track">${r}</div>
     <div class="hw-spi-params">${i.join(" \xB7 ")}</div>
-  </div>`}function gs(e,s){let t=Ve(e),o=hs(e),n=(()=>{var u;let c=(u=e.metrics.kp_forecast_3h)!=null?u:[],d=Date.now(),p=d+24*60*60*1e3,m=c.filter(h=>new Date(h.t_utc).getTime()<=p);return m.length?Math.max(...m.map(h=>h.kp)):null})(),i=[{key:"g1",label:"G1"},{key:"g2",label:"G2"},{key:"g3",label:"G3"}].map(({key:c,label:d})=>{let p=t[c],m=Qe[c];return`<div class="hw-gstorm-row">
+  </div>`}function ws(e,s){let t=st(e),o=us(e),n=(()=>{var g;let c=(g=e.metrics.kp_forecast_3h)!=null?g:[],d=Date.now(),p=d+24*60*60*1e3,m=c.filter(h=>new Date(h.t_utc).getTime()<=p);return m.length?Math.max(...m.map(h=>h.kp)):null})(),i=[{key:"g1",label:"G1"},{key:"g2",label:"G2"},{key:"g3",label:"G3"}].map(({key:c,label:d})=>{let p=t[c],m=tt[c];return`<div class="hw-gstorm-row">
       <span class="hw-gstorm-lbl" style="color:${m};${p===0?" opacity:.35":""}">${d}</span>
       <div class="hw-gstorm-track">
         <div class="hw-gstorm-fill" style="width:${p}%;background:${m}"></div>
       </div>
       <span class="hw-gstorm-pct" style="color:${p>0?m:"#607880"}">${p}%</span>
     </div>`}).join(""),l=n!=null?`Max Kp forecast 24h: <b style="color:#b4c6cc">${n.toFixed(1)}</b>`:"";return`<div class="hw-impact-tip${s?" hw-impact-tip-open":""}">
-    ${ms(o)}
+    ${gs(o)}
     <div class="hw-gstorm-header">Storm probability \xB7 next 24h</div>
     <div class="hw-gstorm-rows">${i}</div>
     ${l?`<div class="hw-gstorm-footer">${l} \xB7 derived from Kp forecast</div>`:""}
-  </div>`}var ge={cycle_name:"Solar Cycle 25",phase:"declining",progress_0_1:.57,cycle_start_year:2019,expected_peak_year:2025,expected_end_year:2030,subtitle:"Activity remains elevated"},Ze={minimum:"#607880",rising:"#d4cc5c",maximum:"#e0a84a",declining:"#96a8c8"};function us(e){var k;let s=ge,t=(k=Ze[s.phase])!=null?k:"#96a8b8",o=s.phase.charAt(0).toUpperCase()+s.phase.slice(1),n=280,r=52,i=10,l=r-6,a=r-18,c=.5,d=.19,p=_=>Math.exp(-Math.pow((_-c)/d,2)/2),m=_=>i+_*(n-2*i),u=_=>l-p(_)*a,h=80,w=[];for(let _=0;_<=h;_++){let H=_/h;w.push(`${_===0?"M":"L"}${m(H).toFixed(1)},${u(H).toFixed(1)}`)}let v=Math.round(s.progress_0_1*h),f=[];for(let _=0;_<=v;_++){let H=_/h;f.push(`${_===0?"M":"L"}${m(H).toFixed(1)},${u(H).toFixed(1)}`)}let x=m(s.progress_0_1),b=[`M${i},${l}`,...f.slice(1),`L${x.toFixed(1)},${l} Z`],$=u(s.progress_0_1),y=5,C=`M${x.toFixed(1)},${$.toFixed(1)} L${(x-y).toFixed(1)},${($-y*1.8).toFixed(1)} L${(x+y).toFixed(1)},${($-y*1.8).toFixed(1)} Z`,S=l+11;return`<div class="hw-impact-tip${e?" hw-impact-tip-open":""}" style="padding:8px 6px 6px">
-    <div class="hw-sc-name">${g(s.cycle_name)}</div>
+  </div>`}var we={cycle_name:"Solar Cycle 25",phase:"declining",progress_0_1:.57,cycle_start_year:2019,expected_peak_year:2025,expected_end_year:2030,subtitle:"Activity remains elevated"},ot={minimum:"#607880",rising:"#d4cc5c",maximum:"#e0a84a",declining:"#96a8c8"};function xs(e){var _;let s=we,t=(_=ot[s.phase])!=null?_:"#96a8b8",o=s.phase.charAt(0).toUpperCase()+s.phase.slice(1),n=280,r=52,i=10,l=r-6,a=r-18,c=.5,d=.19,p=y=>Math.exp(-Math.pow((y-c)/d,2)/2),m=y=>i+y*(n-2*i),g=y=>l-p(y)*a,h=80,w=[];for(let y=0;y<=h;y++){let H=y/h;w.push(`${y===0?"M":"L"}${m(H).toFixed(1)},${g(H).toFixed(1)}`)}let v=Math.round(s.progress_0_1*h),$=[];for(let y=0;y<=v;y++){let H=y/h;$.push(`${y===0?"M":"L"}${m(H).toFixed(1)},${g(H).toFixed(1)}`)}let x=m(s.progress_0_1),f=[`M${i},${l}`,...$.slice(1),`L${x.toFixed(1)},${l} Z`],b=g(s.progress_0_1),S=5,C=`M${x.toFixed(1)},${b.toFixed(1)} L${(x-S).toFixed(1)},${(b-S*1.8).toFixed(1)} L${(x+S).toFixed(1)},${(b-S*1.8).toFixed(1)} Z`,k=l+11;return`<div class="hw-impact-tip${e?" hw-impact-tip-open":""}" style="padding:8px 6px 6px">
+    <div class="hw-sc-name">${u(s.cycle_name)}</div>
     <svg width="100%" height="${r+14}" viewBox="0 0 ${n} ${r+14}" class="hw-sc-svg" preserveAspectRatio="none">
-      <path d="${b.join(" ")}" fill="${t}" opacity="0.12"/>
+      <path d="${f.join(" ")}" fill="${t}" opacity="0.12"/>
       <path d="${w.join(" ")}" fill="none" stroke="#2a4048" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
-      <path d="${f.join(" ")}" fill="none" stroke="${t}" stroke-width="1.5" opacity="0.7" vector-effect="non-scaling-stroke"/>
+      <path d="${$.join(" ")}" fill="none" stroke="${t}" stroke-width="1.5" opacity="0.7" vector-effect="non-scaling-stroke"/>
       <line x1="${i}" y1="${l}" x2="${n-i}" y2="${l}" stroke="#1e2c30" stroke-width="1" vector-effect="non-scaling-stroke"/>
       <path d="${C}" fill="${t}"/>
-      <text x="${i+2}" y="${S}" class="hw-sc-axlabel" text-anchor="start">min</text>
-      <text x="${m(.5).toFixed(1)}" y="${S}" class="hw-sc-axlabel" text-anchor="middle">max</text>
-      <text x="${(n-i-2).toFixed(1)}" y="${S}" class="hw-sc-axlabel" text-anchor="end">min</text>
+      <text x="${i+2}" y="${k}" class="hw-sc-axlabel" text-anchor="start">min</text>
+      <text x="${m(.5).toFixed(1)}" y="${k}" class="hw-sc-axlabel" text-anchor="middle">max</text>
+      <text x="${(n-i-2).toFixed(1)}" y="${k}" class="hw-sc-axlabel" text-anchor="end">min</text>
     </svg>
-    <div class="hw-sc-footer">Phase: <b style="color:${t}">${g(o)}</b>${s.subtitle?` \xB7 ${g(s.subtitle)}`:""}</div>
-  </div>`}function Je(e){var a,c,d,p,m;let s=(c=(a=e.coronal_hole)==null?void 0:a.estimated_speed_kms)!=null?c:e.metrics.solar_wind_kms,t=(d=e.coronal_hole)==null?void 0:d.status,o=s!=null?s:0,n=t!=null?t:o>=600?"strong":o>=500?"active":o>=420?"watch":"quiet",r={strong:"#e05c5c",active:"#e0a84a",watch:"#d4cc5c",quiet:"#5cce8c"},i={strong:"Strong",active:"Active",watch:"Watch",quiet:"None"},l={strong:"Strong high-speed stream",active:"High-speed stream active",watch:"Elevated solar wind",quiet:"Background solar wind"};return{status:n,color:r[n],label:i[n],desc:(m=(p=e.coronal_hole)==null?void 0:p.note)!=null?m:l[n],speed:s}}function ws(e,s){var c;let t=Je(e),o=(c=t.speed)!=null?c:0,n=t.speed!=null?`${Math.round(t.speed)} km/s`:"\u2014",r=s?" hw-impact-tip-open":"",i=o>=420,l=fe("coronal_hole",{hssState:t,uid:"hss"}),a=i?'<div class="hw-hss-meta" style="font-size:.72em">Elevated speed may indicate Earth-facing coronal hole stream</div>':'<div class="hw-hss-meta" style="font-size:.72em">Background solar wind \xB7 no HSS detected</div>';return`<div class="hw-impact-tip${r}">
+    <div class="hw-sc-footer">Phase: <b style="color:${t}">${u(o)}</b>${s.subtitle?` \xB7 ${u(s.subtitle)}`:""}</div>
+  </div>`}function nt(e){var a,c,d,p,m;let s=(c=(a=e.coronal_hole)==null?void 0:a.estimated_speed_kms)!=null?c:e.metrics.solar_wind_kms,t=(d=e.coronal_hole)==null?void 0:d.status,o=s!=null?s:0,n=t!=null?t:o>=600?"strong":o>=500?"active":o>=420?"watch":"quiet",r={strong:"#e05c5c",active:"#e0a84a",watch:"#d4cc5c",quiet:"#5cce8c"},i={strong:"Strong",active:"Active",watch:"Watch",quiet:"None"},l={strong:"Strong high-speed stream",active:"High-speed stream active",watch:"Elevated solar wind",quiet:"Background solar wind"};return{status:n,color:r[n],label:i[n],desc:(m=(p=e.coronal_hole)==null?void 0:p.note)!=null?m:l[n],speed:s}}function fs(e,s){var c;let t=nt(e),o=(c=t.speed)!=null?c:0,n=t.speed!=null?`${Math.round(t.speed)} km/s`:"\u2014",r=s?" hw-impact-tip-open":"",i=o>=420,l=$e("coronal_hole",{hssState:t,uid:"hss"}),a=i?'<div class="hw-hss-meta" style="font-size:.72em">Elevated speed may indicate Earth-facing coronal hole stream</div>':'<div class="hw-hss-meta" style="font-size:.72em">Background solar wind \xB7 no HSS detected</div>';return`<div class="hw-impact-tip${r}">
     ${l}
-    <div class="hw-hss-meta">Solar wind: <b style="color:${t.color}">${g(n)}</b> \xB7 ${g(t.desc)}</div>
+    <div class="hw-hss-meta">Solar wind: <b style="color:${t.color}">${u(n)}</b> \xB7 ${u(t.desc)}</div>
     ${a}
-  </div>`}function et(e){var n,r;let s=(n=e.scales.g_scale)!=null?n:"G0",t=parseInt(s.slice(1),10),o=e.metrics.kp_latest;if(o==null){let i=(r=e.metrics.kp_forecast_3h)!=null?r:[],l=Date.now(),a=i.filter(c=>new Date(c.t_utc).getTime()<=l+3*60*60*1e3).sort((c,d)=>new Date(d.t_utc).getTime()-new Date(c.t_utc).getTime());a.length>0&&(o=a[0].kp)}return t>=2||o!=null&&o>=6?{level:2,color:"#e05c5c",label:"High",kp:o,gScale:s}:t>=1||o!=null&&o>=4?{level:1,color:"#d4cc5c",label:"Moderate",kp:o,gScale:s}:{level:0,color:"#5cce8c",label:"Low",kp:o,gScale:s}}function xs(e,s){let t=et(e),o=s?" hw-impact-tip-open":"",r=[{l:0,label:"Low",color:"#5cce8c",width:33,desc:"Normal density"},{l:1,label:"Moderate",color:"#d4cc5c",width:64,desc:"Elevated density"},{l:2,label:"High",color:"#e05c5c",width:100,desc:"Strong expansion"}].map(a=>{let c=a.l===t.level,d=c?a.color:"#566068",p=c?"0.88":"0.16";return`<div class="hw-satdrag-rung">
+  </div>`}function at(e){var n,r;let s=(n=e.scales.g_scale)!=null?n:"G0",t=parseInt(s.slice(1),10),o=e.metrics.kp_latest;if(o==null){let i=(r=e.metrics.kp_forecast_3h)!=null?r:[],l=Date.now(),a=i.filter(c=>new Date(c.t_utc).getTime()<=l+3*60*60*1e3).sort((c,d)=>new Date(d.t_utc).getTime()-new Date(c.t_utc).getTime());a.length>0&&(o=a[0].kp)}return t>=2||o!=null&&o>=6?{level:2,color:"#e05c5c",label:"High",kp:o,gScale:s}:t>=1||o!=null&&o>=4?{level:1,color:"#d4cc5c",label:"Moderate",kp:o,gScale:s}:{level:0,color:"#5cce8c",label:"Low",kp:o,gScale:s}}function bs(e,s){let t=at(e),o=s?" hw-impact-tip-open":"",r=[{l:0,label:"Low",color:"#5cce8c",width:33,desc:"Normal density"},{l:1,label:"Moderate",color:"#d4cc5c",width:64,desc:"Elevated density"},{l:2,label:"High",color:"#e05c5c",width:100,desc:"Strong expansion"}].map(a=>{let c=a.l===t.level,d=c?a.color:"#566068",p=c?"0.88":"0.16";return`<div class="hw-satdrag-rung">
       <span class="hw-satdrag-label" style="color:${d}">${a.label}</span>
       <div class="hw-satdrag-bar-track">
         <div class="hw-satdrag-bar-fill" style="width:${a.width}%;background:${a.color};opacity:${p}"></div>
@@ -627,102 +627,119 @@ C: ${a.c_flare_probability}%  M: ${a.m_flare_probability}%  X: ${a.x_flare_proba
       <span class="hw-satdrag-mark" style="color:${c?a.color:"transparent"}">${c?"\u25C0":""}</span>
     </div>`}).join(""),i=t.kp!=null?`Kp ${t.kp.toFixed(1)}`:"Kp \u2014",l={0:"Near-normal thermospheric density",1:"Elevated drag \u2014 minor orbit correction may be needed",2:"Strong thermospheric expansion \u2014 significant drag increase"};return`<div class="hw-impact-tip${o}">
     <div class="hw-satdrag-ladder">${r}</div>
-    <div class="hw-satdrag-meta">${i} \xB7 ${g(t.gScale)} \xB7 ${l[t.level]}</div>
-  </div>`}function tt(e){var c,d,p;let s=(c=e.scales.g_scale)!=null?c:"G0",t=parseInt(s.slice(1),10),o=e.metrics.kp_latest;if(o==null){let m=(d=e.metrics.kp_forecast_3h)!=null?d:[],u=Date.now(),h=m.filter(w=>new Date(w.t_utc).getTime()<=u+3*60*60*1e3).sort((w,v)=>new Date(v.t_utc).getTime()-new Date(w.t_utc).getTime());h.length>0&&(o=h[0].kp)}let n=0;t>=2||o!=null&&o>=6?n=2:(t>=1||o!=null&&o>=4)&&(n=1);let r=parseInt(((p=e.scales.r_scale)!=null?p:"R0").slice(1),10),i=r>=2&&n<2;r>=2&&(n=Math.min(2,n+1));let l={0:"#5cce8c",1:"#d4cc5c",2:"#e05c5c"},a={0:"Low",1:"Moderate",2:"High"};return{level:n,color:l[n],label:a[n],kp:o,gScale:s,boostedByFlare:i}}function fs(e,s){var c;let t=tt(e),o=s?" hw-impact-tip-open":"",r=[{l:0,label:"Low",color:"#5cce8c",width:33},{l:1,label:"Moderate",color:"#d4cc5c",width:64},{l:2,label:"High",color:"#e05c5c",width:100}].map(d=>{let p=d.l===t.level,m=p?d.color:"#566068",u=p?"0.88":"0.16";return`<div class="hw-gnss-rung">
+    <div class="hw-satdrag-meta">${i} \xB7 ${u(t.gScale)} \xB7 ${l[t.level]}</div>
+  </div>`}function it(e){var c,d,p;let s=(c=e.scales.g_scale)!=null?c:"G0",t=parseInt(s.slice(1),10),o=e.metrics.kp_latest;if(o==null){let m=(d=e.metrics.kp_forecast_3h)!=null?d:[],g=Date.now(),h=m.filter(w=>new Date(w.t_utc).getTime()<=g+3*60*60*1e3).sort((w,v)=>new Date(v.t_utc).getTime()-new Date(w.t_utc).getTime());h.length>0&&(o=h[0].kp)}let n=0;t>=2||o!=null&&o>=6?n=2:(t>=1||o!=null&&o>=4)&&(n=1);let r=parseInt(((p=e.scales.r_scale)!=null?p:"R0").slice(1),10),i=r>=2&&n<2;r>=2&&(n=Math.min(2,n+1));let l={0:"#5cce8c",1:"#d4cc5c",2:"#e05c5c"},a={0:"Low",1:"Moderate",2:"High"};return{level:n,color:l[n],label:a[n],kp:o,gScale:s,boostedByFlare:i}}function $s(e,s){var c;let t=it(e),o=s?" hw-impact-tip-open":"",r=[{l:0,label:"Low",color:"#5cce8c",width:33},{l:1,label:"Moderate",color:"#d4cc5c",width:64},{l:2,label:"High",color:"#e05c5c",width:100}].map(d=>{let p=d.l===t.level,m=p?d.color:"#566068",g=p?"0.88":"0.16";return`<div class="hw-gnss-rung">
       <span class="hw-gnss-label" style="color:${m}">${d.label}</span>
       <div class="hw-gnss-bar-track">
-        <div class="hw-gnss-bar-fill" style="width:${d.width}%;background:${d.color};opacity:${u}"></div>
+        <div class="hw-gnss-bar-fill" style="width:${d.width}%;background:${d.color};opacity:${g}"></div>
       </div>
       <span class="hw-gnss-mark" style="color:${p?d.color:"transparent"}">${p?"\u25C0":""}</span>
     </div>`}).join(""),i=t.kp!=null?`Kp ${t.kp.toFixed(1)}`:"Kp \u2014",l={0:"Stable ionosphere \xB7 normal positioning accuracy",1:"Possible signal delay or scintillation",2:"Significant positioning errors \xB7 possible signal loss"},a=t.boostedByFlare?`<div class="hw-gnss-meta" style="font-size:.72em">Risk elevated by solar flare activity (R${parseInt(((c=e.scales.r_scale)!=null?c:"R0").slice(1),10)})</div>`:"";return`<div class="hw-impact-tip${o}">
     <div class="hw-gnss-ladder">${r}</div>
-    <div class="hw-gnss-meta">${i} \xB7 ${g(t.gScale)} \xB7 ${l[t.level]}</div>
+    <div class="hw-gnss-meta">${i} \xB7 ${u(t.gScale)} \xB7 ${l[t.level]}</div>
     ${a}
-  </div>`}function st(e){var n;let s=e.metrics.pressure_npa,t=s!=null?s:null,o=(n=e.metrics.density)!=null?n:null;return t==null?{pressure:null,color:"#607880",label:"\u2014",density:o}:t>=6?{pressure:t,color:"#e05c5c",label:"Extreme",density:o}:t>=4?{pressure:t,color:"#e0a84a",label:"Strong",density:o}:t>=2?{pressure:t,color:"#d4cc5c",label:"Elevated",density:o}:t>=1?{pressure:t,color:"#5cce8c",label:"Typical",density:o}:{pressure:t,color:"#7a9298",label:"Weak",density:o}}function bs(e,s){let t=st(e),o=s?" hw-impact-tip-open":"",n=t.pressure,r=200,i=6,l=10,a=i+l,c=a+4,d=c+11,p=a+9,m=d+4,h=[{x:0,w:50,color:"#5cce8c"},{x:50,w:50,color:"#d4cc5c"},{x:100,w:50,color:"#e0a84a"},{x:150,w:50,color:"#e05c5c"}].map(k=>`<rect x="${k.x}" y="${i}" width="${k.w}" height="${l}" fill="${k.color}" opacity="0.55" rx="0"/>`).join(""),w=[{x:0,label:"0",anchor:"start"},{x:50,label:"2",anchor:"middle"},{x:100,label:"4",anchor:"middle"},{x:150,label:"6",anchor:"middle"},{x:200,label:"8+",anchor:"end"}],v=w.map(k=>`<line x1="${k.x}" y1="${a}" x2="${k.x}" y2="${c}" stroke="#3a5058" stroke-width="1"/>`).join(""),f=w.map(k=>`<text x="${k.x}" y="${d}" class="hw-swdp-axlabel" text-anchor="${k.anchor}">${k.label}</text>`).join(""),x="";if(n!=null){let _=Math.min(Math.max(n,0),8)/8*r;x=`<polygon points="${`${_-5},${p} ${_+5},${p} ${_},${a}`}" fill="${t.color}" opacity="0.95"/>
-    <line x1="${_}" y1="${i}" x2="${_}" y2="${a}" stroke="${t.color}" stroke-width="1.5" opacity="0.7"/>`}let b=`<rect x="0" y="${i}" width="${r}" height="${l}" fill="none" stroke="#2a3c42" stroke-width="0.8" rx="0"/>`,$=`<svg class="hw-swdp-gauge" viewBox="0 0 ${r} ${m}" preserveAspectRatio="none" aria-hidden="true">
-    ${h}${b}${x}${v}${f}
-  </svg>`,y=n!=null?`${n.toFixed(2)} nPa`:"\u2014",C=t.density!=null?`${t.density.toFixed(2)} cm\u207B\xB3`:"\u2014",S=e.metrics.solar_wind_kms!=null?`${Math.round(e.metrics.solar_wind_kms)} km/s`:"\u2014",L=n==null?"":n>=4?" \xB7 Magnetosphere compressed":n>=2?" \xB7 Moderate compression":"";return`<div class="hw-impact-tip${o}">
-    ${$}
-    <div class="hw-swdp-meta"><b style="color:${t.color}">${g(y)}</b>${g(L)}</div>
-    <div class="hw-swdp-meta" style="font-size:.72em">Speed ${g(S)} \xB7 Density ${g(C)}</div>
-  </div>`}function ot(e){var c,d;let s=(c=e.alerts_all)!=null?c:[],t=s.find(p=>p.kind==="cme_impact"),o=s.find(p=>p.kind==="cme_watch"),n=t!=null?t:o;if(!n)return{status:"quiet",color:"#5cce8c",label:"None",speed_kms:null,issued_utc:null,arrival_utc:null};let r=((d=n.raw_body)!=null?d:"").match(/Estimated Velocity[:\s]+(\d+)\s*km\/s/i),i=r?parseInt(r[1],10):null,l=null;if(i&&n.t_utc){let p=1496e5/i*1e3;l=new Date(new Date(n.t_utc).getTime()+p).toISOString().replace(".000Z","Z")}let a=t?"impact":"watch";return{status:a,color:a==="impact"?"#e05c5c":"#d4cc5c",label:a==="impact"?"Active":"Watch",speed_kms:i,issued_utc:n.t_utc,arrival_utc:l}}function $s(e,s){let t=ot(e),o=s?" hw-impact-tip-open":"",n="\u2014";if(t.arrival_utc){let a=new Date(t.arrival_utc),c=a.toLocaleString("en-US",{month:"short",timeZone:"UTC"}),d=a.getUTCDate(),p=String(a.getUTCHours()).padStart(2,"0"),m=String(a.getUTCMinutes()).padStart(2,"0");n=`~${c}\xA0${d}\xA0${p}:${m}\u202FUTC`}let r=t.speed_kms?`${t.speed_kms}\u202Fkm/s`:"\u2014",i=t.status!=="quiet"?`Velocity: <b style="color:#b4c6cc">${g(r)}</b>&ensp;Arrival: <b style="color:#b4c6cc">${g(n)}</b>`:"No Earth-directed CME in forecast window",l=fe("cme_cone",{cmeState:t,uid:"cme"});return`<div class="hw-impact-tip${o}">
+  </div>`}function rt(e){var n;let s=e.metrics.pressure_npa,t=s!=null?s:null,o=(n=e.metrics.density)!=null?n:null;return t==null?{pressure:null,color:"#607880",label:"\u2014",density:o}:t>=6?{pressure:t,color:"#e05c5c",label:"Extreme",density:o}:t>=4?{pressure:t,color:"#e0a84a",label:"Strong",density:o}:t>=2?{pressure:t,color:"#d4cc5c",label:"Elevated",density:o}:t>=1?{pressure:t,color:"#5cce8c",label:"Typical",density:o}:{pressure:t,color:"#7a9298",label:"Weak",density:o}}function vs(e,s){let t=rt(e),o=s?" hw-impact-tip-open":"",n=t.pressure,r=200,i=6,l=10,a=i+l,c=a+4,d=c+11,p=a+9,m=d+4,h=[{x:0,w:50,color:"#5cce8c"},{x:50,w:50,color:"#d4cc5c"},{x:100,w:50,color:"#e0a84a"},{x:150,w:50,color:"#e05c5c"}].map(_=>`<rect x="${_.x}" y="${i}" width="${_.w}" height="${l}" fill="${_.color}" opacity="0.55" rx="0"/>`).join(""),w=[{x:0,label:"0",anchor:"start"},{x:50,label:"2",anchor:"middle"},{x:100,label:"4",anchor:"middle"},{x:150,label:"6",anchor:"middle"},{x:200,label:"8+",anchor:"end"}],v=w.map(_=>`<line x1="${_.x}" y1="${a}" x2="${_.x}" y2="${c}" stroke="#3a5058" stroke-width="1"/>`).join(""),$=w.map(_=>`<text x="${_.x}" y="${d}" class="hw-swdp-axlabel" text-anchor="${_.anchor}">${_.label}</text>`).join(""),x="";if(n!=null){let y=Math.min(Math.max(n,0),8)/8*r;x=`<polygon points="${`${y-5},${p} ${y+5},${p} ${y},${a}`}" fill="${t.color}" opacity="0.95"/>
+    <line x1="${y}" y1="${i}" x2="${y}" y2="${a}" stroke="${t.color}" stroke-width="1.5" opacity="0.7"/>`}let f=`<rect x="0" y="${i}" width="${r}" height="${l}" fill="none" stroke="#2a3c42" stroke-width="0.8" rx="0"/>`,b=`<svg class="hw-swdp-gauge" viewBox="0 0 ${r} ${m}" preserveAspectRatio="none" aria-hidden="true">
+    ${h}${f}${x}${v}${$}
+  </svg>`,S=n!=null?`${n.toFixed(2)} nPa`:"\u2014",C=t.density!=null?`${t.density.toFixed(2)} cm\u207B\xB3`:"\u2014",k=e.metrics.solar_wind_kms!=null?`${Math.round(e.metrics.solar_wind_kms)} km/s`:"\u2014",L=n==null?"":n>=4?" \xB7 Magnetosphere compressed":n>=2?" \xB7 Moderate compression":"";return`<div class="hw-impact-tip${o}">
+    ${b}
+    <div class="hw-swdp-meta"><b style="color:${t.color}">${u(S)}</b>${u(L)}</div>
+    <div class="hw-swdp-meta" style="font-size:.72em">Speed ${u(k)} \xB7 Density ${u(C)}</div>
+  </div>`}function lt(e){var c,d;let s=(c=e.alerts_all)!=null?c:[],t=s.find(p=>p.kind==="cme_impact"),o=s.find(p=>p.kind==="cme_watch"),n=t!=null?t:o;if(!n)return{status:"quiet",color:"#5cce8c",label:"None",speed_kms:null,issued_utc:null,arrival_utc:null};let r=((d=n.raw_body)!=null?d:"").match(/Estimated Velocity[:\s]+(\d+)\s*km\/s/i),i=r?parseInt(r[1],10):null,l=null;if(i&&n.t_utc){let p=1496e5/i*1e3;l=new Date(new Date(n.t_utc).getTime()+p).toISOString().replace(".000Z","Z")}let a=t?"impact":"watch";return{status:a,color:a==="impact"?"#e05c5c":"#d4cc5c",label:a==="impact"?"Active":"Watch",speed_kms:i,issued_utc:n.t_utc,arrival_utc:l}}function ys(e,s){let t=lt(e),o=s?" hw-impact-tip-open":"",n="\u2014";if(t.arrival_utc){let a=new Date(t.arrival_utc),c=a.toLocaleString("en-US",{month:"short",timeZone:"UTC"}),d=a.getUTCDate(),p=String(a.getUTCHours()).padStart(2,"0"),m=String(a.getUTCMinutes()).padStart(2,"0");n=`~${c}\xA0${d}\xA0${p}:${m}\u202FUTC`}let r=t.speed_kms?`${t.speed_kms}\u202Fkm/s`:"\u2014",i=t.status!=="quiet"?`Velocity: <b style="color:#b4c6cc">${u(r)}</b>&ensp;Arrival: <b style="color:#b4c6cc">${u(n)}</b>`:"No Earth-directed CME in forecast window",l=$e("cme_cone",{cmeState:t,uid:"cme"});return`<div class="hw-impact-tip${o}">
     ${l}
     <div class="hw-cme-footer">${i}</div>
-  </div>`}function _e(e,s,t,o,n,r,i,l,a){let c=r.has(e),d=c?" hw-impact-open":"",p=c?" hw-impact-tip-open":"";return`<div class="hw-impact-row${d}" id="${e}" data-impact-row="${e}">
+  </div>`}function Se(e,s,t,o,n,r,i,l,a){let c=r.has(e),d=c?" hw-impact-open":"",p=c?" hw-impact-tip-open":"";return`<div class="hw-impact-row${d}" id="${e}" data-impact-row="${e}">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${n}">${t}<span style="color:#b4c6cc">${g(s)}</span></span>
-      <span class="hw-impact-badge" style="background:${n}22;color:${n}">${g(o)}</span>
-      <div class="hw-impact-tip${p}">${Bt(i,e,l,a)}</div>
-    </div>`}function je(e,s,t,o,n,r){var w,v;let i=(w=gt[e.level])!=null?w:"#666",l=e.level==="none"?"None":e.level.charAt(0).toUpperCase()+e.level.slice(1),a=(v=qe[e.kind])!=null?v:es,c=e.level==="none"?"#606870":i,d=e.kind==="solar_activity"?t:r,p=d?" hw-impact-open":"",m;if(e.kind==="solar_activity"){let f=t?" hw-solar-open":"",x=Ke.map(b=>{let $=o.has(b.id),y=$?b.color+"22":"transparent",C=$?"1":"0.32";return`<button class="hw-sl-btn" data-solar-layer="${b.id}" style="color:${b.color};border-color:${b.color};background:${y};opacity:${C}">${b.label}</button>`}).join("");m=`<div class="hw-solar-tip${f}">
+      <span class="hw-impact-kind" style="color:${n}">${t}<span style="color:#b4c6cc">${u(s)}</span></span>
+      <span class="hw-impact-badge" style="background:${n}22;color:${n}">${u(o)}</span>
+      <div class="hw-impact-tip${p}">${Yt(i,e,l,a)}</div>
+    </div>`}function ks(e,s){let t=e.find(r=>r.kind==="aurora");if(t)return t;let o=s.aurora_hint;return{kind:"aurora",level:o.aurora_label==="good"?"moderate":o.aurora_label==="possible"?"low":"none",label:"Aurora",summary:o.summary}}function _s(e,s,t,o){var x,f;let n=(x=Ke[e.level])!=null?x:"#666",r=e.level==="none"?"None":e.level.charAt(0).toUpperCase()+e.level.slice(1),i=(f=Me[e.kind])!=null?f:et,l=e.level==="none"?"#606870":n,a=s.has("aurora"),c=a?" hw-impact-open":"",d=a?" hw-aurora-tip-open":"",p=`https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`,m=null;t&&o.lat!=null&&o.lon!=null&&(m=Qe(t.entries,o.lat,o.lon));let g=o.lat!=null&&o.lon!=null,h=m!=null?m>=30?"#5cce8c":m>=10?"#d4cc5c":"#9ab4bc":"#607880",w=m!=null?`${m}%`:t?"n/a":"\u2026",v=g?`
+    <div class="hw-aurora-obs-panel">
+      <span>\u{1F4CD}</span>
+      <span>${o.locationName?u(o.locationName)+" \xB7 ":""}${o.lat.toFixed(1)}\xB0${o.lat>=0?"N":"S"} ${Math.abs(o.lon).toFixed(1)}\xB0${o.lon>=0?"E":"W"}</span>
+      <span class="hw-aurora-prob" style="color:${h}">Aurora: ${w}</span>
+    </div>`:"",$=`<div class="hw-aurora-tip${d}">
+      <div class="hw-aurora-map-wrap">
+        <img class="hw-aurora-img" src="${A(p)}" alt="NOAA Aurora Oval" loading="lazy" />
+        ${Ve(o)}
+      </div>
+      ${v}
+      <div class="hw-aurora-caption">NOAA OVATION Prime model \xB7 updates every 5 min</div>
+    </div>`;return`<div class="hw-impact-row${c}" id="aurora" data-impact-row="aurora">
+    <span class="hw-impact-caret">\u25B6</span>
+    <span class="hw-impact-kind" style="color:${l}">${i}<span style="color:#b4c6cc">${u(e.label)}</span></span>
+    <span class="hw-impact-badge" style="background:${n}22;color:${n}">${u(r)}</span>
+    ${$}
+  </div>`}function Ue(e,s,t,o,n,r){var w,v;let i=(w=Ke[e.level])!=null?w:"#666",l=e.level==="none"?"None":e.level.charAt(0).toUpperCase()+e.level.slice(1),a=(v=Me[e.kind])!=null?v:et,c=e.level==="none"?"#606870":i,d=e.kind==="solar_activity"?t:r,p=d?" hw-impact-open":"",m;if(e.kind==="solar_activity"){let $=t?" hw-solar-open":"",x=Je.map(f=>{let b=o.has(f.id),S=b?f.color+"22":"transparent",C=b?"1":"0.32";return`<button class="hw-sl-btn" data-solar-layer="${f.id}" style="color:${f.color};border-color:${f.color};background:${S};opacity:${C}">${f.label}</button>`}).join("");m=`<div class="hw-solar-tip${$}">
         <div class="hw-solar-disk-wrap" id="solar">
-          <img class="hw-solar-disk-img" src="${rs}" alt="Solar disk" loading="lazy" />
-          ${s?Jt(s,ds,o):""}
+          <img class="hw-solar-disk-img" src="${cs}" alt="Solar disk" loading="lazy" />
+          ${s?ss(s,hs,o):""}
         </div>
         <div class="hw-solar-layers">${x}</div>
-        <span class="hw-solar-tip-text">${g(e.summary)}</span>
-      </div>`}else m=ps(n,d);let u=e.kind==="solar_activity"?" data-solar-toggle":` data-impact-row="${T(e.kind)}"`,h=e.kind==="radio"?' id="radio"':"";return`<div class="hw-impact-row${p}"${h}${u}>
+        <span class="hw-solar-tip-text">${u(e.summary)}</span>
+      </div>`}else m=ms(n,d);let g=e.kind==="solar_activity"?" data-solar-toggle":` data-impact-row="${A(e.kind)}"`,h=e.kind==="radio"?' id="radio"':"";return`<div class="hw-impact-row${p}"${h}${g}>
     <span class="hw-impact-caret">\u25B6</span>
-    <span class="hw-impact-kind" style="color:${c}">${a}<span style="color:#b4c6cc">${g(e.label)}</span></span>
-    <span class="hw-impact-badge" style="background:${i}22;color:${i}">${g(l)}</span>
+    <span class="hw-impact-kind" style="color:${c}">${a}<span style="color:#b4c6cc">${u(e.label)}</span></span>
+    <span class="hw-impact-badge" style="background:${i}22;color:${i}">${u(l)}</span>
     ${m}
-  </div>`}function vs(e,s,t,o,n,r,i,l,a){var Le,He,Ee,Te;let c=(He=(Le=s==null?void 0:s.impacts)!=null?Le:e.observer_impacts)!=null?He:[],d=c.find(ve=>ve.kind==="radio"),p=c.find(ve=>ve.kind==="solar_activity"),m=d?je(d,t,n,r,e,i.has("radio")):"",u=p?je(p,t,n,r,e,!1):"",v=`
+  </div>`}function Ss(e,s,t,o,n,r,i,l,a){var Ee,Ae,Te,Oe;let c=(Ae=(Ee=s==null?void 0:s.impacts)!=null?Ee:e.observer_impacts)!=null?Ae:[],d=ks(c,e),p=_s(d,i,l,a),m=c.find(ye=>ye.kind==="radio"),g=c.find(ye=>ye.kind==="solar_activity"),h=m?Ue(m,t,n,r,e,i.has("radio")):"",w=g?Ue(g,t,n,r,e,!1):"",x=`
     <div class="hw-section-row" data-impacts-toggle>
       <span class="hw-section-caret">${o?"\u25BC":"\u25B6"}</span>
-      <span class="hw-section-label" style="margin-bottom:0">Indicators (${ns})${s?'<span style="font-size:.65em;color:#7a9870;font-weight:normal;text-transform:none;letter-spacing:0"> \xB7 simulated</span>':""}</span>
-    </div>`,{metrics:f}=e,x=f.xray_class,b=x?(Ee=we[x])!=null?Ee:"#a0b4b8":"#607880",$=x?`${x}-class`:"\u2014",y=f.imf_bz_nt,C=y!=null?y<=-10?"#e05c5c":y<=-5?"#e0a84a":y>=5?"#5cce8c":"#a0b4b8":"#607880",S=y!=null?(y>=0?"+":"")+y.toFixed(1)+" nT":"\u2014",L=f.solar_wind_kms,k=L!=null?`${Math.round(L)} km/s`:"\u2014",_=L!=null?L>700?"#e05c5c":L>500?"#e0a84a":L>400?"#d4cc5c":"#5cce8c":"#607880",H=_e("xray","X-Ray",ts,$,b,i,e,a,l),O=_e("imf_bz","IMF Bz",ss,S,C,i,e,a,l),U=_e("solar_wind","Solar Wind",os,k,_,i,e,a,l),G='<div class="hw-indicators-sep" role="separator" aria-hidden="true"></div>',X=i.has("geomag_storm"),F=Ve(e),D=F.g1,Y=F.g1>=30?Qe.g1:F.g1>0?"#7a9298":"#607880",M=D>0?`G1 ${D}%`:"None",q=`<div class="hw-impact-row${X?" hw-impact-open":""}" id="storm_risk" data-impact-row="geomag_storm">
+      <span class="hw-section-label" style="margin-bottom:0">Indicators (${is})${s?'<span style="font-size:.65em;color:#7a9870;font-weight:normal;text-transform:none;letter-spacing:0"> \xB7 simulated</span>':""}</span>
+    </div>`,{metrics:f}=e,b=f.xray_class,S=b?(Te=fe[b])!=null?Te:"#a0b4b8":"#607880",C=b?`${b}-class`:"\u2014",k=f.imf_bz_nt,L=k!=null?k<=-10?"#e05c5c":k<=-5?"#e0a84a":k>=5?"#5cce8c":"#a0b4b8":"#607880",_=k!=null?(k>=0?"+":"")+k.toFixed(1)+" nT":"\u2014",y=f.solar_wind_kms,H=y!=null?`${Math.round(y)} km/s`:"\u2014",I=y!=null?y>700?"#e05c5c":y>500?"#e0a84a":y>400?"#d4cc5c":"#5cce8c":"#607880",G=Se("xray","X-Ray",os,C,S,i,e,a,l),X=Se("imf_bz","IMF Bz",ns,_,L,i,e,a,l),K=Se("solar_wind","Solar Wind",as,H,I,i,e,a,l),N='<div class="hw-indicators-sep" role="separator" aria-hidden="true"></div>',Y=i.has("geomag_storm"),j=st(e),M=j.g1,E=j.g1>=30?tt.g1:j.g1>0?"#7a9298":"#607880",q=M>0?`G1 ${M}%`:"None",O=`<div class="hw-impact-row${Y?" hw-impact-open":""}" id="storm_risk" data-impact-row="geomag_storm">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${Y}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg><span style="color:#b4c6cc">Storm Risk</span><span style="color:#607880;font-size:.85em;font-weight:normal"> \u2014 Next 24h</span></span>
-      <span class="hw-impact-badge" style="background:${Y}22;color:${Y}">${M}</span>
-      ${gs(e,X)}
-    </div>`,A=i.has("solar_cycle"),E=(Te=Ze[ge.phase])!=null?Te:"#96a8b8",ne=ge.phase.charAt(0).toUpperCase()+ge.phase.slice(1),P=`<div class="hw-impact-row${A?" hw-impact-open":""}" data-impact-row="solar_cycle">
+      <span class="hw-impact-kind" style="color:${E}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg><span style="color:#b4c6cc">Storm Risk</span><span style="color:#607880;font-size:.85em;font-weight:normal"> \u2014 Next 24h</span></span>
+      <span class="hw-impact-badge" style="background:${E}22;color:${E}">${q}</span>
+      ${ws(e,Y)}
+    </div>`,Z=i.has("solar_cycle"),T=(Oe=ot[we.phase])!=null?Oe:"#96a8b8",P=we.phase.charAt(0).toUpperCase()+we.phase.slice(1),R=`<div class="hw-impact-row${Z?" hw-impact-open":""}" data-impact-row="solar_cycle">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${E}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M1 9 Q3 4 6.5 4 Q10 4 12 9"/><circle cx="6.5" cy="4" r="1.3" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Solar Cycle</span></span>
-      <span class="hw-impact-badge" style="background:${E}22;color:${E}">${ne}</span>
-      ${us(A)}
-    </div>`,R=Je(e),z=i.has("hss"),ee=`<div class="hw-impact-row${z?" hw-impact-open":""}" data-impact-row="hss">
+      <span class="hw-impact-kind" style="color:${T}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M1 9 Q3 4 6.5 4 Q10 4 12 9"/><circle cx="6.5" cy="4" r="1.3" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Solar Cycle</span></span>
+      <span class="hw-impact-badge" style="background:${T}22;color:${T}">${P}</span>
+      ${xs(Z)}
+    </div>`,U=nt(e),Q=i.has("hss"),B=`<div class="hw-impact-row${Q?" hw-impact-open":""}" data-impact-row="hss">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${R.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="3.5" cy="6.5" r="2.5"/><line x1="6.2" y1="6.5" x2="11.5" y2="6.5"/><polyline points="9.5,4.5 11.5,6.5 9.5,8.5" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Coronal Hole</span></span>
-      <span class="hw-impact-badge" style="background:${R.color}22;color:${R.color}">${R.label}</span>
-      ${ws(e,z)}
-    </div>`,K=et(e),B=i.has("sat_drag"),j=`<div class="hw-impact-row${B?" hw-impact-open":""}" id="satellite_drag" data-impact-row="sat_drag">
+      <span class="hw-impact-kind" style="color:${U.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="3.5" cy="6.5" r="2.5"/><line x1="6.2" y1="6.5" x2="11.5" y2="6.5"/><polyline points="9.5,4.5 11.5,6.5 9.5,8.5" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Coronal Hole</span></span>
+      <span class="hw-impact-badge" style="background:${U.color}22;color:${U.color}">${U.label}</span>
+      ${fs(e,Q)}
+    </div>`,z=at(e),D=i.has("sat_drag"),ne=`<div class="hw-impact-row${D?" hw-impact-open":""}" id="satellite_drag" data-impact-row="sat_drag">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${K.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><rect x="4.5" y="5" width="4" height="3" rx="0.4"/><line x1="1" y1="6.5" x2="4.5" y2="6.5"/><line x1="8.5" y1="6.5" x2="12" y2="6.5"/><line x1="6.5" y1="5" x2="6.5" y2="3"/><circle cx="6.5" cy="2.5" r="0.6" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Satellite Drag</span></span>
-      <span class="hw-impact-badge" style="background:${K.color}22;color:${K.color}">${K.label}</span>
-      ${xs(e,B)}
-    </div>`,V=tt(e),te=i.has("gnss"),de=`<div class="hw-impact-row${te?" hw-impact-open":""}" id="gnss" data-impact-row="gnss">
+      <span class="hw-impact-kind" style="color:${z.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><rect x="4.5" y="5" width="4" height="3" rx="0.4"/><line x1="1" y1="6.5" x2="4.5" y2="6.5"/><line x1="8.5" y1="6.5" x2="12" y2="6.5"/><line x1="6.5" y1="5" x2="6.5" y2="3"/><circle cx="6.5" cy="2.5" r="0.6" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Satellite Drag</span></span>
+      <span class="hw-impact-badge" style="background:${z.color}22;color:${z.color}">${z.label}</span>
+      ${bs(e,D)}
+    </div>`,ee=it(e),ce=i.has("gnss"),ae=`<div class="hw-impact-row${ce?" hw-impact-open":""}" id="gnss" data-impact-row="gnss">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${V.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M3 5.5 Q6.5 2.5 10 5.5"/><path d="M4.5 7.5 Q6.5 5.5 8.5 7.5"/><circle cx="6.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/><line x1="6.5" y1="10.7" x2="6.5" y2="12"/></svg><span style="color:#b4c6cc">GNSS Risk</span></span>
-      <span class="hw-impact-badge" style="background:${V.color}22;color:${V.color}">${V.label}</span>
-      ${fs(e,te)}
-    </div>`,se=st(e),oe=i.has("sw_pressure"),$e=se.pressure!=null?`${se.pressure.toFixed(2)} nPa`:"\u2014",ie=`<div class="hw-impact-row${oe?" hw-impact-open":""}" data-impact-row="sw_pressure">
+      <span class="hw-impact-kind" style="color:${ee.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M3 5.5 Q6.5 2.5 10 5.5"/><path d="M4.5 7.5 Q6.5 5.5 8.5 7.5"/><circle cx="6.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/><line x1="6.5" y1="10.7" x2="6.5" y2="12"/></svg><span style="color:#b4c6cc">GNSS Risk</span></span>
+      <span class="hw-impact-badge" style="background:${ee.color}22;color:${ee.color}">${ee.label}</span>
+      ${$s(e,ce)}
+    </div>`,te=rt(e),se=i.has("sw_pressure"),de=te.pressure!=null?`${te.pressure.toFixed(2)} nPa`:"\u2014",ve=`<div class="hw-impact-row${se?" hw-impact-open":""}" data-impact-row="sw_pressure">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${se.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 9 Q6.5 3 11 9"/><path d="M4 9 Q6.5 5 9 9"/><line x1="6.5" y1="9" x2="6.5" y2="11"/></svg><span style="color:#b4c6cc">SW Pressure</span></span>
-      <span class="hw-impact-badge" style="background:${se.color}22;color:${se.color}">${$e}</span>
-      ${bs(e,oe)}
-    </div>`,Z=ot(e),pe=i.has("cme_cone"),re=`<div class="hw-impact-row${pe?" hw-impact-open":""}" data-impact-row="cme_cone">
+      <span class="hw-impact-kind" style="color:${te.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 9 Q6.5 3 11 9"/><path d="M4 9 Q6.5 5 9 9"/><line x1="6.5" y1="9" x2="6.5" y2="11"/></svg><span style="color:#b4c6cc">SW Pressure</span></span>
+      <span class="hw-impact-badge" style="background:${te.color}22;color:${te.color}">${de}</span>
+      ${vs(e,se)}
+    </div>`,re=lt(e),le=i.has("cme_cone"),dt=`<div class="hw-impact-row${le?" hw-impact-open":""}" data-impact-row="cme_cone">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${Z.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="2.5" cy="6.5" r="2" fill="currentColor" stroke="none"/><line x1="5" y1="6.5" x2="12" y2="6.5"/><polyline points="10,4.5 12,6.5 10,8.5" fill="none"/><line x1="4.2" y1="4.2" x2="5.5" y2="5.5" stroke-width="1"/><line x1="4.2" y1="8.8" x2="5.5" y2="7.5" stroke-width="1"/></svg><span style="color:#b4c6cc">CME Cone</span></span>
-      <span class="hw-impact-badge" style="background:${Z.color}22;color:${Z.color}">${g(Z.label)}</span>
-      ${$s(e,pe)}
-    </div>`,W=xe(e),Me=i.has("magnetosphere"),at=`<div class="hw-impact-row${Me?" hw-impact-open":""}" data-impact-row="magnetosphere">
+      <span class="hw-impact-kind" style="color:${re.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="2.5" cy="6.5" r="2" fill="currentColor" stroke="none"/><line x1="5" y1="6.5" x2="12" y2="6.5"/><polyline points="10,4.5 12,6.5 10,8.5" fill="none"/><line x1="4.2" y1="4.2" x2="5.5" y2="5.5" stroke-width="1"/><line x1="4.2" y1="8.8" x2="5.5" y2="7.5" stroke-width="1"/></svg><span style="color:#b4c6cc">CME Cone</span></span>
+      <span class="hw-impact-badge" style="background:${re.color}22;color:${re.color}">${u(re.label)}</span>
+      ${ys(e,le)}
+    </div>`,me=be(e),He=i.has("magnetosphere"),pt=`<div class="hw-impact-row${He?" hw-impact-open":""}" data-impact-row="magnetosphere">
       <span class="hw-impact-caret">\u25B6</span>
-      <span class="hw-impact-kind" style="color:${W.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 Q2 2 6.5 2 Q11 2 11 6.5 Q11 11 6.5 11 Q2 11 2 6.5"/><path d="M4.5 6.5 Q4.5 4 6.5 4 Q8.5 4 8.5 6.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Magnetosphere</span></span>
-      <span class="hw-impact-badge" style="background:${W.color}22;color:${W.color}">${g(W.label)}</span>
-      ${Ft(e,Me)}
+      <span class="hw-impact-kind" style="color:${me.color}"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 Q2 2 6.5 2 Q11 2 11 6.5 Q11 11 6.5 11 Q2 11 2 6.5"/><path d="M4.5 6.5 Q4.5 4 6.5 4 Q8.5 4 8.5 6.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg><span style="color:#b4c6cc">Magnetosphere</span></span>
+      <span class="hw-impact-badge" style="background:${me.color}22;color:${me.color}">${u(me.label)}</span>
+      ${Bt(e,He)}
     </div>`;return`
     <div class="hw-impacts">
-      ${v}
-      ${o?[q,m,j,de,H,u,G,O,at,U,ee,ie,re,P].join(""):""}
-    </div>`}var We={geomagnetic_storm:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="4"/><path d="M6.5 2.5v1.5M6.5 9v1.5M2.5 6.5H4M9 6.5h1.5M4.1 4.1l1.1 1.1M7.8 7.8l1.1 1.1M4.1 8.9l1.1-1.1M7.8 5.2l1.1-1.1"/></svg>',geomagnetic_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="4"/><path d="M6.5 4v3l2 1.2"/></svg>',radio_blackout:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M4 10.5a3.5 3.5 0 0 1 5 0"/><path d="M1.8 8.3A6.5 6.5 0 0 1 11.2 8.3"/><circle cx="6.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg>',radiation_storm:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 1.5L8 5H5L6.5 1.5z" fill="currentColor" opacity=".7" stroke="none"/><path d="M3 11l2-3.5h3L10 11"/><line x1="6.5" y1="7" x2="6.5" y2="11"/></svg>',cme_arrival:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="2"/><path d="M1.5 6.5h2M9.5 6.5h2M6.5 1.5v2M6.5 9.5v2"/><path d="M3.5 3.5l1.4 1.4M8.1 8.1l1.4 1.4M8.1 3.5L6.7 4.9M4.9 8.1L3.5 9.5"/></svg>',cme_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 C2 4 4 2 6.5 2 C9 2 11 4 11 6.5"/><path d="M4 6.5 C4 5 5.1 4 6.5 4 C7.9 4 9 5 9 6.5"/><circle cx="6.5" cy="6.5" r="1.3" fill="currentColor" stroke="none"/></svg>',aurora_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true"><path d="M6.5 1L7.5 5.5L12 6.5L7.5 7.5L6.5 12L5.5 7.5L1 6.5L5.5 5.5Z" fill="currentColor" opacity=".85"/></svg>',solar_flare:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor" stroke="none"/><path d="M6.5 1v1.5M6.5 10v1.5M1 6.5h1.5M10 6.5h1.5M2.8 2.8l1.1 1.1M9 9l1.1 1.1M9 2.8l-1.1 1.1M4 9l-1.1 1.1"/></svg>',space_weather_info:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 6v4"/><circle cx="6.5" cy="3.8" r=".6" fill="currentColor" stroke="none"/></svg>',unknown:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M4.8 4.8c0-1 .8-1.8 1.8-1.8s1.7.8 1.7 1.8c0 .9-.6 1.4-1.2 1.8-.6.4-.8.7-.8 1.2"/><circle cx="6.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/></svg>'};function ys(e,s){var a,c;let t=(a=ut[e.level])!=null?a:"#666",o=e.level.charAt(0).toUpperCase()+e.level.slice(1),n=(c=We[e.kind])!=null?c:We.unknown,r=[bt(e.t_utc),e.source_code?`SWPC: ${e.source_code}`:""].filter(Boolean).join(" \xB7 "),i=s&&e.raw_body?`<div class="hw-alert-body">${g(e.raw_body)}</div>`:"";return`<div class="hw-alert-item${s?" hw-alert-open":""}" style="border-color:${t}" data-alert-key="${T(e.dedupe_key)}">
+      ${x}
+      ${o?[p,O,h,ne,ae,G,w,N,X,pt,K,B,ve,dt,R].join(""):""}
+    </div>`}var Ge={geomagnetic_storm:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="4"/><path d="M6.5 2.5v1.5M6.5 9v1.5M2.5 6.5H4M9 6.5h1.5M4.1 4.1l1.1 1.1M7.8 7.8l1.1 1.1M4.1 8.9l1.1-1.1M7.8 5.2l1.1-1.1"/></svg>',geomagnetic_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="4"/><path d="M6.5 4v3l2 1.2"/></svg>',radio_blackout:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M4 10.5a3.5 3.5 0 0 1 5 0"/><path d="M1.8 8.3A6.5 6.5 0 0 1 11.2 8.3"/><circle cx="6.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg>',radiation_storm:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 1.5L8 5H5L6.5 1.5z" fill="currentColor" opacity=".7" stroke="none"/><path d="M3 11l2-3.5h3L10 11"/><line x1="6.5" y1="7" x2="6.5" y2="11"/></svg>',cme_arrival:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="2"/><path d="M1.5 6.5h2M9.5 6.5h2M6.5 1.5v2M6.5 9.5v2"/><path d="M3.5 3.5l1.4 1.4M8.1 8.1l1.4 1.4M8.1 3.5L6.7 4.9M4.9 8.1L3.5 9.5"/></svg>',cme_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 C2 4 4 2 6.5 2 C9 2 11 4 11 6.5"/><path d="M4 6.5 C4 5 5.1 4 6.5 4 C7.9 4 9 5 9 6.5"/><circle cx="6.5" cy="6.5" r="1.3" fill="currentColor" stroke="none"/></svg>',aurora_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true"><path d="M6.5 1L7.5 5.5L12 6.5L7.5 7.5L6.5 12L5.5 7.5L1 6.5L5.5 5.5Z" fill="currentColor" opacity=".85"/></svg>',solar_flare:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor" stroke="none"/><path d="M6.5 1v1.5M6.5 10v1.5M1 6.5h1.5M10 6.5h1.5M2.8 2.8l1.1 1.1M9 9l1.1 1.1M9 2.8l-1.1 1.1M4 9l-1.1 1.1"/></svg>',space_weather_info:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 6v4"/><circle cx="6.5" cy="3.8" r=".6" fill="currentColor" stroke="none"/></svg>',unknown:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M4.8 4.8c0-1 .8-1.8 1.8-1.8s1.7.8 1.7 1.8c0 .9-.6 1.4-1.2 1.8-.6.4-.8.7-.8 1.2"/><circle cx="6.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/></svg>'};function Cs(e,s){var a,c;let t=(a=$t[e.level])!=null?a:"#666",o=e.level.charAt(0).toUpperCase()+e.level.slice(1),n=(c=Ge[e.kind])!=null?c:Ge.unknown,r=[_t(e.t_utc),e.source_code?`SWPC: ${e.source_code}`:""].filter(Boolean).join(" \xB7 "),i=s&&e.raw_body?`<div class="hw-alert-body">${u(e.raw_body)}</div>`:"";return`<div class="hw-alert-item${s?" hw-alert-open":""}" style="border-color:${t}" data-alert-key="${A(e.dedupe_key)}">
     <div class="hw-alert-top">
       <span class="hw-alert-icon" style="color:${t}">${n}</span>
-      <span class="hw-alert-level" style="color:${t}">${g(o)}</span>
-      <span class="hw-alert-title">${g(e.title)}</span>
+      <span class="hw-alert-level" style="color:${t}">${u(o)}</span>
+      <span class="hw-alert-title">${u(e.title)}</span>
     </div>
-    <div class="hw-alert-summary">${g(e.summary_short)}</div>
-    <div class="hw-alert-meta">${g(r)}</div>
+    <div class="hw-alert-summary">${u(e.summary_short)}</div>
+    <div class="hw-alert-meta">${u(r)}</div>
     ${i}
-  </div>`}var ks={info:"#445c64",watch:"#e0a84a",warning:"#e05c5c"},_s="#4ae0a4";function Ss(e){let s=(t,o="")=>`<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" ${o}>${t}</svg>`;switch(e){case"solar_flare":return s(`<circle cx="6.5" cy="6.5" r="2.5"/>
+  </div>`}var Ms={info:"#445c64",watch:"#e0a84a",warning:"#e05c5c"},Ls="#4ae0a4";function Hs(e){let s=(t,o="")=>`<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" ${o}>${t}</svg>`;switch(e){case"solar_flare":return s(`<circle cx="6.5" cy="6.5" r="2.5"/>
         <line x1="6.5" y1="1" x2="6.5" y2="3"/>
         <line x1="6.5" y1="10" x2="6.5" y2="12"/>
         <line x1="1" y1="6.5" x2="3" y2="6.5"/>
@@ -744,9 +761,9 @@ C: ${a.c_flare_probability}%  M: ${a.m_flare_probability}%  X: ${a.x_flare_proba
         <line x1="6.5" y1="5" x2="6.5" y2="8"/>
         <circle cx="6.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/>`);default:return s(`<circle cx="6.5" cy="6.5" r="5.5"/>
         <line x1="6.5" y1="5.5" x2="6.5" y2="9"/>
-        <circle cx="6.5" cy="3.8" r=".6" fill="currentColor" stroke="none"/>`)}}function Cs(e){var o;let s=(o=e.metadata)!=null?o:{},t=[];return s.source_code&&t.push(`Code: ${s.source_code}`),s.model&&t.push(`Model: ${String(s.model).toUpperCase()}`),t.length===0?"":`
-${t.join(" \xB7 ")}`}function Ms(e,s,t){var a;let o=e.is_active?_s:(a=ks[e.level])!=null?a:"#445c64",n=e.event_time===t,r=e.event_time.slice(11,16)+" UTC",i=e.source==="NASA_DONKI"?"DONKI":"SWPC",l=n?`<div class="hw-tl-detail">${g(e.description)}${g(Cs(e))}</div>`:"";return`
-    <div class="hw-tl-item" data-timeline-key="${T(e.event_time)}">
+        <circle cx="6.5" cy="3.8" r=".6" fill="currentColor" stroke="none"/>`)}}function Es(e){var o;let s=(o=e.metadata)!=null?o:{},t=[];return s.source_code&&t.push(`Code: ${s.source_code}`),s.model&&t.push(`Model: ${String(s.model).toUpperCase()}`),t.length===0?"":`
+${t.join(" \xB7 ")}`}function As(e,s,t){var a;let o=e.is_active?Ls:(a=Ms[e.level])!=null?a:"#445c64",n=e.event_time===t,r=e.event_time.slice(11,16)+" UTC",i=e.source==="NASA_DONKI"?"DONKI":"SWPC",l=n?`<div class="hw-tl-detail">${u(e.description)}${u(Es(e))}</div>`:"";return`
+    <div class="hw-tl-item" data-timeline-key="${A(e.event_time)}">
       <div class="hw-tl-chain">
         <div class="hw-tl-dot" style="background:${o}"></div>
         ${s?'<div class="hw-tl-line"></div>':""}
@@ -757,99 +774,99 @@ ${t.join(" \xB7 ")}`}function Ms(e,s,t){var a;let o=e.is_active?_s:(a=ks[e.level
           <span class="hw-tl-src">${i}</span>
         </div>
         <div class="hw-tl-title${e.is_active?" hw-tl-active":""}">
-          ${Ss(e.event_type)} ${g(e.event_title)}
+          ${Hs(e.event_type)} ${u(e.event_title)}
         </div>
         ${l}
       </div>
-    </div>`}function Ls(e,s,t,o){var f,x;let n=(f=e.timeline)!=null?f:[],r=Date.now(),i=new Date(r).toISOString().slice(0,10),l=new Date(r-864e5).toISOString().slice(0,10),a=new Date(r-1728e5).toISOString().slice(0,10),c=new Set([i,l,a]),d=n.filter(b=>{var $;return c.has((($=b.event_time)!=null?$:"").slice(0,10))}).slice().reverse(),p=d.length,m=t?"\u25BC":"\u25B6",u=p>0?`Solar Activity Timeline (${p})`:"Solar Activity Timeline",h=`
+    </div>`}function Ts(e,s,t,o){var $,x;let n=($=e.timeline)!=null?$:[],r=Date.now(),i=new Date(r).toISOString().slice(0,10),l=new Date(r-864e5).toISOString().slice(0,10),a=new Date(r-1728e5).toISOString().slice(0,10),c=new Set([i,l,a]),d=n.filter(f=>{var b;return c.has(((b=f.event_time)!=null?b:"").slice(0,10))}).slice().reverse(),p=d.length,m=t?"\u25BC":"\u25B6",g=p>0?`Solar Activity Timeline (${p})`:"Solar Activity Timeline",h=`
     <div class="hw-section-row" data-tl-section>
       <span class="hw-section-caret">${m}</span>
-      <span class="hw-section-label" style="margin-bottom:0">${u}</span>
-    </div>`;if(!t||p===0)return`<div class="hw-timeline">${h}</div>`;let w=new Map;for(let b of d){let $=((x=b.event_time)!=null?x:"").slice(0,10);w.has($)||w.set($,[]),w.get($).push(b)}let v=[...w.entries()].map(([b,$])=>{let C=new Date(b+"T12:00:00Z").toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"UTC"}),S=o.has(b),L=S?"\u25B6":"\u25BC",k=S?`<span class="hw-tl-day-count">${$.length} events</span>`:"",_=`
-      <div class="hw-tl-day-row" data-tl-day="${T(b)}">
+      <span class="hw-section-label" style="margin-bottom:0">${g}</span>
+    </div>`;if(!t||p===0)return`<div class="hw-timeline">${h}</div>`;let w=new Map;for(let f of d){let b=((x=f.event_time)!=null?x:"").slice(0,10);w.has(b)||w.set(b,[]),w.get(b).push(f)}let v=[...w.entries()].map(([f,b])=>{let C=new Date(f+"T12:00:00Z").toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"UTC"}),k=o.has(f),L=k?"\u25B6":"\u25BC",_=k?`<span class="hw-tl-day-count">${b.length} events</span>`:"",y=`
+      <div class="hw-tl-day-row" data-tl-day="${A(f)}">
         <span class="hw-section-caret">${L}</span>
         <span class="hw-tl-date">${C}</span>
-        ${k}
-      </div>`,H=S?"":$.map((O,U)=>Ms(O,U<$.length-1,s)).join("");return`<div class="hw-tl-group">${_}${H}</div>`}).join("");return`
+        ${_}
+      </div>`,H=k?"":b.map((I,G)=>As(I,G<b.length-1,s)).join("");return`<div class="hw-tl-group">${y}${H}</div>`}).join("");return`
     <div class="hw-timeline">
       ${h}
       ${v}
-    </div>`}function Hs(e,s,t){var c;let o=(c=e.alerts_all)!=null?c:[],n=o.length,r=s?"\u25BC":"\u25B6",i=n>0?`SWPC Alerts (${n})`:"SWPC Alerts",l=`
+    </div>`}function Os(e,s,t){var c;let o=(c=e.alerts_all)!=null?c:[],n=o.length,r=s?"\u25BC":"\u25B6",i=n>0?`SWPC Alerts (${n})`:"SWPC Alerts",l=`
     <div class="hw-alerts-header">
       <div class="hw-section-row" data-alerts-toggle style="margin-bottom:0">
         <span class="hw-section-caret">${r}</span>
         <span class="hw-alerts-label">${i}</span>
       </div>
-    </div>`;if(!s||n===0)return`<div class="hw-alerts">${l}${s&&n===0?'<div class="hw-empty-alerts">No significant recent SWPC alerts</div>':""}</div>`;let a=o.map(d=>ys(d,d.dedupe_key===t)).join("");return`
+    </div>`;if(!s||n===0)return`<div class="hw-alerts">${l}${s&&n===0?'<div class="hw-empty-alerts">No significant recent SWPC alerts</div>':""}</div>`;let a=o.map(d=>Cs(d,d.dedupe_key===t)).join("");return`
     <div class="hw-alerts">
       ${l}
       ${a}
-    </div>`}function Es(e,s){var G,X,F;let t=e.cme_tracker;if(!t)return"";let o=(G=wt[t.impact_level])!=null?G:"#96a8b8",n=(X=xt[t.status])!=null?X:t.status,r=300,i=44,l=18,a=i/2,c=10,d=r-18,p=7,m=`<line x1="${l+c}" y1="${a}" x2="${d-p}" y2="${a}" stroke="#2a3c42" stroke-width="1.5" stroke-dasharray="5,4"/>`,u=`<circle cx="${l}" cy="${a}" r="${c}" fill="#f0c040" opacity="0.92"/>`,h=`
+    </div>`}function Rs(e,s){var X,K,N;let t=e.cme_tracker;if(!t)return"";let o=(X=vt[t.impact_level])!=null?X:"#96a8b8",n=(K=yt[t.status])!=null?K:t.status,r=300,i=44,l=18,a=i/2,c=10,d=r-18,p=7,m=`<line x1="${l+c}" y1="${a}" x2="${d-p}" y2="${a}" stroke="#2a3c42" stroke-width="1.5" stroke-dasharray="5,4"/>`,g=`<circle cx="${l}" cy="${a}" r="${c}" fill="#f0c040" opacity="0.92"/>`,h=`
     <circle cx="${d}" cy="${a}" r="${p}" fill="#4a90c4" opacity="0.88"/>
-    <circle cx="${d}" cy="${a}" r="2.5" fill="#fff" opacity="0.7"/>`,w=`<text x="${l}" y="${a+c+9}" text-anchor="middle" font-size="9" fill="#c8aa60">Sun</text>`,v=`<text x="${d}" y="${a+p+9}" text-anchor="middle" font-size="9" fill="#7ab0d4">Earth</text>`,f="";if(t.progress!=null){let D=l+c+4,Y=d-p-4,M=D+t.progress*(Y-D),I=5;t.status==="arrival_window"?f=`
+    <circle cx="${d}" cy="${a}" r="2.5" fill="#fff" opacity="0.7"/>`,w=`<text x="${l}" y="${a+c+9}" text-anchor="middle" font-size="9" fill="#c8aa60">Sun</text>`,v=`<text x="${d}" y="${a+p+9}" text-anchor="middle" font-size="9" fill="#7ab0d4">Earth</text>`,$="";if(t.progress!=null){let Y=l+c+4,j=d-p-4,M=Y+t.progress*(j-Y),E=5;t.status==="arrival_window"?$=`
         <g transform="translate(${M.toFixed(1)},${a})" class="hw-cme-pulse-dot" style="transform-box:fill-box;transform-origin:center">
-          <circle cx="0" cy="0" r="${I}" fill="${o}" opacity="0.92"/>
-        </g>`:f=`<circle cx="${M.toFixed(1)}" cy="${a}" r="${I}" fill="${o}" opacity="0.85"/>`}let x=`<svg class="hw-cme-svg" viewBox="0 0 ${r} ${i}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <circle cx="0" cy="0" r="${E}" fill="${o}" opacity="0.92"/>
+        </g>`:$=`<circle cx="${M.toFixed(1)}" cy="${a}" r="${E}" fill="${o}" opacity="0.85"/>`}let x=`<svg class="hw-cme-svg" viewBox="0 0 ${r} ${i}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
     ${m}
-    ${u}${w}
+    ${g}${w}
     ${h}${v}
-    ${f}
-  </svg>`,b=Ne(t.arrival_time_utc),$=Ne(t.launch_time_utc),y=t.speed_kms!=null?`${Math.round(t.speed_kms)} km/s`:"\u2014",C=t.half_angle_deg!=null?`${t.half_angle_deg}\xB0`:"\u2014",S=(F=t.source_location)!=null?F:"\u2014",L=t.is_earth_direct?"Direct hit":"Glancing blow",k=t.progress!=null?`${Math.round(t.progress*100)}%`:"\u2014",_=`
+    ${$}
+  </svg>`,f=Be(t.arrival_time_utc),b=Be(t.launch_time_utc),S=t.speed_kms!=null?`${Math.round(t.speed_kms)} km/s`:"\u2014",C=t.half_angle_deg!=null?`${t.half_angle_deg}\xB0`:"\u2014",k=(N=t.source_location)!=null?N:"\u2014",L=t.is_earth_direct?"Direct hit":"Glancing blow",_=t.progress!=null?`${Math.round(t.progress*100)}%`:"\u2014",y=`
     <div class="hw-cme-detail">
       <div class="hw-cme-stat-grid">
         <div class="hw-cme-stat">
           <span class="hw-cme-stat-label">Arrival estimate</span>
-          <span class="hw-cme-stat-value">${g(b)}</span>
+          <span class="hw-cme-stat-value">${u(f)}</span>
         </div>
         <div class="hw-cme-stat">
           <span class="hw-cme-stat-label">Speed</span>
-          <span class="hw-cme-stat-value" style="color:${o}">${g(y)}</span>
+          <span class="hw-cme-stat-value" style="color:${o}">${u(S)}</span>
         </div>
         <div class="hw-cme-stat">
           <span class="hw-cme-stat-label">Impact</span>
-          <span class="hw-cme-stat-value" style="color:${o}">${g(t.impact_level.charAt(0).toUpperCase()+t.impact_level.slice(1))}</span>
+          <span class="hw-cme-stat-value" style="color:${o}">${u(t.impact_level.charAt(0).toUpperCase()+t.impact_level.slice(1))}</span>
         </div>
         <div class="hw-cme-stat">
           <span class="hw-cme-stat-label">Status</span>
-          <span class="hw-cme-stat-value">${g(n)}</span>
+          <span class="hw-cme-stat-value">${u(n)}</span>
         </div>
         <div class="hw-cme-stat">
           <span class="hw-cme-stat-label">Launch</span>
-          <span class="hw-cme-stat-value">${g($)}</span>
+          <span class="hw-cme-stat-value">${u(b)}</span>
         </div>
         <div class="hw-cme-stat">
           <span class="hw-cme-stat-label">Progress</span>
-          <span class="hw-cme-stat-value">${g(k)}</span>
+          <span class="hw-cme-stat-value">${u(_)}</span>
         </div>
       </div>
-      <div class="hw-cme-note">Half-angle: ${g(C)} \xB7 Source: ${g(S)} \xB7 ${g(L)} \xB7 Model: Enlil (NASA DONKI)</div>
-    </div>`,H=s?"\u25BC":"\u25B6",O=t.impact_level==="unknown"?"Unrated":t.impact_level.charAt(0).toUpperCase()+t.impact_level.slice(1),U=s?`${x}${_}`:"";return`
+      <div class="hw-cme-note">Half-angle: ${u(C)} \xB7 Source: ${u(k)} \xB7 ${u(L)} \xB7 Model: Enlil (NASA DONKI)</div>
+    </div>`,H=s?"\u25BC":"\u25B6",I=t.impact_level==="unknown"?"Unrated":t.impact_level.charAt(0).toUpperCase()+t.impact_level.slice(1),G=s?`${x}${y}`:"";return`
     <div class="hw-cme">
       <div class="hw-cme-row" data-cme-toggle>
         <span class="hw-section-caret">${H}</span>
         <span class="hw-section-label" style="margin-bottom:0">CME Tracker</span>
-        <span class="hw-cme-badge" style="background:${o}22;color:${o};margin-left:auto">${g(n)}</span>
-        <span class="hw-cme-badge" style="background:${o}15;color:${o};margin-left:4px">${g(O)} impact</span>
+        <span class="hw-cme-badge" style="background:${o}22;color:${o};margin-left:auto">${u(n)}</span>
+        <span class="hw-cme-badge" style="background:${o}15;color:${o};margin-left:4px">${u(I)} impact</span>
       </div>
-      ${U}
-    </div>`}function Ts(e,s,t,o,n,r,i,l,a,c,d,p,m,u,h,w,v,f,x=0){var k;let b=qt(e,o),$=(k=e.metrics.kp_history_1h)!=null?k:[],y=$.length?me($[$.length-1].t_utc):null,C=y?`Recent history \xB7 Last step ${y}`:"Recent history",S=`<div style="padding:10px 14px;border-bottom:1px solid #1e2c30"><div class="hw-section-row" data-hero-toggle style="margin-bottom:0">
+      ${G}
+    </div>`}function Is(e,s,t,o,n,r,i,l,a,c,d,p,m,g,h,w,v,$,x=0){var _;let f=Zt(e,o),b=(_=e.metrics.kp_history_1h)!=null?_:[],S=b.length?ge(b[b.length-1].t_utc):null,C=S?`Recent history \xB7 Last step ${S}`:"Recent history",k=`<div style="padding:10px 14px;border-bottom:1px solid #1e2c30"><div class="hw-section-row" data-hero-toggle style="margin-bottom:0">
     <span class="hw-section-caret">${t?"\u25BC":"\u25B6"}</span>
-    <span class="hw-section-label" style="margin-bottom:0">${T(C)}</span>
-  </div></div>`,L=t?jt(e):"";return`
+    <span class="hw-section-label" style="margin-bottom:0">${A(C)}</span>
+  </div></div>`,L=t?Gt(e):"";return`
     <div class="hw-root">
-      ${Wt(e)}
-      ${Yt(e,t,b,v,f,x)}
-      ${vs(e,b,m,c,u,h,w,f,v)}
-      ${S}
+      ${Xt(e)}
+      ${Ut(e,t,f,v,$,x)}
+      ${Ss(e,f,m,c,g,h,w,$,v)}
+      ${k}
       ${L}
-      ${Qt(e,o,b,p)}
-      ${Es(e,d)}
-      ${Ls(e,i,l,a)}
-      ${Hs(e,n,r)}
-    </div>`}function As(e){return`<div class="hw-root">
+      ${Jt(e,o,f,p)}
+      ${Rs(e,d)}
+      ${Ts(e,i,l,a)}
+      ${Os(e,n,r)}
+    </div>`}function Fs(e){return`<div class="hw-root">
     <div class="hw-header"><span class="hw-header-title">Space Weather</span></div>
     <div class="hw-error">
       <div class="hw-error-title">Space Weather</div>
-      <div class="hw-error-body">${g(e)}</div>
+      <div class="hw-error-body">${u(e)}</div>
     </div>
-  </div>`}function Rs(){return'<div class="hw-root"><div class="hw-loading">Loading space weather data\u2026</div></div>'}var Ue="nc-helio-ui",Se=class{constructor(s,t){this.expanded=!1;this.heroExpanded=!1;this.scrubOffset=0;this.alertsExpanded=!1;this.expandedAlertKey=null;this.expandedTimelineKey=null;this.timelineOpen=!1;this.collapsedDays=new Set;this.impactsOpen=!1;this.cmeExpanded=!1;this.forecastOpen=!1;this.solarRegions=null;this.solarExpanded=!1;this.solarLayers=new Set(["X","M","C","quiet"]);this.solarChannelIdx=0;this.solarChannelAutoSet=!1;this.expandedImpacts=new Set;this.ovationData=null;this.timer=null;this.data=null;this.el=s,this.opts=t,this.loadUiState(),this.el.innerHTML=Rs(),this.el.addEventListener("click",this.onClick.bind(this)),this.el.addEventListener("input",this.onInput.bind(this)),this.el.addEventListener("change",this.onChange.bind(this)),this.fetch()}expandHeroLinkedPanels(s){for(let t of s)switch(t){case"storm_risk":this.expandedImpacts.add("geomag_storm");break;case"radio":this.expandedImpacts.add("radio");break;case"satellite_drag":this.expandedImpacts.add("sat_drag");break;case"gnss":this.expandedImpacts.add("gnss");break;case"xray":this.expandedImpacts.add("xray");break;case"solar":this.solarExpanded=!0;break;default:Ge()&&console.warn(`[Helio] Hero chip nav: unknown section id "${t}"`)}}onClick(s){var c,d,p,m,u;let t=s.target,o=t.closest("[data-hero-chip]");if(o){let h=o.dataset.heroChip;if(h==="G"||h==="R"||h==="S"||h==="X"){let w=$t[h];this.impactsOpen=!0,this.expandHeroLinkedPanels(w),this.saveUiState(),this.render(),requestAnimationFrame(()=>requestAnimationFrame(()=>yt(w)))}return}if(t.closest("[data-solar-prev]")){this.solarChannelIdx=(this.solarChannelIdx-1+le.length)%le.length,this.solarChannelAutoSet=!0,this.saveUiState(),this.render();return}if(t.closest("[data-solar-next]")){this.solarChannelIdx=(this.solarChannelIdx+1)%le.length,this.solarChannelAutoSet=!0,this.saveUiState(),this.render();return}if(t.closest(".hw-scrub-reset")){this.scrubOffset=0,this.render();return}if(t.closest("[data-cme-toggle]")){this.cmeExpanded=!this.cmeExpanded,this.saveUiState(),this.render();return}if(t.closest("[data-forecast-toggle]")){this.forecastOpen=!this.forecastOpen,this.saveUiState(),this.render();return}if(t.closest("[data-impacts-toggle]")){this.impactsOpen=!this.impactsOpen,this.saveUiState(),this.render();return}let n=t.closest("[data-impact-row]");if(n){let h=(c=n.dataset.impactRow)!=null?c:"";this.expandedImpacts.has(h)?this.expandedImpacts.delete(h):this.expandedImpacts.add(h),this.saveUiState(),this.render();return}let r=t.closest("[data-solar-layer]");if(r){let h=(d=r.dataset.solarLayer)!=null?d:"";this.solarLayers.has(h)?this.solarLayers.delete(h):this.solarLayers.add(h),this.saveUiState(),this.render();return}if(t.closest("[data-solar-toggle]")){this.solarExpanded=!this.solarExpanded,this.saveUiState(),this.render();return}if(t.closest("[data-alerts-toggle]")){this.alertsExpanded=!this.alertsExpanded,this.saveUiState(),this.render();return}let i=t.closest("[data-alert-key]");if(i){let h=(p=i.dataset.alertKey)!=null?p:null;this.expandedAlertKey=this.expandedAlertKey===h?null:h,this.render();return}if(t.closest("[data-tl-section]")){if(this.timelineOpen=!this.timelineOpen,this.timelineOpen){let h=Date.now();this.collapsedDays=new Set([new Date(h).toISOString().slice(0,10),new Date(h-864e5).toISOString().slice(0,10),new Date(h-1728e5).toISOString().slice(0,10)])}this.saveUiState(),this.render();return}let l=t.closest("[data-tl-day]");if(l){let h=(m=l.dataset.tlDay)!=null?m:"";this.collapsedDays.has(h)?this.collapsedDays.delete(h):this.collapsedDays.add(h),this.saveUiState(),this.render();return}let a=t.closest("[data-timeline-key]");if(a){let h=(u=a.dataset.timelineKey)!=null?u:null;this.expandedTimelineKey=this.expandedTimelineKey===h?null:h,this.render();return}if(t.closest(".hw-kpi-close")){let h=t.closest("[data-impact-row]"),w=h==null?void 0:h.dataset.impactRow;w&&this.expandedImpacts.delete(w),this.saveUiState(),this.render();return}if(t.closest(".hw-toggle")){this.expanded=!this.expanded,this.saveUiState(),this.render();return}t.closest("[data-hero-toggle]")&&(this.heroExpanded=!this.heroExpanded,this.saveUiState(),this.render())}onInput(s){let t=s.target;if(!t.matches("[data-scrub]"))return;let o=parseFloat(t.value);this.scrubOffset=o,t.style.setProperty("--pct",`${(o/parseFloat(t.max)*100).toFixed(0)}%`);let n=this.el.querySelector(".hw-scrub-title");n&&(n.textContent=o>0?`\u23F1 +${Math.round(o)}h`:"Timeline")}onChange(s){s.target.matches("[data-scrub]")&&this.render()}async fetch(){var s,t,o,n;try{let r=await fetch(this.opts.dataUrl,{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);if(this.data=await r.json(),!this.solarChannelAutoSet){let i={quiet:1,active:0,elevated:2,storm:3};this.solarChannelIdx=(o=i[(t=(s=this.data.summary)==null?void 0:s.status)!=null?t:"quiet"])!=null?o:0,this.solarChannelAutoSet=!0}this.render(),this.fetchSolarRegions(),this.fetchOvationData()}catch(r){let i=r instanceof Error?r.message:String(r);this.el.innerHTML=As(`Space weather data unavailable (${i})`)}finally{this.timer=setTimeout(()=>this.fetch(),(n=this.opts.refreshMs)!=null?n:6e5)}}async fetchSolarRegions(){try{let s=await fetch("https://services.swpc.noaa.gov/json/solar_regions.json");if(!s.ok)return;let t=await s.json(),o=new Map;for(let n of t){let r=o.get(n.region),i=n.area!=null,l=(r==null?void 0:r.area)!=null;(!r||!l&&i||l===i&&n.observed_date>r.observed_date)&&o.set(n.region,n)}this.solarRegions=[...o.values()],this.render()}catch(s){}}async fetchOvationData(){var s,t,o,n,r,i;if(!(this.opts.lat==null||this.opts.lon==null))try{let l=await fetch("https://services.swpc.noaa.gov/json/ovation_aurora_latest.json");if(!l.ok)return;let a=await l.json(),d=((o=(t=(s=a.coordinates)!=null?s:a.Data)!=null?t:a.data)!=null?o:[]).map(([p,m,u])=>({lon:p,lat:m,prob:u}));this.ovationData={entries:d,forecastTime:String((i=(r=(n=a["Forecast Time"])!=null?n:a.forecast_time)!=null?r:a["Observation Time"])!=null?i:"")},this.render()}catch(l){}}render(){this.data&&(this.el.innerHTML=Ts(this.data,this.expanded,this.heroExpanded,this.scrubOffset,this.alertsExpanded,this.expandedAlertKey,this.expandedTimelineKey,this.timelineOpen,this.collapsedDays,this.impactsOpen,this.cmeExpanded,this.forecastOpen,this.solarRegions,this.solarExpanded,this.solarLayers,this.expandedImpacts,this.opts,this.ovationData,this.solarChannelIdx))}saveUiState(){try{localStorage.setItem(Ue,JSON.stringify({expanded:this.expanded,heroExpanded:this.heroExpanded,alertsExpanded:this.alertsExpanded,timelineOpen:this.timelineOpen,collapsedDays:[...this.collapsedDays],impactsOpen:this.impactsOpen,cmeExpanded:this.cmeExpanded,forecastOpen:this.forecastOpen,solarExpanded:this.solarExpanded,solarLayers:[...this.solarLayers],expandedImpacts:[...this.expandedImpacts]}))}catch(s){}}loadUiState(){try{let s=localStorage.getItem(Ue);if(!s)return;let t=JSON.parse(s);typeof t.expanded=="boolean"&&(this.expanded=t.expanded),typeof t.heroExpanded=="boolean"&&(this.heroExpanded=t.heroExpanded),typeof t.alertsExpanded=="boolean"&&(this.alertsExpanded=t.alertsExpanded),typeof t.timelineOpen=="boolean"&&(this.timelineOpen=t.timelineOpen),typeof t.impactsOpen=="boolean"&&(this.impactsOpen=t.impactsOpen),typeof t.cmeExpanded=="boolean"&&(this.cmeExpanded=t.cmeExpanded),typeof t.forecastOpen=="boolean"&&(this.forecastOpen=t.forecastOpen),typeof t.solarExpanded=="boolean"&&(this.solarExpanded=t.solarExpanded),Array.isArray(t.collapsedDays)&&(this.collapsedDays=new Set(t.collapsedDays)),Array.isArray(t.solarLayers)&&(this.solarLayers=new Set(t.solarLayers)),Array.isArray(t.expandedImpacts)&&(this.expandedImpacts=new Set(t.expandedImpacts))}catch(s){}}updateLocation(s,t,o){this.opts=Ie(Fe({},this.opts),{lat:s,lon:t,locationName:o}),this.render()}destroy(){this.timer&&clearTimeout(this.timer),this.el.removeEventListener("click",this.onClick.bind(this))}},nt={mount(e,s){return Ct(),new Se(e,s)}};typeof window!="undefined"&&(window.HelioWidget=nt);return mt(zs);})();
+  </div>`}function zs(){return'<div class="hw-root"><div class="hw-loading">Loading space weather data\u2026</div></div>'}var Xe="nc-helio-ui",Ce=class{constructor(s,t){this.expanded=!1;this.heroExpanded=!1;this.scrubOffset=0;this.alertsExpanded=!1;this.expandedAlertKey=null;this.expandedTimelineKey=null;this.timelineOpen=!1;this.collapsedDays=new Set;this.impactsOpen=!1;this.cmeExpanded=!1;this.forecastOpen=!1;this.solarRegions=null;this.solarExpanded=!1;this.solarLayers=new Set(["X","M","C","quiet"]);this.solarChannelIdx=0;this.solarChannelAutoSet=!1;this.expandedImpacts=new Set;this.ovationData=null;this.timer=null;this.data=null;this.el=s,this.opts=t,this.loadUiState(),this.el.innerHTML=zs(),this.el.addEventListener("click",this.onClick.bind(this)),this.el.addEventListener("input",this.onInput.bind(this)),this.el.addEventListener("change",this.onChange.bind(this)),this.fetch()}expandHeroLinkedPanels(s){for(let t of s)switch(t){case"storm_risk":this.expandedImpacts.add("geomag_storm");break;case"radio":this.expandedImpacts.add("radio");break;case"satellite_drag":this.expandedImpacts.add("sat_drag");break;case"gnss":this.expandedImpacts.add("gnss");break;case"aurora":this.expandedImpacts.add("aurora");break;case"xray":this.expandedImpacts.add("xray");break;case"solar":this.solarExpanded=!0;break;default:qe()&&console.warn(`[Helio] Hero chip nav: unknown section id "${t}"`)}}onClick(s){var c,d,p,m,g;let t=s.target,o=t.closest("[data-hero-chip]");if(o){let h=o.dataset.heroChip;if(h==="G"||h==="R"||h==="S"||h==="X"){let w=St[h];this.impactsOpen=!0,this.expandHeroLinkedPanels(w),this.saveUiState(),this.render(),requestAnimationFrame(()=>requestAnimationFrame(()=>Mt(w)))}return}if(t.closest("[data-solar-prev]")){this.solarChannelIdx=(this.solarChannelIdx-1+pe.length)%pe.length,this.solarChannelAutoSet=!0,this.saveUiState(),this.render();return}if(t.closest("[data-solar-next]")){this.solarChannelIdx=(this.solarChannelIdx+1)%pe.length,this.solarChannelAutoSet=!0,this.saveUiState(),this.render();return}if(t.closest(".hw-scrub-reset")){this.scrubOffset=0,this.render();return}if(t.closest("[data-cme-toggle]")){this.cmeExpanded=!this.cmeExpanded,this.saveUiState(),this.render();return}if(t.closest("[data-forecast-toggle]")){this.forecastOpen=!this.forecastOpen,this.saveUiState(),this.render();return}if(t.closest("[data-impacts-toggle]")){this.impactsOpen=!this.impactsOpen,this.saveUiState(),this.render();return}let n=t.closest("[data-impact-row]");if(n){let h=(c=n.dataset.impactRow)!=null?c:"";this.expandedImpacts.has(h)?this.expandedImpacts.delete(h):this.expandedImpacts.add(h),this.saveUiState(),this.render();return}let r=t.closest("[data-solar-layer]");if(r){let h=(d=r.dataset.solarLayer)!=null?d:"";this.solarLayers.has(h)?this.solarLayers.delete(h):this.solarLayers.add(h),this.saveUiState(),this.render();return}if(t.closest("[data-solar-toggle]")){this.solarExpanded=!this.solarExpanded,this.saveUiState(),this.render();return}if(t.closest("[data-alerts-toggle]")){this.alertsExpanded=!this.alertsExpanded,this.saveUiState(),this.render();return}let i=t.closest("[data-alert-key]");if(i){let h=(p=i.dataset.alertKey)!=null?p:null;this.expandedAlertKey=this.expandedAlertKey===h?null:h,this.render();return}if(t.closest("[data-tl-section]")){if(this.timelineOpen=!this.timelineOpen,this.timelineOpen){let h=Date.now();this.collapsedDays=new Set([new Date(h).toISOString().slice(0,10),new Date(h-864e5).toISOString().slice(0,10),new Date(h-1728e5).toISOString().slice(0,10)])}this.saveUiState(),this.render();return}let l=t.closest("[data-tl-day]");if(l){let h=(m=l.dataset.tlDay)!=null?m:"";this.collapsedDays.has(h)?this.collapsedDays.delete(h):this.collapsedDays.add(h),this.saveUiState(),this.render();return}let a=t.closest("[data-timeline-key]");if(a){let h=(g=a.dataset.timelineKey)!=null?g:null;this.expandedTimelineKey=this.expandedTimelineKey===h?null:h,this.render();return}if(t.closest(".hw-kpi-close")){let h=t.closest("[data-impact-row]"),w=h==null?void 0:h.dataset.impactRow;w&&this.expandedImpacts.delete(w),this.saveUiState(),this.render();return}if(t.closest(".hw-toggle")){this.expanded=!this.expanded,this.saveUiState(),this.render();return}t.closest("[data-hero-toggle]")&&(this.heroExpanded=!this.heroExpanded,this.saveUiState(),this.render())}onInput(s){let t=s.target;if(!t.matches("[data-scrub]"))return;let o=parseFloat(t.value);this.scrubOffset=o,t.style.setProperty("--pct",`${(o/parseFloat(t.max)*100).toFixed(0)}%`);let n=this.el.querySelector(".hw-scrub-title");n&&(n.textContent=o>0?`\u23F1 +${Math.round(o)}h`:"Timeline")}onChange(s){s.target.matches("[data-scrub]")&&this.render()}async fetch(){var s,t,o,n;try{let r=await fetch(this.opts.dataUrl,{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);if(this.data=await r.json(),!this.solarChannelAutoSet){let i={quiet:1,active:0,elevated:2,storm:3};this.solarChannelIdx=(o=i[(t=(s=this.data.summary)==null?void 0:s.status)!=null?t:"quiet"])!=null?o:0,this.solarChannelAutoSet=!0}this.render(),this.fetchSolarRegions(),this.fetchOvationData()}catch(r){let i=r instanceof Error?r.message:String(r);this.el.innerHTML=Fs(`Space weather data unavailable (${i})`)}finally{this.timer=setTimeout(()=>this.fetch(),(n=this.opts.refreshMs)!=null?n:6e5)}}async fetchSolarRegions(){try{let s=await fetch("https://services.swpc.noaa.gov/json/solar_regions.json");if(!s.ok)return;let t=await s.json(),o=new Map;for(let n of t){let r=o.get(n.region),i=n.area!=null,l=(r==null?void 0:r.area)!=null;(!r||!l&&i||l===i&&n.observed_date>r.observed_date)&&o.set(n.region,n)}this.solarRegions=[...o.values()],this.render()}catch(s){}}async fetchOvationData(){var s,t,o,n,r,i;if(!(this.opts.lat==null||this.opts.lon==null))try{let l=await fetch("https://services.swpc.noaa.gov/json/ovation_aurora_latest.json");if(!l.ok)return;let a=await l.json(),d=((o=(t=(s=a.coordinates)!=null?s:a.Data)!=null?t:a.data)!=null?o:[]).map(([p,m,g])=>({lon:p,lat:m,prob:g}));this.ovationData={entries:d,forecastTime:String((i=(r=(n=a["Forecast Time"])!=null?n:a.forecast_time)!=null?r:a["Observation Time"])!=null?i:"")},this.render()}catch(l){}}render(){this.data&&(this.el.innerHTML=Is(this.data,this.expanded,this.heroExpanded,this.scrubOffset,this.alertsExpanded,this.expandedAlertKey,this.expandedTimelineKey,this.timelineOpen,this.collapsedDays,this.impactsOpen,this.cmeExpanded,this.forecastOpen,this.solarRegions,this.solarExpanded,this.solarLayers,this.expandedImpacts,this.opts,this.ovationData,this.solarChannelIdx))}saveUiState(){try{localStorage.setItem(Xe,JSON.stringify({expanded:this.expanded,heroExpanded:this.heroExpanded,alertsExpanded:this.alertsExpanded,timelineOpen:this.timelineOpen,collapsedDays:[...this.collapsedDays],impactsOpen:this.impactsOpen,cmeExpanded:this.cmeExpanded,forecastOpen:this.forecastOpen,solarExpanded:this.solarExpanded,solarLayers:[...this.solarLayers],expandedImpacts:[...this.expandedImpacts]}))}catch(s){}}loadUiState(){try{let s=localStorage.getItem(Xe);if(!s)return;let t=JSON.parse(s);typeof t.expanded=="boolean"&&(this.expanded=t.expanded),typeof t.heroExpanded=="boolean"&&(this.heroExpanded=t.heroExpanded),typeof t.alertsExpanded=="boolean"&&(this.alertsExpanded=t.alertsExpanded),typeof t.timelineOpen=="boolean"&&(this.timelineOpen=t.timelineOpen),typeof t.impactsOpen=="boolean"&&(this.impactsOpen=t.impactsOpen),typeof t.cmeExpanded=="boolean"&&(this.cmeExpanded=t.cmeExpanded),typeof t.forecastOpen=="boolean"&&(this.forecastOpen=t.forecastOpen),typeof t.solarExpanded=="boolean"&&(this.solarExpanded=t.solarExpanded),Array.isArray(t.collapsedDays)&&(this.collapsedDays=new Set(t.collapsedDays)),Array.isArray(t.solarLayers)&&(this.solarLayers=new Set(t.solarLayers)),Array.isArray(t.expandedImpacts)&&(this.expandedImpacts=new Set(t.expandedImpacts))}catch(s){}}updateLocation(s,t,o){this.opts=Ne(ze({},this.opts),{lat:s,lon:t,locationName:o}),this.render()}destroy(){this.timer&&clearTimeout(this.timer),this.el.removeEventListener("click",this.onClick.bind(this))}},ct={mount(e,s){return At(),new Ce(e,s)}};typeof window!="undefined"&&(window.HelioWidget=ct);return bt(Ns);})();

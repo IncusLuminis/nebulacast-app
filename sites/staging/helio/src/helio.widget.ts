@@ -1773,7 +1773,7 @@ const INDICATOR_KPI_ICON_XRAY  = IMPACT_ICONS.solar_activity;
 const INDICATOR_KPI_ICON_BZ    = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><path d="M2 6 Q2 2.5 6 2.5 Q10 2.5 10 6 Q10 9.5 6 9.5 Q2 9.5 2 6"/><ellipse cx="6" cy="6" rx="2.2" ry="1.9"/><circle cx="6" cy="6" r="0.65" fill="currentColor" stroke="none"/></svg>`;
 const INDICATOR_KPI_ICON_WIND  = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><circle cx="3.2" cy="6" r="2.2"/><line x1="5.8" y1="6" x2="11" y2="6"/><polyline points="9.2,4.3 11,6 9.2,7.7" fill="currentColor" stroke="none"/></svg>`;
 
-const INDICATORS_PANEL_ROW_COUNT = 13;
+const INDICATORS_PANEL_ROW_COUNT = 14;
 
 const ASSET_BASE_DEFAULT = "https://staging.nebulacast.app";
 
@@ -2448,7 +2448,61 @@ function renderIndicatorKpiRow(
     </div>`;
 }
 
-/** Radio or Solar activity row only (no Aurora in unified Indicators panel). */
+function resolveAuroraImpactRow(rows: ObserverImpact[], data: HelioNow): ObserverImpact {
+  const found = rows.find(r => r.kind === "aurora");
+  if (found) return found;
+  const h = data.aurora_hint;
+  const level: ImpactLevel =
+    h.aurora_label === "good" ? "moderate" :
+    h.aurora_label === "possible" ? "low" : "none";
+  return { kind: "aurora", level, label: "Aurora", summary: h.summary };
+}
+
+/** Aurora: OVATION map + observer-location probability (first row in Indicators). */
+function renderAuroraIndicatorRow(
+  row: ObserverImpact,
+  expandedImpacts: Set<string>,
+  ovationData: OvationData | null,
+  opts: HelioWidgetOptions,
+): string {
+  const color       = IMPACT_COLOR[row.level] ?? "#666";
+  const levelLabel  = row.level === "none" ? "None" : row.level.charAt(0).toUpperCase() + row.level.slice(1);
+  const icon        = IMPACT_ICONS[row.kind] ?? IMPACT_ICON_FALLBACK;
+  const iconColor   = row.level === "none" ? "#606870" : color;
+  const isOpen      = expandedImpacts.has("aurora");
+  const openClass   = isOpen ? " hw-impact-open" : "";
+  const auroraOpen  = isOpen ? " hw-aurora-tip-open" : "";
+  const aUrl        = `https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`;
+  let prob: number | null = null;
+  if (ovationData && opts.lat != null && opts.lon != null) {
+    prob = lookupOvationProb(ovationData.entries, opts.lat, opts.lon);
+  }
+  const hasLocation = opts.lat != null && opts.lon != null;
+  const probColor   = prob != null ? (prob >= 30 ? "#5cce8c" : prob >= 10 ? "#d4cc5c" : "#9ab4bc") : "#607880";
+  const probLabel   = prob != null ? `${prob}%` : ovationData ? "n/a" : "…";
+  const obsPanel    = hasLocation ? `
+    <div class="hw-aurora-obs-panel">
+      <span>📍</span>
+      <span>${opts.locationName ? escText(opts.locationName) + " · " : ""}${opts.lat!.toFixed(1)}°${opts.lat! >= 0 ? "N" : "S"} ${Math.abs(opts.lon!).toFixed(1)}°${opts.lon! >= 0 ? "E" : "W"}</span>
+      <span class="hw-aurora-prob" style="color:${probColor}">Aurora: ${probLabel}</span>
+    </div>` : "";
+  const tipHtml = `<div class="hw-aurora-tip${auroraOpen}">
+      <div class="hw-aurora-map-wrap">
+        <img class="hw-aurora-img" src="${esc(aUrl)}" alt="NOAA Aurora Oval" loading="lazy" />
+        ${renderAuroraSvgOverlay(opts)}
+      </div>
+      ${obsPanel}
+      <div class="hw-aurora-caption">NOAA OVATION Prime model · updates every 5 min</div>
+    </div>`;
+  return `<div class="hw-impact-row${openClass}" id="aurora" data-impact-row="aurora">
+    <span class="hw-impact-caret">▶</span>
+    <span class="hw-impact-kind" style="color:${iconColor}">${icon}<span style="color:#b4c6cc">${escText(row.label)}</span></span>
+    <span class="hw-impact-badge" style="background:${color}22;color:${color}">${escText(levelLabel)}</span>
+    ${tipHtml}
+  </div>`;
+}
+
+/** Radio or Solar activity row only (Aurora is rendered separately first). */
 function renderUnifiedObserverDynamicRow(
   row: ObserverImpact,
   solarRegions: SolarRegion[] | null,
@@ -2504,7 +2558,9 @@ function renderImpacts(
   ovationData:     OvationData | null,
   opts:            HelioWidgetOptions,
 ): string {
-  const rows   = scrubData?.impacts ?? data.observer_impacts ?? [];
+  const rows    = scrubData?.impacts ?? data.observer_impacts ?? [];
+  const auroraR = resolveAuroraImpactRow(rows, data);
+  const auroraHtml = renderAuroraIndicatorRow(auroraR, expandedImpacts, ovationData, opts);
   const radioR = rows.find(r => r.kind === "radio");
   const solarR = rows.find(r => r.kind === "solar_activity");
   const radioHtml = radioR
@@ -2643,6 +2699,7 @@ function renderImpacts(
     <div class="hw-impacts">
       ${sectionHdr}
       ${impactsOpen ? [
+        auroraHtml,
         gsRowHtml,
         radioHtml,
         sdRowHtml,
@@ -3115,6 +3172,9 @@ class HelioWidgetInstance {
           break;
         case "gnss":
           this.expandedImpacts.add("gnss");
+          break;
+        case "aurora":
+          this.expandedImpacts.add("aurora");
           break;
         case "xray":
           this.expandedImpacts.add("xray");
