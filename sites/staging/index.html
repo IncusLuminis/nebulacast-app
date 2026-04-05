@@ -1341,11 +1341,15 @@
       if (illum > 0.98) return;
 
       // Step 2: build shadow shape on offscreen canvas, then stamp it over bitmap
-      // Terminator semi-minor axis: ex = r * cos(π * illum)
-      //   illum=0   → ex= r  → full shadow
+      // Terminator semi-minor axis: ex = r * (1 - 2*illum)
+      //   illum=0   → ex= r  → full shadow (new moon)
       //   illum=0.5 → ex= 0  → straight line (quarter)
-      //   illum=1   → ex=-r  → no shadow (full)
-      const ex = r * Math.cos(Math.PI * illum);
+      //   illum=1   → ex=-r  → no shadow (full moon)
+      // Derived from lit-area geometry: illum = (1 - ex/r) / 2
+      // Previously used cos(π*illum) which gave correct endpoints but
+      // under-estimated shadow width at high illumination (e.g. at 90%:
+      // cos gives ~5% width vs correct 20% — nearly invisible on small canvas).
+      const ex = r * (1 - 2 * illum);
 
       // Shadow offscreen
       const os = document.createElement('canvas');
