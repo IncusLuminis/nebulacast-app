@@ -132,11 +132,11 @@ This section is the most implementation-critical part of the spec.
 
 ⸻
 
-5a. Helio Data Contract v1.3
+5a. Helio Data Contract v1.4
 
-Additive amendments: optional **`hero`** object (hero scale labels + optional KPI mirrors), widget scroll **`id`** map for G/R/S/X chips, and notes for local verification on **port 8080**.
+Additive amendments: optional **`hero`** object (hero scale labels + optional KPI mirrors), widget scroll **`id`** map for G/R/S/X chips, optional **`storm_risk`** (Storm Risk panel: observed G + 24h **`max_expected`**), and notes for local verification on **port 8080**.
 
-See: `docs/Helio/Helio Data Contract v1.3.md`
+See: `docs/Helio/Helio Data Contract v1.4.md`
 
 ⸻
 

@@ -1,7 +1,7 @@
 /**
  * TypeScript types for the helio_now.json data contract.
  * Baseline: docs/Helio/Helio Data Contract v1.md
- * Additive (hero, etc.): docs/Helio/Helio Data Contract v1.3.md
+ * Additive (hero, storm_risk, etc.): docs/Helio/Helio Data Contract v1.4.md
  */
 
 export type HelioStatus = "quiet" | "active" | "elevated" | "storm";
