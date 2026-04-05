@@ -299,14 +299,14 @@ const WIDGET_CSS = `
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
 /* Storm Risk: NOW | FORECAST 24h */
-.hw-storm-risk-head{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;margin:8px 0 6px}
+.hw-storm-risk-head{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;margin:6px 0 5px}
 .hw-storm-risk-head span{color:#3a4c52;padding:0 5px;font-weight:400;letter-spacing:0}
-.hw-storm-risk-cols{display:grid;grid-template-columns:1fr 1.2fr;gap:12px;align-items:start}
-.hw-storm-risk-now{padding:2px 4px 2px 0}
-.hw-storm-risk-now-num{font-size:1.45em;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.02em}
-.hw-storm-risk-now-lbl{font-size:.76em;color:#96a8b8;margin-top:5px;line-height:1.35}
-.hw-storm-risk-fc{border-left:1px solid #1e2c30;padding-left:12px;margin-left:-2px}
-.hw-storm-risk-fc-cap{font-size:.60em;color:#7a9298;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.hw-storm-risk-cols{display:grid;grid-template-columns:minmax(3rem,5.6rem) minmax(0,1fr);gap:8px 12px;align-items:start}
+.hw-storm-risk-now{padding:0 6px 0 0;min-width:0}
+.hw-storm-risk-now-num{font-size:24px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.02em}
+.hw-storm-risk-now-lbl{font-size:.68em;color:#96a8b8;margin-top:3px;line-height:1.25}
+.hw-storm-risk-fc{border-left:1px solid #1e2c30;padding-left:12px;margin-left:0;min-width:0}
+.hw-storm-risk-fc-cap{font-size:.60em;color:#7a9298;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
 .hw-storm-severe{border:1px solid #e05c5c66;background:linear-gradient(165deg,#e05c5c14,#1a1216);border-radius:4px;padding:9px 10px}
 .hw-storm-severe-title{font-size:.65em;font-weight:700;color:#e07a7a;letter-spacing:.08em;text-transform:uppercase}
 .hw-storm-severe-g{font-size:.85em;color:#e8c8c8;margin-top:6px;font-weight:600}
