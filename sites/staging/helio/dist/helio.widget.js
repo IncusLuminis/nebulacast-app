@@ -65,10 +65,10 @@
 /* Storm Risk: NOW | FORECAST 24h */
 .hw-storm-risk-head{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;margin:6px 0 5px}
 .hw-storm-risk-head span{color:#3a4c52;padding:0 5px;font-weight:400;letter-spacing:0}
-.hw-storm-risk-cols{display:grid;grid-template-columns:minmax(3rem,5.6rem) minmax(0,1fr);gap:8px 12px;align-items:start}
+.hw-storm-risk-cols{display:grid;grid-template-columns:minmax(5.25rem,7.75rem) minmax(0,1fr);gap:8px 12px;align-items:start}
 .hw-storm-risk-now{padding:0 6px 0 0;min-width:0}
-.hw-storm-risk-now-num{font-size:24px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.02em}
-.hw-storm-risk-now-lbl{font-size:.68em;color:#96a8b8;margin-top:3px;line-height:1.25}
+.hw-storm-risk-now-num{font-size:48px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.02em}
+.hw-storm-risk-now-lbl{font-size:.68em;color:#96a8b8;margin-top:4px;line-height:1.25}
 .hw-storm-risk-fc{border-left:1px solid #1e2c30;padding-left:12px;margin-left:0;min-width:0}
 .hw-storm-risk-fc-cap{font-size:.60em;color:#7a9298;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
 .hw-storm-severe{border:1px solid #e05c5c66;background:linear-gradient(165deg,#e05c5c14,#1a1216);border-radius:4px;padding:9px 10px}
