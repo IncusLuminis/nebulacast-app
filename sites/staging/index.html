@@ -256,6 +256,60 @@
       background: rgba(74,111,165,0.18); border-color: rgba(74,111,165,0.4); color: rgba(255,255,255,0.72);
     }
 
+    /* ─── NQI info button & popup ────────────────────────── */
+    .nqi-info-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      font-size: 9px; font-weight: 700; line-height: 1;
+      color: rgba(255,255,255,0.35); border: 1px solid rgba(255,255,255,0.2);
+      background: transparent; cursor: pointer; flex-shrink: 0;
+      transition: all 0.15s; vertical-align: middle; margin-left: 4px;
+      font-style: normal;
+    }
+    .nqi-info-btn:hover, .nqi-info-btn.is-open {
+      color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.07);
+    }
+    .nqi-info-popup {
+      position: fixed; z-index: 1200;
+      background: rgba(12,16,28,0.97); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px; padding: 14px 16px; min-width: 300px; max-width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      color: rgba(255,255,255,0.82); font-size: 11px; line-height: 1.5;
+      display: none;
+    }
+    .nqi-info-popup.is-open { display: block; }
+    .nqi-info-popup h4 {
+      margin: 0 0 10px; font-size: 12px; font-weight: 700;
+      color: #fff; letter-spacing: 0.03em;
+    }
+    .nqi-info-popup .nqi-section-lbl {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); margin: 10px 0 5px;
+    }
+    .nqi-info-popup table {
+      width: 100%; border-collapse: collapse; font-size: 11px;
+    }
+    .nqi-info-popup table td { padding: 2px 0; vertical-align: top; }
+    .nqi-info-popup table td:first-child {
+      width: 30px; font-weight: 700; color: rgba(255,255,255,0.45);
+      padding-right: 8px; white-space: nowrap;
+    }
+    .nqi-info-popup table td:nth-child(2) {
+      font-weight: 600; color: rgba(255,255,255,0.75); padding-right: 8px; white-space: nowrap;
+    }
+    .nqi-info-popup .nqi-scale-row { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+    .nqi-info-popup .nqi-scale-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .nqi-info-popup .nqi-penalty-row { color: rgba(255,255,255,0.5); font-size: 10px; margin: 2px 0; }
+    .nqi-info-popup .nqi-close {
+      position: absolute; top: 8px; right: 10px;
+      background: none; border: none; color: rgba(255,255,255,0.3);
+      font-size: 16px; cursor: pointer; line-height: 1; padding: 0;
+    }
+    .nqi-info-popup .nqi-close:hover { color: rgba(255,255,255,0.7); }
+
     /* ─── Night chart section inside widget ─────────────── */
     .nop-widget-chart-section {
       margin-top: 10px;
@@ -774,6 +828,32 @@
 <body>
 
 <div id="nop-tooltip" class="nop-tooltip"></div>
+<div id="nqi-info-popup" class="nqi-info-popup" role="dialog" aria-modal="true" aria-label="Night Quality Index explanation">
+  <button class="nqi-close" id="nqi-info-close" aria-label="Close">×</button>
+  <h4>Night Quality Index (NQI)</h4>
+  <p style="margin:0 0 2px;color:rgba(255,255,255,0.5);font-size:10px">
+    Score 0–10 summarising the entire night for the selected observing profile.
+  </p>
+
+  <div class="nqi-section-lbl">Formula — weighted sum</div>
+  <table>
+    <tr><td>25%</td><td>Median score</td><td style="color:rgba(255,255,255,0.45)">typical per-hour observing quality</td></tr>
+    <tr><td>25%</td><td>Clear sky</td><td style="color:rgba(255,255,255,0.45)">fraction of night with clouds &lt; 60%</td></tr>
+    <tr><td>20%</td><td>Best window</td><td style="color:rgba(255,255,255,0.45)">peak 4-hour continuous block</td></tr>
+    <tr><td>15%</td><td>Reliability</td><td style="color:rgba(255,255,255,0.45)">avoids prolonged bad spells (&lt; 30 pts)</td></tr>
+    <tr><td>15%</td><td>Stability</td><td style="color:rgba(255,255,255,0.45)">consistent conditions, low variance</td></tr>
+  </table>
+  <div class="nqi-penalty-row" style="margin-top:6px">
+    − Penalties: dew spread &lt; 3 °C &nbsp;·&nbsp; avg wind &gt; 6 m/s &nbsp;·&nbsp; moon up (visual / planetary only)
+  </div>
+
+  <div class="nqi-section-lbl">Scale</div>
+  <div class="nqi-scale-row"><span class="nqi-scale-dot" style="background:#4caf50"></span><span style="color:rgba(255,255,255,0.55);width:32px">9–10</span><span style="font-weight:600;color:#4caf50">Excellent</span></div>
+  <div class="nqi-scale-row"><span class="nqi-scale-dot" style="background:#8bc34a"></span><span style="color:rgba(255,255,255,0.55);width:32px">7–9</span><span style="font-weight:600;color:#8bc34a">Good</span></div>
+  <div class="nqi-scale-row"><span class="nqi-scale-dot" style="background:#ff9800"></span><span style="color:rgba(255,255,255,0.55);width:32px">5–7</span><span style="font-weight:600;color:#ff9800">Usable</span></div>
+  <div class="nqi-scale-row"><span class="nqi-scale-dot" style="background:#f44336"></span><span style="color:rgba(255,255,255,0.55);width:32px">3–5</span><span style="font-weight:600;color:#f44336">Marginal</span></div>
+  <div class="nqi-scale-row"><span class="nqi-scale-dot" style="background:#9e3a3a"></span><span style="color:rgba(255,255,255,0.55);width:32px">0–3</span><span style="font-weight:600;color:#9e3a3a">Poor</span></div>
+</div>
 <div class="console-root">
 
   <!-- ══════════ TOPBAR: brand (left col) ══════════ -->
@@ -1738,7 +1818,7 @@
     const nqiCls     = activeNqi.class || 'poor';
     const nqiClr     = _nqiColor(nqiCls);
     const p5 = `<div class="hero-card" style="min-width:165px;flex-shrink:0">
-      <div class="hero-card-label">Night Quality</div>
+      <div class="hero-card-label" style="display:flex;align-items:center;gap:4px">Night Quality<button id="nqi-info-btn" class="nqi-info-btn" aria-label="How NQI is calculated" title="How it's calculated">i</button></div>
       <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:4px">
         <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px">
           <div style="display:flex;align-items:baseline;gap:3px">
@@ -2087,6 +2167,58 @@
     }
     list.innerHTML = html;
   }
+
+  // ── NQI info popup ──────────────────────────────────────
+  (function () {
+    const popup = document.getElementById('nqi-info-popup');
+    if (!popup) return;
+
+    function openPopup(anchorEl) {
+      const rect = anchorEl.getBoundingClientRect();
+      const popW = 360, popH = 290;
+      let left = rect.left;
+      let top  = rect.bottom + 6;
+      // Keep within viewport
+      if (left + popW > window.innerWidth - 8)  left = window.innerWidth - popW - 8;
+      if (top  + popH > window.innerHeight - 8) top  = rect.top - popH - 6;
+      popup.style.left = Math.max(8, left) + 'px';
+      popup.style.top  = Math.max(8, top)  + 'px';
+      popup.classList.add('is-open');
+      document.getElementById('nqi-info-btn')?.classList.add('is-open');
+    }
+    function closePopup() {
+      popup.classList.remove('is-open');
+      document.getElementById('nqi-info-btn')?.classList.remove('is-open');
+    }
+
+    // Hero click: open button
+    document.getElementById('console-hero').addEventListener('click', e => {
+      const btn = e.target.closest('#nqi-info-btn');
+      if (btn) {
+        e.stopPropagation();
+        if (popup.classList.contains('is-open')) { closePopup(); }
+        else { openPopup(btn); }
+        return;
+      }
+    });
+
+    // Close button inside popup
+    document.getElementById('nqi-info-close')?.addEventListener('click', closePopup);
+
+    // Click outside → close
+    document.addEventListener('click', e => {
+      if (popup.classList.contains('is-open') &&
+          !popup.contains(e.target) &&
+          !e.target.closest('#nqi-info-btn')) {
+        closePopup();
+      }
+    });
+
+    // Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closePopup();
+    });
+  })();
 
   // ── NOP interactive: profile & chart chip clicks ───────
   document.getElementById('console-hero').addEventListener('click', e => {
