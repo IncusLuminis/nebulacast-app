@@ -310,10 +310,6 @@ const WIDGET_CSS = `
 .hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:5px;line-height:1.22;word-wrap:break-word;max-width:100%}
 .hw-storm-risk-rail{grid-column:2;grid-row:1 / span 2;border-left:1px solid #1e2c30;padding-left:10px;min-width:0;display:flex;flex-direction:column;gap:5px;align-self:stretch}
 .hw-storm-risk-fc{min-width:0}
-.hw-storm-severe{border:1px solid #e05c5c66;background:linear-gradient(165deg,#e05c5c14,#1a1216);border-radius:4px;padding:9px 10px}
-.hw-storm-severe-title{font-size:.65em;font-weight:700;color:#e07a7a;letter-spacing:.08em;text-transform:uppercase}
-.hw-storm-severe-g{font-size:.85em;color:#e8c8c8;margin-top:6px;font-weight:600}
-.hw-storm-severe-p{font-size:.74em;color:#96a8b8;margin-top:5px}
 .hw-gstorm-slot{display:none}
 /* Storm Progress Indicator */
 @keyframes hw-spi-pulse{0%,100%{opacity:.35}50%{opacity:1}}
@@ -1944,7 +1940,25 @@ function normalizeStormRisk(raw: unknown): HelioStormRisk | null {
 }
 
 function resolveStormRisk(data: HelioNow): HelioStormRisk {
-  return normalizeStormRisk(data.storm_risk) ?? deriveStormRiskFallback(data);
+  const kpFallback = deriveStormRiskFallback(data);
+  const parsed     = normalizeStormRisk(data.storm_risk);
+  if (!parsed) return kpFallback;
+  const raw = data.storm_risk as Record<string, unknown> | undefined;
+  const rawFc = raw && typeof raw["forecast_24h"] === "object" && raw["forecast_24h"] !== null
+    ? (raw["forecast_24h"] as Record<string, unknown>)
+    : undefined;
+  const rawMax = rawFc?.["max_expected"];
+  const hasValidMax = typeof rawMax === "number" && Number.isFinite(rawMax);
+  if (!hasValidMax) {
+    return {
+      ...parsed,
+      forecast_24h: {
+        ...parsed.forecast_24h,
+        max_expected: kpFallback.forecast_24h.max_expected,
+      },
+    };
+  }
+  return parsed;
 }
 
 function stormNowBadgeStyle(g_level: number): string {
@@ -2048,7 +2062,7 @@ function renderStormProgress(sp: StormPhaseResult): string {
   </div>`;
 }
 
-/** Semicircle G0–G5 dial: green G0–G1, yellow G2–G3, red G4–G5. Needle at discrete level. */
+/** Semicircle G0–G5 dial: green G0–G1, yellow G2–G3, red G4–G5. Needle at discrete forecast level only (no interpolation). */
 function buildStormRiskGaugeSvg(gLevelRaw: number, ariaHint: string): string {
   const g = Math.max(0, Math.min(5, Math.round(gLevelRaw)));
   const cx = 70;
@@ -2057,7 +2071,10 @@ function buildStormRiskGaugeSvg(gLevelRaw: number, ariaHint: string): string {
   const band = 9;
   const Rin = R - band;
   const π = Math.PI;
+  /** Zone / tick angles: G0 at left (π) → G5 at right (0), equal steps over 180°. */
   const θ = (k: number) => π * (1 - k / 5);
+  /** Needle angle: same as spec `angleDeg = -90 + (g/5)*180` after mapping to math CCW-from-+x ↔ this left→right sweep. */
+  const needleRad = θ(g);
 
   const xy = (rad: number, radLen: number) => ({
     x: cx + radLen * Math.cos(rad),
@@ -2079,7 +2096,7 @@ function buildStormRiskGaugeSvg(gLevelRaw: number, ariaHint: string): string {
     return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#2a3a40" stroke-width="1" stroke-linecap="round"/>`;
   };
 
-  const tn = xy(θ(g), R - 2);
+  const tn = xy(needleRad, R - 2);
   const needle = `<line x1="${cx}" y1="${cy}" x2="${tn.x.toFixed(2)}" y2="${tn.y.toFixed(2)}" stroke="#c8d6dc" stroke-width="2" stroke-linecap="round"/>`;
   const cap = `<circle cx="${cx}" cy="${cy}" r="3.5" fill="#3a4c52" stroke="#1e2c30" stroke-width="1"/>`;
 
@@ -2107,12 +2124,6 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
   const sr     = resolveStormRisk(data);
   const sp     = deriveStormPhase(data);
   const fc     = sr.forecast_24h;
-  const severe = fc.G4 > 1e-6 || fc.G5 > 1e-6;
-  const useG5  = fc.G5 > 1e-6;
-  const sevLevel  = useG5 ? 5 : 4;
-  const sevProb   = useG5 ? fc.G5 : fc.G4;
-  const sevKey    = useG5 ? "G5" : "G4";
-  const sevName   = G_STORM_NOW_LABELS[sevLevel] ?? "Severe Storm";
 
   const nowNumCol = stormNowBadgeStyle(sr.now.g_level);
   const nowCol = `
@@ -2121,22 +2132,13 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
       <div class="hw-storm-risk-now-lbl">${escText(sr.now.label)}</div>
     </div>`;
 
-  const maxG = Math.max(0, Math.min(5, Math.round(fc.max_expected)));
+  /** Forecast 24h: single categorical level from JSON `max_expected` (Kp→G on server / fallback). */
+  const forecastG = Math.max(0, Math.min(5, Math.round(fc.max_expected)));
 
-  let fcInner: string;
-  if (severe) {
-    const pct = Math.round(sevProb * 100);
-    fcInner = `
-        <div class="hw-storm-severe" role="alert">
-          <div class="hw-storm-severe-title">Severe storm risk</div>
-          <div class="hw-storm-severe-g">${sevKey} expected · ${escText(sevName)}</div>
-          <div class="hw-storm-severe-p">Probability: <b style="color:#e8c4c4">${pct}%</b></div>
-        </div>`;
-  } else {
-    fcInner = `
-        <div class="hw-storm-risk-fc-gauge">${buildStormRiskGaugeSvg(maxG, "24h max implied storm level")}</div>
-        <div class="hw-gstorm-footer" style="margin-top:4px">From Kp forecast · max implied G${fc.max_expected}</div>`;
-  }
+  const fcInner = `
+        <div class="hw-storm-risk-fc-gauge">${buildStormRiskGaugeSvg(forecastG, "Max expected geomagnetic level in next 24 hours")}</div>
+        <div class="hw-gstorm-footer" style="margin-top:5px;line-height:1.35">Max expected level in next 24h</div>
+        <div class="hw-gstorm-footer" style="margin-top:2px">From Kp forecast · G${forecastG}</div>`;
 
   const openClass = isOpen ? " hw-impact-tip-open" : "";
   return `<div class="hw-impact-tip${openClass}">

@@ -131,7 +131,7 @@ _G_STORM_NOW_LABELS: Dict[int, str] = {
 
 
 def _kp_to_max_g_level(kp: float) -> int:
-    """Maximum NOAA G level implied by Kp (for max_expected in forecast window)."""
+    """Maximum NOAA G implied by Kp for forecast window (thresholds: <5→G0, 5→G1, … 9→G5)."""
     if kp >= 9:
         return 5
     if kp >= 8:
