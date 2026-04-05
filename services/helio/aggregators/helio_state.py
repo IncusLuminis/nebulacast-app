@@ -7,9 +7,9 @@ HelioEvent lists to produce the normalized aggregate state consumed by the
 serializer (gen_helio.py) and ultimately the frontend widget.
 
 Public API:
-  derive(metrics, events, updated_utc?) ->
+    derive(metrics, events, updated_utc?) ->
       {summary, scales, forecast, aurora_hint, observer_impacts,
-       alerts_preview, alerts_all}
+       storm_risk, coronal_hole, alerts_preview, alerts_all, timeline}
 
 All derivations are deterministic, conservative, and observer-oriented.
 See: docs/Helio/Helio Aggregate Derivation Spec v1.md
@@ -116,6 +116,98 @@ def _derive_s_scale(events_24h: List[Dict[str, Any]]) -> int:
 
 
 # ── Kp forecast ───────────────────────────────────────────────────────────────
+
+# ── Storm risk (NOW + 24h forecast probabilities) ─────────────────────────────
+
+
+_G_STORM_NOW_LABELS: Dict[int, str] = {
+    0: "Quiet",
+    1: "Minor Storm",
+    2: "Moderate Storm",
+    3: "Strong Storm",
+    4: "Severe Storm",
+    5: "Extreme Storm",
+}
+
+
+def _kp_to_max_g_level(kp: float) -> int:
+    """Maximum NOAA G level implied by Kp (for max_expected in forecast window)."""
+    if kp >= 9:
+        return 5
+    if kp >= 8:
+        return 4
+    if kp >= 7:
+        return 3
+    if kp >= 6:
+        return 2
+    if kp >= 5:
+        return 1
+    return 0
+
+
+def _storm_hit_prob_from_max_kp(max_kp: float, threshold: float) -> float:
+    """
+    Match helio.widget deriveStormProbs: ramp 0%% below (threshold-0.7), ~90%% above (threshold+1).
+    Returns probability in [0, 1].
+    """
+    if max_kp < threshold - 0.7:
+        return 0.0
+    if max_kp > threshold + 1.0:
+        return 0.9
+    frac = (max_kp - (threshold - 0.7)) / 1.7
+    pct = round(max(0.0, frac) ** 0.7 * 90.0)
+    return pct / 100.0
+
+
+def _derive_storm_risk(
+    kp_forecast_3h: List[Dict[str, Any]],
+    g_now: int,
+    now_dt: datetime,
+) -> Dict[str, Any]:
+    """
+    Additive UI block: observed G level + 24h forecast storm hit probabilities (G1..G5).
+
+    Probabilities are floats in [0, 1], aligned with the embedded widget's Kp-forecast heuristic.
+    """
+    g_now = max(0, min(5, int(g_now)))
+    cutoff = now_dt + timedelta(hours=24)
+    margin = timedelta(hours=3)
+
+    next24: List[Dict[str, Any]] = []
+    for p in kp_forecast_3h or []:
+        t = _parse_ts(p.get("t_utc"))
+        if t is None:
+            continue
+        if now_dt - margin <= t <= cutoff:
+            next24.append(p)
+
+    if not next24:
+        max_kp = 0.0
+    else:
+        max_kp = max(float(x.get("kp") or 0.0) for x in next24)
+
+    g1 = _storm_hit_prob_from_max_kp(max_kp, 5.0)
+    g2 = _storm_hit_prob_from_max_kp(max_kp, 6.0)
+    g3 = _storm_hit_prob_from_max_kp(max_kp, 7.0)
+    g4 = _storm_hit_prob_from_max_kp(max_kp, 8.0)
+    g5 = _storm_hit_prob_from_max_kp(max_kp, 9.0)
+    max_expected = _kp_to_max_g_level(max_kp)
+
+    return {
+        "now": {
+            "g_level": g_now,
+            "label": _G_STORM_NOW_LABELS.get(g_now, "Quiet"),
+        },
+        "forecast_24h": {
+            "G1": g1,
+            "G2": g2,
+            "G3": g3,
+            "G4": g4,
+            "G5": g5,
+            "max_expected": max_expected,
+        },
+    }
+
 
 def _derive_forecast(
     kp_forecast_3h: List[Dict[str, Any]],
@@ -517,6 +609,8 @@ def derive(
     # ── Coronal hole / High-speed stream ──────────────────────────────────────
     coronal_hole = _derive_coronal_hole(solar_wind_kms)
 
+    storm_risk = _derive_storm_risk(kp_forecast_3h, g, now_dt)
+
     # ── Alerts ────────────────────────────────────────────────────────────────
     # alerts_all: all events, newest first (already sorted by interpreter)
     alerts_all = sorted(events, key=lambda e: e.get("t_utc") or "", reverse=True)
@@ -533,6 +627,7 @@ def derive(
         "aurora_hint":      aurora_hint,
         "observer_impacts": observer_impacts,
         "coronal_hole":     coronal_hole,
+        "storm_risk":       storm_risk,
         "alerts_all":       alerts_all,
         "timeline":         timeline or [],
     }

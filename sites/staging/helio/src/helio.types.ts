@@ -79,6 +79,26 @@ export interface HelioForecast {
   trend:           "falling" | "steady" | "rising" | "unknown";
 }
 
+/** Additive: derived geomagnetic storm risk for Storm Risk panel (optional on older JSON). */
+export interface HelioStormRiskNow {
+  g_level: number; // 0–5
+  label:   string;
+}
+
+export interface HelioStormRiskForecast24h {
+  G1:           number;
+  G2:           number;
+  G3:           number;
+  G4:           number;
+  G5:           number;
+  max_expected: number; // 0–5, highest G implied by max Kp in window
+}
+
+export interface HelioStormRisk {
+  now:          HelioStormRiskNow;
+  forecast_24h: HelioStormRiskForecast24h;
+}
+
 export interface HelioAuroraHint {
   aurora_possible:    boolean;
   aurora_min_lat_est: number | null;
@@ -164,6 +184,7 @@ export interface HelioNow {
   summary:          HelioSummary;
   scales:           HelioScales;
   forecast:         HelioForecast;
+  storm_risk?:      HelioStormRisk;
   aurora_hint:      HelioAuroraHint;
   observer_impacts: ObserverImpact[];
   coronal_hole:     CoronalHoleState | null;

@@ -121,6 +121,7 @@ def main() -> int:
         "forecast":         aggregate["forecast"],
         "aurora_hint":      aggregate["aurora_hint"],
         "observer_impacts": aggregate["observer_impacts"],
+        "storm_risk":       aggregate["storm_risk"],
         "coronal_hole":     aggregate["coronal_hole"],
         "alerts_preview":   alerts_preview,
         "alerts_all":       aggregate["alerts_all"],

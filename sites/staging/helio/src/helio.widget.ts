@@ -12,6 +12,8 @@ import type {
   KpHistoryPoint, WindHistoryPoint, BzHistoryPoint, XrayHistoryPoint,
   HelioWidgetOptions, ImpactLevel, AlertLevel, HelioStatus, AuroraLabel, ObserverImpact,
   CmeTrackerEvent, CmeTrackerStatus, CmeImpactLevel,
+  HelioStormRisk,
+  HelioStormRiskForecast24h,
 } from "./helio.types";
 
 const REFRESH_MS_DEFAULT = 10 * 60 * 1000; // 10 minutes
@@ -296,6 +298,20 @@ const WIDGET_CSS = `
 .hw-gstorm-fill{height:100%;border-radius:3px;transition:width .3s}
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
+/* Storm Risk: NOW | FORECAST 24h */
+.hw-storm-risk-head{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;margin:8px 0 6px}
+.hw-storm-risk-head span{color:#3a4c52;padding:0 5px;font-weight:400;letter-spacing:0}
+.hw-storm-risk-cols{display:grid;grid-template-columns:1fr 1.2fr;gap:12px;align-items:start}
+.hw-storm-risk-now{padding:2px 4px 2px 0}
+.hw-storm-risk-now-num{font-size:1.45em;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.02em}
+.hw-storm-risk-now-lbl{font-size:.76em;color:#96a8b8;margin-top:5px;line-height:1.35}
+.hw-storm-risk-fc{border-left:1px solid #1e2c30;padding-left:12px;margin-left:-2px}
+.hw-storm-risk-fc-cap{font-size:.60em;color:#7a9298;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.hw-storm-severe{border:1px solid #e05c5c66;background:linear-gradient(165deg,#e05c5c14,#1a1216);border-radius:4px;padding:9px 10px}
+.hw-storm-severe-title{font-size:.65em;font-weight:700;color:#e07a7a;letter-spacing:.08em;text-transform:uppercase}
+.hw-storm-severe-g{font-size:.85em;color:#e8c8c8;margin-top:6px;font-weight:600}
+.hw-storm-severe-p{font-size:.74em;color:#96a8b8;margin-top:5px}
+.hw-gstorm-slot{display:none}
 /* Storm Progress Indicator */
 @keyframes hw-spi-pulse{0%,100%{opacity:.35}50%{opacity:1}}
 .hw-spi-wrap{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #1e2c30;cursor:default}
@@ -1839,29 +1855,100 @@ function renderRadioBlackoutPanel(data: HelioNow, isOpen: boolean): string {
 
 // ── Geomagnetic Storm Probability ────────────────────────────────────────────
 
-const G_STORM_COLORS = { g1: "#d4cc5c", g2: "#e0a84a", g3: "#e05c5c" };
-const G_STORM_LABELS = { g1: "Minor", g2: "Moderate", g3: "Strong" };
+const G_STORM_COLORS = { g1: "#d4cc5c", g2: "#e0a84a", g3: "#e05c5c", g4: "#e05050", g5: "#c04070" };
 
-/** Derive approximate G-storm probabilities from Kp 3-hour forecast. */
-function deriveStormProbs(data: HelioNow): { g1: number; g2: number; g3: number } {
+const G_STORM_NOW_LABELS: Record<number, string> = {
+  0: "Quiet",
+  1: "Minor Storm",
+  2: "Moderate Storm",
+  3: "Strong Storm",
+  4: "Severe Storm",
+  5: "Extreme Storm",
+};
+
+function kpToMaxGLevel(kp: number): number {
+  if (kp >= 9) return 5;
+  if (kp >= 8) return 4;
+  if (kp >= 7) return 3;
+  if (kp >= 6) return 2;
+  if (kp >= 5) return 1;
+  return 0;
+}
+
+/** Same ramp as services/helio aggregators (_storm_hit_prob_from_max_kp). */
+function stormHitProbFromMaxKp(maxKp: number, threshold: number): number {
+  if (maxKp < threshold - 0.7) return 0;
+  if (maxKp > threshold + 1.0) return 0.9;
+  const frac = (maxKp - (threshold - 0.7)) / 1.7;
+  return Math.round(Math.pow(Math.max(0, frac), 0.7) * 90) / 100;
+}
+
+/** Client-side fallback when `storm_risk` is missing from JSON (older payloads). */
+function deriveStormRiskFallback(data: HelioNow): HelioStormRisk {
+  const rawG    = parseInt((data.scales.g_scale ?? "G0").replace(/\D/g, ""), 10);
+  const g_level = Math.max(0, Math.min(5, Number.isFinite(rawG) ? rawG : 0));
   const forecast = data.metrics.kp_forecast_3h ?? [];
-  const now = Date.now();
-  const cutoff = now + 24 * 60 * 60 * 1000;
-  const next24h = forecast.filter(p => {
+  const nowMs    = Date.now();
+  const cutoff   = nowMs + 24 * 60 * 60 * 1000;
+  const next24h  = forecast.filter(p => {
     const t = new Date(p.t_utc).getTime();
-    return t >= now - 3 * 60 * 60 * 1000 && t <= cutoff; // include current period
+    return t >= nowMs - 3 * 60 * 60 * 1000 && t <= cutoff;
   });
-  if (next24h.length === 0) return { g1: 0, g2: 0, g3: 0 };
-  const maxKp = Math.max(...next24h.map(p => p.kp));
-
-  // Ramp: 0% below (threshold - 0.7), ~90% above (threshold + 1)
-  const prob = (threshold: number) => {
-    if (maxKp < threshold - 0.7) return 0;
-    if (maxKp > threshold + 1.0) return 90;
-    const frac = (maxKp - (threshold - 0.7)) / 1.7;
-    return Math.round(Math.pow(Math.max(0, frac), 0.7) * 90);
+  const maxKp = next24h.length === 0 ? 0 : Math.max(...next24h.map(p => p.kp));
+  const fc: HelioStormRiskForecast24h = {
+    G1: stormHitProbFromMaxKp(maxKp, 5),
+    G2: stormHitProbFromMaxKp(maxKp, 6),
+    G3: stormHitProbFromMaxKp(maxKp, 7),
+    G4: stormHitProbFromMaxKp(maxKp, 8),
+    G5: stormHitProbFromMaxKp(maxKp, 9),
+    max_expected: kpToMaxGLevel(maxKp),
   };
-  return { g1: prob(5), g2: prob(6), g3: prob(7) };
+  return {
+    now: { g_level, label: G_STORM_NOW_LABELS[g_level] ?? "Quiet" },
+    forecast_24h: fc,
+  };
+}
+
+function normalizeStormRisk(raw: unknown): HelioStormRisk | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const now = r["now"] as Record<string, unknown> | undefined;
+  const fc  = r["forecast_24h"] as Record<string, unknown> | undefined;
+  if (!now || !fc) return null;
+  const g_level = typeof now["g_level"] === "number" ? now["g_level"] : parseInt(String(now["g_level"]), 10);
+  const label   = typeof now["label"] === "string" ? now["label"] : "Quiet";
+  if (!Number.isFinite(g_level)) return null;
+  const clampG = (v: unknown): number => {
+    const n = typeof v === "number" ? v : parseFloat(String(v));
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(1, n));
+  };
+  const maxExp = fc["max_expected"];
+  const max_expected = typeof maxExp === "number" && Number.isFinite(maxExp)
+    ? Math.max(0, Math.min(5, Math.round(maxExp)))
+    : 0;
+  return {
+    now: { g_level: Math.max(0, Math.min(5, Math.round(g_level))), label },
+    forecast_24h: {
+      G1: clampG(fc["G1"]),
+      G2: clampG(fc["G2"]),
+      G3: clampG(fc["G3"]),
+      G4: clampG(fc["G4"]),
+      G5: clampG(fc["G5"]),
+      max_expected,
+    },
+  };
+}
+
+function resolveStormRisk(data: HelioNow): HelioStormRisk {
+  return normalizeStormRisk(data.storm_risk) ?? deriveStormRiskFallback(data);
+}
+
+function stormNowBadgeStyle(g_level: number): string {
+  if (g_level >= 4) return "#e05c5c";
+  if (g_level >= 3) return "#e0a84a";
+  if (g_level >= 1) return "#d4cc5c";
+  return "#607880";
 }
 
 const STORM_PHASE_COLORS = {
@@ -1959,42 +2046,76 @@ function renderStormProgress(sp: StormPhaseResult): string {
 }
 
 function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
-  const probs   = deriveStormProbs(data);
-  const sp      = deriveStormPhase(data);
-  const maxKp24 = (() => {
-    const forecast = data.metrics.kp_forecast_3h ?? [];
-    const now = Date.now(), cutoff = now + 24 * 60 * 60 * 1000;
-    const pts = forecast.filter(p => new Date(p.t_utc).getTime() <= cutoff);
-    return pts.length ? Math.max(...pts.map(p => p.kp)) : null;
-  })();
+  const sr     = resolveStormRisk(data);
+  const sp     = deriveStormPhase(data);
+  const fc     = sr.forecast_24h;
+  const severe = fc.G4 > 1e-6 || fc.G5 > 1e-6;
+  const useG5  = fc.G5 > 1e-6;
+  const sevLevel  = useG5 ? 5 : 4;
+  const sevProb   = useG5 ? fc.G5 : fc.G4;
+  const sevKey    = useG5 ? "G5" : "G4";
+  const sevName   = G_STORM_NOW_LABELS[sevLevel] ?? "Severe Storm";
 
-  const levels: Array<{ key: "g1"|"g2"|"g3"; label: string }> = [
-    { key: "g1", label: "G1" }, { key: "g2", label: "G2" }, { key: "g3", label: "G3" },
-  ];
+  const nowNumCol = stormNowBadgeStyle(sr.now.g_level);
+  const nowCol = `
+    <div class="hw-storm-risk-now">
+      <div class="hw-storm-risk-now-num" style="color:${nowNumCol}">G${sr.now.g_level}</div>
+      <div class="hw-storm-risk-now-lbl">${escText(sr.now.label)}</div>
+    </div>`;
 
-  const rows = levels.map(({ key, label }) => {
-    const pct   = probs[key];
-    const color = G_STORM_COLORS[key];
-    const dim   = pct === 0 ? " opacity:.35" : "";
+  const barRow = (gk: "G1" | "G2" | "G3" | "G4" | "G5", color: string, hideWhenZero: boolean): string => {
+    const p   = fc[gk];
+    const pct = Math.round(p * 100);
+    const w   = Math.round(p * 100);
+    if (hideWhenZero && p < 1e-6) {
+      return `<div class="hw-gstorm-slot" data-storm-prob="${gk}" aria-hidden="true"></div>`;
+    }
+    const dim = pct === 0 ? " opacity:.4" : "";
     return `<div class="hw-gstorm-row">
-      <span class="hw-gstorm-lbl" style="color:${color};${dim}">${label}</span>
+      <span class="hw-gstorm-lbl" style="color:${color};min-width:22px${dim}">${gk}</span>
       <div class="hw-gstorm-track">
-        <div class="hw-gstorm-fill" style="width:${pct}%;background:${color}"></div>
+        <div class="hw-gstorm-fill" style="width:${w}%;background:${color}"></div>
       </div>
       <span class="hw-gstorm-pct" style="color:${pct > 0 ? color : "#607880"}">${pct}%</span>
     </div>`;
-  }).join("");
+  };
 
-  const kpNote = maxKp24 != null
-    ? `Max Kp forecast 24h: <b style="color:#b4c6cc">${maxKp24.toFixed(1)}</b>`
-    : "";
+  let fcCol: string;
+  if (severe) {
+    const pct = Math.round(sevProb * 100);
+    fcCol = `
+      <div class="hw-storm-risk-fc">
+        <div class="hw-storm-risk-fc-cap">Forecast 24h</div>
+        <div class="hw-storm-severe" role="alert">
+          <div class="hw-storm-severe-title">Severe storm risk</div>
+          <div class="hw-storm-severe-g">${sevKey} expected · ${escText(sevName)}</div>
+          <div class="hw-storm-severe-p">Probability: <b style="color:#e8c4c4">${pct}%</b></div>
+        </div>
+      </div>`;
+  } else {
+    const rows = [
+      barRow("G1", G_STORM_COLORS.g1, false),
+      barRow("G2", G_STORM_COLORS.g2, false),
+      barRow("G3", G_STORM_COLORS.g3, false),
+      barRow("G4", G_STORM_COLORS.g4, true),
+      barRow("G5", G_STORM_COLORS.g5, true),
+    ].join("");
+    fcCol = `
+      <div class="hw-storm-risk-fc">
+        <div class="hw-storm-risk-fc-cap">Forecast 24h</div>
+        <div class="hw-gstorm-rows">${rows}</div>
+        <div class="hw-gstorm-footer" style="margin-top:6px">From Kp forecast · max implied G${fc.max_expected}</div>
+      </div>`;
+  }
 
   const openClass = isOpen ? " hw-impact-tip-open" : "";
   return `<div class="hw-impact-tip${openClass}">
     ${renderStormProgress(sp)}
-    <div class="hw-gstorm-header">Storm probability · next 24h</div>
-    <div class="hw-gstorm-rows">${rows}</div>
-    ${kpNote ? `<div class="hw-gstorm-footer">${kpNote} · derived from Kp forecast</div>` : ""}
+    <div class="hw-storm-risk-head">Now <span>|</span> Forecast 24h</div>
+    <div class="hw-storm-risk-cols">
+      ${nowCol}
+      ${fcCol}
+    </div>
   </div>`;
 }
 
@@ -2602,16 +2723,15 @@ function renderImpacts(
 
   const sepHtml = `<div class="hw-indicators-sep" role="separator" aria-hidden="true"></div>`;
 
-  // Geomagnetic Storm Probability — derived from Kp forecast
-  const gsOpen      = expandedImpacts.has("geomag_storm");
-  const gsProbs     = deriveStormProbs(data);
-  const gsBadgePct  = gsProbs.g1;
-  const gsBadgeCol  = gsProbs.g1 >= 30 ? G_STORM_COLORS.g1 : gsProbs.g1 > 0 ? "#7a9298" : "#607880";
-  const gsBadgeTxt  = gsBadgePct > 0 ? `G1 ${gsBadgePct}%` : "None";
-  const gsIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg>`;
-  const gsRowHtml   = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" id="storm_risk" data-impact-row="geomag_storm">
+  // Geomagnetic storm: NOW (observed G) + forecast probabilities (see `storm_risk` in JSON)
+  const gsOpen     = expandedImpacts.has("geomag_storm");
+  const gsRisk     = resolveStormRisk(data);
+  const gsBadgeCol = stormNowBadgeStyle(gsRisk.now.g_level);
+  const gsBadgeTxt = `G${gsRisk.now.g_level}`;
+  const gsIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg>`;
+  const gsRowHtml  = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" id="storm_risk" data-impact-row="geomag_storm">
       <span class="hw-impact-caret">▶</span>
-      <span class="hw-impact-kind" style="color:${gsBadgeCol}">${gsIcon}<span style="color:#b4c6cc">Storm Risk</span><span style="color:#607880;font-size:.85em;font-weight:normal"> — Next 24h</span></span>
+      <span class="hw-impact-kind" style="color:${gsBadgeCol}">${gsIcon}<span style="color:#b4c6cc">Storm Risk</span></span>
       <span class="hw-impact-badge" style="background:${gsBadgeCol}22;color:${gsBadgeCol}">${gsBadgeTxt}</span>
       ${renderGeomagStormTip(data, gsOpen)}
     </div>`;
