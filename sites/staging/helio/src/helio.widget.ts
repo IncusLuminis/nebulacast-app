@@ -299,15 +299,15 @@ const WIDGET_CSS = `
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
 /* Storm Risk: NOW | FORECAST 24h (grid: left stack + full-height forecast rail) */
-.hw-storm-risk-grid{display:grid;grid-template-columns:minmax(4.35rem,5.35rem) minmax(0,1fr);column-gap:8px;row-gap:5px;align-items:start;margin:6px 0 0}
+.hw-storm-risk-grid{display:grid;grid-template-columns:minmax(120px,168px) minmax(0,1fr);column-gap:8px;row-gap:5px;align-items:start;margin:6px 0 0}
 .hw-storm-risk-head-now{grid-column:1;grid-row:1;font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;padding:0 2px;text-align:center;justify-self:stretch}
 .hw-storm-risk-head-fc{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase}
 .hw-storm-risk-now{grid-column:1;grid-row:2;min-width:0;justify-self:stretch;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 2px}
-.hw-storm-risk-gauge{display:block;width:100%;max-width:160px;height:auto;margin:0 auto;flex-shrink:0}
+.hw-storm-risk-gauge{display:block;width:100%;max-width:168px;height:auto;margin:0 auto;flex-shrink:0}
 .hw-storm-risk-gauge svg{display:block;width:100%;height:auto}
+.hw-storm-risk-now-gauge{margin:0 auto;width:100%;max-width:168px}
 .hw-storm-risk-fc-gauge{margin:2px auto 4px;width:100%;max-width:168px}
-.hw-storm-risk-now-num{font-size:48px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.05em}
-.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:5px;line-height:1.22;word-wrap:break-word;max-width:100%}
+.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:6px;line-height:1.22;word-wrap:break-word;max-width:100%}
 .hw-storm-risk-rail{grid-column:2;grid-row:1 / span 2;border-left:1px solid #1e2c30;padding-left:10px;min-width:0;display:flex;flex-direction:column;gap:5px;align-self:stretch}
 .hw-storm-risk-fc{min-width:0}
 .hw-gstorm-slot{display:none}
@@ -2062,9 +2062,15 @@ function renderStormProgress(sp: StormPhaseResult): string {
   </div>`;
 }
 
-/** Semicircle G0–G5 dial: green G0–G1, yellow G2–G3, red G4–G5. Needle at discrete forecast level only (no interpolation). */
-function buildStormRiskGaugeSvg(gLevelRaw: number, ariaHint: string): string {
+interface StormRiskGaugeOpts {
+  /** When false, omit "Gn" under the arc (e.g. forecast shows G in footer only). Default true. */
+  showDialCode?: boolean;
+}
+
+/** Semicircle G0–G5 dial: green G0–G1, yellow G2–G3, red G4–G5. Needle at discrete G only (no interpolation). */
+function buildStormRiskGaugeSvg(gLevelRaw: number, ariaHint: string, opts?: StormRiskGaugeOpts): string {
   const g = Math.max(0, Math.min(5, Math.round(gLevelRaw)));
+  const showDialCode = opts?.showDialCode !== false;
   const cx = 70;
   const cy = 76;
   const R = 48;
@@ -2115,7 +2121,7 @@ function buildStormRiskGaugeSvg(gLevelRaw: number, ariaHint: string): string {
       ${ticks}
       ${needle}
       ${cap}
-      <text x="${cx}" y="84" text-anchor="middle" fill="#8a9ca8" font-size="11" font-family="inherit" font-weight="600">G${g}</text>
+      ${showDialCode ? `<text x="${cx}" y="84" text-anchor="middle" fill="#8a9ca8" font-size="11" font-family="inherit" font-weight="600">G${g}</text>` : ""}
     </svg>
   </div>`;
 }
@@ -2125,10 +2131,9 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
   const sp     = deriveStormPhase(data);
   const fc     = sr.forecast_24h;
 
-  const nowNumCol = stormNowBadgeStyle(sr.now.g_level);
   const nowCol = `
     <div class="hw-storm-risk-now">
-      <div class="hw-storm-risk-now-num" style="color:${nowNumCol}">G${sr.now.g_level}</div>
+      <div class="hw-storm-risk-now-gauge">${buildStormRiskGaugeSvg(sr.now.g_level, "Current observed geomagnetic storm level", { showDialCode: true })}</div>
       <div class="hw-storm-risk-now-lbl">${escText(sr.now.label)}</div>
     </div>`;
 
@@ -2136,7 +2141,7 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
   const forecastG = Math.max(0, Math.min(5, Math.round(fc.max_expected)));
 
   const fcInner = `
-        <div class="hw-storm-risk-fc-gauge">${buildStormRiskGaugeSvg(forecastG, "Max expected geomagnetic level in next 24 hours")}</div>
+        <div class="hw-storm-risk-fc-gauge">${buildStormRiskGaugeSvg(forecastG, "Max expected geomagnetic level in next 24 hours", { showDialCode: false })}</div>
         <div class="hw-gstorm-footer" style="margin-top:5px;line-height:1.35">Max expected level in next 24h</div>
         <div class="hw-gstorm-footer" style="margin-top:2px">From Kp forecast · G${forecastG}</div>`;
 
