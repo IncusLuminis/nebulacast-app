@@ -58,6 +58,20 @@ export interface HelioScales {
   s_scale: ScaleValue;
 }
 
+/** Optional UI mirror for the Space Weather hero (additive; never required). */
+export interface HelioHeroScales {
+  g?: string;
+  r?: string;
+  s?: string;
+  x?: string;
+}
+
+export interface HelioHeroBlock {
+  kp?:           number;
+  status_label?: string;
+  scales?:       HelioHeroScales;
+}
+
 export interface HelioForecast {
   kp_max_next_24h: number | null;
   kp_max_at_utc:   string | null;
@@ -139,6 +153,7 @@ export interface CmeTrackerEvent {
 export interface HelioNow {
   schema_version:   string;
   updated_utc:      string;
+  hero?:            HelioHeroBlock;
   source: {
     domain:   string;
     provider: string;

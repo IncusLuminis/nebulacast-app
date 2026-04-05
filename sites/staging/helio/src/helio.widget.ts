@@ -123,6 +123,44 @@ function scaleIsActive(scale: string): boolean {
   return parseInt(scale.slice(1), 10) > 0;
 }
 
+/** Scroll targets for hero G/R/S/X chips (fragment ids below the hero). */
+const HERO_SCALE_SCROLL_IDS = {
+  G: "geomagnetic",
+  R: "radio",
+  S: "radiation",
+  X: "solar",
+} as const;
+
+type HeroScaleChipKey = keyof typeof HERO_SCALE_SCROLL_IDS;
+
+function normalizeHeroXClass(x: string): string {
+  const t = x.trim();
+  if (t.toUpperCase().startsWith("X:")) return t.slice(2).trim() || "—";
+  return t || "—";
+}
+
+function heroXChipActive(letter: string): boolean {
+  return letter === "C" || letter === "M" || letter === "X";
+}
+
+function resolveHeroScaleLabels(data: HelioNow, scrubData: ScrubData | null): { g: string; r: string; s: string; x: string } {
+  const xFallback = data.metrics.xray_class != null ? String(data.metrics.xray_class) : "—";
+  const base = {
+    g: scrubData?.gScale ?? data.scales.g_scale,
+    r: data.scales.r_scale,
+    s: data.scales.s_scale,
+    x: normalizeHeroXClass(xFallback),
+  };
+  const h = data.hero?.scales;
+  if (!h) return base;
+  return {
+    g: h.g ?? base.g,
+    r: h.r ?? base.r,
+    s: h.s ?? base.s,
+    x: normalizeHeroXClass(h.x ?? base.x),
+  };
+}
+
 // ── CSS ──────────────────────────────────────────────────────────────────────
 
 const WIDGET_CSS = `
@@ -146,6 +184,10 @@ const WIDGET_CSS = `
 .hw-scales-row{display:flex;gap:6px;justify-content:flex-end}
 .hw-scale-chip{font-size:.72em;font-weight:600;padding:1px 6px;border-radius:2px;background:#222e32;color:#96a8b8;border:1px solid #2a3c42}
 .hw-scale-chip.hw-scale-active{color:#e0a84a;border-color:#5a4020}
+.hw-hero-scale-chip{font:inherit;font-family:inherit;line-height:inherit;margin:0;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;transition:background .12s,color .12s,border-color .12s,box-shadow .12s}
+.hw-hero-scale-chip:hover{background:#283438;color:#b4c6cc}
+.hw-hero-scale-chip:focus{outline:none}
+.hw-hero-scale-chip:focus-visible{outline:2px solid #5a8a98;outline-offset:1px}
 .hw-summary-text{font-size:.78em;color:#96a8b8;line-height:1.4}
 
 /* Hero toggle (bottom-left, 2 font steps up) */
@@ -1247,11 +1289,22 @@ function renderHero(
     ? scrubData.kp.toFixed(1)
     : (metrics.kp_latest != null ? metrics.kp_latest.toFixed(1) : "—");
 
-  const gScaleDisplay = scrubData ? scrubData.gScale : scales.g_scale;
-  const scaleChips = [gScaleDisplay, scales.r_scale, scales.s_scale].map(s => {
-    const active = scaleIsActive(s);
-    const style  = active ? `color:${tone.accent};border-color:${tone.accent}33` : "";
-    return `<span class="hw-scale-chip${active ? " hw-scale-active" : ""}" style="${style}">${escText(s)}</span>`;
+  const heroScales = resolveHeroScaleLabels(data, scrubData);
+  const heroScaleDefs: { key: HeroScaleChipKey; text: string; title: string; aria: string; active: boolean }[] = [
+    { key: "G", text: heroScales.g, title: "Geomagnetic storm level. Based on Kp index.",
+      aria: "Geomagnetic storm level", active: scaleIsActive(heroScales.g) },
+    { key: "R", text: heroScales.r, title: "Radio blackout level. Based on solar X-ray flux.",
+      aria: "Radio blackout level", active: scaleIsActive(heroScales.r) },
+    { key: "S", text: heroScales.s, title: "Solar radiation storm level. Based on energetic proton flux.",
+      aria: "Solar radiation storm level", active: scaleIsActive(heroScales.s) },
+    { key: "X", text: `X:${heroScales.x}`, title: "Current solar X-ray activity class.",
+      aria: "Solar X-ray activity", active: heroXChipActive(heroScales.x) },
+  ];
+  const scaleChips = heroScaleDefs.map(def => {
+    const scrollId = HERO_SCALE_SCROLL_IDS[def.key];
+    const style = def.active ? `color:${tone.accent};border-color:${tone.accent}33` : "";
+    return `<button type="button" class="hw-scale-chip hw-hero-scale-chip${def.active ? " hw-scale-active" : ""}"
+      style="${style}" data-hero-scroll="${esc(scrollId)}" title="${esc(def.title)}" aria-label="${esc(def.aria)}">${escText(def.text)}</button>`;
   }).join("");
 
   const auroraLabel = scrubData ? scrubData.auroraLabel : aurora_hint.aurora_label;
@@ -2357,7 +2410,7 @@ function renderImpacts(
         return `<button class="hw-sl-btn" data-solar-layer="${l.id}" style="color:${l.color};border-color:${l.color};background:${bg};opacity:${op}">${l.label}</button>`;
       }).join("");
       tipHtml = `<div class="hw-solar-tip${solarOpen}">
-          <div class="hw-solar-disk-wrap">
+          <div class="hw-solar-disk-wrap" id="solar">
             <img class="hw-solar-disk-img" src="${SOLAR_DISK_URL}" alt="Solar disk" loading="lazy" />
             ${solarRegions ? renderSolarOverlay(solarRegions, SOLAR_DISK_PX, solarLayers) : ""}
           </div>
@@ -2395,7 +2448,8 @@ function renderImpacts(
       tipHtml = `<div class="hw-impact-tip${tipOpen}">${escText(row.summary)}</div>`;
     }
     const rowAttr = row.kind === "solar_activity" ? " data-solar-toggle" : ` data-impact-row="${esc(row.kind)}"`;
-    return `<div class="hw-impact-row${openClass}"${rowAttr}>
+    const rowId   = row.kind === "radio" ? ' id="radio"' : row.kind === "solar_activity" ? ' id="radiation"' : "";
+    return `<div class="hw-impact-row${openClass}"${rowId}${rowAttr}>
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${iconColor}">${icon}<span style="color:#b4c6cc">${escText(row.label)}</span></span>
       <span class="hw-impact-badge" style="background:${color}22;color:${color}">${escText(levelLabel)}</span>
@@ -2420,7 +2474,7 @@ function renderImpacts(
   const gsBadgeCol  = gsProbs.g1 >= 30 ? G_STORM_COLORS.g1 : gsProbs.g1 > 0 ? "#7a9298" : "#607880";
   const gsBadgeTxt  = gsBadgePct > 0 ? `G1 ${gsBadgePct}%` : "None";
   const gsIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg>`;
-  const gsRowHtml   = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" data-impact-row="geomag_storm">
+  const gsRowHtml   = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" id="geomagnetic" data-impact-row="geomag_storm">
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${gsBadgeCol}">${gsIcon}<span style="color:#b4c6cc">Storm Risk</span><span style="color:#607880;font-size:.85em;font-weight:normal"> — Next 24h</span></span>
       <span class="hw-impact-badge" style="background:${gsBadgeCol}22;color:${gsBadgeCol}">${gsBadgeTxt}</span>
@@ -2957,6 +3011,25 @@ class HelioWidgetInstance {
 
   private onClick(e: Event): void {
     const target = e.target as Element;
+
+    const heroScrollEl = target.closest("[data-hero-scroll]") as HTMLElement | null;
+    if (heroScrollEl) {
+      const id = heroScrollEl.dataset.heroScroll;
+      if (id) {
+        const scrollToTarget = () => {
+          document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+        if (!this.impactsOpen) {
+          this.impactsOpen = true;
+          this.saveUiState();
+          this.render();
+          requestAnimationFrame(() => requestAnimationFrame(scrollToTarget));
+        } else {
+          scrollToTarget();
+        }
+      }
+      return;
+    }
 
     // Solar channel switcher
     if (target.closest("[data-solar-prev]")) {
