@@ -298,14 +298,15 @@ const WIDGET_CSS = `
 .hw-gstorm-fill{height:100%;border-radius:3px;transition:width .3s}
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
-/* Storm Risk: NOW | FORECAST 24h */
-.hw-storm-risk-head{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;margin:6px 0 5px}
-.hw-storm-risk-head span{color:#3a4c52;padding:0 5px;font-weight:400;letter-spacing:0}
-.hw-storm-risk-cols{display:grid;grid-template-columns:minmax(5rem,6.2rem) minmax(0,1fr);gap:6px 10px;align-items:start}
-.hw-storm-risk-now{padding:0 4px 0 0;min-width:0}
+/* Storm Risk: NOW | FORECAST 24h (grid: left stack + full-height forecast rail) */
+.hw-storm-risk-grid{display:grid;grid-template-columns:minmax(4.35rem,5.35rem) minmax(0,1fr);column-gap:8px;row-gap:5px;align-items:start;margin:6px 0 0}
+.hw-storm-risk-head-now{grid-column:1;grid-row:1;font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;padding:0 2px 0 0}
+.hw-storm-risk-head-fc{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase}
+.hw-storm-risk-now{grid-column:1;grid-row:2;padding:0 4px 0 0;min-width:0}
 .hw-storm-risk-now-num{font-size:48px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.05em}
 .hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:5px;line-height:1.22;word-wrap:break-word}
-.hw-storm-risk-fc{border-left:1px solid #1e2c30;padding-left:10px;margin-left:0;min-width:0}
+.hw-storm-risk-rail{grid-column:2;grid-row:1 / span 2;border-left:1px solid #1e2c30;padding-left:10px;min-width:0;display:flex;flex-direction:column;gap:5px;align-self:stretch}
+.hw-storm-risk-fc{min-width:0}
 .hw-storm-severe{border:1px solid #e05c5c66;background:linear-gradient(165deg,#e05c5c14,#1a1216);border-radius:4px;padding:9px 10px}
 .hw-storm-severe-title{font-size:.65em;font-weight:700;color:#e07a7a;letter-spacing:.08em;text-transform:uppercase}
 .hw-storm-severe-g{font-size:.85em;color:#e8c8c8;margin-top:6px;font-weight:600}
@@ -2079,17 +2080,15 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
     </div>`;
   };
 
-  let fcCol: string;
+  let fcInner: string;
   if (severe) {
     const pct = Math.round(sevProb * 100);
-    fcCol = `
-      <div class="hw-storm-risk-fc">
+    fcInner = `
         <div class="hw-storm-severe" role="alert">
           <div class="hw-storm-severe-title">Severe storm risk</div>
           <div class="hw-storm-severe-g">${sevKey} expected · ${escText(sevName)}</div>
           <div class="hw-storm-severe-p">Probability: <b style="color:#e8c4c4">${pct}%</b></div>
-        </div>
-      </div>`;
+        </div>`;
   } else {
     const rows = [
       barRow("G1", G_STORM_COLORS.g1, false),
@@ -2098,20 +2097,21 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
       barRow("G4", G_STORM_COLORS.g4, true),
       barRow("G5", G_STORM_COLORS.g5, true),
     ].join("");
-    fcCol = `
-      <div class="hw-storm-risk-fc">
+    fcInner = `
         <div class="hw-gstorm-rows">${rows}</div>
-        <div class="hw-gstorm-footer" style="margin-top:6px">From Kp forecast · max implied G${fc.max_expected}</div>
-      </div>`;
+        <div class="hw-gstorm-footer" style="margin-top:6px">From Kp forecast · max implied G${fc.max_expected}</div>`;
   }
 
   const openClass = isOpen ? " hw-impact-tip-open" : "";
   return `<div class="hw-impact-tip${openClass}">
     ${renderStormProgress(sp)}
-    <div class="hw-storm-risk-head">Now <span>|</span> Forecast 24h</div>
-    <div class="hw-storm-risk-cols">
+    <div class="hw-storm-risk-grid">
+      <div class="hw-storm-risk-head-now">Now</div>
       ${nowCol}
-      ${fcCol}
+      <div class="hw-storm-risk-rail">
+        <div class="hw-storm-risk-head-fc">Forecast 24h</div>
+        <div class="hw-storm-risk-fc">${fcInner}</div>
+      </div>
     </div>
   </div>`;
 }
