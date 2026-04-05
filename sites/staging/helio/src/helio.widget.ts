@@ -299,10 +299,12 @@ const WIDGET_CSS = `
 .hw-gstorm-pct{font-size:.78em;min-width:28px;text-align:right;flex-shrink:0}
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
 /* Storm Risk: NOW | FORECAST 24h (grid: left stack + full-height forecast rail) */
-.hw-storm-risk-grid{display:grid;grid-template-columns:minmax(4.35rem,5.35rem) minmax(0,1fr);column-gap:8px;row-gap:5px;align-items:start;margin:6px 0 0}
+.hw-storm-risk-grid{display:grid;grid-template-columns:minmax(118px,152px) minmax(0,1fr);column-gap:8px;row-gap:5px;align-items:start;margin:6px 0 0}
 .hw-storm-risk-head-now{grid-column:1;grid-row:1;font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;padding:0 2px;text-align:center;justify-self:stretch}
 .hw-storm-risk-head-fc{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase}
 .hw-storm-risk-now{grid-column:1;grid-row:2;min-width:0;justify-self:stretch;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 2px}
+.hw-storm-risk-gauge{display:block;width:100%;max-width:148px;height:auto;margin:0 auto 4px;flex-shrink:0}
+.hw-storm-risk-gauge svg{display:block;width:100%;height:auto}
 .hw-storm-risk-now-num{font-size:48px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.05em}
 .hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:5px;line-height:1.22;word-wrap:break-word;max-width:100%}
 .hw-storm-risk-rail{grid-column:2;grid-row:1 / span 2;border-left:1px solid #1e2c30;padding-left:10px;min-width:0;display:flex;flex-direction:column;gap:5px;align-self:stretch}
@@ -2045,6 +2047,61 @@ function renderStormProgress(sp: StormPhaseResult): string {
   </div>`;
 }
 
+/** Semicircle G0–G5 dial: green G0–G1, yellow G2–G3, red G4–G5. Needle at discrete level. */
+function buildStormRiskNowGaugeSvg(gLevelRaw: number): string {
+  const g = Math.max(0, Math.min(5, Math.round(gLevelRaw)));
+  const cx = 70;
+  const cy = 76;
+  const R = 48;
+  const band = 9;
+  const Rin = R - band;
+  const π = Math.PI;
+  const θ = (k: number) => π * (1 - k / 5);
+
+  const xy = (rad: number, radLen: number) => ({
+    x: cx + radLen * Math.cos(rad),
+    y: cy - radLen * Math.sin(rad),
+  });
+
+  const arcBand = (t0: number, t1: number, color: string): string => {
+    const o0 = xy(t0, R);
+    const o1 = xy(t1, R);
+    const i0 = xy(t0, Rin);
+    const i1 = xy(t1, Rin);
+    return `<path d="M ${i0.x.toFixed(2)} ${i0.y.toFixed(2)} L ${o0.x.toFixed(2)} ${o0.y.toFixed(2)} A ${R} ${R} 0 0 1 ${o1.x.toFixed(2)} ${o1.y.toFixed(2)} L ${i1.x.toFixed(2)} ${i1.y.toFixed(2)} A ${Rin} ${Rin} 0 0 0 ${i0.x.toFixed(2)} ${i0.y.toFixed(2)} Z" fill="${color}"/>`;
+  };
+
+  const tick = (k: number) => {
+    const t = θ(k);
+    const a = xy(t, R + 1);
+    const b = xy(t, R - 5);
+    return `<line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}" stroke="#2a3a40" stroke-width="1" stroke-linecap="round"/>`;
+  };
+
+  const tn = xy(θ(g), R - 2);
+  const needle = `<line x1="${cx}" y1="${cy}" x2="${tn.x.toFixed(2)}" y2="${tn.y.toFixed(2)}" stroke="#c8d6dc" stroke-width="2" stroke-linecap="round"/>`;
+  const cap = `<circle cx="${cx}" cy="${cy}" r="3.5" fill="#3a4c52" stroke="#1e2c30" stroke-width="1"/>`;
+
+  const zones =
+    arcBand(θ(0), θ(2), "#3d8f62") +
+    arcBand(θ(2), θ(4), "#b8982a") +
+    arcBand(θ(4), θ(5), "#b04048");
+
+  const ticks = [0, 1, 2, 3, 4, 5].map(tick).join("");
+
+  return `<div class="hw-storm-risk-gauge" role="img" aria-label="Storm level G${g}">
+    <svg viewBox="0 0 140 88" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect width="140" height="88" fill="none"/>
+      <path d="M ${xy(π, R).x.toFixed(2)} ${xy(π, R).y.toFixed(2)} A ${R} ${R} 0 0 1 ${xy(0, R).x.toFixed(2)} ${xy(0, R).y.toFixed(2)}" fill="none" stroke="#1a2428" stroke-width="2" stroke-linecap="round"/>
+      ${zones}
+      ${ticks}
+      ${needle}
+      ${cap}
+      <text x="${cx}" y="84" text-anchor="middle" fill="#8a9ca8" font-size="11" font-family="inherit" font-weight="600">G${g}</text>
+    </svg>
+  </div>`;
+}
+
 function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
   const sr     = resolveStormRisk(data);
   const sp     = deriveStormPhase(data);
@@ -2059,6 +2116,7 @@ function renderGeomagStormTip(data: HelioNow, isOpen: boolean): string {
   const nowNumCol = stormNowBadgeStyle(sr.now.g_level);
   const nowCol = `
     <div class="hw-storm-risk-now">
+      ${buildStormRiskNowGaugeSvg(sr.now.g_level)}
       <div class="hw-storm-risk-now-num" style="color:${nowNumCol}">G${sr.now.g_level}</div>
       <div class="hw-storm-risk-now-lbl">${escText(sr.now.label)}</div>
     </div>`;
