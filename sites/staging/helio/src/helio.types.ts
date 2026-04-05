@@ -1,7 +1,7 @@
 /**
  * TypeScript types for the helio_now.json data contract.
  * Baseline: docs/Helio/Helio Data Contract v1.md
- * Additive (hero, etc.): docs/Helio/Helio Data Contract v1.3.md
+ * Additive (hero, storm_risk, etc.): docs/Helio/Helio Data Contract v1.4.md
  */
 
 export type HelioStatus = "quiet" | "active" | "elevated" | "storm";
@@ -77,6 +77,26 @@ export interface HelioForecast {
   kp_max_next_24h: number | null;
   kp_max_at_utc:   string | null;
   trend:           "falling" | "steady" | "rising" | "unknown";
+}
+
+/** Additive: derived geomagnetic storm risk for Storm Risk panel (optional on older JSON). */
+export interface HelioStormRiskNow {
+  g_level: number; // 0–5
+  label:   string;
+}
+
+export interface HelioStormRiskForecast24h {
+  G1:           number;
+  G2:           number;
+  G3:           number;
+  G4:           number;
+  G5:           number;
+  max_expected: number; // 0–5, highest G implied by max Kp in window
+}
+
+export interface HelioStormRisk {
+  now:          HelioStormRiskNow;
+  forecast_24h: HelioStormRiskForecast24h;
 }
 
 export interface HelioAuroraHint {
@@ -164,6 +184,7 @@ export interface HelioNow {
   summary:          HelioSummary;
   scales:           HelioScales;
   forecast:         HelioForecast;
+  storm_risk?:      HelioStormRisk;
   aurora_hint:      HelioAuroraHint;
   observer_impacts: ObserverImpact[];
   coronal_hole:     CoronalHoleState | null;

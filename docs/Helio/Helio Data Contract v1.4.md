@@ -1,18 +1,19 @@
-# Helio Data Contract v1.3
+# Helio Data Contract v1.4
 
-**Document revision:** 1.3  
+**Document revision:** 1.4  
 **Extends:** [Helio Data Contract v1](./Helio%20Data%20Contract%20v1.md)
 
-This revision is **additive only**. All required fields, nullability, and semantics from v1 remain unchanged. Clients that ignore v1.3 fields continue to work.
+This revision is **additive only**. All required fields, nullability, and semantics from v1 remain unchanged. Clients that ignore v1.4 fields continue to work.
 
-The serialized dataset still carries `"schema_version": "helio_now/v1"` in `helio_now.json` unless the project explicitly bumps that string in a future release. **Contract v1.3** refers to this documentation revision, not necessarily a new `schema_version` value.
+The serialized dataset still carries `"schema_version": "helio_now/v1"` in `helio_now.json` unless the project explicitly bumps that string in a future release. **Contract v1.4** refers to this documentation revision, not necessarily a new `schema_version` value.
 
 ---
 
-## 1. Purpose of v1.3
+## 1. Purpose of v1.4
 
 - Document the optional **`hero`** object on `helio_now.json`, aligned with the Space Weather hero UI (G / R / S / X chips).
 - Document **in-widget scroll targets** (HTML `id` anchors) used when chips jump to the Observer Impacts panel.
+- Document the optional **`storm_risk`** object for the Storm Risk impact row (observed G + 24h max-expected G; dual semicircle gauges in the widget).
 
 ---
 
@@ -88,7 +89,43 @@ Anchors exist only when Observer Impacts content is rendered; the widget expands
 
 ---
 
-## 4. Local verification (port 8080)
+## 4. Optional top-level field: `storm_risk`
+
+`storm_risk` is **optional**. If omitted, the Helio widget **derives** an equivalent shape client-side from `scales.g_scale`, `metrics.kp_forecast_3h`, and the same Kp→G rules used server-side.
+
+### 4.1 Shape
+
+- **`now`:** observed geomagnetic storm level (integer **0–5**) and display **`label`** (e.g. Quiet … Extreme Storm).
+- **`forecast_24h`:** includes **`max_expected`** (integer **0–5**), the **maximum G level implied** by the peak **Kp** in the **next 24 hours** (same window rules as `_derive_storm_risk` in `helio_state.py`).  
+- **`G1` … `G5`** may still be present as floats in **[0, 1]** for backward compatibility; the current Storm Risk **UI does not render probabilities**—only **`now`** and **`max_expected`** drive the categorical gauges.
+
+### 4.2 Kp → `max_expected` (integer G)
+
+Threshold mapping (fractional Kp uses these cutoffs): **Kp &lt; 5 → G0**, **5 → G1**, **6 → G2**, **7 → G3**, **8 → G4**, **9 → G5**.
+
+### 4.3 Example
+
+```json
+{
+  "storm_risk": {
+    "now": { "g_level": 0, "label": "Quiet" },
+    "forecast_24h": {
+      "G1": 0.0,
+      "G2": 0.0,
+      "G3": 0.0,
+      "G4": 0.0,
+      "G5": 0.0,
+      "max_expected": 0
+    }
+  }
+}
+```
+
+**Reference implementation:** `services/helio/aggregators/helio_state.py` (`_derive_storm_risk`, `_kp_to_max_g_level`), `services/helio/pipelines/gen_helio.py`, widget `sites/staging/helio/src/helio.widget.ts` (`resolveStormRisk`, `renderGeomagStormTip`).
+
+---
+
+## 5. Local verification (port 8080)
 
 The repo’s standard local server serves **`sites/staging/`** on **port 8080**.
 
@@ -99,9 +136,10 @@ Use any free port only for ad-hoc testing; **8080** is the conventional document
 
 ---
 
-## 5. Changelog (v1 → v1.3)
+## 6. Changelog (v1 → v1.4)
 
 | Revision | Change |
 |----------|--------|
+| **v1.4** | Optional **`storm_risk`** block; Storm Risk UI: dual semicircle gauges (**now** vs **`max_expected`** only); Kp→G thresholds for **`max_expected`**. |
 | **v1.3** | Optional **`hero`** block; documented widget scroll **`id`** map; local check on **:8080**. |
 | **v1** | Baseline consolidated contract (see v1 doc). |
