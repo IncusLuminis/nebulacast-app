@@ -71,7 +71,7 @@
 .hw-storm-risk-gauge svg{display:block;width:100%;height:auto}
 .hw-storm-risk-now-gauge{margin:0 auto;width:100%;max-width:168px}
 .hw-storm-risk-fc-gauge{margin:2px auto 4px;width:100%;max-width:168px}
-.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:6px;line-height:1.22;word-wrap:break-word;max-width:100%}
+.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:3px;line-height:1.2;word-wrap:break-word;max-width:100%}
 .hw-storm-risk-rail{grid-column:2;grid-row:1 / span 2;border-left:1px solid #1e2c30;padding-left:10px;min-width:0;display:flex;flex-direction:column;gap:5px;align-self:stretch}
 .hw-storm-risk-fc{min-width:0}
 .hw-gstorm-slot{display:none}
@@ -605,8 +605,8 @@ C: ${a.c_flare_probability}%  M: ${a.m_flare_probability}%  X: ${a.x_flare_proba
       <div class="hw-storm-risk-now-lbl">${g(t.now.label)}</div>
     </div>`,r=Math.max(0,Math.min(5,Math.round(n.max_expected))),i=`
         <div class="hw-storm-risk-fc-gauge">${Ue(r,"Max expected geomagnetic level in next 24 hours",{showDialCode:!1})}</div>
-        <div class="hw-gstorm-footer" style="margin-top:5px;line-height:1.35">Max expected level in next 24h</div>
-        <div class="hw-gstorm-footer" style="margin-top:2px">From Kp forecast \xB7 G${r}</div>`;return`<div class="hw-impact-tip${s?" hw-impact-tip-open":""}">
+        <div class="hw-gstorm-footer" style="margin-top:5px;line-height:1.35">Max expected in next 24h</div>
+        <div class="hw-gstorm-footer" style="margin-top:2px">From Kp forecast: G${r}</div>`;return`<div class="hw-impact-tip${s?" hw-impact-tip-open":""}">
     ${bs(o)}
     <div class="hw-storm-risk-grid">
       <div class="hw-storm-risk-head-now">Now</div>
