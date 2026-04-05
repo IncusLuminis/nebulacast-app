@@ -119,9 +119,9 @@ function esc(s: string): string {
 function escText(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-/** Hero chip → Observer Impact section ids (scroll to first, flash all). */
+/** Hero chip → Indicators panel section ids (scroll to first, flash all). */
 const HERO_SCALE_LINKS = {
-  G: ["aurora", "storm_risk"],
+  G: ["storm_risk"],
   R: ["radio"],
   S: ["satellite_drag", "gnss"],
   X: ["solar"],
@@ -251,7 +251,7 @@ const WIDGET_CSS = `
 .hw-hero{padding:12px 14px 10px;border-bottom:1px solid #1e2c30}
 .hw-aurora-banner{display:flex;align-items:center;justify-content:space-between;margin:10px -14px -10px;padding:7px 14px;background:#0f2d1c;border-top:1px solid #1e4a2e}
 .hw-aurora-banner-text{font-size:.75em;font-weight:600;color:#5cce8c;letter-spacing:.02em}
-.hw-aurora-map-btn{font-size:.7em;color:#5cce8c;background:none;border:1px solid #2a5a3a;border-radius:3px;padding:2px 9px;cursor:pointer;transition:background .15s;white-space:nowrap}
+.hw-aurora-map-btn{font-size:.7em;color:#5cce8c;background:none;border:1px solid #2a5a3a;border-radius:3px;padding:2px 9px;cursor:pointer;transition:background .15s;white-space:nowrap;text-decoration:none;display:inline-block}
 .hw-aurora-map-btn:hover{background:#1a4a2a}
 .hw-hero-main{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
 .hw-kp-col{display:flex;flex-direction:column;gap:6px;min-width:72px;border:1px solid #2a3c42;border-radius:6px;padding:8px 10px}
@@ -396,8 +396,9 @@ const WIDGET_CSS = `
 .hw-sim-badge{font-size:.72em;font-weight:600;color:#9acf60}
 .hw-sim-kp{font-size:.72em;color:#7a9870}
 
-/* Impacts */
+/* Impacts / unified Indicators panel */
 .hw-impacts{padding:10px 14px;border-bottom:1px solid #1e2c30}
+.hw-indicators-sep{height:1px;margin:10px 0 12px;background:linear-gradient(90deg,transparent,rgba(42,60,66,.95),transparent);border:none;flex-shrink:0}
 .hw-impact-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;cursor:default;border-radius:3px;padding:3px 4px;margin-left:-4px;margin-right:-4px;transition:background .12s}
 .hw-impact-row:last-child{margin-bottom:0}
 .hw-impact-row{cursor:pointer}
@@ -1333,7 +1334,7 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 
 // ── Hero section ─────────────────────────────────────────────────────────────
 
-function renderSolarMini(activePopover: string | null, channelIdx: number, baseUrl?: string): string {
+function renderSolarMini(channelIdx: number, baseUrl?: string): string {
   const ch  = SOLAR_CHANNELS[channelIdx];
   const hmi = SUN_HMI_URL;
   const src = resolveAssetUrl(ch.url, baseUrl);
@@ -1356,11 +1357,11 @@ function renderSolarMini(activePopover: string | null, channelIdx: number, baseU
 }
 
 function renderHero(
-  data: HelioNow, heroExpanded: boolean, indicatorsOpen: boolean, activePopover: string | null,
-  scrubData: ScrubData | null, opts: HelioWidgetOptions, ovationData: OvationData | null,
+  data: HelioNow, heroExpanded: boolean,
+  scrubData: ScrubData | null, opts: HelioWidgetOptions, _ovationData: OvationData | null,
   solarChannelIdx: number = 0,
 ): string {
-  const { summary, scales, metrics, aurora_hint } = data;
+  const { summary, metrics } = data;
   const tone = STATUS_TONE[summary.status] ?? STATUS_TONE.quiet;
 
   // When scrubbing, display forecasted Kp + G-scale; otherwise live values
@@ -1390,53 +1391,19 @@ function renderHero(
       style="${style}" data-hero-chip="${def.key}" title="${esc(def.title)}" aria-label="${esc(def.aria)}">${escText(def.text)}</button>`;
   }).join("");
 
-  const auroraLabel = scrubData ? scrubData.auroraLabel : aurora_hint.aurora_label;
-  const auroraColor = auroraLabel === "good" ? "#5cce8c" : auroraLabel === "possible" ? "#d4cc5c" : "#607880";
-  const auroraDisp  = auroraLabel.charAt(0).toUpperCase() + auroraLabel.slice(1);
+  const kpTrend   = trendArrow((metrics.kp_history_1h ?? []).map(p => p.kp), 0.5);
 
-  const windColor = "#b4c6cc";
-  const windDisp  = metrics.solar_wind_kms != null ? `${Math.round(metrics.solar_wind_kms)} km/s` : "—";
-
-  const bz     = metrics.imf_bz_nt;
-  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
-  const bzDisp  = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
-
-  const xray      = metrics.xray_class;
-  const xrayColor = xray ? (XRAY_COLOR[xray] ?? "#a0b4b8") : "#607880";
-  const xrayDisp  = xray ? `${xray}-class` : "—";
-
-  // Trend arrows — compare current vs ~3h ago in each history array
-  const kpTrend   = trendArrow((metrics.kp_history_1h   ?? []).map(p => p.kp),                    0.5);
-  const windTrend = trendArrow((metrics.wind_history_1h  ?? []).map(p => p.kms),                   20);
-  const bzTrend   = trendArrow((metrics.bz_history_1h    ?? []).map(p => p.bz),                    1.5);
-  // X-ray: use log10(flux) so small changes at low flux don't dominate
-  const xrayTrend = trendArrow((metrics.xray_history_1h  ?? []).map(p => Math.log10(p.flux + 1e-9)), 0.15);
-
-  const historyPts   = metrics.kp_history_1h ?? [];
-  const lastStepTime = historyPts.length ? fmtKpTime(historyPts[historyPts.length - 1].t_utc) : null;
-  const historyLabel = lastStepTime ? `Recent history · Last step ${lastStepTime}` : "Recent history";
-  const magnetInfo   = deriveMagnetInfo(data);
-
-  // Aurora highlight — live Kp only (scrub shows forecast, not an "alert")
   const liveKp        = metrics.kp_latest ?? 0;
   const isAuroraAlert = liveKp >= 5;
   const heroBg        = isAuroraAlert
     ? `linear-gradient(160deg, #0d2a1a 0%, ${tone.bg}22 75%)`
     : `${tone.bg}18`;
 
-  const kpiItem = (key: string, label: string, value: string, color: string, trend?: string) => {
-    const trendHtml = trend ? `<span class="hw-trend">${trend}</span>` : "";
-    const isActive = activePopover === key;
-    return `<div class="hw-kpi-item${isActive ? " hw-kpi-active" : ""}" data-kpi="${key}">
-      <span class="hw-qd-label">${label}</span>
-      <span class="hw-qd-value" style="color:${color}">${value}${trendHtml}</span>
-    </div>`;
-  };
-
+  const ovationJpg = "https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg";
   const auroraBanner = isAuroraAlert ? `
     <div class="hw-aurora-banner">
       <span class="hw-aurora-banner-text">✦ Aurora alert · Kp ${liveKp.toFixed(1)}</span>
-      <button class="hw-aurora-map-btn" data-kpi="aurora">View aurora map →</button>
+      <a class="hw-aurora-map-btn" href="${esc(ovationJpg)}" target="_blank" rel="noopener noreferrer">View aurora map →</a>
     </div>` : "";
 
   return `
@@ -1451,22 +1418,10 @@ function renderHero(
         <div class="hw-info-col">
           <div class="hw-info-top-row">
             <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
-            ${renderSolarMini(activePopover, solarChannelIdx, opts.baseUrl)}
+            ${renderSolarMini(solarChannelIdx, opts.baseUrl)}
           </div>
         </div>
       </div>
-      <div class="hw-section-row" data-indicators-toggle style="margin-top:8px;margin-bottom:${indicatorsOpen ? "0" : "4px"}">
-        <span class="hw-section-caret">${indicatorsOpen ? "▼" : "▶"}</span>
-        <span class="hw-section-label" style="margin-bottom:0">INDICATORS</span>
-      </div>
-      ${indicatorsOpen ? `
-      <div class="hw-quick-details">
-        ${kpiItem("aurora",     "Aurora",     escText(auroraDisp), auroraColor)}
-        ${kpiItem("solar_wind", "Solar wind", escText(windDisp),   windColor, windTrend)}
-        ${kpiItem("imf_bz",     "IMF Bz",     escText(bzDisp),     bzColor,   bzTrend)}
-        ${kpiItem("xray",       "X-ray",      escText(xrayDisp),   xrayColor, xrayTrend)}
-      </div>
-      ${activePopover ? renderKpiPopover(data, activePopover, opts, ovationData) : ""}` : ""}
       ${auroraBanner}
     </div>`;
 }
@@ -1812,6 +1767,13 @@ const IMPACT_ICONS: Record<string, string> = {
   solar_activity: `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.25" style="flex-shrink:0"><circle cx="6" cy="6" r="2" fill="currentColor" stroke="none"/><path d="M6 1v1.5M6 9.5V11M1 6h1.5M9.5 6H11M2.6 2.6l1.1 1.1M8.3 8.3l1.1 1.1M9.4 2.6l-1.1 1.1M3.7 8.3l-1.1 1.1"/></svg>`,
 };
 const IMPACT_ICON_FALLBACK = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" style="flex-shrink:0"><circle cx="6" cy="6" r="2.5" fill="currentColor" opacity=".7"/></svg>`;
+
+/** Icons for expandable KPI rows inside unified Indicators panel */
+const INDICATOR_KPI_ICON_XRAY  = IMPACT_ICONS.solar_activity;
+const INDICATOR_KPI_ICON_BZ    = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><path d="M2 6 Q2 2.5 6 2.5 Q10 2.5 10 6 Q10 9.5 6 9.5 Q2 9.5 2 6"/><ellipse cx="6" cy="6" rx="2.2" ry="1.9"/><circle cx="6" cy="6" r="0.65" fill="currentColor" stroke="none"/></svg>`;
+const INDICATOR_KPI_ICON_WIND  = `<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.2" style="flex-shrink:0"><circle cx="3.2" cy="6" r="2.2"/><line x1="5.8" y1="6" x2="11" y2="6"/><polyline points="9.2,4.3 11,6 9.2,7.7" fill="currentColor" stroke="none"/></svg>`;
+
+const INDICATORS_PANEL_ROW_COUNT = 13;
 
 const ASSET_BASE_DEFAULT = "https://staging.nebulacast.app";
 
@@ -2464,6 +2426,73 @@ function renderCMEConeTip(data: HelioNow, isOpen: boolean): string {
   </div>`;
 }
 
+function renderIndicatorKpiRow(
+  kpiKey: "xray" | "imf_bz" | "solar_wind",
+  label: string,
+  iconHtml: string,
+  badgeText: string,
+  badgeColor: string,
+  expandedImpacts: Set<string>,
+  data: HelioNow,
+  opts: HelioWidgetOptions,
+  ovationData: OvationData | null,
+): string {
+  const isOpen     = expandedImpacts.has(kpiKey);
+  const openClass  = isOpen ? " hw-impact-open" : "";
+  const tipClass   = isOpen ? " hw-impact-tip-open" : "";
+  return `<div class="hw-impact-row${openClass}" data-impact-row="${kpiKey}">
+      <span class="hw-impact-caret">▶</span>
+      <span class="hw-impact-kind" style="color:${badgeColor}">${iconHtml}<span style="color:#b4c6cc">${escText(label)}</span></span>
+      <span class="hw-impact-badge" style="background:${badgeColor}22;color:${badgeColor}">${escText(badgeText)}</span>
+      <div class="hw-impact-tip${tipClass}">${renderKpiPopover(data, kpiKey, opts, ovationData)}</div>
+    </div>`;
+}
+
+/** Radio or Solar activity row only (no Aurora in unified Indicators panel). */
+function renderUnifiedObserverDynamicRow(
+  row: ObserverImpact,
+  solarRegions: SolarRegion[] | null,
+  solarExpanded: boolean,
+  solarLayers: Set<string>,
+  data: HelioNow,
+  isOpenRadio: boolean,
+): string {
+  const color      = IMPACT_COLOR[row.level] ?? "#666";
+  const levelLabel = row.level === "none" ? "None" : row.level.charAt(0).toUpperCase() + row.level.slice(1);
+  const icon       = IMPACT_ICONS[row.kind] ?? IMPACT_ICON_FALLBACK;
+  const iconColor  = row.level === "none" ? "#606870" : color;
+  const isOpen     = row.kind === "solar_activity" ? solarExpanded : isOpenRadio;
+  const openClass  = isOpen ? " hw-impact-open" : "";
+  let tipHtml: string;
+  if (row.kind === "solar_activity") {
+    const solarOpen  = solarExpanded ? " hw-solar-open" : "";
+    const layerBtns  = SOLAR_LAYER_DEFS.map(l => {
+      const on = solarLayers.has(l.id);
+      const bg = on ? l.color + "22" : "transparent";
+      const op = on ? "1" : "0.32";
+      return `<button class="hw-sl-btn" data-solar-layer="${l.id}" style="color:${l.color};border-color:${l.color};background:${bg};opacity:${op}">${l.label}</button>`;
+    }).join("");
+    tipHtml = `<div class="hw-solar-tip${solarOpen}">
+        <div class="hw-solar-disk-wrap" id="solar">
+          <img class="hw-solar-disk-img" src="${SOLAR_DISK_URL}" alt="Solar disk" loading="lazy" />
+          ${solarRegions ? renderSolarOverlay(solarRegions, SOLAR_DISK_PX, solarLayers) : ""}
+        </div>
+        <div class="hw-solar-layers">${layerBtns}</div>
+        <span class="hw-solar-tip-text">${escText(row.summary)}</span>
+      </div>`;
+  } else {
+    tipHtml = renderRadioBlackoutPanel(data, isOpen);
+  }
+  const rowAttr = row.kind === "solar_activity" ? " data-solar-toggle" : ` data-impact-row="${esc(row.kind)}"`;
+  const rowId   = row.kind === "radio" ? ' id="radio"' : "";
+  return `<div class="hw-impact-row${openClass}"${rowId}${rowAttr}>
+    <span class="hw-impact-caret">▶</span>
+    <span class="hw-impact-kind" style="color:${iconColor}">${icon}<span style="color:#b4c6cc">${escText(row.label)}</span></span>
+    <span class="hw-impact-badge" style="background:${color}22;color:${color}">${escText(levelLabel)}</span>
+    ${tipHtml}
+  </div>`;
+}
+
 function renderImpacts(
   data:            HelioNow,
   scrubData:       ScrubData | null,
@@ -2475,83 +2504,49 @@ function renderImpacts(
   ovationData:     OvationData | null,
   opts:            HelioWidgetOptions,
 ): string {
-  const rows = scrubData?.impacts ?? data.observer_impacts ?? [];
-  const rowsHtml = rows.map(row => {
-    const color      = IMPACT_COLOR[row.level] ?? "#666";
-    const levelLabel = row.level === "none" ? "None" : row.level.charAt(0).toUpperCase() + row.level.slice(1);
-    const icon       = IMPACT_ICONS[row.kind] ?? IMPACT_ICON_FALLBACK;
-    const iconColor  = row.level === "none" ? "#606870" : color;
-    const isOpen     = row.kind === "solar_activity" ? solarExpanded : expandedImpacts.has(row.kind);
-    const openClass  = isOpen ? " hw-impact-open" : "";
-    let tipHtml: string;
-    if (row.kind === "solar_activity") {
-      const solarOpen  = solarExpanded ? " hw-solar-open" : "";
-      const layerBtns  = SOLAR_LAYER_DEFS.map(l => {
-        const on = solarLayers.has(l.id);
-        const bg = on ? l.color + "22" : "transparent";
-        const op = on ? "1" : "0.32";
-        return `<button class="hw-sl-btn" data-solar-layer="${l.id}" style="color:${l.color};border-color:${l.color};background:${bg};opacity:${op}">${l.label}</button>`;
-      }).join("");
-      tipHtml = `<div class="hw-solar-tip${solarOpen}">
-          <div class="hw-solar-disk-wrap" id="solar">
-            <img class="hw-solar-disk-img" src="${SOLAR_DISK_URL}" alt="Solar disk" loading="lazy" />
-            ${solarRegions ? renderSolarOverlay(solarRegions, SOLAR_DISK_PX, solarLayers) : ""}
-          </div>
-          <div class="hw-solar-layers">${layerBtns}</div>
-          <span class="hw-solar-tip-text">${escText(row.summary)}</span>
-        </div>`;
-    } else if (row.kind === "aurora") {
-      const auroraOpen = isOpen ? " hw-aurora-tip-open" : "";
-      const aUrl = `https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`;
-      let prob: number | null = null;
-      if (ovationData && opts.lat != null && opts.lon != null) {
-        prob = lookupOvationProb(ovationData.entries, opts.lat, opts.lon);
-      }
-      const hasLocation = opts.lat != null && opts.lon != null;
-      const probColor   = prob != null ? (prob >= 30 ? "#5cce8c" : prob >= 10 ? "#d4cc5c" : "#9ab4bc") : "#607880";
-      const probLabel   = prob != null ? `${prob}%` : ovationData ? "n/a" : "…";
-      const obsPanel    = hasLocation ? `
-        <div class="hw-aurora-obs-panel">
-          <span>📍</span>
-          <span>${opts.locationName ? escText(opts.locationName) + " · " : ""}${opts.lat!.toFixed(1)}°${opts.lat! >= 0 ? "N" : "S"} ${Math.abs(opts.lon!).toFixed(1)}°${opts.lon! >= 0 ? "E" : "W"}</span>
-          <span class="hw-aurora-prob" style="color:${probColor}">Aurora: ${probLabel}</span>
-        </div>` : "";
-      tipHtml = `<div class="hw-aurora-tip${auroraOpen}">
-          <div class="hw-aurora-map-wrap">
-            <img class="hw-aurora-img" src="${esc(aUrl)}" alt="NOAA Aurora Oval" loading="lazy" />
-            ${renderAuroraSvgOverlay(opts)}
-          </div>
-          ${obsPanel}
-          <div class="hw-aurora-caption">NOAA OVATION Prime model · updates every 5 min</div>
-        </div>`;
-    } else if (row.kind === "radio") {
-      tipHtml = renderRadioBlackoutPanel(data, isOpen);
-    } else {
-      const tipOpen = isOpen ? " hw-impact-tip-open" : "";
-      tipHtml = `<div class="hw-impact-tip${tipOpen}">${escText(row.summary)}</div>`;
-    }
-    const rowAttr = row.kind === "solar_activity" ? " data-solar-toggle" : ` data-impact-row="${esc(row.kind)}"`;
-    const rowId   = row.kind === "aurora" ? ' id="aurora"'
-      : row.kind === "radio" ? ' id="radio"'
-      : "";
-    return `<div class="hw-impact-row${openClass}"${rowId}${rowAttr}>
-      <span class="hw-impact-caret">▶</span>
-      <span class="hw-impact-kind" style="color:${iconColor}">${icon}<span style="color:#b4c6cc">${escText(row.label)}</span></span>
-      <span class="hw-impact-badge" style="background:${color}22;color:${color}">${escText(levelLabel)}</span>
-      ${tipHtml}
-    </div>`;
-  }).join("");
+  const rows   = scrubData?.impacts ?? data.observer_impacts ?? [];
+  const radioR = rows.find(r => r.kind === "radio");
+  const solarR = rows.find(r => r.kind === "solar_activity");
+  const radioHtml = radioR
+    ? renderUnifiedObserverDynamicRow(radioR, solarRegions, solarExpanded, solarLayers, data, expandedImpacts.has("radio"))
+    : "";
+  const solarHtml = solarR
+    ? renderUnifiedObserverDynamicRow(solarR, solarRegions, solarExpanded, solarLayers, data, false)
+    : "";
+
   const simNote = scrubData
     ? `<span style="font-size:.65em;color:#7a9870;font-weight:normal;text-transform:none;letter-spacing:0"> · simulated</span>`
     : "";
-  const total = rows.length + 8; // +8 for Magnetosphere, Storm Risk, Solar Cycle, Coronal Hole, Satellite Drag, GNSS, SW Pressure, CME Cone
   const caret = impactsOpen ? "▼" : "▶";
-  const label = total > 0 ? `Observer Impacts (${total})` : "Observer Impacts";
   const sectionHdr = `
     <div class="hw-section-row" data-impacts-toggle>
       <span class="hw-section-caret">${caret}</span>
-      <span class="hw-section-label" style="margin-bottom:0">${label}${simNote}</span>
+      <span class="hw-section-label" style="margin-bottom:0">Indicators (${INDICATORS_PANEL_ROW_COUNT})${simNote}</span>
     </div>`;
+
+  const { metrics } = data;
+  const xray      = metrics.xray_class;
+  const xrayColor = xray ? (XRAY_COLOR[xray] ?? "#a0b4b8") : "#607880";
+  const xrayBadge = xray ? `${xray}-class` : "—";
+  const bz        = metrics.imf_bz_nt;
+  const bzColor   = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
+  const bzBadge   = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const wind      = metrics.solar_wind_kms;
+  const windBadge = wind != null ? `${Math.round(wind)} km/s` : "—";
+  const windColor = wind != null ? (wind > 700 ? "#e05c5c" : wind > 500 ? "#e0a84a" : wind > 400 ? "#d4cc5c" : "#5cce8c") : "#607880";
+
+  const xrayRowHtml = renderIndicatorKpiRow(
+    "xray", "X-Ray", INDICATOR_KPI_ICON_XRAY, xrayBadge, xrayColor, expandedImpacts, data, opts, ovationData,
+  );
+  const imfRowHtml = renderIndicatorKpiRow(
+    "imf_bz", "IMF Bz", INDICATOR_KPI_ICON_BZ, bzBadge, bzColor, expandedImpacts, data, opts, ovationData,
+  );
+  const windRowHtml = renderIndicatorKpiRow(
+    "solar_wind", "Solar Wind", INDICATOR_KPI_ICON_WIND, windBadge, windColor, expandedImpacts, data, opts, ovationData,
+  );
+
+  const sepHtml = `<div class="hw-indicators-sep" role="separator" aria-hidden="true"></div>`;
+
   // Geomagnetic Storm Probability — derived from Kp forecast
   const gsOpen      = expandedImpacts.has("geomag_storm");
   const gsProbs     = deriveStormProbs(data);
@@ -2647,7 +2642,22 @@ function renderImpacts(
   return `
     <div class="hw-impacts">
       ${sectionHdr}
-      ${impactsOpen ? rowsHtml + gsRowHtml + magRowHtml + scRowHtml + hssRowHtml + sdRowHtml + gnRowHtml + swdpRowHtml + cmeRowHtml : ""}
+      ${impactsOpen ? [
+        gsRowHtml,
+        radioHtml,
+        sdRowHtml,
+        gnRowHtml,
+        xrayRowHtml,
+        solarHtml,
+        sepHtml,
+        imfRowHtml,
+        magRowHtml,
+        windRowHtml,
+        hssRowHtml,
+        swdpRowHtml,
+        cmeRowHtml,
+        scRowHtml,
+      ].join("") : ""}
     </div>`;
 }
 
@@ -2997,7 +3007,6 @@ function renderCard(
   data:                  HelioNow,
   expanded:              boolean,
   heroExpanded:          boolean,
-  activePopover:         string | null,
   scrubOffset:           number,
   alertsExpanded:        boolean,
   expandedAlertKey:      string | null,
@@ -3007,7 +3016,6 @@ function renderCard(
   impactsOpen:           boolean,
   cmeExpanded:           boolean,
   forecastOpen:          boolean,
-  indicatorsOpen:        boolean,
   solarRegions:          SolarRegion[] | null,
   solarExpanded:         boolean,
   solarLayers:           Set<string>,
@@ -3028,7 +3036,7 @@ function renderCard(
   return `
     <div class="hw-root">
       ${renderHeader(data)}
-      ${renderHero(data, heroExpanded, indicatorsOpen, activePopover, scrubData, opts, ovationData, solarChannelIdx)}
+      ${renderHero(data, heroExpanded, scrubData, opts, ovationData, solarChannelIdx)}
       ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${histToggle}
       ${histDetail}
@@ -3062,7 +3070,6 @@ class HelioWidgetInstance {
   private opts:             HelioWidgetOptions;
   private expanded          = false;
   private heroExpanded      = false;
-  private activePopover:    string | null = null;
   private scrubOffset       = 0;
   private alertsExpanded       = false;
   private expandedAlertKey:    string | null = null;
@@ -3072,7 +3079,6 @@ class HelioWidgetInstance {
   private impactsOpen          = false;
   private cmeExpanded          = false;
   private forecastOpen         = false;
-  private indicatorsOpen       = true;
   private solarRegions:        SolarRegion[] | null = null;
   private solarExpanded        = false;
   private solarLayers:         Set<string> = new Set(["X", "M", "C", "quiet"]);
@@ -3094,13 +3100,10 @@ class HelioWidgetInstance {
     this.fetch();
   }
 
-  /** Open Observer Impacts rows that match hero deep-link fragment ids. */
+  /** Open Indicators rows that match hero deep-link fragment ids. */
   private expandHeroLinkedPanels(domIds: readonly string[]): void {
     for (const domId of domIds) {
       switch (domId) {
-        case "aurora":
-          this.expandedImpacts.add("aurora");
-          break;
         case "storm_risk":
           this.expandedImpacts.add("geomag_storm");
           break;
@@ -3178,15 +3181,7 @@ class HelioWidgetInstance {
       return;
     }
 
-    // Indicators group: collapse / expand
-    if (target.closest("[data-indicators-toggle]")) {
-      this.indicatorsOpen = !this.indicatorsOpen;
-      this.saveUiState();
-      this.render();
-      return;
-    }
-
-    // Observer Impacts section: collapse / expand
+    // Indicators panel: collapse / expand
     if (target.closest("[data-impacts-toggle]")) {
       this.impactsOpen = !this.impactsOpen;
       this.saveUiState();
@@ -3278,18 +3273,12 @@ class HelioWidgetInstance {
       return;
     }
 
-    // Close button inside a KPI popover
+    // Close button inside a KPI popover (unified Indicators metric rows)
     if (target.closest(".hw-kpi-close")) {
-      this.activePopover = null;
-      this.render();
-      return;
-    }
-
-    // KPI item click — toggle its popover
-    const kpiEl = target.closest("[data-kpi]") as HTMLElement | null;
-    if (kpiEl) {
-      const key = kpiEl.dataset.kpi ?? null;
-      this.activePopover = this.activePopover === key ? null : key;
+      const rowEl = target.closest("[data-impact-row]") as HTMLElement | null;
+      const rk    = rowEl?.dataset.impactRow;
+      if (rk) this.expandedImpacts.delete(rk);
+      this.saveUiState();
       this.render();
       return;
     }
@@ -3394,10 +3383,10 @@ class HelioWidgetInstance {
   private render(): void {
     if (!this.data) return;
     this.el.innerHTML = renderCard(
-      this.data, this.expanded, this.heroExpanded, this.activePopover,
+      this.data, this.expanded, this.heroExpanded,
       this.scrubOffset, this.alertsExpanded, this.expandedAlertKey,
       this.expandedTimelineKey, this.timelineOpen, this.collapsedDays,
-      this.impactsOpen, this.cmeExpanded, this.forecastOpen, this.indicatorsOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
+      this.impactsOpen, this.cmeExpanded, this.forecastOpen, this.solarRegions, this.solarExpanded, this.solarLayers,
       this.expandedImpacts, this.opts, this.ovationData, this.solarChannelIdx,
     );
   }
@@ -3414,7 +3403,6 @@ class HelioWidgetInstance {
         impactsOpen:    this.impactsOpen,
         cmeExpanded:    this.cmeExpanded,
         forecastOpen:   this.forecastOpen,
-        indicatorsOpen: this.indicatorsOpen,
         solarExpanded:  this.solarExpanded,
         solarLayers:    [...this.solarLayers],
         expandedImpacts: [...this.expandedImpacts],
@@ -3435,7 +3423,6 @@ class HelioWidgetInstance {
       if (typeof s.impactsOpen    === "boolean") this.impactsOpen    = s.impactsOpen;
       if (typeof s.cmeExpanded    === "boolean") this.cmeExpanded    = s.cmeExpanded;
       if (typeof s.forecastOpen   === "boolean") this.forecastOpen   = s.forecastOpen;
-      if (typeof s.indicatorsOpen === "boolean") this.indicatorsOpen = s.indicatorsOpen;
       if (typeof s.solarExpanded  === "boolean") this.solarExpanded  = s.solarExpanded;
       if (Array.isArray(s.collapsedDays))  this.collapsedDays  = new Set(s.collapsedDays);
       if (Array.isArray(s.solarLayers))    this.solarLayers    = new Set(s.solarLayers);
