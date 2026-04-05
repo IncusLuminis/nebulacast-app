@@ -119,15 +119,47 @@ function esc(s: string): string {
 function escText(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-/** Scroll targets for hero G/R/S/X chips (fragment ids below the hero). */
-const HERO_SCALE_SCROLL_IDS = {
-  G: "geomagnetic",
-  R: "radio",
-  S: "radiation",
-  X: "solar",
+/** Hero chip → Observer Impact section ids (scroll to first, flash all). */
+const HERO_SCALE_LINKS = {
+  G: ["aurora", "storm_risk"],
+  R: ["radio"],
+  S: ["satellite_drag", "gnss"],
+  X: ["solar"],
 } as const;
 
-type HeroScaleChipKey = keyof typeof HERO_SCALE_SCROLL_IDS;
+type HeroScaleChipKey = keyof typeof HERO_SCALE_LINKS;
+
+const SECTION_FLASH_MS = 1200;
+
+function helioDevHost(): boolean {
+  try {
+    const h = globalThis.location?.hostname ?? "";
+    return h === "localhost" || h === "127.0.0.1" || h.endsWith(".local");
+  } catch {
+    return false;
+  }
+}
+
+function runHeroScaleNav(ids: readonly string[]): void {
+  const toFlash: HTMLElement[] = [];
+  let scrollEl: HTMLElement | null = null;
+  for (const id of ids) {
+    const node = document.getElementById(id);
+    if (node instanceof HTMLElement) {
+      if (!scrollEl) scrollEl = node;
+      toFlash.push(node);
+    } else if (helioDevHost()) {
+      console.warn(`[Helio] Hero chip nav: missing element #${id}`);
+    }
+  }
+  if (scrollEl) {
+    scrollEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  for (const el of toFlash) {
+    el.classList.add("section-flash");
+    window.setTimeout(() => el.classList.remove("section-flash"), SECTION_FLASH_MS);
+  }
+}
 
 function normalizeHeroXClass(x: string): string {
   const t = x.trim();
@@ -202,6 +234,15 @@ function resolveHeroScaleLabels(data: HelioNow, scrubData: ScrubData | null): { 
 
 const WIDGET_CSS = `
 .hw-root{font-family:inherit;color:#e0e0e0;background:#161c1e;border-radius:6px;overflow:hidden}
+/* Hero chip deep-links: keep targets clear of sticky page chrome */
+.hw-root #aurora,.hw-root #storm_risk,.hw-root #radio,.hw-root #satellite_drag,.hw-root #gnss,.hw-root #solar{scroll-margin-top:14px}
+/* Brief highlight when navigating from hero scale chips */
+@keyframes hw-section-flash-kf{
+  0%{box-shadow:inset 0 0 0 0 rgba(90,168,200,0)}
+  18%{box-shadow:inset 0 0 0 2px rgba(90,168,200,0.75),0 0 14px rgba(90,168,200,0.22)}
+  100%{box-shadow:inset 0 0 0 0 rgba(90,168,200,0)}
+}
+.hw-root .section-flash{animation:hw-section-flash-kf 1.2s ease-out}
 .hw-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1a2428;border-bottom:1px solid #2a3438}
 .hw-header-title{font-size:.78em;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#b4c4cc}
 .hw-freshness{font-size:.72em;color:#96a8b8}
@@ -1339,7 +1380,6 @@ function renderHero(
       aria: "Solar X-ray activity" },
   ];
   const scaleChips = heroScaleDefs.map(def => {
-    const scrollId = HERO_SCALE_SCROLL_IDS[def.key];
     let pal: HeroScaleChipPalette;
     if (def.key === "G") pal = heroGrsChipColors(tierFromNoaaScale(heroScales.g, "G"));
     else if (def.key === "R") pal = heroGrsChipColors(tierFromNoaaScale(heroScales.r, "R"));
@@ -1347,7 +1387,7 @@ function renderHero(
     else pal = heroXChipColors(heroScales.x);
     const style = `color:${pal.color};background:${pal.background};border-color:${pal.borderColor}`;
     return `<button type="button" class="hw-scale-chip hw-hero-scale-chip"
-      style="${style}" data-hero-scroll="${esc(scrollId)}" title="${esc(def.title)}" aria-label="${esc(def.aria)}">${escText(def.text)}</button>`;
+      style="${style}" data-hero-chip="${def.key}" title="${esc(def.title)}" aria-label="${esc(def.aria)}">${escText(def.text)}</button>`;
   }).join("");
 
   const auroraLabel = scrubData ? scrubData.auroraLabel : aurora_hint.aurora_label;
@@ -2491,7 +2531,9 @@ function renderImpacts(
       tipHtml = `<div class="hw-impact-tip${tipOpen}">${escText(row.summary)}</div>`;
     }
     const rowAttr = row.kind === "solar_activity" ? " data-solar-toggle" : ` data-impact-row="${esc(row.kind)}"`;
-    const rowId   = row.kind === "radio" ? ' id="radio"' : row.kind === "solar_activity" ? ' id="radiation"' : "";
+    const rowId   = row.kind === "aurora" ? ' id="aurora"'
+      : row.kind === "radio" ? ' id="radio"'
+      : "";
     return `<div class="hw-impact-row${openClass}"${rowId}${rowAttr}>
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${iconColor}">${icon}<span style="color:#b4c6cc">${escText(row.label)}</span></span>
@@ -2517,7 +2559,7 @@ function renderImpacts(
   const gsBadgeCol  = gsProbs.g1 >= 30 ? G_STORM_COLORS.g1 : gsProbs.g1 > 0 ? "#7a9298" : "#607880";
   const gsBadgeTxt  = gsBadgePct > 0 ? `G1 ${gsBadgePct}%` : "None";
   const gsIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 2 L6.5 5"/><path d="M6.5 5 Q2 5 2 8.5 Q2 11 6.5 11 Q11 11 11 8.5 Q11 5 6.5 5"/><path d="M4.5 7.5 Q6.5 6 8.5 7.5"/></svg>`;
-  const gsRowHtml   = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" id="geomagnetic" data-impact-row="geomag_storm">
+  const gsRowHtml   = `<div class="hw-impact-row${gsOpen ? " hw-impact-open" : ""}" id="storm_risk" data-impact-row="geomag_storm">
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${gsBadgeCol}">${gsIcon}<span style="color:#b4c6cc">Storm Risk</span><span style="color:#607880;font-size:.85em;font-weight:normal"> — Next 24h</span></span>
       <span class="hw-impact-badge" style="background:${gsBadgeCol}22;color:${gsBadgeCol}">${gsBadgeTxt}</span>
@@ -2551,7 +2593,7 @@ function renderImpacts(
   const sdState     = deriveSatDragState(data);
   const sdOpen      = expandedImpacts.has("sat_drag");
   const sdIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><rect x="4.5" y="5" width="4" height="3" rx="0.4"/><line x1="1" y1="6.5" x2="4.5" y2="6.5"/><line x1="8.5" y1="6.5" x2="12" y2="6.5"/><line x1="6.5" y1="5" x2="6.5" y2="3"/><circle cx="6.5" cy="2.5" r="0.6" fill="currentColor" stroke="none"/></svg>`;
-  const sdRowHtml   = `<div class="hw-impact-row${sdOpen ? " hw-impact-open" : ""}" data-impact-row="sat_drag">
+  const sdRowHtml   = `<div class="hw-impact-row${sdOpen ? " hw-impact-open" : ""}" id="satellite_drag" data-impact-row="sat_drag">
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${sdState.color}">${sdIcon}<span style="color:#b4c6cc">Satellite Drag</span></span>
       <span class="hw-impact-badge" style="background:${sdState.color}22;color:${sdState.color}">${sdState.label}</span>
@@ -2562,7 +2604,7 @@ function renderImpacts(
   const gnState     = deriveGnssState(data);
   const gnOpen      = expandedImpacts.has("gnss");
   const gnIcon      = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M3 5.5 Q6.5 2.5 10 5.5"/><path d="M4.5 7.5 Q6.5 5.5 8.5 7.5"/><circle cx="6.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/><line x1="6.5" y1="10.7" x2="6.5" y2="12"/></svg>`;
-  const gnRowHtml   = `<div class="hw-impact-row${gnOpen ? " hw-impact-open" : ""}" data-impact-row="gnss">
+  const gnRowHtml   = `<div class="hw-impact-row${gnOpen ? " hw-impact-open" : ""}" id="gnss" data-impact-row="gnss">
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${gnState.color}">${gnIcon}<span style="color:#b4c6cc">GNSS Risk</span></span>
       <span class="hw-impact-badge" style="background:${gnState.color}22;color:${gnState.color}">${gnState.label}</span>
@@ -3055,20 +3097,19 @@ class HelioWidgetInstance {
   private onClick(e: Event): void {
     const target = e.target as Element;
 
-    const heroScrollEl = target.closest("[data-hero-scroll]") as HTMLElement | null;
-    if (heroScrollEl) {
-      const id = heroScrollEl.dataset.heroScroll;
-      if (id) {
-        const scrollToTarget = () => {
-          document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-        };
+    const heroChipEl = target.closest("[data-hero-chip]") as HTMLElement | null;
+    if (heroChipEl) {
+      const chip = heroChipEl.dataset.heroChip;
+      if (chip === "G" || chip === "R" || chip === "S" || chip === "X") {
+        const ids = HERO_SCALE_LINKS[chip];
+        const go = () => runHeroScaleNav(ids);
         if (!this.impactsOpen) {
           this.impactsOpen = true;
           this.saveUiState();
           this.render();
-          requestAnimationFrame(() => requestAnimationFrame(scrollToTarget));
+          requestAnimationFrame(() => requestAnimationFrame(go));
         } else {
-          scrollToTarget();
+          go();
         }
       }
       return;

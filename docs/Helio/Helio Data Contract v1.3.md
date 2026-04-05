@@ -71,16 +71,20 @@ hero?: HelioHeroBlock;
 
 ## 3. Widget scroll anchors (Observer Impacts)
 
-The embedded Helio widget (`sites/staging/helio/`) exposes **fragment targets** inside the card for hero chip clicks. These ids are **UI contract** details for the widget bundle, not additional JSON fields.
+The embedded Helio widget (`sites/staging/helio/`) exposes **fragment `id`s** on impact rows for hero scale chip navigation. These ids are **UI contract** details for the widget bundle, not JSON fields.
 
-| Chip | Scroll target `id` | Intended section |
-|------|-------------------|------------------|
-| G | `geomagnetic` | Geomagnetic storm risk row (24h G-scale probability) |
-| R | `radio` | HF radio / R-scale impact row |
-| S | `radiation` | Solar activity / S-scale context row (row anchor) |
-| X | `solar` | Solar disk / X-ray activity focus (inner target) |
+**Mapping (chip → sections):** scroll to the **first** existing target, then apply a short **`section-flash`** highlight to **all** found targets (~1.2s).
 
-Anchors exist in the DOM only when the Observer Impacts panel content is rendered; the widget may expand the panel before scrolling if it was collapsed.
+| Chip | Target element ids (order) |
+|------|----------------------------|
+| G | `aurora`, `storm_risk` |
+| R | `radio` |
+| S | `satellite_drag`, `gnss` |
+| X | `solar` |
+
+Corresponding DOM ids: `#aurora`, `#storm_risk`, `#radio`, `#satellite_drag`, `#gnss`, `#solar` (`#solar` is on the solar-disk wrapper inside the Solar activity row).
+
+Anchors exist only when Observer Impacts content is rendered; the widget expands that panel before scrolling if it was collapsed. Missing ids are skipped; on localhost, the widget may log a console warning for missing targets.
 
 ---
 
