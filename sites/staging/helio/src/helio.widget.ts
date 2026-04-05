@@ -124,12 +124,12 @@ const HERO_SCALE_LINKS = {
   G: ["storm_risk"],
   R: ["radio"],
   S: ["satellite_drag", "gnss"],
-  X: ["solar"],
+  X: ["xray", "solar"],
 } as const;
 
 type HeroScaleChipKey = keyof typeof HERO_SCALE_LINKS;
 
-const SECTION_FLASH_MS = 1200;
+const SECTION_FLASH_MS = 2400;
 
 function helioDevHost(): boolean {
   try {
@@ -235,14 +235,14 @@ function resolveHeroScaleLabels(data: HelioNow, scrubData: ScrubData | null): { 
 const WIDGET_CSS = `
 .hw-root{font-family:inherit;color:#e0e0e0;background:#161c1e;border-radius:6px;overflow:hidden}
 /* Hero chip deep-links: keep targets clear of sticky page chrome */
-.hw-root #aurora,.hw-root #storm_risk,.hw-root #radio,.hw-root #satellite_drag,.hw-root #gnss,.hw-root #solar{scroll-margin-top:14px}
+.hw-root #aurora,.hw-root #storm_risk,.hw-root #radio,.hw-root #satellite_drag,.hw-root #gnss,.hw-root #xray,.hw-root #solar{scroll-margin-top:14px}
 /* Brief highlight when navigating from hero scale chips */
 @keyframes hw-section-flash-kf{
   0%{box-shadow:inset 0 0 0 0 rgba(90,168,200,0)}
   18%{box-shadow:inset 0 0 0 2px rgba(90,168,200,0.75),0 0 14px rgba(90,168,200,0.22)}
   100%{box-shadow:inset 0 0 0 0 rgba(90,168,200,0)}
 }
-.hw-root .section-flash{animation:hw-section-flash-kf 1.2s ease-out}
+.hw-root .section-flash{animation:hw-section-flash-kf 2.4s ease-out}
 .hw-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1a2428;border-bottom:1px solid #2a3438}
 .hw-header-title{font-size:.78em;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#b4c4cc}
 .hw-freshness{font-size:.72em;color:#96a8b8}
@@ -2440,7 +2440,7 @@ function renderIndicatorKpiRow(
   const isOpen     = expandedImpacts.has(kpiKey);
   const openClass  = isOpen ? " hw-impact-open" : "";
   const tipClass   = isOpen ? " hw-impact-tip-open" : "";
-  return `<div class="hw-impact-row${openClass}" data-impact-row="${kpiKey}">
+  return `<div class="hw-impact-row${openClass}" id="${kpiKey}" data-impact-row="${kpiKey}">
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${badgeColor}">${iconHtml}<span style="color:#b4c6cc">${escText(label)}</span></span>
       <span class="hw-impact-badge" style="background:${badgeColor}22;color:${badgeColor}">${escText(badgeText)}</span>
@@ -3115,6 +3115,9 @@ class HelioWidgetInstance {
           break;
         case "gnss":
           this.expandedImpacts.add("gnss");
+          break;
+        case "xray":
+          this.expandedImpacts.add("xray");
           break;
         case "solar":
           this.solarExpanded = true;
