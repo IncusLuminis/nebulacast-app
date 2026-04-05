@@ -494,6 +494,18 @@ def derive(
     driver  = _dominant_driver(g, r, s, events_24h, xray_class)
     summary = _derive_summary(status, driver, g)
 
+    # Optional hero mirror for embedded UI (additive; duplicates scales + x-ray class)
+    hero = {
+        "kp": float(kp_latest) if kp_latest is not None else None,
+        "status_label": summary.get("label"),
+        "scales": {
+            "g": scales["g_scale"],
+            "r": scales["r_scale"],
+            "s": scales["s_scale"],
+            "x": xray_class,
+        },
+    }
+
     # ── Aurora hint ───────────────────────────────────────────────────────────
     aurora_hint = _derive_aurora_hint(
         kp_max_next_24h, events_24h, imf_bz_nt, kp_latest,
@@ -515,6 +527,7 @@ def derive(
 
     return {
         "summary":          summary,
+        "hero":             hero,
         "scales":           scales,
         "forecast":         forecast,
         "aurora_hint":      aurora_hint,
