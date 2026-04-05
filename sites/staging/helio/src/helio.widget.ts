@@ -1334,18 +1334,35 @@ function trendArrow(vals: number[], threshold: number): "↑" | "↓" | "→" {
 
 // ── Hero section ─────────────────────────────────────────────────────────────
 
+/** NASA SDO rolling ~24h MP4 (512²) aligned with each hero solar channel. */
+function sdoLoopMp4ForSolarChannel(channelId: string): string {
+  const base = "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/";
+  const fileById: Record<string, string> = {
+    eit171: "latest_512_0171.mp4",
+    eit195: "latest_512_0193.mp4",
+    eit284: "latest_512_0211.mp4",
+    eit304: "latest_512_0304.mp4",
+    cont:   "latest_512_HMID.mp4",
+    mag:    "latest_512_HMIB.mp4",
+  };
+  return base + (fileById[channelId] ?? "latest_512_0171.mp4");
+}
+
 function renderSolarMini(channelIdx: number, baseUrl?: string): string {
   const ch  = SOLAR_CHANNELS[channelIdx];
   const hmi = SUN_HMI_URL;
   const src = resolveAssetUrl(ch.url, baseUrl);
+  const loopSrc = sdoLoopMp4ForSolarChannel(ch.id);
   return `<div class="hw-solar-mini-wrap" style="cursor:default">
     <div class="hw-solar-mini-inner">
       <img class="hw-solar-mini-img" src="${esc(src)}" alt="${esc(ch.label)}"
         onerror="if(this.src!=='${esc(hmi)}')this.src='${esc(hmi)}'" />
-      <video class="hw-solar-mini-video" autoplay loop muted playsinline
-        oncanplay="this.style.opacity=1"
+      <video class="hw-solar-mini-video" autoplay loop muted playsinline preload="auto"
+        onplaying="this.style.opacity=1"
+        oncanplay="void this.play().catch(function(){})"
+        onerror="this.style.display='none'"
         aria-label="Solar disk · ${esc(ch.label)} · last 24h">
-        <source src="${esc(SUN_LOOP_URL)}" type="video/mp4">
+        <source src="${esc(loopSrc)}" type="video/mp4">
       </video>
     </div>
     <div class="hw-solar-mini-switcher">
@@ -1795,9 +1812,6 @@ const SOLAR_CHANNELS = [
 ] as const;
 
 const SUN_HMI_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
-const SUN_AIA171_URL = SOLAR_CHANNELS[0].url;
-// NASA SDO publishes a rolling "latest 24h" AIA 171 Å loop, refreshed automatically
-const SUN_LOOP_URL   = "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_512_0171.mp4";
 const SOLAR_DISK_PX  = 240;
 
 function renderRadioBlackoutPanel(data: HelioNow, isOpen: boolean): string {
