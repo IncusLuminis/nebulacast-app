@@ -119,10 +119,6 @@ function esc(s: string): string {
 function escText(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-function scaleIsActive(scale: string): boolean {
-  return parseInt(scale.slice(1), 10) > 0;
-}
-
 /** Scroll targets for hero G/R/S/X chips (fragment ids below the hero). */
 const HERO_SCALE_SCROLL_IDS = {
   G: "geomagnetic",
@@ -139,8 +135,49 @@ function normalizeHeroXClass(x: string): string {
   return t || "—";
 }
 
-function heroXChipActive(letter: string): boolean {
-  return letter === "C" || letter === "M" || letter === "X";
+/** NOAA G/R/S index 0–5 from scale label (e.g. G3 → 3). */
+function tierFromNoaaScale(scale: string, prefix: "G" | "R" | "S"): number {
+  const s = scale.trim().toUpperCase();
+  if (s.length < 2 || s[0] !== prefix) return 0;
+  const n = parseInt(s.slice(1), 10);
+  if (!isFinite(n) || n < 0) return 0;
+  return Math.min(5, n);
+}
+
+interface HeroScaleChipPalette {
+  color: string;
+  background: string;
+  borderColor: string;
+}
+
+/** G / R / S chips: quiet → severe (matches app greens / ambers / reds). */
+function heroGrsChipColors(tier: number): HeroScaleChipPalette {
+  if (tier <= 0) return { color: "#96a8b8", background: "#1e2830", borderColor: "#2a3c42" };
+  if (tier === 1) return { color: "#d4cc5c", background: "#2a2616", borderColor: "#5a5028" };
+  if (tier === 2) return { color: "#e0a84a", background: "#2c2214", borderColor: "#6a5018" };
+  if (tier === 3) return { color: "#e8a060", background: "#301810", borderColor: "#744018" };
+  if (tier === 4) return { color: "#e07058", background: "#2c1412", borderColor: "#762820" };
+  return { color: "#e05c5c", background: "#2e1214", borderColor: "#7a2828" };
+}
+
+/** X chip: GOES class letter, aligned with XRAY_COLOR ramps. */
+function heroXChipColors(letter: string): HeroScaleChipPalette {
+  const L = letter.trim().toUpperCase();
+  if (L === "—" || L === "" || L === "-") {
+    return { color: "#607880", background: "#1e2830", borderColor: "#2a3c42" };
+  }
+  const fg = XRAY_COLOR[L] ?? "#a0b4b8";
+  const bg: Record<string, string> = {
+    A: "#242628", B: "#15221c", C: "#1a2215", M: "#221a10", X: "#281416",
+  };
+  const br: Record<string, string> = {
+    A: "#404448", B: "#2a5a40", C: "#3e6a30", M: "#6a5018", X: "#7a2828",
+  };
+  return {
+    color: fg,
+    background: bg[L] ?? "#1e2830",
+    borderColor: br[L] ?? "#3a4c52",
+  };
 }
 
 function resolveHeroScaleLabels(data: HelioNow, scrubData: ScrubData | null): { g: string; r: string; s: string; x: string } {
@@ -184,8 +221,9 @@ const WIDGET_CSS = `
 .hw-scales-row{display:flex;gap:6px;justify-content:flex-end}
 .hw-scale-chip{font-size:.72em;font-weight:600;padding:1px 6px;border-radius:2px;background:#222e32;color:#96a8b8;border:1px solid #2a3c42}
 .hw-scale-chip.hw-scale-active{color:#e0a84a;border-color:#5a4020}
-.hw-hero-scale-chip{font:inherit;font-family:inherit;line-height:inherit;margin:0;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;transition:background .12s,color .12s,border-color .12s,box-shadow .12s}
-.hw-hero-scale-chip:hover{background:#283438;color:#b4c6cc}
+.hw-hero-scale-chip{font:inherit;font-family:inherit;line-height:inherit;margin:0;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;border-style:solid;border-width:1px;transition:filter .12s,box-shadow .12s}
+.hw-hero-scale-chip:hover{filter:brightness(1.14)}
+.hw-hero-scale-chip:active{filter:brightness(0.96)}
 .hw-hero-scale-chip:focus{outline:none}
 .hw-hero-scale-chip:focus-visible{outline:2px solid #5a8a98;outline-offset:1px}
 .hw-summary-text{font-size:.78em;color:#96a8b8;line-height:1.4}
@@ -1290,20 +1328,25 @@ function renderHero(
     : (metrics.kp_latest != null ? metrics.kp_latest.toFixed(1) : "—");
 
   const heroScales = resolveHeroScaleLabels(data, scrubData);
-  const heroScaleDefs: { key: HeroScaleChipKey; text: string; title: string; aria: string; active: boolean }[] = [
+  const heroScaleDefs: { key: HeroScaleChipKey; text: string; title: string; aria: string }[] = [
     { key: "G", text: heroScales.g, title: "Geomagnetic storm level. Based on Kp index.",
-      aria: "Geomagnetic storm level", active: scaleIsActive(heroScales.g) },
+      aria: "Geomagnetic storm level" },
     { key: "R", text: heroScales.r, title: "Radio blackout level. Based on solar X-ray flux.",
-      aria: "Radio blackout level", active: scaleIsActive(heroScales.r) },
+      aria: "Radio blackout level" },
     { key: "S", text: heroScales.s, title: "Solar radiation storm level. Based on energetic proton flux.",
-      aria: "Solar radiation storm level", active: scaleIsActive(heroScales.s) },
+      aria: "Solar radiation storm level" },
     { key: "X", text: `X:${heroScales.x}`, title: "Current solar X-ray activity class.",
-      aria: "Solar X-ray activity", active: heroXChipActive(heroScales.x) },
+      aria: "Solar X-ray activity" },
   ];
   const scaleChips = heroScaleDefs.map(def => {
     const scrollId = HERO_SCALE_SCROLL_IDS[def.key];
-    const style = def.active ? `color:${tone.accent};border-color:${tone.accent}33` : "";
-    return `<button type="button" class="hw-scale-chip hw-hero-scale-chip${def.active ? " hw-scale-active" : ""}"
+    let pal: HeroScaleChipPalette;
+    if (def.key === "G") pal = heroGrsChipColors(tierFromNoaaScale(heroScales.g, "G"));
+    else if (def.key === "R") pal = heroGrsChipColors(tierFromNoaaScale(heroScales.r, "R"));
+    else if (def.key === "S") pal = heroGrsChipColors(tierFromNoaaScale(heroScales.s, "S"));
+    else pal = heroXChipColors(heroScales.x);
+    const style = `color:${pal.color};background:${pal.background};border-color:${pal.borderColor}`;
+    return `<button type="button" class="hw-scale-chip hw-hero-scale-chip"
       style="${style}" data-hero-scroll="${esc(scrollId)}" title="${esc(def.title)}" aria-label="${esc(def.aria)}">${escText(def.text)}</button>`;
   }).join("");
 
