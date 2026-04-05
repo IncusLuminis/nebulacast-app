@@ -911,12 +911,13 @@ function getHourScore(hour) {
     const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
     const skyScore = hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score;
     const atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
+    // Round each component first so the sum matches the displayed per-category points
     const raw =
-      atmW  * hour.atmosphere_score   +
-      skyW  * skyScore                +
-      dewW  * hour.dew_safety_score   +
-      stabW * hour.stability_score;
-    return Math.max(0, Math.min(100, Math.round(raw)));
+      Math.round(atmW  * hour.atmosphere_score)  +
+      Math.round(skyW  * skyScore)               +
+      Math.round(dewW  * hour.dew_safety_score)  +
+      Math.round(stabW * hour.stability_score);
+    return Math.max(0, Math.min(100, raw));
   }
 
   // Fallback: for "balanced" profile use API score directly
