@@ -300,11 +300,11 @@ const WIDGET_CSS = `
 .hw-gstorm-footer{font-size:.70em;color:#607880;margin-top:5px}
 /* Storm Risk: NOW | FORECAST 24h (grid: left stack + full-height forecast rail) */
 .hw-storm-risk-grid{display:grid;grid-template-columns:minmax(4.35rem,5.35rem) minmax(0,1fr);column-gap:8px;row-gap:5px;align-items:start;margin:6px 0 0}
-.hw-storm-risk-head-now{grid-column:1;grid-row:1;font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;padding:0 2px 0 0}
+.hw-storm-risk-head-now{grid-column:1;grid-row:1;font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase;padding:0 2px;text-align:center;justify-self:stretch}
 .hw-storm-risk-head-fc{font-size:.62em;color:#607880;letter-spacing:.06em;text-transform:uppercase}
-.hw-storm-risk-now{grid-column:1;grid-row:2;padding:0 4px 0 0;min-width:0}
+.hw-storm-risk-now{grid-column:1;grid-row:2;min-width:0;justify-self:stretch;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 2px}
 .hw-storm-risk-now-num{font-size:48px;font-weight:700;line-height:1;color:#b4c6cc;letter-spacing:-.05em}
-.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:5px;line-height:1.22;word-wrap:break-word}
+.hw-storm-risk-now-lbl{font-size:clamp(.88rem,2.35vw,1.02rem);font-weight:500;color:#a8bac4;margin-top:5px;line-height:1.22;word-wrap:break-word;max-width:100%}
 .hw-storm-risk-rail{grid-column:2;grid-row:1 / span 2;border-left:1px solid #1e2c30;padding-left:10px;min-width:0;display:flex;flex-direction:column;gap:5px;align-self:stretch}
 .hw-storm-risk-fc{min-width:0}
 .hw-storm-severe{border:1px solid #e05c5c66;background:linear-gradient(165deg,#e05c5c14,#1a1216);border-radius:4px;padding:9px 10px}
