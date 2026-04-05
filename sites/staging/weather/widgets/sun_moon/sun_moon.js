@@ -209,7 +209,7 @@ function drawSunMoonCanvas(canvas, data, selectedHour) {
   const h = heightCss;
   ctx.clearRect(0, 0, w, h);
 
-  const padding = { left: 32, right: 10, top: 10, bottom: 32 };
+  const padding = { left: 42, right: 10, top: 10, bottom: 76 };
   const innerW = w - padding.left - padding.right;
   const innerH = h - padding.top - padding.bottom;
 
@@ -244,6 +244,40 @@ function drawSunMoonCanvas(canvas, data, selectedHour) {
   ctx.lineWidth = 0.8;
   const yHorizon = yForAlt(0);
   const yBottom = padding.top + innerH;
+
+  // ── 3 time-rows below chart ───────────────────────────────────────────────
+  const ROW_SUN      = yBottom + 16;
+  const ROW_MOON     = yBottom + 38;
+  const ROW_TWILIGHT = yBottom + 60;
+
+  // Thin separator lines between rows
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.04)";
+  ctx.lineWidth = 0.8;
+  for (const sepY of [yBottom + 7, yBottom + 28, yBottom + 49]) {
+    ctx.beginPath();
+    ctx.moveTo(padding.left, sepY);
+    ctx.lineTo(w - padding.right, sepY);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Row labels on the left margin
+  const _rowLabels = [
+    { y: ROW_SUN,      text: "Sun",   color: "#ffd36b"                  },
+    { y: ROW_MOON,     text: "Moon",  color: "rgba(143,182,255,0.88)"   },
+    { y: ROW_TWILIGHT, text: "Twil.", color: "rgba(165,165,195,0.65)"   },
+  ];
+  ctx.save();
+  ctx.font = "bold 7px system-ui, -apple-system, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  for (const rl of _rowLabels) {
+    ctx.fillStyle = rl.color;
+    ctx.globalAlpha = 0.75;
+    ctx.fillText(rl.text, 2, rl.y);
+  }
+  ctx.restore();
   ctx.beginPath();
   ctx.moveTo(padding.left, yHorizon);
   ctx.lineTo(padding.left + innerW, yHorizon);
@@ -337,31 +371,45 @@ function drawSunMoonCanvas(canvas, data, selectedHour) {
   fillDaylight(data.times);
 
   // ── Event markers ────────────────────────────────────────────────────────
-  // dir = "up"   → line from chart top down to horizon   (day-side events)
-  // dir = "down" → line from horizon down to chart bottom (twilight/night events)
-  // timeStr      → time shown at the bottom of the chart below the line
-  function drawEvent(label, timeStr, dateObj, color, isMoon, dir) {
+  // dir     = "up"  → dashed line from chart top down to horizon (day/moon events)
+  //           "down"→ dashed line from horizon down (twilight/night events)
+  // rowType = "sun" | "moon" | "twilight" → which time row to write the time into
+  function drawEvent(label, timeStr, dateObj, color, isMoon, dir, rowType) {
     if (!dateObj) return;
     const hr = getLocalHour(dateObj, tz);
     if (hr == null || hr < 0 || hr >= 24) return;
     const xLine = xForHour(hr);
+
+    const rowY = rowType === "sun" ? ROW_SUN
+               : rowType === "moon" ? ROW_MOON
+               : ROW_TWILIGHT;
+
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = 1;
     ctx.setLineDash(isMoon ? [2, 3] : [3, 4]);
+
+    // Main segment (above or below horizon)
     ctx.beginPath();
     if (dir === "up") {
       ctx.moveTo(xLine, padding.top);
       ctx.lineTo(xLine, yHorizon);
     } else {
       ctx.moveTo(xLine, yHorizon);
-      ctx.lineTo(xLine, yBottom);
+      ctx.lineTo(xLine, yHorizon + 12);
     }
     ctx.stroke();
-    ctx.setLineDash([]);
 
-    // Event name: horizontal, to the RIGHT of the line
-    // "up" events → near top of chart; "down" events → just below horizon
+    // Extension: thin line down to the row, lower opacity
+    ctx.globalAlpha = 0.28;
+    ctx.beginPath();
+    ctx.moveTo(xLine, (dir === "up") ? yHorizon : yHorizon + 12);
+    ctx.lineTo(xLine, rowY - 5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+
+    // Event name label (near its origin)
     const labelY = (dir === "up") ? padding.top + 2 : yHorizon + 2;
     ctx.save();
     ctx.font = "7.5px system-ui, -apple-system, sans-serif";
@@ -372,17 +420,18 @@ function drawSunMoonCanvas(canvas, data, selectedHour) {
     ctx.fillText(label, xLine + 3, labelY);
     ctx.restore();
 
-    // Time label at the very bottom (below chart drawing area)
+    // Time in its row — bold, larger, readable
     if (timeStr) {
       ctx.save();
-      ctx.font = "8px system-ui, -apple-system, sans-serif";
+      ctx.font = "bold 10px system-ui, -apple-system, sans-serif";
       ctx.fillStyle = color;
       ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.globalAlpha = 0.88;
-      ctx.fillText(timeStr, xLine, yBottom + 3);
+      ctx.textBaseline = "middle";
+      ctx.globalAlpha = 0.92;
+      ctx.fillText(timeStr, xLine, rowY);
       ctx.restore();
     }
+
     ctx.restore();
   }
 
@@ -416,31 +465,31 @@ function drawSunMoonCanvas(canvas, data, selectedHour) {
   if (data.times) {
     const t = data.times;
     drawEvent("Night end",       formatLocalTime(t.nightEnd, tz),
-              t.nightEnd,                        "rgba(160,160,185,0.80)", false, "down");
+              t.nightEnd,                        "rgba(160,160,185,0.80)", false, "down", "twilight");
     drawEvent("Astro twilight",  formatLocalTime(t.nauticalDawn || t.nightEnd, tz),
-              t.nauticalDawn || t.nightEnd,      "rgba(140,140,170,0.80)", false, "down");
+              t.nauticalDawn || t.nightEnd,      "rgba(140,140,170,0.80)", false, "down", "twilight");
     drawEvent("Civil twilight",  formatLocalTime(t.dawn, tz),
-              t.dawn,                            "rgba(180,180,205,0.85)", false, "down");
+              t.dawn,                            "rgba(180,180,205,0.85)", false, "down", "twilight");
     drawEvent("Sunrise",         formatLocalTime(t.sunrise, tz),
-              t.sunrise,                         "#ffd36b",                false, "up");
+              t.sunrise,                         "#ffd36b",                false, "up",   "sun");
     drawEvent("Sun culmination", formatLocalTime(t.solarNoon, tz),
-              t.solarNoon,                       "#ffd36b",                false, "up");
+              t.solarNoon,                       "#ffd36b",                false, "up",   "sun");
     drawEvent("Sunset",          formatLocalTime(t.sunset, tz),
-              t.sunset,                          "#ffd36b",                false, "up");
+              t.sunset,                          "#ffd36b",                false, "up",   "sun");
     drawEvent("Civil twilight",  formatLocalTime(t.dusk, tz),
-              t.dusk,                            "rgba(180,180,205,0.85)", false, "down");
+              t.dusk,                            "rgba(180,180,205,0.85)", false, "down", "twilight");
     drawEvent("Astro twilight",  formatLocalTime(t.nauticalDusk || t.night, tz),
-              t.nauticalDusk || t.night,         "rgba(140,140,170,0.80)", false, "down");
+              t.nauticalDusk || t.night,         "rgba(140,140,170,0.80)", false, "down", "twilight");
     drawEvent("Night",           formatLocalTime(t.night, tz),
-              t.night,                           "rgba(160,160,185,0.80)", false, "down");
+              t.night,                           "rgba(160,160,185,0.80)", false, "down", "twilight");
   }
   if (data.moonCulmination) {
     drawEvent("Moon culm.",      formatLocalTime(data.moonCulmination, tz),
-              data.moonCulmination,              "#8fb6ff",                true,  "up");
+              data.moonCulmination,              "#8fb6ff",                true,  "up",   "moon");
   }
   if (data.moonTimes && data.moonTimes.set) {
     drawEvent("Moonset",         formatLocalTime(data.moonTimes.set, tz),
-              data.moonTimes.set,                "#8fb6ff",                true,  "up");
+              data.moonTimes.set,                "#8fb6ff",                true,  "up",   "moon");
   }
 
   // ── Selected hour marker ─────────────────────────────────────────────────
