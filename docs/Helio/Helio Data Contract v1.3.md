@@ -73,7 +73,7 @@ hero?: HelioHeroBlock;
 
 The embedded Helio widget (`sites/staging/helio/`) exposes **fragment `id`s** on impact rows for hero scale chip navigation. These ids are **UI contract** details for the widget bundle, not JSON fields.
 
-**Mapping (chip → sections):** scroll to the **first** existing target, then apply a short **`section-flash`** highlight to **all** found targets (~1.2s).
+**Mapping (chip → sections):** ensure Observer Impacts is **open**, **expand** each mapped row (and the solar disk panel for **`solar`**), then **smooth-scroll** to the **first** existing target and apply a short **`section-flash`** on **all** found targets (~1.2s).
 
 | Chip | Target element ids (order) |
 |------|----------------------------|

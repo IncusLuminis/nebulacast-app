@@ -3094,6 +3094,34 @@ class HelioWidgetInstance {
     this.fetch();
   }
 
+  /** Open Observer Impacts rows that match hero deep-link fragment ids. */
+  private expandHeroLinkedPanels(domIds: readonly string[]): void {
+    for (const domId of domIds) {
+      switch (domId) {
+        case "aurora":
+          this.expandedImpacts.add("aurora");
+          break;
+        case "storm_risk":
+          this.expandedImpacts.add("geomag_storm");
+          break;
+        case "radio":
+          this.expandedImpacts.add("radio");
+          break;
+        case "satellite_drag":
+          this.expandedImpacts.add("sat_drag");
+          break;
+        case "gnss":
+          this.expandedImpacts.add("gnss");
+          break;
+        case "solar":
+          this.solarExpanded = true;
+          break;
+        default:
+          if (helioDevHost()) console.warn(`[Helio] Hero chip nav: unknown section id "${domId}"`);
+      }
+    }
+  }
+
   private onClick(e: Event): void {
     const target = e.target as Element;
 
@@ -3102,15 +3130,11 @@ class HelioWidgetInstance {
       const chip = heroChipEl.dataset.heroChip;
       if (chip === "G" || chip === "R" || chip === "S" || chip === "X") {
         const ids = HERO_SCALE_LINKS[chip];
-        const go = () => runHeroScaleNav(ids);
-        if (!this.impactsOpen) {
-          this.impactsOpen = true;
-          this.saveUiState();
-          this.render();
-          requestAnimationFrame(() => requestAnimationFrame(go));
-        } else {
-          go();
-        }
+        this.impactsOpen = true;
+        this.expandHeroLinkedPanels(ids);
+        this.saveUiState();
+        this.render();
+        requestAnimationFrame(() => requestAnimationFrame(() => runHeroScaleNav(ids)));
       }
       return;
     }
