@@ -327,21 +327,10 @@ const WIDGET_CSS = `
 /* Coronal Hole / HSS Indicator */
 .hw-hss-diagram{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-hss-meta{font-size:.75em;color:#7a9298;margin-top:1px}
-/* Satellite Drag Indicator */
-.hw-satdrag-ladder{display:flex;flex-direction:column;gap:4px;margin:4px 0 6px}
-.hw-satdrag-rung{display:flex;align-items:center;gap:7px}
-.hw-satdrag-label{font-size:.82em;font-weight:700;min-width:54px;flex-shrink:0}
-.hw-satdrag-bar-track{flex:1;height:6px;background:#1e2c30;border-radius:3px;overflow:hidden}
-.hw-satdrag-bar-fill{height:100%;border-radius:3px}
-.hw-satdrag-mark{font-size:.72em;min-width:14px;flex-shrink:0}
+/* Satellite Drag / GNSS Risk — shared level strip */
+.hw-level-strip{display:flex;gap:5px;margin:6px 0 8px}
+.hw-level-cell{flex:1;text-align:center;padding:5px 0;border-radius:4px;font-size:.78em;font-weight:700;border:1px solid transparent}
 .hw-satdrag-meta{font-size:.75em;color:#7a9298;margin-top:2px}
-/* GNSS Disturbance Risk */
-.hw-gnss-ladder{display:flex;flex-direction:column;gap:4px;margin:4px 0 6px}
-.hw-gnss-rung{display:flex;align-items:center;gap:7px}
-.hw-gnss-label{font-size:.82em;font-weight:700;min-width:54px;flex-shrink:0}
-.hw-gnss-bar-track{flex:1;height:6px;background:#1e2c30;border-radius:3px;overflow:hidden}
-.hw-gnss-bar-fill{height:100%;border-radius:3px}
-.hw-gnss-mark{font-size:.72em;min-width:14px;flex-shrink:0}
 .hw-gnss-meta{font-size:.75em;color:#7a9298;margin-top:2px}
 /* Solar Wind Dynamic Pressure gauge */
 .hw-swdp-gauge{display:block;width:100%;margin:4px 0 5px;overflow:visible}
@@ -2323,26 +2312,21 @@ function renderSatDragTip(data: HelioNow, isOpen: boolean): string {
   const sd      = deriveSatDragState(data);
   const openCls = isOpen ? " hw-impact-tip-open" : "";
 
-  const DRAG_LEVELS = [
-    { l: 0 as 0|1|2, label: "Low",      color: "#5cce8c", width: 33,  desc: "Normal density"     },
-    { l: 1 as 0|1|2, label: "Moderate", color: "#d4cc5c", width: 64,  desc: "Elevated density"   },
-    { l: 2 as 0|1|2, label: "High",     color: "#e05c5c", width: 100, desc: "Strong expansion"   },
+  const LEVELS = [
+    { l: 0 as 0|1|2, label: "Low",      color: "#5cce8c" },
+    { l: 1 as 0|1|2, label: "Moderate", color: "#d4cc5c" },
+    { l: 2 as 0|1|2, label: "High",     color: "#e05c5c" },
   ];
 
-  const rungs = DRAG_LEVELS.map(dl => {
-    const isCurrent = dl.l === sd.level;
-    const labelCol  = isCurrent ? dl.color : "#566068";
-    const barOp     = isCurrent ? "0.88" : "0.16";
-    return `<div class="hw-satdrag-rung">
-      <span class="hw-satdrag-label" style="color:${labelCol}">${dl.label}</span>
-      <div class="hw-satdrag-bar-track">
-        <div class="hw-satdrag-bar-fill" style="width:${dl.width}%;background:${dl.color};opacity:${barOp}"></div>
-      </div>
-      <span class="hw-satdrag-mark" style="color:${isCurrent ? dl.color : "transparent"}">${isCurrent ? "◀" : ""}</span>
-    </div>`;
+  const cells = LEVELS.map(lv => {
+    const active = lv.l === sd.level;
+    const bg     = active ? `${lv.color}2e` : "#1b2a2e";
+    const col    = active ? lv.color : "#3d5058";
+    const border = active ? `1px solid ${lv.color}66` : "1px solid #253035";
+    return `<div class="hw-level-cell" style="background:${bg};color:${col};border:${border}">${lv.label}</div>`;
   }).join("");
 
-  const kpStr   = sd.kp != null ? `Kp ${sd.kp.toFixed(1)}` : "Kp —";
+  const kpStr = sd.kp != null ? `Kp ${sd.kp.toFixed(1)}` : "Kp —";
   const noteMap: Record<number, string> = {
     0: "Near-normal thermospheric density",
     1: "Elevated drag — minor orbit correction may be needed",
@@ -2350,7 +2334,7 @@ function renderSatDragTip(data: HelioNow, isOpen: boolean): string {
   };
 
   return `<div class="hw-impact-tip${openCls}">
-    <div class="hw-satdrag-ladder">${rungs}</div>
+    <div class="hw-level-strip">${cells}</div>
     <div class="hw-satdrag-meta">${kpStr} · ${escText(sd.gScale)} · ${noteMap[sd.level]}</div>
   </div>`;
 }
@@ -2398,26 +2382,21 @@ function renderGnssTip(data: HelioNow, isOpen: boolean): string {
   const gn      = deriveGnssState(data);
   const openCls = isOpen ? " hw-impact-tip-open" : "";
 
-  const GNSS_LEVELS = [
-    { l: 0 as 0|1|2, label: "Low",      color: "#5cce8c", width: 33  },
-    { l: 1 as 0|1|2, label: "Moderate", color: "#d4cc5c", width: 64  },
-    { l: 2 as 0|1|2, label: "High",     color: "#e05c5c", width: 100 },
+  const LEVELS = [
+    { l: 0 as 0|1|2, label: "Low",      color: "#5cce8c" },
+    { l: 1 as 0|1|2, label: "Moderate", color: "#d4cc5c" },
+    { l: 2 as 0|1|2, label: "High",     color: "#e05c5c" },
   ];
 
-  const rungs = GNSS_LEVELS.map(gl => {
-    const isCurrent = gl.l === gn.level;
-    const labelCol  = isCurrent ? gl.color : "#566068";
-    const barOp     = isCurrent ? "0.88" : "0.16";
-    return `<div class="hw-gnss-rung">
-      <span class="hw-gnss-label" style="color:${labelCol}">${gl.label}</span>
-      <div class="hw-gnss-bar-track">
-        <div class="hw-gnss-bar-fill" style="width:${gl.width}%;background:${gl.color};opacity:${barOp}"></div>
-      </div>
-      <span class="hw-gnss-mark" style="color:${isCurrent ? gl.color : "transparent"}">${isCurrent ? "◀" : ""}</span>
-    </div>`;
+  const cells = LEVELS.map(lv => {
+    const active = lv.l === gn.level;
+    const bg     = active ? `${lv.color}2e` : "#1b2a2e";
+    const col    = active ? lv.color : "#3d5058";
+    const border = active ? `1px solid ${lv.color}66` : "1px solid #253035";
+    return `<div class="hw-level-cell" style="background:${bg};color:${col};border:${border}">${lv.label}</div>`;
   }).join("");
 
-  const kpStr   = gn.kp != null ? `Kp ${gn.kp.toFixed(1)}` : "Kp —";
+  const kpStr = gn.kp != null ? `Kp ${gn.kp.toFixed(1)}` : "Kp —";
   const noteMap: Record<number, string> = {
     0: "Stable ionosphere · normal positioning accuracy",
     1: "Possible signal delay or scintillation",
@@ -2428,7 +2407,7 @@ function renderGnssTip(data: HelioNow, isOpen: boolean): string {
     : "";
 
   return `<div class="hw-impact-tip${openCls}">
-    <div class="hw-gnss-ladder">${rungs}</div>
+    <div class="hw-level-strip">${cells}</div>
     <div class="hw-gnss-meta">${kpStr} · ${escText(gn.gScale)} · ${noteMap[gn.level]}</div>
     ${flareNote}
   </div>`;
