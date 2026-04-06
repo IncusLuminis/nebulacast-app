@@ -394,33 +394,13 @@
     ${y}
     ${M}
     ${W}
-  </svg>`}function Nt(e){let o=ye(e),t=e.metrics.imf_bz_nt,s=e.metrics.solar_wind_kms,n=t!=null?(t>=0?"+":"")+t.toFixed(1)+" nT":"\u2014",c=t!=null?t<=-10?"#e05c5c":t<=-5?"#e0a84a":t>=5?"#5cce8c":"#a0b4b8":"#607880",r=t!=null&&t<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":t!=null&&t<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-kpi-popover">
+  </svg>`}function Nt(e){let o=ye(e),t=e.metrics.imf_bz_nt,s=e.metrics.solar_wind_kms,n=t!=null&&t<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":t!=null&&t<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-kpi-popover">
     ${ce("Magnetosphere")}
     <div class="hw-spark-wrap" style="border-radius:3px;overflow:hidden">${zt(o,t,s,!1)}</div>
-    <div class="hw-kpi-stat-row">
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">IMF Bz</span>
-        <span class="hw-kpi-stat-value" style="color:${c}">${g(n)}</span>
-      </div>
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Coupling</span>
-        <span class="hw-kpi-stat-value" style="color:${o.color}">${g(o.coupling)}</span>
-      </div>
-    </div>
-    <div class="hw-kpi-hint" style="margin-bottom:0">${g(r)}</div>
-  </div>`}function Bt(e,o){if(!o)return"";let t=ye(e),s=e.metrics.imf_bz_nt,n=e.metrics.solar_wind_kms,c=s!=null?(s>=0?"+":"")+s.toFixed(1)+" nT":"\u2014",r=s!=null?s<=-10?"#e05c5c":s<=-5?"#e0a84a":s>=5?"#5cce8c":"#a0b4b8":"#607880",i=s!=null&&s<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":s!=null&&s<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-impact-tip hw-impact-tip-open">
+    <div class="hw-kpi-hint" style="margin-bottom:0">${g(n)}</div>
+  </div>`}function Bt(e,o){if(!o)return"";let t=ye(e),s=e.metrics.imf_bz_nt,n=e.metrics.solar_wind_kms,c=s!=null&&s<-5?"Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely.":s!=null&&s<0?"Southward IMF Bz is partially opening the magnetosphere. Enhanced aurora activity possible.":"Northward IMF Bz keeps the magnetosphere closed. Solar wind energy transfer is minimal.";return`<div class="hw-impact-tip hw-impact-tip-open">
     <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${ke("magnetosphere",{windKms:n!=null?n:void 0,bz:s!=null?s:void 0})}</div>
-    <div class="hw-kpi-stat-row">
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">IMF Bz</span>
-        <span class="hw-kpi-stat-value" style="color:${r}">${g(c)}</span>
-      </div>
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Coupling</span>
-        <span class="hw-kpi-stat-value" style="color:${t.color}">${g(t.coupling)}</span>
-      </div>
-    </div>
-    <div class="hw-kpi-hint" style="margin-bottom:0">${g(i)}</div>
+    <div class="hw-kpi-hint" style="margin-bottom:0">${g(c)}</div>
   </div>`}function Ze(e,o,t){if(!e.length)return null;let s=(t%360+360)%360,n=-1,c=1/0,r=Math.cos(o*Math.PI/180);for(let i of e){let a=i.lat-o,l=(i.lon-s+180+360)%360-180,d=a*a+l*r*(l*r);d<c&&(c=d,n=i.prob)}return n>=0?n:null}function Je(e){return`<svg viewBox="0 0 100 100" width="100%" height="100%"
     style="position:absolute;top:0;left:0;pointer-events:none">${['<text x="50" y="4"   font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">N</text>','<text x="96"  y="51" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">W</text>','<text x="50" y="97"  font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">S</text>','<text x="4"   y="51" font-size="3.2" fill="#6a8a98" text-anchor="middle" font-family="monospace" opacity=".6">E</text>'].join("")}</svg>`}function Pt(e,o){let t=`https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?_=${Date.now()}`,s=null;o&&e.lat!=null&&e.lon!=null&&(s=Ze(o.entries,e.lat,e.lon));let n=e.lat!=null&&e.lon!=null,c=s!=null?s>=30?"#5cce8c":s>=10?"#d4cc5c":"#9ab4bc":"#607880",r=s!=null?`${s}%`:o?"n/a":"\u2026",i=n?`
     <div class="hw-aurora-obs-panel">
@@ -686,7 +666,7 @@ C: ${a.c_flare_probability}%  M: ${a.m_flare_probability}%  X: ${a.x_flare_proba
     </div>`;return`
     <div class="hw-impacts">
       ${x}
-      ${s?[p,A,h,oe,Se,Y,w,N,j,pt,X,ee,se,Z,B].join(""):""}
+      ${s?[p,A,h,oe,Se,Y,w,N,X,j,pt,ee,se,Z,B].join(""):""}
     </div>`}var Ke={geomagnetic_storm:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="4"/><path d="M6.5 2.5v1.5M6.5 9v1.5M2.5 6.5H4M9 6.5h1.5M4.1 4.1l1.1 1.1M7.8 7.8l1.1 1.1M4.1 8.9l1.1-1.1M7.8 5.2l1.1-1.1"/></svg>',geomagnetic_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="4"/><path d="M6.5 4v3l2 1.2"/></svg>',radio_blackout:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M4 10.5a3.5 3.5 0 0 1 5 0"/><path d="M1.8 8.3A6.5 6.5 0 0 1 11.2 8.3"/><circle cx="6.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg>',radiation_storm:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M6.5 1.5L8 5H5L6.5 1.5z" fill="currentColor" opacity=".7" stroke="none"/><path d="M3 11l2-3.5h3L10 11"/><line x1="6.5" y1="7" x2="6.5" y2="11"/></svg>',cme_arrival:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="2"/><path d="M1.5 6.5h2M9.5 6.5h2M6.5 1.5v2M6.5 9.5v2"/><path d="M3.5 3.5l1.4 1.4M8.1 8.1l1.4 1.4M8.1 3.5L6.7 4.9M4.9 8.1L3.5 9.5"/></svg>',cme_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 C2 4 4 2 6.5 2 C9 2 11 4 11 6.5"/><path d="M4 6.5 C4 5 5.1 4 6.5 4 C7.9 4 9 5 9 6.5"/><circle cx="6.5" cy="6.5" r="1.3" fill="currentColor" stroke="none"/></svg>',aurora_watch:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true"><path d="M6.5 1L7.5 5.5L12 6.5L7.5 7.5L6.5 12L5.5 7.5L1 6.5L5.5 5.5Z" fill="currentColor" opacity=".85"/></svg>',solar_flare:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="2.2" fill="currentColor" stroke="none"/><path d="M6.5 1v1.5M6.5 10v1.5M1 6.5h1.5M10 6.5h1.5M2.8 2.8l1.1 1.1M9 9l1.1 1.1M9 2.8l-1.1 1.1M4 9l-1.1 1.1"/></svg>',space_weather_info:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M6.5 6v4"/><circle cx="6.5" cy="3.8" r=".6" fill="currentColor" stroke="none"/></svg>',unknown:'<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="6.5" cy="6.5" r="5"/><path d="M4.8 4.8c0-1 .8-1.8 1.8-1.8s1.7.8 1.7 1.8c0 .9-.6 1.4-1.2 1.8-.6.4-.8.7-.8 1.2"/><circle cx="6.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/></svg>'};function Ro(e,o){var a,l;let t=(a=bt[e.level])!=null?a:"#666",s=e.level.charAt(0).toUpperCase()+e.level.slice(1),n=(l=Ke[e.kind])!=null?l:Ke.unknown,c=[_t(e.t_utc),e.source_code?`SWPC: ${e.source_code}`:""].filter(Boolean).join(" \xB7 "),r=o&&e.raw_body?`<div class="hw-alert-body">${g(e.raw_body)}</div>`:"";return`<div class="hw-alert-item${o?" hw-alert-open":""}" style="border-color:${t}" data-alert-key="${O(e.dedupe_key)}">
     <div class="hw-alert-top">
       <span class="hw-alert-icon" style="color:${t}">${n}</span>

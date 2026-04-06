@@ -1128,9 +1128,6 @@ function renderMagnetospherePopover(data: HelioNow): string {
   const bz    = data.metrics.imf_bz_nt;
   const wind  = data.metrics.solar_wind_kms;
 
-  const bzStr   = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
-  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
-
   const hintText = (bz != null && bz < -5)
     ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
     : (bz != null && bz < 0)
@@ -1140,16 +1137,6 @@ function renderMagnetospherePopover(data: HelioNow): string {
   return `<div class="hw-kpi-popover">
     ${renderPopoverHeader("Magnetosphere")}
     <div class="hw-spark-wrap" style="border-radius:3px;overflow:hidden">${renderMagnetosphereSvg(info, bz, wind, false)}</div>
-    <div class="hw-kpi-stat-row">
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">IMF Bz</span>
-        <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Coupling</span>
-        <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
-      </div>
-    </div>
     <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
   </div>`;
 }
@@ -1161,9 +1148,6 @@ function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
   const bz    = data.metrics.imf_bz_nt;
   const wind  = data.metrics.solar_wind_kms;
 
-  const bzStr   = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
-  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
-
   const hintText = (bz != null && bz < -5)
     ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
     : (bz != null && bz < 0)
@@ -1174,16 +1158,6 @@ function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
 
   return `<div class="hw-impact-tip hw-impact-tip-open">
     <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${scene}</div>
-    <div class="hw-kpi-stat-row">
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">IMF Bz</span>
-        <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Coupling</span>
-        <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
-      </div>
-    </div>
     <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
   </div>`;
 }
@@ -2794,9 +2768,9 @@ function renderImpacts(
         xrayRowHtml,
         solarHtml,
         sepHtml,
+        windRowHtml,
         imfRowHtml,
         magRowHtml,
-        windRowHtml,
         hssRowHtml,
         swdpRowHtml,
         cmeRowHtml,
