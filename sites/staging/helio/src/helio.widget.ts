@@ -123,7 +123,7 @@ function escText(s: string): string {
 }
 /** Hero chip → Indicators panel section ids (scroll to first, flash all). */
 const HERO_SCALE_LINKS = {
-  G: ["aurora", "storm_risk"],
+  G: ["magnetosphere"],
   R: ["radio"],
   S: ["satellite_drag", "gnss"],
   X: ["xray", "solar"],
@@ -338,6 +338,7 @@ const WIDGET_CSS = `
 .hw-chain-state{font-size:.82em;font-weight:700;line-height:1.1;margin-bottom:4px}
 .hw-chain-msgs{font-size:.67em;color:#7a9298;line-height:1.45}
 .hw-chain-msg{display:block}
+.hw-chain-col-earth{cursor:pointer;border-radius:4px;transition:background .15s}.hw-chain-col-earth:hover{background:#1e2c3044}
 /* Satellite Drag / GNSS Risk — shared level strip */
 .hw-level-strip{display:flex;gap:5px;margin:6px 0 8px}
 .hw-level-cell{flex:1;text-align:center;padding:5px 0;border-radius:4px;font-size:.78em;font-weight:700;border:1px solid transparent}
@@ -1152,12 +1153,11 @@ function renderMagnetospherePopover(data: HelioNow): string {
   </div>`;
 }
 
-/** Tip content for Magnetosphere impact row (Observer Impacts panel) */
+/** Tip content for Sun-Earth Interaction impact row (Observer Impacts panel) */
 function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
   if (!isOpen) return "";
-  const info  = deriveMagnetInfo(data);
-  const bz    = data.metrics.imf_bz_nt;
-  const wind  = data.metrics.solar_wind_kms;
+  const bz   = data.metrics.imf_bz_nt;
+  const wind = data.metrics.solar_wind_kms;
 
   const hintText = (bz != null && bz < -5)
     ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
@@ -1168,8 +1168,9 @@ function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
   const scene = buildHelioSolarEarthScene("magnetosphere", { windKms: wind ?? undefined, bz: bz ?? undefined });
 
   return `<div class="hw-impact-tip hw-impact-tip-open">
-    <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${scene}</div>
-    <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
+    <div style="border-radius:3px;overflow:hidden;margin-bottom:2px">${scene}</div>
+    ${renderChainPanelInline(data)}
+    <div class="hw-kpi-hint" style="margin-top:6px;margin-bottom:0">${escText(hintText)}</div>
   </div>`;
 }
 
@@ -2349,6 +2350,30 @@ function renderChainPanel(data: HelioNow): string {
   </div>`;
 }
 
+/** Inline version for embedding inside the Sun-Earth interaction tip (no outer wrapper). */
+function renderChainPanelInline(data: HelioNow): string {
+  const panel = data.chain_panel ?? deriveChainPanel(data);
+  const arrow = `<div class="hw-chain-arrow">›</div>`;
+  // EARTH column is clickable — opens Aurora & Storm Risk rows
+  const earthColor = CHAIN_COLOR[panel.earth.severity] ?? CHAIN_COLOR.none;
+  const earthGlow  = CHAIN_GLOW[panel.earth.severity]  ?? "none";
+  const earthMsgs  = panel.earth.messages.slice(0, 3)
+    .map(m => `<span class="hw-chain-msg">${escText(m)}</span>`).join("");
+  const earthCol = `<div class="hw-chain-col hw-chain-col-earth" data-chain-col="earth" title="Click to expand Aurora &amp; Storm Risk">
+    <div class="hw-chain-head">Earth</div>
+    <span class="hw-chain-lamp" style="background:${earthColor};box-shadow:${earthGlow}"></span>
+    <div class="hw-chain-state" style="color:${earthColor}">${escText(panel.earth.label)}</div>
+    <div class="hw-chain-msgs">${earthMsgs}</div>
+  </div>`;
+  return `<div class="hw-chain-cols" style="margin:8px 0 4px">
+    ${renderChainCol(panel.sun,   "Sun")}
+    ${arrow}
+    ${renderChainCol(panel.space, "Space")}
+    ${arrow}
+    ${earthCol}
+  </div>`;
+}
+
 // ── Satellite Drag Indicator ──────────────────────────────────────────────────
 interface SatDragState {
   level:  0 | 1 | 2;
@@ -2835,16 +2860,6 @@ function renderImpacts(
       ${renderSolarCycleTip(scOpen)}
     </div>`;
 
-  // Coronal Hole / High-Speed Stream — derived from solar wind speed
-  const hssState    = deriveHSSState(data);
-  const hssOpen     = expandedImpacts.has("hss");
-  const hssIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="3.5" cy="6.5" r="2.5"/><line x1="6.2" y1="6.5" x2="11.5" y2="6.5"/><polyline points="9.5,4.5 11.5,6.5 9.5,8.5" fill="currentColor" stroke="none"/></svg>`;
-  const hssRowHtml  = `<div class="hw-impact-row${hssOpen ? " hw-impact-open" : ""}" data-impact-row="hss">
-      <span class="hw-impact-caret">▶</span>
-      <span class="hw-impact-kind" style="color:${hssState.color}">${hssIcon}<span style="color:#b4c6cc">Coronal Hole</span></span>
-      <span class="hw-impact-badge" style="background:${hssState.color}22;color:${hssState.color}">${hssState.label}</span>
-      ${renderHSSTip(data, hssOpen)}
-    </div>`;
 
   // Satellite Drag — derived from G-scale / Kp
   const sdState     = deriveSatDragState(data);
@@ -2869,23 +2884,14 @@ function renderImpacts(
     </div>`;
 
 
-  const cmeState    = deriveCMEState(data);
-  const cmeOpen     = expandedImpacts.has("cme_cone");
-  const cmeIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><circle cx="2.5" cy="6.5" r="2" fill="currentColor" stroke="none"/><line x1="5" y1="6.5" x2="12" y2="6.5"/><polyline points="10,4.5 12,6.5 10,8.5" fill="none"/><line x1="4.2" y1="4.2" x2="5.5" y2="5.5" stroke-width="1"/><line x1="4.2" y1="8.8" x2="5.5" y2="7.5" stroke-width="1"/></svg>`;
-  const cmeRowHtml  = `<div class="hw-impact-row${cmeOpen ? " hw-impact-open" : ""}" data-impact-row="cme_cone">
-      <span class="hw-impact-caret">▶</span>
-      <span class="hw-impact-kind" style="color:${cmeState.color}">${cmeIcon}<span style="color:#b4c6cc">CME Cone</span></span>
-      <span class="hw-impact-badge" style="background:${cmeState.color}22;color:${cmeState.color}">${escText(cmeState.label)}</span>
-      ${renderCMEConeTip(data, cmeOpen)}
-    </div>`;
 
-  // Magnetosphere — moved from hero KPI popover into Observer Impacts
+  // Sun-Earth Interaction (formerly Magnetosphere)
   const magInfo     = deriveMagnetInfo(data);
   const magOpen     = expandedImpacts.has("magnetosphere");
   const magIcon     = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 6.5 Q2 2 6.5 2 Q11 2 11 6.5 Q11 11 6.5 11 Q2 11 2 6.5"/><path d="M4.5 6.5 Q4.5 4 6.5 4 Q8.5 4 8.5 6.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/></svg>`;
   const magRowHtml  = `<div class="hw-impact-row${magOpen ? " hw-impact-open" : ""}" data-impact-row="magnetosphere">
       <span class="hw-impact-caret">▶</span>
-      <span class="hw-impact-kind" style="color:${magInfo.color}">${magIcon}<span style="color:#b4c6cc">Magnetosphere</span></span>
+      <span class="hw-impact-kind" style="color:${magInfo.color}">${magIcon}<span style="color:#b4c6cc">Sun-Earth interaction</span></span>
       <span class="hw-impact-badge" style="background:${magInfo.color}22;color:${magInfo.color}">${escText(magInfo.label)}</span>
       ${renderMagnetosphereTip(data, magOpen)}
     </div>`;
@@ -2894,6 +2900,7 @@ function renderImpacts(
     <div class="hw-impacts">
       ${sectionHdr}
       ${impactsOpen ? [
+        magRowHtml,
         auroraHtml,
         gsRowHtml,
         radioHtml,
@@ -2904,9 +2911,6 @@ function renderImpacts(
         sepHtml,
         windRowHtml,
         imfRowHtml,
-        magRowHtml,
-        hssRowHtml,
-        cmeRowHtml,
         scRowHtml,
       ].join("") : ""}
     </div>`;
@@ -3287,7 +3291,6 @@ function renderCard(
     <div class="hw-root">
       ${renderHeader(data)}
       ${renderHero(data, heroExpanded, scrubData, opts, ovationData)}
-      ${renderChainPanel(data)}
       ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${histToggle}
       ${histDetail}
@@ -3374,6 +3377,9 @@ class HelioWidgetInstance {
         case "solar":
           this.solarExpanded = true;
           break;
+        case "magnetosphere":
+          this.expandedImpacts.add("magnetosphere");
+          break;
         default:
           if (helioDevHost()) console.warn(`[Helio] Hero chip nav: unknown section id "${domId}"`);
       }
@@ -3405,6 +3411,9 @@ class HelioWidgetInstance {
         case "solar":
           this.solarExpanded = false;
           break;
+        case "magnetosphere":
+          this.expandedImpacts.delete("magnetosphere");
+          break;
         default:
           break;
       }
@@ -3414,12 +3423,13 @@ class HelioWidgetInstance {
   private heroDomIdExpanded(domId: string): boolean {
     switch (domId) {
       case "storm_risk":    return this.expandedImpacts.has("geomag_storm");
-      case "radio":       return this.expandedImpacts.has("radio");
+      case "radio":         return this.expandedImpacts.has("radio");
       case "satellite_drag": return this.expandedImpacts.has("sat_drag");
       case "gnss":          return this.expandedImpacts.has("gnss");
       case "aurora":        return this.expandedImpacts.has("aurora");
       case "xray":          return this.expandedImpacts.has("xray");
       case "solar":         return this.solarExpanded;
+      case "magnetosphere": return this.expandedImpacts.has("magnetosphere");
       default:              return false;
     }
   }
@@ -3482,6 +3492,22 @@ class HelioWidgetInstance {
     // Indicators panel: collapse / expand
     if (target.closest("[data-impacts-toggle]")) {
       this.impactsOpen = !this.impactsOpen;
+      this.saveUiState();
+      this.render();
+      return;
+    }
+
+    // Chain panel EARTH column → toggle Aurora + Storm Risk rows
+    if (target.closest("[data-chain-col='earth']")) {
+      this.impactsOpen = true;
+      const bothOpen = this.expandedImpacts.has("aurora") && this.expandedImpacts.has("geomag_storm");
+      if (bothOpen) {
+        this.expandedImpacts.delete("aurora");
+        this.expandedImpacts.delete("geomag_storm");
+      } else {
+        this.expandedImpacts.add("aurora");
+        this.expandedImpacts.add("geomag_storm");
+      }
       this.saveUiState();
       this.render();
       return;
