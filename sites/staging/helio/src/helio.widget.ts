@@ -2769,10 +2769,10 @@ function renderImpacts(
         solarHtml,
         sepHtml,
         windRowHtml,
+        swdpRowHtml,
         imfRowHtml,
         magRowHtml,
         hssRowHtml,
-        swdpRowHtml,
         cmeRowHtml,
         scRowHtml,
       ].join("") : ""}
