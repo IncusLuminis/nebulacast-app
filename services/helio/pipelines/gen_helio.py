@@ -32,7 +32,7 @@ from normalizers.helio_now import normalize
 from interpreters.swpc_alerts import interpret, derive_scales
 from interpreters.timeline_builder import build_timeline
 from interpreters.cme_tracker import build_cme_tracker
-from aggregators.helio_state import derive
+from aggregators.helio_state import derive, derive_chain_panel
 
 _OUTPUT_PATH = _repo_root / "sites" / "staging" / "data" / "helio_now.json"
 
@@ -105,6 +105,9 @@ def main() -> int:
           f"kp_max_24h={aggregate['forecast']['kp_max_next_24h']} "
           f"trend={aggregate['forecast']['trend']}")
 
+    # ── 4b. Chain panel ───────────────────────────────────────────────────────
+    chain_panel = derive_chain_panel(aggregate, metrics, cme_tracker)
+
     # ── 5. Serialize (Task 4) ─────────────────────────────────────────────────
     payload = {
         "schema_version": "helio_now/v1",
@@ -127,6 +130,7 @@ def main() -> int:
         "alerts_all":       aggregate["alerts_all"],
         "timeline":         aggregate["timeline"],
         "cme_tracker":      cme_tracker,
+        "chain_panel":      chain_panel,
         "raw": {
             "alerts_count": len(raw_alerts),
         },

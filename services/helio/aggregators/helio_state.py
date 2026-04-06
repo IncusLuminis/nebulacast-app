@@ -631,3 +631,128 @@ def derive(
         "alerts_all":       alerts_all,
         "timeline":         timeline or [],
     }
+
+
+def derive_chain_panel(
+    aggregate: Dict[str, Any],
+    metrics: Dict[str, Any],
+    cme_tracker: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Derive the Space Weather Chain panel: Sun → Space → Earth.
+
+    Returns a dict with keys sun/space/earth, each containing:
+        state, severity, label, messages
+    """
+    from datetime import timezone  # local import to avoid circular issues
+
+    scales          = aggregate.get("scales", {})
+    observer_impacts = aggregate.get("observer_impacts") or []
+    coronal_hole    = aggregate.get("coronal_hole") or {}
+
+    xray_class     = metrics.get("xray_class") or "A"
+    solar_wind_kms = metrics.get("solar_wind_kms")
+    kp_latest      = metrics.get("kp_latest")
+    g_num          = int(scales.get("g_scale", "G0")[1])
+
+    # ── SUN ───────────────────────────────────────────────────────────────────
+    solar_act  = next((i for i in observer_impacts if i.get("kind") == "solar_activity"), None)
+    solar_level = solar_act.get("level", "none") if solar_act else "none"
+    ch_status  = coronal_hole.get("status", "quiet")
+
+    sun_msgs: list = []
+    if xray_class == "X":
+        sun_msgs.append("Solar flare: X-class")
+        sun_msgs.append("Elevated X-ray activity")
+    elif xray_class == "M":
+        sun_msgs.append("Solar flare: M-class")
+        sun_msgs.append("Elevated X-ray activity")
+    elif xray_class == "C":
+        sun_msgs.append("Minor C-class flare activity")
+
+    if ch_status in ("active", "strong"):
+        sun_msgs.append(f"Coronal hole: {ch_status.capitalize()}")
+        spd = coronal_hole.get("estimated_speed_kms")
+        if spd is not None:
+            sun_msgs.append(f"Fast solar wind: ~{round(spd)} km/s")
+
+    if not sun_msgs:
+        sun_msgs.append("No significant solar source activity")
+
+    if xray_class == "X" or solar_level == "high":
+        sun_state, sun_sev = "Strong", "strong"
+    elif xray_class == "M" or solar_level == "moderate" or ch_status == "strong":
+        sun_state, sun_sev = "Active", "moderate"
+    elif xray_class == "C" or solar_level == "low" or ch_status == "active":
+        sun_state, sun_sev = "Elevated", "low"
+    else:
+        sun_state, sun_sev = "Quiet", "none"
+
+    # ── SPACE ─────────────────────────────────────────────────────────────────
+    space_msgs: list = []
+    space_state, space_sev = "Clear", "none"
+
+    if cme_tracker:
+        ct_status = cme_tracker.get("status", "")
+        ct_impact = cme_tracker.get("impact_level", "low")
+        ct_arrival = cme_tracker.get("arrival_time_utc")
+
+        if ct_status in ("arrived", "arrival_window"):
+            space_state = "Impacting"
+            space_sev   = "strong" if ct_impact == "high" else "moderate"
+            space_msgs.append("CME impact underway")
+            spd = cme_tracker.get("speed_kms")
+            if spd is not None:
+                space_msgs.append(f"Speed: ~{round(spd)} km/s")
+        elif ct_status == "inbound":
+            space_state = "Incoming"
+            space_sev   = "moderate" if ct_impact == "high" else "low"
+            space_msgs.append("Earth-directed CME detected")
+            if ct_arrival:
+                try:
+                    from datetime import datetime
+                    eta = datetime.fromisoformat(ct_arrival.replace("Z", "+00:00"))
+                    space_msgs.append(f"ETA: {eta.strftime('%d %b %H:%M UTC')}")
+                except Exception:
+                    space_msgs.append(f"ETA: {ct_arrival}")
+            space_msgs.append(f"Expected impact: {ct_impact.capitalize()}")
+
+    if not space_msgs:
+        if solar_wind_kms and solar_wind_kms > 500:
+            space_state = "Active"
+            space_sev   = "low"
+            space_msgs.append(f"High-speed solar wind: {round(solar_wind_kms)} km/s")
+            space_msgs.append("No Earth-directed CME tracked")
+        else:
+            space_msgs.append("No Earth-directed events")
+
+    # ── EARTH ─────────────────────────────────────────────────────────────────
+    kp_str = f"Kp {kp_latest:.1f}" if kp_latest is not None else "Kp —"
+    earth_msgs = [f"G{g_num}"]
+
+    if g_num >= 4:
+        earth_state, earth_sev = "Severe", "severe"
+        earth_msgs.append("Severe geomagnetic storm")
+    elif g_num == 3:
+        earth_state, earth_sev = "Storm", "strong"
+        earth_msgs.append("Strong geomagnetic storm")
+    elif g_num == 2:
+        earth_state, earth_sev = "Storm", "moderate"
+        earth_msgs.append("Moderate geomagnetic storm")
+    elif g_num == 1:
+        earth_state, earth_sev = "Active", "low"
+        earth_msgs.append("Minor geomagnetic storm")
+    else:
+        earth_state, earth_sev = "Quiet", "none"
+        earth_msgs.append("Quiet conditions")
+
+    earth_msgs.append(kp_str)
+
+    def _col(state: str, sev: str, msgs: list) -> Dict[str, Any]:
+        return {"state": state, "severity": sev, "label": state, "messages": msgs}
+
+    return {
+        "sun":   _col(sun_state,   sun_sev,   sun_msgs),
+        "space": _col(space_state, space_sev, space_msgs),
+        "earth": _col(earth_state, earth_sev, earth_msgs),
+    }
