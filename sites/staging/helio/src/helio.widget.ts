@@ -2723,17 +2723,6 @@ function renderImpacts(
       ${renderGnssTip(data, gnOpen)}
     </div>`;
 
-  // Solar Wind Dynamic Pressure
-  const swdpState   = deriveSWDPState(data);
-  const swdpOpen    = expandedImpacts.has("sw_pressure");
-  const swdpBadge   = swdpState.pressure != null ? `${swdpState.pressure.toFixed(2)} nPa` : "—";
-  const swdpIcon    = `<svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.3"><path d="M2 9 Q6.5 3 11 9"/><path d="M4 9 Q6.5 5 9 9"/><line x1="6.5" y1="9" x2="6.5" y2="11"/></svg>`;
-  const swdpRowHtml = `<div class="hw-impact-row${swdpOpen ? " hw-impact-open" : ""}" data-impact-row="sw_pressure">
-      <span class="hw-impact-caret">▶</span>
-      <span class="hw-impact-kind" style="color:${swdpState.color}">${swdpIcon}<span style="color:#b4c6cc">SW Pressure</span></span>
-      <span class="hw-impact-badge" style="background:${swdpState.color}22;color:${swdpState.color}">${swdpBadge}</span>
-      ${renderSWDPTip(data, swdpOpen)}
-    </div>`;
 
   const cmeState    = deriveCMEState(data);
   const cmeOpen     = expandedImpacts.has("cme_cone");
@@ -2769,7 +2758,6 @@ function renderImpacts(
         solarHtml,
         sepHtml,
         windRowHtml,
-        swdpRowHtml,
         imfRowHtml,
         magRowHtml,
         hssRowHtml,
