@@ -12,6 +12,20 @@ export type ScaleValue       = "G0"|"G1"|"G2"|"G3"|"G4"|"G5"|"R0"|"R1"|"R2"|"R3"
 export type CmeTrackerStatus      = "detected" | "inbound" | "arrival_window" | "arrived";
 export type CmeImpactLevel        = "low" | "moderate" | "high" | "unknown";
 export type CoronalHoleStatus     = "quiet" | "watch" | "active" | "strong";
+export type ChainSeverity         = "none" | "low" | "moderate" | "strong" | "severe";
+
+export interface ChainPanelColumn {
+  state:    string;
+  severity: ChainSeverity;
+  label:    string;
+  messages: string[];
+}
+
+export interface ChainPanel {
+  sun:   ChainPanelColumn;
+  space: ChainPanelColumn;
+  earth: ChainPanelColumn;
+}
 
 export interface KpForecastPoint {
   t_utc: string;
@@ -192,6 +206,7 @@ export interface HelioNow {
   alerts_all:       HelioEvent[];
   timeline:         TimelineEvent[];
   cme_tracker:      CmeTrackerEvent | null;
+  chain_panel?:     ChainPanel;
   raw: {
     alerts_count: number;
   };

@@ -327,6 +327,17 @@ const WIDGET_CSS = `
 /* Coronal Hole / HSS Indicator */
 .hw-hss-diagram{display:block;width:100%;margin:4px 0 5px;overflow:visible}
 .hw-hss-meta{font-size:.75em;color:#7a9298;margin-top:1px}
+/* Space Weather Chain panel */
+.hw-chain{padding:10px 12px 8px;border-top:1px solid #1a2b30}
+.hw-chain-title{font-size:.62em;letter-spacing:.09em;color:#4a6068;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.hw-chain-cols{display:flex;align-items:flex-start}
+.hw-chain-col{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 2px;min-width:0}
+.hw-chain-arrow{display:flex;align-items:center;color:#253540;font-size:.8em;padding:0 2px;margin-top:18px;flex-shrink:0}
+.hw-chain-head{font-size:.58em;letter-spacing:.07em;text-transform:uppercase;color:#4a6068;font-weight:600;margin-bottom:5px}
+.hw-chain-lamp{width:8px;height:8px;border-radius:50%;display:inline-block;margin-bottom:5px}
+.hw-chain-state{font-size:.82em;font-weight:700;line-height:1.1;margin-bottom:4px}
+.hw-chain-msgs{font-size:.67em;color:#7a9298;line-height:1.45}
+.hw-chain-msg{display:block}
 /* Satellite Drag / GNSS Risk — shared level strip */
 .hw-level-strip{display:flex;gap:5px;margin:6px 0 8px}
 .hw-level-cell{flex:1;text-align:center;padding:5px 0;border-radius:4px;font-size:.78em;font-weight:700;border:1px solid transparent}
@@ -2204,6 +2215,140 @@ function renderHSSTip(data: HelioNow, isOpen: boolean): string {
   </div>`;
 }
 
+// ── Space Weather Chain Panel ─────────────────────────────────────────────────
+
+const CHAIN_COLOR: Record<string, string> = {
+  none:     "#3a5060",
+  low:      "#5cce8c",
+  moderate: "#d4cc5c",
+  strong:   "#e0a84a",
+  severe:   "#e05c5c",
+};
+
+const CHAIN_GLOW: Record<string, string> = {
+  none:     "none",
+  low:      "0 0 5px #5cce8c55",
+  moderate: "0 0 5px #d4cc5c55",
+  strong:   "0 0 6px #e0a84a77",
+  severe:   "0 0 7px #e05c5c99",
+};
+
+function deriveChainPanel(data: HelioNow): ChainPanel {
+  // ── SUN ──────────────────────────────────────────────────────────────
+  const xray       = data.metrics.xray_class ?? "A";
+  const solarAct   = data.observer_impacts.find(i => i.kind === "solar_activity");
+  const solarLevel = solarAct?.level ?? "none";
+  const ch         = data.coronal_hole;
+  const chStatus   = ch?.status ?? "quiet";
+
+  const sunMsgs: string[] = [];
+  if (xray === "X")      { sunMsgs.push("Solar flare: X-class"); sunMsgs.push("Elevated X-ray activity"); }
+  else if (xray === "M") { sunMsgs.push("Solar flare: M-class"); sunMsgs.push("Elevated X-ray activity"); }
+  else if (xray === "C") { sunMsgs.push("Minor C-class flare activity"); }
+  if (chStatus === "strong" || chStatus === "active") {
+    sunMsgs.push(`Coronal hole: ${chStatus === "strong" ? "Strong" : "Active"}`);
+    if (ch?.estimated_speed_kms != null)
+      sunMsgs.push(`Fast solar wind: ~${Math.round(ch.estimated_speed_kms)} km/s`);
+  }
+  if (sunMsgs.length === 0) sunMsgs.push("No significant solar source activity");
+
+  let sunState: string; let sunSev: string;
+  if (xray === "X" || solarLevel === "high")
+    { sunState = "Strong";   sunSev = "strong"; }
+  else if (xray === "M" || solarLevel === "moderate" || chStatus === "strong")
+    { sunState = "Active";   sunSev = "moderate"; }
+  else if (xray === "C" || solarLevel === "low" || chStatus === "active")
+    { sunState = "Elevated"; sunSev = "low"; }
+  else
+    { sunState = "Quiet";   sunSev = "none"; }
+
+  // ── SPACE ─────────────────────────────────────────────────────────────
+  const ct   = data.cme_tracker;
+  const wind = data.metrics.solar_wind_kms;
+  const spaceMsgs: string[] = [];
+  let spaceState = "Clear"; let spaceSev = "none";
+
+  if (ct) {
+    const ctStatus = ct.status;
+    const ctImpact = ct.impact_level;
+    if (ctStatus === "arrived" || ctStatus === "arrival_window") {
+      spaceState = "Impacting";
+      spaceSev   = ctImpact === "high" ? "strong" : "moderate";
+      spaceMsgs.push("CME impact underway");
+      if (ct.speed_kms != null) spaceMsgs.push(`Speed: ~${Math.round(ct.speed_kms)} km/s`);
+    } else if (ctStatus === "inbound" || ctStatus === "detected") {
+      spaceState = "Incoming";
+      spaceSev   = ctImpact === "high" ? "moderate" : "low";
+      spaceMsgs.push("Earth-directed CME detected");
+      if (ct.arrival_time_utc) {
+        const eta = new Date(ct.arrival_time_utc);
+        const d = eta.getUTCDate().toString().padStart(2, "0");
+        const mo = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][eta.getUTCMonth()];
+        const hh = eta.getUTCHours().toString().padStart(2, "0");
+        const mm = eta.getUTCMinutes().toString().padStart(2, "0");
+        spaceMsgs.push(`ETA: ${d} ${mo} ${hh}:${mm} UTC`);
+      }
+      spaceMsgs.push(`Expected impact: ${ctImpact.charAt(0).toUpperCase() + ctImpact.slice(1)}`);
+    }
+  }
+  if (spaceMsgs.length === 0) {
+    if (wind != null && wind > 500) {
+      spaceState = "Active"; spaceSev = "low";
+      spaceMsgs.push(`High-speed solar wind: ${Math.round(wind)} km/s`);
+      spaceMsgs.push("No Earth-directed CME tracked");
+    } else {
+      spaceMsgs.push("No Earth-directed events");
+    }
+  }
+
+  // ── EARTH ─────────────────────────────────────────────────────────────
+  const gNum = parseInt((data.scales.g_scale ?? "G0").slice(1), 10);
+  const kp   = data.metrics.kp_latest;
+  const kpStr = kp != null ? `Kp ${kp.toFixed(1)}` : "Kp —";
+  const earthMsgs: string[] = [`G${gNum}`];
+  let earthState: string; let earthSev: string;
+  if (gNum >= 4)     { earthState = "Severe"; earthSev = "severe"; earthMsgs.push("Severe geomagnetic storm"); }
+  else if (gNum ===3){ earthState = "Storm";  earthSev = "strong"; earthMsgs.push("Strong geomagnetic storm"); }
+  else if (gNum ===2){ earthState = "Storm";  earthSev = "moderate"; earthMsgs.push("Moderate geomagnetic storm"); }
+  else if (gNum ===1){ earthState = "Active"; earthSev = "low"; earthMsgs.push("Minor geomagnetic storm"); }
+  else               { earthState = "Quiet";  earthSev = "none"; earthMsgs.push("Quiet conditions"); }
+  earthMsgs.push(kpStr);
+
+  return {
+    sun:   { state: sunState,   severity: sunSev   as ChainSeverity, label: sunState,   messages: sunMsgs },
+    space: { state: spaceState, severity: spaceSev  as ChainSeverity, label: spaceState, messages: spaceMsgs },
+    earth: { state: earthState, severity: earthSev  as ChainSeverity, label: earthState, messages: earthMsgs },
+  };
+}
+
+function renderChainCol(col: ChainPanelColumn, headLabel: string): string {
+  const color = CHAIN_COLOR[col.severity] ?? CHAIN_COLOR.none;
+  const glow  = CHAIN_GLOW[col.severity]  ?? "none";
+  const msgs  = col.messages.slice(0, 3)
+    .map(m => `<span class="hw-chain-msg">${escText(m)}</span>`).join("");
+  return `<div class="hw-chain-col">
+    <div class="hw-chain-head">${escText(headLabel)}</div>
+    <span class="hw-chain-lamp" style="background:${color};box-shadow:${glow}"></span>
+    <div class="hw-chain-state" style="color:${color}">${escText(col.label)}</div>
+    <div class="hw-chain-msgs">${msgs}</div>
+  </div>`;
+}
+
+function renderChainPanel(data: HelioNow): string {
+  const panel = data.chain_panel ?? deriveChainPanel(data);
+  const arrow = `<div class="hw-chain-arrow">›</div>`;
+  return `<div class="hw-chain">
+    <div class="hw-chain-title">Solar · Space · Earth</div>
+    <div class="hw-chain-cols">
+      ${renderChainCol(panel.sun,   "Sun")}
+      ${arrow}
+      ${renderChainCol(panel.space, "Space")}
+      ${arrow}
+      ${renderChainCol(panel.earth, "Earth")}
+    </div>
+  </div>`;
+}
+
 // ── Satellite Drag Indicator ──────────────────────────────────────────────────
 interface SatDragState {
   level:  0 | 1 | 2;
@@ -3142,6 +3287,7 @@ function renderCard(
     <div class="hw-root">
       ${renderHeader(data)}
       ${renderHero(data, heroExpanded, scrubData, opts, ovationData)}
+      ${renderChainPanel(data)}
       ${renderImpacts(data, scrubData, solarRegions, impactsOpen, solarExpanded, solarLayers, expandedImpacts, ovationData, opts)}
       ${histToggle}
       ${histDetail}
