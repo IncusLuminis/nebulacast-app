@@ -333,8 +333,8 @@ const WIDGET_CSS = `
 .hw-chain-cols{display:flex;align-items:flex-start}
 .hw-chain-col{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 2px;min-width:0}
 .hw-chain-arrow{display:flex;align-items:center;color:#253540;font-size:.8em;padding:0 2px;margin-top:18px;flex-shrink:0}
-.hw-chain-head{font-size:.58em;letter-spacing:.07em;text-transform:uppercase;color:#4a6068;font-weight:600;margin-bottom:5px}
-.hw-chain-lamp{width:8px;height:8px;border-radius:50%;display:inline-block;margin-bottom:5px}
+.hw-chain-head{font-size:.58em;letter-spacing:.07em;text-transform:uppercase;color:#4a6068;font-weight:600;margin-bottom:4px}
+.hw-chain-alarm{display:block;width:100%;max-width:72px;height:auto;margin:0 auto 5px;border-radius:3px}
 .hw-chain-state{font-size:.82em;font-weight:700;line-height:1.1;margin-bottom:4px}
 .hw-chain-msgs{font-size:.67em;color:#7a9298;line-height:1.45}
 .hw-chain-msg{display:block}
@@ -2218,6 +2218,24 @@ function renderHSSTip(data: HelioNow, isOpen: boolean): string {
 
 // ── Space Weather Chain Panel ─────────────────────────────────────────────────
 
+const CHAIN_GIF_BASE = "/assets/gifs";
+
+const CHAIN_GIF_MAP: Record<string, string> = {
+  none:     "off_green_quiet.gif",
+  low:      "steady_green_normal.gif",
+  moderate: "blink_fast_yellow_watch.gif",
+  strong:   "breathe_slow_red_alert.gif",
+  severe:   "breathe_slow_red_alert.gif",
+};
+
+function getAlarmGif(column: "sun" | "space" | "earth", severity: string): string {
+  // Earth strong/severe → beacon (active storm impact, not incoming alert)
+  if (column === "earth" && (severity === "strong" || severity === "severe")) {
+    return `${CHAIN_GIF_BASE}/beacon_red_storm.gif`;
+  }
+  return `${CHAIN_GIF_BASE}/${CHAIN_GIF_MAP[severity] ?? CHAIN_GIF_MAP.none}`;
+}
+
 const CHAIN_COLOR: Record<string, string> = {
   none:     "#3a5060",
   low:      "#5cce8c",
@@ -2322,14 +2340,14 @@ function deriveChainPanel(data: HelioNow): ChainPanel {
   };
 }
 
-function renderChainCol(col: ChainPanelColumn, headLabel: string): string {
-  const color = CHAIN_COLOR[col.severity] ?? CHAIN_COLOR.none;
-  const glow  = CHAIN_GLOW[col.severity]  ?? "none";
-  const msgs  = col.messages.slice(0, 3)
+function renderChainCol(col: ChainPanelColumn, headLabel: string, column: "sun" | "space" | "earth"): string {
+  const color  = CHAIN_COLOR[col.severity] ?? CHAIN_COLOR.none;
+  const gifSrc = getAlarmGif(column, col.severity);
+  const msgs   = col.messages.slice(0, 3)
     .map(m => `<span class="hw-chain-msg">${escText(m)}</span>`).join("");
   return `<div class="hw-chain-col">
     <div class="hw-chain-head">${escText(headLabel)}</div>
-    <span class="hw-chain-lamp" style="background:${color};box-shadow:${glow}"></span>
+    <img class="hw-chain-alarm" src="${esc(gifSrc)}" alt="" aria-hidden="true">
     <div class="hw-chain-state" style="color:${color}">${escText(col.label)}</div>
     <div class="hw-chain-msgs">${msgs}</div>
   </div>`;
@@ -2341,34 +2359,34 @@ function renderChainPanel(data: HelioNow): string {
   return `<div class="hw-chain">
     <div class="hw-chain-title">Solar · Space · Earth</div>
     <div class="hw-chain-cols">
-      ${renderChainCol(panel.sun,   "Sun")}
+      ${renderChainCol(panel.sun,   "Sun",   "sun")}
       ${arrow}
-      ${renderChainCol(panel.space, "Space")}
+      ${renderChainCol(panel.space, "Space", "space")}
       ${arrow}
-      ${renderChainCol(panel.earth, "Earth")}
+      ${renderChainCol(panel.earth, "Earth", "earth")}
     </div>
   </div>`;
 }
 
 /** Inline version for embedding inside the Sun-Earth interaction tip (no outer wrapper). */
 function renderChainPanelInline(data: HelioNow): string {
-  const panel = data.chain_panel ?? deriveChainPanel(data);
-  const arrow = `<div class="hw-chain-arrow">›</div>`;
-  // EARTH column is clickable — opens Aurora & Storm Risk rows
+  const panel     = data.chain_panel ?? deriveChainPanel(data);
+  const arrow     = `<div class="hw-chain-arrow">›</div>`;
   const earthColor = CHAIN_COLOR[panel.earth.severity] ?? CHAIN_COLOR.none;
-  const earthGlow  = CHAIN_GLOW[panel.earth.severity]  ?? "none";
+  const earthGif   = getAlarmGif("earth", panel.earth.severity);
   const earthMsgs  = panel.earth.messages.slice(0, 3)
     .map(m => `<span class="hw-chain-msg">${escText(m)}</span>`).join("");
+  // EARTH column is clickable — opens Aurora & Storm Risk rows
   const earthCol = `<div class="hw-chain-col hw-chain-col-earth" data-chain-col="earth" title="Click to expand Aurora &amp; Storm Risk">
     <div class="hw-chain-head">Earth</div>
-    <span class="hw-chain-lamp" style="background:${earthColor};box-shadow:${earthGlow}"></span>
+    <img class="hw-chain-alarm" src="${esc(earthGif)}" alt="" aria-hidden="true">
     <div class="hw-chain-state" style="color:${earthColor}">${escText(panel.earth.label)}</div>
     <div class="hw-chain-msgs">${earthMsgs}</div>
   </div>`;
   return `<div class="hw-chain-cols" style="margin:8px 0 4px">
-    ${renderChainCol(panel.sun,   "Sun")}
+    ${renderChainCol(panel.sun,   "Sun",   "sun")}
     ${arrow}
-    ${renderChainCol(panel.space, "Space")}
+    ${renderChainCol(panel.space, "Space", "space")}
     ${arrow}
     ${earthCol}
   </div>`;
