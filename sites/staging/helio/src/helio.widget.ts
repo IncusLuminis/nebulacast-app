@@ -727,16 +727,12 @@ function renderBzGauge(bz: number | null): string {
 function renderBzPopover(data: HelioNow): string {
   const bz       = data.metrics.imf_bz_nt;
   const bt       = data.metrics.imf_bt_nt;
-  const wind     = data.metrics.solar_wind_kms;
-  const pressure = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined ?? null;
 
   const bzColor  = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
   const bzStr    = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
   const btStr    = bt != null ? bt.toFixed(1) + " nT" : "—";
-  const windStr  = wind != null ? `${Math.round(wind)} km/s` : "—";
-  const pressStr = pressure != null ? `${(pressure as number).toFixed(2)} nPa` : "—";
 
-  const magnetInfo   = deriveMagnetInfo(data);
+  const magnetInfo = deriveMagnetInfo(data);
 
   const aurora = bz != null && bz < -5
     ? { msg: "Southward IMF · Aurora favorable", color: "#5cce8c" }
@@ -760,16 +756,11 @@ function renderBzPopover(data: HelioNow): string {
         <span class="hw-kpi-stat-value">${escText(btStr)}</span>
       </div>
       <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Solar wind</span>
-        <span class="hw-kpi-stat-value">${escText(windStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Pressure</span>
-        <span class="hw-kpi-stat-value">${escText(pressStr)}</span>
+        <span class="hw-kpi-stat-label">Coupling</span>
+        <span class="hw-kpi-stat-value" style="color:${magnetInfo.color};font-weight:600">${escText(magnetInfo.coupling)}</span>
       </div>
     </div>
-    <div class="hw-kpi-hint" style="color:${aurora.color};font-weight:600;margin-bottom:4px">${escText(aurora.msg)}</div>
-    <div style="font-size:.65em;color:#607880">Coupling: <span style="color:${magnetInfo.color};font-weight:600">${escText(magnetInfo.coupling)}</span> · Trend history: ▶ Details</div>
+    <div class="hw-kpi-hint" style="color:${aurora.color};font-weight:600;margin-bottom:0">${escText(aurora.msg)}</div>
   </div>`;
 }
 
@@ -1133,19 +1124,12 @@ function buildHelioSolarEarthScene(
 }
 
 function renderMagnetospherePopover(data: HelioNow): string {
-  const info     = deriveMagnetInfo(data);
-  const bz       = data.metrics.imf_bz_nt;
-  const wind     = data.metrics.solar_wind_kms;
-  const kp       = data.metrics.kp_latest;
-  const density  = (data.metrics as Record<string, unknown>).density  as number | null | undefined;
-  const pressure = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined;
+  const info  = deriveMagnetInfo(data);
+  const bz    = data.metrics.imf_bz_nt;
+  const wind  = data.metrics.solar_wind_kms;
 
-  const bzStr      = bz      != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
-  const windStr    = wind    != null ? `${Math.round(wind)} km/s` : "—";
-  const densityStr = density != null ? `${(density as number).toFixed(1)} p/cm³` : "—";
-  const pressStr   = pressure != null ? `${(pressure as number).toFixed(2)} nPa` : "—";
-  const bzColor    = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
-  const windColor  = wind != null ? (wind > 700 ? "#e05c5c" : wind > 500 ? "#e0a84a" : wind > 350 ? "#d4c840" : "#5cce8c") : "#607880";
+  const bzStr   = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
 
   const hintText = (bz != null && bz < -5)
     ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
@@ -1158,26 +1142,12 @@ function renderMagnetospherePopover(data: HelioNow): string {
     <div class="hw-spark-wrap" style="border-radius:3px;overflow:hidden">${renderMagnetosphereSvg(info, bz, wind, false)}</div>
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Solar wind</span>
-        <span class="hw-kpi-stat-value" style="color:${windColor}">${escText(windStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">IMF Bz</span>
         <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Coupling</span>
         <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
-      </div>
-    </div>
-    <div class="hw-kpi-stat-row" style="margin-top:4px">
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Density</span>
-        <span class="hw-kpi-stat-value">${escText(densityStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Pressure</span>
-        <span class="hw-kpi-stat-value">${escText(pressStr)}</span>
       </div>
     </div>
     <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
@@ -1187,18 +1157,12 @@ function renderMagnetospherePopover(data: HelioNow): string {
 /** Tip content for Magnetosphere impact row (Observer Impacts panel) */
 function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
   if (!isOpen) return "";
-  const info     = deriveMagnetInfo(data);
-  const bz       = data.metrics.imf_bz_nt;
-  const wind     = data.metrics.solar_wind_kms;
-  const density  = (data.metrics as Record<string, unknown>).density  as number | null | undefined;
-  const pressure = (data.metrics as Record<string, unknown>).pressure_npa as number | null | undefined;
+  const info  = deriveMagnetInfo(data);
+  const bz    = data.metrics.imf_bz_nt;
+  const wind  = data.metrics.solar_wind_kms;
 
-  const bzStr      = bz      != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
-  const windStr    = wind    != null ? `${Math.round(wind)} km/s` : "—";
-  const densityStr = density != null ? `${(density as number).toFixed(1)} p/cm³` : "—";
-  const pressStr   = pressure != null ? `${(pressure as number).toFixed(2)} nPa` : "—";
-  const bzColor    = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
-  const windColor  = wind != null ? (wind > 700 ? "#e05c5c" : wind > 500 ? "#e0a84a" : wind > 350 ? "#d4c840" : "#5cce8c") : "#607880";
+  const bzStr   = bz != null ? (bz >= 0 ? "+" : "") + bz.toFixed(1) + " nT" : "—";
+  const bzColor = bz != null ? (bz <= -10 ? "#e05c5c" : bz <= -5 ? "#e0a84a" : bz >= 5 ? "#5cce8c" : "#a0b4b8") : "#607880";
 
   const hintText = (bz != null && bz < -5)
     ? "Southward IMF Bz is strongly coupling energy into the magnetosphere. Geomagnetic storm conditions likely."
@@ -1212,26 +1176,12 @@ function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
     <div style="border-radius:3px;overflow:hidden;margin-bottom:6px">${scene}</div>
     <div class="hw-kpi-stat-row">
       <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Solar wind</span>
-        <span class="hw-kpi-stat-value" style="color:${windColor}">${escText(windStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">IMF Bz</span>
         <span class="hw-kpi-stat-value" style="color:${bzColor}">${escText(bzStr)}</span>
       </div>
       <div class="hw-kpi-stat">
         <span class="hw-kpi-stat-label">Coupling</span>
         <span class="hw-kpi-stat-value" style="color:${info.color}">${escText(info.coupling)}</span>
-      </div>
-    </div>
-    <div class="hw-kpi-stat-row" style="margin-top:4px">
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Density</span>
-        <span class="hw-kpi-stat-value">${escText(densityStr)}</span>
-      </div>
-      <div class="hw-kpi-stat">
-        <span class="hw-kpi-stat-label">Pressure</span>
-        <span class="hw-kpi-stat-value">${escText(pressStr)}</span>
       </div>
     </div>
     <div class="hw-kpi-hint" style="margin-bottom:0">${escText(hintText)}</div>
