@@ -218,5 +218,5 @@ export interface HelioWidgetOptions {
   lat?:          number;   // observer latitude °N
   lon?:          number;   // observer longitude °E
   locationName?: string;   // display name (e.g. "Moscow")
-  baseUrl?:      string;   // origin for /assets/* (hero Sun GIF, Sun→Space→Earth chain lamps); required for embeds on other domains (e.g. Blogger)
+  baseUrl?:      string;   // optional override for /assets/* origin; if omitted and dataUrl is absolute (e.g. https://staging.nebulacast.app/...), that host is used; else https://staging.nebulacast.app
 }
