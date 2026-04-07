@@ -422,7 +422,12 @@ except ImportError as e:
 
 
 def fetch_open_meteo(lat: float, lon: float, tz: str, hours: int = 72) -> Dict[str, Any]:
-    """Fetch weather data from Open-Meteo API."""
+    """Fetch weather data from Open-Meteo API.
+
+    Caches each successful response to services/weather/outputs/om_cache_{lat}_{lon}.json.
+    That file is committed to git by cron-weather, so it survives across CI runs.
+    On fetch failure the stale cache is returned with a warning instead of crashing.
+    """
     url = "https://api.open-meteo.com/v1/forecast"
 
     hourly_fields = [
@@ -455,6 +460,11 @@ def fetch_open_meteo(lat: float, lon: float, tz: str, hours: int = 72) -> Dict[s
     query = urllib.parse.urlencode(params)
     full_url = f"{url}?{query}"
 
+    # Cache file: committed to git in services/weather/outputs/, persists across CI runs.
+    cache_key = f"{lat:.4f}_{lon:.4f}".replace("-", "m")
+    cache_path = _service_root / "outputs" / f"om_cache_{cache_key}.json"
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+
     try:
         with urllib.request.urlopen(full_url, timeout=20) as response:
             data = json.loads(response.read().decode("utf-8"))
@@ -462,9 +472,24 @@ def fetch_open_meteo(lat: float, lon: float, tz: str, hours: int = 72) -> Dict[s
             keys = list(om_hourly.keys())
             n = len(om_hourly.get("time") or [])
             print(f"[weather] Open-Meteo hourly keys: {keys}, time length={n}")
+            # Persist fresh response so the next run can fall back to it if needed.
+            try:
+                with open(cache_path, "w", encoding="utf-8") as cf:
+                    json.dump({"fetched_at": datetime.now(timezone.utc).isoformat(), "data": data}, cf)
+            except Exception:
+                pass  # non-critical
             return data
     except Exception as e:
         print(f"ERROR: Open-Meteo fetch failed: {e}")
+        # Try stale cache before giving up.
+        if cache_path.exists():
+            try:
+                cached = json.loads(cache_path.read_text(encoding="utf-8"))
+                fetched_at = cached.get("fetched_at", "unknown")
+                print(f"[weather] Using stale Open-Meteo cache from {fetched_at} (live fetch unavailable)")
+                return cached["data"]
+            except Exception as ce:
+                print(f"[weather] Stale cache load failed: {ce}")
         return {}
 
 
