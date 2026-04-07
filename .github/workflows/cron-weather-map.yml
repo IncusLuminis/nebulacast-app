@@ -25,11 +25,13 @@ jobs:
       - name: Run weather map pipeline
         env:
           WEATHER_MAP_SKIP_RENDER: "1"
+          WEATHER_MAP_SKIP_WIND: "1"
         run: PYTHONPATH=services/weather python services/weather/pipelines/gen_weather_map.py
 
       - name: Validate output
         env:
           WEATHER_MAP_SKIP_RENDER: "1"
+          WEATHER_MAP_SKIP_WIND: "1"
         run: |
           python3 - <<'EOF'
           import json, os, sys
@@ -40,17 +42,26 @@ jobs:
                   print(f"FAIL: missing key '{k}'"); sys.exit(1)
 
           skip_render = os.environ.get("WEATHER_MAP_SKIP_RENDER", "0") == "1"
+          skip_wind   = os.environ.get("WEATHER_MAP_SKIP_WIND",   "0") == "1"
 
           if skip_render:
-              # In manifest-only mode cloud WebPs are not rendered; validate wind frames instead.
-              wind_profiles = d["layers"].get("wind", {}).get("profiles", [])
-              wind_avail = sum(
-                  sum(1 for f in (p.get("frames") or []) if f.get("available"))
-                  for p in wind_profiles
-              )
-              if wind_avail < 50:
-                  print(f"FAIL: only {wind_avail} wind frames available (expected ≥50)"); sys.exit(1)
-              print(f"OK (skip-render mode): {wind_avail} wind frames, updated {d['updated_utc']}")
+              if skip_wind:
+                  # Wind is preserved from the last cron-grib-tiles manifest — no need to validate here.
+                  wind_profiles = d["layers"].get("wind", {}).get("profiles", [])
+                  wind_avail = sum(
+                      sum(1 for f in (p.get("frames") or []) if f.get("available"))
+                      for p in wind_profiles
+                  )
+                  print(f"OK (skip-render + skip-wind mode): wind={wind_avail} frames (preserved), updated {d['updated_utc']}")
+              else:
+                  wind_profiles = d["layers"].get("wind", {}).get("profiles", [])
+                  wind_avail = sum(
+                      sum(1 for f in (p.get("frames") or []) if f.get("available"))
+                      for p in wind_profiles
+                  )
+                  if wind_avail < 50:
+                      print(f"FAIL: only {wind_avail} wind frames available (expected ≥50)"); sys.exit(1)
+                  print(f"OK (skip-render mode): {wind_avail} wind frames, updated {d['updated_utc']}")
           else:
               rendered = d["stats"]["rendered_frames"]
               if rendered < 50:

@@ -62,6 +62,13 @@ OM_CACHE_TTL = 3 * 3600  # 3 hours
 # Full rendering still happens in cron-grib-tiles.yml before the unified deploy.
 SKIP_RENDER = os.environ.get("WEATHER_MAP_SKIP_RENDER", "0") == "1"
 
+# When set to "1", skip wind vector generation entirely and preserve the wind
+# section from the existing manifest (written by the last cron-grib-tiles run).
+# Wind JSON files are .gitignored and never committed/deployed from cron-weather-map,
+# so regenerating them there only adds Open-Meteo dependency risk for no benefit.
+# isobar data still fetched (pressure_msl only — lighter request).
+SKIP_WIND = os.environ.get("WEATHER_MAP_SKIP_WIND", "0") == "1"
+
 # ── Profile definitions ───────────────────────────────────────────────────────
 
 # Internal raster profiles (pipeline generates WebP frames for these)
@@ -691,6 +698,7 @@ def run_profile(
     past_days:     int = 2,
     forecast_days: int = 6,
     skip_render:   bool = False,
+    skip_wind:     bool = False,
 ) -> tuple[list[dict], list[dict], list[dict], int, int]:
     """
     Run full pipeline for one profile.
@@ -736,29 +744,36 @@ def run_profile(
         temp_matrix   = [[] for _ in timeline]
 
     # Wind grid (denser — used for particle animation layer AND pressure isobars)
+    # When skip_wind=True, fetch only pressure_msl (no wind variables) — lighter
+    # request sufficient for isobar generation; wind JSON files are not written.
+    _wind_fetch_vars = (
+        "pressure_msl" if skip_wind
+        else "wind_speed_10m,wind_direction_10m,pressure_msl"
+    )
     if skip_clouds:
         # world profile: wind grid is the only data source (also used for isobars)
         wind_points = build_grid(bbox, wind_lat_n, wind_lon_n, hexagonal=True)
-        print(f"  Wind/isobar grid: {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
+        print(f"  {'Isobar' if skip_wind else 'Wind/isobar'} grid: {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
         wind_grid_data = fetch_open_meteo(
             wind_points, past_days, forecast_days,
-            variables="wind_speed_10m,wind_direction_10m,pressure_msl",
+            variables=_wind_fetch_vars,
         )
-        print(f"  Fetched {len(wind_grid_data)} wind/pressure series", flush=True)
+        print(f"  Fetched {len(wind_grid_data)} {'isobar' if skip_wind else 'wind/pressure'} series", flush=True)
     elif wind_lat_n != lat_n or wind_lon_n != lon_n:
         wind_points = build_grid(bbox, wind_lat_n, wind_lon_n, hexagonal=True)
-        print(f"  Wind grid:  {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
+        print(f"  {'Isobar' if skip_wind else 'Wind'} grid:  {len(wind_points)} pts ({wind_lat_n}×{wind_lon_n})", flush=True)
         wind_grid_data = fetch_open_meteo(
             wind_points, past_days, forecast_days,
-            # Include pressure_msl so isobars benefit from the denser grid at no extra cost
-            variables="wind_speed_10m,wind_direction_10m,pressure_msl",
+            variables=_wind_fetch_vars,
         )
-        print(f"  Fetched {len(wind_grid_data)} wind/pressure series", flush=True)
+        print(f"  Fetched {len(wind_grid_data)} {'isobar' if skip_wind else 'wind/pressure'} series", flush=True)
     else:
         wind_points    = points
         wind_grid_data = grid_data
 
-    wind_matrix   = build_wind_timeseries(wind_grid_data, timeline)
+    # Skip wind vector building when skip_wind=True — wind_matrix stays empty,
+    # all wind frames will be marked available=False (overridden later in run()).
+    wind_matrix   = [] if skip_wind else build_wind_timeseries(wind_grid_data, timeline)
     # Isobars reuse the dense wind grid for much better spatial detail
     isobar_matrix = build_scalar_timeseries(wind_grid_data, timeline, "pressure_msl")
 
@@ -809,30 +824,42 @@ def run_profile(
             cloud_refs.append({"index": idx, "available": False, "asset_url": None})
 
         # ── Wind frame ────────────────────────────────────────────────────────
-        wind_frame = build_wind_frame_json(wind_matrix[idx], wind_points, idx, slot_dt)
         wind_name  = f"wind_{idx:03d}.json"
         wind_path  = wind_dir / wind_name
         wind_url   = f"/data/wind/{pid}/{wind_name}"
 
-        if wind_frame["available"]:
-            with open(wind_path, "w", encoding="utf-8") as wf:
-                json.dump(wind_frame, wf, separators=(",", ":"))
-        elif wind_path.exists():
-            wind_path.unlink()
+        if skip_wind:
+            # Wind skipped — placeholder ref; actual data preserved from old manifest in run().
+            wind_refs.append({
+                "index":      idx,
+                "t_utc":      slot_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "available":  False,
+                "asset_type": "vector",
+                "asset_url":  None,
+                "meta":       {"source_name": "open-meteo", "wind_unit": "m/s"},
+            })
+        else:
+            wind_frame = build_wind_frame_json(wind_matrix[idx], wind_points, idx, slot_dt)
 
-        wind_refs.append({
-            "index":      idx,
-            "t_utc":      wind_frame["t_utc"],
-            "available":  wind_frame["available"],
-            "asset_type": "vector",
-            "asset_url":  wind_url if wind_frame["available"] else None,
-            "meta": {
-                "source_name":   "open-meteo",
-                "wind_unit":     "m/s",
-                "density_mode":  "full_grid",
-                "vector_count":  len(wind_frame["vectors"]),
-            },
-        })
+            if wind_frame["available"]:
+                with open(wind_path, "w", encoding="utf-8") as wf:
+                    json.dump(wind_frame, wf, separators=(",", ":"))
+            elif wind_path.exists():
+                wind_path.unlink()
+
+            wind_refs.append({
+                "index":      idx,
+                "t_utc":      wind_frame["t_utc"],
+                "available":  wind_frame["available"],
+                "asset_type": "vector",
+                "asset_url":  wind_url if wind_frame["available"] else None,
+                "meta": {
+                    "source_name":   "open-meteo",
+                    "wind_unit":     "m/s",
+                    "density_mode":  "full_grid",
+                    "vector_count":  len(wind_frame["vectors"]),
+                },
+            })
 
         # ── Isobar frame (JSON lat/lon paths → Leaflet L.polyline) ───────────
         iso_name    = f"isobar_{idx:03d}.json"
@@ -879,6 +906,11 @@ def run() -> None:
     if not HAS_PIL:
         print("[weather-map] ERROR: Pillow/numpy not installed. Run: pip install Pillow numpy", flush=True)
         sys.exit(1)
+
+    if SKIP_WIND:
+        print("[weather-map] SKIP_WIND=1: wind vector fetch disabled; wind section will be preserved from existing manifest", flush=True)
+    if SKIP_RENDER:
+        print("[weather-map] SKIP_RENDER=1: cloud WebP rendering disabled (manifest-only mode)", flush=True)
 
     anchor   = floor_to_hour(datetime.now(timezone.utc))
     print(f"[weather-map] Anchor: {anchor.isoformat()}", flush=True)
@@ -954,7 +986,7 @@ def run() -> None:
     icon_profile_manifests: list[dict] = []
 
     for profile in PROFILES:
-        cloud_refs, wind_refs, isobar_refs, rendered, skipped, pts, cloud_matrix, precip_matrix, temp_matrix = run_profile(profile, timeline, skip_render=SKIP_RENDER)
+        cloud_refs, wind_refs, isobar_refs, rendered, skipped, pts, cloud_matrix, precip_matrix, temp_matrix = run_profile(profile, timeline, skip_render=SKIP_RENDER, skip_wind=SKIP_WIND)
         total_rendered += rendered
         total_skipped  += skipped
         bbox = profile["bbox"]
@@ -1110,6 +1142,25 @@ def run() -> None:
             ],
         },
     }
+
+    # When SKIP_WIND=1: restore the wind layer from the existing manifest so the
+    # frontend keeps serving the last good wind data (generated by cron-grib-tiles).
+    # This prevents cron-weather-map from ever overwriting wind availability with
+    # all-False entries just because Open-Meteo was unavailable during this run.
+    if SKIP_WIND and OUT_JSON.exists():
+        try:
+            old = json.loads(OUT_JSON.read_text())
+            if "layers" in old and "wind" in old["layers"]:
+                contract["layers"]["wind"] = old["layers"]["wind"]
+                old_wind_avail = sum(
+                    sum(1 for f in (p.get("frames") or []) if f.get("available"))
+                    for p in old["layers"]["wind"].get("profiles", [])
+                )
+                print(f"[weather-map] SKIP_WIND: restored wind section from existing manifest ({old_wind_avail} available frames)", flush=True)
+            else:
+                print("[weather-map] SKIP_WIND: existing manifest has no wind section — leaving empty", flush=True)
+        except Exception as e:
+            print(f"[weather-map] SKIP_WIND: could not read existing manifest ({e}) — wind section is empty", flush=True)
 
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT_JSON, "w", encoding="utf-8") as f:
