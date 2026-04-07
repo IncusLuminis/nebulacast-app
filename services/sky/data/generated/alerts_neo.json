@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-04-07T01:54:28.872101Z",
+  "generated_utc": "2026-04-07T13:08:45.391719Z",
   "source": "JPL SSD CAD API + JPL Horizons + JPL SBDB",
   "counts": {
     "pha_rows": 1,
-    "ld10_rows": 4,
-    "items": 5
+    "ld10_rows": 5,
+    "items": 6
   },
   "items": [
     {
@@ -20,7 +20,7 @@
       "dec_deg": 30.32503,
       "mag": 18.91,
       "updated_utc": "2026-04-07T19:11:00Z",
-      "ingested_utc": "2026-04-07T01:54:25.655248Z",
+      "ingested_utc": "2026-04-07T13:08:41.870213Z",
       "meta": {
         "t_utc": "2026-Apr-07 19:11Z",
         "t_utc_iso": "2026-04-07T19:11:00Z",
@@ -100,6 +100,98 @@
       }
     },
     {
+      "id": "2026 GD",
+      "source": "jpl-cad+horizons+sbdb",
+      "group": "neo",
+      "type": "neo",
+      "title": "2026 GD",
+      "note": "Close approach within 10 lunar distances",
+      "score_raw": 90.0,
+      "score_norm": 0.9,
+      "ra_deg": 284.17363,
+      "dec_deg": -41.38147,
+      "mag": 15.56,
+      "updated_utc": "2026-04-09T23:00:00Z",
+      "ingested_utc": "2026-04-07T13:08:41.870213Z",
+      "meta": {
+        "t_utc": "2026-Apr-09 23:00Z",
+        "t_utc_iso": "2026-04-09T23:00:00Z",
+        "date_local": "2026-04-10",
+        "neo_event_id": "neo:2026 GD:2026-Apr-09 23:00",
+        "bucket": "10ld",
+        "pha": false,
+        "pha_cad_flag": false,
+        "pha_sbdb_flag": false,
+        "dist_au": 0.00167660140054697,
+        "dist_ld": 0.652487,
+        "v_rel_km_s": 12.6562169874194,
+        "h_cad": 26.556,
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-07&date-max=2026-04-14&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-04-07&date-max=2026-04-14&sort=dist&limit=50&dist-max=10LD",
+        "cad_fields_pha": [
+          "des",
+          "orbit_id",
+          "jd",
+          "cd",
+          "dist",
+          "dist_min",
+          "dist_max",
+          "v_rel",
+          "v_inf",
+          "t_sigma_f",
+          "h"
+        ],
+        "cad_fields_10ld": [
+          "des",
+          "orbit_id",
+          "jd",
+          "cd",
+          "dist",
+          "dist_min",
+          "dist_max",
+          "v_rel",
+          "v_inf",
+          "t_sigma_f",
+          "h"
+        ],
+        "cad_row": [
+          "2026 GD",
+          "1",
+          "2461140.458517100",
+          "2026-Apr-09 23:00",
+          "0.00167660140054697",
+          "0.00167101868167402",
+          "0.00168218429372459",
+          "12.6562169874194",
+          "12.5300199255724",
+          "00:10",
+          "26.556"
+        ],
+        "alt_deg": -26.468117,
+        "az_deg": 124.211945,
+        "horizons_ok": true,
+        "horizons_error": null,
+        "horizons_query": {
+          "id": "2026 GD",
+          "jd": 2461140.4583333335,
+          "site": {
+            "lat": 52.2297,
+            "lon": 21.0122,
+            "elev_km": 0.1
+          }
+        },
+        "sbdb_ok": true,
+        "sbdb_error": null,
+        "sbdb_moid_au": 0.000525,
+        "sbdb_h": null,
+        "sbdb_albedo": null,
+        "sbdb_diameter_km": null,
+        "sbdb_diameter_est_km": 0.017348461358824153,
+        "sbdb_diameter_source": "h_cad",
+        "risk_score": 0.552
+      }
+    },
+    {
       "id": "2011 FT9",
       "source": "jpl-cad+horizons+sbdb",
       "group": "neo",
@@ -112,7 +204,7 @@
       "dec_deg": 55.07362,
       "mag": 19.49,
       "updated_utc": "2026-04-07T00:22:00Z",
-      "ingested_utc": "2026-04-07T01:54:25.655248Z",
+      "ingested_utc": "2026-04-07T13:08:41.870213Z",
       "meta": {
         "t_utc": "2026-Apr-07 00:22Z",
         "t_utc_iso": "2026-04-07T00:22:00Z",
@@ -204,7 +296,7 @@
       "dec_deg": -11.83181,
       "mag": 22.63,
       "updated_utc": "2026-04-07T14:21:00Z",
-      "ingested_utc": "2026-04-07T01:54:25.655248Z",
+      "ingested_utc": "2026-04-07T13:08:41.870213Z",
       "meta": {
         "t_utc": "2026-Apr-07 14:21Z",
         "t_utc_iso": "2026-04-07T14:21:00Z",
@@ -296,7 +388,7 @@
       "dec_deg": -17.80774,
       "mag": 19.7,
       "updated_utc": "2026-04-13T17:38:00Z",
-      "ingested_utc": "2026-04-07T01:54:25.655248Z",
+      "ingested_utc": "2026-04-07T13:08:41.870213Z",
       "meta": {
         "t_utc": "2026-Apr-13 17:38Z",
         "t_utc_iso": "2026-04-13T17:38:00Z",
@@ -388,7 +480,7 @@
       "dec_deg": 32.64948,
       "mag": 20.82,
       "updated_utc": "2026-04-11T08:08:00Z",
-      "ingested_utc": "2026-04-07T01:54:25.655248Z",
+      "ingested_utc": "2026-04-07T13:08:41.870213Z",
       "meta": {
         "t_utc": "2026-Apr-11 08:08Z",
         "t_utc_iso": "2026-04-11T08:08:00Z",

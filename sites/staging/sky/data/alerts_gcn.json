@@ -1,10 +1,12 @@
 {
-  "generated_utc": "2026-04-07T01:54:24.151030Z",
+  "generated_utc": "2026-04-07T13:08:39.956463Z",
   "source": "NASA/GCN Kafka via gcn_kafka",
   "counts": {
-    "items": 0,
-    "by_topic": {},
-    "polls_total": 120,
+    "items": 1,
+    "by_topic": {
+      "igwn.gwalert": 1
+    },
+    "polls_total": 121,
     "polls_empty": 120
   },
   "raw": {
@@ -20,5 +22,69 @@
     "consume_timeout_sec": 1.0,
     "heartbeat_sec": 15
   },
-  "items": []
+  "items": [
+    {
+      "id": "gcn:igwn.gwalert:98675",
+      "source": "gcn_kafka",
+      "group": "gcn",
+      "type": "gcn",
+      "title": "GW RETRACTION: MS260407m",
+      "ui_type": "GW alert",
+      "note": "— · FAR —",
+      "score_raw": null,
+      "score_norm": 0.5,
+      "ra_deg": null,
+      "dec_deg": null,
+      "mag": null,
+      "discovery": null,
+      "updated_utc": "2026-04-07T13:07:13.826000+00:00",
+      "ingested_utc": "2026-04-07T13:06:39.064396Z",
+      "meta": {
+        "topic": "igwn.gwalert",
+        "offset": 98675,
+        "kafka_timestamp_ms": 1775567233826,
+        "payload_text": null,
+        "payload_json": {
+          "alert_type": "RETRACTION",
+          "time_created": "2026-04-07T13:07:13Z",
+          "superevent_id": "MS260407m",
+          "urls": {
+            "gracedb": "https://gracedb.ligo.org/superevents/MS260407m/view/"
+          },
+          "event": {},
+          "external_coinc": null
+        },
+        "payload_text_meta": {
+          "present": true,
+          "bytes": 214,
+          "sha256": "96c8565b03325a267320cca059ce9a962b45a789958b0e7ecb5c9358e0cff96e",
+          "truncated": true,
+          "max_chars": 4096
+        },
+        "gw": {
+          "alert_type": "RETRACTION",
+          "time_created_utc": "2026-04-07T13:07:13Z",
+          "superevent_id": "MS260407m",
+          "significant": null,
+          "event_time_utc": null,
+          "far": null,
+          "instruments": [],
+          "group": null,
+          "pipeline": null,
+          "search": null,
+          "properties": {},
+          "classification": {},
+          "classification_top": null
+        },
+        "urls": {
+          "gracedb": "https://gracedb.ligo.org/superevents/MS260407m/view/"
+        },
+        "title": "GW RETRACTION: MS260407m",
+        "note": "— · FAR —",
+        "ui_type": "GW alert",
+        "ui_type_hint": "Gravitational-wave candidate alert (LIGO/Virgo/KAGRA/IGWN). Preliminary machine-generated notice; classification and sky localization can be updated.",
+        "ui_type_html": "<strong>Gravitational-wave candidate</strong> (LIGO/Virgo/KAGRA/IGWN). Preliminary; classification and sky localization may be revised."
+      }
+    }
+  ]
 }
