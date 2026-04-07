@@ -442,6 +442,18 @@ def main() -> int:
     # Validate payload has required fields
     if not payload.get("hours") or not isinstance(payload.get("hours"), list) or len(payload.get("hours", [])) == 0:
         log.error("Payload missing or empty hours array! Payload keys: %s", list(payload.keys()))
+        # If Open-Meteo was unavailable, a previously committed daily_weather.json
+        # may exist in the repo checkout.  Preserving it is better than crashing and
+        # leaving CI in a failed state.  The stale file will be updated on the next
+        # successful run (typically within 6 hours when Open-Meteo recovers).
+        repo_root = service_root.parent.parent
+        existing = repo_root / "sites" / "staging" / "weather" / "daily_weather.json"
+        if existing.exists():
+            log.warning(
+                "Open-Meteo unavailable and no stale cache loaded. "
+                "Keeping previously committed weather data — skipping update this run."
+            )
+            return 0
         raise ValueError("build_weather_payload returned payload without valid hours array")
 
     out_json = outputs_dir / "daily_weather.json"
