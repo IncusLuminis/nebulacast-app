@@ -3,6 +3,8 @@
  *
  * Mount API:
  *   HelioWidget.mount(element, { dataUrl: '/data/helio_now.json' })
+ *   // Absolute dataUrl (e.g. https://staging.nebulacast.app/data/helio_now.json) also sets /assets/* origin for embeds.
+ *   // Optional baseUrl overrides that origin.
  *
  * Self-contained: no external dependencies.
  */
@@ -1371,7 +1373,7 @@ function renderHero(
         <div class="hw-info-col">
           <div class="hw-info-top-row">
             <div class="hw-summary-text" style="flex:1">${escText(summary.text)}</div>
-            ${renderHeroSunGif(sunGifStatus, opts.baseUrl)}
+            ${renderHeroSunGif(sunGifStatus, helioAssetBase(opts))}
           </div>
         </div>
       </div>
@@ -1728,12 +1730,28 @@ const INDICATOR_KPI_ICON_WIND  = `<svg viewBox="0 0 12 12" width="12" height="12
 
 const INDICATORS_PANEL_ROW_COUNT = 14;
 
+/** Fallback when `baseUrl` is omitted and `dataUrl` is relative — matches [staging console](https://staging.nebulacast.app/). */
 const ASSET_BASE_DEFAULT = "https://staging.nebulacast.app";
 
 function resolveAssetUrl(path: string, baseUrl?: string): string {
   if (!path || /^https?:\/\//.test(path) || path.startsWith("//")) return path;
   const base = (baseUrl ?? ASSET_BASE_DEFAULT).replace(/\/$/, "");
   return base + (path.startsWith("/") ? path : "/" + path);
+}
+
+/** Origin for `/assets/*` (GIF lamps, hero Sun): explicit `baseUrl` → else `dataUrl` host if absolute → else staging. */
+function helioAssetBase(opts: Pick<HelioWidgetOptions, "baseUrl" | "dataUrl">): string {
+  const ex = opts.baseUrl?.trim();
+  if (ex) return ex.replace(/\/$/, "");
+  const du = opts.dataUrl?.trim() ?? "";
+  if (/^https?:\/\//i.test(du)) {
+    try {
+      return new URL(du).origin;
+    } catch {
+      /* fall through */
+    }
+  }
+  return ASSET_BASE_DEFAULT;
 }
 
 const SOLAR_DISK_URL    = "https://soho.nascom.nasa.gov/data/realtime/hmi_igr/512/latest.jpg";
@@ -2918,7 +2936,7 @@ function renderImpacts(
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${magInfo.color}">${magIcon}<span style="color:#b4c6cc">Sun-Earth interaction</span></span>
       <span class="hw-impact-badge" style="background:${magInfo.color}22;color:${magInfo.color}">${escText(magInfo.label)}</span>
-      ${renderMagnetosphereTip(data, magOpen, opts.baseUrl)}
+      ${renderMagnetosphereTip(data, magOpen, helioAssetBase(opts))}
     </div>`;
 
   return `
