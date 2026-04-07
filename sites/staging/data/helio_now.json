@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-04-07T16:11:44Z",
+  "updated_utc": "2026-04-07T19:09:48Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -17,13 +17,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 1.67,
-    "kp_time_utc": "2026-04-07T12:00:00Z",
+    "kp_latest": 2.33,
+    "kp_time_utc": "2026-04-07T15:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-04-07T18:00:00Z",
-        "kp": 1.67
-      },
       {
         "t_utc": "2026-04-07T21:00:00Z",
         "kp": 1.33
@@ -99,10 +95,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-04-06T18:00:00Z",
-        "kp": 2.33
-      },
-      {
         "t_utc": "2026-04-06T21:00:00Z",
         "kp": 2.67
       },
@@ -125,26 +117,18 @@
       {
         "t_utc": "2026-04-07T12:00:00Z",
         "kp": 1.67
+      },
+      {
+        "t_utc": "2026-04-07T15:00:00Z",
+        "kp": 2.33
       }
     ],
-    "xray_flux_wm2": 5.94935329445434e-07,
-    "xray_class": "B",
+    "xray_flux_wm2": 1.312514541496057e-06,
+    "xray_class": "C",
     "xray_history_1h": [
       {
-        "t_utc": "2026-04-06T16:00:00Z",
-        "flux": 5.27993217739701e-07
-      },
-      {
-        "t_utc": "2026-04-06T17:00:00Z",
-        "flux": 5.018523163850356e-07
-      },
-      {
-        "t_utc": "2026-04-06T18:00:00Z",
-        "flux": 4.958482918482332e-07
-      },
-      {
         "t_utc": "2026-04-06T19:00:00Z",
-        "flux": 4.997937120757949e-07
+        "flux": 4.99688460422476e-07
       },
       {
         "t_utc": "2026-04-06T20:00:00Z",
@@ -228,39 +212,30 @@
       },
       {
         "t_utc": "2026-04-07T16:00:00Z",
-        "flux": 6.009255584002757e-07
+        "flux": 6.302034828801576e-07
+      },
+      {
+        "t_utc": "2026-04-07T17:00:00Z",
+        "flux": 6.559506535571321e-07
+      },
+      {
+        "t_utc": "2026-04-07T18:00:00Z",
+        "flux": 2.4573230916757893e-06
+      },
+      {
+        "t_utc": "2026-04-07T19:00:00Z",
+        "flux": 1.465360972880652e-06
       }
     ],
-    "solar_wind_kms": 435.3,
-    "density": 1.61,
-    "pressure_npa": 0.51,
+    "solar_wind_kms": 415.4,
+    "density": 1.89,
+    "pressure_npa": 0.54,
     "wind_history_1h": [
       {
-        "t_utc": "2026-04-06T16:00:00Z",
-        "kms": 527.0,
-        "density": 1.76,
-        "temp_kk": 113.3,
-        "pressure_npa": 0.82
-      },
-      {
-        "t_utc": "2026-04-06T17:00:00Z",
-        "kms": 522.5,
-        "density": 1.92,
-        "temp_kk": 116.9,
-        "pressure_npa": 0.88
-      },
-      {
-        "t_utc": "2026-04-06T18:00:00Z",
-        "kms": 529.2,
-        "density": 1.99,
-        "temp_kk": 115.7,
-        "pressure_npa": 0.93
-      },
-      {
         "t_utc": "2026-04-06T19:00:00Z",
-        "kms": 534.2,
-        "density": 1.92,
-        "temp_kk": 102.2,
+        "kms": 533.7,
+        "density": 1.94,
+        "temp_kk": 107.8,
         "pressure_npa": 0.92
       },
       {
@@ -405,30 +380,39 @@
       },
       {
         "t_utc": "2026-04-07T16:00:00Z",
-        "kms": 434.0,
-        "density": 1.87,
-        "temp_kk": 60.0,
-        "pressure_npa": 0.59
+        "kms": 431.7,
+        "density": 2.07,
+        "temp_kk": 72.3,
+        "pressure_npa": 0.64
+      },
+      {
+        "t_utc": "2026-04-07T17:00:00Z",
+        "kms": 429.3,
+        "density": 2.03,
+        "temp_kk": 66.4,
+        "pressure_npa": 0.62
+      },
+      {
+        "t_utc": "2026-04-07T18:00:00Z",
+        "kms": 416.5,
+        "density": 2.32,
+        "temp_kk": 81.8,
+        "pressure_npa": 0.67
+      },
+      {
+        "t_utc": "2026-04-07T19:00:00Z",
+        "kms": 412.7,
+        "density": 2.29,
+        "temp_kk": 75.8,
+        "pressure_npa": 0.65
       }
     ],
-    "imf_bz_nt": -2.43,
-    "imf_bt_nt": 3.84,
+    "imf_bz_nt": -2.18,
+    "imf_bt_nt": 4.08,
     "bz_history_1h": [
       {
-        "t_utc": "2026-04-06T16:00:00Z",
-        "bz": 1.62
-      },
-      {
-        "t_utc": "2026-04-06T17:00:00Z",
-        "bz": -2.0
-      },
-      {
-        "t_utc": "2026-04-06T18:00:00Z",
-        "bz": -0.97
-      },
-      {
         "t_utc": "2026-04-06T19:00:00Z",
-        "bz": -0.06
+        "bz": -0.3
       },
       {
         "t_utc": "2026-04-06T20:00:00Z",
@@ -512,154 +496,22 @@
       },
       {
         "t_utc": "2026-04-07T16:00:00Z",
+        "bz": -2.04
+      },
+      {
+        "t_utc": "2026-04-07T17:00:00Z",
         "bz": -2.26
+      },
+      {
+        "t_utc": "2026-04-07T18:00:00Z",
+        "bz": -1.0
+      },
+      {
+        "t_utc": "2026-04-07T19:00:00Z",
+        "bz": -0.92
       }
     ],
     "bz_history_5m": [
-      {
-        "t_utc": "2026-04-07T10:10:00Z",
-        "bz": 1.75
-      },
-      {
-        "t_utc": "2026-04-07T10:15:00Z",
-        "bz": 1.99
-      },
-      {
-        "t_utc": "2026-04-07T10:20:00Z",
-        "bz": 1.81
-      },
-      {
-        "t_utc": "2026-04-07T10:25:00Z",
-        "bz": 0.92
-      },
-      {
-        "t_utc": "2026-04-07T10:30:00Z",
-        "bz": 0.63
-      },
-      {
-        "t_utc": "2026-04-07T10:35:00Z",
-        "bz": 0.58
-      },
-      {
-        "t_utc": "2026-04-07T10:40:00Z",
-        "bz": -0.06
-      },
-      {
-        "t_utc": "2026-04-07T10:45:00Z",
-        "bz": -0.47
-      },
-      {
-        "t_utc": "2026-04-07T10:50:00Z",
-        "bz": -0.87
-      },
-      {
-        "t_utc": "2026-04-07T10:55:00Z",
-        "bz": -1.34
-      },
-      {
-        "t_utc": "2026-04-07T11:00:00Z",
-        "bz": -1.09
-      },
-      {
-        "t_utc": "2026-04-07T11:05:00Z",
-        "bz": -1.37
-      },
-      {
-        "t_utc": "2026-04-07T11:10:00Z",
-        "bz": -1.31
-      },
-      {
-        "t_utc": "2026-04-07T11:15:00Z",
-        "bz": -1.03
-      },
-      {
-        "t_utc": "2026-04-07T11:20:00Z",
-        "bz": -1.94
-      },
-      {
-        "t_utc": "2026-04-07T11:25:00Z",
-        "bz": 2.05
-      },
-      {
-        "t_utc": "2026-04-07T11:30:00Z",
-        "bz": 1.57
-      },
-      {
-        "t_utc": "2026-04-07T11:35:00Z",
-        "bz": 1.04
-      },
-      {
-        "t_utc": "2026-04-07T11:40:00Z",
-        "bz": 0.26
-      },
-      {
-        "t_utc": "2026-04-07T11:45:00Z",
-        "bz": 1.52
-      },
-      {
-        "t_utc": "2026-04-07T11:50:00Z",
-        "bz": 2.5
-      },
-      {
-        "t_utc": "2026-04-07T11:55:00Z",
-        "bz": 1.82
-      },
-      {
-        "t_utc": "2026-04-07T12:00:00Z",
-        "bz": 0.57
-      },
-      {
-        "t_utc": "2026-04-07T12:05:00Z",
-        "bz": 2.26
-      },
-      {
-        "t_utc": "2026-04-07T12:10:00Z",
-        "bz": 2.05
-      },
-      {
-        "t_utc": "2026-04-07T12:15:00Z",
-        "bz": 1.83
-      },
-      {
-        "t_utc": "2026-04-07T12:20:00Z",
-        "bz": 0.89
-      },
-      {
-        "t_utc": "2026-04-07T12:25:00Z",
-        "bz": 1.64
-      },
-      {
-        "t_utc": "2026-04-07T12:30:00Z",
-        "bz": 2.51
-      },
-      {
-        "t_utc": "2026-04-07T12:35:00Z",
-        "bz": 1.79
-      },
-      {
-        "t_utc": "2026-04-07T12:40:00Z",
-        "bz": 1.0
-      },
-      {
-        "t_utc": "2026-04-07T12:45:00Z",
-        "bz": -0.96
-      },
-      {
-        "t_utc": "2026-04-07T12:50:00Z",
-        "bz": -2.44
-      },
-      {
-        "t_utc": "2026-04-07T12:55:00Z",
-        "bz": -2.57
-      },
-      {
-        "t_utc": "2026-04-07T13:00:00Z",
-        "bz": -2.09
-      },
-      {
-        "t_utc": "2026-04-07T13:05:00Z",
-        "bz": -2.63
-      },
       {
         "t_utc": "2026-04-07T13:10:00Z",
         "bz": -2.74
@@ -803,6 +655,150 @@
       {
         "t_utc": "2026-04-07T16:05:00Z",
         "bz": -2.5
+      },
+      {
+        "t_utc": "2026-04-07T16:10:00Z",
+        "bz": -2.69
+      },
+      {
+        "t_utc": "2026-04-07T16:15:00Z",
+        "bz": -2.49
+      },
+      {
+        "t_utc": "2026-04-07T16:20:00Z",
+        "bz": -2.01
+      },
+      {
+        "t_utc": "2026-04-07T16:25:00Z",
+        "bz": -1.86
+      },
+      {
+        "t_utc": "2026-04-07T16:30:00Z",
+        "bz": -0.64
+      },
+      {
+        "t_utc": "2026-04-07T16:35:00Z",
+        "bz": -1.75
+      },
+      {
+        "t_utc": "2026-04-07T16:40:00Z",
+        "bz": -1.71
+      },
+      {
+        "t_utc": "2026-04-07T16:45:00Z",
+        "bz": -2.31
+      },
+      {
+        "t_utc": "2026-04-07T16:50:00Z",
+        "bz": -2.12
+      },
+      {
+        "t_utc": "2026-04-07T16:55:00Z",
+        "bz": -2.33
+      },
+      {
+        "t_utc": "2026-04-07T17:00:00Z",
+        "bz": -2.42
+      },
+      {
+        "t_utc": "2026-04-07T17:05:00Z",
+        "bz": -3.0
+      },
+      {
+        "t_utc": "2026-04-07T17:10:00Z",
+        "bz": -3.46
+      },
+      {
+        "t_utc": "2026-04-07T17:15:00Z",
+        "bz": -3.58
+      },
+      {
+        "t_utc": "2026-04-07T17:20:00Z",
+        "bz": -3.4
+      },
+      {
+        "t_utc": "2026-04-07T17:25:00Z",
+        "bz": -3.25
+      },
+      {
+        "t_utc": "2026-04-07T17:30:00Z",
+        "bz": -3.58
+      },
+      {
+        "t_utc": "2026-04-07T17:35:00Z",
+        "bz": -2.78
+      },
+      {
+        "t_utc": "2026-04-07T17:40:00Z",
+        "bz": -1.72
+      },
+      {
+        "t_utc": "2026-04-07T17:45:00Z",
+        "bz": 0.09
+      },
+      {
+        "t_utc": "2026-04-07T17:50:00Z",
+        "bz": 0.33
+      },
+      {
+        "t_utc": "2026-04-07T17:55:00Z",
+        "bz": 0.18
+      },
+      {
+        "t_utc": "2026-04-07T18:00:00Z",
+        "bz": -0.28
+      },
+      {
+        "t_utc": "2026-04-07T18:05:00Z",
+        "bz": -0.89
+      },
+      {
+        "t_utc": "2026-04-07T18:10:00Z",
+        "bz": -3.43
+      },
+      {
+        "t_utc": "2026-04-07T18:15:00Z",
+        "bz": -3.12
+      },
+      {
+        "t_utc": "2026-04-07T18:20:00Z",
+        "bz": -2.62
+      },
+      {
+        "t_utc": "2026-04-07T18:25:00Z",
+        "bz": 0.08
+      },
+      {
+        "t_utc": "2026-04-07T18:30:00Z",
+        "bz": 0.59
+      },
+      {
+        "t_utc": "2026-04-07T18:35:00Z",
+        "bz": -0.52
+      },
+      {
+        "t_utc": "2026-04-07T18:40:00Z",
+        "bz": -1.38
+      },
+      {
+        "t_utc": "2026-04-07T18:45:00Z",
+        "bz": -2.03
+      },
+      {
+        "t_utc": "2026-04-07T18:50:00Z",
+        "bz": 0.53
+      },
+      {
+        "t_utc": "2026-04-07T18:55:00Z",
+        "bz": 0.93
+      },
+      {
+        "t_utc": "2026-04-07T19:00:00Z",
+        "bz": -0.17
+      },
+      {
+        "t_utc": "2026-04-07T19:05:00Z",
+        "bz": -2.15
       }
     ]
   },
@@ -812,13 +808,13 @@
     "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 1.67,
+    "kp": 2.33,
     "status_label": "Quiet",
     "scales": {
       "g": "G0",
       "r": "R0",
       "s": "S0",
-      "x": "B"
+      "x": "C"
     }
   },
   "scales": {
@@ -829,7 +825,7 @@
   "forecast": {
     "kp_max_next_24h": 2.33,
     "kp_max_at_utc": "2026-04-08T00:00:00Z",
-    "trend": "steady"
+    "trend": "rising"
   },
   "aurora_hint": {
     "aurora_possible": false,
@@ -872,9 +868,9 @@
     }
   },
   "coronal_hole": {
-    "status": "watch",
-    "estimated_speed_kms": 435.3,
-    "note": "Elevated solar wind — possible HSS"
+    "status": "quiet",
+    "estimated_speed_kms": 415.4,
+    "note": "Background solar wind"
   },
   "alerts_preview": [
     {
@@ -889,7 +885,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5313\r\nIssue Time: 2026 Apr 07 0124 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 Apr 07 0124 UTC\r\nValid To: 2026 Apr 07 1200 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.8741,
+      "relevance": 0.8288,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-04-07T00"
     },
     {
@@ -904,7 +900,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3668\r\nIssue Time: 2026 Apr 07 0500 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3667\r\nBegin Time: 2026 Apr 03 0920 UTC\r\nYesterday Maximum 2MeV Flux: 6075 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.3378,
+      "relevance": 0.3213,
       "dedupe_key": "space_weather_info|info|na|warning|2026-04-07T00"
     },
     {
@@ -919,7 +915,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3667\r\nIssue Time: 2026 Apr 06 0459 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3666\r\nBegin Time: 2026 Apr 03 0920 UTC\r\nYesterday Maximum 2MeV Flux: 5995 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.2044,
+      "relevance": 0.1879,
       "dedupe_key": "space_weather_info|info|na|warning|2026-04-06T00"
     }
   ],
@@ -936,7 +932,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3668\r\nIssue Time: 2026 Apr 07 0500 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3667\r\nBegin Time: 2026 Apr 03 0920 UTC\r\nYesterday Maximum 2MeV Flux: 6075 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.3378,
+      "relevance": 0.3213,
       "dedupe_key": "space_weather_info|info|na|warning|2026-04-07T00"
     },
     {
@@ -951,7 +947,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5313\r\nIssue Time: 2026 Apr 07 0124 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 Apr 07 0124 UTC\r\nValid To: 2026 Apr 07 1200 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.8741,
+      "relevance": 0.8288,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-04-07T00"
     },
     {
@@ -966,7 +962,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3667\r\nIssue Time: 2026 Apr 06 0459 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3666\r\nBegin Time: 2026 Apr 03 0920 UTC\r\nYesterday Maximum 2MeV Flux: 5995 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.2044,
+      "relevance": 0.1879,
       "dedupe_key": "space_weather_info|info|na|warning|2026-04-06T00"
     },
     {
@@ -981,7 +977,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3666\r\nIssue Time: 2026 Apr 05 0507 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1000pfu\r\nContinuation of Serial Number: 3665\r\nBegin Time: 2026 Apr 03 0920 UTC\r\nYesterday Maximum 2MeV Flux: 2419 pfu\r\n\r\n\r\n\r\nPotential Impacts: Satellite systems may experience significant charging resulting in increased risk to satellite systems.",
-      "relevance": 0.0718,
+      "relevance": 0.06,
       "dedupe_key": "space_weather_info|info|na|warning|2026-04-05T00"
     },
     {
@@ -1154,7 +1150,7 @@
       "severity": "low",
       "label": "Elevated",
       "messages": [
-        "No significant solar source activity"
+        "Minor C-class flare activity"
       ]
     },
     "space": {
@@ -1172,7 +1168,7 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 1.7"
+        "Kp 2.3"
       ]
     }
   },
