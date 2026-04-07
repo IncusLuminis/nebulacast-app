@@ -3663,7 +3663,14 @@ class HelioWidgetInstance {
 
   private async fetch(): Promise<void> {
     try {
-      const res = await fetch(this.opts.dataUrl, { cache: "no-store" });
+      // Append a timestamp cache-buster instead of using { cache: "no-store" }.
+      // cache: "no-store" adds Cache-Control to request headers, which is a
+      // non-simple CORS header and triggers a preflight OPTIONS request.
+      // CF Pages returns 405 on OPTIONS → preflight fails → CORS error on Firefox.
+      // A URL query param achieves the same no-cache effect without extra headers.
+      const sep = this.opts.dataUrl.includes("?") ? "&" : "?";
+      const url = `${this.opts.dataUrl}${sep}_t=${Date.now()}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.data = await res.json() as HelioNow;
       this.render();
