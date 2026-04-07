@@ -1154,7 +1154,7 @@ function renderMagnetospherePopover(data: HelioNow): string {
 }
 
 /** Tip content for Sun-Earth Interaction impact row (Observer Impacts panel) */
-function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
+function renderMagnetosphereTip(data: HelioNow, isOpen: boolean, baseUrl?: string): string {
   if (!isOpen) return "";
   const bz   = data.metrics.imf_bz_nt;
   const wind = data.metrics.solar_wind_kms;
@@ -1169,7 +1169,7 @@ function renderMagnetosphereTip(data: HelioNow, isOpen: boolean): string {
 
   return `<div class="hw-impact-tip hw-impact-tip-open">
     <div style="border-radius:3px;overflow:hidden;margin-bottom:2px">${scene}</div>
-    ${renderChainPanelInline(data)}
+    ${renderChainPanelInline(data, baseUrl)}
     <div class="hw-kpi-hint" style="margin-top:6px;margin-bottom:0">${escText(hintText)}</div>
   </div>`;
 }
@@ -2236,6 +2236,11 @@ function getAlarmGif(column: "sun" | "space" | "earth", severity: string): strin
   return `${CHAIN_GIF_BASE}/${CHAIN_GIF_MAP[severity] ?? CHAIN_GIF_MAP.none}`;
 }
 
+/** Absolute URL for chain GIFs (embeds must pass `opts.baseUrl` or rely on ASSET_BASE_DEFAULT). */
+function getAlarmGifUrl(column: "sun" | "space" | "earth", severity: string, baseUrl?: string): string {
+  return resolveAssetUrl(getAlarmGif(column, severity), baseUrl);
+}
+
 const CHAIN_COLOR: Record<string, string> = {
   none:     "#3a5060",
   low:      "#5cce8c",
@@ -2340,9 +2345,11 @@ function deriveChainPanel(data: HelioNow): ChainPanel {
   };
 }
 
-function renderChainCol(col: ChainPanelColumn, headLabel: string, column: "sun" | "space" | "earth"): string {
+function renderChainCol(
+  col: ChainPanelColumn, headLabel: string, column: "sun" | "space" | "earth", baseUrl?: string,
+): string {
   const color  = CHAIN_COLOR[col.severity] ?? CHAIN_COLOR.none;
-  const gifSrc = getAlarmGif(column, col.severity);
+  const gifSrc = getAlarmGifUrl(column, col.severity, baseUrl);
   const msgs   = col.messages.slice(0, 3)
     .map(m => `<span class="hw-chain-msg">${escText(m)}</span>`).join("");
   return `<div class="hw-chain-col">
@@ -2353,27 +2360,27 @@ function renderChainCol(col: ChainPanelColumn, headLabel: string, column: "sun" 
   </div>`;
 }
 
-function renderChainPanel(data: HelioNow): string {
+function renderChainPanel(data: HelioNow, baseUrl?: string): string {
   const panel = data.chain_panel ?? deriveChainPanel(data);
   const arrow = `<div class="hw-chain-arrow">›</div>`;
   return `<div class="hw-chain">
     <div class="hw-chain-title">Solar · Space · Earth</div>
     <div class="hw-chain-cols">
-      ${renderChainCol(panel.sun,   "Sun",   "sun")}
+      ${renderChainCol(panel.sun,   "Sun",   "sun",   baseUrl)}
       ${arrow}
-      ${renderChainCol(panel.space, "Space", "space")}
+      ${renderChainCol(panel.space, "Space", "space", baseUrl)}
       ${arrow}
-      ${renderChainCol(panel.earth, "Earth", "earth")}
+      ${renderChainCol(panel.earth, "Earth", "earth", baseUrl)}
     </div>
   </div>`;
 }
 
 /** Inline version for embedding inside the Sun-Earth interaction tip (no outer wrapper). */
-function renderChainPanelInline(data: HelioNow): string {
+function renderChainPanelInline(data: HelioNow, baseUrl?: string): string {
   const panel     = data.chain_panel ?? deriveChainPanel(data);
   const arrow     = `<div class="hw-chain-arrow">›</div>`;
   const earthColor = CHAIN_COLOR[panel.earth.severity] ?? CHAIN_COLOR.none;
-  const earthGif   = getAlarmGif("earth", panel.earth.severity);
+  const earthGif   = getAlarmGifUrl("earth", panel.earth.severity, baseUrl);
   const earthMsgs  = panel.earth.messages.slice(0, 3)
     .map(m => `<span class="hw-chain-msg">${escText(m)}</span>`).join("");
   // EARTH column is clickable — opens Aurora & Storm Risk rows
@@ -2384,9 +2391,9 @@ function renderChainPanelInline(data: HelioNow): string {
     <div class="hw-chain-msgs">${earthMsgs}</div>
   </div>`;
   return `<div class="hw-chain-cols" style="margin:8px 0 4px">
-    ${renderChainCol(panel.sun,   "Sun",   "sun")}
+    ${renderChainCol(panel.sun,   "Sun",   "sun",   baseUrl)}
     ${arrow}
-    ${renderChainCol(panel.space, "Space", "space")}
+    ${renderChainCol(panel.space, "Space", "space", baseUrl)}
     ${arrow}
     ${earthCol}
   </div>`;
@@ -2911,7 +2918,7 @@ function renderImpacts(
       <span class="hw-impact-caret">▶</span>
       <span class="hw-impact-kind" style="color:${magInfo.color}">${magIcon}<span style="color:#b4c6cc">Sun-Earth interaction</span></span>
       <span class="hw-impact-badge" style="background:${magInfo.color}22;color:${magInfo.color}">${escText(magInfo.label)}</span>
-      ${renderMagnetosphereTip(data, magOpen)}
+      ${renderMagnetosphereTip(data, magOpen, opts.baseUrl)}
     </div>`;
 
   return `
