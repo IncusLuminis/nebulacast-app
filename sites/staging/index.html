@@ -473,7 +473,12 @@
 
     /* Sun page */
     #page-sun { overflow-y: auto; padding: 20px; }
-    #page-sun #w-sun { max-width: 1200px; margin: 0 auto; }
+    #page-sun #w-sun {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
 
     /* Map page */
     #page-map { overflow: hidden; }
@@ -903,7 +908,12 @@
       padding: 20px;
     }
 
-    #w-sun { max-width: 1200px; margin: 0 auto; }
+    #w-sun {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
 
     /* Map panel */
     #panel-map {
@@ -1125,7 +1135,7 @@
 
     <!-- ── PAGE: SUN & MOON ── -->
     <div id="page-sun" class="console-page" style="overflow-y:auto;padding:20px">
-      <div id="w-sun" style="max-width:1200px;margin:0 auto"></div>
+      <div id="w-sun" style="width:100%;max-width:1200px;margin:0 auto;box-sizing:border-box"></div>
     </div>
 
     <!-- ── PAGE: MAP ── -->

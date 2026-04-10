@@ -1,4 +1,7 @@
 .sunmoon-card{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:12px;
@@ -40,6 +43,8 @@
 }
 .sunmoon-graph-wrap{
   position:relative;
+  width:100%;
+  min-width:0;
   margin-bottom:8px;
 }
 .sunmoon-canvas{
