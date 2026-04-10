@@ -33,52 +33,55 @@
     /* ─── Console root grid ────────────────────────────────── */
     .console-root {
       display: grid;
-      grid-template-rows: 52px 1fr;
+      grid-template-rows: auto 1fr;
       grid-template-columns: 200px 1fr 280px;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* ─── Top bar (spans all 3 columns) ─────────────────────*/
+    /* ─── Top bar (spans all 3 columns, mirrors column widths) ─── */
     .console-topbar {
       grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 200px 1fr 280px;
       background: rgba(16, 20, 32, 0.98);
       border-bottom: 1px solid rgba(255,255,255,0.07);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 14px;
       z-index: 50;
-      min-width: 0;
     }
 
     .cb-brand {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.75);
       white-space: nowrap;
-      flex-shrink: 0;
-      padding-right: 10px;
-      border-right: 1px solid rgba(255,255,255,0.1);
+      border-right: 1px solid rgba(255,255,255,0.08);
     }
     .cb-brand span { color: #4a6fa5; }
 
     .cb-location {
-      flex: 1;
+      padding: 8px 14px;
       min-width: 0;
-      padding-top: 9px;
     }
 
-    /* ─── Control bar: time player ───────────────────────── */
+    /* ─── Control bar: player + time (right column) ───────── */
+    .cb-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      border-left: 1px solid rgba(255,255,255,0.08);
+    }
+
     .cb-player {
       display: flex;
       align-items: center;
       gap: 3px;
       flex-shrink: 0;
-      padding: 0 8px;
-      border-left: 1px solid rgba(255,255,255,0.08);
-      border-right: 1px solid rgba(255,255,255,0.08);
     }
 
     .cb-btn {
@@ -1031,14 +1034,16 @@
   <header class="console-topbar">
     <div class="cb-brand"><span>★</span> NEBULACAST</div>
     <div class="cb-location" id="w-location"></div>
-    <div class="cb-player">
-      <button class="cb-btn" id="cb-prev-day" title="−1 day">⏮</button>
-      <button class="cb-btn" id="cb-prev-hour" title="−1 hour">◀</button>
-      <button class="cb-btn cb-btn-now is-live" id="cb-now" title="Jump to live">NOW</button>
-      <button class="cb-btn" id="cb-next-hour" title="+1 hour">▶</button>
-      <button class="cb-btn" id="cb-next-day" title="+1 day">⏭</button>
+    <div class="cb-right">
+      <div class="cb-player">
+        <button class="cb-btn" id="cb-prev-day" title="−1 day">⏮</button>
+        <button class="cb-btn" id="cb-prev-hour" title="−1 hour">◀</button>
+        <button class="cb-btn cb-btn-now is-live" id="cb-now" title="Jump to live">NOW</button>
+        <button class="cb-btn" id="cb-next-hour" title="+1 hour">▶</button>
+        <button class="cb-btn" id="cb-next-day" title="+1 day">⏭</button>
+      </div>
+      <div class="cb-time is-live" id="cb-time">LIVE</div>
     </div>
-    <div class="cb-time is-live" id="cb-time">LIVE</div>
   </header>
 
   <!-- ══════════ LEFT COLUMN: NAVIGATION RAIL ══════════ -->
