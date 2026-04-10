@@ -105,6 +105,8 @@ function injectCss() {
 }
 .nc-stats-donut-pair-charts--single{ grid-template-columns:1fr; }
 .nc-stats-donut-pair-chart-cell{ display:flex; justify-content:center; width:100%; min-width:0; }
+.nc-stats-pair-stretch-cell{ min-width:0; width:100%; }
+.nc-stats-bar-charts-row{ align-items:start; justify-items:stretch; }
 .nc-stats-donut-pair-legends{
   display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; min-width:0;
 }
@@ -910,36 +912,80 @@ export async function initStatsPage(root) {
 
   appendAlertsDonutPair(evtBody, noaaSegs, skySegs);
 
-  if (data.ranking?.items?.length) {
-    const scores = data.ranking.items.map(it => Number(it.score)).filter(x => isFinite(x));
-    const hist = makeHistogram(scores, 8);
-    const pR = document.createElement('p');
-    pR.className = 'nc-stats-note';
-    pR.textContent = 'Ranking score bins (tonight list)';
-    evtBody.appendChild(pR);
-    const cv = mkCanvas(statsContentWidth(root), 140);
-    const rAxis = hist.labels.map(l => l.split('–')[0]);
-    drawBars(cv.ctx, cv.w, cv.h, rAxis, hist.counts, '#38bdf8');
-    attachBarChartTooltip(cv.canvas, cv.w, cv.h, hist.labels, hist.counts, { valueLabel: 'Objects in bin' });
-    evtBody.appendChild(cv.canvas);
-  }
+  const hasRankHist = data.ranking?.items?.length > 0;
+  const hasCalHist = data.daily?.items?.length > 0;
+  if (hasRankHist || hasCalHist) {
+    const dualRc = hasRankHist && hasCalHist;
+    const fullW = statsContentWidth(root);
+    const colW = dualRc ? Math.max(260, Math.floor((fullW - 16) / 2)) : fullW;
 
-  if (data.daily?.items?.length) {
-    const byStream = {};
-    for (const it of data.daily.items) {
-      const k = it.stream || it.category || 'other';
-      byStream[k] = (byStream[k] || 0) + 1;
+    const wrap = document.createElement('div');
+    wrap.className = 'nc-stats-donut-pair';
+
+    const head = document.createElement('div');
+    head.className = dualRc
+      ? 'nc-stats-donut-pair-head'
+      : 'nc-stats-donut-pair-head nc-stats-donut-pair-head--single';
+
+    const charts = document.createElement('div');
+    charts.className = dualRc
+      ? 'nc-stats-donut-pair-charts nc-stats-bar-charts-row'
+      : 'nc-stats-donut-pair-charts nc-stats-donut-pair-charts--single nc-stats-bar-charts-row';
+
+    function histHeadNote(text) {
+      const p = document.createElement('p');
+      p.className = 'nc-stats-note';
+      p.style.marginTop = '0';
+      p.style.marginBottom = '4px';
+      p.innerHTML = `<strong>${esc(text)}</strong>`;
+      return p;
     }
-    const lbls = Object.keys(byStream).sort((a, b) => byStream[b] - byStream[a]);
-    const vals = lbls.map(l => byStream[l]);
-    const pD = document.createElement('p');
-    pD.className = 'nc-stats-note';
-    pD.textContent = 'Calendar signal items by stream/category';
-    evtBody.appendChild(pD);
-    const cv = mkCanvas(statsContentWidth(root), Math.min(200, 36 + lbls.length * 12));
-    drawBars(cv.ctx, cv.w, cv.h, lbls, vals, '#34d399');
-    attachBarChartTooltip(cv.canvas, cv.w, cv.h, lbls, vals, { valueLabel: 'Items' });
-    evtBody.appendChild(cv.canvas);
+
+    const rankCell = document.createElement('div');
+    rankCell.className = 'nc-stats-pair-stretch-cell';
+    if (hasRankHist) {
+      const scores = data.ranking.items.map(it => Number(it.score)).filter(x => isFinite(x));
+      const hist = makeHistogram(scores, 8);
+      const cvR = mkCanvas(colW, 140);
+      const rAxis = hist.labels.map(l => l.split('–')[0]);
+      drawBars(cvR.ctx, cvR.w, cvR.h, rAxis, hist.counts, '#38bdf8');
+      attachBarChartTooltip(cvR.canvas, cvR.w, cvR.h, hist.labels, hist.counts, { valueLabel: 'Objects in bin' });
+      rankCell.appendChild(cvR.canvas);
+    }
+
+    const calCell = document.createElement('div');
+    calCell.className = 'nc-stats-pair-stretch-cell';
+    if (hasCalHist) {
+      const byStream = {};
+      for (const it of data.daily.items) {
+        const k = it.stream || it.category || 'other';
+        byStream[k] = (byStream[k] || 0) + 1;
+      }
+      const lbls = Object.keys(byStream).sort((a, b) => byStream[b] - byStream[a]);
+      const vals = lbls.map(l => byStream[l]);
+      const calH = Math.min(200, 36 + lbls.length * 12);
+      const cvC = mkCanvas(colW, calH);
+      drawBars(cvC.ctx, cvC.w, cvC.h, lbls, vals, '#34d399');
+      attachBarChartTooltip(cvC.canvas, cvC.w, cvC.h, lbls, vals, { valueLabel: 'Items' });
+      calCell.appendChild(cvC.canvas);
+    }
+
+    if (dualRc) {
+      head.append(
+        histHeadNote('Ranking score bins (tonight list)'),
+        histHeadNote('Calendar signal items by stream/category'),
+      );
+      charts.append(rankCell, calCell);
+    } else if (hasRankHist) {
+      head.append(histHeadNote('Ranking score bins (tonight list)'));
+      charts.append(rankCell);
+    } else {
+      head.append(histHeadNote('Calendar signal items by stream/category'));
+      charts.append(calCell);
+    }
+
+    wrap.append(head, charts);
+    evtBody.appendChild(wrap);
   }
 
   if (!evtBody.childNodes.length) evtBody.textContent = 'No events/alerts data loaded.';
