@@ -33,58 +33,175 @@
     /* ─── Console root grid ────────────────────────────────── */
     .console-root {
       display: grid;
-      grid-template-rows: 52px 1fr;
-      grid-template-columns: 272px 1fr;
-      row-gap: 8px;
+      grid-template-rows: auto 1fr;
+      grid-template-columns: 200px 1fr 280px;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* ─── Topbar cells ───────────────────────────────────────*/
-    .console-topbar-brand {
+    /* ─── Top bar (spans all 3 columns, mirrors column widths) ─── */
+    .console-topbar {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 200px 1fr 280px;
       background: rgba(16, 20, 32, 0.98);
       border-bottom: 1px solid rgba(255,255,255,0.07);
-      border-right: 1px solid rgba(255,255,255,0.06);
-      display: flex;
-      align-items: center;
-      padding: 0 14px;
       z-index: 50;
     }
 
-    .console-topbar-location {
-      background: rgba(16, 20, 32, 0.98);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
+    .cb-brand {
       display: flex;
       align-items: center;
-      padding: 9px 20px 0;
-      z-index: 50;
-      min-width: 0;
-    }
-
-    .console-topbar-location #w-location {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .console-brand {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      color: rgba(255,255,255,0.7);
+      justify-content: center;
+      padding: 0 16px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.75);
       white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .cb-brand span { color: #4a6fa5; }
+
+    .cb-location {
+      padding: 8px 14px;
+      min-width: 0;
     }
 
-    .console-brand span {
-      color: #4a6fa5;
+    /* ─── Control bar: player + time (right column) ───────── */
+    .cb-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      border-left: 1px solid rgba(255,255,255,0.08);
     }
 
-    /* ─── Brand bar at top of left feed column ───────────── */
-    .console-brand-bar {
-      background: rgba(16, 20, 32, 0.98);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding: 13px 14px 11px;
+    .cb-player {
+      display: flex;
+      align-items: center;
+      gap: 3px;
       flex-shrink: 0;
     }
+
+    .cb-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 5px;
+      color: rgba(255,255,255,0.55);
+      font-size: 11px;
+      font-family: inherit;
+      padding: 4px 8px;
+      cursor: pointer;
+      line-height: 1;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .cb-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.85);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .cb-btn-now {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: rgba(74,111,165,0.15);
+      border-color: rgba(74,111,165,0.35);
+      color: #8fb6ff;
+      padding: 4px 10px;
+    }
+    .cb-btn-now:hover {
+      background: rgba(74,111,165,0.3);
+      border-color: rgba(74,111,165,0.6);
+      color: #fff;
+    }
+    .cb-btn-now.is-live {
+      background: rgba(76,175,80,0.12);
+      border-color: rgba(76,175,80,0.35);
+      color: #4caf50;
+    }
+
+    .cb-time {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.55);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      padding: 0 8px;
+      flex-shrink: 0;
+      min-width: 110px;
+      text-align: center;
+    }
+    .cb-time.is-live {
+      color: #4caf50;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── Left nav rail ──────────────────────────────────── */
+    .console-nav {
+      background: rgba(10, 13, 22, 0.98);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px 0;
+    }
+    .console-nav::-webkit-scrollbar { width: 3px; }
+    .console-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
+
+    .nav-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 0 8px;
+    }
+    .nav-divider {
+      margin: 8px 8px;
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.45);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      width: 100%;
+      text-align: left;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.8);
+    }
+    .nav-item.is-active {
+      background: rgba(74,111,165,0.18);
+      color: #8fb6ff;
+    }
+    .nav-item.is-active:hover {
+      background: rgba(74,111,165,0.28);
+    }
+    .nav-icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .nav-label { flex: 1; }
 
     /* ─── Hero Decision Band ─────────────────────────────────*/
     .console-hero {
@@ -317,13 +434,70 @@
       border-top: 1px solid rgba(255,255,255,0.06);
     }
 
-    /* ─── Right column (topbar + hero + tools) ─────────────── */
-    .console-right {
+    /* ─── Center main content column ───────────────────────── */
+    .console-main {
       display: flex;
       flex-direction: column;
       overflow: hidden;
       min-height: 0;
     }
+
+    /* ─── Console pages (center column) ─────────────────────*/
+    .console-page {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .console-page.is-active {
+      display: flex;
+    }
+
+    /* Dashboard page: hero + panels stacked, scrollable */
+    #page-dashboard {
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+    }
+    #page-dashboard.is-active { display: flex; }
+
+    /* Sky page — fullscreen */
+    #page-sky { overflow: hidden; }
+    #page-sky #w-sky { width: 100%; height: 100%; background: #0a0e14; position: relative; }
+    #page-sky #skyMount { width: 100%; height: 100%; position: relative; }
+    #page-sky #skyMount .sky-root {
+      position: relative !important; width: 100% !important; height: 100% !important;
+      max-width: 100% !important; max-height: 100% !important; overflow: hidden !important;
+    }
+
+    /* Sun page */
+    #page-sun { overflow-y: auto; padding: 20px; }
+    #page-sun #w-sun { max-width: 1200px; margin: 0 auto; }
+
+    /* Map page */
+    #page-map { overflow: hidden; }
+
+    /* Events page */
+    #page-events { overflow-y: auto; }
+
+    /* Weather & Helio panels inside dashboard */
+    .db-panel { flex-shrink: 0; }
+    .db-panel-weather #w-weather { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .db-panel-helio   #w-helio   { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+    /* ─── Right column: alerts/events stream ────────────────*/
+    .console-alerts {
+      background: rgba(12, 16, 26, 0.98);
+      border-left: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .console-alerts::-webkit-scrollbar { width: 4px; }
+    .console-alerts::-webkit-scrollbar-track { background: transparent; }
+    .console-alerts::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     /* ─── Priority Feed ──────────────────────────────────── */
     .console-feed {
@@ -856,189 +1030,247 @@
 </div>
 <div class="console-root">
 
-  <!-- ══════════ TOPBAR: brand (left col) ══════════ -->
-  <div class="console-topbar-brand">
-    <div class="console-brand"><span>★</span> NEBULACAST</div>
-  </div>
+  <!-- ══════════ TOPBAR: global control bar ══════════ -->
+  <header class="console-topbar">
+    <div class="cb-brand"><span>★</span> NEBULACAST</div>
+    <div class="cb-location" id="w-location"></div>
+    <div class="cb-right">
+      <div class="cb-player">
+        <button class="cb-btn" id="cb-prev-day" title="−1 day">⏮</button>
+        <button class="cb-btn" id="cb-prev-hour" title="−1 hour">◀</button>
+        <button class="cb-btn cb-btn-now is-live" id="cb-now" title="Jump to live">NOW</button>
+        <button class="cb-btn" id="cb-next-hour" title="+1 hour">▶</button>
+        <button class="cb-btn" id="cb-next-day" title="+1 day">⏭</button>
+      </div>
+      <div class="cb-time is-live" id="cb-time">LIVE</div>
+    </div>
+  </header>
 
-  <!-- ══════════ TOPBAR: location (right col) ══════════ -->
-  <div class="console-topbar-location">
-    <div id="w-location"></div>
-  </div>
+  <!-- ══════════ LEFT COLUMN: NAVIGATION RAIL ══════════ -->
+  <nav class="console-nav">
+    <div class="nav-section">
+      <button class="nav-item is-active" data-page="dashboard">
+        <span class="nav-icon">⊞</span>
+        <span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-item" data-page="sky">
+        <span class="nav-icon">✦</span>
+        <span class="nav-label">Sky</span>
+      </button>
+      <button class="nav-item" data-page="weather">
+        <span class="nav-icon">☁</span>
+        <span class="nav-label">Weather</span>
+      </button>
+      <button class="nav-item" data-page="helio">
+        <span class="nav-icon">☀</span>
+        <span class="nav-label">Space Weather</span>
+      </button>
+      <button class="nav-item" data-page="map">
+        <span class="nav-icon">◻</span>
+        <span class="nav-label">Map</span>
+      </button>
+      <button class="nav-item" data-page="events">
+        <span class="nav-icon">◈</span>
+        <span class="nav-label">Events</span>
+      </button>
+      <button class="nav-item" data-page="sun">
+        <span class="nav-icon">☽</span>
+        <span class="nav-label">Sun &amp; Moon</span>
+      </button>
+      <hr class="nav-divider">
+      <button class="nav-item" data-page="showcase">
+        <span class="nav-icon">⬡</span>
+        <span class="nav-label">Showcase</span>
+      </button>
+      <button class="nav-item" data-page="stats">
+        <span class="nav-icon">◎</span>
+        <span class="nav-label">Stats</span>
+      </button>
+      <button class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙</span>
+        <span class="nav-label">Settings</span>
+      </button>
+    </div>
+  </nav>
 
-  <!-- ══════════ LEFT COLUMN: PRIORITY FEED ══════════ -->
-  <aside class="console-feed">
+  <!-- ══════════ CENTER COLUMN: MAIN CONTENT ══════════ -->
+  <main class="console-main">
 
-      <!-- 1. Space Weather Alerts -->
-      <div class="feed-section" id="fs-swx">
-        <div class="feed-section-hdr" data-toggle="swx">
-          <span class="fsh-chevron">▾</span>
-          <span class="fsh-title">Space Weather Alerts</span>
-          <span class="fsh-badge" id="swx-badge"></span>
-        </div>
-        <div class="feed-section-body" id="fsb-swx">
-          <div class="alerts-list" id="swx-list">
-            <div class="feed-loading">Loading…</div>
+    <!-- ── PAGE: DASHBOARD (default) ── -->
+    <div id="page-dashboard" class="console-page is-active">
+
+      <!-- Hero Decision Band -->
+      <section class="console-hero" id="console-hero">
+        <div class="hero-skeleton">Loading conditions…</div>
+      </section>
+
+      <!-- Weather / Conditions (timeline layer) -->
+      <div class="db-panel db-panel-weather">
+        <div id="w-weather"></div>
+      </div>
+
+      <!-- Space Weather secondary widget -->
+      <div class="db-panel db-panel-helio">
+        <div id="w-helio"></div>
+      </div>
+
+    </div>
+
+    <!-- ── PAGE: SKY ── -->
+    <div id="page-sky" class="console-page">
+      <div id="w-sky">
+        <div id="skyMount"></div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: SUN & MOON ── -->
+    <div id="page-sun" class="console-page" style="overflow-y:auto;padding:20px">
+      <div id="w-sun" style="max-width:1200px;margin:0 auto"></div>
+    </div>
+
+    <!-- ── PAGE: MAP ── -->
+    <div id="page-map" class="console-page">
+      <iframe
+        id="mapIframe"
+        src=""
+        class="map-iframe"
+        title="Weather Map"
+        frameborder="0"
+      ></iframe>
+    </div>
+
+    <!-- ── PAGE: EVENTS ── -->
+    <div id="page-events" class="console-page" style="overflow-y:auto">
+      <div class="events-subtabs">
+        <button type="button" class="events-subtab is-active" data-sub="calendar">Calendar</button>
+        <button type="button" class="events-subtab" data-sub="news">News</button>
+        <button type="button" class="events-subtab" data-sub="observer">Observer Conditions</button>
+      </div>
+
+      <div id="subpanel-calendar" class="events-subpanel is-active">
+        <div id="nrc-main" class="nrc-root">
+          <div class="nrc-filters" data-role="filters"></div>
+          <div class="nrc-header">
+            <div class="nrc-meta">
+              <a class="nrc-link" href="/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>
+              <a class="nrc-link" href="/alerts/rss.xml" target="_blank" rel="noopener">RSS</a>
+            </div>
           </div>
+          <div class="nrc-status" data-role="status">Loading…</div>
+          <div class="nrc-list" data-role="list"></div>
         </div>
       </div>
 
-      <!-- 2. Best Objects Today -->
-      <div class="feed-section" id="fs-ranking">
-        <div class="feed-section-hdr" data-toggle="ranking">
-          <span class="fsh-chevron">▾</span>
-          <span class="fsh-title">Best Objects Today</span>
-        </div>
-        <div class="feed-section-body" id="fsb-ranking">
-          <div class="feed-list" id="feed-list">
-            <div class="feed-loading">Loading…</div>
+      <div id="subpanel-news" class="events-subpanel">
+        <div id="nrw-main" class="nrw-root">
+          <div class="nrw-filters" data-role="filters"></div>
+          <div class="nrw-header">
+            <div class="nrw-meta">
+              <a class="nrw-rss" href="/news/rss.xml" target="_blank" rel="noopener">RSS</a>
+            </div>
           </div>
+          <div class="nrw-status" data-role="status">Loading…</div>
+          <div class="nrw-list" data-role="list"></div>
         </div>
       </div>
 
-      <!-- 3. Sky Alerts -->
-      <div class="feed-section" id="fs-sky">
-        <div class="feed-section-hdr" data-toggle="sky">
-          <span class="fsh-chevron">▾</span>
-          <span class="fsh-title">Sky Alerts</span>
-          <span class="fsh-badge" id="sky-badge"></span>
-        </div>
-        <div class="feed-section-body" id="fsb-sky">
-          <div class="alerts-list" id="sky-list">
-            <div class="feed-loading">Loading…</div>
-          </div>
-        </div>
+      <div id="subpanel-observer" class="events-subpanel">
+        <div id="w-observer-weather" style="max-width:1200px;margin:0 auto"></div>
       </div>
+    </div>
 
-      <!-- 4. Calendar Events -->
-      <div class="feed-section" id="fs-cal">
-        <div class="feed-section-hdr" data-toggle="cal">
-          <span class="fsh-chevron">▾</span>
-          <span class="fsh-title">Calendar Events</span>
-          <span class="fsh-badge" id="cal-badge"></span>
-        </div>
-        <div class="feed-section-body" id="fsb-cal">
-          <div class="alerts-list" id="cal-list">
-            <div class="feed-loading">Loading…</div>
-          </div>
-        </div>
-      </div>
+    <!-- ── PAGE: SHOWCASE ── -->
+    <div id="page-showcase" class="console-page">
+      <iframe src="/showcase/" style="width:100%;height:100%;border:none;" title="Showcase"></iframe>
+    </div>
 
-      <!-- 5. News -->
-      <div class="feed-section" id="fs-news">
-        <div class="feed-section-hdr" data-toggle="news">
-          <span class="fsh-chevron">▾</span>
-          <span class="fsh-title">News</span>
-          <span class="fsh-badge" id="news-badge"></span>
-        </div>
-        <div class="feed-section-body" id="fsb-news">
-          <div class="alerts-list" id="news-list">
-            <div class="feed-loading">Loading…</div>
-          </div>
+    <!-- ── PAGE: STATS ── -->
+    <div id="page-stats" class="console-page" style="overflow-y:auto;padding:40px 24px">
+      <h2 style="color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:500;margin:0 0 8px">Stats</h2>
+      <p style="color:rgba(255,255,255,0.3);font-size:0.85rem">Coming soon</p>
+    </div>
+
+    <!-- ── PAGE: SETTINGS ── -->
+    <div id="page-settings" class="console-page" style="overflow-y:auto;padding:40px 24px">
+      <h2 style="color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:500;margin:0 0 8px">Settings</h2>
+      <p style="color:rgba(255,255,255,0.3);font-size:0.85rem">Coming soon</p>
+    </div>
+
+  </main><!-- .console-main -->
+
+  <!-- ══════════ RIGHT COLUMN: ALERTS / EVENTS STREAM ══════════ -->
+  <aside class="console-alerts">
+
+    <!-- 1. Space Weather Alerts -->
+    <div class="feed-section" id="fs-swx">
+      <div class="feed-section-hdr" data-toggle="swx">
+        <span class="fsh-chevron">▾</span>
+        <span class="fsh-title">Space Weather</span>
+        <span class="fsh-badge" id="swx-badge"></span>
+      </div>
+      <div class="feed-section-body" id="fsb-swx">
+        <div class="alerts-list" id="swx-list">
+          <div class="feed-loading">Loading…</div>
         </div>
       </div>
+    </div>
+
+    <!-- 2. Sky Alerts -->
+    <div class="feed-section" id="fs-sky">
+      <div class="feed-section-hdr" data-toggle="sky">
+        <span class="fsh-chevron">▾</span>
+        <span class="fsh-title">Sky Alerts</span>
+        <span class="fsh-badge" id="sky-badge"></span>
+      </div>
+      <div class="feed-section-body" id="fsb-sky">
+        <div class="alerts-list" id="sky-list">
+          <div class="feed-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Best Objects Today -->
+    <div class="feed-section" id="fs-ranking">
+      <div class="feed-section-hdr" data-toggle="ranking">
+        <span class="fsh-chevron">▾</span>
+        <span class="fsh-title">Best Objects</span>
+      </div>
+      <div class="feed-section-body" id="fsb-ranking">
+        <div class="feed-list" id="feed-list">
+          <div class="feed-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Calendar Events -->
+    <div class="feed-section" id="fs-cal">
+      <div class="feed-section-hdr" data-toggle="cal">
+        <span class="fsh-chevron">▾</span>
+        <span class="fsh-title">Calendar</span>
+        <span class="fsh-badge" id="cal-badge"></span>
+      </div>
+      <div class="feed-section-body" id="fsb-cal">
+        <div class="alerts-list" id="cal-list">
+          <div class="feed-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. News -->
+    <div class="feed-section" id="fs-news">
+      <div class="feed-section-hdr" data-toggle="news">
+        <span class="fsh-chevron">▾</span>
+        <span class="fsh-title">News</span>
+        <span class="fsh-badge" id="news-badge"></span>
+      </div>
+      <div class="feed-section-body" id="fsb-news">
+        <div class="alerts-list" id="news-list">
+          <div class="feed-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
 
   </aside>
-
-  <!-- ══════════ RIGHT COLUMN ══════════ -->
-  <div class="console-right">
-
-    <!-- ── HERO DECISION BAND ── -->
-    <section class="console-hero" id="console-hero">
-      <div class="hero-skeleton">Loading conditions…</div>
-    </section>
-
-    <!-- ── CONTEXT TOOLS ── -->
-    <main class="console-tools">
-
-      <nav class="tools-tabs" role="tablist">
-        <button type="button" class="tools-tab is-active" data-tab="weather">Conditions</button>
-        <button type="button" class="tools-tab" data-tab="sky">Sky</button>
-        <button type="button" class="tools-tab" data-tab="sun">Sun &amp; Moon</button>
-        <button type="button" class="tools-tab" data-tab="map">Map</button>
-        <button type="button" class="tools-tab" data-tab="helio">Space Weather</button>
-        <button type="button" class="tools-tab" data-tab="events">Events</button>
-      </nav>
-
-      <div class="tools-content">
-
-        <!-- Conditions (Weather) -->
-        <div id="panel-weather" class="tools-panel is-active">
-          <div id="w-weather"></div>
-        </div>
-
-        <!-- Sky viewer -->
-        <div id="panel-sky" class="tools-panel">
-          <div id="w-sky">
-            <div id="skyMount"></div>
-          </div>
-        </div>
-
-        <!-- Sun & Moon -->
-        <div id="panel-sun" class="tools-panel">
-          <div id="w-sun"></div>
-        </div>
-
-        <!-- Map -->
-        <div id="panel-map" class="tools-panel">
-          <iframe
-            id="mapIframe"
-            src=""
-            class="map-iframe"
-            title="Weather Map"
-            frameborder="0"
-          ></iframe>
-        </div>
-
-        <!-- Space Weather (Helio) -->
-        <div id="panel-helio" class="tools-panel">
-          <div id="w-helio"></div>
-        </div>
-
-        <!-- Events: Calendar / News / Observer -->
-        <div id="panel-events" class="tools-panel">
-          <div class="events-subtabs">
-            <button type="button" class="events-subtab is-active" data-sub="calendar">Calendar</button>
-            <button type="button" class="events-subtab" data-sub="news">News</button>
-            <button type="button" class="events-subtab" data-sub="observer">Observer Conditions</button>
-          </div>
-
-          <div id="subpanel-calendar" class="events-subpanel is-active">
-            <div id="nrc-main" class="nrc-root">
-              <div class="nrc-filters" data-role="filters"></div>
-              <div class="nrc-header">
-                <div class="nrc-meta">
-                  <a class="nrc-link" href="/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>
-                  <a class="nrc-link" href="/alerts/rss.xml" target="_blank" rel="noopener">RSS</a>
-                </div>
-              </div>
-              <div class="nrc-status" data-role="status">Loading…</div>
-              <div class="nrc-list" data-role="list"></div>
-            </div>
-          </div>
-
-          <div id="subpanel-news" class="events-subpanel">
-            <div id="nrw-main" class="nrw-root">
-              <div class="nrw-filters" data-role="filters"></div>
-              <div class="nrw-header">
-                <div class="nrw-meta">
-                  <a class="nrw-rss" href="/news/rss.xml" target="_blank" rel="noopener">RSS</a>
-                </div>
-              </div>
-              <div class="nrw-status" data-role="status">Loading…</div>
-              <div class="nrw-list" data-role="list"></div>
-            </div>
-          </div>
-
-          <div id="subpanel-observer" class="events-subpanel">
-            <div id="w-observer-weather"></div>
-          </div>
-        </div>
-
-      </div><!-- .tools-content -->
-    </main>
-
-  </div><!-- .console-right -->
 
 </div><!-- .console-root -->
 
@@ -1180,12 +1412,9 @@
     }
   }
 
-  // ── Helio (lazy – Space Weather tab) ───────────────────
-  let helioInited = false;
+  // ── Helio (in dashboard, init on load) ────────────────
   let _helioInstance = null;
-  function initHelioIfNeeded() {
-    if (helioInited) return;
-    helioInited = true;
+  {
     const helioEl = document.getElementById('w-helio');
     if (helioEl && window.HelioWidget) {
       const loc = getState()?.location ?? {};
@@ -1315,28 +1544,35 @@
 
   subscribe(() => { if (skyInited) syncSkyFromState(); });
 
-  // ── Context Tools tab switching ─────────────────────────
-  const toolTabs    = document.querySelectorAll('.tools-tab');
-  const toolPanels  = document.querySelectorAll('.tools-panel');
+  // ── Nav rail page switching ─────────────────────────────
+  const navItems     = document.querySelectorAll('.nav-item[data-page]');
+  const consolePages = document.querySelectorAll('.console-page');
 
-  toolTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const id = tab.dataset.tab;
+  function activatePage(pageId) {
+    // weather/helio live inside dashboard — map them there and scroll
+    const effectivePage = (pageId === 'weather' || pageId === 'helio') ? 'dashboard' : pageId;
 
-      // Lazy-init heavy panels
-      if (id === 'sky')    { initSkyIfNeeded().then(() => { syncSkyFromState(); setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 100); }); }
-      if (id === 'map')    { initMapIfNeeded(); }
-      if (id === 'helio')  { initHelioIfNeeded(); }
-      if (id === 'events') { initObsIfNeeded(); }
+    if (effectivePage === 'sky')    { initSkyIfNeeded().then(() => { syncSkyFromState(); setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 100); }); }
+    if (effectivePage === 'map')    { initMapIfNeeded(); }
+    if (effectivePage === 'events') { initObsIfNeeded(); }
 
-      toolTabs.forEach(t => t.classList.remove('is-active'));
-      tab.classList.add('is-active');
+    navItems.forEach(i => i.classList.remove('is-active'));
+    document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('is-active');
+    consolePages.forEach(p => p.classList.toggle('is-active', p.id === `page-${effectivePage}`));
 
-      toolPanels.forEach(p => p.classList.toggle('is-active', p.id === `panel-${id}`));
+    if (pageId === 'weather') {
+      setTimeout(() => document.querySelector('.db-panel-weather')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+    if (pageId === 'helio') {
+      setTimeout(() => document.querySelector('.db-panel-helio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
 
-      const titles = { weather: 'Conditions', sky: 'Sky', sun: 'Sun & Moon', map: 'Map', helio: 'Space Weather', events: 'Events' };
-      document.title = `Nebulacast — ${titles[id] || id}`;
-    });
+    const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', showcase: 'Showcase', stats: 'Stats', settings: 'Settings' };
+    document.title = `Nebulacast — ${titles[pageId] || pageId}`;
+  }
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => activatePage(item.dataset.page));
   });
 
   // ── Events sub-tabs ─────────────────────────────────────
@@ -1960,11 +2196,10 @@
 
     feedEl.innerHTML = html;
 
-    // Click → open Sky tab focused on that object
+    // Click → open Sky page focused on that object
     feedEl.querySelectorAll('.feed-item').forEach(el => {
       el.addEventListener('click', () => {
-        // Switch to Sky tab
-        document.querySelector('[data-tab="sky"]')?.click();
+        activatePage('sky');
         // TODO: forward target ID to sky widget when supported
       });
     });
@@ -2246,6 +2481,59 @@
       _nopRenderChart(_nopActiveMetric);
       document.querySelectorAll('.nop-chip').forEach(c => c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
     }
+  });
+
+  // ══════════════════════════════════════════════════════════
+  //  CONTROL BAR — TIME PLAYER
+  // ══════════════════════════════════════════════════════════
+  let _cbSelectedISO = null; // null = live mode
+
+  function _cbUpdateDisplay() {
+    const btnNow  = document.getElementById('cb-now');
+    const timeEl  = document.getElementById('cb-time');
+    if (!timeEl) return;
+    if (!_cbSelectedISO) {
+      timeEl.textContent = 'LIVE';
+      timeEl.classList.add('is-live');
+      if (btnNow) { btnNow.classList.add('is-live'); btnNow.textContent = 'NOW'; }
+    } else {
+      const d = new Date(_cbSelectedISO);
+      timeEl.textContent = d.toLocaleString([], {
+        month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      });
+      timeEl.classList.remove('is-live');
+      if (btnNow) { btnNow.classList.remove('is-live'); btnNow.textContent = '↺ NOW'; }
+    }
+  }
+
+  function _cbSetTime(isoOrNull) {
+    _cbSelectedISO = isoOrNull;
+    setState({ time: { datetimeISO: isoOrNull } });
+    _cbUpdateDisplay();
+  }
+
+  document.getElementById('cb-now')?.addEventListener('click', () => _cbSetTime(null));
+
+  document.getElementById('cb-prev-hour')?.addEventListener('click', () => {
+    const base = _cbSelectedISO ? new Date(_cbSelectedISO) : new Date();
+    base.setHours(base.getHours() - 1, 0, 0, 0);
+    _cbSetTime(base.toISOString());
+  });
+  document.getElementById('cb-next-hour')?.addEventListener('click', () => {
+    const base = _cbSelectedISO ? new Date(_cbSelectedISO) : new Date();
+    base.setHours(base.getHours() + 1, 0, 0, 0);
+    _cbSetTime(base.toISOString());
+  });
+  document.getElementById('cb-prev-day')?.addEventListener('click', () => {
+    const base = _cbSelectedISO ? new Date(_cbSelectedISO) : new Date();
+    base.setDate(base.getDate() - 1);
+    _cbSetTime(base.toISOString());
+  });
+  document.getElementById('cb-next-day')?.addEventListener('click', () => {
+    const base = _cbSelectedISO ? new Date(_cbSelectedISO) : new Date();
+    base.setDate(base.getDate() + 1);
+    _cbSetTime(base.toISOString());
   });
 
   // ── Boot ───────────────────────────────────────────────
