@@ -2851,21 +2851,52 @@
   }
 
   // ── Anchor iframe init (sky + map) ──
+  const _DB_ANCHOR_CSS = `
+    /* shared font for component titles — matches hero card label */
+    .sky-h1, .card h2 {
+      font-size: 10px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.08em !important;
+      text-transform: uppercase !important;
+      color: rgba(255,255,255,0.45) !important;
+      margin: 0 !important;
+      line-height: 1.4 !important;
+    }
+    /* hide location rows */
+    #locPill,
+    .controls-row > span:first-child,
+    .controls-row > .separator:first-of-type { display: none !important; }
+  `;
+
+  function _dbInjectAnchorCss(iframe) {
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) return;
+      const s = doc.createElement('style');
+      s.textContent = _DB_ANCHOR_CSS;
+      doc.head.appendChild(s);
+    } catch (_) {}
+  }
+
   let _dbAnchorsInited = false;
   function _dbInitAnchors() {
     if (_dbAnchorsInited) return;
     _dbAnchorsInited = true;
     const skyIframe = document.getElementById('db-sky-iframe');
-    if (skyIframe && !skyIframe.getAttribute('src')) skyIframe.src = '/sky/';
+    if (skyIframe && !skyIframe.getAttribute('src')) {
+      skyIframe.addEventListener('load', () => _dbInjectAnchorCss(skyIframe));
+      skyIframe.src = '/sky/';
+    }
     const mapIframe = document.getElementById('db-map-iframe');
     if (mapIframe && !mapIframe.getAttribute('src')) {
-      mapIframe.src = '/weather/map-poc.html';
       mapIframe.addEventListener('load', () => {
+        _dbInjectAnchorCss(mapIframe);
         const loc = typeof getState === 'function' ? getState()?.location : null;
         if (loc && mapIframe.contentWindow) {
           mapIframe.contentWindow.postMessage({ type: 'update-location', location: loc }, '*');
         }
       });
+      mapIframe.src = '/weather/map-poc.html';
     }
   }
 
