@@ -18,7 +18,12 @@ const C_LABEL = 'rgba(255,255,255,0.58)';
 const C_TEXT = 'rgba(255,255,255,0.94)';
 const BG_PANEL = 'rgba(12,15,22,0.98)';
 
+/** Shared with hit-testing for tooltips */
+const LINE_PAD = { L: 50, R: 12, T: 14, B: 30 };
+const BAR_PAD = { L: 40, R: 8, T: 10, B: 26 };
+
 let _cssDone = false;
+let _chartTooltipEl = null;
 
 function injectCss() {
   if (_cssDone) return;
@@ -104,8 +109,164 @@ function injectCss() {
 .nc-stats-prof-nqi{ font-size:22px; font-weight:800; }
 .nc-stats-loading{ opacity:0.62; font-size:15px; }
 .nc-stats-err{ color:#f87171; font-size:14px; }
+.nc-stats-chart-tooltip{
+  position:fixed; z-index:100050; pointer-events:none; left:0; top:0;
+  max-width:min(280px,calc(100vw - 24px));
+  padding:8px 11px; border-radius:9px;
+  font-size:12px; line-height:1.4;
+  color:rgba(255,255,255,0.95);
+  background:rgba(15,18,28,0.97);
+  border:1px solid rgba(255,255,255,0.14);
+  box-shadow:0 12px 40px rgba(0,0,0,0.55);
+  font-variant-numeric:tabular-nums;
+  white-space:pre-wrap;
+  visibility:hidden; opacity:0; transition:opacity .08s ease;
+}
+.nc-stats-chart-tooltip.is-visible{ visibility:visible; opacity:1; }
 `;
   document.head.appendChild(s);
+}
+
+function chartTooltipNode() {
+  if (!_chartTooltipEl) {
+    _chartTooltipEl = document.createElement('div');
+    _chartTooltipEl.className = 'nc-stats-chart-tooltip';
+    _chartTooltipEl.setAttribute('role', 'tooltip');
+    document.body.appendChild(_chartTooltipEl);
+  }
+  return _chartTooltipEl;
+}
+
+function showChartTooltip(clientX, clientY, text) {
+  const el = chartTooltipNode();
+  el.textContent = text;
+  el.classList.add('is-visible');
+  const pad = 14;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  el.style.left = '0';
+  el.style.top = '0';
+  const tw = el.offsetWidth;
+  const th = el.offsetHeight;
+  let x = clientX + pad;
+  let y = clientY + pad;
+  if (x + tw > vw - 8) x = clientX - tw - pad;
+  if (y + th > vh - 8) y = clientY - th - pad;
+  if (x < 8) x = 8;
+  if (y < 8) y = 8;
+  el.style.left = `${Math.round(x)}px`;
+  el.style.top = `${Math.round(y)}px`;
+}
+
+function hideChartTooltip() {
+  if (_chartTooltipEl) {
+    _chartTooltipEl.classList.remove('is-visible');
+    _chartTooltipEl.textContent = '';
+  }
+}
+
+/** Map pointer position to logical chart coordinates (matches draw calls using w×h). */
+function canvasToLogical(canvas, wLogical, hLogical, offsetX, offsetY) {
+  const rw = canvas.clientWidth || 1;
+  const rh = canvas.clientHeight || 1;
+  return {
+    x: offsetX * (wLogical / rw),
+    y: offsetY * (hLogical / rh),
+  };
+}
+
+function attachLineChartTooltip(canvas, W, H, labels, values, opts = {}) {
+  const n = values.length;
+  if (!n) return;
+  const { L, R, T, B } = LINE_PAD;
+  const cw = W - L - R;
+  const fmtVal = v => (opts.yFmt ? opts.yFmt(v) : String(Math.round(v * 10) / 10));
+  const seriesName = opts.seriesName || 'Value';
+
+  function onMove(e) {
+    const { x: mx, y: my } = canvasToLogical(canvas, W, H, e.offsetX, e.offsetY);
+    const ch = H - T - B;
+    if (mx < L || mx > L + cw || my < T || my > T + ch) {
+      hideChartTooltip();
+      return;
+    }
+    let idx;
+    if (n === 1) idx = 0;
+    else {
+      const u = (mx - L) / Math.max(cw, 1e-6);
+      idx = Math.round(u * (n - 1));
+      idx = Math.max(0, Math.min(n - 1, idx));
+    }
+    const tLbl = String(labels[idx] ?? '—');
+    const tVal = values[idx];
+    showChartTooltip(e.clientX, e.clientY, `${seriesName}\n${tLbl}\n${fmtVal(tVal)}`);
+  }
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseleave', hideChartTooltip);
+  canvas.addEventListener('blur', hideChartTooltip);
+}
+
+function attachBarChartTooltip(canvas, W, H, labels, values, opts = {}) {
+  const n = values.length;
+  if (!n) return;
+  const { L, R, T, B } = BAR_PAD;
+  const cw = W - L - R, ch = H - T - B;
+  const valLabel = opts.valueLabel || 'Count';
+  const fmt = opts.formatValue || (v => String(v));
+
+  function onMove(e) {
+    const { x: mx, y: my } = canvasToLogical(canvas, W, H, e.offsetX, e.offsetY);
+    if (mx < L || mx > L + cw || my < T || my > T + ch) {
+      hideChartTooltip();
+      return;
+    }
+    const slot = cw / n;
+    const i = Math.max(0, Math.min(n - 1, Math.floor((mx - L) / slot)));
+    const lbl = String(labels[i] ?? '—');
+    showChartTooltip(e.clientX, e.clientY, `${lbl}\n${valLabel}: ${fmt(values[i])}`);
+  }
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseleave', hideChartTooltip);
+  canvas.addEventListener('blur', hideChartTooltip);
+}
+
+function attachDonutTooltip(canvas, W, H, segments) {
+  const total = _segmentsTotal(segments);
+  if (!total) return;
+  const cx = W / 2, cy = H / 2;
+  const R = W * 0.38;
+  const ri = R * 0.55;
+
+  function onMove(e) {
+    const { x: mx, y: my } = canvasToLogical(canvas, W, H, e.offsetX, e.offsetY);
+    const dx = mx - cx, dy = my - cy;
+    const d = Math.hypot(dx, dy);
+    if (d < ri || d > R) {
+      hideChartTooltip();
+      return;
+    }
+    let ang = Math.atan2(dy, dx) + Math.PI / 2;
+    if (ang < 0) ang += 2 * Math.PI;
+    if (ang >= 2 * Math.PI) ang -= 2 * Math.PI;
+    const t = ang / (2 * Math.PI);
+    let u = 0;
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      const f = seg.count / total;
+      const end = u + f;
+      const last = i === segments.length - 1;
+      if (t >= u - 1e-9 && (last ? t <= end + 1e-6 : t < end - 1e-9)) {
+        const pct = Math.round(f * 1000) / 10;
+        showChartTooltip(e.clientX, e.clientY, `${seg.label}\n${seg.count} (${pct}%)`);
+        return;
+      }
+      u = end;
+    }
+    hideChartTooltip();
+  }
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseleave', hideChartTooltip);
+  canvas.addEventListener('blur', hideChartTooltip);
 }
 
 function mkCanvas(w, h, fluid = true) {
@@ -142,7 +303,7 @@ function fillRR(ctx, x, y, w, h, r) {
 }
 
 function drawLineSeries(ctx, W, H, labels, values, opts) {
-  const padL = 50, padR = 12, padT = 14, padB = 30;
+  const padL = LINE_PAD.L, padR = LINE_PAD.R, padT = LINE_PAD.T, padB = LINE_PAD.B;
   const cw = W - padL - padR, ch = H - padT - padB;
   const n = values.length;
   if (!n) {
@@ -215,7 +376,7 @@ function drawLineSeries(ctx, W, H, labels, values, opts) {
 }
 
 function drawBars(ctx, W, H, labels, values, color) {
-  const padL = 40, padR = 8, padT = 10, padB = 26;
+  const padL = BAR_PAD.L, padR = BAR_PAD.R, padT = BAR_PAD.T, padB = BAR_PAD.B;
   const cw = W - padL - padR, ch = H - padT - padB;
   const n = values.length;
   if (!n) return;
@@ -394,6 +555,7 @@ function donutBlock(segments, centerSub = 'items') {
   row.className = 'nc-stats-chart-row';
   const { canvas, ctx, w, h } = mkCanvas(180, 180, false);
   drawDonut(canvas, ctx, w, h, segments, centerSub);
+  attachDonutTooltip(canvas, w, h, segments);
   const box = document.createElement('div');
   box.className = 'nc-stats-donut-box';
   box.appendChild(canvas);
@@ -506,10 +668,13 @@ export async function initStatsPage(root) {
     const col = document.createElement('div');
     col.innerHTML = `<p class="nc-stats-note"><strong>Stars</strong> (limit_mag ${data.stars.limit_mag ?? '—'}, n=${stars.length})</p>`;
     const g1 = mkCanvas(360, 140);
-    drawBars(g1.ctx, g1.w, g1.h, hist.labels.map(l => l.split('–')[0]), hist.counts, '#60a5fa');
+    const magAxis = hist.labels.map(l => l.split('–')[0]);
+    drawBars(g1.ctx, g1.w, g1.h, magAxis, hist.counts, '#60a5fa');
+    attachBarChartTooltip(g1.canvas, g1.w, g1.h, hist.labels, hist.counts, { valueLabel: 'Stars in bin' });
     col.appendChild(g1.canvas);
     const g2 = mkCanvas(360, 120);
     drawBars(g2.ctx, g2.w, g2.h, specLabels, specVals, '#a78bfa');
+    attachBarChartTooltip(g2.canvas, g2.w, g2.h, specLabels, specVals, { valueLabel: 'Stars' });
     col.appendChild(g2.canvas);
     catRow.appendChild(col);
   } else {
@@ -532,6 +697,7 @@ export async function initStatsPage(root) {
     col.innerHTML = `<p class="nc-stats-note"><strong>Messier objects</strong> (n=${items.length})</p>`;
     const g = mkCanvas(360, Math.min(40 + lbls.length * 10, 220));
     drawBars(g.ctx, g.w, g.h, lbls, vals, '#34d399');
+    attachBarChartTooltip(g.canvas, g.w, g.h, lbls, vals, { valueLabel: 'Objects' });
     col.appendChild(g.canvas);
     catRow.appendChild(col);
   }
@@ -548,6 +714,7 @@ export async function initStatsPage(root) {
     col.innerHTML = `<p class="nc-stats-note"><strong>Constellation lines</strong> — segments per constellation (top 16). Unique constellations: ${Object.keys(perCon).length}, total segments: ${lines.length}.</p>`;
     const g = mkCanvas(360, 160);
     drawBars(g.ctx, g.w, g.h, sorted.map(x => x[0]), sorted.map(x => x[1]), '#f472b6');
+    attachBarChartTooltip(g.canvas, g.w, g.h, sorted.map(x => x[0]), sorted.map(x => x[1]), { valueLabel: 'Segments' });
     col.appendChild(g.canvas);
     catRow.appendChild(col);
   }
@@ -585,6 +752,11 @@ export async function initStatsPage(root) {
       drawLineSeries(cv.ctx, cv.w, cv.h, labels, spec.values, {
         color: spec.color,
         yFmt: spec.yFmt,
+        nightFlags: spec.nightFlags,
+      });
+      attachLineChartTooltip(cv.canvas, cv.w, cv.h, labels, spec.values, {
+        yFmt: spec.yFmt,
+        seriesName: spec.label,
         nightFlags: spec.nightFlags,
       });
       wrap.appendChild(cv.canvas);
@@ -675,7 +847,9 @@ export async function initStatsPage(root) {
       });
       const vals = fc.map(s => Number(s.kp) || 0);
       const cv = mkCanvas(Math.min(640, root.clientWidth || 640), 140);
-      drawLineSeries(cv.ctx, cv.w, cv.h, lbls, vals, { color: '#c084fc', vmin: 0, vmax: Math.max(9, ...vals, 1), yFmt: v => v.toFixed(1) });
+      const lineOpts = { color: '#c084fc', vmin: 0, vmax: Math.max(9, ...vals, 1), yFmt: v => v.toFixed(1) };
+      drawLineSeries(cv.ctx, cv.w, cv.h, lbls, vals, lineOpts);
+      attachLineChartTooltip(cv.canvas, cv.w, cv.h, lbls, vals, { ...lineOpts, seriesName: 'Kp (forecast step)' });
       spaceBody.appendChild(cv.canvas);
     }
 
@@ -724,7 +898,9 @@ export async function initStatsPage(root) {
     pR.textContent = 'Ranking score bins (tonight list)';
     evtBody.appendChild(pR);
     const cv = mkCanvas(Math.min(640, root.clientWidth || 640), 140);
-    drawBars(cv.ctx, cv.w, cv.h, hist.labels.map(l => l.split('–')[0]), hist.counts, '#38bdf8');
+    const rAxis = hist.labels.map(l => l.split('–')[0]);
+    drawBars(cv.ctx, cv.w, cv.h, rAxis, hist.counts, '#38bdf8');
+    attachBarChartTooltip(cv.canvas, cv.w, cv.h, hist.labels, hist.counts, { valueLabel: 'Objects in bin' });
     evtBody.appendChild(cv.canvas);
   }
 
@@ -742,6 +918,7 @@ export async function initStatsPage(root) {
     evtBody.appendChild(pD);
     const cv = mkCanvas(Math.min(640, root.clientWidth || 640), Math.min(200, 36 + lbls.length * 12));
     drawBars(cv.ctx, cv.w, cv.h, lbls, vals, '#34d399');
+    attachBarChartTooltip(cv.canvas, cv.w, cv.h, lbls, vals, { valueLabel: 'Items' });
     evtBody.appendChild(cv.canvas);
   }
 
