@@ -95,6 +95,28 @@ function injectCss() {
 .nc-stats-canvas-h{ display:block; width:100%; height:auto; border-radius:8px; background:rgba(0,0,0,0.15); }
 .nc-stats-chart-row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 .nc-stats-donut-box{ flex:0 0 auto; }
+.nc-stats-donut-pair{ width:100%; margin-bottom:12px; }
+.nc-stats-donut-pair-head{
+  display:grid; grid-template-columns:1fr 1fr; gap:16px; min-width:0; margin-bottom:6px;
+}
+.nc-stats-donut-pair-head--single{ grid-template-columns:1fr; }
+.nc-stats-donut-pair-charts{
+  display:grid; grid-template-columns:1fr 1fr; gap:16px; justify-items:center; align-items:start; min-width:0;
+}
+.nc-stats-donut-pair-charts--single{ grid-template-columns:1fr; }
+.nc-stats-donut-pair-chart-cell{ display:flex; justify-content:center; width:100%; min-width:0; }
+.nc-stats-donut-pair-legends{
+  display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; min-width:0;
+}
+.nc-stats-donut-pair-legends--single{ grid-template-columns:1fr; }
+.nc-stats-donut-pair-legend-cell{ min-width:0; }
+@media (max-width:720px){
+  .nc-stats-donut-pair-head:not(.nc-stats-donut-pair-head--single),
+  .nc-stats-donut-pair-charts:not(.nc-stats-donut-pair-charts--single),
+  .nc-stats-donut-pair-legends:not(.nc-stats-donut-pair-legends--single){
+    grid-template-columns:1fr;
+  }
+}
 .nc-stats-legend{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; font-size:12px; }
 .nc-stats-legend-item{ display:flex; align-items:center; gap:6px; }
 .nc-stats-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
@@ -555,15 +577,7 @@ function kpiGrid(pairs) {
   return g;
 }
 
-function donutBlock(segments, centerSub = 'items') {
-  const row = document.createElement('div');
-  row.className = 'nc-stats-chart-row';
-  const { canvas, ctx, w, h } = mkCanvas(180, 180, false);
-  drawDonut(canvas, ctx, w, h, segments, centerSub);
-  attachDonutTooltip(canvas, w, h, segments);
-  const box = document.createElement('div');
-  box.className = 'nc-stats-donut-box';
-  box.appendChild(canvas);
+function legendFromSegments(segments) {
   const leg = document.createElement('div');
   leg.className = 'nc-stats-legend';
   for (const s of segments) {
@@ -572,8 +586,75 @@ function donutBlock(segments, centerSub = 'items') {
     it.innerHTML = `<span class="nc-stats-dot" style="background:${s.color}"></span><span class="nc-stats-legend-l">${esc(s.label)}</span><span class="nc-stats-legend-c">${s.count}</span>`;
     leg.appendChild(it);
   }
-  row.append(box, leg);
-  return row;
+  return leg;
+}
+
+function donutCanvasCell(segments, centerSub = 'items') {
+  const cell = document.createElement('div');
+  cell.className = 'nc-stats-donut-pair-chart-cell';
+  if (!segments?.length || !_segmentsTotal(segments)) return cell;
+  const { canvas, ctx, w, h } = mkCanvas(180, 180, false);
+  drawDonut(canvas, ctx, w, h, segments, centerSub);
+  attachDonutTooltip(canvas, w, h, segments);
+  cell.appendChild(canvas);
+  return cell;
+}
+
+function legendCellForSegments(segments) {
+  const cell = document.createElement('div');
+  cell.className = 'nc-stats-donut-pair-legend-cell';
+  if (!segments?.length || !_segmentsTotal(segments)) return cell;
+  cell.appendChild(legendFromSegments(segments));
+  return cell;
+}
+
+/** NOAA preview (left) and sky alerts by group (right); legends in a row below. */
+function appendAlertsDonutPair(container, noaaSegments, skySegments) {
+  const hasNoaa = noaaSegments?.length && _segmentsTotal(noaaSegments) > 0;
+  const hasSky = skySegments?.length && _segmentsTotal(skySegments) > 0;
+  if (!hasNoaa && !hasSky) return;
+
+  const dual = hasNoaa && hasSky;
+  const wrap = document.createElement('div');
+  wrap.className = 'nc-stats-donut-pair';
+
+  const head = document.createElement('div');
+  head.className = dual ? 'nc-stats-donut-pair-head' : 'nc-stats-donut-pair-head nc-stats-donut-pair-head--single';
+
+  const charts = document.createElement('div');
+  charts.className = dual ? 'nc-stats-donut-pair-charts' : 'nc-stats-donut-pair-charts nc-stats-donut-pair-charts--single';
+
+  const legs = document.createElement('div');
+  legs.className = dual ? 'nc-stats-donut-pair-legends' : 'nc-stats-donut-pair-legends nc-stats-donut-pair-legends--single';
+
+  function headNote(htmlStrong, rest = '') {
+    const p = document.createElement('p');
+    p.className = 'nc-stats-note';
+    p.style.marginTop = '0';
+    p.style.marginBottom = '0';
+    p.innerHTML = `<strong>${htmlStrong}</strong>${rest}`;
+    return p;
+  }
+
+  if (dual) {
+    head.append(
+      headNote('NOAA-style preview alerts (severity mix)'),
+      headNote('Sky alerts by group', ' (from alerts_now counts)'),
+    );
+    charts.append(donutCanvasCell(noaaSegments, 'alerts'), donutCanvasCell(skySegments, 'alerts'));
+    legs.append(legendCellForSegments(noaaSegments), legendCellForSegments(skySegments));
+  } else if (hasNoaa) {
+    head.append(headNote('NOAA-style preview alerts (severity mix)'));
+    charts.append(donutCanvasCell(noaaSegments, 'alerts'));
+    legs.append(legendCellForSegments(noaaSegments));
+  } else {
+    head.append(headNote('Sky alerts by group', ' (from alerts_now counts)'));
+    charts.append(donutCanvasCell(skySegments, 'alerts'));
+    legs.append(legendCellForSegments(skySegments));
+  }
+
+  wrap.append(head, charts, legs);
+  container.appendChild(wrap);
 }
 
 /** @param {HTMLElement} root */
@@ -797,43 +878,37 @@ export async function initStatsPage(root) {
       attachLineChartTooltip(cv.canvas, cv.w, cv.h, lbls, vals, { ...lineOpts, seriesName: 'Kp (forecast step)' });
       spaceBody.appendChild(cv.canvas);
     }
-
-    const prev = data.helio.alerts_preview;
-    if (prev?.length) {
-      const byLevel = {};
-      for (const a of prev) {
-        const lv = a.level || 'unknown';
-        byLevel[lv] = (byLevel[lv] || 0) + 1;
-      }
-      const segments = Object.entries(byLevel).map(([label, count]) => ({
-        label: String(label),
-        count,
-        color: label === 'warning' ? '#f97316' : label === 'watch' ? '#eab308' : '#64748b',
-      }));
-      const p = document.createElement('p');
-      p.className = 'nc-stats-note';
-      p.textContent = 'NOAA-style preview alerts (severity mix)';
-      spaceBody.appendChild(p);
-      spaceBody.appendChild(donutBlock(segments, 'alerts'));
-    }
   } else {
     spaceBody.textContent = 'Helio snapshot not available.';
   }
   sectionsEl.appendChild(section('4. Space environment', spaceBody));
 
   const evtBody = document.createElement('div');
+
+  let noaaSegs = null;
+  if (data.helio?.alerts_preview?.length) {
+    const byLevel = {};
+    for (const a of data.helio.alerts_preview) {
+      const lv = a.level || 'unknown';
+      byLevel[lv] = (byLevel[lv] || 0) + 1;
+    }
+    noaaSegs = Object.entries(byLevel).map(([label, count]) => ({
+      label: String(label),
+      count,
+      color: label === 'warning' ? '#f97316' : label === 'watch' ? '#eab308' : '#64748b',
+    }));
+  }
+
+  let skySegs = null;
   if (data.alerts?.counts?.by_group) {
-    const segs = Object.entries(data.alerts.counts.by_group).map(([g, count]) => ({
+    skySegs = Object.entries(data.alerts.counts.by_group).map(([g, count]) => ({
       label: g.toUpperCase(),
       count: Number(count) || 0,
       color: groupColor(g),
     }));
-    const p0 = document.createElement('p');
-    p0.className = 'nc-stats-note';
-    p0.textContent = 'Sky alerts by group (from alerts_now counts)';
-    evtBody.appendChild(p0);
-    evtBody.appendChild(donutBlock(segs, 'alerts'));
   }
+
+  appendAlertsDonutPair(evtBody, noaaSegs, skySegs);
 
   if (data.ranking?.items?.length) {
     const scores = data.ranking.items.map(it => Number(it.score)).filter(x => isFinite(x));
