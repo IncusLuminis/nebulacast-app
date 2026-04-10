@@ -2858,9 +2858,9 @@
     if (_dbAnchorsInited) return;
     _dbAnchorsInited = true;
     const skyIframe = document.getElementById('db-sky-iframe');
-    if (skyIframe && !skyIframe.src) skyIframe.src = '/sky/';
+    if (skyIframe && !skyIframe.getAttribute('src')) skyIframe.src = '/sky/';
     const mapIframe = document.getElementById('db-map-iframe');
-    if (mapIframe && !mapIframe.src) {
+    if (mapIframe && !mapIframe.getAttribute('src')) {
       mapIframe.src = '/weather/map-poc.html';
       mapIframe.addEventListener('load', () => {
         const loc = typeof getState === 'function' ? getState()?.location : null;
