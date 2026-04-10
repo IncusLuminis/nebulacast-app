@@ -12,10 +12,10 @@ const GROUP_COLORS = {
 };
 const COLOR_DEFAULT = '#64748b';
 
-const C_GRID = 'rgba(255,255,255,0.055)';
-const C_AXIS = 'rgba(255,255,255,0.20)';
-const C_LABEL = 'rgba(255,255,255,0.40)';
-const C_TEXT = 'rgba(255,255,255,0.80)';
+const C_GRID = 'rgba(255,255,255,0.075)';
+const C_AXIS = 'rgba(255,255,255,0.32)';
+const C_LABEL = 'rgba(255,255,255,0.58)';
+const C_TEXT = 'rgba(255,255,255,0.94)';
 const BG_PANEL = 'rgba(12,15,22,0.98)';
 
 let _cssDone = false;
@@ -28,26 +28,26 @@ function injectCss() {
   s.textContent = `
 .nc-stats-root{
   font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  color:rgba(255,255,255,0.88);
+  color:rgba(255,255,255,0.96);
 }
 .nc-stats-hero{
   margin-bottom:20px;
 }
 .nc-stats-hero h1{
-  font-size:1.15rem;font-weight:600;margin:0 0 6px;color:rgba(255,255,255,0.72);
+  font-size:1.35rem;font-weight:600;margin:0 0 6px;color:rgba(255,255,255,0.88);
 }
 .nc-stats-hero p{
-  font-size:0.78rem;margin:0;opacity:0.42;line-height:1.45;max-width:52rem;
+  font-size:0.95rem;margin:0;opacity:0.58;line-height:1.5;max-width:52rem;
 }
 .nc-stats-badge{
-  display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.65px;
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.65px;
   text-transform:uppercase;padding:3px 8px;border-radius:6px;margin-bottom:8px;
-  border:1px solid rgba(255,255,255,0.12);
-  background:rgba(255,255,255,0.04);
-  color:rgba(255,255,255,0.45);
+  border:1px solid rgba(255,255,255,0.16);
+  background:rgba(255,255,255,0.06);
+  color:rgba(255,255,255,0.64);
 }
-.nc-stats-badge--time{ color:#7dd3fc; border-color:rgba(125,211,252,0.35); }
-.nc-stats-badge--static{ color:#c4b5fd; border-color:rgba(196,181,253,0.35); }
+.nc-stats-badge--time{ color:#93d8fd; border-color:rgba(147,216,253,0.42); }
+.nc-stats-badge--static{ color:#d4c7fd; border-color:rgba(212,199,253,0.42); }
 .nc-stats-sections{ display:flex; flex-direction:column; gap:14px; }
 .nc-stats-section{
   border:1px solid rgba(255,255,255,0.08);
@@ -55,22 +55,22 @@ function injectCss() {
   background:${BG_PANEL};
 }
 .nc-stats-section-head{
-  padding:8px 14px;font-size:9.5px;font-weight:700;letter-spacing:0.7px;
-  text-transform:uppercase;color:rgba(255,255,255,0.42);
+  padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:0.7px;
+  text-transform:uppercase;color:rgba(255,255,255,0.58);
   border-bottom:1px solid rgba(255,255,255,0.06);
   background:rgba(255,255,255,0.025);
 }
 .nc-stats-section-body{ padding:14px 16px 16px; }
 .nc-stats-table-wrap{ overflow-x:auto; }
 .nc-stats-table{
-  width:100%;border-collapse:collapse;font-size:11px;
+  width:100%;border-collapse:collapse;font-size:13px;
   font-variant-numeric:tabular-nums;
 }
 .nc-stats-table th,.nc-stats-table td{
   text-align:left;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.06);
 }
-.nc-stats-table th{ color:rgba(255,255,255,0.38); font-weight:600; font-size:9px; text-transform:uppercase; letter-spacing:0.4px; }
-.nc-stats-fresh-sub{ color:rgba(255,255,255,0.35); font-size:10px; }
+.nc-stats-table th{ color:rgba(255,255,255,0.56); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; }
+.nc-stats-fresh-sub{ color:rgba(255,255,255,0.52); font-size:12px; }
 .nc-stats-stale{ color:#f97316; }
 .nc-stats-row2{
   display:grid; grid-template-columns:1fr 1fr; gap:12px;
@@ -83,27 +83,27 @@ function injectCss() {
   background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);
   border-radius:9px; padding:8px 10px 9px;
 }
-.nc-stats-kpi-l{ font-size:9px; letter-spacing:0.4px; text-transform:uppercase; color:rgba(255,255,255,0.36); margin-bottom:4px; }
-.nc-stats-kpi-v{ font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
+.nc-stats-kpi-l{ font-size:11px; letter-spacing:0.4px; text-transform:uppercase; color:rgba(255,255,255,0.56); margin-bottom:4px; }
+.nc-stats-kpi-v{ font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; }
 .nc-stats-chart-grid{ display:grid; gap:10px; }
 .nc-stats-canvas-h{ display:block; width:100%; height:auto; border-radius:8px; background:rgba(0,0,0,0.15); }
 .nc-stats-chart-row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 .nc-stats-donut-box{ flex:0 0 auto; }
-.nc-stats-legend{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; font-size:10px; }
+.nc-stats-legend{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; font-size:12px; }
 .nc-stats-legend-item{ display:flex; align-items:center; gap:6px; }
 .nc-stats-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.nc-stats-legend-l{ flex:1; opacity:0.78; }
-.nc-stats-legend-c{ opacity:0.45; font-size:9.5px; }
-.nc-stats-note{ font-size:10px; color:rgba(255,255,255,0.35); margin-top:8px; line-height:1.4; }
+.nc-stats-legend-l{ flex:1; opacity:0.92; }
+.nc-stats-legend-c{ opacity:0.62; font-size:11px; }
+.nc-stats-note{ font-size:12px; color:rgba(255,255,255,0.55); margin-top:8px; line-height:1.45; }
 .nc-stats-profile-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; margin-top:10px; }
 .nc-stats-prof{
   border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:8px 10px;
   background:rgba(255,255,255,0.02);
 }
-.nc-stats-prof-name{ font-size:10px; text-transform:capitalize; color:rgba(255,255,255,0.45); margin-bottom:4px; }
-.nc-stats-prof-nqi{ font-size:18px; font-weight:800; }
-.nc-stats-loading{ opacity:0.5; font-size:13px; }
-.nc-stats-err{ color:#f87171; font-size:12px; }
+.nc-stats-prof-name{ font-size:12px; text-transform:capitalize; color:rgba(255,255,255,0.58); margin-bottom:4px; }
+.nc-stats-prof-nqi{ font-size:22px; font-weight:800; }
+.nc-stats-loading{ opacity:0.62; font-size:15px; }
+.nc-stats-err{ color:#f87171; font-size:14px; }
 `;
   document.head.appendChild(s);
 }
@@ -142,12 +142,12 @@ function fillRR(ctx, x, y, w, h, r) {
 }
 
 function drawLineSeries(ctx, W, H, labels, values, opts) {
-  const padL = 44, padR = 12, padT = 14, padB = 28;
+  const padL = 50, padR = 12, padT = 14, padB = 30;
   const cw = W - padL - padR, ch = H - padT - padB;
   const n = values.length;
   if (!n) {
     ctx.fillStyle = C_LABEL;
-    ctx.font = '11px system-ui';
+    ctx.font = '13px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText('No data', W / 2, H / 2);
     return;
@@ -164,7 +164,7 @@ function drawLineSeries(ctx, W, H, labels, values, opts) {
     ctx.lineTo(padL + cw, y);
     ctx.stroke();
     ctx.fillStyle = C_LABEL;
-    ctx.font = '8px ui-monospace,monospace';
+    ctx.font = '10px ui-monospace,monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     const val = vmin + (span * i / 3);
@@ -204,7 +204,7 @@ function drawLineSeries(ctx, W, H, labels, values, opts) {
   const maxLbl = Math.max(1, Math.floor(cw / 40));
   const step = Math.max(1, Math.ceil(n / maxLbl));
   ctx.fillStyle = C_LABEL;
-  ctx.font = '8px system-ui';
+  ctx.font = '10px system-ui';
   ctx.textBaseline = 'top';
   for (let i = 0; i < n; i += step) {
     ctx.textAlign = 'center';
@@ -244,7 +244,7 @@ function drawBars(ctx, W, H, labels, values, color) {
   ctx.stroke();
 
   ctx.fillStyle = C_LABEL;
-  ctx.font = '8px system-ui';
+  ctx.font = '10px system-ui';
   ctx.textBaseline = 'top';
   const maxLbl = Math.max(1, Math.floor(cw / 36));
   const step = Math.max(1, Math.ceil(n / maxLbl));
@@ -262,7 +262,7 @@ function drawDonut(canvas, ctx, W, H, segments, centerSub = 'items') {
   const total = _segmentsTotal(segments);
   if (!total) {
     ctx.fillStyle = C_LABEL;
-    ctx.font = '11px system-ui';
+    ctx.font = '13px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('No data', cx, cy);
@@ -284,11 +284,11 @@ function drawDonut(canvas, ctx, W, H, segments, centerSub = 'items') {
   ctx.fillStyle = BG_PANEL;
   ctx.fill();
   ctx.fillStyle = C_TEXT;
-  ctx.font = `bold ${Math.round(W * 0.11)}px system-ui`;
+  ctx.font = `bold ${Math.round(W * 0.128)}px system-ui`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(total), cx, cy - 6);
-  ctx.font = `${Math.round(W * 0.062)}px system-ui`;
+  ctx.font = `${Math.round(W * 0.078)}px system-ui`;
   ctx.fillStyle = C_LABEL;
   ctx.fillText(centerSub, cx, cy + 10);
 }
