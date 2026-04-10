@@ -100,13 +100,6 @@ function injectCss() {
 .nc-stats-legend-l{ flex:1; opacity:0.92; }
 .nc-stats-legend-c{ opacity:0.62; font-size:11px; }
 .nc-stats-note{ font-size:12px; color:rgba(255,255,255,0.55); margin-top:8px; line-height:1.45; }
-.nc-stats-profile-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; margin-top:10px; }
-.nc-stats-prof{
-  border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:8px 10px;
-  background:rgba(255,255,255,0.02);
-}
-.nc-stats-prof-name{ font-size:12px; text-transform:capitalize; color:rgba(255,255,255,0.58); margin-bottom:4px; }
-.nc-stats-prof-nqi{ font-size:22px; font-weight:800; }
 .nc-stats-loading{ opacity:0.62; font-size:15px; }
 .nc-stats-err{ color:#f87171; font-size:14px; }
 .nc-stats-chart-tooltip{
@@ -744,53 +737,10 @@ export async function initStatsPage(root) {
       charts.appendChild(wrap);
     }
     atmBody.appendChild(charts);
-
-    const ns = data.weather.night_summary;
-    if (ns?.nqi) {
-      const profWrap = document.createElement('div');
-      profWrap.innerHTML = '<p class="nc-stats-note"><strong>Night summary (NQIs)</strong> from the same snapshot as the dashboard.</p>';
-      const grid = document.createElement('div');
-      grid.className = 'nc-stats-profile-grid';
-      for (const [pid, nqi] of Object.entries(ns.nqi)) {
-        const avg = ns.avg_score?.[pid];
-        const box = document.createElement('div');
-        box.className = 'nc-stats-prof';
-        const cls = nqi.class || '';
-        box.innerHTML = `<div class="nc-stats-prof-name">${esc(pid)}</div>
-          <div class="nc-stats-prof-nqi" style="color:${nqiClassColor(cls)}">${esc(String(nqi.value ?? '—'))}</div>
-          <div class="nc-stats-note">Class: ${esc(cls || '—')}${avg != null ? ` · Avg score: ${avg}` : ''}</div>`;
-        grid.appendChild(box);
-      }
-      profWrap.appendChild(grid);
-
-      const bw = ns.best_window;
-      if (bw) {
-        profWrap.appendChild(kpiGrid([
- ['Best window (UTC)', `${bw.start_utc ?? '—'} → ${bw.end_utc ?? '—'}`],
-        ]));
-      }
-      atmBody.appendChild(profWrap);
-    }
-
-    const ton = data.weather.decision?.best_tonight;
-    if (ton?.start && ton?.end) {
-      atmBody.appendChild(kpiGrid([
- ['Best window tonight (cloud-weighted)', `${ton.start} → ${ton.end} (avg cloud ${ton.cloud_avg ?? '—'}%)`],
-      ]));
-    }
   } else {
     atmBody.appendChild(document.createTextNode('Observer weather snapshot not available.'));
   }
   sectionsEl.appendChild(section('3. Atmosphere & observing', atmBody));
-
-  function nqiClassColor(cls) {
-    const c = String(cls || '').toLowerCase();
-    if (c === 'excellent') return '#4ade80';
-    if (c === 'good') return '#a3e635';
-    if (c === 'usable') return '#fbbf24';
-    if (c === 'marginal') return '#fb923c';
-    return '#f87171';
-  }
 
   const spaceBody = document.createElement('div');
   if (data.helio) {
