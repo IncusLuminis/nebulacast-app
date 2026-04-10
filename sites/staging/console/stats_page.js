@@ -105,8 +105,14 @@ function injectCss() {
 }
 .nc-stats-donut-pair-charts--single{ grid-template-columns:1fr; }
 .nc-stats-donut-pair-chart-cell{ display:flex; justify-content:center; width:100%; min-width:0; }
-.nc-stats-pair-stretch-cell{ min-width:0; width:100%; }
-.nc-stats-bar-charts-row{ align-items:start; justify-items:stretch; }
+.nc-stats-pair-stretch-cell{
+  min-width:0; width:100%; display:flex; flex-direction:column; align-items:stretch;
+}
+.nc-stats-bar-charts-row{ align-items:stretch; justify-items:stretch; }
+.nc-stats-bar-charts-row:not(.nc-stats-donut-pair-charts--single){
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+}
+.nc-stats-pair-stretch-cell canvas{ width:100%; height:auto; display:block; flex-shrink:0; }
 .nc-stats-donut-pair-legends{
   display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; min-width:0;
 }
@@ -919,6 +925,35 @@ export async function initStatsPage(root) {
     const fullW = statsContentWidth(root);
     const colW = dualRc ? Math.max(260, Math.floor((fullW - 16) / 2)) : fullW;
 
+    const RANK_BAR_CH = 168;
+    let rankHist = null;
+    let rAxis = null;
+    if (hasRankHist) {
+      const scores = data.ranking.items.map(it => Number(it.score)).filter(x => isFinite(x));
+      rankHist = makeHistogram(scores, 8);
+      rAxis = rankHist.labels.map(l => l.split('–')[0]);
+    }
+
+    let calLbls = null;
+    let calVals = null;
+    if (hasCalHist) {
+      const byStream = {};
+      for (const it of data.daily.items) {
+        const k = it.stream || it.category || 'other';
+        byStream[k] = (byStream[k] || 0) + 1;
+      }
+      calLbls = Object.keys(byStream).sort((a, b) => byStream[b] - byStream[a]);
+      calVals = calLbls.map(l => byStream[l]);
+    }
+
+    const calNeedH = calLbls
+      ? Math.min(228, Math.max(152, 40 + calLbls.length * 12))
+      : RANK_BAR_CH;
+    let barCanvasH;
+    if (dualRc) barCanvasH = Math.max(RANK_BAR_CH, calNeedH);
+    else if (hasRankHist) barCanvasH = RANK_BAR_CH;
+    else barCanvasH = calNeedH;
+
     const wrap = document.createElement('div');
     wrap.className = 'nc-stats-donut-pair';
 
@@ -944,29 +979,20 @@ export async function initStatsPage(root) {
     const rankCell = document.createElement('div');
     rankCell.className = 'nc-stats-pair-stretch-cell';
     if (hasRankHist) {
-      const scores = data.ranking.items.map(it => Number(it.score)).filter(x => isFinite(x));
-      const hist = makeHistogram(scores, 8);
-      const cvR = mkCanvas(colW, 140);
-      const rAxis = hist.labels.map(l => l.split('–')[0]);
-      drawBars(cvR.ctx, cvR.w, cvR.h, rAxis, hist.counts, '#38bdf8');
-      attachBarChartTooltip(cvR.canvas, cvR.w, cvR.h, hist.labels, hist.counts, { valueLabel: 'Objects in bin' });
+      const cvR = mkCanvas(colW, barCanvasH);
+      drawBars(cvR.ctx, cvR.w, cvR.h, rAxis, rankHist.counts, '#38bdf8');
+      attachBarChartTooltip(cvR.canvas, cvR.w, cvR.h, rankHist.labels, rankHist.counts, {
+        valueLabel: 'Objects in bin',
+      });
       rankCell.appendChild(cvR.canvas);
     }
 
     const calCell = document.createElement('div');
     calCell.className = 'nc-stats-pair-stretch-cell';
     if (hasCalHist) {
-      const byStream = {};
-      for (const it of data.daily.items) {
-        const k = it.stream || it.category || 'other';
-        byStream[k] = (byStream[k] || 0) + 1;
-      }
-      const lbls = Object.keys(byStream).sort((a, b) => byStream[b] - byStream[a]);
-      const vals = lbls.map(l => byStream[l]);
-      const calH = Math.min(200, 36 + lbls.length * 12);
-      const cvC = mkCanvas(colW, calH);
-      drawBars(cvC.ctx, cvC.w, cvC.h, lbls, vals, '#34d399');
-      attachBarChartTooltip(cvC.canvas, cvC.w, cvC.h, lbls, vals, { valueLabel: 'Items' });
+      const cvC = mkCanvas(colW, barCanvasH);
+      drawBars(cvC.ctx, cvC.w, cvC.h, calLbls, calVals, '#34d399');
+      attachBarChartTooltip(cvC.canvas, cvC.w, cvC.h, calLbls, calVals, { valueLabel: 'Items' });
       calCell.appendChild(cvC.canvas);
     }
 
