@@ -1073,10 +1073,10 @@
         <span class="nav-label">Sun &amp; Moon</span>
       </button>
       <hr class="nav-divider">
-      <a class="nav-item" href="/showcase/" target="_blank">
+      <button class="nav-item" data-page="showcase">
         <span class="nav-icon">⬡</span>
         <span class="nav-label">Showcase</span>
-      </a>
+      </button>
       <button class="nav-item" data-page="stats">
         <span class="nav-icon">◎</span>
         <span class="nav-label">Stats</span>
@@ -1172,6 +1172,11 @@
       <div id="subpanel-observer" class="events-subpanel">
         <div id="w-observer-weather" style="max-width:1200px;margin:0 auto"></div>
       </div>
+    </div>
+
+    <!-- ── PAGE: SHOWCASE ── -->
+    <div id="page-showcase" class="console-page">
+      <iframe src="/showcase/" style="width:100%;height:100%;border:none;" title="Showcase"></iframe>
     </div>
 
     <!-- ── PAGE: STATS ── -->
@@ -1557,7 +1562,7 @@
       setTimeout(() => document.querySelector('.db-panel-helio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
 
-    const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', stats: 'Stats', settings: 'Settings' };
+    const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', showcase: 'Showcase', stats: 'Stats', settings: 'Settings' };
     document.title = `Nebulacast — ${titles[pageId] || pageId}`;
   }
 
