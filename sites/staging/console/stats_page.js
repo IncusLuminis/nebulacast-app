@@ -596,7 +596,6 @@ export async function initStatsPage(root) {
     map: '/data/weather_map_now.json',
     stars: '/sky/data/stars.json',
     messier: '/sky/data/dso_messier.json',
-    constellations: '/sky/data/constellations.json',
   };
 
   const keys = Object.keys(urls);
@@ -639,7 +638,6 @@ export async function initStatsPage(root) {
   addFresh('weather_map_now.json', 'Map manifest', 'updated_utc', data.map?.updated_utc);
   addFresh('stars.json', 'HYG catalog slice', 'generated_at', data.stars?.generated_at);
   addFresh('dso_messier.json', 'Messier list', 'generated_at', data.messier?.generated_at);
-  addFresh('constellations.json', 'Constellation lines', 'generated_at', data.constellations?.generated_at);
   addFresh('ranking.json', 'Tonight object ranking', '—', null, 'Not stamped in JSON');
 
   sectionsEl.appendChild(section('1. Data freshness / health', freshnessTable(freshRows, now)));
@@ -698,23 +696,6 @@ export async function initStatsPage(root) {
     const g = mkCanvas(360, Math.min(40 + lbls.length * 10, 220));
     drawBars(g.ctx, g.w, g.h, lbls, vals, '#34d399');
     attachBarChartTooltip(g.canvas, g.w, g.h, lbls, vals, { valueLabel: 'Objects' });
-    col.appendChild(g.canvas);
-    catRow.appendChild(col);
-  }
-
-  if (data.constellations?.lines?.length) {
-    const lines = data.constellations.lines;
-    const perCon = {};
-    for (const ln of lines) {
-      const c = ln.con || '?';
-      perCon[c] = (perCon[c] || 0) + 1;
-    }
-    const sorted = Object.entries(perCon).sort((a, b) => b[1] - a[1]).slice(0, 16);
-    const col = document.createElement('div');
-    col.innerHTML = `<p class="nc-stats-note"><strong>Constellation lines</strong> — segments per constellation (top 16). Unique constellations: ${Object.keys(perCon).length}, total segments: ${lines.length}.</p>`;
-    const g = mkCanvas(360, 160);
-    drawBars(g.ctx, g.w, g.h, sorted.map(x => x[0]), sorted.map(x => x[1]), '#f472b6');
-    attachBarChartTooltip(g.canvas, g.w, g.h, sorted.map(x => x[0]), sorted.map(x => x[1]), { valueLabel: 'Segments' });
     col.appendChild(g.canvas);
     catRow.appendChild(col);
   }
