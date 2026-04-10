@@ -2862,10 +2862,9 @@
       margin: 0 !important;
       line-height: 1.4 !important;
     }
-    /* hide location rows */
-    #locPill,
-    .controls-row > span:first-child,
-    .controls-row > .separator:first-of-type { display: none !important; }
+    /* hide location/frame/data rows */
+    #locPill, #framePill, #dataPill,
+    .controls-row { display: none !important; }
   `;
 
   function _dbInjectAnchorCss(iframe) {
