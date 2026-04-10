@@ -997,6 +997,106 @@
       padding: 3px 11px; cursor: pointer; transition: all .15s;
     }
     .resize-bar .rz-embed:hover { background: rgba(74,111,165,0.35); color: #fff; border-color: rgba(74,111,165,0.7); }
+
+    /* ─── Hero card launcher interaction ──────────────────── */
+    .hero-card[data-panel] { cursor: pointer; border-radius: 6px; transition: background 0.15s; }
+    .hero-card[data-panel]:hover { background: rgba(255,255,255,0.04); }
+    .hero-card[data-panel].db-panel-open {
+      background: rgba(74,111,165,0.1);
+      box-shadow: 0 0 0 1px rgba(74,111,165,0.35) inset;
+    }
+
+    /* ─── Dashboard subpanels ─────────────────────────────── */
+    #db-panels-stack { flex-shrink: 0; }
+    .db-subpanel { flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .dbp-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 20px;
+      background: rgba(14,18,28,0.85);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+    .dbp-title {
+      flex: 1;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.4);
+    }
+    .dbp-close {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px; color: rgba(255,255,255,0.3); font-size: 10px;
+      cursor: pointer; padding: 2px 8px; font-family: inherit; line-height: 1.6;
+      transition: all 0.15s;
+    }
+    .dbp-close:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.65); }
+    .dbp-body { padding: 16px 20px; }
+
+    /* Night Quality matrix inside subpanel */
+    .dbp-nqi-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px;
+    }
+    .dbp-nqi-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px; padding: 10px 14px;
+    }
+    .dbp-nqi-card-lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+    .dbp-nqi-card-val { font-size: 32px; font-weight: 700; line-height: 1; }
+    .dbp-nqi-card-sub { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+    /* Tonight / Best window subpanel */
+    .dbp-window-info { margin-bottom: 12px; }
+    .dbp-window-time { font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.85); }
+    .dbp-window-sub  { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+    /* Sun & Moon subpanel */
+    .dbp-sunmoon-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .dbp-sm-col { display: flex; flex-direction: column; gap: 6px; }
+    .dbp-sm-head { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 4px; }
+    .dbp-sm-row { display: flex; align-items: baseline; gap: 8px; font-size: 12px; }
+    .dbp-sm-lbl { color: rgba(255,255,255,0.35); font-size: 10px; min-width: 52px; }
+    .dbp-sm-val { color: rgba(255,255,255,0.82); font-weight: 600; }
+
+    /* ─── Mini alarm rail ─────────────────────────────────── */
+    .hero-alarm-rail { min-width: 72px !important; }
+    .alarm-lamps { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+    .alarm-lamp {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.45); cursor: pointer;
+    }
+    .alarm-lamp-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      transition: box-shadow 0.3s;
+    }
+    .alarm-lamp-lbl { text-transform: uppercase; }
+
+    /* ─── Persistent anchor panels: SKY + MAP ─────────────── */
+    #db-anchors {
+      display: flex; gap: 8px;
+      padding: 12px 20px 20px;
+      flex-shrink: 0;
+      background: rgba(10,12,20,0.6);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .db-anchor {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+      aspect-ratio: 1 / 1;
+      background: rgba(14,18,28,0.9);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px; overflow: hidden;
+    }
+    .db-anchor-label {
+      padding: 5px 12px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.3);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .db-anchor-frame, .db-anchor-iframe {
+      flex: 1; min-height: 0; width: 100%; border: none; display: block;
+    }
   </style>
 </head>
 <body>
@@ -1099,19 +1199,77 @@
     <!-- ── PAGE: DASHBOARD (default) ── -->
     <div id="page-dashboard" class="console-page is-active">
 
-      <!-- Hero Decision Band -->
+      <!-- Hero Strip (summary + launcher) -->
       <section class="console-hero" id="console-hero">
         <div class="hero-skeleton">Loading conditions…</div>
       </section>
 
-      <!-- Weather / Conditions (timeline layer) -->
-      <div class="db-panel db-panel-weather">
-        <div id="w-weather"></div>
-      </div>
+      <!-- ── Expanded Panels Stack ── -->
+      <div id="db-panels-stack">
 
-      <!-- Space Weather secondary widget -->
-      <div class="db-panel db-panel-helio">
-        <div id="w-helio"></div>
+        <!-- Weather Cards (Date/Time launcher) -->
+        <div id="dbp-weather" class="db-subpanel" style="display:none">
+          <div class="dbp-header">
+            <span class="dbp-title">Weather Conditions</span>
+            <button class="dbp-close" data-close="weather">✕</button>
+          </div>
+          <div class="db-panel db-panel-weather" style="overflow:hidden">
+            <div id="w-weather"></div>
+          </div>
+        </div>
+
+        <!-- Night Quality Matrix (Night Quality launcher) -->
+        <div id="dbp-matrix" class="db-subpanel" style="display:none">
+          <div class="dbp-header">
+            <span class="dbp-title">Night Quality Details</span>
+            <button class="dbp-close" data-close="matrix">✕</button>
+          </div>
+          <div id="dbp-matrix-body" class="dbp-body"></div>
+        </div>
+
+        <!-- Best Observing Window (Tonight launcher) -->
+        <div id="dbp-window" class="db-subpanel" style="display:none">
+          <div class="dbp-header">
+            <span class="dbp-title">Best Observing Window</span>
+            <button class="dbp-close" data-close="window">✕</button>
+          </div>
+          <div class="dbp-body" data-role="tp-best-window">
+            <div id="dbp-window-body" class="dbp-window-info"></div>
+          </div>
+        </div>
+
+        <!-- Sun &amp; Moon (Moon launcher) -->
+        <div id="dbp-sunmoon" class="db-subpanel" style="display:none">
+          <div class="dbp-header">
+            <span class="dbp-title">Sun &amp; Moon</span>
+            <button class="dbp-close" data-close="sunmoon">✕</button>
+          </div>
+          <div id="dbp-sunmoon-body" class="dbp-body"></div>
+        </div>
+
+        <!-- Space Weather (Kp / Sun / Alarm launcher) -->
+        <div id="dbp-helio" class="db-subpanel" style="display:none">
+          <div class="dbp-header">
+            <span class="dbp-title">Space Weather</span>
+            <button class="dbp-close" data-close="helio">✕</button>
+          </div>
+          <div class="db-panel db-panel-helio" style="overflow:hidden">
+            <div id="w-helio"></div>
+          </div>
+        </div>
+
+      </div><!-- #db-panels-stack -->
+
+      <!-- ── Persistent Anchor Panels: SKY + MAP ── -->
+      <div id="db-anchors">
+        <div class="db-anchor" id="db-anchor-sky">
+          <div class="db-anchor-label">Sky</div>
+          <iframe class="db-anchor-iframe" id="db-sky-iframe" src="" frameborder="0" title="Sky view" loading="lazy"></iframe>
+        </div>
+        <div class="db-anchor" id="db-anchor-map">
+          <div class="db-anchor-label">Map</div>
+          <iframe class="db-anchor-iframe" id="db-map-iframe" src="" frameborder="0" title="Weather Map" loading="lazy"></iframe>
+        </div>
       </div>
 
     </div>
@@ -1561,10 +1719,12 @@
     consolePages.forEach(p => p.classList.toggle('is-active', p.id === `page-${effectivePage}`));
 
     if (pageId === 'weather') {
-      setTimeout(() => document.querySelector('.db-panel-weather')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      if (typeof _dbOpenPanel === 'function') _dbOpenPanel('weather');
+      else setTimeout(() => document.querySelector('.db-panel-weather')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
     if (pageId === 'helio') {
-      setTimeout(() => document.querySelector('.db-panel-helio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+      if (typeof _dbOpenPanel === 'function') _dbOpenPanel('helio');
+      else setTimeout(() => document.querySelector('.db-panel-helio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
 
     const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', showcase: 'Showcase', stats: 'Stats', settings: 'Settings' };
@@ -1978,7 +2138,7 @@
       const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
       return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
-    const p1 = `<div class="hero-card" style="min-width:118px;flex-shrink:0">
+    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:118px;flex-shrink:0">
       <div class="hero-card-label">Kp</div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
         <div style="display:flex;align-items:baseline;gap:6px">
@@ -1997,7 +2157,7 @@
     const sunGifMap    = { quiet:'171',     active:'195',     elevated:'284',     storm:'304'      };
     const sunBorder = sunBorderMap[swStatus] ?? '#5cce8c';
     const sunWave   = sunGifMap[swStatus]    ?? '171';
-    const p2 = `<div class="hero-card" style="min-width:110px;flex-shrink:0;align-items:center">
+    const p2 = `<div class="hero-card" data-panel="helio" style="min-width:110px;flex-shrink:0;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Sun</div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <div style="position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;
@@ -2017,7 +2177,7 @@
       const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       // Date: secondary label, same size/style as the previous time appearance.
       // Time: hero element, auto-scaled to exactly match date's rendered width.
-      var p0 = `<div class="hero-card" style="flex-shrink:0;align-items:center">
+      var p0 = `<div class="hero-card" data-panel="weather" style="flex-shrink:0;align-items:center">
         <div class="hero-card-label" style="align-self:flex-start">Date &amp; Time</div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
           <div id="nop-clock-date" style="font-size:20px;font-weight:600;line-height:1;color:#fff;letter-spacing:0.01em;white-space:nowrap">${_dateStr}</div>
@@ -2036,7 +2196,7 @@
         ? '<span style="color:rgba(255,255,255,0.22);font-size:9px"> ↓below</span>' : '';
     const moonRiseSet = (moonriseT||moonsetT)
       ? `<div style="font-size:9px;color:rgba(255,255,255,0.38);margin-top:2px">${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''  }${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>` : '';
-    const p4 = `<div class="hero-card" style="min-width:110px;flex-shrink:0;align-items:center">
+    const p4 = `<div class="hero-card" data-panel="sunmoon" style="min-width:110px;flex-shrink:0;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Moon</div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <canvas id="nop-moon-canvas" width="72" height="72" style="flex-shrink:0;width:72px;height:72px"></canvas>
@@ -2053,7 +2213,7 @@
     const nqiVal     = activeNqi.value != null ? activeNqi.value.toFixed(1) : '—';
     const nqiCls     = activeNqi.class || 'poor';
     const nqiClr     = _nqiColor(nqiCls);
-    const p5 = `<div class="hero-card" style="min-width:165px;flex-shrink:0">
+    const p5 = `<div class="hero-card" data-panel="matrix" style="min-width:165px;flex-shrink:0">
       <div class="hero-card-label" style="display:flex;align-items:center;gap:4px">Night Quality<button id="nqi-info-btn" class="nqi-info-btn" aria-label="How NQI is calculated" title="How it's calculated">i</button></div>
       <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:4px">
         <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px">
@@ -2070,7 +2230,7 @@
     // ── Panel 6: Tonight (merged Best Window + summary) ──
     const bw = _nopBestWindow;
     const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '—';
-    const p6 = `<div class="hero-card" style="flex:1;min-width:180px">
+    const p6 = `<div class="hero-card" data-panel="window" style="flex:1;min-width:180px">
       <div class="hero-card-label">Tonight</div>
       <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.65);margin-top:4px;white-space:nowrap">
         Best window: ${winStr}
@@ -2078,8 +2238,26 @@
       <div class="nop-summary-text" style="margin-top:5px">${p3Summary}</div>
     </div>`;
 
-    // New order: Date | Night Quality | Tonight | Moon | Kp | Sun
-    hero.innerHTML = [p0, p5, p6, p4, p1, p2].join('');
+    // ── Panel 7: Mini Alarm Rail ──
+    function _alarmColor(lvl) { return ['#5cce8c','#d4cc5c','#e09440','#e05c5c'][Math.min(lvl,3)]; }
+    function _alarmGlow(lvl)  { const c = _alarmColor(lvl); return `0 0 ${[5,7,10,14][Math.min(lvl,3)]}px ${c}${['44','66','99','bb'][Math.min(lvl,3)]}`; }
+    function _lampHtml(lbl, lvl) {
+      const c = _alarmColor(lvl);
+      return `<div class="alarm-lamp" title="${lbl}"><div class="alarm-lamp-dot" style="background:${c};box-shadow:${_alarmGlow(lvl)}"></div><div class="alarm-lamp-lbl">${lbl}</div></div>`;
+    }
+    const sunLvl   = (()=>{ const cls=sw?.metrics?.xray_class||'A'; return cls[0]==='X'?3:cls[0]==='M'?2:cls[0]==='C'?1:0; })();
+    const spaceLvl = (()=>{ const kp=sw?.metrics?.kp_latest??0; return kp>=7?3:kp>=5?2:kp>=3?1:0; })();
+    const earthLvl = (()=>{ const g=parseInt((sw?.scales?.g_scale||'G0').replace(/\D/g,''))||0; return g>=4?3:g>=3?2:g>=1?1:0; })();
+    const p7 = `<div class="hero-card hero-alarm-rail" data-panel="helio" style="flex-shrink:0;min-width:72px;justify-content:center;padding:6px 12px">
+      <div class="hero-card-label">Alarm</div>
+      <div class="alarm-lamps">${_lampHtml('SUN',sunLvl)}${_lampHtml('SPACE',spaceLvl)}${_lampHtml('EARTH',earthLvl)}</div>
+    </div>`;
+
+    // New order: Date | Night Quality | Tonight | Moon | Kp | Sun | Alarm
+    hero.innerHTML = [p0, p5, p6, p4, p1, p2, p7].join('');
+
+    // Expose data for dashboard subpanel renderers
+    window._dbHeroData = { wx, sw, sunMoon, sunsetT, sunriseT, moonriseT, moonsetT, moonIllum, moonWaxing };
 
     // Post-render: moon canvas + NQI label scaling
     _nopDrawMoon(document.getElementById('nop-moon-canvas'), moonIllum / 100, moonWaxing);
@@ -2112,6 +2290,9 @@
     if (_nopClockInterval) clearInterval(_nopClockInterval);
     _nopTickClock();  // immediate first tick + measure
     _nopClockInterval = setInterval(_nopTickClock, 1000);
+
+    // Dashboard: restore open panels & sync hero state after re-render
+    if (typeof _dbAfterHeroRender === 'function') _dbAfterHeroRender();
   }
 
   // ══════════════════════════════════════════════════════════
@@ -2482,6 +2663,213 @@
       document.querySelectorAll('.nop-chip').forEach(c => c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
     }
   });
+
+  // ══════════════════════════════════════════════════════════
+  //  DASHBOARD PANEL MANAGER
+  // ══════════════════════════════════════════════════════════
+
+  const _DB_LS_KEY = 'nbc_db_panels_v1';
+  const _DB_PANELS = ['weather', 'matrix', 'window', 'sunmoon', 'helio'];
+
+  function _dbLoadState() {
+    try { return JSON.parse(localStorage.getItem(_DB_LS_KEY)) || {}; } catch (_) { return {}; }
+  }
+  function _dbSaveState(open) {
+    try { localStorage.setItem(_DB_LS_KEY, JSON.stringify(open)); } catch (_) {}
+  }
+
+  // Return set of currently open panel ids
+  function _dbOpenSet() {
+    const s = {};
+    _DB_PANELS.forEach(id => {
+      s[id] = document.getElementById(`dbp-${id}`)?.style.display !== 'none';
+    });
+    return s;
+  }
+
+  function _dbOpenPanel(panelId) {
+    const el = document.getElementById(`dbp-${panelId}`);
+    if (!el) return;
+    el.style.display = '';
+    // Populate content if needed
+    if (panelId === 'matrix')  _dbRenderMatrix();
+    if (panelId === 'window')  _dbRenderWindow();
+    if (panelId === 'sunmoon') _dbRenderSunMoon();
+    // scroll into view
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+    _dbSyncHeroActive();
+    _dbSaveState(_dbOpenSet());
+  }
+
+  function _dbClosePanel(panelId) {
+    const el = document.getElementById(`dbp-${panelId}`);
+    if (el) el.style.display = 'none';
+    _dbSyncHeroActive();
+    _dbSaveState(_dbOpenSet());
+  }
+
+  function _dbTogglePanel(panelId) {
+    const el = document.getElementById(`dbp-${panelId}`);
+    if (!el) return;
+    if (el.style.display === 'none') _dbOpenPanel(panelId);
+    else _dbClosePanel(panelId);
+  }
+
+  // Highlight hero cards whose panel is open
+  function _dbSyncHeroActive() {
+    document.querySelectorAll('.hero-card[data-panel]').forEach(card => {
+      const id = card.dataset.panel;
+      const open = document.getElementById(`dbp-${id}`)?.style.display !== 'none';
+      card.classList.toggle('db-panel-open', !!open);
+    });
+  }
+
+  // Restore open panels from localStorage and sync hero state
+  function _dbAfterHeroRender() {
+    const saved = _dbLoadState();
+    _DB_PANELS.forEach(id => {
+      const el = document.getElementById(`dbp-${id}`);
+      if (!el) return;
+      if (saved[id]) {
+        el.style.display = '';
+        if (id === 'matrix')  _dbRenderMatrix();
+        if (id === 'window')  _dbRenderWindow();
+        if (id === 'sunmoon') _dbRenderSunMoon();
+      } else {
+        el.style.display = 'none';
+      }
+    });
+    _dbSyncHeroActive();
+    _dbInitAnchors();
+  }
+
+  // Hero click → toggle panel
+  document.getElementById('console-hero').addEventListener('click', e => {
+    const card = e.target.closest('.hero-card[data-panel]');
+    if (!card) return;
+    // Don't trigger on NQI info button or profile/chip buttons
+    if (e.target.closest('#nqi-info-btn') || e.target.closest('.nop-profile-btn') || e.target.closest('.nop-chip')) return;
+    _dbTogglePanel(card.dataset.panel);
+  });
+
+  // Close buttons inside subpanels
+  document.getElementById('db-panels-stack').addEventListener('click', e => {
+    const btn = e.target.closest('.dbp-close');
+    if (!btn) return;
+    _dbClosePanel(btn.dataset.close);
+  });
+
+  // ── Night Quality Matrix renderer ──
+  function _dbRenderMatrix() {
+    const body = document.getElementById('dbp-matrix-body');
+    if (!body) return;
+    const d = window._dbHeroData;
+    const nqi  = d?.wx?.night_summary?.nqi        || {};
+    const avg  = d?.wx?.night_summary?.avg_score   || {};
+    const modes = d?.wx?.decision?.mode_scores     || {};
+    const PLBL = { balanced:'Balanced', visual:'Visual', photography:'Photo', broadband:'Broadband', planetary:'Planetary' };
+    const profileKeys = Object.keys(nqi).length ? Object.keys(nqi) : Object.keys(modes);
+
+    if (!profileKeys.length) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No data available.</p>'; return; }
+
+    function nqiColor(cls) { return cls==='excellent'?'#4caf50':cls==='good'?'#8bc34a':cls==='usable'?'#ff9800':cls==='marginal'?'#f44336':'#9e3a3a'; }
+
+    const cards = profileKeys.map(k => {
+      const n = nqi[k] || {};
+      const val = n.value != null ? n.value.toFixed(1) : '—';
+      const cls = n.class || 'poor';
+      const clr = nqiColor(cls);
+      const avgS = avg[k] != null ? avg[k] : (modes[k] != null ? modes[k] : null);
+      const sub  = avgS != null ? `Avg score ${Math.round(avgS)}` : '';
+      return `<div class="dbp-nqi-card">
+        <div class="dbp-nqi-card-lbl">${PLBL[k] || k}</div>
+        <div class="dbp-nqi-card-val" style="color:${clr}">${val}<span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:500"> /10</span></div>
+        <div class="dbp-nqi-card-sub">${cls.charAt(0).toUpperCase()+cls.slice(1)}${sub?' · '+sub:''}</div>
+      </div>`;
+    }).join('');
+
+    const bw = d?.wx?.decision?.best_tonight;
+    const winHtml = bw
+      ? `<div style="margin-bottom:14px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:5px">Best Observing Window</div>
+          <span style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.82)">${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}</span>
+         </div>` : '';
+
+    body.innerHTML = winHtml + `<div class="dbp-nqi-grid">${cards}</div>`;
+  }
+
+  // ── Best Observing Window renderer ──
+  function _dbRenderWindow() {
+    const body = document.getElementById('dbp-window-body');
+    if (!body) return;
+    const d = window._dbHeroData;
+    const bw = d?.wx?.decision?.best_tonight;
+    if (!bw) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No window data available.</p>'; return; }
+    body.innerHTML = `
+      <div class="dbp-window-time">${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}</div>
+      <div class="dbp-window-sub">Best continuous observing window tonight</div>`;
+    // Inject night chart (reuses NOP chart logic)
+    _nopInjectWidgetChart();
+  }
+
+  // ── Sun & Moon renderer ──
+  function _dbRenderSunMoon() {
+    const body = document.getElementById('dbp-sunmoon-body');
+    if (!body) return;
+    const d = window._dbHeroData;
+    if (!d) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No data available.</p>'; return; }
+
+    const moonPct = Math.round(d.moonIllum || 0);
+    const moonPhase = d.moonWaxing ? 'Waxing' : 'Waning';
+
+    // Find current sun/moon altitude from nearest frame
+    let sunAlt = null, moonAlt = null;
+    if (d.sunMoon?.frames?.length) {
+      const now = Date.now();
+      let best = null, minD = Infinity;
+      for (const f of d.sunMoon.frames) {
+        const t = _parseSMTime(f.t_utc); if (!t) continue;
+        const dist = Math.abs(t.getTime() - now);
+        if (dist < minD) { minD = dist; best = f; }
+      }
+      if (best) { sunAlt = best.sun?.alt_deg ?? null; moonAlt = best.moon?.alt_deg ?? null; }
+    }
+
+    body.innerHTML = `<div class="dbp-sunmoon-grid">
+      <div class="dbp-sm-col">
+        <div class="dbp-sm-head">Sun</div>
+        <div class="dbp-sm-row"><span class="dbp-sm-lbl">Sunset</span><span class="dbp-sm-val">${_nopFmtT(d.sunsetT)}</span></div>
+        <div class="dbp-sm-row"><span class="dbp-sm-lbl">Sunrise</span><span class="dbp-sm-val">${_nopFmtT(d.sunriseT)}</span></div>
+        ${sunAlt != null ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Altitude</span><span class="dbp-sm-val">${sunAlt.toFixed(1)}°</span></div>` : ''}
+      </div>
+      <div class="dbp-sm-col">
+        <div class="dbp-sm-head">Moon</div>
+        <div class="dbp-sm-row"><span class="dbp-sm-lbl">Illumin.</span><span class="dbp-sm-val">${moonPct}% ${moonPhase}</span></div>
+        ${d.moonriseT ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Moonrise</span><span class="dbp-sm-val">${_nopFmtT(d.moonriseT)}</span></div>` : ''}
+        ${d.moonsetT  ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Moonset</span><span class="dbp-sm-val">${_nopFmtT(d.moonsetT)}</span></div>` : ''}
+        ${moonAlt != null ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Altitude</span><span class="dbp-sm-val">${moonAlt.toFixed(1)}°</span></div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // ── Anchor iframe init (sky + map) ──
+  let _dbAnchorsInited = false;
+  function _dbInitAnchors() {
+    if (_dbAnchorsInited) return;
+    _dbAnchorsInited = true;
+    const skyIframe = document.getElementById('db-sky-iframe');
+    if (skyIframe && !skyIframe.src) skyIframe.src = '/sky/';
+    const mapIframe = document.getElementById('db-map-iframe');
+    if (mapIframe && !mapIframe.src) {
+      mapIframe.src = '/weather/map-poc.html';
+      mapIframe.addEventListener('load', () => {
+        const loc = typeof getState === 'function' ? getState()?.location : null;
+        if (loc && mapIframe.contentWindow) {
+          mapIframe.contentWindow.postMessage({ type: 'update-location', location: loc }, '*');
+        }
+      });
+    }
+  }
 
   // ══════════════════════════════════════════════════════════
   //  CONTROL BAR — TIME PLAYER
