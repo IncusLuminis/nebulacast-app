@@ -90,7 +90,8 @@ function injectCss() {
 }
 .nc-stats-kpi-l{ font-size:11px; letter-spacing:0.4px; text-transform:uppercase; color:rgba(255,255,255,0.56); margin-bottom:4px; }
 .nc-stats-kpi-v{ font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; }
-.nc-stats-chart-grid{ display:grid; gap:10px; }
+.nc-stats-chart-grid{ display:grid; grid-template-columns:1fr; gap:10px; width:100%; }
+.nc-stats-chart-cell{ width:100%; min-width:0; }
 .nc-stats-canvas-h{ display:block; width:100%; height:auto; border-radius:8px; background:rgba(0,0,0,0.15); }
 .nc-stats-chart-row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 .nc-stats-donut-box{ flex:0 0 auto; }
@@ -262,6 +263,17 @@ function attachDonutTooltip(canvas, W, H, segments) {
   canvas.addEventListener('blur', hideChartTooltip);
 }
 
+/** Usable width for full-bleed charts inside the stats column (not capped at 640px). */
+function statsContentWidth(el) {
+  let w = 0;
+  if (el) w = el.clientWidth || Math.floor(el.getBoundingClientRect().width);
+  if (!w || w < 160) {
+    const main = document.querySelector('.console-main');
+    w = (main && main.clientWidth) || window.innerWidth || 640;
+  }
+  return Math.max(280, Math.floor(w));
+}
+
 function mkCanvas(w, h, fluid = true) {
   const dpr = window.devicePixelRatio || 1;
   const canvas = document.createElement('canvas');
@@ -270,7 +282,7 @@ function mkCanvas(w, h, fluid = true) {
   canvas.height = Math.round(h * dpr);
   if (fluid) {
     canvas.style.width = '100%';
-    canvas.style.maxWidth = w + 'px';
+    canvas.style.maxWidth = '100%';
     canvas.style.height = 'auto';
   }
   const ctx = canvas.getContext('2d');
@@ -714,13 +726,14 @@ export async function initStatsPage(root) {
 
     const charts = document.createElement('div');
     charts.className = 'nc-stats-chart-grid';
-    const w = Math.min(640, root.clientWidth || 640);
+    const w = statsContentWidth(root);
     for (const spec of [
       { label: 'Cloud cover (% total)', values: cloud, color: '#94a3b8', yFmt: v => String(Math.round(v)), nightFlags },
  { label: 'Air temperature (°C)', values: temp, color: '#fbbf24', yFmt: v => String(Math.round(v * 10) / 10) },
       { label: 'Wind speed (m/s)', values: wind, color: '#22d3ee', yFmt: v => String(Math.round(v * 10) / 10) },
     ]) {
       const wrap = document.createElement('div');
+      wrap.className = 'nc-stats-chart-cell';
       wrap.innerHTML = `<p class="nc-stats-note" style="margin-bottom:4px"><strong>${esc(spec.label)}</strong>${spec.nightFlags ? ' — violet band = night flag in snapshot' : ''}</p>`;
       const cv = mkCanvas(w, 130);
       drawLineSeries(cv.ctx, cv.w, cv.h, labels, spec.values, {
@@ -777,7 +790,8 @@ export async function initStatsPage(root) {
         }
       });
       const vals = fc.map(s => Number(s.kp) || 0);
-      const cv = mkCanvas(Math.min(640, root.clientWidth || 640), 140);
+      const kpW = statsContentWidth(root);
+      const cv = mkCanvas(kpW, 140);
       const lineOpts = { color: '#c084fc', vmin: 0, vmax: Math.max(9, ...vals, 1), yFmt: v => v.toFixed(1) };
       drawLineSeries(cv.ctx, cv.w, cv.h, lbls, vals, lineOpts);
       attachLineChartTooltip(cv.canvas, cv.w, cv.h, lbls, vals, { ...lineOpts, seriesName: 'Kp (forecast step)' });
@@ -828,7 +842,7 @@ export async function initStatsPage(root) {
     pR.className = 'nc-stats-note';
     pR.textContent = 'Ranking score bins (tonight list)';
     evtBody.appendChild(pR);
-    const cv = mkCanvas(Math.min(640, root.clientWidth || 640), 140);
+    const cv = mkCanvas(statsContentWidth(root), 140);
     const rAxis = hist.labels.map(l => l.split('–')[0]);
     drawBars(cv.ctx, cv.w, cv.h, rAxis, hist.counts, '#38bdf8');
     attachBarChartTooltip(cv.canvas, cv.w, cv.h, hist.labels, hist.counts, { valueLabel: 'Objects in bin' });
@@ -847,7 +861,7 @@ export async function initStatsPage(root) {
     pD.className = 'nc-stats-note';
     pD.textContent = 'Calendar signal items by stream/category';
     evtBody.appendChild(pD);
-    const cv = mkCanvas(Math.min(640, root.clientWidth || 640), Math.min(200, 36 + lbls.length * 12));
+    const cv = mkCanvas(statsContentWidth(root), Math.min(200, 36 + lbls.length * 12));
     drawBars(cv.ctx, cv.w, cv.h, lbls, vals, '#34d399');
     attachBarChartTooltip(cv.canvas, cv.w, cv.h, lbls, vals, { valueLabel: 'Items' });
     evtBody.appendChild(cv.canvas);
