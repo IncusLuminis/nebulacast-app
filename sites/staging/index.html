@@ -155,10 +155,10 @@
       gap: 1px;
       padding: 0 8px;
     }
-    .nav-section + .nav-section {
-      margin-top: auto;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255,255,255,0.06);
+    .nav-divider {
+      margin: 8px 8px;
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.08);
     }
 
     .nav-item {
@@ -1066,11 +1066,18 @@
         <span class="nav-icon">◈</span>
         <span class="nav-label">Events</span>
       </button>
-    </div>
-    <div class="nav-section">
       <button class="nav-item" data-page="sun">
         <span class="nav-icon">☽</span>
         <span class="nav-label">Sun &amp; Moon</span>
+      </button>
+      <hr class="nav-divider">
+      <button class="nav-item" data-page="stats">
+        <span class="nav-icon">◎</span>
+        <span class="nav-label">Stats</span>
+      </button>
+      <button class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙</span>
+        <span class="nav-label">Settings</span>
       </button>
     </div>
   </nav>
@@ -1159,6 +1166,18 @@
       <div id="subpanel-observer" class="events-subpanel">
         <div id="w-observer-weather" style="max-width:1200px;margin:0 auto"></div>
       </div>
+    </div>
+
+    <!-- ── PAGE: STATS ── -->
+    <div id="page-stats" class="console-page" style="overflow-y:auto;padding:40px 24px">
+      <h2 style="color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:500;margin:0 0 8px">Stats</h2>
+      <p style="color:rgba(255,255,255,0.3);font-size:0.85rem">Coming soon</p>
+    </div>
+
+    <!-- ── PAGE: SETTINGS ── -->
+    <div id="page-settings" class="console-page" style="overflow-y:auto;padding:40px 24px">
+      <h2 style="color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:500;margin:0 0 8px">Settings</h2>
+      <p style="color:rgba(255,255,255,0.3);font-size:0.85rem">Coming soon</p>
     </div>
 
   </main><!-- .console-main -->
@@ -1532,7 +1551,7 @@
       setTimeout(() => document.querySelector('.db-panel-helio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
 
-    const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon' };
+    const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', stats: 'Stats', settings: 'Settings' };
     document.title = `Nebulacast — ${titles[pageId] || pageId}`;
   }
 
