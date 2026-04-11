@@ -493,6 +493,17 @@
     .db-panel-weather #forecastMatrix,
     .db-panel-weather .weather-meta { display: none !important; }
 
+    /* Show only forecast matrix section in dashboard matrix panel */
+    .db-panel-matrix #w-weather-matrix { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
+    .db-panel-matrix .api-fallback-banner,
+    .db-panel-matrix .top-panel-v2,
+    .db-panel-matrix .overall-explain-wrap,
+    .db-panel-matrix .hourly-header,
+    .db-panel-matrix .hourly,
+    .db-panel-matrix .legend,
+    .db-panel-matrix .weather-meta { display: none !important; }
+    .db-panel-matrix #forecastMatrix { display: block !important; }
+
     /* ─── Right column: alerts/events stream ────────────────*/
     .console-alerts {
       background: rgba(12, 16, 26, 0.98);
@@ -1225,13 +1236,15 @@
           </div>
         </div>
 
-        <!-- Night Quality Matrix (Night Quality launcher) -->
+        <!-- Forecast Matrix (Night Quality launcher) -->
         <div id="dbp-matrix" class="db-subpanel" style="display:none">
           <div class="dbp-header">
-            <span class="dbp-title">Night Quality Details</span>
+            <span class="dbp-title">Forecast Matrix</span>
             <button class="dbp-close" data-close="matrix">✕</button>
           </div>
-          <div id="dbp-matrix-body" class="dbp-body"></div>
+          <div class="db-panel db-panel-matrix" style="overflow:hidden">
+            <div id="w-weather-matrix"></div>
+          </div>
         </div>
 
         <!-- Best Observing Window (Tonight launcher) -->
@@ -1542,6 +1555,10 @@
   // ── Weather (Conditions tab) ────────────────────────────
   const weatherEl = document.getElementById("w-weather");
   if (weatherEl) mountWeather(weatherEl, storeApi);
+
+  // ── Weather matrix (Matrix panel) ───────────────────────
+  const weatherMatrixEl = document.getElementById("w-weather-matrix");
+  if (weatherMatrixEl) mountWeather(weatherMatrixEl, storeApi);
 
   // ── Sun & Moon tab ──────────────────────────────────────
   const sunEl = document.getElementById("w-sun");
@@ -2692,13 +2709,14 @@
     return s;
   }
 
-  // Force Observing tab active when weather panel opens from dashboard
-  function _dbActivateWeatherObserving() {
+  // Force a specific tab active in a weather widget instance
+  function _dbActivateWeatherTab(widgetId, mode) {
     setTimeout(() => {
-      const btn = document.querySelector('#w-weather .htab[data-hmode="observing"]');
+      const btn = document.querySelector(`#${widgetId} .htab[data-hmode="${mode}"]`);
       if (btn && !btn.hasAttribute('data-active')) btn.click();
     }, 50);
   }
+  function _dbActivateWeatherObserving() { _dbActivateWeatherTab('w-weather', 'observing'); }
 
   function _dbOpenPanel(panelId) {
     const el = document.getElementById(`dbp-${panelId}`);
@@ -2706,7 +2724,7 @@
     el.style.display = '';
     // Populate content if needed
     if (panelId === 'weather') _dbActivateWeatherObserving();
-    if (panelId === 'matrix')  _dbRenderMatrix();
+    if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     if (panelId === 'window')  _dbRenderWindow();
     if (panelId === 'sunmoon') _dbRenderSunMoon();
     // scroll into view
@@ -2746,7 +2764,7 @@
       if (!el) return;
       if (saved[id]) {
         el.style.display = '';
-        if (id === 'matrix')  _dbRenderMatrix();
+        if (id === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
         if (id === 'window')  _dbRenderWindow();
         if (id === 'sunmoon') _dbRenderSunMoon();
       } else {
