@@ -1238,10 +1238,10 @@
           </div>
         </div>
 
-        <!-- Sun &amp; Moon (Moon launcher) -->
+        <!-- Sun Equation (Moon launcher) -->
         <div id="dbp-sunmoon" class="db-subpanel" style="display:none">
           <div class="dbp-header">
-            <span class="dbp-title">Sun &amp; Moon</span>
+            <span class="dbp-title">Sun Equation</span>
             <button class="dbp-close" data-close="sunmoon">✕</button>
           </div>
           <div id="dbp-sunmoon-body" class="dbp-body"></div>
@@ -2810,44 +2810,101 @@
     _nopInjectWidgetChart();
   }
 
-  // ── Sun & Moon renderer ──
+  // ── Sun Equation renderer (altitude-over-time chart) ──
   function _dbRenderSunMoon() {
     const body = document.getElementById('dbp-sunmoon-body');
     if (!body) return;
     const d = window._dbHeroData;
-    if (!d) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No data available.</p>'; return; }
-
-    const moonPct = Math.round(d.moonIllum || 0);
-    const moonPhase = d.moonWaxing ? 'Waxing' : 'Waning';
-
-    // Find current sun/moon altitude from nearest frame
-    let sunAlt = null, moonAlt = null;
-    if (d.sunMoon?.frames?.length) {
-      const now = Date.now();
-      let best = null, minD = Infinity;
-      for (const f of d.sunMoon.frames) {
-        const t = _parseSMTime(f.t_utc); if (!t) continue;
-        const dist = Math.abs(t.getTime() - now);
-        if (dist < minD) { minD = dist; best = f; }
-      }
-      if (best) { sunAlt = best.sun?.alt_deg ?? null; moonAlt = best.moon?.alt_deg ?? null; }
+    if (!d?.sunMoon?.frames?.length) {
+      body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No altitude data available.</p>';
+      return;
     }
 
-    body.innerHTML = `<div class="dbp-sunmoon-grid">
-      <div class="dbp-sm-col">
-        <div class="dbp-sm-head">Sun</div>
-        <div class="dbp-sm-row"><span class="dbp-sm-lbl">Sunset</span><span class="dbp-sm-val">${_nopFmtT(d.sunsetT)}</span></div>
-        <div class="dbp-sm-row"><span class="dbp-sm-lbl">Sunrise</span><span class="dbp-sm-val">${_nopFmtT(d.sunriseT)}</span></div>
-        ${sunAlt != null ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Altitude</span><span class="dbp-sm-val">${sunAlt.toFixed(1)}°</span></div>` : ''}
-      </div>
-      <div class="dbp-sm-col">
-        <div class="dbp-sm-head">Moon</div>
-        <div class="dbp-sm-row"><span class="dbp-sm-lbl">Illumin.</span><span class="dbp-sm-val">${moonPct}% ${moonPhase}</span></div>
-        ${d.moonriseT ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Moonrise</span><span class="dbp-sm-val">${_nopFmtT(d.moonriseT)}</span></div>` : ''}
-        ${d.moonsetT  ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Moonset</span><span class="dbp-sm-val">${_nopFmtT(d.moonsetT)}</span></div>` : ''}
-        ${moonAlt != null ? `<div class="dbp-sm-row"><span class="dbp-sm-lbl">Altitude</span><span class="dbp-sm-val">${moonAlt.toFixed(1)}°</span></div>` : ''}
-      </div>
-    </div>`;
+    // Parse all frames
+    const frames = d.sunMoon.frames;
+    const pts = frames.map(f => ({
+      t: _parseSMTime(f.t_utc),
+      s: f.sun?.alt_deg ?? null,
+      m: f.moon?.alt_deg ?? null
+    })).filter(p => p.t);
+    if (pts.length < 2) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">Insufficient data.</p>'; return; }
+
+    // Night window: sunset-2h → sunrise+2h (or full range)
+    const tMin = d.sunsetT  ? new Date(d.sunsetT).getTime()  - 2*3600e3 : pts[0].t.getTime();
+    const tMax = d.sunriseT ? new Date(d.sunriseT).getTime() + 2*3600e3 : pts[pts.length-1].t.getTime();
+    const vis  = pts.filter(p => { const ms = p.t.getTime(); return ms >= tMin && ms <= tMax; });
+    if (vis.length < 2) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">Night window not available.</p>'; return; }
+
+    // Chart geometry
+    const W = 900, H = 170, pL = 36, pR = 16, pT = 18, pB = 30;
+    const cW = W - pL - pR, cH = H - pT - pB;
+    const altMin = -18, altMax = 90;
+    const tx  = ms  => pL + (ms - tMin) / (tMax - tMin) * cW;
+    const ty  = alt => pT + cH - (alt - altMin) / (altMax - altMin) * cH;
+    const hz  = ty(0); // horizon y
+
+    // Build SVG polyline points
+    const sunPts  = vis.filter(p => p.s != null).map(p => `${tx(p.t.getTime()).toFixed(1)},${ty(p.s).toFixed(1)}`).join(' ');
+    const moonPts = vis.filter(p => p.m != null).map(p => `${tx(p.t.getTime()).toFixed(1)},${ty(p.m).toFixed(1)}`).join(' ');
+
+    // Time axis labels (every 2 UTC hours)
+    const axisLabels = [];
+    for (const p of vis) {
+      const h = p.t.getUTCHours(), mn = p.t.getUTCMinutes();
+      if (mn === 0 && h % 2 === 0) {
+        axisLabels.push(`<text x="${tx(p.t.getTime()).toFixed(1)}" y="${H - 4}" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="9" font-family="monospace">${String(h).padStart(2,'0')}:00</text>`);
+      }
+    }
+
+    // Altitude grid lines
+    const grid = [0, 30, 60].map(a => `
+      <line x1="${pL}" y1="${ty(a).toFixed(1)}" x2="${pL+cW}" y2="${ty(a).toFixed(1)}" stroke="rgba(255,255,255,${a===0?'0.18':'0.07'})" stroke-width="1" ${a===0?'stroke-dasharray="4,3"':''}/>
+      <text x="${(pL-4).toFixed(1)}" y="${(ty(a)+3).toFixed(1)}" text-anchor="end" fill="rgba(255,255,255,0.25)" font-size="9">${a}°</text>`).join('');
+
+    // Now marker
+    const nowMs = Date.now();
+    const nowInRange = nowMs >= tMin && nowMs <= tMax;
+    const nowLine = nowInRange
+      ? `<line x1="${tx(nowMs).toFixed(1)}" y1="${pT}" x2="${tx(nowMs).toFixed(1)}" y2="${pT+cH}" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-dasharray="2,4"/>`
+      : '';
+
+    // Find current altitudes
+    let curSun = null, curMoon = null;
+    { let minD = Infinity;
+      for (const p of pts) {
+        const d2 = Math.abs(p.t.getTime() - nowMs);
+        if (d2 < minD) { minD = d2; curSun = p.s; curMoon = p.m; }
+      }
+    }
+
+    const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible">
+      <!-- night shading below horizon -->
+      <rect x="${pL}" y="${hz.toFixed(1)}" width="${cW}" height="${(pT+cH-hz).toFixed(1)}" fill="rgba(0,0,40,0.22)"/>
+      ${grid}
+      ${sunPts  ? `<polyline points="${sunPts}"  fill="none" stroke="#f5a23a" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
+      ${moonPts ? `<polyline points="${moonPts}" fill="none" stroke="#8ab6d8" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
+      ${nowLine}
+      ${axisLabels.join('')}
+      <!-- legend -->
+      <rect x="${pL}" y="5" width="12" height="3" fill="#f5a23a" rx="1"/>
+      <text x="${pL+15}" y="11" fill="rgba(255,255,255,0.4)" font-size="9">Sun${curSun != null ? ' '+curSun.toFixed(1)+'°' : ''}</text>
+      <rect x="${pL+60}" y="5" width="12" height="3" fill="#8ab6d8" rx="1"/>
+      <text x="${pL+75}" y="11" fill="rgba(255,255,255,0.4)" font-size="9">Moon${curMoon != null ? ' '+curMoon.toFixed(1)+'°' : ''}</text>
+    </svg>`;
+
+    // Key times row
+    const moonPct = Math.round(d.moonIllum || 0);
+    const moonPhase = d.moonWaxing ? 'Waxing' : 'Waning';
+    const ev = (lbl, t, clr) => t ? `<div class="dbp-sm-col" style="min-width:70px"><div class="dbp-sm-head" style="color:${clr}">${lbl}</div><div class="dbp-sm-val">${_nopFmtT(t)}</div></div>` : '';
+
+    body.innerHTML = svg + `
+      <div class="dbp-sunmoon-grid" style="margin-top:10px;flex-wrap:wrap;gap:12px 20px">
+        ${ev('Sunset',  d.sunsetT,  '#f5a23a')}
+        ${ev('Sunrise', d.sunriseT, '#f5a23a')}
+        ${ev('Moonrise',d.moonriseT,'#8ab6d8')}
+        ${ev('Moonset', d.moonsetT, '#8ab6d8')}
+        <div class="dbp-sm-col" style="min-width:80px"><div class="dbp-sm-head" style="color:#8ab6d8">Moon</div><div class="dbp-sm-val">${moonPct}% ${moonPhase}</div></div>
+      </div>`;
   }
 
   // ── Anchor iframe init (sky + map) ──
