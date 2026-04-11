@@ -2659,6 +2659,14 @@
     });
   })();
 
+  // Sync profile selection to weather widget instances (pills are hidden but still clickable)
+  function _dbSyncWeatherProfile(profileKey) {
+    ['w-weather', 'w-weather-matrix'].forEach(id => {
+      const pill = document.querySelector(`#${id} .profile-pill[data-profile="${profileKey}"]`);
+      if (pill) pill.click();
+    });
+  }
+
   // ── NOP interactive: profile & chart chip clicks ───────
   document.getElementById('console-hero').addEventListener('click', e => {
     const pb = e.target.closest('.nop-profile-btn');
@@ -2677,6 +2685,7 @@
       if (sl) { sl.textContent = _nqiLabel(cls); sl.style.color = clr; }
       document.querySelectorAll('.nop-profile-btn').forEach(b => b.classList.toggle('is-active', b.dataset.profile === p));
       _nopScaleNqiLabel();
+      _dbSyncWeatherProfile(p);
       return;
     }
     const ch = e.target.closest('.nop-chip');
