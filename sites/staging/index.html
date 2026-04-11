@@ -2685,11 +2685,20 @@
     return s;
   }
 
+  // Force Observing tab active when weather panel opens from dashboard
+  function _dbActivateWeatherObserving() {
+    setTimeout(() => {
+      const btn = document.querySelector('#w-weather .htab[data-hmode="observing"]');
+      if (btn && !btn.hasAttribute('data-active')) btn.click();
+    }, 50);
+  }
+
   function _dbOpenPanel(panelId) {
     const el = document.getElementById(`dbp-${panelId}`);
     if (!el) return;
     el.style.display = '';
     // Populate content if needed
+    if (panelId === 'weather') _dbActivateWeatherObserving();
     if (panelId === 'matrix')  _dbRenderMatrix();
     if (panelId === 'window')  _dbRenderWindow();
     if (panelId === 'sunmoon') _dbRenderSunMoon();
