@@ -473,7 +473,12 @@
 
     /* Sun page */
     #page-sun { overflow-y: auto; padding: 20px; }
-    #page-sun #w-sun { max-width: 1200px; margin: 0 auto; }
+    #page-sun #w-sun {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
 
     /* Map page */
     #page-map { overflow: hidden; }
@@ -962,7 +967,12 @@
       padding: 20px;
     }
 
-    #w-sun { max-width: 1200px; margin: 0 auto; }
+    #w-sun {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
 
     /* Map panel */
     #panel-map {
@@ -1331,7 +1341,7 @@
 
     <!-- ── PAGE: SUN & MOON ── -->
     <div id="page-sun" class="console-page" style="overflow-y:auto;padding:20px">
-      <div id="w-sun" style="max-width:1200px;margin:0 auto"></div>
+      <div id="w-sun" style="width:100%;max-width:1200px;margin:0 auto;box-sizing:border-box"></div>
     </div>
 
     <!-- ── PAGE: MAP ── -->
@@ -1391,9 +1401,8 @@
     </div>
 
     <!-- ── PAGE: STATS ── -->
-    <div id="page-stats" class="console-page" style="overflow-y:auto;padding:40px 24px">
-      <h2 style="color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:500;margin:0 0 8px">Stats</h2>
-      <p style="color:rgba(255,255,255,0.3);font-size:0.85rem">Coming soon</p>
+    <div id="page-stats" class="console-page" style="overflow-y:auto;padding:0">
+      <div id="stats-app-root" style="max-width:1200px;margin:0 auto;padding:32px 24px 48px"></div>
     </div>
 
     <!-- ── PAGE: SETTINGS ── -->
@@ -1756,6 +1765,7 @@
     if (effectivePage === 'sky')    { initSkyIfNeeded().then(() => { syncSkyFromState(); setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 100); }); }
     if (effectivePage === 'map')    { initMapIfNeeded(); }
     if (effectivePage === 'events') { initObsIfNeeded(); }
+    if (effectivePage === 'stats')   { initStatsIfNeeded(); }
 
     navItems.forEach(i => i.classList.remove('is-active'));
     document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('is-active');
