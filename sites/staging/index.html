@@ -505,6 +505,22 @@
     .db-panel-matrix .weather-meta { display: none !important; }
     .db-panel-matrix #forecastMatrix { display: block !important; }
 
+    /* Show only Best Observing Window section from weather widget */
+    .db-panel-window #w-weather-window { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
+    .db-panel-window .api-fallback-banner,
+    .db-panel-window .overall-explain-wrap,
+    .db-panel-window .hourly-header,
+    .db-panel-window .hourly,
+    .db-panel-window #forecastMatrix,
+    .db-panel-window .legend,
+    .db-panel-window .weather-meta { display: none !important; }
+    /* Within top-panel-v2 keep only .tp-best-window */
+    .db-panel-window .tp-quality,
+    .db-panel-window .tp-sky-status,
+    .db-panel-window .tp-time-location { display: none !important; }
+    /* Hide the widget's own section label — subpanel header already says it */
+    .db-panel-window .tp-best-window .tp-label { display: none !important; }
+
     /* ─── Right column: alerts/events stream ────────────────*/
     .console-alerts {
       background: rgba(12, 16, 26, 0.98);
@@ -1078,17 +1094,6 @@
 
     /* ─── Mini alarm rail ─────────────────────────────────── */
     .hero-alarm-rail { min-width: 72px !important; }
-    .alarm-lamps { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
-    .alarm-lamp {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.45); cursor: pointer;
-    }
-    .alarm-lamp-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-      transition: box-shadow 0.3s;
-    }
-    .alarm-lamp-lbl { text-transform: uppercase; }
 
     /* ─── Persistent anchor panels: SKY + MAP ─────────────── */
     #db-anchors {
@@ -1254,8 +1259,8 @@
             <span class="dbp-title">Best Observing Window</span>
             <button class="dbp-close" data-close="window">✕</button>
           </div>
-          <div class="dbp-body" data-role="tp-best-window">
-            <div id="dbp-window-body" class="dbp-window-info"></div>
+          <div class="db-panel db-panel-window" style="overflow:hidden">
+            <div id="w-weather-window"></div>
           </div>
         </div>
 
@@ -1265,7 +1270,7 @@
             <span class="dbp-title">Sun Equation</span>
             <button class="dbp-close" data-close="sunmoon">✕</button>
           </div>
-          <div id="dbp-sunmoon-body" class="dbp-body"></div>
+          <div id="w-sunmoon-panel" style="max-width:1200px;margin:0 auto;padding:16px 20px"></div>
         </div>
 
         <!-- Space Weather (Kp / Sun / Alarm launcher) -->
@@ -1561,9 +1566,17 @@
   const weatherMatrixEl = document.getElementById("w-weather-matrix");
   if (weatherMatrixEl) mountWeather(weatherMatrixEl, storeApi);
 
+  // ── Weather window (Best Observing Window panel) ─────────
+  const weatherWindowEl = document.getElementById("w-weather-window");
+  if (weatherWindowEl) mountWeather(weatherWindowEl, storeApi);
+
   // ── Sun & Moon tab ──────────────────────────────────────
   const sunEl = document.getElementById("w-sun");
   if (sunEl) mountSunMoon(sunEl, storeApi);
+
+  // ── Sun & Moon in dashboard sunmoon panel ───────────────
+  const sunmoonPanelEl = document.getElementById("w-sunmoon-panel");
+  if (sunmoonPanelEl) mountSunMoon(sunmoonPanelEl, storeApi);
 
   // ── Calendar & News (always init, DOM ready) ────────────
   window.runCalendarWidget({
@@ -2261,19 +2274,38 @@
       <div class="nop-summary-text" style="margin-top:5px">${p3Summary}</div>
     </div>`;
 
-    // ── Panel 7: Mini Alarm Rail ──
-    function _alarmColor(lvl) { return ['#5cce8c','#d4cc5c','#e09440','#e05c5c'][Math.min(lvl,3)]; }
-    function _alarmGlow(lvl)  { const c = _alarmColor(lvl); return `0 0 ${[5,7,10,14][Math.min(lvl,3)]}px ${c}${['44','66','99','bb'][Math.min(lvl,3)]}`; }
-    function _lampHtml(lbl, lvl) {
-      const c = _alarmColor(lvl);
-      return `<div class="alarm-lamp" title="${lbl}"><div class="alarm-lamp-dot" style="background:${c};box-shadow:${_alarmGlow(lvl)}"></div><div class="alarm-lamp-lbl">${lbl}</div></div>`;
+    // ── Panel 7: Mini Alarm Rail (GIF lamps matching helio widget) ──
+    function _chainColor(sev) {
+      return {none:'#3a5060',low:'#5cce8c',moderate:'#d4cc5c',strong:'#e0a84a',severe:'#e05c5c'}[sev]||'#3a5060';
     }
-    const sunLvl   = (()=>{ const cls=sw?.metrics?.xray_class||'A'; return cls[0]==='X'?3:cls[0]==='M'?2:cls[0]==='C'?1:0; })();
-    const spaceLvl = (()=>{ const kp=sw?.metrics?.kp_latest??0; return kp>=7?3:kp>=5?2:kp>=3?1:0; })();
-    const earthLvl = (()=>{ const g=parseInt((sw?.scales?.g_scale||'G0').replace(/\D/g,''))||0; return g>=4?3:g>=3?2:g>=1?1:0; })();
-    const p7 = `<div class="hero-card hero-alarm-rail" data-panel="helio" style="flex-shrink:0;min-width:72px;justify-content:center;padding:6px 12px">
+    function _chainGif(col, sev) {
+      if (col==='earth'&&(sev==='strong'||sev==='severe')) return '/assets/gifs/beacon_red_storm.gif';
+      const m={none:'off_green_quiet.gif',low:'steady_green_normal.gif',moderate:'blink_fast_yellow_watch.gif',strong:'breathe_slow_red_alert.gif',severe:'breathe_slow_red_alert.gif'};
+      return '/assets/gifs/'+(m[sev]||m.none);
+    }
+    function _miniLamp(col, sev, lbl) {
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+        <div style="font-size:8px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#4a6068">${col.toUpperCase()}</div>
+        <img src="${_chainGif(col,sev)}" style="width:28px;height:auto;border-radius:2px" alt="">
+        <div style="font-size:9px;font-weight:700;color:${_chainColor(sev)};line-height:1.2">${lbl}</div>
+      </div>`;
+    }
+    const xrayC  = (sw?.metrics?.xray_class||'A')[0];
+    const sunSev = xrayC==='X'?'strong':xrayC==='M'?'moderate':xrayC==='C'?'low':'none';
+    const sunState = {none:'Quiet',low:'Elevated',moderate:'Active',strong:'Strong'}[sunSev]||'Quiet';
+    const kpV    = sw?.metrics?.kp_latest ?? 0;
+    const spaceSev = kpV>=5?'moderate':kpV>=3?'low':'none';
+    const spaceState = {none:'Clear',low:'Elevated',moderate:'Active',strong:'Impacting'}[spaceSev]||'Clear';
+    const gN     = parseInt((sw?.scales?.g_scale||'G0').slice(1))||0;
+    const earthSev = gN>=4?'severe':gN>=3?'strong':gN>=2?'moderate':gN>=1?'low':'none';
+    const earthState = {none:'Quiet',low:'Active',moderate:'Storm',strong:'Storm',severe:'Severe'}[earthSev]||'Quiet';
+    const p7 = `<div class="hero-card hero-alarm-rail" data-panel="helio" style="flex-shrink:0;min-width:72px;justify-content:center;padding:6px 14px">
       <div class="hero-card-label">Alarm</div>
-      <div class="alarm-lamps">${_lampHtml('SUN',sunLvl)}${_lampHtml('SPACE',spaceLvl)}${_lampHtml('EARTH',earthLvl)}</div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;align-items:center">
+        ${_miniLamp('sun',sunSev,sunState)}
+        ${_miniLamp('space',spaceSev,spaceState)}
+        ${_miniLamp('earth',earthSev,earthState)}
+      </div>
     </div>`;
 
     // New order: Date | Night Quality | Tonight | Moon | Kp | Sun | Alarm
@@ -2661,7 +2693,7 @@
 
   // Sync profile selection to weather widget instances (pills are hidden but still clickable)
   function _dbSyncWeatherProfile(profileKey) {
-    ['w-weather', 'w-weather-matrix'].forEach(id => {
+    ['w-weather', 'w-weather-matrix', 'w-weather-window'].forEach(id => {
       const pill = document.querySelector(`#${id} .profile-pill[data-profile="${profileKey}"]`);
       if (pill) pill.click();
     });
@@ -2735,8 +2767,6 @@
     // Populate content if needed
     if (panelId === 'weather') _dbActivateWeatherObserving();
     if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
-    if (panelId === 'window')  _dbRenderWindow();
-    if (panelId === 'sunmoon') _dbRenderSunMoon();
     // scroll into view
     setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
     _dbSyncHeroActive();
@@ -2775,8 +2805,6 @@
       if (saved[id]) {
         el.style.display = '';
         if (id === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
-        if (id === 'window')  _dbRenderWindow();
-        if (id === 'sunmoon') _dbRenderSunMoon();
       } else {
         el.style.display = 'none';
       }
@@ -2838,117 +2866,6 @@
          </div>` : '';
 
     body.innerHTML = winHtml + `<div class="dbp-nqi-grid">${cards}</div>`;
-  }
-
-  // ── Best Observing Window renderer ──
-  function _dbRenderWindow() {
-    const body = document.getElementById('dbp-window-body');
-    if (!body) return;
-    const d = window._dbHeroData;
-    const bw = d?.wx?.decision?.best_tonight;
-    if (!bw) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No window data available.</p>'; return; }
-    body.innerHTML = `
-      <div class="dbp-window-time">${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}</div>
-      <div class="dbp-window-sub">Best continuous observing window tonight</div>`;
-    // Inject night chart (reuses NOP chart logic)
-    _nopInjectWidgetChart();
-  }
-
-  // ── Sun Equation renderer (altitude-over-time chart) ──
-  function _dbRenderSunMoon() {
-    const body = document.getElementById('dbp-sunmoon-body');
-    if (!body) return;
-    const d = window._dbHeroData;
-    if (!d?.sunMoon?.frames?.length) {
-      body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No altitude data available.</p>';
-      return;
-    }
-
-    // Parse all frames
-    const frames = d.sunMoon.frames;
-    const pts = frames.map(f => ({
-      t: _parseSMTime(f.t_utc),
-      s: f.sun?.alt_deg ?? null,
-      m: f.moon?.alt_deg ?? null
-    })).filter(p => p.t);
-    if (pts.length < 2) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">Insufficient data.</p>'; return; }
-
-    // Night window: sunset-2h → sunrise+2h (or full range)
-    const tMin = d.sunsetT  ? new Date(d.sunsetT).getTime()  - 2*3600e3 : pts[0].t.getTime();
-    const tMax = d.sunriseT ? new Date(d.sunriseT).getTime() + 2*3600e3 : pts[pts.length-1].t.getTime();
-    const vis  = pts.filter(p => { const ms = p.t.getTime(); return ms >= tMin && ms <= tMax; });
-    if (vis.length < 2) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">Night window not available.</p>'; return; }
-
-    // Chart geometry
-    const W = 900, H = 170, pL = 36, pR = 16, pT = 18, pB = 30;
-    const cW = W - pL - pR, cH = H - pT - pB;
-    const altMin = -18, altMax = 90;
-    const tx  = ms  => pL + (ms - tMin) / (tMax - tMin) * cW;
-    const ty  = alt => pT + cH - (alt - altMin) / (altMax - altMin) * cH;
-    const hz  = ty(0); // horizon y
-
-    // Build SVG polyline points
-    const sunPts  = vis.filter(p => p.s != null).map(p => `${tx(p.t.getTime()).toFixed(1)},${ty(p.s).toFixed(1)}`).join(' ');
-    const moonPts = vis.filter(p => p.m != null).map(p => `${tx(p.t.getTime()).toFixed(1)},${ty(p.m).toFixed(1)}`).join(' ');
-
-    // Time axis labels (every 2 UTC hours)
-    const axisLabels = [];
-    for (const p of vis) {
-      const h = p.t.getUTCHours(), mn = p.t.getUTCMinutes();
-      if (mn === 0 && h % 2 === 0) {
-        axisLabels.push(`<text x="${tx(p.t.getTime()).toFixed(1)}" y="${H - 4}" text-anchor="middle" fill="rgba(255,255,255,0.28)" font-size="9" font-family="monospace">${String(h).padStart(2,'0')}:00</text>`);
-      }
-    }
-
-    // Altitude grid lines
-    const grid = [0, 30, 60].map(a => `
-      <line x1="${pL}" y1="${ty(a).toFixed(1)}" x2="${pL+cW}" y2="${ty(a).toFixed(1)}" stroke="rgba(255,255,255,${a===0?'0.18':'0.07'})" stroke-width="1" ${a===0?'stroke-dasharray="4,3"':''}/>
-      <text x="${(pL-4).toFixed(1)}" y="${(ty(a)+3).toFixed(1)}" text-anchor="end" fill="rgba(255,255,255,0.25)" font-size="9">${a}°</text>`).join('');
-
-    // Now marker
-    const nowMs = Date.now();
-    const nowInRange = nowMs >= tMin && nowMs <= tMax;
-    const nowLine = nowInRange
-      ? `<line x1="${tx(nowMs).toFixed(1)}" y1="${pT}" x2="${tx(nowMs).toFixed(1)}" y2="${pT+cH}" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-dasharray="2,4"/>`
-      : '';
-
-    // Find current altitudes
-    let curSun = null, curMoon = null;
-    { let minD = Infinity;
-      for (const p of pts) {
-        const d2 = Math.abs(p.t.getTime() - nowMs);
-        if (d2 < minD) { minD = d2; curSun = p.s; curMoon = p.m; }
-      }
-    }
-
-    const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible">
-      <!-- night shading below horizon -->
-      <rect x="${pL}" y="${hz.toFixed(1)}" width="${cW}" height="${(pT+cH-hz).toFixed(1)}" fill="rgba(0,0,40,0.22)"/>
-      ${grid}
-      ${sunPts  ? `<polyline points="${sunPts}"  fill="none" stroke="#f5a23a" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
-      ${moonPts ? `<polyline points="${moonPts}" fill="none" stroke="#8ab6d8" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
-      ${nowLine}
-      ${axisLabels.join('')}
-      <!-- legend -->
-      <rect x="${pL}" y="5" width="12" height="3" fill="#f5a23a" rx="1"/>
-      <text x="${pL+15}" y="11" fill="rgba(255,255,255,0.4)" font-size="9">Sun${curSun != null ? ' '+curSun.toFixed(1)+'°' : ''}</text>
-      <rect x="${pL+60}" y="5" width="12" height="3" fill="#8ab6d8" rx="1"/>
-      <text x="${pL+75}" y="11" fill="rgba(255,255,255,0.4)" font-size="9">Moon${curMoon != null ? ' '+curMoon.toFixed(1)+'°' : ''}</text>
-    </svg>`;
-
-    // Key times row
-    const moonPct = Math.round(d.moonIllum || 0);
-    const moonPhase = d.moonWaxing ? 'Waxing' : 'Waning';
-    const ev = (lbl, t, clr) => t ? `<div class="dbp-sm-col" style="min-width:70px"><div class="dbp-sm-head" style="color:${clr}">${lbl}</div><div class="dbp-sm-val">${_nopFmtT(t)}</div></div>` : '';
-
-    body.innerHTML = svg + `
-      <div class="dbp-sunmoon-grid" style="margin-top:10px;flex-wrap:wrap;gap:12px 20px">
-        ${ev('Sunset',  d.sunsetT,  '#f5a23a')}
-        ${ev('Sunrise', d.sunriseT, '#f5a23a')}
-        ${ev('Moonrise',d.moonriseT,'#8ab6d8')}
-        ${ev('Moonset', d.moonsetT, '#8ab6d8')}
-        <div class="dbp-sm-col" style="min-width:80px"><div class="dbp-sm-head" style="color:#8ab6d8">Moon</div><div class="dbp-sm-val">${moonPct}% ${moonPhase}</div></div>
-      </div>`;
   }
 
   // ── Anchor iframe init (sky + map) ──
