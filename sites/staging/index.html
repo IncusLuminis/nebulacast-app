@@ -2713,6 +2713,11 @@
       const pill = document.querySelector(`#${id} .profile-pill[data-profile="${wxKey}"]`);
       if (pill) pill.click();
     });
+    // The pill click handler calls renderNow + renderHourly but NOT renderForecastMatrix.
+    // Re-click the matrix tab to force renderForecastMatrix with the new profile.
+    if (document.getElementById('dbp-matrix')?.style.display !== 'none') {
+      setTimeout(() => _dbActivateWeatherTab('w-weather-matrix', 'matrix'), 30);
+    }
   }
 
   // ── NOP interactive: profile & chart chip clicks ───────
