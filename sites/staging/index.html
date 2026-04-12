@@ -2681,9 +2681,12 @@
   })();
 
   // Sync profile selection to weather widget instances (pills are hidden but still clickable)
+  // NQI uses "photography" key; weather widget uses "broadband" for the same profile
+  const _DB_PROFILE_MAP = { photography: 'broadband' };
   function _dbSyncWeatherProfile(profileKey) {
+    const wxKey = _DB_PROFILE_MAP[profileKey] || profileKey;
     ['w-weather', 'w-weather-matrix'].forEach(id => {
-      const pill = document.querySelector(`#${id} .profile-pill[data-profile="${profileKey}"]`);
+      const pill = document.querySelector(`#${id} .profile-pill[data-profile="${wxKey}"]`);
       if (pill) pill.click();
     });
   }
