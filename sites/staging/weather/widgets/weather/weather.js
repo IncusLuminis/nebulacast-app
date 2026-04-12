@@ -3564,41 +3564,24 @@ function openHourInspector(hourIdx) {
   const els = getHourInspectorElements();
   if (!els.backdrop || !els.sheet) return;
   
-  // Position sheet centered vertically within widget container bounds
-  const widgetContainer = document.getElementById("poc-weather") || document.getElementById("w-weather") || document.querySelector(".card");
-  if (widgetContainer) {
-    const widgetRect = widgetContainer.getBoundingClientRect();
-    const padding = window.innerWidth <= 768 ? 8 : 16; // Smaller padding on mobile
-    const minPadding = 8; // Minimum padding from screen edges
-    
-    // Calculate left and right positions
-    const leftPos = Math.max(minPadding, widgetRect.left + padding);
-    const rightPos = Math.max(minPadding, window.innerWidth - widgetRect.right + padding);
-    const maxWidth = Math.min(480, widgetRect.width - padding * 2, window.innerWidth - leftPos - rightPos);
+  // Position sheet centered on the viewport.
+  // Previously this used getBoundingClientRect() on a named widget container, but when
+  // multiple widget instances exist some may be display:none — their rects return all-zeros,
+  // causing the sheet to snap to the far left. Viewport-centering is simpler and correct
+  // regardless of how many instances are mounted.
+  {
+    const padding = window.innerWidth <= 768 ? 8 : 16;
+    const maxPopupWidth = Math.min(480, window.innerWidth - padding * 2);
+    const leftPos = Math.round((window.innerWidth - maxPopupWidth) / 2);
+    const rightPos = window.innerWidth - leftPos - maxPopupWidth;
 
-    // Calculate max height - centered but constrained by widget and viewport
-    const verticalPadding = padding * 2; // Padding top and bottom
-    const maxHeight = Math.min(
-      widgetRect.height - verticalPadding, // Don't exceed widget height
-      window.innerHeight - verticalPadding // Don't exceed viewport
-    );
-    
-    els.sheet.style.left = leftPos + "px";
-    els.sheet.style.right = rightPos + "px";
-    els.sheet.style.maxWidth = maxWidth + "px";
-    els.sheet.style.maxHeight = maxHeight + "px";
-    els.sheet.style.width = "auto";
-    els.sheet.style.top = "50%";
+    els.sheet.style.left      = Math.max(padding, leftPos) + "px";
+    els.sheet.style.right     = Math.max(padding, rightPos) + "px";
+    els.sheet.style.maxWidth  = maxPopupWidth + "px";
+    els.sheet.style.maxHeight = Math.round(window.innerHeight * 0.85) + "px";
+    els.sheet.style.width     = "auto";
+    els.sheet.style.top       = "50%";
     els.sheet.style.transform = "translateY(-50%)";
-  } else {
-    // Fallback: center on screen
-    els.sheet.style.left = "50%";
-    els.sheet.style.right = "auto";
-    els.sheet.style.transform = "translate(-50%, -50%)";
-    els.sheet.style.maxWidth = "90%";
-    els.sheet.style.maxHeight = "80vh";
-    els.sheet.style.width = "auto";
-    els.sheet.style.top = "50%";
   }
   
   hourInspectorOpen = true;
