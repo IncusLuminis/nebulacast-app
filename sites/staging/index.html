@@ -2714,9 +2714,12 @@
       if (pill) pill.click();
     });
     // The pill click handler calls renderNow + renderHourly but NOT renderForecastMatrix.
-    // Re-click the matrix tab to force renderForecastMatrix with the new profile.
+    // Force a matrix tab re-click (clear data-active first so the guard passes).
     if (document.getElementById('dbp-matrix')?.style.display !== 'none') {
-      setTimeout(() => _dbActivateWeatherTab('w-weather-matrix', 'matrix'), 30);
+      setTimeout(() => {
+        const btn = document.querySelector('#w-weather-matrix .htab[data-hmode="matrix"]');
+        if (btn) { btn.removeAttribute('data-active'); btn.click(); }
+      }, 30);
     }
   }
 
