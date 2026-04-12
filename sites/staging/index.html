@@ -2846,13 +2846,25 @@
 
   // Force a specific tab active in a weather widget instance.
   // Retries with backoff until the tab button appears in the DOM (weather widget may still be rendering).
+  // For 'matrix' mode: also verifies that rows actually rendered after click (weatherData may not be
+  // ready yet), and retries if content is still empty.
   function _dbActivateWeatherTab(widgetId, mode) {
     const _attempt = (delay) => setTimeout(() => {
       const btn = document.querySelector(`#${widgetId} .htab[data-hmode="${mode}"]`);
-      if (btn) {
-        if (!btn.hasAttribute('data-active')) btn.click();
-      } else if (delay < 4000) {
-        _attempt(Math.min(delay * 2, 1000)); // exponential backoff, cap at 1s
+      if (!btn) {
+        if (delay < 4000) _attempt(Math.min(delay * 2, 1000));
+        return;
+      }
+      if (!btn.hasAttribute('data-active')) btn.click();
+      // Matrix: verify rows actually appeared ~300ms after click (weatherData may still be loading).
+      // If still empty, force a re-click so renderForecastMatrix runs once data is ready.
+      if (mode === 'matrix' && delay < 4000) {
+        setTimeout(() => {
+          if (document.querySelectorAll(`#${widgetId} .matrix-row`).length === 0) {
+            btn.removeAttribute('data-active');
+            _attempt(Math.min(delay * 2, 1000));
+          }
+        }, 300);
       }
     }, delay);
     _attempt(50);
