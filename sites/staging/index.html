@@ -2797,8 +2797,14 @@
     const el = document.getElementById(`dbp-${panelId}`);
     if (!el) return;
     el.style.display = '';
-    // Populate content if needed
-    if (panelId === 'weather') _dbActivateWeatherObserving();
+    // Activate weather tabs — matrix must always win over observing
+    if (panelId === 'weather') {
+      _dbActivateWeatherObserving();
+      // If matrix is also open, re-assert matrix mode after a tick
+      if (document.getElementById('dbp-matrix')?.style.display !== 'none') {
+        setTimeout(() => _dbActivateWeatherTab('w-weather-matrix', 'matrix'), 80);
+      }
+    }
     if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     if (panelId === 'window')  _dbRenderWindow();
     // scroll into view
@@ -2833,17 +2839,20 @@
   // Restore open panels from localStorage and sync hero state
   function _dbAfterHeroRender() {
     const saved = _dbLoadState();
+    let matrixOpen = false;
     _DB_PANELS.forEach(id => {
       const el = document.getElementById(`dbp-${id}`);
       if (!el) return;
       if (saved[id]) {
         el.style.display = '';
-        if (id === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
+        if (id === 'matrix')  matrixOpen = true;
         if (id === 'window')  _dbRenderWindow();
       } else {
         el.style.display = 'none';
       }
     });
+    // Activate matrix tab last so it always overrides any observing activation
+    if (matrixOpen) _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     _dbSyncHeroActive();
     _dbInitAnchors();
   }
