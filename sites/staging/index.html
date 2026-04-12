@@ -2979,35 +2979,43 @@
       const fluxStr = xrayFlux!=null ? xrayFlux.toExponential(2)+' W/m²' : '—';
       return `
         <div class="kp-rbar-scale">${bars}</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px">
+        <div style="font-size:10px;color:rgba(255,255,255,0.65);margin-top:4px">
           X-ray: <b style="color:${xc}">${xrayClass[0]}-class</b> · ${fluxStr}
         </div>
-        ${radioImpact?`<div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:3px;line-height:1.3">${radioImpact.summary}</div>`:''}`;
+        ${radioImpact?`<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;line-height:1.4">${radioImpact.summary}</div>`:''}`;
     }
 
     if (tab === 'S') {
-      // Satellite drag: g_scale + kp
       const kpV = kp ?? 0;
       let satLvl = 0;
       if (gLvl>=2 || kpV>=6) satLvl = 2;
       else if (gLvl>=1 || kpV>=4) satLvl = 1;
-      // GNSS: same + boosted by r_scale
       let gnssLvl = satLvl;
       if (rLvl>=2 && gnssLvl<2) gnssLvl = Math.min(2, gnssLvl+1);
-      const LVL_C = ['#5cce8c','#d4cc5c','#e05c5c'];
-      const LVL_L = ['Low','Moderate','High'];
+      const LVL = [{c:'#5cce8c',l:'Low'},{c:'#d4cc5c',l:'Moderate'},{c:'#e05c5c',l:'High'}];
       const SAT_D = ['Near-normal thermospheric density','Elevated drag — minor orbit correction','Strong drag increase — significant impact'];
-      const GPS_D = ['Stable ionosphere · normal accuracy','Possible signal delay or scintillation','Positioning errors · possible signal loss'];
+      const GPS_D = ['Stable ionosphere · normal positioning accuracy','Possible signal delay or scintillation','Positioning errors · possible signal loss'];
+      const kpLbl = kp!=null ? `Kp ${kp.toFixed(1)}` : 'Kp —';
+      const scaleLbl = scales.g_scale || 'G0';
+      function _lvlCells(active) {
+        return LVL.map((v,i) => {
+          const on = i===active;
+          const bg = on ? v.c+'2e' : '#1b2a2e';
+          const col = on ? v.c : '#3d5058';
+          const brd = on ? `1px solid ${v.c}66` : '1px solid #253035';
+          return `<div style="flex:1;padding:5px 4px;border-radius:4px;text-align:center;font-size:11px;font-weight:700;background:${bg};color:${col};border:${brd}">${v.l}</div>`;
+        }).join('');
+      }
       return `
-        <div style="margin-bottom:7px">
-          <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(255,255,255,0.3);margin-bottom:3px">Satellite Drag</div>
-          <div style="font-size:14px;font-weight:700;color:${LVL_C[satLvl]};margin-bottom:2px">${LVL_L[satLvl]}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.35);line-height:1.3">${SAT_D[satLvl]}</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:5px">Satellite Drag</div>
+          <div style="display:flex;gap:4px;margin-bottom:5px">${_lvlCells(satLvl)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.6);line-height:1.4">${kpLbl} · ${scaleLbl} · ${SAT_D[satLvl]}</div>
         </div>
         <div>
-          <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(255,255,255,0.3);margin-bottom:3px">GNSS Risk</div>
-          <div style="font-size:14px;font-weight:700;color:${LVL_C[gnssLvl]};margin-bottom:2px">${LVL_L[gnssLvl]}</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.35);line-height:1.3">${GPS_D[gnssLvl]}</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:5px">GNSS Risk</div>
+          <div style="display:flex;gap:4px;margin-bottom:5px">${_lvlCells(gnssLvl)}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.6);line-height:1.4">${kpLbl} · ${scaleLbl} · ${GPS_D[gnssLvl]}</div>
         </div>`;
     }
     return '';
