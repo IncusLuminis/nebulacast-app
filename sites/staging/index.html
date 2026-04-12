@@ -2200,13 +2200,55 @@
       const _now = new Date();
       const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
       const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      // Date: secondary label, same size/style as the previous time appearance.
-      // Time: hero element, auto-scaled to exactly match date's rendered width.
+
+      // ── Weather chips: icon · temp · cloud · pressure ──
+      const _nowHourStr = _now.toISOString().slice(0, 13);
+      const _curIdx  = (wx?.hourly||[]).findIndex(h => (h.timestamp_utc||'').slice(0,13) >= _nowHourStr);
+      const _curH    = _curIdx >= 0 ? wx.hourly[_curIdx]   : null;
+      const _nextH   = _curIdx >= 0 ? wx.hourly[_curIdx+1] : null;
+
+      // icon: derive from cloud cover + precip
+      const _dtCloud  = _curH?.cloud?.total_percent ?? null;
+      const _dtPrecip = _curH?.precip?.probability_percent ?? 0;
+      const _dtIcon   = _dtCloud == null ? '' :
+                        _dtCloud < 15 ? '☀' :
+                        _dtCloud < 40 ? '🌤' :
+                        _dtCloud < 75 ? '⛅' :
+                        _dtPrecip > 30 ? '🌧' : '☁';
+
+      // temp + trend vs next hour
+      const _dtTemp     = _curH?.air?.temperature_c ?? null;
+      const _dtTempNext = _nextH?.air?.temperature_c ?? null;
+      const _dtTempArr  = _dtTemp != null && _dtTempNext != null
+        ? (_dtTempNext > _dtTemp + 0.4 ? '↑' : _dtTempNext < _dtTemp - 0.4 ? '↓' : '')
+        : '';
+      const _dtTempStr  = _dtTemp != null ? `${Math.round(_dtTemp)}°${_dtTempArr}` : '—';
+
+      // cloud %
+      const _dtCloudStr = _dtCloud != null ? `${Math.round(_dtCloud)}%` : '—';
+
+      // pressure + backend trend label
+      const _dtPres      = _curH?.air?.pressure_hpa ?? null;
+      const _dtPresLabel = wx?.decision?.pressure?.trend_label ?? '';
+      const _dtPresArr   = _dtPresLabel === 'rising' ? '↑' : _dtPresLabel === 'falling' ? '↓' : _dtPresLabel === 'steady' ? '' : '';
+      const _dtPresStr   = _dtPres != null ? `${Math.round(_dtPres)}${_dtPresArr}` : '—';
+
+      const _dtChips = (_curH == null) ? '' :
+        `<div style="display:flex;align-items:center;gap:4px;margin-top:5px;white-space:nowrap">
+          <span style="font-size:13px;line-height:1">${_dtIcon}</span>
+          <span style="font-size:10px;font-weight:600;color:rgba(255,200,120,0.85)">${_dtTempStr}</span>
+          <span style="font-size:9px;color:rgba(255,255,255,0.2)">·</span>
+          <span style="font-size:10px;font-weight:600;color:rgba(143,182,255,0.8)">${_dtCloudStr}</span>
+          <span style="font-size:9px;color:rgba(255,255,255,0.2)">·</span>
+          <span style="font-size:10px;font-weight:600;color:rgba(100,210,130,0.8)">${_dtPresStr}</span>
+        </div>`;
+
       var p0 = `<div class="hero-card" data-panel="weather" style="flex-shrink:0;align-items:center">
         <div class="hero-card-label" style="align-self:flex-start">Date &amp; Time</div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
           <div id="nop-clock-date" style="font-size:20px;font-weight:600;line-height:1;color:#fff;letter-spacing:0.01em;white-space:nowrap">${_dateStr}</div>
           <div id="nop-clock-time" style="font-size:20px;font-weight:700;line-height:1;color:rgba(255,255,255,0.42);letter-spacing:-0.02em;white-space:nowrap;font-variant-numeric:tabular-nums">${_timeStr}</div>
+          ${_dtChips}
         </div>
       </div>`;
     }
@@ -2751,12 +2793,18 @@
     return s;
   }
 
-  // Force a specific tab active in a weather widget instance
+  // Force a specific tab active in a weather widget instance.
+  // Retries with backoff until the tab button appears in the DOM (weather widget may still be rendering).
   function _dbActivateWeatherTab(widgetId, mode) {
-    setTimeout(() => {
+    const _attempt = (delay) => setTimeout(() => {
       const btn = document.querySelector(`#${widgetId} .htab[data-hmode="${mode}"]`);
-      if (btn && !btn.hasAttribute('data-active')) btn.click();
-    }, 50);
+      if (btn) {
+        if (!btn.hasAttribute('data-active')) btn.click();
+      } else if (delay < 4000) {
+        _attempt(Math.min(delay * 2, 1000)); // exponential backoff, cap at 1s
+      }
+    }, delay);
+    _attempt(50);
   }
   function _dbActivateWeatherObserving() { _dbActivateWeatherTab('w-weather', 'observing'); }
 
