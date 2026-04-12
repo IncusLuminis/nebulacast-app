@@ -1849,7 +1849,7 @@
   let _nopProfiles = {}, _nopActiveProfile = 'balanced';
   let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'moon';
   let _helioData = null; // last fetched helio_now.json, shared with _dbRenderHelio
-  let _kpTab = 'G';     // active tab in Kp hero card: 'G' | 'R' | 'S'
+  let _stormTab = 'G';  // active tab in Storm Risk panel column: 'G' | 'R' | 'S'
   let _nopNQI = {};       // night_summary.nqi  per profile: {value, class}
   let _nopAvgScore = {};  // night_summary.avg_score per profile: int 0-100
   let _nopClockInterval = null;
@@ -2230,19 +2230,17 @@
       const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
       return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
-    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:130px;flex-shrink:0">
-      <div class="hero-card-label" style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-        <span>KP</span>
-        <div class="kp-tab-row">
-          <button class="kp-tab${_kpTab==='G'?' is-active':''}" data-kptab="G">G${gLvl}</button>
-          <button class="kp-tab${_kpTab==='R'?' is-active':''}" data-kptab="R">R${rLvl}</button>
-          <button class="kp-tab${_kpTab==='S'?' is-active':''}" data-kptab="S">S${sLvl}</button>
+    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:118px;flex-shrink:0">
+      <div class="hero-card-label">Kp</div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
+          <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${trendArrow}</span>
         </div>
+        <div><span class="sw-badge ${swStatus}">${swLabel}</span></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.3)">Current conditions</div>
       </div>
-      <div class="kp-tab-body" style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-width:0;width:100%">
-        ${_kpTabBody(_kpTab, sw)}
-      </div>
-      ${_kpTab==='G'?`<div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>`:''}
+      <div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
     </div>`;
 
     // ── Panel 2: Sun ──
@@ -2835,39 +2833,6 @@
       _nopActiveMetric = ch.dataset.metric;
       _nopRenderChart(_nopActiveMetric);
       document.querySelectorAll('.nop-chip').forEach(c => c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
-      return;
-    }
-    // KP card tab switcher
-    const kpBtn = e.target.closest('.kp-tab');
-    if (kpBtn) {
-      _kpTab = kpBtn.dataset.kptab;
-      // Update tab active styling
-      document.querySelectorAll('.kp-tab').forEach(t => t.classList.toggle('is-active', t.dataset.kptab === _kpTab));
-      // Swap tab body content inline (no re-fetch needed)
-      const body = document.querySelector('.kp-tab-body');
-      if (body) {
-        body.innerHTML = _kpTabBody(_kpTab, window._dbHeroData?.sw);
-      }
-      // Show/hide G0 scale badges
-      const kpCard = document.querySelector('.hero-card[data-panel="helio"]');
-      if (kpCard) {
-        let scalesEl = kpCard.querySelector('.nop-scales');
-        if (_kpTab === 'G' && !scalesEl) {
-          const sw = window._dbHeroData?.sw;
-          const sc = sw?.scales || {};
-          const gL = parseInt((sc.g_scale||'G0').replace(/\D/g,''))||0;
-          const rL = parseInt((sc.r_scale||'R0').replace(/\D/g,''))||0;
-          const sL = parseInt((sc.s_scale||'S0').replace(/\D/g,''))||0;
-          function _sb(l,n,m){const on=n>0,hi=n/m,c=!on?'rgba(255,255,255,0.2)':hi>=0.6?'#f44336':'#ff9800',bg=!on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';return`<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${n}</span>`;}
-          const div = document.createElement('div');
-          div.className = 'nop-scales'; div.style.marginTop = 'auto';
-          div.innerHTML = _sb('G',gL,5)+_sb('R',rL,5)+_sb('S',sL,5);
-          kpCard.appendChild(div);
-        } else if (_kpTab !== 'G' && scalesEl) {
-          scalesEl.remove();
-        }
-      }
-      return;
     }
   });
 
@@ -2966,7 +2931,7 @@
   }
 
   // ── KP card tab content renderer ─────────────────────────────────
-  function _kpTabBody(tab, sw) {
+  function _stormTabBody(tab, sw) {
     const scales  = sw?.scales || {};
     const kp      = sw?.metrics?.kp_latest ?? null;
     const gLvl    = parseInt((scales.g_scale||'G0').replace(/\D/g,'')) || 0;
@@ -3265,38 +3230,65 @@
       <div class="dbp-aurora-summary">${aurora.summary||''}</div>
     </div>`;
 
-    // ── 3. Storm Risk ───────────────────────────────────────────────
-    const risk    = sw.storm_risk || {};
-    const gNow    = risk.now?.g_level ?? 0;
-    const gNowLbl = risk.now?.label || 'Quiet';
-    const fc      = risk.forecast_24h || {};
-    const gColor  = gNow===0?'rgba(255,255,255,0.3)':gNow===1?'#5cce8c':gNow===2?'#d4cc5c':gNow===3?'#e0a84a':'#e05c5c';
-    const fcBars  = ['G1','G2','G3','G4','G5'].map(g => {
-      const pct = Math.round((fc[g]||0)*100);
-      const barColor = g==='G1'?'#5cce8c':g==='G2'?'#d4cc5c':g==='G3'?'#e0a84a':'#e05c5c';
-      return `<div class="dbp-storm-bar-row">
-        <span class="dbp-storm-bar-lbl" style="color:${barColor}">${g}</span>
-        <div class="dbp-storm-bar-track"><div class="dbp-storm-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
-        <span class="dbp-storm-bar-pct">${pct}%</span>
-      </div>`;
-    }).join('');
+    // ── 3. Storm Risk (with G/R/S tab switcher) ─────────────────────
     const scales  = sw.scales || {};
+    const gLvl_h  = parseInt((scales.g_scale||'G0').replace(/\D/g,''))||0;
+    const rLvl_h  = parseInt((scales.r_scale||'R0').replace(/\D/g,''))||0;
+    const sLvl_h  = parseInt((scales.s_scale||'S0').replace(/\D/g,''))||0;
 
-    const stormHtml = `<div class="dbp-helio-col">
-      <div class="dbp-helio-col-title">Storm Risk</div>
-      <div class="dbp-storm-now">
-        <span class="dbp-storm-glbl" style="color:${gColor}">G${gNow}</span>
-        <span class="dbp-storm-glbl-lbl">${gNowLbl}</span>
+    function _stormTabContent(tab) {
+      if (tab === 'G') {
+        const risk    = sw.storm_risk || {};
+        const gNow    = risk.now?.g_level ?? 0;
+        const gNowLbl = risk.now?.label || 'Quiet';
+        const fc      = risk.forecast_24h || {};
+        const gColor  = gNow===0?'rgba(255,255,255,0.3)':gNow===1?'#5cce8c':gNow===2?'#d4cc5c':gNow===3?'#e0a84a':'#e05c5c';
+        const fcBars  = ['G1','G2','G3','G4','G5'].map(g => {
+          const pct = Math.round((fc[g]||0)*100);
+          const barColor = g==='G1'?'#5cce8c':g==='G2'?'#d4cc5c':g==='G3'?'#e0a84a':'#e05c5c';
+          return `<div class="dbp-storm-bar-row">
+            <span class="dbp-storm-bar-lbl" style="color:${barColor}">${g}</span>
+            <div class="dbp-storm-bar-track"><div class="dbp-storm-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+            <span class="dbp-storm-bar-pct">${pct}%</span>
+          </div>`;
+        }).join('');
+        return `<div class="dbp-storm-now">
+          <span class="dbp-storm-glbl" style="color:${gColor}">G${gNow}</span>
+          <span class="dbp-storm-glbl-lbl">${gNowLbl}</span>
+        </div>
+        <div class="dbp-storm-fc-title">24h Forecast probability</div>
+        ${fcBars}`;
+      }
+      return _stormTabBody(tab, sw);
+    }
+
+    const stormHtml = `<div class="dbp-helio-col" id="dbp-storm-col">
+      <div class="dbp-helio-col-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Storm Risk</span>
+        <div class="kp-tab-row">
+          <button class="kp-tab${_stormTab==='G'?' is-active':''}" data-stormtab="G">G${gLvl_h}</button>
+          <button class="kp-tab${_stormTab==='R'?' is-active':''}" data-stormtab="R">R${rLvl_h}</button>
+          <button class="kp-tab${_stormTab==='S'?' is-active':''}" data-stormtab="S">S${sLvl_h}</button>
+        </div>
       </div>
-      <div style="display:flex;gap:12px;font-size:11px;margin-bottom:12px">
-        <span style="color:rgba(255,255,255,0.35)">R scale</span><span style="font-weight:600;color:rgba(255,255,255,0.7)">${scales.r_scale||'R0'}</span>
-        <span style="color:rgba(255,255,255,0.35)">S scale</span><span style="font-weight:600;color:rgba(255,255,255,0.7)">${scales.s_scale||'S0'}</span>
-      </div>
-      <div class="dbp-storm-fc-title">24h Forecast probability</div>
-      ${fcBars}
+      <div class="dbp-storm-tab-body">${_stormTabContent(_stormTab)}</div>
     </div>`;
 
     body.innerHTML = chainHtml + auroraHtml + stormHtml;
+
+    // Storm Risk tab switcher — event delegation, bound once per body lifetime
+    if (!body._stormTabBound) {
+      body._stormTabBound = true;
+      body.addEventListener('click', e => {
+        const btn = e.target.closest('[data-stormtab]');
+        if (!btn) return;
+        _stormTab = btn.dataset.stormtab;
+        body.querySelectorAll('[data-stormtab]').forEach(t =>
+          t.classList.toggle('is-active', t.dataset.stormtab === _stormTab));
+        const tabBody = body.querySelector('.dbp-storm-tab-body');
+        if (tabBody) tabBody.innerHTML = _stormTabContent(_stormTab);
+      });
+    }
   }
 
   function _dbOpenPanel(panelId) {
@@ -3372,7 +3364,7 @@
     const card = e.target.closest('.hero-card[data-panel]');
     if (!card) return;
     // Don't trigger on NQI info button, profile/chip buttons, or KP tab switcher
-    if (e.target.closest('#nqi-info-btn') || e.target.closest('.nop-profile-btn') || e.target.closest('.nop-chip') || e.target.closest('.kp-tab')) return;
+    if (e.target.closest('#nqi-info-btn') || e.target.closest('.nop-profile-btn') || e.target.closest('.nop-chip')) return;
     _dbTogglePanel(card.dataset.panel);
   });
 
