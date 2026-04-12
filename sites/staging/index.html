@@ -510,21 +510,14 @@
     .db-panel-matrix .weather-meta { display: none !important; }
     .db-panel-matrix #forecastMatrix { display: block !important; }
 
-    /* Show only Best Observing Window section from weather widget */
-    .db-panel-window #w-weather-window { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
-    .db-panel-window .api-fallback-banner,
-    .db-panel-window .overall-explain-wrap,
-    .db-panel-window .hourly-header,
-    .db-panel-window .hourly,
-    .db-panel-window #forecastMatrix,
-    .db-panel-window .legend,
-    .db-panel-window .weather-meta { display: none !important; }
-    /* Within top-panel-v2 keep only .tp-best-window */
-    .db-panel-window .tp-quality,
-    .db-panel-window .tp-sky-status,
-    .db-panel-window .tp-time-location { display: none !important; }
-    /* Hide the widget's own section label — subpanel header already says it */
-    .db-panel-window .tp-best-window .tp-label { display: none !important; }
+    /* Tonight / Night chart panel */
+    .dbp-window-body { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
+    .dbp-window-chart { display: flex; align-items: flex-end; gap: 2px; height: 60px; margin-bottom: 8px; }
+    .dbp-window-chart .nop-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 3px; cursor: default; transition: opacity 0.12s; }
+    .dbp-window-chart .nop-bar:hover { opacity: 0.75; }
+    .dbp-window-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+    .dbp-window-chip { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: rgba(255,255,255,0.55); font-family: inherit; font-size: 10px; font-weight: 600; padding: 3px 9px; cursor: pointer; transition: all 0.15s; }
+    .dbp-window-chip.is-active { background: rgba(92,206,140,0.15); border-color: rgba(92,206,140,0.45); color: #5cce8c; }
 
     /* ─── Right column: alerts/events stream ────────────────*/
     .console-alerts {
@@ -1266,11 +1259,11 @@
         <!-- Best Observing Window (Tonight launcher) -->
         <div id="dbp-window" class="db-subpanel" style="display:none">
           <div class="dbp-header">
-            <span class="dbp-title">Best Observing Window</span>
+            <span class="dbp-title">Tonight's Night Chart</span>
             <button class="dbp-close" data-close="window">✕</button>
           </div>
-          <div class="db-panel db-panel-window" style="overflow:hidden">
-            <div id="w-weather-window"></div>
+          <div class="db-panel" style="overflow:hidden">
+            <div id="dbp-window-body" class="dbp-window-body"></div>
           </div>
         </div>
 
@@ -1574,10 +1567,6 @@
   // ── Weather matrix (Matrix panel) ───────────────────────
   const weatherMatrixEl = document.getElementById("w-weather-matrix");
   if (weatherMatrixEl) mountWeather(weatherMatrixEl, storeApi);
-
-  // ── Weather window (Best Observing Window panel) ─────────
-  const weatherWindowEl = document.getElementById("w-weather-window");
-  if (weatherWindowEl) mountWeather(weatherWindowEl, storeApi);
 
   // ── Sun & Moon tab ──────────────────────────────────────
   const sunEl = document.getElementById("w-sun");
@@ -1974,8 +1963,8 @@
                 fixMin: 0, fixMax: null },
   };
 
-  function _nopRenderChart(metric) {
-    const chart = document.getElementById('nop-chart');
+  function _nopRenderChart(metric, chartEl) {
+    const chart = chartEl || document.getElementById('nop-chart');
     if (!chart) return;
     if (!_nopNightHours.length) { chart.innerHTML = ''; return; }
 
@@ -2717,7 +2706,7 @@
 
   // Sync profile selection to weather widget instances (pills are hidden but still clickable)
   function _dbSyncWeatherProfile(profileKey) {
-    ['w-weather', 'w-weather-matrix', 'w-weather-window'].forEach(id => {
+    ['w-weather', 'w-weather-matrix'].forEach(id => {
       const pill = document.querySelector(`#${id} .profile-pill[data-profile="${profileKey}"]`);
       if (pill) pill.click();
     });
@@ -2784,6 +2773,50 @@
   }
   function _dbActivateWeatherObserving() { _dbActivateWeatherTab('w-weather', 'observing'); }
 
+  function _dbRenderWindow() {
+    const body = document.getElementById('dbp-window-body');
+    if (!body) return;
+
+    // Best window time line
+    let winHtml = '';
+    if (_nopBestWindow?.start && _nopBestWindow?.end) {
+      winHtml = `<div class="dbp-window-info">
+        <div class="dbp-window-time">${_nopFmtT(_nopBestWindow.start)} – ${_nopFmtT(_nopBestWindow.end)}</div>
+        <div class="dbp-window-sub">Best observing window tonight</div>
+      </div>`;
+    } else if (!_nopNightHours.length) {
+      winHtml = `<div class="dbp-window-info"><div class="dbp-window-sub">No weather data available for tonight.</div></div>`;
+    }
+
+    // Chip row
+    const chipHtml = _NOP_CHIP_KEYS.map(k =>
+      `<button class="dbp-window-chip${_nopActiveMetric===k?' is-active':''}" data-wmetric="${k}">${_NOP_CHIP_LABELS[k]}</button>`
+    ).join('');
+
+    body.innerHTML = winHtml +
+      `<div id="dbp-window-chart" class="dbp-window-chart"></div>` +
+      `<div class="dbp-window-chip-row">${chipHtml}</div>`;
+
+    _nopRenderChart(_nopActiveMetric, body.querySelector('#dbp-window-chart'));
+
+    // Chip clicks (bind once per body lifetime via flag)
+    if (!body._wChipsBound) {
+      body._wChipsBound = true;
+      body.addEventListener('click', e => {
+        const ch = e.target.closest('.dbp-window-chip');
+        if (!ch) return;
+        _nopActiveMetric = ch.dataset.wmetric;
+        body.querySelectorAll('.dbp-window-chip').forEach(c =>
+          c.classList.toggle('is-active', c.dataset.wmetric === _nopActiveMetric));
+        _nopRenderChart(_nopActiveMetric, body.querySelector('#dbp-window-chart'));
+        // Also re-render NQI chart if visible
+        document.querySelectorAll('.nop-chip').forEach(c =>
+          c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
+        _nopRenderChart(_nopActiveMetric);
+      });
+    }
+  }
+
   function _dbOpenPanel(panelId) {
     const el = document.getElementById(`dbp-${panelId}`);
     if (!el) return;
@@ -2791,6 +2824,7 @@
     // Populate content if needed
     if (panelId === 'weather') _dbActivateWeatherObserving();
     if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
+    if (panelId === 'window')  _dbRenderWindow();
     // scroll into view
     setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
     _dbSyncHeroActive();
@@ -2829,6 +2863,7 @@
       if (saved[id]) {
         el.style.display = '';
         if (id === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
+        if (id === 'window')  _dbRenderWindow();
       } else {
         el.style.display = 'none';
       }
