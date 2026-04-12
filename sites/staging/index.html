@@ -533,6 +533,20 @@
     .dbp-event-title { color: rgba(255,255,255,0.75); font-weight: 600; margin-bottom: 1px; }
     .dbp-event-time { color: rgba(255,255,255,0.3); }
 
+    /* KP card tab switcher */
+    .kp-tab-row { display: flex; gap: 3px; }
+    .kp-tab { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px;
+              border: 1px solid rgba(255,255,255,0.1); background: transparent;
+              color: rgba(255,255,255,0.28); cursor: pointer; letter-spacing: 0.04em;
+              line-height: 1.7; transition: background 0.1s, color 0.1s; }
+    .kp-tab.is-active { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85);
+                        border-color: rgba(255,255,255,0.22); }
+    .kp-rbar-scale { display: flex; gap: 3px; margin: 6px 0 4px; width: 100%; }
+    .kp-rbar-block { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .kp-rbar-label { font-size: 8px; font-weight: 700; }
+    .kp-rbar-bar { width: 100%; height: 6px; border-radius: 2px; }
+    .kp-rbar-desc { font-size: 7px; text-align: center; line-height: 1.2; white-space: nowrap; overflow: hidden; }
+
     /* Show only hourly Observing cards in dashboard weather panel (no tabs) */
     .db-panel-weather .api-fallback-banner,
     .db-panel-weather .top-panel-v2,
@@ -1835,6 +1849,7 @@
   let _nopProfiles = {}, _nopActiveProfile = 'balanced';
   let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'moon';
   let _helioData = null; // last fetched helio_now.json, shared with _dbRenderHelio
+  let _kpTab = 'G';     // active tab in Kp hero card: 'G' | 'R' | 'S'
   let _nopNQI = {};       // night_summary.nqi  per profile: {value, class}
   let _nopAvgScore = {};  // night_summary.avg_score per profile: int 0-100
   let _nopClockInterval = null;
@@ -2215,17 +2230,19 @@
       const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
       return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
-    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:118px;flex-shrink:0">
-      <div class="hero-card-label">Kp</div>
-      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
-        <div style="display:flex;align-items:baseline;gap:6px">
-          <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
-          <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${trendArrow}</span>
+    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:130px;flex-shrink:0">
+      <div class="hero-card-label" style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+        <span>KP</span>
+        <div class="kp-tab-row">
+          <button class="kp-tab${_kpTab==='G'?' is-active':''}" data-kptab="G">G${gLvl}</button>
+          <button class="kp-tab${_kpTab==='R'?' is-active':''}" data-kptab="R">R${rLvl}</button>
+          <button class="kp-tab${_kpTab==='S'?' is-active':''}" data-kptab="S">S${sLvl}</button>
         </div>
-        <div><span class="sw-badge ${swStatus}">${swLabel}</span></div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.3)">Current conditions</div>
       </div>
-      <div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
+      <div class="kp-tab-body" style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-width:0;width:100%">
+        ${_kpTabBody(_kpTab, sw)}
+      </div>
+      ${_kpTab==='G'?`<div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>`:''}
     </div>`;
 
     // ── Panel 2: Sun ──
@@ -2818,6 +2835,39 @@
       _nopActiveMetric = ch.dataset.metric;
       _nopRenderChart(_nopActiveMetric);
       document.querySelectorAll('.nop-chip').forEach(c => c.classList.toggle('is-active', c.dataset.metric === _nopActiveMetric));
+      return;
+    }
+    // KP card tab switcher
+    const kpBtn = e.target.closest('.kp-tab');
+    if (kpBtn) {
+      _kpTab = kpBtn.dataset.kptab;
+      // Update tab active styling
+      document.querySelectorAll('.kp-tab').forEach(t => t.classList.toggle('is-active', t.dataset.kptab === _kpTab));
+      // Swap tab body content inline (no re-fetch needed)
+      const body = document.querySelector('.kp-tab-body');
+      if (body) {
+        body.innerHTML = _kpTabBody(_kpTab, window._dbHeroData?.sw);
+      }
+      // Show/hide G0 scale badges
+      const kpCard = document.querySelector('.hero-card[data-panel="helio"]');
+      if (kpCard) {
+        let scalesEl = kpCard.querySelector('.nop-scales');
+        if (_kpTab === 'G' && !scalesEl) {
+          const sw = window._dbHeroData?.sw;
+          const sc = sw?.scales || {};
+          const gL = parseInt((sc.g_scale||'G0').replace(/\D/g,''))||0;
+          const rL = parseInt((sc.r_scale||'R0').replace(/\D/g,''))||0;
+          const sL = parseInt((sc.s_scale||'S0').replace(/\D/g,''))||0;
+          function _sb(l,n,m){const on=n>0,hi=n/m,c=!on?'rgba(255,255,255,0.2)':hi>=0.6?'#f44336':'#ff9800',bg=!on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';return`<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${n}</span>`;}
+          const div = document.createElement('div');
+          div.className = 'nop-scales'; div.style.marginTop = 'auto';
+          div.innerHTML = _sb('G',gL,5)+_sb('R',rL,5)+_sb('S',sL,5);
+          kpCard.appendChild(div);
+        } else if (_kpTab !== 'G' && scalesEl) {
+          scalesEl.remove();
+        }
+      }
+      return;
     }
   });
 
@@ -2913,6 +2963,89 @@
         _nopRenderChart(_nopActiveMetric);
       });
     }
+  }
+
+  // ── KP card tab content renderer ─────────────────────────────────
+  function _kpTabBody(tab, sw) {
+    const scales  = sw?.scales || {};
+    const kp      = sw?.metrics?.kp_latest ?? null;
+    const gLvl    = parseInt((scales.g_scale||'G0').replace(/\D/g,'')) || 0;
+    const rLvl    = parseInt((scales.r_scale||'R0').replace(/\D/g,'')) || 0;
+    const trend   = sw?.forecast?.trend || 'steady';
+    const tArrow  = trend==='rising'?'↑':trend==='falling'?'↓':'→';
+    const swSt    = sw?.summary?.status || 'quiet';
+    const swLbl   = sw?.summary?.label  || 'Quiet';
+
+    if (tab === 'G') {
+      return `
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
+          <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${tArrow}</span>
+        </div>
+        <div><span class="sw-badge ${swSt}">${swLbl}</span></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.3)">Current conditions</div>`;
+    }
+
+    if (tab === 'R') {
+      const xrayClass = String(sw?.metrics?.xray_class||'A');
+      const xrayFlux  = sw?.metrics?.xray_flux_wm2;
+      const XRAY_COLOR = {A:'#607880',B:'#5cce8c',C:'#aad47a',M:'#e0a84a',X:'#e05c5c'};
+      const xc = XRAY_COLOR[xrayClass[0]]||'#607880';
+      const radioImpact = (sw?.observer_impacts||[]).find(i=>i.kind==='radio');
+      const RADIO = [
+        {r:0,color:'#5cce8c',desc:'Quiet'},
+        {r:1,color:'#d4cc5c',desc:'Minor'},
+        {r:2,color:'#e0a84a',desc:'Moderate'},
+        {r:3,color:'#e05c5c',desc:'Strong'},
+        {r:4,color:'#c0407a',desc:'Severe'},
+        {r:5,color:'#8c3cc0',desc:'Extreme'},
+      ];
+      const bars = RADIO.map(l => {
+        const lit = l.r <= rLvl;
+        const bg  = lit ? l.color : '#1e2c30';
+        const op  = (l.r === rLvl) ? '1' : lit ? '0.5' : '1';
+        const tc  = lit ? l.color : '#566068';
+        return `<div class="kp-rbar-block">
+          <span class="kp-rbar-label" style="color:${tc}">R${l.r}</span>
+          <div class="kp-rbar-bar" style="background:${bg};opacity:${op}"></div>
+          <span class="kp-rbar-desc" style="color:${tc}">${l.desc}</span>
+        </div>`;
+      }).join('');
+      const fluxStr = xrayFlux!=null ? xrayFlux.toExponential(2)+' W/m²' : '—';
+      return `
+        <div class="kp-rbar-scale">${bars}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px">
+          X-ray: <b style="color:${xc}">${xrayClass[0]}-class</b> · ${fluxStr}
+        </div>
+        ${radioImpact?`<div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:3px;line-height:1.3">${radioImpact.summary}</div>`:''}`;
+    }
+
+    if (tab === 'S') {
+      // Satellite drag: g_scale + kp
+      const kpV = kp ?? 0;
+      let satLvl = 0;
+      if (gLvl>=2 || kpV>=6) satLvl = 2;
+      else if (gLvl>=1 || kpV>=4) satLvl = 1;
+      // GNSS: same + boosted by r_scale
+      let gnssLvl = satLvl;
+      if (rLvl>=2 && gnssLvl<2) gnssLvl = Math.min(2, gnssLvl+1);
+      const LVL_C = ['#5cce8c','#d4cc5c','#e05c5c'];
+      const LVL_L = ['Low','Moderate','High'];
+      const SAT_D = ['Near-normal thermospheric density','Elevated drag — minor orbit correction','Strong drag increase — significant impact'];
+      const GPS_D = ['Stable ionosphere · normal accuracy','Possible signal delay or scintillation','Positioning errors · possible signal loss'];
+      return `
+        <div style="margin-bottom:7px">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(255,255,255,0.3);margin-bottom:3px">Satellite Drag</div>
+          <div style="font-size:14px;font-weight:700;color:${LVL_C[satLvl]};margin-bottom:2px">${LVL_L[satLvl]}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.35);line-height:1.3">${SAT_D[satLvl]}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(255,255,255,0.3);margin-bottom:3px">GNSS Risk</div>
+          <div style="font-size:14px;font-weight:700;color:${LVL_C[gnssLvl]};margin-bottom:2px">${LVL_L[gnssLvl]}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.35);line-height:1.3">${GPS_D[gnssLvl]}</div>
+        </div>`;
+    }
+    return '';
   }
 
   function _dbRenderSolar() {
@@ -3238,8 +3371,8 @@
   document.getElementById('console-hero').addEventListener('click', e => {
     const card = e.target.closest('.hero-card[data-panel]');
     if (!card) return;
-    // Don't trigger on NQI info button or profile/chip buttons
-    if (e.target.closest('#nqi-info-btn') || e.target.closest('.nop-profile-btn') || e.target.closest('.nop-chip')) return;
+    // Don't trigger on NQI info button, profile/chip buttons, or KP tab switcher
+    if (e.target.closest('#nqi-info-btn') || e.target.closest('.nop-profile-btn') || e.target.closest('.nop-chip') || e.target.closest('.kp-tab')) return;
     _dbTogglePanel(card.dataset.panel);
   });
 
