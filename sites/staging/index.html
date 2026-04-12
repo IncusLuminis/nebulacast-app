@@ -489,7 +489,38 @@
     /* Weather & Helio panels inside dashboard */
     .db-panel { flex-shrink: 0; }
     .db-panel-weather #w-weather { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
-    .db-panel-helio   #w-helio   { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    /* Helio three-panel layout */
+    .dbp-helio-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: rgba(255,255,255,0.06); min-width: 600px; }
+    .dbp-helio-col { background: #0c1118; padding: 16px 18px; min-width: 0; }
+    .dbp-helio-col-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 12px; }
+
+    /* Chain panel */
+    .dbp-chain-cols { display: flex; align-items: flex-start; gap: 0; }
+    .dbp-chain-col  { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 4px 2px; }
+    .dbp-chain-arrow { display: flex; align-items: center; color: #253540; font-size: 14px; padding: 0 2px; margin-top: 20px; flex-shrink: 0; }
+    .dbp-chain-head { font-size: 8px; letter-spacing: 0.07em; text-transform: uppercase; color: #4a6068; font-weight: 700; margin-bottom: 4px; }
+    .dbp-chain-gif  { display: block; width: 52px; height: auto; border-radius: 3px; margin: 0 auto 5px; }
+    .dbp-chain-state { font-size: 11px; font-weight: 700; line-height: 1.1; margin-bottom: 4px; }
+    .dbp-chain-msgs { font-size: 10px; color: #7a9298; line-height: 1.5; }
+
+    /* Aurora panel */
+    .dbp-aurora-kpi { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
+    .dbp-aurora-val { font-size: 36px; font-weight: 700; line-height: 1; }
+    .dbp-aurora-lbl { font-size: 12px; font-weight: 600; }
+    .dbp-aurora-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .dbp-aurora-key { color: rgba(255,255,255,0.35); }
+    .dbp-aurora-summary { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.5; margin-top: 10px; }
+
+    /* Storm Risk panel */
+    .dbp-storm-now  { display: flex; align-items: baseline; gap: 6px; margin-bottom: 12px; }
+    .dbp-storm-glbl { font-size: 36px; font-weight: 700; line-height: 1; }
+    .dbp-storm-glbl-lbl { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.45); }
+    .dbp-storm-fc-title { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 8px; }
+    .dbp-storm-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .dbp-storm-bar-lbl { font-size: 11px; font-weight: 700; min-width: 22px; }
+    .dbp-storm-bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+    .dbp-storm-bar-fill  { height: 100%; border-radius: 3px; }
+    .dbp-storm-bar-pct  { font-size: 10px; color: rgba(255,255,255,0.35); min-width: 32px; text-align: right; }
 
     /* Show only hourly Observing cards in dashboard weather panel (no tabs) */
     .db-panel-weather .api-fallback-banner,
@@ -1282,8 +1313,8 @@
             <span class="dbp-title">Space Weather</span>
             <button class="dbp-close" data-close="helio">✕</button>
           </div>
-          <div class="db-panel db-panel-helio" style="overflow:hidden">
-            <div id="w-helio"></div>
+          <div class="db-panel" style="overflow-x:auto;overflow-y:hidden">
+            <div id="dbp-helio-body" class="dbp-helio-grid"></div>
           </div>
         </div>
 
@@ -1604,34 +1635,7 @@
     }
   }
 
-  let statsInited = false;
-  function initStatsIfNeeded() {
-    if (statsInited) return;
-    statsInited = true;
-    const root = document.getElementById('stats-app-root');
-    if (!root) return;
-    import('/console/stats_page.js')
-      .then(m => m.initStatsPage(root))
-      .catch(e => {
-        console.error('[stats]', e);
-        root.innerHTML = '<p style="color:rgba(248,113,113,0.9);font-size:13px">Could not load Stats module.</p>';
-      });
-  }
-
-  // ── Helio (in dashboard, init on load) ────────────────
-  let _helioInstance = null;
-  {
-    const helioEl = document.getElementById('w-helio');
-    if (helioEl && window.HelioWidget) {
-      const loc = getState()?.location ?? {};
-      _helioInstance = window.HelioWidget.mount(helioEl, {
-        dataUrl:      '/data/helio_now.json',
-        lat:          typeof loc.lat === 'number' ? loc.lat : undefined,
-        lon:          typeof loc.lon === 'number' ? loc.lon : undefined,
-        locationName: loc.name || undefined,
-      });
-    }
-  }
+  // ── Helio panels rendered from sw data in loadHero ────
 
   subscribe((newState) => {
     const loc = newState?.location;
@@ -1808,6 +1812,7 @@
   // Module state for interactive NOP elements
   let _nopProfiles = {}, _nopActiveProfile = 'balanced';
   let _nopNightHours = [], _nopBestWindow = null, _nopActiveMetric = 'moon';
+  let _helioData = null; // last fetched helio_now.json, shared with _dbRenderHelio
   let _nopNQI = {};       // night_summary.nqi  per profile: {value, class}
   let _nopAvgScore = {};  // night_summary.avg_score per profile: int 0-100
   let _nopClockInterval = null;
@@ -2060,6 +2065,7 @@
         fetch('/sky/data/sun_moon.json').then(r => r.ok ? r.json() : null),
       ]);
     } catch (_) {}
+    _helioData = sw; // store for _dbRenderHelio
 
     // ── Night hours: smart selection ──────────────────────────────────────────
     // If it's currently night (before sunrise), show remaining hours of this night.
@@ -2876,6 +2882,102 @@
     }
   }
 
+  function _dbRenderHelio() {
+    const body = document.getElementById('dbp-helio-body');
+    if (!body) return;
+    const sw = _helioData;
+
+    // ── helpers ──────────────────────────────────────────────────────
+    const CHAIN_COLOR = {none:'#3a5060',low:'#5cce8c',moderate:'#d4cc5c',strong:'#e0a84a',severe:'#e05c5c'};
+    const chainColor = sev => CHAIN_COLOR[sev] || CHAIN_COLOR.none;
+    const chainGif   = (col, sev) => {
+      if (col==='earth' && (sev==='strong'||sev==='severe')) return '/assets/gifs/beacon_red_storm.gif';
+      return '/assets/gifs/' + ({none:'off_green_quiet.gif',low:'steady_green_normal.gif',moderate:'blink_fast_yellow_watch.gif',strong:'breathe_slow_red_alert.gif',severe:'breathe_slow_red_alert.gif'}[sev]||'off_green_quiet.gif');
+    };
+
+    if (!sw) {
+      body.innerHTML = '<div style="padding:24px;color:rgba(255,255,255,0.3);font-size:12px">Space weather data unavailable.</div>';
+      return;
+    }
+
+    // ── 1. Sun–Earth Chain ──────────────────────────────────────────
+    const chain = sw.chain_panel || {};
+    const chainCols = ['sun','space','earth'].map((col, i, arr) => {
+      const c = chain[col] || {};
+      const sev = c.severity || 'none';
+      const msgs = (c.messages || []).map(m => `<span class="dbp-chain-msgs">${m}</span>`).join('');
+      const arrow = i < arr.length-1
+        ? `<div class="dbp-chain-arrow">→</div>` : '';
+      return `<div class="dbp-chain-col">
+        <div class="dbp-chain-head">${col.toUpperCase()}</div>
+        <img class="dbp-chain-gif" src="${chainGif(col,sev)}" alt="">
+        <div class="dbp-chain-state" style="color:${chainColor(sev)}">${c.label||'—'}</div>
+        <div style="font-size:10px;color:#7a9298;line-height:1.5;text-align:center">${(c.messages||[]).join('<br>')}</div>
+      </div>${arrow}`;
+    }).join('');
+
+    const chainHtml = `<div class="dbp-helio-col">
+      <div class="dbp-helio-col-title">Sun–Earth Chain</div>
+      <div class="dbp-chain-cols">${chainCols}</div>
+    </div>`;
+
+    // ── 2. Aurora ──────────────────────────────────────────────────
+    const aurora  = sw.aurora_hint || {};
+    const kp      = sw.metrics?.kp_latest ?? null;
+    const kpFc    = sw.forecast?.kp_max_next_24h ?? null;
+    const bz      = sw.metrics?.imf_bz_nt ?? null;
+    const wind    = sw.metrics?.solar_wind_kms ?? null;
+    const aLabel  = aurora.aurora_label || 'none';
+    const aColor  = {none:'#607880',low:'#5cce8c',moderate:'#d4cc5c',high:'#e0a84a',extreme:'#e05c5c'}[aLabel] || '#607880';
+    const aText   = {none:'No Aurora',low:'Low',moderate:'Moderate',high:'High',extreme:'Extreme'}[aLabel] || 'No Aurora';
+
+    const auroraHtml = `<div class="dbp-helio-col">
+      <div class="dbp-helio-col-title">Aurora</div>
+      <div class="dbp-aurora-kpi">
+        <span class="dbp-aurora-val" style="color:${aColor}">${aText}</span>
+      </div>
+      <div class="dbp-aurora-row"><span class="dbp-aurora-key">Kp now</span><span style="color:rgba(255,255,255,0.75);font-weight:600">${kp!=null?kp.toFixed(1):'—'}</span></div>
+      <div class="dbp-aurora-row"><span class="dbp-aurora-key">Kp forecast 24h</span><span style="color:rgba(255,255,255,0.75);font-weight:600">${kpFc!=null?kpFc.toFixed(1):'—'}</span></div>
+      <div class="dbp-aurora-row"><span class="dbp-aurora-key">IMF Bz</span><span style="color:${bz!=null&&bz<-5?'#e0a84a':'rgba(255,255,255,0.75)'};font-weight:600">${bz!=null?bz.toFixed(1)+' nT':'—'}</span></div>
+      <div class="dbp-aurora-row"><span class="dbp-aurora-key">Solar wind</span><span style="color:rgba(255,255,255,0.75);font-weight:600">${wind!=null?Math.round(wind)+' km/s':'—'}</span></div>
+      ${aurora.aurora_min_lat_est!=null?`<div class="dbp-aurora-row"><span class="dbp-aurora-key">Min latitude</span><span style="color:rgba(255,255,255,0.75);font-weight:600">${aurora.aurora_min_lat_est}°</span></div>`:''}
+      <div class="dbp-aurora-summary">${aurora.summary||''}</div>
+    </div>`;
+
+    // ── 3. Storm Risk ───────────────────────────────────────────────
+    const risk    = sw.storm_risk || {};
+    const gNow    = risk.now?.g_level ?? 0;
+    const gNowLbl = risk.now?.label || 'Quiet';
+    const fc      = risk.forecast_24h || {};
+    const gColor  = gNow===0?'rgba(255,255,255,0.3)':gNow===1?'#5cce8c':gNow===2?'#d4cc5c':gNow===3?'#e0a84a':'#e05c5c';
+    const fcBars  = ['G1','G2','G3','G4','G5'].map(g => {
+      const pct = Math.round((fc[g]||0)*100);
+      const barColor = g==='G1'?'#5cce8c':g==='G2'?'#d4cc5c':g==='G3'?'#e0a84a':'#e05c5c';
+      return `<div class="dbp-storm-bar-row">
+        <span class="dbp-storm-bar-lbl" style="color:${barColor}">${g}</span>
+        <div class="dbp-storm-bar-track"><div class="dbp-storm-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <span class="dbp-storm-bar-pct">${pct}%</span>
+      </div>`;
+    }).join('');
+    const scales  = sw.scales || {};
+
+    const stormHtml = `<div class="dbp-helio-col">
+      <div class="dbp-helio-col-title">Storm Risk</div>
+      <div class="dbp-storm-now">
+        <span class="dbp-storm-glbl" style="color:${gColor}">G${gNow}</span>
+        <span class="dbp-storm-glbl-lbl">${gNowLbl}</span>
+      </div>
+      <div style="display:flex;gap:12px;font-size:11px;margin-bottom:12px">
+        <span style="color:rgba(255,255,255,0.35)">R scale</span><span style="font-weight:600;color:rgba(255,255,255,0.7)">${scales.r_scale||'R0'}</span>
+        <span style="color:rgba(255,255,255,0.35)">S scale</span><span style="font-weight:600;color:rgba(255,255,255,0.7)">${scales.s_scale||'S0'}</span>
+      </div>
+      <div class="dbp-storm-fc-title">24h Forecast probability</div>
+      ${fcBars}
+    </div>`;
+
+    body.innerHTML = chainHtml + auroraHtml + stormHtml;
+  }
+
   function _dbOpenPanel(panelId) {
     const el = document.getElementById(`dbp-${panelId}`);
     if (!el) return;
@@ -2890,6 +2992,7 @@
     }
     if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     if (panelId === 'window')  _dbRenderWindow();
+    if (panelId === 'helio')   _dbRenderHelio();
     // scroll into view
     setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
     _dbSyncHeroActive();
@@ -2930,6 +3033,7 @@
         el.style.display = '';
         if (id === 'matrix')  matrixOpen = true;
         if (id === 'window')  _dbRenderWindow();
+        if (id === 'helio')   _dbRenderHelio();
       } else {
         el.style.display = 'none';
       }
