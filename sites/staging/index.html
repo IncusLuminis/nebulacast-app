@@ -2351,15 +2351,14 @@
         <div style="font-size:9px;font-weight:700;color:${_chainColor(sev)};line-height:1.2">${lbl}</div>
       </div>`;
     }
-    const xrayC  = (sw?.metrics?.xray_class||'A')[0];
-    const sunSev = xrayC==='X'?'strong':xrayC==='M'?'moderate':xrayC==='C'?'low':'none';
-    const sunState = {none:'Quiet',low:'Elevated',moderate:'Active',strong:'Strong'}[sunSev]||'Quiet';
-    const kpV    = sw?.metrics?.kp_latest ?? 0;
-    const spaceSev = kpV>=5?'moderate':kpV>=3?'low':'none';
-    const spaceState = {none:'Clear',low:'Elevated',moderate:'Active',strong:'Impacting'}[spaceSev]||'Clear';
-    const gN     = parseInt((sw?.scales?.g_scale||'G0').slice(1))||0;
-    const earthSev = gN>=4?'severe':gN>=3?'strong':gN>=2?'moderate':gN>=1?'low':'none';
-    const earthState = {none:'Quiet',low:'Active',moderate:'Storm',strong:'Storm',severe:'Severe'}[earthSev]||'Quiet';
+    // Use chain_panel as single source of truth — same as Sun-Earth Chain panel
+    const _cp       = sw?.chain_panel || {};
+    const sunSev    = _cp.sun?.severity   || 'none';
+    const sunState  = _cp.sun?.label      || 'Quiet';
+    const spaceSev  = _cp.space?.severity || 'none';
+    const spaceState= _cp.space?.label    || 'Clear';
+    const earthSev  = _cp.earth?.severity || 'none';
+    const earthState= _cp.earth?.label    || 'Quiet';
     const p7 = `<div class="hero-card hero-alarm-rail" data-panel="helio" style="flex-shrink:0;min-width:72px;justify-content:center;padding:6px 14px">
       <div class="hero-card-label">Alarm</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;align-items:center">
