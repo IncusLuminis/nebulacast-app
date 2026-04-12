@@ -522,6 +522,17 @@
     .dbp-storm-bar-fill  { height: 100%; border-radius: 3px; }
     .dbp-storm-bar-pct  { font-size: 10px; color: rgba(255,255,255,0.35); min-width: 32px; text-align: right; }
 
+    /* Solar Activity panel sparklines */
+    .dbp-spark { display: flex; align-items: flex-end; gap: 1px; height: 36px; margin: 8px 0 4px; }
+    .dbp-spark-bar { flex: 1; border-radius: 1px 1px 0 0; min-height: 2px; opacity: 0.8; }
+    .dbp-spark-label { font-size: 9px; color: rgba(255,255,255,0.25); text-align: right; }
+    .dbp-solar-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .dbp-solar-key { color: rgba(255,255,255,0.35); }
+    .dbp-xray-big { font-size: 48px; font-weight: 700; line-height: 1; }
+    .dbp-event-item { padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.05); font-size: 10px; line-height: 1.4; }
+    .dbp-event-title { color: rgba(255,255,255,0.75); font-weight: 600; margin-bottom: 1px; }
+    .dbp-event-time { color: rgba(255,255,255,0.3); }
+
     /* Show only hourly Observing cards in dashboard weather panel (no tabs) */
     .db-panel-weather .api-fallback-banner,
     .db-panel-weather .top-panel-v2,
@@ -1315,6 +1326,17 @@
           </div>
           <div class="db-panel" style="overflow-x:auto;overflow-y:hidden">
             <div id="dbp-helio-body" class="dbp-helio-grid"></div>
+          </div>
+        </div>
+
+        <!-- Solar Activity (Sun launcher) -->
+        <div id="dbp-solar" class="db-subpanel" style="display:none">
+          <div class="dbp-header">
+            <span class="dbp-title">Solar Activity</span>
+            <button class="dbp-close" data-close="solar">✕</button>
+          </div>
+          <div class="db-panel" style="overflow-x:auto;overflow-y:hidden">
+            <div id="dbp-solar-body" class="dbp-helio-grid"></div>
           </div>
         </div>
 
@@ -2212,7 +2234,7 @@
     const sunGifMap    = { quiet:'171',     active:'195',     elevated:'284',     storm:'304'      };
     const sunBorder = sunBorderMap[swStatus] ?? '#5cce8c';
     const sunWave   = sunGifMap[swStatus]    ?? '171';
-    const p2 = `<div class="hero-card" data-panel="helio" style="min-width:110px;flex-shrink:0;align-items:center">
+    const p2 = `<div class="hero-card" data-panel="solar" style="min-width:110px;flex-shrink:0;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Sun</div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <div style="position:relative;width:86px;height:86px;border-radius:50%;overflow:hidden;
@@ -2804,7 +2826,7 @@
   // ══════════════════════════════════════════════════════════
 
   const _DB_LS_KEY = 'nbc_db_panels_v1';
-  const _DB_PANELS = ['weather', 'matrix', 'window', 'sunmoon', 'helio'];
+  const _DB_PANELS = ['weather', 'matrix', 'window', 'sunmoon', 'helio', 'solar'];
 
   function _dbLoadState() {
     try { return JSON.parse(localStorage.getItem(_DB_LS_KEY)) || {}; } catch (_) { return {}; }
@@ -2879,6 +2901,114 @@
         _nopRenderChart(_nopActiveMetric);
       });
     }
+  }
+
+  function _dbRenderSolar() {
+    const body = document.getElementById('dbp-solar-body');
+    if (!body) return;
+    const sw = _helioData;
+
+    if (!sw) {
+      body.innerHTML = '<div style="padding:24px;color:rgba(255,255,255,0.3);font-size:12px">Solar data unavailable.</div>';
+      return;
+    }
+
+    const fmtTime = iso => { try { return new Date(iso).toLocaleString('en-GB',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC',hour12:false})+' UTC'; } catch(_){return iso||'—';} };
+
+    // ── helpers ──────────────────────────────────────────────────────
+    const XRAY_COLOR = {A:'#607880',B:'#5cce8c',C:'#aad47a',M:'#e0a84a',X:'#e05c5c'};
+    const xrayClass = String(sw.metrics?.xray_class||'A');
+    const xrayLetter = xrayClass[0]||'A';
+    const xrayColor = XRAY_COLOR[xrayLetter]||'#607880';
+    const rScale = sw.scales?.r_scale||'R0';
+    const rN = parseInt(rScale.slice(1))||0;
+    const rColor = rN===0?'rgba(255,255,255,0.3)':rN===1?'#5cce8c':rN===2?'#d4cc5c':rN===3?'#e0a84a':'#e05c5c';
+
+    // Sparkline from xray_history_1h — normalise on log scale (flux spans many decades)
+    const xrayHist = sw.metrics?.xray_history_1h||[];
+    let xraySpark = '';
+    if (xrayHist.length) {
+      const logFlux = xrayHist.map(h => h.flux>0 ? Math.log10(h.flux) : -10);
+      const minL = Math.min(...logFlux), maxL = Math.max(...logFlux);
+      const range = maxL-minL || 1;
+      xraySpark = `<div class="dbp-spark">${logFlux.map((l,i) => {
+        const norm = (l-minL)/range;
+        const hpx = Math.max(2, Math.round(norm*34));
+        return `<div class="dbp-spark-bar" style="height:${hpx}px;background:${xrayColor}"></div>`;
+      }).join('')}</div><div class="dbp-spark-label">← 24h history</div>`;
+    }
+
+    // ── 1. X-Ray ───────────────────────────────────────────────────
+    const xrayHtml = `<div class="dbp-helio-col">
+      <div class="dbp-helio-col-title">X-Ray</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+        <span class="dbp-xray-big" style="color:${xrayColor}">${xrayLetter}</span>
+        <span style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.45)">${xrayClass}</span>
+      </div>
+      <div class="dbp-solar-row"><span class="dbp-solar-key">R scale</span><span style="color:${rColor};font-weight:600">${rScale}</span></div>
+      <div class="dbp-solar-row"><span class="dbp-solar-key">Flux</span><span style="color:rgba(255,255,255,0.7);font-weight:600">${sw.metrics?.xray_flux_wm2!=null?sw.metrics.xray_flux_wm2.toExponential(2)+' W/m²':'—'}</span></div>
+      ${xraySpark}
+    </div>`;
+
+    // ── 2. Solar Activity ──────────────────────────────────────────
+    const sunChain = sw.chain_panel?.sun||{};
+    const sunColor = {none:'#607880',low:'#5cce8c',moderate:'#d4cc5c',strong:'#e0a84a',severe:'#e05c5c'}[sunChain.severity||'none']||'#607880';
+    // Recent solar events from timeline (flares, CMEs)
+    const solarEvents = (sw.timeline||[])
+      .filter(e => ['solar_flare','cme_launch','cme_impact'].includes(e.event_type))
+      .slice(0,4);
+    const eventsHtml = solarEvents.length
+      ? solarEvents.map(e => `<div class="dbp-event-item">
+          <div class="dbp-event-title">${e.event_title||e.event_type}</div>
+          <div class="dbp-event-time">${fmtTime(e.event_time)}</div>
+        </div>`).join('')
+      : '<div style="font-size:11px;color:rgba(255,255,255,0.3);padding-top:8px">No recent solar events</div>';
+    const solarImpact = (sw.observer_impacts||[]).find(i=>i.kind==='solar_activity');
+
+    const solarHtml = `<div class="dbp-helio-col">
+      <div class="dbp-helio-col-title">Solar Activity</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+        <span style="font-size:28px;font-weight:700;line-height:1;color:${sunColor}">${sunChain.label||'Quiet'}</span>
+      </div>
+      ${solarImpact?`<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:10px;line-height:1.4">${solarImpact.summary}</div>`:''}
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:4px">Recent Events</div>
+      ${eventsHtml}
+    </div>`;
+
+    // ── 3. Solar Wind ──────────────────────────────────────────────
+    const windKms  = sw.metrics?.solar_wind_kms??null;
+    const density  = sw.metrics?.density??null;
+    const pressure = sw.metrics?.pressure_npa??null;
+    const bz       = sw.metrics?.imf_bz_nt??null;
+    const bt       = sw.metrics?.imf_bt_nt??null;
+    const bzColor  = bz!=null&&bz<-5?'#e05c5c':bz!=null&&bz<-2?'#e0a84a':'rgba(255,255,255,0.75)';
+
+    // Wind speed sparkline
+    const windHist = sw.metrics?.wind_history_1h||[];
+    let windSpark = '';
+    if (windHist.length) {
+      const speeds = windHist.map(h=>h.kms||0);
+      const minS=Math.min(...speeds), maxS=Math.max(...speeds), range=maxS-minS||1;
+      windSpark = `<div class="dbp-spark">${speeds.map(s => {
+        const norm=(s-minS)/range, hpx=Math.max(2,Math.round(norm*34));
+        return `<div class="dbp-spark-bar" style="height:${hpx}px;background:rgba(143,182,255,0.6)"></div>`;
+      }).join('')}</div><div class="dbp-spark-label">← 24h speed history</div>`;
+    }
+
+    const windHtml = `<div class="dbp-helio-col">
+      <div class="dbp-helio-col-title">Solar Wind</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
+        <span style="font-size:36px;font-weight:700;line-height:1;color:rgba(143,182,255,0.9)">${windKms!=null?Math.round(windKms):'—'}</span>
+        <span style="font-size:13px;color:rgba(255,255,255,0.35);font-weight:500">km/s</span>
+      </div>
+      <div class="dbp-solar-row"><span class="dbp-solar-key">Density</span><span style="color:rgba(255,255,255,0.75);font-weight:600">${density!=null?density.toFixed(2)+' p/cm³':'—'}</span></div>
+      <div class="dbp-solar-row"><span class="dbp-solar-key">Pressure</span><span style="color:rgba(255,255,255,0.75);font-weight:600">${pressure!=null?pressure.toFixed(2)+' nPa':'—'}</span></div>
+      <div class="dbp-solar-row"><span class="dbp-solar-key">IMF Bz</span><span style="color:${bzColor};font-weight:600">${bz!=null?bz.toFixed(1)+' nT':'—'}</span></div>
+      <div class="dbp-solar-row"><span class="dbp-solar-key">IMF Bt</span><span style="color:rgba(255,255,255,0.75);font-weight:600">${bt!=null?bt.toFixed(1)+' nT':'—'}</span></div>
+      ${windSpark}
+    </div>`;
+
+    body.innerHTML = xrayHtml + solarHtml + windHtml;
   }
 
   function _dbRenderHelio() {
@@ -2992,6 +3122,7 @@
     if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     if (panelId === 'window')  _dbRenderWindow();
     if (panelId === 'helio')   _dbRenderHelio();
+    if (panelId === 'solar')   _dbRenderSolar();
     // scroll into view
     setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
     _dbSyncHeroActive();
@@ -3033,6 +3164,7 @@
         if (id === 'matrix')  matrixOpen = true;
         if (id === 'window')  _dbRenderWindow();
         if (id === 'helio')   _dbRenderHelio();
+        if (id === 'solar')   _dbRenderSolar();
       } else {
         el.style.display = 'none';
       }
