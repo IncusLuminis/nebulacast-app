@@ -762,6 +762,39 @@
       line-height: 1.6;
       margin: 0 16px 16px;
     }
+    /* Row variant: wraps on small content */
+    .stg-row-wrap {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    /* Toggle group (multi-select) */
+    .stg-toggle-group {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .stg-toggle {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.35);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .stg-toggle:hover {
+      color: rgba(255,255,255,0.6);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .stg-toggle.is-active {
+      background: rgba(143,182,255,0.12);
+      border-color: rgba(143,182,255,0.3);
+      color: #8fb6ff;
+    }
 
     /* Weather & Helio panels inside dashboard */
     .db-panel { flex-shrink: 0; }
@@ -1804,12 +1837,111 @@
               </div>
             </div>
             <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Scoring Strictness</span>
+                <span class="stg-label-hint">Controls how tightly atmospheric thresholds are applied</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-strictness-group" role="radiogroup" aria-label="Scoring strictness">
+                  <button class="stg-pill" data-stg-strictness="relaxed">Relaxed</button>
+                  <button class="stg-pill" data-stg-strictness="recommended">Recommended</button>
+                  <button class="stg-pill" data-stg-strictness="strict">Strict</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
             <div class="stg-row stg-row-action">
               <span class="stg-label-hint">Restore all observing model settings to recommended defaults</span>
               <button class="stg-btn stg-btn-ghost" id="stg-reset-model">Reset to defaults</button>
             </div>
           </div>
-          <p class="stg-note">Profile changes apply to the Weather panel on the next data load.</p>
+          <p class="stg-note">Profile changes apply to the Weather panel on the next data load. Strictness presets will refine scoring thresholds in an upcoming update.</p>
+        </section>
+
+        <!-- ── SECTION: Sky & Ranking ── -->
+        <section class="stg-section" id="stg-sky">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">✦</span>
+            <div>
+              <h2 class="stg-section-title">Sky &amp; Ranking</h2>
+              <p class="stg-section-desc">Client-side display filters for the Sky view</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Minimum Object Altitude</span>
+                <span class="stg-label-hint">Hide objects below this altitude above horizon</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-alt-group" role="radiogroup" aria-label="Minimum altitude">
+                  <button class="stg-pill" data-stg-alt="0">Any</button>
+                  <button class="stg-pill" data-stg-alt="10">10°</button>
+                  <button class="stg-pill" data-stg-alt="20">20°</button>
+                  <button class="stg-pill" data-stg-alt="30">30°</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Max Objects Shown</span>
+                <span class="stg-label-hint">Limit the number of labelled objects on the sky chart</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-maxobj-group" role="radiogroup" aria-label="Max objects">
+                  <button class="stg-pill" data-stg-maxobj="5">5</button>
+                  <button class="stg-pill" data-stg-maxobj="8">8</button>
+                  <button class="stg-pill" data-stg-maxobj="12">12</button>
+                  <button class="stg-pill" data-stg-maxobj="20">20</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="stg-note">These filters apply immediately to the Sky view. They do not change the underlying ranking data.</p>
+        </section>
+
+        <!-- ── SECTION: Alert Visibility ── -->
+        <section class="stg-section" id="stg-alerts-vis">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🔔</span>
+            <div>
+              <h2 class="stg-section-title">Alert Visibility</h2>
+              <p class="stg-section-desc">Filter which alerts appear in the sidebar feed</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Space Weather Min Severity</span>
+                <span class="stg-label-hint">Only show alerts at or above this level</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-swx-sev-group" role="radiogroup" aria-label="SWX minimum severity">
+                  <button class="stg-pill" data-stg-swxsev="1">All</button>
+                  <button class="stg-pill" data-stg-swxsev="2">Notable</button>
+                  <button class="stg-pill" data-stg-swxsev="3">Significant</button>
+                  <button class="stg-pill" data-stg-swxsev="4">Major</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row stg-row-wrap">
+              <div class="stg-label">
+                <span class="stg-label-text">Sky Alert Types</span>
+                <span class="stg-label-hint">Toggle which alert categories appear in the feed</span>
+              </div>
+              <div class="stg-toggle-group" id="stg-sky-grp-toggles">
+                <button class="stg-toggle" data-stg-skygrp="risk">RISK</button>
+                <button class="stg-toggle" data-stg-skygrp="neo">NEO</button>
+                <button class="stg-toggle" data-stg-skygrp="neocp">NEO?</button>
+                <button class="stg-toggle" data-stg-skygrp="transient">TRAN</button>
+                <button class="stg-toggle" data-stg-skygrp="nova">NOVA</button>
+              </div>
+            </div>
+          </div>
+          <p class="stg-note">Alert filters apply to the sidebar feed immediately. They do not affect the underlying science pipeline.</p>
         </section>
 
         <!-- ── SECTION: Space Weather Preferences ── -->
@@ -2266,6 +2398,9 @@
       dtISO = isFinite(t) ? new Date(clampMs(t, now, max)).toISOString() : null;
     }
 
+    let _skyF = { minAltObjects: 10, maxObjects: 8 };
+    try { const _sf = JSON.parse(localStorage.getItem('nc-sky-filters')); if (_sf) _skyF = { ..._skyF, ..._sf }; } catch (_) {}
+
     window.SKY_CONFIG = {
       baseUrl:     '/sky',
       mountId:     'skyMount',
@@ -2273,12 +2408,15 @@
       lon:         (lon != null ? lon : 21.0122),
       datetimeISO: dtISO,
       options: {
-        showSunMoon:       true,
-        showMilkyWay:      true,
-        showGridEq:        true,
+        showSunMoon:        true,
+        showMilkyWay:       true,
+        showGridEq:         true,
         showConstellations: true,
-        showObjects:       true,
-        showAlerts:        true,
+        showObjects:        true,
+        showAlerts:         true,
+        minAltObjectsDeg:   _skyF.minAltObjects,
+        minAltAlertsDeg:    _skyF.minAltObjects,
+        maxObjects:         _skyF.maxObjects,
       }
     };
 
@@ -3081,9 +3219,13 @@
     let sw = null;
     try { sw = await fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
 
-    const alerts = (sw?.alerts_preview || []).slice(0, 8);
+    let minSev = 1;
+    try { const f = JSON.parse(localStorage.getItem('nc-swx-filters')); if (f?.minSeverity >= 1) minSev = f.minSeverity; } catch (_) {}
+
+    const alerts = (sw?.alerts_preview || []).filter(a => (a.severity || 1) >= minSev).slice(0, 8);
     if (!alerts.length) {
       list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
       return;
     }
     if (badge) { badge.textContent = alerts.length; badge.style.display = ''; }
@@ -3116,9 +3258,13 @@
     let data = null;
     try { data = await fetch('/sky/data/alerts_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
 
-    const items = (data?.items || []).slice(0, 10);
+    let allowedGroups = new Set(['risk', 'neo', 'neocp', 'transient', 'nova']);
+    try { const f = JSON.parse(localStorage.getItem('nc-sky-alert-filters')); if (Array.isArray(f?.groups)) allowedGroups = new Set(f.groups); } catch (_) {}
+
+    const items = (data?.items || []).filter(a => allowedGroups.has(a.group || a.type || 'neo')).slice(0, 10);
     if (!items.length) {
       list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
       return;
     }
     if (badge) { badge.textContent = items.length; badge.style.display = ''; }
@@ -4235,15 +4381,155 @@
       });
     }
 
+    // ══ PHASE 2 ══════════════════════════════════════════
+
+    const STORAGE_SKY_FILTERS       = 'nc-sky-filters';
+    const STORAGE_SKY_ALERT_FILTERS = 'nc-sky-alert-filters';
+    const STORAGE_SWX_FILTERS       = 'nc-swx-filters';
+    const STORAGE_STRICTNESS        = 'nc-weather-strictness';
+
+    const DEFAULT_SKY_FILTERS = { minAltObjects: 10, maxObjects: 8 };
+    const DEFAULT_SKY_GROUPS  = ['risk', 'neo', 'neocp', 'transient', 'nova'];
+    const DEFAULT_SWX_SEV     = 1;
+    const DEFAULT_STRICTNESS  = 'recommended';
+
+    // ── Sky filters ────────────────────────────────────────
+    function getSkyFilters() {
+      try { const f = safeGet(STORAGE_SKY_FILTERS); return f ? { ...DEFAULT_SKY_FILTERS, ...f } : { ...DEFAULT_SKY_FILTERS }; } catch (_) { return { ...DEFAULT_SKY_FILTERS }; }
+    }
+    function saveSkyFilters(patch) {
+      try { localStorage.setItem(STORAGE_SKY_FILTERS, JSON.stringify({ ...getSkyFilters(), ...patch })); } catch (_) {}
+    }
+    function applySkyFiltersToWidget(filters) {
+      try {
+        if (window.__skyWidget && typeof window.__skyWidget.update === 'function') {
+          window.__skyWidget.update({ options: {
+            minAltObjectsDeg: filters.minAltObjects,
+            minAltAlertsDeg:  filters.minAltObjects,
+            maxObjects:       filters.maxObjects,
+          }});
+        }
+        // Also update SKY_CONFIG so next init picks it up
+        if (window.SKY_CONFIG?.options) {
+          window.SKY_CONFIG.options.minAltObjectsDeg = filters.minAltObjects;
+          window.SKY_CONFIG.options.minAltAlertsDeg  = filters.minAltObjects;
+          window.SKY_CONFIG.options.maxObjects        = filters.maxObjects;
+        }
+      } catch (_) {}
+    }
+
+    // ── Sky alert group filters ────────────────────────────
+    function getSkyAlertGroups() {
+      try { const f = safeGet(STORAGE_SKY_ALERT_FILTERS); return Array.isArray(f?.groups) ? f.groups : [...DEFAULT_SKY_GROUPS]; } catch (_) { return [...DEFAULT_SKY_GROUPS]; }
+    }
+    function saveSkyAlertGroups(groups) {
+      try { localStorage.setItem(STORAGE_SKY_ALERT_FILTERS, JSON.stringify({ groups })); } catch (_) {}
+    }
+
+    // ── SWX severity filter ────────────────────────────────
+    function getSwxSev() {
+      try { const f = safeGet(STORAGE_SWX_FILTERS); return (f?.minSeverity >= 1) ? f.minSeverity : DEFAULT_SWX_SEV; } catch (_) { return DEFAULT_SWX_SEV; }
+    }
+    function saveSwxSev(sev) {
+      try { localStorage.setItem(STORAGE_SWX_FILTERS, JSON.stringify({ minSeverity: sev })); } catch (_) {}
+    }
+
+    // ── Strictness ─────────────────────────────────────────
+    function getStrictness() {
+      try { const v = localStorage.getItem(STORAGE_STRICTNESS); return ['relaxed','recommended','strict'].includes(v) ? v : DEFAULT_STRICTNESS; } catch (_) { return DEFAULT_STRICTNESS; }
+    }
+    function saveStrictness(v) {
+      try { localStorage.setItem(STORAGE_STRICTNESS, v); } catch (_) {}
+    }
+
+    // ── Refresh Phase 2 pill/toggle states ─────────────────
+    function refreshPhase2() {
+      const sf = getSkyFilters();
+      activatePill('stg-alt-group',    'stgAlt',    String(sf.minAltObjects));
+      activatePill('stg-maxobj-group', 'stgMaxobj', String(sf.maxObjects));
+      activatePill('stg-strictness-group', 'stgStrictness', getStrictness());
+      activatePill('stg-swx-sev-group',    'stgSwxsev',     String(getSwxSev()));
+
+      const groups = new Set(getSkyAlertGroups());
+      document.querySelectorAll('#stg-sky-grp-toggles .stg-toggle').forEach(btn => {
+        btn.classList.toggle('is-active', groups.has(btn.dataset.stgSkygrp));
+      });
+    }
+
+    // ── Altitude pills ─────────────────────────────────────
+    document.getElementById('stg-alt-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-alt]');
+      if (!pill) return;
+      const val = parseInt(pill.dataset.stgAlt, 10);
+      saveSkyFilters({ minAltObjects: val });
+      activatePill('stg-alt-group', 'stgAlt', pill.dataset.stgAlt);
+      applySkyFiltersToWidget(getSkyFilters());
+    });
+
+    // ── Max objects pills ──────────────────────────────────
+    document.getElementById('stg-maxobj-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-maxobj]');
+      if (!pill) return;
+      const val = parseInt(pill.dataset.stgMaxobj, 10);
+      saveSkyFilters({ maxObjects: val });
+      activatePill('stg-maxobj-group', 'stgMaxobj', pill.dataset.stgMaxobj);
+      applySkyFiltersToWidget(getSkyFilters());
+    });
+
+    // ── Strictness pills ───────────────────────────────────
+    document.getElementById('stg-strictness-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-strictness]');
+      if (!pill) return;
+      saveStrictness(pill.dataset.stgStrictness);
+      activatePill('stg-strictness-group', 'stgStrictness', pill.dataset.stgStrictness);
+    });
+
+    // ── SWX severity pills ─────────────────────────────────
+    document.getElementById('stg-swx-sev-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-swxsev]');
+      if (!pill) return;
+      const sev = parseInt(pill.dataset.stgSwxsev, 10);
+      saveSwxSev(sev);
+      activatePill('stg-swx-sev-group', 'stgSwxsev', pill.dataset.stgSwxsev);
+      loadSwxAlerts();
+    });
+
+    // ── Sky alert group toggles ────────────────────────────
+    document.getElementById('stg-sky-grp-toggles')?.addEventListener('click', e => {
+      const btn = e.target.closest('.stg-toggle[data-stg-skygrp]');
+      if (!btn) return;
+      const grp = btn.dataset.stgSkygrp;
+      let groups = getSkyAlertGroups();
+      if (groups.includes(grp)) {
+        groups = groups.filter(g => g !== grp);
+      } else {
+        groups = [...groups, grp];
+      }
+      saveSkyAlertGroups(groups);
+      btn.classList.toggle('is-active', groups.includes(grp));
+      loadSkyAlerts();
+    });
+
+    // ── Reset model now also resets strictness ─────────────
+    const _origResetModel = resetModelBtn;
+    if (resetModelBtn) {
+      resetModelBtn.addEventListener('click', () => {
+        saveStrictness(DEFAULT_STRICTNESS);
+        activatePill('stg-strictness-group', 'stgStrictness', DEFAULT_STRICTNESS);
+      });
+    }
+
     // ── Init on settings page open ────────────────────────
     document.querySelector('.nav-item[data-page="settings"]')?.addEventListener('click', () => {
       refreshObserverContext();
       refreshPills();
+      refreshPhase2();
     });
 
     // Run once on load in case settings is the initial page
     refreshObserverContext();
     refreshPills();
+    refreshPhase2();
   })();
 
 </script>
