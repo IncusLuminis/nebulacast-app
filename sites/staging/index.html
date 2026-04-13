@@ -762,6 +762,63 @@
       line-height: 1.6;
       margin: 0 16px 16px;
     }
+    /* Danger button */
+    .stg-btn-danger {
+      background: rgba(255,80,80,0.08);
+      color: rgba(255,120,120,0.75);
+      border: 1px solid rgba(255,80,80,0.2);
+    }
+    .stg-btn-danger:hover {
+      background: rgba(255,80,80,0.14);
+      color: rgba(255,140,140,0.9);
+    }
+    /* Import status */
+    .stg-import-status {
+      font-size: 0.76rem;
+      padding: 8px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .stg-import-status.ok  { color: #7dff9a; }
+    .stg-import-status.err { color: #ff8080; }
+    /* Weights table */
+    .stg-weights-table {
+      margin: 10px 16px 0;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .stg-wt-row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      padding: 8px 14px;
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.60);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+    }
+    .stg-wt-row:last-child { border-bottom: none; }
+    .stg-wt-header {
+      font-size: 0.69rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.025);
+    }
+    .stg-wt-cat {
+      color: rgba(255,255,255,0.55);
+      font-weight: 500;
+    }
+    .stg-wt-val {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      color: rgba(255,255,255,0.45);
+    }
+    .stg-wt-val.is-active-profile {
+      color: #8fb6ff;
+      font-weight: 600;
+    }
     /* Row variant: wraps on small content */
     .stg-row-wrap {
       flex-wrap: wrap;
@@ -2023,6 +2080,95 @@
                 <span class="stg-coming-soon">Coming soon</span>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Advanced ── -->
+        <section class="stg-section" id="stg-advanced">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">⚗️</span>
+            <div>
+              <h2 class="stg-section-title">Advanced</h2>
+              <p class="stg-section-desc">Export, import, and reset all preferences. Power-user controls.</p>
+            </div>
+          </div>
+
+          <!-- Export / Import -->
+          <div class="stg-card" style="margin-bottom:10px">
+            <h3 class="stg-subheading">Settings Document</h3>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Export</span>
+                <span class="stg-label-hint">Download all preferences as a versioned JSON file</span>
+              </div>
+              <button class="stg-btn stg-btn-ghost" id="stg-export-btn">Export settings</button>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Import</span>
+                <span class="stg-label-hint">Load preferences from a previously exported file. Unknown or invalid keys are ignored.</span>
+              </div>
+              <label class="stg-btn stg-btn-ghost" id="stg-import-label" style="cursor:pointer">
+                Import settings
+                <input type="file" id="stg-import-input" accept=".json,application/json" style="display:none">
+              </label>
+            </div>
+            <div id="stg-import-status" class="stg-import-status" style="display:none"></div>
+            <div class="stg-divider"></div>
+            <div class="stg-row stg-row-action">
+              <div class="stg-label">
+                <span class="stg-label-text">Reset all preferences</span>
+                <span class="stg-label-hint">Clear every saved preference and return to app defaults</span>
+              </div>
+              <button class="stg-btn stg-btn-danger" id="stg-reset-all-btn">Reset everything</button>
+            </div>
+          </div>
+
+          <!-- Profile weights viewer -->
+          <div class="stg-card">
+            <h3 class="stg-subheading">Weather Scoring Weights (read-only)</h3>
+            <p class="stg-body-text" style="margin-bottom:0">Category weights used by the TypeScript v5 scoring engine per profile. Sum is always 1.0. Weight editing will be available once the scoring engines are unified.</p>
+            <div class="stg-weights-table" id="stg-weights-table">
+              <div class="stg-wt-row stg-wt-header">
+                <span>Category</span>
+                <span>Balanced</span>
+                <span>Visual</span>
+                <span>Broadband</span>
+                <span>Planetary</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Atmosphere</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="atmosphere">35%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="atmosphere">40%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="atmosphere">30%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="atmosphere">55%</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Sky Darkness</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="sky_darkness">30%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="sky_darkness">25%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="sky_darkness">45%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="sky_darkness">10%</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Dew Safety</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="dew_safety">20%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="dew_safety">20%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="dew_safety">15%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="dew_safety">20%</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Stability / Seeing</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="stability">15%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="stability">15%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="stability">10%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="stability">15%</span>
+              </div>
+            </div>
+            <p class="stg-body-text" style="margin-top:10px">
+              The active profile column is highlighted. These weights are applied server-side — they cannot be changed client-side until a validated weight editor is introduced.
+            </p>
           </div>
         </section>
 
@@ -4519,17 +4665,126 @@
       });
     }
 
+    // ══ PHASE 3 ══════════════════════════════════════════
+
+    const SETTINGS_SCHEMA_VERSION = 1;
+
+    // All preference keys that belong in the exported document
+    const EXPORT_KEYS = [
+      STORAGE_LOCATION,
+      STORAGE_PREFS,
+      STORAGE_PROFILE,
+      STORAGE_SKY_FILTERS,
+      STORAGE_SKY_ALERT_FILTERS,
+      STORAGE_SWX_FILTERS,
+      STORAGE_STRICTNESS,
+    ];
+
+    function buildExportDoc() {
+      const doc = { schema_version: SETTINGS_SCHEMA_VERSION, exported_utc: new Date().toISOString(), preferences: {} };
+      for (const key of EXPORT_KEYS) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw !== null) doc.preferences[key] = JSON.parse(raw);
+        } catch (_) {}
+      }
+      return doc;
+    }
+
+    function applyImportDoc(doc) {
+      if (!doc || doc.schema_version !== SETTINGS_SCHEMA_VERSION) throw new Error('Unsupported schema version');
+      const prefs = doc.preferences;
+      if (typeof prefs !== 'object' || prefs === null) throw new Error('Missing preferences object');
+
+      let applied = 0;
+      for (const key of EXPORT_KEYS) {
+        if (key in prefs) {
+          try { localStorage.setItem(key, JSON.stringify(prefs[key])); applied++; } catch (_) {}
+        }
+      }
+      return applied;
+    }
+
+    // ── Export button ──────────────────────────────────────
+    document.getElementById('stg-export-btn')?.addEventListener('click', () => {
+      const doc = buildExportDoc();
+      const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nebulacast-settings-v${SETTINGS_SCHEMA_VERSION}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // ── Import file input ──────────────────────────────────
+    document.getElementById('stg-import-input')?.addEventListener('change', e => {
+      const file = e.target.files?.[0];
+      const statusEl = document.getElementById('stg-import-status');
+      if (!file || !statusEl) return;
+
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const doc = JSON.parse(ev.target.result);
+          const n = applyImportDoc(doc);
+          statusEl.textContent = `✓ Imported ${n} preference${n !== 1 ? 's' : ''}. Refresh the page to apply all changes.`;
+          statusEl.className = 'stg-import-status ok';
+          statusEl.style.display = '';
+          // Re-render pills/state for what we can apply live
+          refreshObserverContext();
+          refreshPills();
+          refreshPhase2();
+        } catch (err) {
+          statusEl.textContent = `Import failed: ${err.message}`;
+          statusEl.className = 'stg-import-status err';
+          statusEl.style.display = '';
+        }
+        e.target.value = ''; // allow re-importing same file
+      };
+      reader.readAsText(file);
+    });
+
+    // ── Reset all ──────────────────────────────────────────
+    document.getElementById('stg-reset-all-btn')?.addEventListener('click', () => {
+      const btn = document.getElementById('stg-reset-all-btn');
+      if (btn.dataset.confirm !== '1') {
+        btn.textContent = 'Confirm reset?';
+        btn.dataset.confirm = '1';
+        setTimeout(() => { if (btn.dataset.confirm === '1') { btn.textContent = 'Reset everything'; delete btn.dataset.confirm; } }, 3000);
+        return;
+      }
+      for (const key of EXPORT_KEYS) { try { localStorage.removeItem(key); } catch (_) {} }
+      try { localStorage.removeItem(STORAGE_HELIO_UI); } catch (_) {}
+      try { localStorage.removeItem(STORAGE_MAP); } catch (_) {}
+      refreshObserverContext();
+      refreshPills();
+      refreshPhase2();
+      flashDone(btn, '✓ Reset');
+      delete btn.dataset.confirm;
+    });
+
+    // ── Highlight active profile column in weights table ───
+    function refreshWeightsTable() {
+      const activeProfile = getCurrentProfile();
+      document.querySelectorAll('.stg-wt-val').forEach(cell => {
+        cell.classList.toggle('is-active-profile', cell.dataset.profile === activeProfile);
+      });
+    }
+
     // ── Init on settings page open ────────────────────────
     document.querySelector('.nav-item[data-page="settings"]')?.addEventListener('click', () => {
       refreshObserverContext();
       refreshPills();
       refreshPhase2();
+      refreshWeightsTable();
     });
 
     // Run once on load in case settings is the initial page
     refreshObserverContext();
     refreshPills();
     refreshPhase2();
+    refreshWeightsTable();
   })();
 
 </script>
