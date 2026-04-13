@@ -486,6 +486,373 @@
     /* Events page */
     #page-events { overflow-y: auto; }
 
+    /* ─── Settings page ──────────────────────────────────────*/
+    .stg-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 0;
+    }
+    .stg-page-header {
+      margin-bottom: 36px;
+    }
+    .stg-page-title {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #e6f2ff;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+    .stg-page-sub {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.50);
+      margin: 0;
+    }
+    .stg-section {
+      margin-bottom: 32px;
+    }
+    .stg-section-hdr {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .stg-section-icon {
+      font-size: 1rem;
+      line-height: 1.6;
+      flex-shrink: 0;
+    }
+    .stg-section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+      margin: 0 0 3px;
+    }
+    .stg-section-desc {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.45);
+      margin: 0;
+    }
+    .stg-card {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .stg-card-muted {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .stg-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+    }
+    .stg-row-action {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .stg-label {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .stg-label-text {
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+    }
+    .stg-label-hint {
+      font-size: 0.74rem;
+      color: rgba(255,255,255,0.43);
+      line-height: 1.4;
+    }
+    .stg-control {
+      flex-shrink: 0;
+    }
+    .stg-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.05);
+      margin: 0 16px;
+    }
+    .stg-note {
+      font-size: 0.73rem;
+      color: rgba(255,255,255,0.40);
+      margin: 6px 4px 0;
+    }
+    /* Pill group */
+    .stg-pill-group {
+      display: flex;
+      gap: 3px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .stg-pill {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+    .stg-pill:hover {
+      color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.06);
+    }
+    .stg-pill.is-active {
+      background: rgba(143,182,255,0.15);
+      color: #8fb6ff;
+    }
+    /* Profile description */
+    .stg-profile-desc {
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.50);
+      padding: 0 16px 14px;
+      min-height: 0;
+      line-height: 1.5;
+      display: none;
+    }
+    .stg-profile-desc.is-visible {
+      display: block;
+    }
+    /* Buttons */
+    .stg-btn {
+      font-size: 0.77rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .stg-btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.65);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .stg-btn-ghost:hover {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.75);
+    }
+    .stg-btn-ghost.is-done {
+      color: #7dff9a;
+      border-color: rgba(125,255,154,0.2);
+      background: rgba(125,255,154,0.06);
+    }
+    /* Value badge */
+    .stg-value-badge {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 5px;
+      padding: 4px 10px;
+    }
+    /* Coming soon badge */
+    .stg-coming-soon {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+    /* Location display */
+    .stg-location-display {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .stg-loc-name {
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+    }
+    .stg-loc-coords {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.45);
+      font-family: monospace;
+    }
+    /* Provenance table */
+    .stg-provenance-table {
+      margin: 0 16px 0;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .stg-prov-row {
+      display: grid;
+      grid-template-columns: 1.2fr 2fr 0.8fr;
+      gap: 12px;
+      padding: 9px 14px;
+      font-size: 0.77rem;
+      color: rgba(255,255,255,0.70);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+    }
+    .stg-prov-row:last-child { border-bottom: none; }
+    .stg-prov-header {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.40);
+      background: rgba(255,255,255,0.025);
+    }
+    .stg-prov-engine {
+      color: rgba(255,255,255,0.53);
+      font-size: 0.73rem;
+    }
+    .stg-badge {
+      font-size: 0.69rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+    }
+    .stg-badge-yes { background: rgba(125,255,154,0.1); color: #7dff9a; }
+    .stg-badge-no  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.45); }
+    /* Sources list */
+    .stg-sources-list {
+      margin: 0 16px;
+    }
+    .stg-source-row {
+      display: flex;
+      gap: 14px;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .stg-source-row:last-child { border-bottom: none; }
+    .stg-source-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.70);
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+    .stg-source-desc {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.4;
+    }
+    .stg-subheading {
+      font-size: 0.74rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.40);
+      margin: 16px 16px 10px;
+    }
+    .stg-body-text {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.50);
+      line-height: 1.6;
+      margin: 0 16px 16px;
+    }
+    /* Danger button */
+    .stg-btn-danger {
+      background: rgba(255,80,80,0.08);
+      color: rgba(255,120,120,0.75);
+      border: 1px solid rgba(255,80,80,0.2);
+    }
+    .stg-btn-danger:hover {
+      background: rgba(255,80,80,0.14);
+      color: rgba(255,140,140,0.9);
+    }
+    /* Import status */
+    .stg-import-status {
+      font-size: 0.76rem;
+      padding: 8px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .stg-import-status.ok  { color: #7dff9a; }
+    .stg-import-status.err { color: #ff8080; }
+    /* Weights table */
+    .stg-weights-table {
+      margin: 10px 16px 0;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .stg-wt-row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      padding: 8px 14px;
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.75);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+    }
+    .stg-wt-row:last-child { border-bottom: none; }
+    .stg-wt-header {
+      font-size: 0.69rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.50);
+      background: rgba(255,255,255,0.025);
+    }
+    .stg-wt-cat {
+      color: rgba(255,255,255,0.70);
+      font-weight: 500;
+    }
+    .stg-wt-val {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      color: rgba(255,255,255,0.60);
+    }
+    .stg-wt-val.is-active-profile {
+      color: #8fb6ff;
+      font-weight: 600;
+    }
+    /* Row variant: wraps on small content */
+    .stg-row-wrap {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    /* Toggle group (multi-select) */
+    .stg-toggle-group {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .stg-toggle {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.35);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .stg-toggle:hover {
+      color: rgba(255,255,255,0.6);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .stg-toggle.is-active {
+      background: rgba(143,182,255,0.12);
+      border-color: rgba(143,182,255,0.3);
+      color: #8fb6ff;
+    }
+
     /* Weather & Helio panels inside dashboard */
     .db-panel { flex-shrink: 0; }
     .db-panel-weather #w-weather { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
@@ -1443,9 +1810,434 @@
     </div>
 
     <!-- ── PAGE: SETTINGS ── -->
-    <div id="page-settings" class="console-page" style="overflow-y:auto;padding:40px 24px">
-      <h2 style="color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:500;margin:0 0 8px">Settings</h2>
-      <p style="color:rgba(255,255,255,0.3);font-size:0.85rem">Coming soon</p>
+    <div id="page-settings" class="console-page" style="overflow-y:auto">
+      <div class="stg-wrap">
+
+        <div class="stg-page-header">
+          <h1 class="stg-page-title">Settings</h1>
+          <p class="stg-page-sub">Observer Console preferences and configuration</p>
+        </div>
+
+        <!-- ── SECTION: Observer Context ── -->
+        <section class="stg-section" id="stg-observer">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">📍</span>
+            <div>
+              <h2 class="stg-section-title">Observer Context</h2>
+              <p class="stg-section-desc">Your default observing location and regional settings</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Location</span>
+                <span class="stg-label-hint">Used for weather, sky, and solar calculations</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-location-display" id="stg-loc-display">
+                  <span class="stg-loc-name" id="stg-loc-name">—</span>
+                  <span class="stg-loc-coords" id="stg-loc-coords"></span>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Timezone</span>
+                <span class="stg-label-hint">Derived from location</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-value-badge" id="stg-loc-tz">—</span>
+              </div>
+            </div>
+          </div>
+          <p class="stg-note">To change location, use the location picker in the Dashboard or Weather panel.</p>
+        </section>
+
+        <!-- ── SECTION: Observing Model ── -->
+        <section class="stg-section" id="stg-model">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🔭</span>
+            <div>
+              <h2 class="stg-section-title">Observing Model</h2>
+              <p class="stg-section-desc">Scoring profile and forecast range for weather quality</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Observing Profile</span>
+                <span class="stg-label-hint">Weights how atmospheric conditions are scored</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-profile-group" role="radiogroup" aria-label="Observing profile">
+                  <button class="stg-pill" data-stg-profile="balanced">Balanced</button>
+                  <button class="stg-pill" data-stg-profile="visual">Visual</button>
+                  <button class="stg-pill" data-stg-profile="broadband">Broadband</button>
+                  <button class="stg-pill" data-stg-profile="planetary">Planetary</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-profile-desc" id="stg-profile-desc"></div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Forecast Range</span>
+                <span class="stg-label-hint">Default time window for weather data</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-range-group" role="radiogroup" aria-label="Forecast range">
+                  <button class="stg-pill" data-stg-range="today">Tonight</button>
+                  <button class="stg-pill" data-stg-range="48h">48 h</button>
+                  <button class="stg-pill" data-stg-range="7d">7 days</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Scoring Strictness</span>
+                <span class="stg-label-hint">Controls how tightly atmospheric thresholds are applied</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-strictness-group" role="radiogroup" aria-label="Scoring strictness">
+                  <button class="stg-pill" data-stg-strictness="relaxed">Relaxed</button>
+                  <button class="stg-pill" data-stg-strictness="recommended">Recommended</button>
+                  <button class="stg-pill" data-stg-strictness="strict">Strict</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row stg-row-action">
+              <span class="stg-label-hint">Restore all observing model settings to recommended defaults</span>
+              <button class="stg-btn stg-btn-ghost" id="stg-reset-model">Reset to defaults</button>
+            </div>
+          </div>
+          <p class="stg-note">Profile changes apply to the Weather panel on the next data load. Strictness presets will refine scoring thresholds in an upcoming update.</p>
+        </section>
+
+        <!-- ── SECTION: Sky & Ranking ── -->
+        <section class="stg-section" id="stg-sky">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">✦</span>
+            <div>
+              <h2 class="stg-section-title">Sky &amp; Ranking</h2>
+              <p class="stg-section-desc">Client-side display filters for the Sky view</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Minimum Object Altitude</span>
+                <span class="stg-label-hint">Hide objects below this altitude above horizon</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-alt-group" role="radiogroup" aria-label="Minimum altitude">
+                  <button class="stg-pill" data-stg-alt="0">Any</button>
+                  <button class="stg-pill" data-stg-alt="10">10°</button>
+                  <button class="stg-pill" data-stg-alt="20">20°</button>
+                  <button class="stg-pill" data-stg-alt="30">30°</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Max Objects Shown</span>
+                <span class="stg-label-hint">Limit the number of labelled objects on the sky chart</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-maxobj-group" role="radiogroup" aria-label="Max objects">
+                  <button class="stg-pill" data-stg-maxobj="5">5</button>
+                  <button class="stg-pill" data-stg-maxobj="8">8</button>
+                  <button class="stg-pill" data-stg-maxobj="12">12</button>
+                  <button class="stg-pill" data-stg-maxobj="20">20</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="stg-note">These filters apply immediately to the Sky view. They do not change the underlying ranking data.</p>
+        </section>
+
+        <!-- ── SECTION: Alert Visibility ── -->
+        <section class="stg-section" id="stg-alerts-vis">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🔔</span>
+            <div>
+              <h2 class="stg-section-title">Alert Visibility</h2>
+              <p class="stg-section-desc">Filter which alerts appear in the sidebar feed</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Space Weather Min Severity</span>
+                <span class="stg-label-hint">Only show alerts at or above this level</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-swx-sev-group" role="radiogroup" aria-label="SWX minimum severity">
+                  <button class="stg-pill" data-stg-swxsev="1">All</button>
+                  <button class="stg-pill" data-stg-swxsev="2">Notable</button>
+                  <button class="stg-pill" data-stg-swxsev="3">Significant</button>
+                  <button class="stg-pill" data-stg-swxsev="4">Major</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row stg-row-wrap">
+              <div class="stg-label">
+                <span class="stg-label-text">Sky Alert Types</span>
+                <span class="stg-label-hint">Toggle which alert categories appear in the feed</span>
+              </div>
+              <div class="stg-toggle-group" id="stg-sky-grp-toggles">
+                <button class="stg-toggle" data-stg-skygrp="risk">RISK</button>
+                <button class="stg-toggle" data-stg-skygrp="neo">NEO</button>
+                <button class="stg-toggle" data-stg-skygrp="neocp">NEO?</button>
+                <button class="stg-toggle" data-stg-skygrp="transient">TRAN</button>
+                <button class="stg-toggle" data-stg-skygrp="nova">NOVA</button>
+              </div>
+            </div>
+          </div>
+          <p class="stg-note">Alert filters apply to the sidebar feed immediately. They do not affect the underlying science pipeline.</p>
+        </section>
+
+        <!-- ── SECTION: Space Weather Preferences ── -->
+        <section class="stg-section" id="stg-helio">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">☀️</span>
+            <div>
+              <h2 class="stg-section-title">Space Weather</h2>
+              <p class="stg-section-desc">Helio widget display preferences</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row stg-row-action">
+              <div class="stg-label">
+                <span class="stg-label-text">Panel Layout State</span>
+                <span class="stg-label-hint">Expanded / collapsed state of Helio panels is saved automatically</span>
+              </div>
+              <button class="stg-btn stg-btn-ghost" id="stg-reset-helio">Reset panel state</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Map Preferences ── -->
+        <section class="stg-section" id="stg-map">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🗺️</span>
+            <div>
+              <h2 class="stg-section-title">Map</h2>
+              <p class="stg-section-desc">Weather map display state</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row stg-row-action">
+              <div class="stg-label">
+                <span class="stg-label-text">Saved Map State</span>
+                <span class="stg-label-hint">Map center, zoom, and layer visibility are saved automatically</span>
+              </div>
+              <button class="stg-btn stg-btn-ghost" id="stg-reset-map">Clear map state</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Appearance & Layout ── -->
+        <section class="stg-section" id="stg-appearance">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🎨</span>
+            <div>
+              <h2 class="stg-section-title">Appearance &amp; Layout</h2>
+              <p class="stg-section-desc">Visual and layout preferences</p>
+            </div>
+          </div>
+          <div class="stg-card stg-card-muted">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Theme</span>
+                <span class="stg-label-hint">Console color scheme</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-coming-soon">Coming soon</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Compact mode</span>
+                <span class="stg-label-hint">Reduce panel spacing and font sizes</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-coming-soon">Coming soon</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Reduce motion</span>
+                <span class="stg-label-hint">Disable animated transitions</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-coming-soon">Coming soon</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Advanced ── -->
+        <section class="stg-section" id="stg-advanced">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">⚗️</span>
+            <div>
+              <h2 class="stg-section-title">Advanced</h2>
+              <p class="stg-section-desc">Export, import, and reset all preferences. Power-user controls.</p>
+            </div>
+          </div>
+
+          <!-- Export / Import -->
+          <div class="stg-card" style="margin-bottom:10px">
+            <h3 class="stg-subheading">Settings Document</h3>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Export</span>
+                <span class="stg-label-hint">Download all preferences as a versioned JSON file</span>
+              </div>
+              <button class="stg-btn stg-btn-ghost" id="stg-export-btn">Export settings</button>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Import</span>
+                <span class="stg-label-hint">Load preferences from a previously exported file. Unknown or invalid keys are ignored.</span>
+              </div>
+              <label class="stg-btn stg-btn-ghost" id="stg-import-label" style="cursor:pointer">
+                Import settings
+                <input type="file" id="stg-import-input" accept=".json,application/json" style="display:none">
+              </label>
+            </div>
+            <div id="stg-import-status" class="stg-import-status" style="display:none"></div>
+            <div class="stg-divider"></div>
+            <div class="stg-row stg-row-action">
+              <div class="stg-label">
+                <span class="stg-label-text">Reset all preferences</span>
+                <span class="stg-label-hint">Clear every saved preference and return to app defaults</span>
+              </div>
+              <button class="stg-btn stg-btn-danger" id="stg-reset-all-btn">Reset everything</button>
+            </div>
+          </div>
+
+          <!-- Profile weights viewer -->
+          <div class="stg-card">
+            <h3 class="stg-subheading">Weather Scoring Weights (read-only)</h3>
+            <p class="stg-body-text" style="margin-bottom:0">Category weights used by the TypeScript v5 scoring engine per profile. Sum is always 1.0. Weight editing will be available once the scoring engines are unified.</p>
+            <div class="stg-weights-table" id="stg-weights-table">
+              <div class="stg-wt-row stg-wt-header">
+                <span>Category</span>
+                <span>Balanced</span>
+                <span>Visual</span>
+                <span>Broadband</span>
+                <span>Planetary</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Atmosphere</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="atmosphere">35%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="atmosphere">40%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="atmosphere">30%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="atmosphere">55%</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Sky Darkness</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="sky_darkness">30%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="sky_darkness">25%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="sky_darkness">45%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="sky_darkness">10%</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Dew Safety</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="dew_safety">20%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="dew_safety">20%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="dew_safety">15%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="dew_safety">20%</span>
+              </div>
+              <div class="stg-wt-row">
+                <span class="stg-wt-cat">Stability / Seeing</span>
+                <span class="stg-wt-val" data-profile="balanced" data-cat="stability">15%</span>
+                <span class="stg-wt-val" data-profile="visual"    data-cat="stability">15%</span>
+                <span class="stg-wt-val" data-profile="broadband" data-cat="stability">10%</span>
+                <span class="stg-wt-val" data-profile="planetary" data-cat="stability">15%</span>
+              </div>
+            </div>
+            <p class="stg-body-text" style="margin-top:10px">
+              The active profile column is highlighted. These weights are applied server-side — they cannot be changed client-side until a validated weight editor is introduced.
+            </p>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Data & Transparency ── -->
+        <section class="stg-section" id="stg-data">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">📡</span>
+            <div>
+              <h2 class="stg-section-title">Data &amp; Transparency</h2>
+              <p class="stg-section-desc">Data sources and scoring model provenance</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <h3 class="stg-subheading">Scoring Models</h3>
+            <div class="stg-provenance-table">
+              <div class="stg-prov-row stg-prov-header">
+                <span>Surface</span>
+                <span>Engine</span>
+                <span>Profile-aware</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Weather panel</span>
+                <span class="stg-prov-engine">TypeScript v5 hierarchical model</span>
+                <span class="stg-badge stg-badge-yes">Yes</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Observer hero</span>
+                <span class="stg-prov-engine">Python YAML factor engine</span>
+                <span class="stg-badge stg-badge-yes">Yes</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Sky ranking</span>
+                <span class="stg-prov-engine">Build-time rules (rules.yml)</span>
+                <span class="stg-badge stg-badge-no">No</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Space weather</span>
+                <span class="stg-prov-engine">NOAA SWPC live data</span>
+                <span class="stg-badge stg-badge-no">No</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <h3 class="stg-subheading">Data Sources</h3>
+            <div class="stg-sources-list">
+              <div class="stg-source-row">
+                <span class="stg-source-name">Open-Meteo</span>
+                <span class="stg-source-desc">Atmospheric weather forecast (clouds, wind, humidity, precipitation)</span>
+              </div>
+              <div class="stg-source-row">
+                <span class="stg-source-name">NOAA SWPC</span>
+                <span class="stg-source-desc">Space weather alerts, Kp index, solar wind, X-ray flux, geomagnetic data</span>
+              </div>
+              <div class="stg-source-row">
+                <span class="stg-source-name">7Timer!</span>
+                <span class="stg-source-desc">Astronomical seeing and transparency forecast</span>
+              </div>
+              <div class="stg-source-row">
+                <span class="stg-source-name">JPL Horizons / MPC</span>
+                <span class="stg-source-desc">Planetary and deep sky object ephemerides, NEO data</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <h3 class="stg-subheading">Refresh Model</h3>
+            <p class="stg-body-text">Weather data is refreshed server-side on a scheduled pipeline (hourly). Space weather data is updated every 10 minutes. Sky object ranking is recalculated nightly. Widgets poll for new data automatically after each interval.</p>
+          </div>
+        </section>
+
+        <div style="height:48px"></div>
+      </div><!-- .stg-wrap -->
     </div>
 
   </main><!-- .console-main -->
@@ -1752,6 +2544,9 @@
       dtISO = isFinite(t) ? new Date(clampMs(t, now, max)).toISOString() : null;
     }
 
+    let _skyF = { minAltObjects: 10, maxObjects: 8 };
+    try { const _sf = JSON.parse(localStorage.getItem('nc-sky-filters')); if (_sf) _skyF = { ..._skyF, ..._sf }; } catch (_) {}
+
     window.SKY_CONFIG = {
       baseUrl:     '/sky',
       mountId:     'skyMount',
@@ -1759,12 +2554,15 @@
       lon:         (lon != null ? lon : 21.0122),
       datetimeISO: dtISO,
       options: {
-        showSunMoon:       true,
-        showMilkyWay:      true,
-        showGridEq:        true,
+        showSunMoon:        true,
+        showMilkyWay:       true,
+        showGridEq:         true,
         showConstellations: true,
-        showObjects:       true,
-        showAlerts:        true,
+        showObjects:        true,
+        showAlerts:         true,
+        minAltObjectsDeg:   _skyF.minAltObjects,
+        minAltAlertsDeg:    _skyF.minAltObjects,
+        maxObjects:         _skyF.maxObjects,
       }
     };
 
@@ -2567,9 +3365,13 @@
     let sw = null;
     try { sw = await fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
 
-    const alerts = (sw?.alerts_preview || []).slice(0, 8);
+    let minSev = 1;
+    try { const f = JSON.parse(localStorage.getItem('nc-swx-filters')); if (f?.minSeverity >= 1) minSev = f.minSeverity; } catch (_) {}
+
+    const alerts = (sw?.alerts_preview || []).filter(a => (a.severity || 1) >= minSev).slice(0, 8);
     if (!alerts.length) {
       list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
       return;
     }
     if (badge) { badge.textContent = alerts.length; badge.style.display = ''; }
@@ -2602,9 +3404,13 @@
     let data = null;
     try { data = await fetch('/sky/data/alerts_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
 
-    const items = (data?.items || []).slice(0, 10);
+    let allowedGroups = new Set(['risk', 'neo', 'neocp', 'transient', 'nova']);
+    try { const f = JSON.parse(localStorage.getItem('nc-sky-alert-filters')); if (Array.isArray(f?.groups)) allowedGroups = new Set(f.groups); } catch (_) {}
+
+    const items = (data?.items || []).filter(a => allowedGroups.has(a.group || a.type || 'neo')).slice(0, 10);
     if (!items.length) {
       list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
+      if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
       return;
     }
     if (badge) { badge.textContent = items.length; badge.style.display = ''; }
@@ -3538,6 +4344,448 @@
   loadSkyAlerts();
   loadCalendarEvents();
   loadNewsItems();
+
+  // ══════════════════════════════════════════════════════════
+  //  SETTINGS PAGE
+  // ══════════════════════════════════════════════════════════
+  (function initSettings() {
+    const STORAGE_LOCATION  = 'nc-weather-location';
+    const STORAGE_PREFS     = 'nc-weather-prefs';
+    const STORAGE_PROFILE   = 'nc-weather-profile';
+    const STORAGE_HELIO_UI  = 'nc-helio-ui';
+    const STORAGE_MAP       = 'map-poc-layer-state-v2';
+
+    const DEFAULT_PROFILE = 'balanced';
+    const DEFAULT_RANGE   = 'today';
+
+    const PROFILE_DESCS = {
+      balanced:   'General-purpose balance of atmosphere, sky darkness, dew safety, and seeing. Recommended for mixed observing.',
+      visual:     'Prioritises atmospheric clarity and sky transparency. Best for visual observing with eyepiece.',
+      broadband:  'Strongest weight on sky darkness and Bortle class. Optimised for deep-sky imaging and Milky Way photography.',
+      planetary:  'Maximum weight on atmospheric stability and seeing. Ideal for high-magnification planetary and lunar work.',
+    };
+
+    function safeGet(key) {
+      try { return JSON.parse(localStorage.getItem(key)); } catch (_) { return null; }
+    }
+
+    // ── Populate Observer Context ──────────────────────────
+    const APP_DEFAULT_LOC = { name: 'Warsaw', lat: 52.2297, lon: 21.0122, tz: 'Europe/Warsaw' };
+
+    function refreshObserverContext() {
+      const loc = safeGet(STORAGE_LOCATION);
+      const nameEl   = document.getElementById('stg-loc-name');
+      const coordsEl = document.getElementById('stg-loc-coords');
+      const tzEl     = document.getElementById('stg-loc-tz');
+      if (!nameEl) return;
+      const src = (loc && loc.name) ? loc : null;
+      if (src) {
+        nameEl.textContent   = src.name;
+        coordsEl.textContent = `${src.lat?.toFixed(4)}°, ${src.lon?.toFixed(4)}°`;
+        tzEl.textContent     = src.tz || '—';
+      } else {
+        nameEl.textContent   = `${APP_DEFAULT_LOC.name} (default)`;
+        coordsEl.textContent = `${APP_DEFAULT_LOC.lat}°, ${APP_DEFAULT_LOC.lon}°`;
+        tzEl.textContent     = APP_DEFAULT_LOC.tz;
+      }
+    }
+
+    // ── Read current profile + range ──────────────────────
+    function getCurrentProfile() {
+      try {
+        const p = localStorage.getItem(STORAGE_PROFILE);
+        if (p && ['balanced','visual','broadband','planetary'].includes(p)) return p;
+      } catch (_) {}
+      try {
+        const prefs = safeGet(STORAGE_PREFS);
+        if (prefs && prefs.profile) {
+          const mapped = prefs.profile === 'default' ? 'balanced' : prefs.profile;
+          if (['balanced','visual','broadband','planetary'].includes(mapped)) return mapped;
+        }
+      } catch (_) {}
+      return DEFAULT_PROFILE;
+    }
+
+    function getCurrentRange() {
+      try {
+        const prefs = safeGet(STORAGE_PREFS);
+        if (prefs && ['today','48h','7d'].includes(prefs.range)) return prefs.range;
+      } catch (_) {}
+      return DEFAULT_RANGE;
+    }
+
+    // ── Save profile + range ───────────────────────────────
+    function saveProfile(profile) {
+      try { localStorage.setItem(STORAGE_PROFILE, profile); } catch (_) {}
+      try {
+        const prefs = safeGet(STORAGE_PREFS) || {};
+        prefs.profile = profile;
+        localStorage.setItem(STORAGE_PREFS, JSON.stringify(prefs));
+      } catch (_) {}
+    }
+
+    function saveRange(range) {
+      try {
+        const prefs = safeGet(STORAGE_PREFS) || {};
+        prefs.range = range;
+        localStorage.setItem(STORAGE_PREFS, JSON.stringify(prefs));
+      } catch (_) {}
+    }
+
+    // ── Pill group helper ──────────────────────────────────
+    function activatePill(groupId, attrKey, value) {
+      const group = document.getElementById(groupId);
+      if (!group) return;
+      group.querySelectorAll('.stg-pill').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset[attrKey] === value);
+      });
+    }
+
+    // ── Render profile description ─────────────────────────
+    function renderProfileDesc(profile) {
+      const el = document.getElementById('stg-profile-desc');
+      if (!el) return;
+      const desc = PROFILE_DESCS[profile];
+      if (desc) {
+        el.textContent = desc;
+        el.classList.add('is-visible');
+      } else {
+        el.classList.remove('is-visible');
+      }
+    }
+
+    // ── Flash "done" feedback on a button ─────────────────
+    function flashDone(btn, label = 'Done') {
+      const orig = btn.textContent;
+      btn.textContent = label;
+      btn.classList.add('is-done');
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove('is-done');
+      }, 1800);
+    }
+
+    // ── Init pill state from localStorage ─────────────────
+    function refreshPills() {
+      const profile = getCurrentProfile();
+      const range   = getCurrentRange();
+      activatePill('stg-profile-group', 'stgProfile', profile);
+      activatePill('stg-range-group',   'stgRange',   range);
+      renderProfileDesc(profile);
+    }
+
+    // ── Profile pill clicks ────────────────────────────────
+    const profileGroup = document.getElementById('stg-profile-group');
+    if (profileGroup) {
+      profileGroup.addEventListener('click', e => {
+        const pill = e.target.closest('.stg-pill[data-stg-profile]');
+        if (!pill) return;
+        const profile = pill.dataset.stgProfile;
+        saveProfile(profile);
+        activatePill('stg-profile-group', 'stgProfile', profile);
+        renderProfileDesc(profile);
+      });
+    }
+
+    // ── Range pill clicks ──────────────────────────────────
+    const rangeGroup = document.getElementById('stg-range-group');
+    if (rangeGroup) {
+      rangeGroup.addEventListener('click', e => {
+        const pill = e.target.closest('.stg-pill[data-stg-range]');
+        if (!pill) return;
+        saveRange(pill.dataset.stgRange);
+        activatePill('stg-range-group', 'stgRange', pill.dataset.stgRange);
+      });
+    }
+
+    // ── Reset model defaults ───────────────────────────────
+    const resetModelBtn = document.getElementById('stg-reset-model');
+    if (resetModelBtn) {
+      resetModelBtn.addEventListener('click', () => {
+        saveProfile(DEFAULT_PROFILE);
+        saveRange(DEFAULT_RANGE);
+        refreshPills();
+        flashDone(resetModelBtn, '✓ Reset');
+      });
+    }
+
+    // ── Reset Helio panel state ────────────────────────────
+    const resetHelioBtn = document.getElementById('stg-reset-helio');
+    if (resetHelioBtn) {
+      resetHelioBtn.addEventListener('click', () => {
+        try { localStorage.removeItem(STORAGE_HELIO_UI); } catch (_) {}
+        flashDone(resetHelioBtn, '✓ Cleared');
+      });
+    }
+
+    // ── Clear map state ────────────────────────────────────
+    const resetMapBtn = document.getElementById('stg-reset-map');
+    if (resetMapBtn) {
+      resetMapBtn.addEventListener('click', () => {
+        try { localStorage.removeItem(STORAGE_MAP); } catch (_) {}
+        flashDone(resetMapBtn, '✓ Cleared');
+      });
+    }
+
+    // ══ PHASE 2 ══════════════════════════════════════════
+
+    const STORAGE_SKY_FILTERS       = 'nc-sky-filters';
+    const STORAGE_SKY_ALERT_FILTERS = 'nc-sky-alert-filters';
+    const STORAGE_SWX_FILTERS       = 'nc-swx-filters';
+    const STORAGE_STRICTNESS        = 'nc-weather-strictness';
+
+    const DEFAULT_SKY_FILTERS = { minAltObjects: 10, maxObjects: 8 };
+    const DEFAULT_SKY_GROUPS  = ['risk', 'neo', 'neocp', 'transient', 'nova'];
+    const DEFAULT_SWX_SEV     = 1;
+    const DEFAULT_STRICTNESS  = 'recommended';
+
+    // ── Sky filters ────────────────────────────────────────
+    function getSkyFilters() {
+      try { const f = safeGet(STORAGE_SKY_FILTERS); return f ? { ...DEFAULT_SKY_FILTERS, ...f } : { ...DEFAULT_SKY_FILTERS }; } catch (_) { return { ...DEFAULT_SKY_FILTERS }; }
+    }
+    function saveSkyFilters(patch) {
+      try { localStorage.setItem(STORAGE_SKY_FILTERS, JSON.stringify({ ...getSkyFilters(), ...patch })); } catch (_) {}
+    }
+    function applySkyFiltersToWidget(filters) {
+      try {
+        if (window.__skyWidget && typeof window.__skyWidget.update === 'function') {
+          window.__skyWidget.update({ options: {
+            minAltObjectsDeg: filters.minAltObjects,
+            minAltAlertsDeg:  filters.minAltObjects,
+            maxObjects:       filters.maxObjects,
+          }});
+        }
+        // Also update SKY_CONFIG so next init picks it up
+        if (window.SKY_CONFIG?.options) {
+          window.SKY_CONFIG.options.minAltObjectsDeg = filters.minAltObjects;
+          window.SKY_CONFIG.options.minAltAlertsDeg  = filters.minAltObjects;
+          window.SKY_CONFIG.options.maxObjects        = filters.maxObjects;
+        }
+      } catch (_) {}
+    }
+
+    // ── Sky alert group filters ────────────────────────────
+    function getSkyAlertGroups() {
+      try { const f = safeGet(STORAGE_SKY_ALERT_FILTERS); return Array.isArray(f?.groups) ? f.groups : [...DEFAULT_SKY_GROUPS]; } catch (_) { return [...DEFAULT_SKY_GROUPS]; }
+    }
+    function saveSkyAlertGroups(groups) {
+      try { localStorage.setItem(STORAGE_SKY_ALERT_FILTERS, JSON.stringify({ groups })); } catch (_) {}
+    }
+
+    // ── SWX severity filter ────────────────────────────────
+    function getSwxSev() {
+      try { const f = safeGet(STORAGE_SWX_FILTERS); return (f?.minSeverity >= 1) ? f.minSeverity : DEFAULT_SWX_SEV; } catch (_) { return DEFAULT_SWX_SEV; }
+    }
+    function saveSwxSev(sev) {
+      try { localStorage.setItem(STORAGE_SWX_FILTERS, JSON.stringify({ minSeverity: sev })); } catch (_) {}
+    }
+
+    // ── Strictness ─────────────────────────────────────────
+    function getStrictness() {
+      try { const v = localStorage.getItem(STORAGE_STRICTNESS); return ['relaxed','recommended','strict'].includes(v) ? v : DEFAULT_STRICTNESS; } catch (_) { return DEFAULT_STRICTNESS; }
+    }
+    function saveStrictness(v) {
+      try { localStorage.setItem(STORAGE_STRICTNESS, v); } catch (_) {}
+    }
+
+    // ── Refresh Phase 2 pill/toggle states ─────────────────
+    function refreshPhase2() {
+      const sf = getSkyFilters();
+      activatePill('stg-alt-group',    'stgAlt',    String(sf.minAltObjects));
+      activatePill('stg-maxobj-group', 'stgMaxobj', String(sf.maxObjects));
+      activatePill('stg-strictness-group', 'stgStrictness', getStrictness());
+      activatePill('stg-swx-sev-group',    'stgSwxsev',     String(getSwxSev()));
+
+      const groups = new Set(getSkyAlertGroups());
+      document.querySelectorAll('#stg-sky-grp-toggles .stg-toggle').forEach(btn => {
+        btn.classList.toggle('is-active', groups.has(btn.dataset.stgSkygrp));
+      });
+    }
+
+    // ── Altitude pills ─────────────────────────────────────
+    document.getElementById('stg-alt-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-alt]');
+      if (!pill) return;
+      const val = parseInt(pill.dataset.stgAlt, 10);
+      saveSkyFilters({ minAltObjects: val });
+      activatePill('stg-alt-group', 'stgAlt', pill.dataset.stgAlt);
+      applySkyFiltersToWidget(getSkyFilters());
+    });
+
+    // ── Max objects pills ──────────────────────────────────
+    document.getElementById('stg-maxobj-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-maxobj]');
+      if (!pill) return;
+      const val = parseInt(pill.dataset.stgMaxobj, 10);
+      saveSkyFilters({ maxObjects: val });
+      activatePill('stg-maxobj-group', 'stgMaxobj', pill.dataset.stgMaxobj);
+      applySkyFiltersToWidget(getSkyFilters());
+    });
+
+    // ── Strictness pills ───────────────────────────────────
+    document.getElementById('stg-strictness-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-strictness]');
+      if (!pill) return;
+      saveStrictness(pill.dataset.stgStrictness);
+      activatePill('stg-strictness-group', 'stgStrictness', pill.dataset.stgStrictness);
+    });
+
+    // ── SWX severity pills ─────────────────────────────────
+    document.getElementById('stg-swx-sev-group')?.addEventListener('click', e => {
+      const pill = e.target.closest('.stg-pill[data-stg-swxsev]');
+      if (!pill) return;
+      const sev = parseInt(pill.dataset.stgSwxsev, 10);
+      saveSwxSev(sev);
+      activatePill('stg-swx-sev-group', 'stgSwxsev', pill.dataset.stgSwxsev);
+      loadSwxAlerts();
+    });
+
+    // ── Sky alert group toggles ────────────────────────────
+    document.getElementById('stg-sky-grp-toggles')?.addEventListener('click', e => {
+      const btn = e.target.closest('.stg-toggle[data-stg-skygrp]');
+      if (!btn) return;
+      const grp = btn.dataset.stgSkygrp;
+      let groups = getSkyAlertGroups();
+      if (groups.includes(grp)) {
+        groups = groups.filter(g => g !== grp);
+      } else {
+        groups = [...groups, grp];
+      }
+      saveSkyAlertGroups(groups);
+      btn.classList.toggle('is-active', groups.includes(grp));
+      loadSkyAlerts();
+    });
+
+    // ── Reset model now also resets strictness ─────────────
+    const _origResetModel = resetModelBtn;
+    if (resetModelBtn) {
+      resetModelBtn.addEventListener('click', () => {
+        saveStrictness(DEFAULT_STRICTNESS);
+        activatePill('stg-strictness-group', 'stgStrictness', DEFAULT_STRICTNESS);
+      });
+    }
+
+    // ══ PHASE 3 ══════════════════════════════════════════
+
+    const SETTINGS_SCHEMA_VERSION = 1;
+
+    // All preference keys that belong in the exported document
+    const EXPORT_KEYS = [
+      STORAGE_LOCATION,
+      STORAGE_PREFS,
+      STORAGE_PROFILE,
+      STORAGE_SKY_FILTERS,
+      STORAGE_SKY_ALERT_FILTERS,
+      STORAGE_SWX_FILTERS,
+      STORAGE_STRICTNESS,
+    ];
+
+    function buildExportDoc() {
+      const doc = { schema_version: SETTINGS_SCHEMA_VERSION, exported_utc: new Date().toISOString(), preferences: {} };
+      for (const key of EXPORT_KEYS) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw !== null) doc.preferences[key] = JSON.parse(raw);
+        } catch (_) {}
+      }
+      return doc;
+    }
+
+    function applyImportDoc(doc) {
+      if (!doc || doc.schema_version !== SETTINGS_SCHEMA_VERSION) throw new Error('Unsupported schema version');
+      const prefs = doc.preferences;
+      if (typeof prefs !== 'object' || prefs === null) throw new Error('Missing preferences object');
+
+      let applied = 0;
+      for (const key of EXPORT_KEYS) {
+        if (key in prefs) {
+          try { localStorage.setItem(key, JSON.stringify(prefs[key])); applied++; } catch (_) {}
+        }
+      }
+      return applied;
+    }
+
+    // ── Export button ──────────────────────────────────────
+    document.getElementById('stg-export-btn')?.addEventListener('click', () => {
+      const doc = buildExportDoc();
+      const blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nebulacast-settings-v${SETTINGS_SCHEMA_VERSION}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // ── Import file input ──────────────────────────────────
+    document.getElementById('stg-import-input')?.addEventListener('change', e => {
+      const file = e.target.files?.[0];
+      const statusEl = document.getElementById('stg-import-status');
+      if (!file || !statusEl) return;
+
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const doc = JSON.parse(ev.target.result);
+          const n = applyImportDoc(doc);
+          statusEl.textContent = `✓ Imported ${n} preference${n !== 1 ? 's' : ''}. Refresh the page to apply all changes.`;
+          statusEl.className = 'stg-import-status ok';
+          statusEl.style.display = '';
+          // Re-render pills/state for what we can apply live
+          refreshObserverContext();
+          refreshPills();
+          refreshPhase2();
+        } catch (err) {
+          statusEl.textContent = `Import failed: ${err.message}`;
+          statusEl.className = 'stg-import-status err';
+          statusEl.style.display = '';
+        }
+        e.target.value = ''; // allow re-importing same file
+      };
+      reader.readAsText(file);
+    });
+
+    // ── Reset all ──────────────────────────────────────────
+    document.getElementById('stg-reset-all-btn')?.addEventListener('click', () => {
+      const btn = document.getElementById('stg-reset-all-btn');
+      if (btn.dataset.confirm !== '1') {
+        btn.textContent = 'Confirm reset?';
+        btn.dataset.confirm = '1';
+        setTimeout(() => { if (btn.dataset.confirm === '1') { btn.textContent = 'Reset everything'; delete btn.dataset.confirm; } }, 3000);
+        return;
+      }
+      for (const key of EXPORT_KEYS) { try { localStorage.removeItem(key); } catch (_) {} }
+      try { localStorage.removeItem(STORAGE_HELIO_UI); } catch (_) {}
+      try { localStorage.removeItem(STORAGE_MAP); } catch (_) {}
+      refreshObserverContext();
+      refreshPills();
+      refreshPhase2();
+      flashDone(btn, '✓ Reset');
+      delete btn.dataset.confirm;
+    });
+
+    // ── Highlight active profile column in weights table ───
+    function refreshWeightsTable() {
+      const activeProfile = getCurrentProfile();
+      document.querySelectorAll('.stg-wt-val').forEach(cell => {
+        cell.classList.toggle('is-active-profile', cell.dataset.profile === activeProfile);
+      });
+    }
+
+    // ── Init on settings page open ────────────────────────
+    document.querySelector('.nav-item[data-page="settings"]')?.addEventListener('click', () => {
+      refreshObserverContext();
+      refreshPills();
+      refreshPhase2();
+      refreshWeightsTable();
+    });
+
+    // Run once on load in case settings is the initial page
+    refreshObserverContext();
+    refreshPills();
+    refreshPhase2();
+    refreshWeightsTable();
+  })();
 
 </script>
 </body>
