@@ -486,6 +486,283 @@
     /* Events page */
     #page-events { overflow-y: auto; }
 
+    /* ─── Settings page ──────────────────────────────────────*/
+    .stg-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 0;
+    }
+    .stg-page-header {
+      margin-bottom: 36px;
+    }
+    .stg-page-title {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #e6f2ff;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+    .stg-page-sub {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.35);
+      margin: 0;
+    }
+    .stg-section {
+      margin-bottom: 32px;
+    }
+    .stg-section-hdr {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .stg-section-icon {
+      font-size: 1rem;
+      line-height: 1.6;
+      flex-shrink: 0;
+    }
+    .stg-section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+      margin: 0 0 3px;
+    }
+    .stg-section-desc {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.3);
+      margin: 0;
+    }
+    .stg-card {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .stg-card-muted {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .stg-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+    }
+    .stg-row-action {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .stg-label {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .stg-label-text {
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+    }
+    .stg-label-hint {
+      font-size: 0.74rem;
+      color: rgba(255,255,255,0.28);
+      line-height: 1.4;
+    }
+    .stg-control {
+      flex-shrink: 0;
+    }
+    .stg-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.05);
+      margin: 0 16px;
+    }
+    .stg-note {
+      font-size: 0.73rem;
+      color: rgba(255,255,255,0.25);
+      margin: 6px 4px 0;
+    }
+    /* Pill group */
+    .stg-pill-group {
+      display: flex;
+      gap: 3px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .stg-pill {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+    .stg-pill:hover {
+      color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.06);
+    }
+    .stg-pill.is-active {
+      background: rgba(143,182,255,0.15);
+      color: #8fb6ff;
+    }
+    /* Profile description */
+    .stg-profile-desc {
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.35);
+      padding: 0 16px 14px;
+      min-height: 0;
+      line-height: 1.5;
+      display: none;
+    }
+    .stg-profile-desc.is-visible {
+      display: block;
+    }
+    /* Buttons */
+    .stg-btn {
+      font-size: 0.77rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .stg-btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .stg-btn-ghost:hover {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.75);
+    }
+    .stg-btn-ghost.is-done {
+      color: #7dff9a;
+      border-color: rgba(125,255,154,0.2);
+      background: rgba(125,255,154,0.06);
+    }
+    /* Value badge */
+    .stg-value-badge {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 5px;
+      padding: 4px 10px;
+    }
+    /* Coming soon badge */
+    .stg-coming-soon {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+    /* Location display */
+    .stg-location-display {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .stg-loc-name {
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+    }
+    .stg-loc-coords {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.3);
+      font-family: monospace;
+    }
+    /* Provenance table */
+    .stg-provenance-table {
+      margin: 0 16px 0;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .stg-prov-row {
+      display: grid;
+      grid-template-columns: 1.2fr 2fr 0.8fr;
+      gap: 12px;
+      padding: 9px 14px;
+      font-size: 0.77rem;
+      color: rgba(255,255,255,0.55);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+    }
+    .stg-prov-row:last-child { border-bottom: none; }
+    .stg-prov-header {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.025);
+    }
+    .stg-prov-engine {
+      color: rgba(255,255,255,0.38);
+      font-size: 0.73rem;
+    }
+    .stg-badge {
+      font-size: 0.69rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+    }
+    .stg-badge-yes { background: rgba(125,255,154,0.1); color: #7dff9a; }
+    .stg-badge-no  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); }
+    /* Sources list */
+    .stg-sources-list {
+      margin: 0 16px;
+    }
+    .stg-source-row {
+      display: flex;
+      gap: 14px;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .stg-source-row:last-child { border-bottom: none; }
+    .stg-source-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+    .stg-source-desc {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.4;
+    }
+    .stg-subheading {
+      font-size: 0.74rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.25);
+      margin: 16px 16px 10px;
+    }
+    .stg-body-text {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.6;
+      margin: 0 16px 16px;
+    }
+
     /* Weather & Helio panels inside dashboard */
     .db-panel { flex-shrink: 0; }
     .db-panel-weather #w-weather { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
@@ -1443,9 +1720,246 @@
     </div>
 
     <!-- ── PAGE: SETTINGS ── -->
-    <div id="page-settings" class="console-page" style="overflow-y:auto;padding:40px 24px">
-      <h2 style="color:rgba(255,255,255,0.6);font-size:1.1rem;font-weight:500;margin:0 0 8px">Settings</h2>
-      <p style="color:rgba(255,255,255,0.3);font-size:0.85rem">Coming soon</p>
+    <div id="page-settings" class="console-page" style="overflow-y:auto">
+      <div class="stg-wrap">
+
+        <div class="stg-page-header">
+          <h1 class="stg-page-title">Settings</h1>
+          <p class="stg-page-sub">Observer Console preferences and configuration</p>
+        </div>
+
+        <!-- ── SECTION: Observer Context ── -->
+        <section class="stg-section" id="stg-observer">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">📍</span>
+            <div>
+              <h2 class="stg-section-title">Observer Context</h2>
+              <p class="stg-section-desc">Your default observing location and regional settings</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Location</span>
+                <span class="stg-label-hint">Used for weather, sky, and solar calculations</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-location-display" id="stg-loc-display">
+                  <span class="stg-loc-name" id="stg-loc-name">—</span>
+                  <span class="stg-loc-coords" id="stg-loc-coords"></span>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Timezone</span>
+                <span class="stg-label-hint">Derived from location</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-value-badge" id="stg-loc-tz">—</span>
+              </div>
+            </div>
+          </div>
+          <p class="stg-note">To change location, use the location picker in the Dashboard or Weather panel.</p>
+        </section>
+
+        <!-- ── SECTION: Observing Model ── -->
+        <section class="stg-section" id="stg-model">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🔭</span>
+            <div>
+              <h2 class="stg-section-title">Observing Model</h2>
+              <p class="stg-section-desc">Scoring profile and forecast range for weather quality</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Observing Profile</span>
+                <span class="stg-label-hint">Weights how atmospheric conditions are scored</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-profile-group" role="radiogroup" aria-label="Observing profile">
+                  <button class="stg-pill" data-stg-profile="balanced">Balanced</button>
+                  <button class="stg-pill" data-stg-profile="visual">Visual</button>
+                  <button class="stg-pill" data-stg-profile="broadband">Broadband</button>
+                  <button class="stg-pill" data-stg-profile="planetary">Planetary</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-profile-desc" id="stg-profile-desc"></div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Forecast Range</span>
+                <span class="stg-label-hint">Default time window for weather data</span>
+              </div>
+              <div class="stg-control">
+                <div class="stg-pill-group" id="stg-range-group" role="radiogroup" aria-label="Forecast range">
+                  <button class="stg-pill" data-stg-range="today">Tonight</button>
+                  <button class="stg-pill" data-stg-range="48h">48 h</button>
+                  <button class="stg-pill" data-stg-range="7d">7 days</button>
+                </div>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row stg-row-action">
+              <span class="stg-label-hint">Restore all observing model settings to recommended defaults</span>
+              <button class="stg-btn stg-btn-ghost" id="stg-reset-model">Reset to defaults</button>
+            </div>
+          </div>
+          <p class="stg-note">Profile changes apply to the Weather panel on the next data load.</p>
+        </section>
+
+        <!-- ── SECTION: Space Weather Preferences ── -->
+        <section class="stg-section" id="stg-helio">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">☀️</span>
+            <div>
+              <h2 class="stg-section-title">Space Weather</h2>
+              <p class="stg-section-desc">Helio widget display preferences</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row stg-row-action">
+              <div class="stg-label">
+                <span class="stg-label-text">Panel Layout State</span>
+                <span class="stg-label-hint">Expanded / collapsed state of Helio panels is saved automatically</span>
+              </div>
+              <button class="stg-btn stg-btn-ghost" id="stg-reset-helio">Reset panel state</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Map Preferences ── -->
+        <section class="stg-section" id="stg-map">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🗺️</span>
+            <div>
+              <h2 class="stg-section-title">Map</h2>
+              <p class="stg-section-desc">Weather map display state</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <div class="stg-row stg-row-action">
+              <div class="stg-label">
+                <span class="stg-label-text">Saved Map State</span>
+                <span class="stg-label-hint">Map center, zoom, and layer visibility are saved automatically</span>
+              </div>
+              <button class="stg-btn stg-btn-ghost" id="stg-reset-map">Clear map state</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Appearance & Layout ── -->
+        <section class="stg-section" id="stg-appearance">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">🎨</span>
+            <div>
+              <h2 class="stg-section-title">Appearance &amp; Layout</h2>
+              <p class="stg-section-desc">Visual and layout preferences</p>
+            </div>
+          </div>
+          <div class="stg-card stg-card-muted">
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Theme</span>
+                <span class="stg-label-hint">Console color scheme</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-coming-soon">Coming soon</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Compact mode</span>
+                <span class="stg-label-hint">Reduce panel spacing and font sizes</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-coming-soon">Coming soon</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <div class="stg-row">
+              <div class="stg-label">
+                <span class="stg-label-text">Reduce motion</span>
+                <span class="stg-label-hint">Disable animated transitions</span>
+              </div>
+              <div class="stg-control">
+                <span class="stg-coming-soon">Coming soon</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION: Data & Transparency ── -->
+        <section class="stg-section" id="stg-data">
+          <div class="stg-section-hdr">
+            <span class="stg-section-icon">📡</span>
+            <div>
+              <h2 class="stg-section-title">Data &amp; Transparency</h2>
+              <p class="stg-section-desc">Data sources and scoring model provenance</p>
+            </div>
+          </div>
+          <div class="stg-card">
+            <h3 class="stg-subheading">Scoring Models</h3>
+            <div class="stg-provenance-table">
+              <div class="stg-prov-row stg-prov-header">
+                <span>Surface</span>
+                <span>Engine</span>
+                <span>Profile-aware</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Weather panel</span>
+                <span class="stg-prov-engine">TypeScript v5 hierarchical model</span>
+                <span class="stg-badge stg-badge-yes">Yes</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Observer hero</span>
+                <span class="stg-prov-engine">Python YAML factor engine</span>
+                <span class="stg-badge stg-badge-yes">Yes</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Sky ranking</span>
+                <span class="stg-prov-engine">Build-time rules (rules.yml)</span>
+                <span class="stg-badge stg-badge-no">No</span>
+              </div>
+              <div class="stg-prov-row">
+                <span>Space weather</span>
+                <span class="stg-prov-engine">NOAA SWPC live data</span>
+                <span class="stg-badge stg-badge-no">No</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <h3 class="stg-subheading">Data Sources</h3>
+            <div class="stg-sources-list">
+              <div class="stg-source-row">
+                <span class="stg-source-name">Open-Meteo</span>
+                <span class="stg-source-desc">Atmospheric weather forecast (clouds, wind, humidity, precipitation)</span>
+              </div>
+              <div class="stg-source-row">
+                <span class="stg-source-name">NOAA SWPC</span>
+                <span class="stg-source-desc">Space weather alerts, Kp index, solar wind, X-ray flux, geomagnetic data</span>
+              </div>
+              <div class="stg-source-row">
+                <span class="stg-source-name">7Timer!</span>
+                <span class="stg-source-desc">Astronomical seeing and transparency forecast</span>
+              </div>
+              <div class="stg-source-row">
+                <span class="stg-source-name">JPL Horizons / MPC</span>
+                <span class="stg-source-desc">Planetary and deep sky object ephemerides, NEO data</span>
+              </div>
+            </div>
+            <div class="stg-divider"></div>
+            <h3 class="stg-subheading">Refresh Model</h3>
+            <p class="stg-body-text">Weather data is refreshed server-side on a scheduled pipeline (hourly). Space weather data is updated every 10 minutes. Sky object ranking is recalculated nightly. Widgets poll for new data automatically after each interval.</p>
+          </div>
+        </section>
+
+        <div style="height:48px"></div>
+      </div><!-- .stg-wrap -->
     </div>
 
   </main><!-- .console-main -->
@@ -3538,6 +4052,199 @@
   loadSkyAlerts();
   loadCalendarEvents();
   loadNewsItems();
+
+  // ══════════════════════════════════════════════════════════
+  //  SETTINGS PAGE
+  // ══════════════════════════════════════════════════════════
+  (function initSettings() {
+    const STORAGE_LOCATION  = 'nc-weather-location';
+    const STORAGE_PREFS     = 'nc-weather-prefs';
+    const STORAGE_PROFILE   = 'nc-weather-profile';
+    const STORAGE_HELIO_UI  = 'nc-helio-ui';
+    const STORAGE_MAP       = 'map-poc-layer-state-v2';
+
+    const DEFAULT_PROFILE = 'balanced';
+    const DEFAULT_RANGE   = 'today';
+
+    const PROFILE_DESCS = {
+      balanced:   'General-purpose balance of atmosphere, sky darkness, dew safety, and seeing. Recommended for mixed observing.',
+      visual:     'Prioritises atmospheric clarity and sky transparency. Best for visual observing with eyepiece.',
+      broadband:  'Strongest weight on sky darkness and Bortle class. Optimised for deep-sky imaging and Milky Way photography.',
+      planetary:  'Maximum weight on atmospheric stability and seeing. Ideal for high-magnification planetary and lunar work.',
+    };
+
+    function safeGet(key) {
+      try { return JSON.parse(localStorage.getItem(key)); } catch (_) { return null; }
+    }
+
+    // ── Populate Observer Context ──────────────────────────
+    const APP_DEFAULT_LOC = { name: 'Warsaw', lat: 52.2297, lon: 21.0122, tz: 'Europe/Warsaw' };
+
+    function refreshObserverContext() {
+      const loc = safeGet(STORAGE_LOCATION);
+      const nameEl   = document.getElementById('stg-loc-name');
+      const coordsEl = document.getElementById('stg-loc-coords');
+      const tzEl     = document.getElementById('stg-loc-tz');
+      if (!nameEl) return;
+      const src = (loc && loc.name) ? loc : null;
+      if (src) {
+        nameEl.textContent   = src.name;
+        coordsEl.textContent = `${src.lat?.toFixed(4)}°, ${src.lon?.toFixed(4)}°`;
+        tzEl.textContent     = src.tz || '—';
+      } else {
+        nameEl.textContent   = `${APP_DEFAULT_LOC.name} (default)`;
+        coordsEl.textContent = `${APP_DEFAULT_LOC.lat}°, ${APP_DEFAULT_LOC.lon}°`;
+        tzEl.textContent     = APP_DEFAULT_LOC.tz;
+      }
+    }
+
+    // ── Read current profile + range ──────────────────────
+    function getCurrentProfile() {
+      try {
+        const p = localStorage.getItem(STORAGE_PROFILE);
+        if (p && ['balanced','visual','broadband','planetary'].includes(p)) return p;
+      } catch (_) {}
+      try {
+        const prefs = safeGet(STORAGE_PREFS);
+        if (prefs && prefs.profile) {
+          const mapped = prefs.profile === 'default' ? 'balanced' : prefs.profile;
+          if (['balanced','visual','broadband','planetary'].includes(mapped)) return mapped;
+        }
+      } catch (_) {}
+      return DEFAULT_PROFILE;
+    }
+
+    function getCurrentRange() {
+      try {
+        const prefs = safeGet(STORAGE_PREFS);
+        if (prefs && ['today','48h','7d'].includes(prefs.range)) return prefs.range;
+      } catch (_) {}
+      return DEFAULT_RANGE;
+    }
+
+    // ── Save profile + range ───────────────────────────────
+    function saveProfile(profile) {
+      try { localStorage.setItem(STORAGE_PROFILE, profile); } catch (_) {}
+      try {
+        const prefs = safeGet(STORAGE_PREFS) || {};
+        prefs.profile = profile;
+        localStorage.setItem(STORAGE_PREFS, JSON.stringify(prefs));
+      } catch (_) {}
+    }
+
+    function saveRange(range) {
+      try {
+        const prefs = safeGet(STORAGE_PREFS) || {};
+        prefs.range = range;
+        localStorage.setItem(STORAGE_PREFS, JSON.stringify(prefs));
+      } catch (_) {}
+    }
+
+    // ── Pill group helper ──────────────────────────────────
+    function activatePill(groupId, attrKey, value) {
+      const group = document.getElementById(groupId);
+      if (!group) return;
+      group.querySelectorAll('.stg-pill').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset[attrKey] === value);
+      });
+    }
+
+    // ── Render profile description ─────────────────────────
+    function renderProfileDesc(profile) {
+      const el = document.getElementById('stg-profile-desc');
+      if (!el) return;
+      const desc = PROFILE_DESCS[profile];
+      if (desc) {
+        el.textContent = desc;
+        el.classList.add('is-visible');
+      } else {
+        el.classList.remove('is-visible');
+      }
+    }
+
+    // ── Flash "done" feedback on a button ─────────────────
+    function flashDone(btn, label = 'Done') {
+      const orig = btn.textContent;
+      btn.textContent = label;
+      btn.classList.add('is-done');
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove('is-done');
+      }, 1800);
+    }
+
+    // ── Init pill state from localStorage ─────────────────
+    function refreshPills() {
+      const profile = getCurrentProfile();
+      const range   = getCurrentRange();
+      activatePill('stg-profile-group', 'stgProfile', profile);
+      activatePill('stg-range-group',   'stgRange',   range);
+      renderProfileDesc(profile);
+    }
+
+    // ── Profile pill clicks ────────────────────────────────
+    const profileGroup = document.getElementById('stg-profile-group');
+    if (profileGroup) {
+      profileGroup.addEventListener('click', e => {
+        const pill = e.target.closest('.stg-pill[data-stg-profile]');
+        if (!pill) return;
+        const profile = pill.dataset.stgProfile;
+        saveProfile(profile);
+        activatePill('stg-profile-group', 'stgProfile', profile);
+        renderProfileDesc(profile);
+      });
+    }
+
+    // ── Range pill clicks ──────────────────────────────────
+    const rangeGroup = document.getElementById('stg-range-group');
+    if (rangeGroup) {
+      rangeGroup.addEventListener('click', e => {
+        const pill = e.target.closest('.stg-pill[data-stg-range]');
+        if (!pill) return;
+        saveRange(pill.dataset.stgRange);
+        activatePill('stg-range-group', 'stgRange', pill.dataset.stgRange);
+      });
+    }
+
+    // ── Reset model defaults ───────────────────────────────
+    const resetModelBtn = document.getElementById('stg-reset-model');
+    if (resetModelBtn) {
+      resetModelBtn.addEventListener('click', () => {
+        saveProfile(DEFAULT_PROFILE);
+        saveRange(DEFAULT_RANGE);
+        refreshPills();
+        flashDone(resetModelBtn, '✓ Reset');
+      });
+    }
+
+    // ── Reset Helio panel state ────────────────────────────
+    const resetHelioBtn = document.getElementById('stg-reset-helio');
+    if (resetHelioBtn) {
+      resetHelioBtn.addEventListener('click', () => {
+        try { localStorage.removeItem(STORAGE_HELIO_UI); } catch (_) {}
+        flashDone(resetHelioBtn, '✓ Cleared');
+      });
+    }
+
+    // ── Clear map state ────────────────────────────────────
+    const resetMapBtn = document.getElementById('stg-reset-map');
+    if (resetMapBtn) {
+      resetMapBtn.addEventListener('click', () => {
+        try { localStorage.removeItem(STORAGE_MAP); } catch (_) {}
+        flashDone(resetMapBtn, '✓ Cleared');
+      });
+    }
+
+    // ── Init on settings page open ────────────────────────
+    document.querySelector('.nav-item[data-page="settings"]')?.addEventListener('click', () => {
+      refreshObserverContext();
+      refreshPills();
+    });
+
+    // Run once on load in case settings is the initial page
+    refreshObserverContext();
+    refreshPills();
+  })();
 
 </script>
 </body>
