@@ -2439,11 +2439,12 @@
            Math.abs(loc.lon - _DEFAULT_SITE_LON) < 0.05;
   }
 
-  function _originNotice(siteName) {
+  function _originNotice(siteName, dataLabel) {
+    const label = dataLabel || 'Data';
     return `<div style="font-size:9px;color:rgba(255,180,60,0.7);letter-spacing:0.04em;
                         padding:4px 8px;text-align:center;border-top:1px solid rgba(255,180,60,0.12);
                         margin-top:4px">
-      ⚠ Data from ${siteName || _DEFAULT_SITE_NAME} (default site) · not yet location-aware
+      ⚠ ${label} from ${siteName || _DEFAULT_SITE_NAME} (default site) · not yet location-aware
     </div>`;
   }
 
@@ -2498,16 +2499,22 @@
   // ── Observer Weather (lazy – inside Events tab) ─────────
   let obsInited = false;
 
+  function _buildObsWeatherUrl() {
+    const loc = getState()?.location;
+    const p = new URLSearchParams({
+      lat:    String(loc?.lat    ?? _DEFAULT_SITE_LAT),
+      lon:    String(loc?.lon    ?? _DEFAULT_SITE_LON),
+      tz:     loc?.tz            ?? 'Europe/Warsaw',
+      bortle: '5',
+    });
+    return `/api/observer-weather?${p.toString()}`;
+  }
+
   function _updateObsPanel() {
     const obsEl = document.getElementById('w-observer-weather');
     if (!obsEl) return;
-    if (!_isDefaultSite(getState()?.location)) {
-      // Show placeholder — data is site-bound until Phase 3.
-      obsEl.innerHTML = _locationPlaceholder('Observer weather');
-      return;
-    }
     if (window.runObserverWeatherPanel) {
-      window.runObserverWeatherPanel(obsEl, { jsonUrl: '/data/observer_weather_now.json' });
+      window.runObserverWeatherPanel(obsEl, { jsonUrl: _buildObsWeatherUrl() });
     }
   }
 
@@ -2517,18 +2524,9 @@
     _updateObsPanel();
   }
 
-  // ── Helio panels rendered from sw data in loadHero ────
-
-  subscribe((newState) => {
-    const loc = newState?.location;
-    if (_helioInstance && loc) {
-      _helioInstance.updateLocation(
-        typeof loc.lat === 'number' ? loc.lat : undefined,
-        typeof loc.lon === 'number' ? loc.lon : undefined,
-        loc.name || undefined
-      );
-    }
-  });
+  // ── Helio data is fetched directly in loadHero() via helio_now.json ──────
+  // (HelioWidget.mount-based instance was removed; helio script tag kept for
+  // the standalone /helio/ page which mounts it independently)
 
   // ── Map (lazy iframe) ───────────────────────────────────
   let mapInited = false;
@@ -2951,7 +2949,7 @@
     let wx = null, sw = null, sunMoon = null;
     try {
       [wx, sw, sunMoon] = await Promise.all([
-        fetch('/data/observer_weather_now.json', {cache:'no-store'}).then(r => r.ok ? r.json() : null),
+        fetch(_buildObsWeatherUrl(), {cache:'no-store'}).then(r => r.ok ? r.json() : null),
         fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
         fetch('/sky/data/sun_moon.json').then(r => r.ok ? r.json() : null),
       ]);
@@ -3262,7 +3260,9 @@
     // New order: Date | Night Quality | Tonight | Moon | Kp | Sun | Alarm
     hero.innerHTML = [p0, p5, p6, p4, p1, p2, p7].join('');
 
-    // Data-origin notice: rendered as a sibling div below the hero strip
+    // Data-origin notice: rendered as a sibling div below the hero strip.
+    // Weather data is now location-aware (via /api/observer-weather).
+    // Sun/Moon data (sunset/sunrise times) still comes from the default-site pipeline.
     const _noticeId = 'hero-origin-notice';
     let _noticeEl = document.getElementById(_noticeId);
     if (!_isDefaultSite(getState()?.location)) {
@@ -3271,7 +3271,7 @@
         _noticeEl.id = _noticeId;
         hero.insertAdjacentElement('afterend', _noticeEl);
       }
-      _noticeEl.innerHTML = _originNotice(_DEFAULT_SITE_NAME);
+      _noticeEl.innerHTML = _originNotice(_DEFAULT_SITE_NAME, 'Sun/Moon times');
     } else {
       _noticeEl?.remove();
     }
