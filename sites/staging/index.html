@@ -1740,6 +1740,13 @@
     <div id="page-sky" class="console-page">
       <div id="w-sky">
         <div id="skyMount"></div>
+        <!-- Origin notice: shown when object scores are not from current location -->
+        <div id="sky-origin-badge" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
+             z-index:20;font-size:9px;color:rgba(255,180,60,0.8);letter-spacing:0.04em;
+             background:rgba(10,14,20,0.75);border:1px solid rgba(255,180,60,0.2);
+             border-radius:4px;padding:3px 10px;pointer-events:none;white-space:nowrap">
+          ⚠ Object scores from Warsaw · visual positions are location-correct
+        </div>
       </div>
     </div>
 
@@ -2640,7 +2647,12 @@
     try { window.__skyWidget.update(patch); } catch (_) {}
   }
 
-  subscribe(() => { if (skyInited) syncSkyFromState(); });
+  subscribe((s) => {
+    if (skyInited) syncSkyFromState();
+    // Update sky origin badge visibility
+    const skyBadge = document.getElementById('sky-origin-badge');
+    if (skyBadge) skyBadge.style.display = _isDefaultSite(s?.location) ? 'none' : '';
+  });
 
   // ── Nav rail page switching ─────────────────────────────
   const navItems     = document.querySelectorAll('.nav-item[data-page]');
@@ -3404,11 +3416,19 @@
 
     feedEl.innerHTML = html;
 
-    // Click → open Sky page focused on that object
+    // Click → open Sky page and highlight the selected object
     feedEl.querySelectorAll('.feed-item').forEach(el => {
       el.addEventListener('click', () => {
+        const objectId = el.dataset.id || null;
         activatePage('sky');
-        // TODO: forward target ID to sky widget when supported
+        if (objectId) {
+          // Sky widget may need to initialise first; wait briefly then highlight
+          initSkyIfNeeded().then(() => {
+            setTimeout(() => {
+              try { window.__skyWidget?.update({ ui: { highlightId: objectId, highlightMs: 5000 } }); } catch (_) {}
+            }, 350);
+          });
+        }
       });
     });
   }
