@@ -4496,22 +4496,23 @@
     const APP_DEFAULT_LOC = { name: 'Warsaw', lat: 52.2297, lon: 21.0122, tz: 'Europe/Warsaw' };
 
     function refreshObserverContext() {
-      const loc = safeGet(STORAGE_LOCATION);
+      const loc = getState()?.location;
       const nameEl   = document.getElementById('stg-loc-name');
       const coordsEl = document.getElementById('stg-loc-coords');
       const tzEl     = document.getElementById('stg-loc-tz');
       if (!nameEl) return;
-      const src = (loc && loc.name) ? loc : null;
-      if (src) {
-        nameEl.textContent   = src.name;
-        coordsEl.textContent = `${src.lat?.toFixed(4)}°, ${src.lon?.toFixed(4)}°`;
-        tzEl.textContent     = src.tz || '—';
+      if (loc && typeof loc.lat === 'number') {
+        nameEl.textContent   = loc.name || `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`;
+        coordsEl.textContent = `${loc.lat.toFixed(4)}°, ${loc.lon.toFixed(4)}°`;
+        if (tzEl) tzEl.textContent = loc.tz || '—';
       } else {
         nameEl.textContent   = `${APP_DEFAULT_LOC.name} (default)`;
         coordsEl.textContent = `${APP_DEFAULT_LOC.lat}°, ${APP_DEFAULT_LOC.lon}°`;
-        tzEl.textContent     = APP_DEFAULT_LOC.tz;
+        if (tzEl) tzEl.textContent = APP_DEFAULT_LOC.tz;
       }
     }
+    // Keep settings in sync when location changes from the picker
+    subscribe(refreshObserverContext);
 
     // ── Read current profile + range ──────────────────────
     function getCurrentProfile() {
