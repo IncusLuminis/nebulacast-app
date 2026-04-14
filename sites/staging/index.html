@@ -4365,7 +4365,11 @@
     const skyIframe = document.getElementById('db-sky-iframe');
     if (skyIframe && !skyIframe.getAttribute('src')) {
       skyIframe.addEventListener('load', () => _dbInjectAnchorCss(skyIframe));
-      skyIframe.src = '/sky/';
+      const _skyLoc = getState()?.location;
+      const _skyParams = (_skyLoc && isFinite(_skyLoc.lat) && isFinite(_skyLoc.lon))
+        ? `?lat=${_skyLoc.lat}&lon=${_skyLoc.lon}`
+        : '';
+      skyIframe.src = '/sky/' + _skyParams;
     }
     const mapIframe = document.getElementById('db-map-iframe');
     if (mapIframe && !mapIframe.getAttribute('src')) {
@@ -4455,6 +4459,20 @@
       loadFeed();
       // Observer Panel: re-run if already initialized
       if (obsInited) _updateObsPanel();
+      // Dashboard sky iframe: update projection via same-origin contentWindow
+      try {
+        const _skyIf = document.getElementById('db-sky-iframe');
+        if (_skyIf?.contentWindow?.__skyWidget?.update) {
+          _skyIf.contentWindow.__skyWidget.update({ lat: s.location.lat, lon: s.location.lon });
+        }
+      } catch (_) {}
+      // Dashboard map iframe: send postMessage (same pattern as #mapIframe subscriber)
+      try {
+        const _mapIf = document.getElementById('db-map-iframe');
+        if (_mapIf?.contentWindow && _mapIf.src) {
+          _mapIf.contentWindow.postMessage({ type: 'update-location', location: s.location }, '*');
+        }
+      } catch (_) {}
     }, 500));
   }
 
