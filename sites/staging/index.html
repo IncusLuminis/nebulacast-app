@@ -2428,6 +2428,36 @@
     return loc ? `${loc.lat},${loc.lon}` : null;
   }
 
+  // ── Data origin awareness ───────────────────────────────
+  // These match the pipeline constants used to bake static JSON files.
+  const _DEFAULT_SITE_LAT = 52.2297, _DEFAULT_SITE_LON = 21.0122;
+  const _DEFAULT_SITE_NAME = "Warsaw";
+
+  function _isDefaultSite(loc) {
+    if (!loc || typeof loc.lat !== 'number') return true; // no location = assume default
+    return Math.abs(loc.lat - _DEFAULT_SITE_LAT) < 0.05 &&
+           Math.abs(loc.lon - _DEFAULT_SITE_LON) < 0.05;
+  }
+
+  function _originNotice(siteName) {
+    return `<div style="font-size:9px;color:rgba(255,180,60,0.7);letter-spacing:0.04em;
+                        padding:4px 8px;text-align:center;border-top:1px solid rgba(255,180,60,0.12);
+                        margin-top:4px">
+      ⚠ Data from ${siteName || _DEFAULT_SITE_NAME} (default site) · not yet location-aware
+    </div>`;
+  }
+
+  function _locationPlaceholder(label) {
+    return `<div style="padding:18px 12px;text-align:center;color:rgba(255,255,255,0.38);font-size:11px;line-height:1.5">
+      <div style="font-size:18px;margin-bottom:8px">📍</div>
+      <div style="font-weight:600;margin-bottom:4px">${label} — not available for this location</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.25)">
+        Data is computed for the default observer site (${_DEFAULT_SITE_NAME}).<br>
+        Location-aware data is coming in a future update.
+      </div>
+    </div>`;
+  }
+
   // ── Topbar: Location ────────────────────────────────────
   const locationEl = document.getElementById("w-location");
   if (locationEl) mountLocation(locationEl, storeApi);
@@ -2467,13 +2497,24 @@
 
   // ── Observer Weather (lazy – inside Events tab) ─────────
   let obsInited = false;
+
+  function _updateObsPanel() {
+    const obsEl = document.getElementById('w-observer-weather');
+    if (!obsEl) return;
+    if (!_isDefaultSite(getState()?.location)) {
+      // Show placeholder — data is site-bound until Phase 3.
+      obsEl.innerHTML = _locationPlaceholder('Observer weather');
+      return;
+    }
+    if (window.runObserverWeatherPanel) {
+      window.runObserverWeatherPanel(obsEl, { jsonUrl: '/data/observer_weather_now.json' });
+    }
+  }
+
   function initObsIfNeeded() {
     if (obsInited) return;
     obsInited = true;
-    const obsEl = document.getElementById('w-observer-weather');
-    if (obsEl && window.runObserverWeatherPanel) {
-      window.runObserverWeatherPanel(obsEl, { jsonUrl: '/data/observer_weather_now.json' });
-    }
+    _updateObsPanel();
   }
 
   // ── Helio panels rendered from sw data in loadHero ────
@@ -3221,6 +3262,20 @@
     // New order: Date | Night Quality | Tonight | Moon | Kp | Sun | Alarm
     hero.innerHTML = [p0, p5, p6, p4, p1, p2, p7].join('');
 
+    // Data-origin notice: rendered as a sibling div below the hero strip
+    const _noticeId = 'hero-origin-notice';
+    let _noticeEl = document.getElementById(_noticeId);
+    if (!_isDefaultSite(getState()?.location)) {
+      if (!_noticeEl) {
+        _noticeEl = document.createElement('div');
+        _noticeEl.id = _noticeId;
+        hero.insertAdjacentElement('afterend', _noticeEl);
+      }
+      _noticeEl.innerHTML = _originNotice(_DEFAULT_SITE_NAME);
+    } else {
+      _noticeEl?.remove();
+    }
+
     // Expose data for dashboard subpanel renderers
     window._dbHeroData = { wx, sw, sunMoon, sunsetT, sunriseT, moonriseT, moonsetT, moonIllum, moonWaxing };
 
@@ -3287,6 +3342,13 @@
   async function loadFeed() {
     const feedEl = document.getElementById('feed-list');
     if (!feedEl) return;
+
+    // Show placeholder if current location is not the default site —
+    // ranking data is computed only for the default observer site until Phase 3.
+    if (!_isDefaultSite(getState()?.location)) {
+      feedEl.innerHTML = _locationPlaceholder('Ranking');
+      return;
+    }
 
     let data = null;
     try { data = await fetch('/sky/data/ranking.json').then(r => r.ok ? r.json() : null); } catch (_) {}
@@ -4372,12 +4434,7 @@
       loadHero();
       loadFeed();
       // Observer Panel: re-run if already initialized
-      if (obsInited) {
-        const obsEl = document.getElementById('w-observer-weather');
-        if (obsEl && window.runObserverWeatherPanel) {
-          window.runObserverWeatherPanel(obsEl, { jsonUrl: '/data/observer_weather_now.json' });
-        }
-      }
+      if (obsInited) _updateObsPanel();
     }, 500));
   }
 
