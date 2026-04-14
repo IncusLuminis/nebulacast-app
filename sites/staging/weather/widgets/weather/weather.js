@@ -28,6 +28,14 @@ function escapeHtml(s) {
 function formatTime(isoStr) {
   const d = parseISO(isoStr);
   if (!d) return "—";
+  const tz = weatherData && weatherData.location && weatherData.location.tz;
+  if (tz) {
+    try {
+      const parts = new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d);
+      const hPart = parts.find(p => p.type === "hour");
+      if (hPart) return hPart.value.padStart(2, "0") + ":00";
+    } catch (_) {}
+  }
   // Format as HH:00 (always show :00 for hourly forecasts)
   const h = d.getHours();
   return String(h).padStart(2, "0") + ":00";
@@ -1962,14 +1970,20 @@ function computeSunMoonEvents(frames) {
   return events;
 }
 
-async function fetchSunMoonEvents() {
+async function fetchSunMoonEvents(loc) {
+  const _DEFAULT_LAT = 52.2297, _DEFAULT_LON = 21.0122;
+  const isDefault = !loc || !isFinite(loc.lat) || !isFinite(loc.lon) ||
+    (Math.abs(loc.lat - _DEFAULT_LAT) < 0.05 && Math.abs(loc.lon - _DEFAULT_LON) < 0.05);
+  const url = isDefault
+    ? "/sky/data/sun_moon.json"
+    : `/api/sun-moon?lat=${loc.lat}&lon=${loc.lon}&days=7&step_min=10`;
   try {
-    const res = await fetch("/sky/data/sun_moon.json");
+    const res = await fetch(url);
     if (!res.ok) { sunMoonEventsCache = []; return; }
     const data = await res.json();
     sunMoonEventsCache = computeSunMoonEvents(data.frames || []);
   } catch (e) {
-    console.warn("[weather] sun_moon.json load failed:", e.message);
+    console.warn("[weather] sun_moon load failed:", e.message);
     sunMoonEventsCache = [];
   }
 }
@@ -2974,6 +2988,7 @@ async function loadWeather(rootEl, state, forceRefresh) {
       throw new Error(userFriendlyMsg + " (" + errorMsg + ")");
     }
     weatherData = data;
+    fetchSunMoonEvents(data.location);
     var profileList;
     if (Array.isArray(data.profiles) && data.profiles.length) {
       profileList = ["balanced"].concat(data.profiles.filter(function(p){ return p !== "balanced"; }));
@@ -4574,7 +4589,7 @@ function renderWeatherHTML(rootEl) {
 
 export function mountWeather(rootEl, storeApi, options) {
   layoutMode = (options && options.layout === "vertical") ? "vertical" : "default";
-  fetchSunMoonEvents();
+  fetchSunMoonEvents(storeApi && storeApi.getState && storeApi.getState().location);
 
   if (layoutMode === "vertical") {
     renderWeatherHTMLVertical(rootEl);
