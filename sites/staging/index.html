@@ -2743,7 +2743,14 @@
     return cls==='excellent'?'#4caf50':cls==='good'?'#8bc34a':cls==='usable'?'#ff9800':cls==='marginal'?'#f44336':'#9e3a3a';
   }
   function _nqiLabel(cls) { return cls ? cls.charAt(0).toUpperCase()+cls.slice(1) : '—'; }
-  function _nopFmtT(iso)   { try { return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}); } catch(_){return'—';} }
+  function _nopFmtT(iso, tz) {
+    try {
+      const opts = { hour: '2-digit', minute: '2-digit', hour12: false };
+      const _tz  = tz || getState()?.location?.tz;
+      if (_tz) opts.timeZone = _tz;
+      return new Date(iso).toLocaleTimeString([], opts);
+    } catch(_) { return '—'; }
+  }
 
   // Parse "2026-Mar-30 07:06Z" format from sun_moon.json
   function _parseSMTime(s) {
@@ -3133,8 +3140,10 @@
     // ── Panel 0: Date / Time ──
     {
       const _now = new Date();
-      const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-      const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const _obsTz   = getState()?.location?.tz || undefined;
+      const _tzOpts  = _obsTz ? { timeZone: _obsTz } : {};
+      const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', ..._tzOpts });
+      const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, ..._tzOpts });
 
       // ── Weather chips: icon · temp · cloud · pressure ──
       const _nowHourStr = _now.toISOString().slice(0, 13);
@@ -3295,9 +3304,11 @@
       const dEl  = document.getElementById('nop-clock-date');
       const tEl  = document.getElementById('nop-clock-time');
       if (!dEl || !tEl) return;
-      const newDate = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      const _tz2    = getState()?.location?.tz || undefined;
+      const _tzO2   = _tz2 ? { timeZone: _tz2 } : {};
+      const newDate = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', ..._tzO2 });
       if (dEl.textContent !== newDate) { dEl.textContent = newDate; _nopClockFontSet = false; }
-      tEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      tEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, ..._tzO2 });
       // Scale time font-size so its rendered width matches the date width
       if (!_nopClockFontSet) {
         requestAnimationFrame(() => {
@@ -3339,7 +3350,15 @@
   function fmtBestTime(iso) {
     if (!iso) return '—';
     try {
-      return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      // best_time_local from /api/sky-ranking is already a local ISO string (no Z suffix) —
+      // just extract HH:MM directly to avoid any TZ re-interpretation.
+      const m = /T(\d{2}):(\d{2})/.exec(iso);
+      if (m) return `${m[1]}:${m[2]}`;
+      // Fallback for plain time strings or UTC timestamps
+      const tz = getState()?.location?.tz;
+      const opts = { hour: '2-digit', minute: '2-digit', hour12: false };
+      if (tz) opts.timeZone = tz;
+      return new Date(iso).toLocaleTimeString([], opts);
     } catch (_) { return '—'; }
   }
 
