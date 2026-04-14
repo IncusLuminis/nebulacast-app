@@ -3347,15 +3347,15 @@
     const feedEl = document.getElementById('feed-list');
     if (!feedEl) return;
 
-    // Show placeholder if current location is not the default site —
-    // ranking data is computed only for the default observer site (requires parameterized backend).
-    if (!_isDefaultSite(getState()?.location)) {
-      feedEl.innerHTML = _locationPlaceholder('Ranking');
-      return;
-    }
-
+    // Use dynamic /api/sky-ranking for non-default locations, static file for default (Warsaw).
     let data = null;
-    try { data = await fetch('/sky/data/ranking.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+    try {
+      const loc = getState()?.location;
+      const rankingUrl = _isDefaultSite(loc)
+        ? '/sky/data/ranking.json'
+        : `/api/sky-ranking?lat=${loc.lat}&lon=${loc.lon}&tz=${encodeURIComponent(loc.tz || 'UTC')}`;
+      data = await fetch(rankingUrl, { cache: 'no-store' }).then(r => r.ok ? r.json() : null);
+    } catch (_) {}
 
     if (!data?.items?.length) {
       feedEl.innerHTML = '<div class="feed-loading">No targets available.</div>';
