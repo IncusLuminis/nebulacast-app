@@ -2414,7 +2414,7 @@
 
 <!-- Main app: state, widgets, console logic -->
 <script type="module">
-  import { initState, getState, setState, subscribe, getObserverContext } from "/weather/core/state.js";
+  import { initState, getState, setState, subscribe } from "/weather/core/state.js";
   import { mountLocation } from "/weather/widgets/location/location.js";
   import { mountWeather } from "/weather/widgets/weather/weather.js";
   import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js";
@@ -2461,7 +2461,7 @@
       <div style="font-weight:600;margin-bottom:4px">${label} — not available for this location</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.25)">
         Data is computed for the default observer site (${_DEFAULT_SITE_NAME}).<br>
-        Location-aware data is coming in a future update.
+        Location-aware ranking requires server-side ephemeris computation.
       </div>
     </div>`;
   }
@@ -3356,7 +3356,7 @@
     if (!feedEl) return;
 
     // Show placeholder if current location is not the default site —
-    // ranking data is computed only for the default observer site until Phase 3.
+    // ranking data is computed only for the default observer site (requires parameterized backend).
     if (!_isDefaultSite(getState()?.location)) {
       feedEl.innerHTML = _locationPlaceholder('Ranking');
       return;
@@ -4442,8 +4442,8 @@
   loadNewsItems();
 
   // ── Location-reactive reloads ──────────────────────────
-  // Hero, Feed, and Observer Panel refetch when location changes.
-  // Data is still site-bound (Warsaw) until Phase 3 parameterizes endpoints.
+  // Hero and Observer Panel use /api/observer-weather (dynamic, location-aware).
+  // Ranking feed is still site-bound and shows a placeholder for non-Warsaw locations.
   {
     let _prevLocKey = _locKey(getState());
 
