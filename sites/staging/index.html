@@ -2407,7 +2407,7 @@
 
 <!-- Main app: state, widgets, console logic -->
 <script type="module">
-  import { initState, getState, setState, subscribe } from "/weather/core/state.js";
+  import { initState, getState, setState, subscribe, getObserverContext } from "/weather/core/state.js";
   import { mountLocation } from "/weather/widgets/location/location.js";
   import { mountWeather } from "/weather/widgets/weather/weather.js";
   import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js";
@@ -2415,6 +2415,18 @@
   // ── State ──────────────────────────────────────────────
   initState();
   const storeApi = { getState, setState, subscribe };
+
+  // ── Utility: debounce ──────────────────────────────────
+  function _debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  // ── Utility: location key (for change detection) ───────
+  function _locKey(s) {
+    const loc = s?.location;
+    return loc ? `${loc.lat},${loc.lon}` : null;
+  }
 
   // ── Topbar: Location ────────────────────────────────────
   const locationEl = document.getElementById("w-location");
@@ -2479,6 +2491,7 @@
 
   // ── Map (lazy iframe) ───────────────────────────────────
   let mapInited = false;
+  let _mapUnsub = null; // stored so we never register more than one listener
   function initMapIfNeeded() {
     if (mapInited) return;
     mapInited = true;
@@ -2497,7 +2510,8 @@
         iframe.contentWindow.postMessage({ type: "update-location", location: loc }, "*");
       }
     });
-    subscribe(() => {
+    if (_mapUnsub) _mapUnsub();
+    _mapUnsub = subscribe(() => {
       const loc = getState()?.location;
       if (loc && iframe.contentWindow && iframe.src) {
         iframe.contentWindow.postMessage({ type: "update-location", location: loc }, "*");
@@ -4344,6 +4358,28 @@
   loadSkyAlerts();
   loadCalendarEvents();
   loadNewsItems();
+
+  // ── Location-reactive reloads ──────────────────────────
+  // Hero, Feed, and Observer Panel refetch when location changes.
+  // Data is still site-bound (Warsaw) until Phase 3 parameterizes endpoints.
+  {
+    let _prevLocKey = _locKey(getState());
+
+    subscribe(_debounce((s) => {
+      const newKey = _locKey(s);
+      if (newKey === null || newKey === _prevLocKey) return;
+      _prevLocKey = newKey;
+      loadHero();
+      loadFeed();
+      // Observer Panel: re-run if already initialized
+      if (obsInited) {
+        const obsEl = document.getElementById('w-observer-weather');
+        if (obsEl && window.runObserverWeatherPanel) {
+          window.runObserverWeatherPanel(obsEl, { jsonUrl: '/data/observer_weather_now.json' });
+        }
+      }
+    }, 500));
+  }
 
   // ══════════════════════════════════════════════════════════
   //  SETTINGS PAGE
