@@ -2960,10 +2960,14 @@
 
     let wx = null, sw = null, sunMoon = null;
     try {
+      const loc = getState()?.location;
+      const sunMoonUrl = _isDefaultSite(loc)
+        ? '/sky/data/sun_moon.json'
+        : `/api/sun-moon?lat=${loc.lat}&lon=${loc.lon}&days=7&step_min=10`;
       [wx, sw, sunMoon] = await Promise.all([
         fetch(_buildObsWeatherUrl(), {cache:'no-store'}).then(r => r.ok ? r.json() : null),
         fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
-        fetch('/sky/data/sun_moon.json').then(r => r.ok ? r.json() : null),
+        fetch(sunMoonUrl, {cache:'no-store'}).then(r => r.ok ? r.json() : null),
       ]);
     } catch (_) {}
     _helioData = sw; // store for _dbRenderHelio
@@ -3272,21 +3276,9 @@
     // New order: Date | Night Quality | Tonight | Moon | Kp | Sun | Alarm
     hero.innerHTML = [p0, p5, p6, p4, p1, p2, p7].join('');
 
-    // Data-origin notice: rendered as a sibling div below the hero strip.
-    // Weather data is now location-aware (via /api/observer-weather).
-    // Sun/Moon data (sunset/sunrise times) still comes from the default-site pipeline.
-    const _noticeId = 'hero-origin-notice';
-    let _noticeEl = document.getElementById(_noticeId);
-    if (!_isDefaultSite(getState()?.location)) {
-      if (!_noticeEl) {
-        _noticeEl = document.createElement('div');
-        _noticeEl.id = _noticeId;
-        hero.insertAdjacentElement('afterend', _noticeEl);
-      }
-      _noticeEl.innerHTML = _originNotice(_DEFAULT_SITE_NAME, 'Sun/Moon times');
-    } else {
-      _noticeEl?.remove();
-    }
+    // Sun/Moon data is now location-aware (/api/sun-moon for non-default locations).
+    // Remove any stale origin notice that may have been rendered previously.
+    document.getElementById('hero-origin-notice')?.remove();
 
     // Expose data for dashboard subpanel renderers
     window._dbHeroData = { wx, sw, sunMoon, sunsetT, sunriseT, moonriseT, moonsetT, moonIllum, moonWaxing };
