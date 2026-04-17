@@ -1703,7 +1703,7 @@
         <!-- Space Weather (Kp / Sun / Alarm launcher) -->
         <div id="dbp-helio" class="db-subpanel" style="display:none">
           <div class="dbp-header">
-            <span class="dbp-title">Space Weather</span>
+            <span class="dbp-title">Space Weather Forecast</span>
             <button class="dbp-close" data-close="helio">✕</button>
           </div>
           <div class="db-panel" style="overflow-x:auto;overflow-y:hidden">
@@ -3138,7 +3138,7 @@
       return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
     const p1 = `<div class="hero-card" data-panel="helio" style="min-width:118px;flex-shrink:0">
-      <div class="hero-card-label">Kp</div>
+      <div class="hero-card-label">Kp NOW</div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
         <div style="display:flex;align-items:baseline;gap:6px">
           <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
@@ -3308,7 +3308,7 @@
     const earthSev  = _cp.earth?.severity || 'none';
     const earthState= _cp.earth?.label    || 'Quiet';
     const p7 = `<div class="hero-card hero-alarm-rail" data-panel="helio" style="flex-shrink:0;min-width:72px;justify-content:center;padding:6px 14px">
-      <div class="hero-card-label">Alarm</div>
+      <div class="hero-card-label">FORECAST</div>
       <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;align-items:center">
         ${_miniLamp('sun',sunSev,sunState)}
         ${_miniLamp('space',spaceSev,spaceState)}
@@ -4144,17 +4144,42 @@
 
     // ── 1. Sun–Earth Chain ──────────────────────────────────────────
     const chain = sw.chain_panel || {};
+    const _kpLive = sw.metrics?.kp_latest ?? null;
     const chainCols = ['sun','space','earth'].map((col, i, arr) => {
       const c = chain[col] || {};
       const sev = c.severity || 'none';
-      const msgs = (c.messages || []).map(m => `<span class="dbp-chain-msgs">${m}</span>`).join('');
+
+      // Filter raw Kp readings — never show "Kp X.X" in the chain panel
+      let displayMsgs = (c.messages || []).filter(m => !/^Kp[\s\d]/.test(m));
+
+      if (col === 'earth') {
+        // Combine G-level token + description into one formatted line
+        const gIdx = displayMsgs.findIndex(m => /^G\d$/.test(m));
+        if (gIdx >= 0) {
+          const gToken = displayMsgs[gIdx];
+          const gNum   = parseInt(gToken[1]) || 0;
+          const descIdx = displayMsgs.findIndex((m, j) => j !== gIdx && !/^G\d$/.test(m));
+          const desc    = descIdx >= 0 ? displayMsgs[descIdx] : '';
+          // "Expected" when the live Kp hasn't yet reached this G-level threshold
+          const gKpThreshold = gNum + 4; // G1→kp5, G2→kp6, G3→kp7 …
+          const suffix = (gNum > 0 && _kpLive != null && _kpLive < gKpThreshold) ? ' Expected' : '';
+          // Title-case the description (e.g. "moderate geomagnetic storm" → "Moderate Geomagnetic Storm")
+          const descTc = desc.replace(/\b\w/g, c => c.toUpperCase());
+          const combined = desc
+            ? `${gToken} ${descTc}${suffix}`
+            : `${gToken}${suffix}`;
+          // Rebuild: combined line first, then any remaining messages
+          displayMsgs = [combined, ...displayMsgs.filter((_, j) => j !== gIdx && j !== descIdx)];
+        }
+      }
+
       const arrow = i < arr.length-1
         ? `<div class="dbp-chain-arrow">→</div>` : '';
       return `<div class="dbp-chain-col">
         <div class="dbp-chain-head">${col.toUpperCase()}</div>
         <img class="dbp-chain-gif" src="${chainGif(col,sev)}" alt="">
         <div class="dbp-chain-state" style="color:${chainColor(sev)}">${c.label||'—'}</div>
-        <div style="font-size:10px;color:#7a9298;line-height:1.5;text-align:center">${(c.messages||[]).join('<br>')}</div>
+        <div style="font-size:10px;color:#7a9298;line-height:1.5;text-align:center">${displayMsgs.join('<br>')}</div>
       </div>${arrow}`;
     }).join('');
 
