@@ -1736,6 +1736,20 @@
 
     </div>
 
+    <!-- ── PAGE: WEATHER ── -->
+    <div id="page-weather" class="console-page" style="overflow:hidden">
+      <iframe id="iframe-weather" src="" frameborder="0"
+              style="width:100%;height:100%;border:none;display:block"
+              title="Weather"></iframe>
+    </div>
+
+    <!-- ── PAGE: HELIO (Space Weather) ── -->
+    <div id="page-helio" class="console-page" style="overflow:hidden">
+      <iframe id="iframe-helio" src="" frameborder="0"
+              style="width:100%;height:100%;border:none;display:block"
+              title="Space Weather"></iframe>
+    </div>
+
     <!-- ── PAGE: SKY ── -->
     <div id="page-sky" class="console-page">
       <div id="w-sky">
@@ -2659,26 +2673,26 @@
   const consolePages = document.querySelectorAll('.console-page');
 
   function activatePage(pageId) {
-    // weather/helio live inside dashboard — map them there and scroll
-    const effectivePage = (pageId === 'weather' || pageId === 'helio') ? 'dashboard' : pageId;
+    const effectivePage = pageId;
 
     if (effectivePage === 'sky')    { initSkyIfNeeded().then(() => { syncSkyFromState(); setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 100); }); }
     if (effectivePage === 'map')    { initMapIfNeeded(); }
     if (effectivePage === 'events') { initObsIfNeeded(); }
-    if (effectivePage === 'stats')   { initStatsIfNeeded(); }
+    if (effectivePage === 'stats')  { initStatsIfNeeded(); }
+
+    // Lazy-load iframes on first visit
+    if (effectivePage === 'weather') {
+      const ifr = document.getElementById('iframe-weather');
+      if (ifr && !ifr.dataset.loaded) { ifr.src = '/weather/'; ifr.dataset.loaded = '1'; }
+    }
+    if (effectivePage === 'helio') {
+      const ifr = document.getElementById('iframe-helio');
+      if (ifr && !ifr.dataset.loaded) { ifr.src = '/helio/'; ifr.dataset.loaded = '1'; }
+    }
 
     navItems.forEach(i => i.classList.remove('is-active'));
     document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('is-active');
     consolePages.forEach(p => p.classList.toggle('is-active', p.id === `page-${effectivePage}`));
-
-    if (pageId === 'weather') {
-      if (typeof _dbOpenPanel === 'function') _dbOpenPanel('weather');
-      else setTimeout(() => document.querySelector('.db-panel-weather')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    }
-    if (pageId === 'helio') {
-      if (typeof _dbOpenPanel === 'function') _dbOpenPanel('helio');
-      else setTimeout(() => document.querySelector('.db-panel-helio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    }
 
     const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', showcase: 'Showcase', stats: 'Stats', settings: 'Settings' };
     document.title = `Nebulacast — ${titles[pageId] || pageId}`;
