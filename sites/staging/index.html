@@ -3179,11 +3179,13 @@
 
       const _dtChips = (_curH == null) ? '' :
         `<div style="display:flex;align-items:center;gap:4px;margin-top:5px;white-space:nowrap">
-          <span style="font-size:13px;line-height:1">${_dtIcon}</span>
+          <span style="font-size:11px;line-height:1;opacity:0.7">🌡</span>
           <span style="font-size:10px;font-weight:600;color:rgba(255,200,120,0.85)">${_dtTempStr}</span>
           <span style="font-size:9px;color:rgba(255,255,255,0.2)">·</span>
+          <span style="font-size:11px;line-height:1;opacity:0.7">${_dtIcon}</span>
           <span style="font-size:10px;font-weight:600;color:rgba(143,182,255,0.8)">${_dtCloudStr}</span>
           <span style="font-size:9px;color:rgba(255,255,255,0.2)">·</span>
+          <span style="font-size:10px;line-height:1;opacity:0.55;color:rgba(100,210,130,0.9);font-weight:700">hPa</span>
           <span style="font-size:10px;font-weight:600;color:rgba(100,210,130,0.8)">${_dtPresStr}</span>
         </div>`;
 
