@@ -2533,10 +2533,14 @@
 
   function _updateObsPanel() {
     const obsEl = document.getElementById('w-observer-weather');
-    if (!obsEl) return;
-    if (window.runObserverWeatherPanel) {
-      window.runObserverWeatherPanel(obsEl, { jsonUrl: _buildObsWeatherUrl() });
-    }
+    if (!obsEl || !window.runObserverWeatherPanel) return;
+    const apiUrl = _buildObsWeatherUrl();
+    const staticUrl = '/data/observer_weather_now.json';
+    // Try API first; fall back to static JSON if the endpoint is unavailable
+    fetch(apiUrl, { method: 'HEAD', cache: 'no-store' })
+      .then(r => r.ok ? apiUrl : staticUrl)
+      .catch(() => staticUrl)
+      .then(url => window.runObserverWeatherPanel(obsEl, { jsonUrl: url }));
   }
 
   function initObsIfNeeded() {
@@ -3000,7 +3004,7 @@
         ? '/sky/data/sun_moon.json'
         : `/api/sun-moon?lat=${loc.lat}&lon=${loc.lon}&days=7&step_min=10`;
       [wx, sw, sunMoon] = await Promise.all([
-        fetch(_buildObsWeatherUrl(), {cache:'no-store'}).then(r => r.ok ? r.json() : null),
+        fetch(_buildObsWeatherUrl(), {cache:'no-store'}).then(r => r.ok ? r.json() : fetch('/data/observer_weather_now.json').then(r2 => r2.ok ? r2.json() : null)),
         fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
         fetch(sunMoonUrl, {cache:'no-store'}).then(r => r.ok ? r.json() : null),
       ]);
