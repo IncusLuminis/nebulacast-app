@@ -1830,6 +1830,7 @@ function renderProfileSwitcher(rootEl) {
       const r = findNearestHour(weatherData && weatherData.hours || []);
       renderNow(rootEl, r.hour);
       renderHourly(rootEl, weatherData && weatherData.hours || []);
+      if (hourlyMode === "matrix") renderForecastMatrix(rootEl, weatherData && weatherData.hours || []);
       if (hourInspectorOpen && currentInspectorHourIdx >= 0) {
         renderHourInspector(currentInspectorHourIdx);
       }
