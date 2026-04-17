@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="./widgets/astro/astro.css?v=20260401a">
   <link rel="stylesheet" href="./widgets/sun_moon/sun_moon.css?v=20260401a">
   <link rel="stylesheet" href="./sky_integration.css?v=20260401a">
+  <script>if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.dataset.embed = '1';</script>
+  <style>html[data-embed='1'] #w-location { display: none !important; }</style>
 </head>
 <body>
   <div class="page-wrap">

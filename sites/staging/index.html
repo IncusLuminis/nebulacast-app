@@ -2683,7 +2683,7 @@
     // Lazy-load iframes on first visit
     if (effectivePage === 'weather') {
       const ifr = document.getElementById('iframe-weather');
-      if (ifr && !ifr.dataset.loaded) { ifr.src = '/weather/'; ifr.dataset.loaded = '1'; }
+      if (ifr && !ifr.dataset.loaded) { ifr.src = '/weather/?embed=1'; ifr.dataset.loaded = '1'; }
     }
     if (effectivePage === 'helio') {
       const ifr = document.getElementById('iframe-helio');
