@@ -207,7 +207,7 @@
     .console-hero {
       background: rgba(14, 18, 28, 0.97);
       border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 10px 20px;
+      padding: 10px 9px;
       display: flex;
       align-items: stretch;
       gap: 1px;
@@ -219,7 +219,7 @@
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      padding: 6px 18px;
+      padding: 6px 11px;
       border-right: 1px solid rgba(255,255,255,0.06);
       gap: 4px;
       min-width: 0;
@@ -3146,7 +3146,7 @@
       const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
       return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
-    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:118px;flex-shrink:0">
+    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:100px;flex-shrink:0">
       <div class="hero-card-label">Kp NOW</div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
         <div style="display:flex;align-items:baseline;gap:6px">
@@ -3249,7 +3249,7 @@
         ? '<span style="color:rgba(255,255,255,0.22);font-size:9px"> ↓below</span>' : '';
     const moonRiseSet = (moonriseT||moonsetT)
       ? `<div style="font-size:9px;color:rgba(255,255,255,0.38);margin-top:2px">${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''  }${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>` : '';
-    const p4 = `<div class="hero-card" data-panel="sunmoon" style="min-width:110px;flex-shrink:0;align-items:center">
+    const p4 = `<div class="hero-card" data-panel="sunmoon" style="min-width:92px;flex-shrink:0;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Moon</div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <canvas id="nop-moon-canvas" width="72" height="72" style="flex-shrink:0;width:72px;height:72px"></canvas>
@@ -3266,12 +3266,12 @@
     const nqiVal     = activeNqi.value != null ? activeNqi.value.toFixed(1) : '—';
     const nqiCls     = activeNqi.class || 'poor';
     const nqiClr     = _nqiColor(nqiCls);
-    const p5 = `<div class="hero-card" data-panel="matrix" style="min-width:165px;flex-shrink:0">
+    const p5 = `<div class="hero-card" data-panel="matrix" style="min-width:130px;flex-shrink:0">
       <div class="hero-card-label" style="display:flex;align-items:center;gap:4px">Night Quality<button id="nqi-info-btn" class="nqi-info-btn" aria-label="How NQI is calculated" title="How it's calculated">i</button></div>
-      <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:4px">
+      <div style="flex:1;display:flex;align-items:center;gap:6px;margin-top:4px">
         <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px">
           <div style="display:flex;align-items:baseline;gap:3px">
-            <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr};font-variant-numeric:tabular-nums">${nqiVal}</span>
+            <span id="nop-nqi-val" style="font-size:28px;font-weight:700;line-height:1;color:${nqiClr};font-variant-numeric:tabular-nums">${nqiVal}</span>
             <span style="font-size:14px;color:rgba(255,255,255,0.55);font-weight:500">/10</span>
           </div>
           <span id="nop-nqi-lbl" style="font-size:14px;font-weight:700;line-height:1;color:${nqiClr};white-space:nowrap">${_nqiLabel(nqiCls)}</span>
@@ -3283,7 +3283,7 @@
     // ── Panel 6: Tonight (merged Best Window + summary) ──
     const bw = _nopBestWindow;
     const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '—';
-    const p6 = `<div class="hero-card" data-panel="window" style="flex:1;min-width:180px">
+    const p6 = `<div class="hero-card" data-panel="window" style="flex:1;min-width:145px">
       <div class="hero-card-label">Tonight</div>
       <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.65);margin-top:4px;white-space:nowrap">
         Best window: ${winStr}
@@ -3296,14 +3296,9 @@
     const fcTrend    = sw?.forecast?.trend || 'steady';
     const fcArrow    = fcTrend === 'rising' ? '↑' : fcTrend === 'falling' ? '↓' : '→';
     const gFc        = kpToGLive(kpFc);
-    const FC_G_LABELS  = { 1:'Minor', 2:'Moderate', 3:'Strong', 4:'Severe', 5:'Extreme' };
     const fcStatusCls  = gFc >= 3 ? 'storm' : gFc >= 1 ? 'elevated' : (kpFc != null && kpFc >= 4) ? 'active' : 'quiet';
     const fcStatusLbl  = { storm:'Storm Risk', elevated:'Elevated', active:'Active', quiet:'Quiet' }[fcStatusCls];
-    // Secondary info line: "G2 Moderate Storm Expected" or blank
-    const fcGLine = gFc > 0
-      ? `G${gFc} ${FC_G_LABELS[gFc]} Storm Expected`
-      : '';
-    const p7 = `<div class="hero-card" data-panel="helio" style="min-width:118px;flex-shrink:0">
+    const p7 = `<div class="hero-card" data-panel="helio" style="min-width:100px;flex-shrink:0">
       <div class="hero-card-label">FORECAST</div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
         <div style="display:flex;align-items:baseline;gap:6px">
@@ -3311,7 +3306,6 @@
           <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${fcArrow}</span>
         </div>
         <div><span class="sw-badge ${fcStatusCls}">${fcStatusLbl}</span></div>
-        ${fcGLine ? `<div style="font-size:9px;color:rgba(255,255,255,0.55)">${fcGLine}</div>` : ''}
         <div style="font-size:9px;color:rgba(255,255,255,0.4)">Max Kp · Next 24h</div>
       </div>
       <div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gFc,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
