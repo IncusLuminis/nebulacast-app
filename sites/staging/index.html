@@ -2545,6 +2545,20 @@
     _updateObsPanel();
   }
 
+  let statsInited = false;
+  function initStatsIfNeeded() {
+    if (statsInited) return;
+    statsInited = true;
+    const root = document.getElementById('stats-app-root');
+    if (!root) return;
+    import('/console/stats_page.js')
+      .then(m => m.initStatsPage(root))
+      .catch(e => {
+        console.error('[stats]', e);
+        root.innerHTML = '<p style="color:rgba(248,113,113,0.9);font-size:13px">Could not load Stats module.</p>';
+      });
+  }
+
   // ── Helio data is fetched directly in loadHero() via helio_now.json ──────
   // (HelioWidget.mount-based instance was removed; helio script tag kept for
   // the standalone /helio/ page which mounts it independently)
