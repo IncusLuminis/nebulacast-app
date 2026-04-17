@@ -42,14 +42,20 @@
 
 <script>
   // ✅ MUST exist before widget.js is imported
-  window.SKY_CONFIG = {
-    baseUrl: "/sky",
-    mountId: "skyMount",
-    lat: 52.2297,
-    lon: 21.0122,
-    datetimeISO: null
-  };
-  console.log("[sky] SKY_CONFIG:", window.SKY_CONFIG);
+  // Read observer location from URL params (lat, lon, tz) with Warsaw fallback.
+  (function() {
+    const p = new URLSearchParams(window.location.search);
+    const lat = parseFloat(p.get('lat') ?? '');
+    const lon = parseFloat(p.get('lon') ?? '');
+    const dt  = p.get('datetime') || null;
+    window.SKY_CONFIG = {
+      baseUrl:     '/sky',
+      mountId:     'skyMount',
+      lat:         (isFinite(lat) && lat >= -90  && lat <= 90)  ? lat : 52.2297,
+      lon:         (isFinite(lon) && lon >= -180 && lon <= 180) ? lon : 21.0122,
+      datetimeISO: dt,
+    };
+  })();
 </script>
 
 <script type="module">

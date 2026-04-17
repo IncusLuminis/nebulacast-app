@@ -13,6 +13,10 @@ const DEFAULT_STATE = {
     lon: 21.0122,
     tz: "Europe/Warsaw"
   },
+  time: {
+    mode: "live",        // "live" | "manual"
+    datetimeISO: null    // ISO string when mode === "manual", null = use wall clock
+  },
   profile: "default", // default|visual|broadband|planetary
   range: "today",     // today|48h|7d (TONIGHT|48H|7D in UI)
   source: "url"      // url|user|geolocate
@@ -26,6 +30,21 @@ const subscribers = new Set();
  */
 export function getState() {
   return JSON.parse(JSON.stringify(state));
+}
+
+/**
+ * Get unified observer context (location + effective time).
+ * Single source of truth for all components that need both.
+ */
+export function getObserverContext() {
+  const s = getState();
+  return {
+    location: s.location,
+    effectiveTime: {
+      mode: s.time?.mode ?? "live",
+      datetimeISO: s.time?.datetimeISO ?? null
+    }
+  };
 }
 
 /**
@@ -46,6 +65,13 @@ export function setState(partial, meta = {}) {
   }
   if (partial.source !== undefined) {
     state.source = partial.source;
+  }
+  if (partial.time !== undefined) {
+    state.time = { ...state.time, ...partial.time };
+    // Derive mode from presence of datetimeISO if not explicitly set
+    if (partial.time.mode === undefined) {
+      state.time.mode = state.time.datetimeISO ? "manual" : "live";
+    }
   }
   
   // Validate

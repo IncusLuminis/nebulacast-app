@@ -78,8 +78,15 @@ function getLocalHour(dateUtc, tz) {
 
 function formatLocalTime(dateUtc, tz) {
   if (!dateUtc) return "—";
-  const local = getLocalDate(dateUtc, tz);
-  return local.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  try {
+    return new Intl.DateTimeFormat([], {
+      hour: "2-digit", minute: "2-digit", hour12: false,
+      timeZone: tz || "UTC"
+    }).format(dateUtc);
+  } catch (_) {
+    const local = getLocalDate(dateUtc, tz);
+    return local.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
 }
 
 /**

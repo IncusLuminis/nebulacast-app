@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="./widgets/astro/astro.css?v=20260401a">
   <link rel="stylesheet" href="./widgets/sun_moon/sun_moon.css?v=20260401a">
   <link rel="stylesheet" href="./sky_integration.css?v=20260401a">
+  <script>if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.dataset.embed = '1';</script>
+  <style>html[data-embed='1'] #w-location { display: none !important; }</style>
 </head>
 <body>
   <div class="page-wrap">
@@ -129,7 +131,7 @@
   <script type="module">
     import { initState, getState, setState, subscribe } from "./core/state.js?v=20260328a";
     import { mountLocation } from "./widgets/location/location.js?v=20260328a";
-    import { mountWeather } from "./widgets/weather/weather.js?v=20260403a";
+    import { mountWeather } from "./widgets/weather/weather.js?v=20260417b";
     import { mountMap } from "./widgets/map/map.js?v=20260328a";
     import { mountSunMoon } from "./widgets/sun_moon/sun_moon.js?v=20260328a";
     import { mountAstro } from "./widgets/astro/astro.js?v=20260328a";

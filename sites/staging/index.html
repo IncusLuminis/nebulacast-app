@@ -1736,10 +1736,31 @@
 
     </div>
 
+    <!-- ── PAGE: WEATHER ── -->
+    <div id="page-weather" class="console-page" style="overflow:hidden">
+      <iframe id="iframe-weather" src="" frameborder="0"
+              style="width:100%;height:100%;border:none;display:block"
+              title="Weather"></iframe>
+    </div>
+
+    <!-- ── PAGE: HELIO (Space Weather) ── -->
+    <div id="page-helio" class="console-page" style="overflow:hidden">
+      <iframe id="iframe-helio" src="" frameborder="0"
+              style="width:100%;height:100%;border:none;display:block"
+              title="Space Weather"></iframe>
+    </div>
+
     <!-- ── PAGE: SKY ── -->
     <div id="page-sky" class="console-page">
       <div id="w-sky">
         <div id="skyMount"></div>
+        <!-- Origin notice: shown when object scores are not from current location -->
+        <div id="sky-origin-badge" style="display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
+             z-index:20;font-size:9px;color:rgba(255,180,60,0.8);letter-spacing:0.04em;
+             background:rgba(10,14,20,0.75);border:1px solid rgba(255,180,60,0.2);
+             border-radius:4px;padding:3px 10px;pointer-events:none;white-space:nowrap">
+          ⚠ Object scores from Warsaw · visual positions are location-correct
+        </div>
       </div>
     </div>
 
@@ -2416,6 +2437,49 @@
   initState();
   const storeApi = { getState, setState, subscribe };
 
+  // ── Utility: debounce ──────────────────────────────────
+  function _debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  // ── Utility: location key (for change detection) ───────
+  function _locKey(s) {
+    const loc = s?.location;
+    return loc ? `${loc.lat},${loc.lon}` : null;
+  }
+
+  // ── Data origin awareness ───────────────────────────────
+  // These match the pipeline constants used to bake static JSON files.
+  const _DEFAULT_SITE_LAT = 52.2297, _DEFAULT_SITE_LON = 21.0122;
+  const _DEFAULT_SITE_NAME = "Warsaw";
+
+  function _isDefaultSite(loc) {
+    if (!loc || typeof loc.lat !== 'number') return true; // no location = assume default
+    return Math.abs(loc.lat - _DEFAULT_SITE_LAT) < 0.05 &&
+           Math.abs(loc.lon - _DEFAULT_SITE_LON) < 0.05;
+  }
+
+  function _originNotice(siteName, dataLabel) {
+    const label = dataLabel || 'Data';
+    return `<div style="font-size:9px;color:rgba(255,180,60,0.7);letter-spacing:0.04em;
+                        padding:4px 8px;text-align:center;border-top:1px solid rgba(255,180,60,0.12);
+                        margin-top:4px">
+      ⚠ ${label} from ${siteName || _DEFAULT_SITE_NAME} (default site) · not yet location-aware
+    </div>`;
+  }
+
+  function _locationPlaceholder(label) {
+    return `<div style="padding:18px 12px;text-align:center;color:rgba(255,255,255,0.38);font-size:11px;line-height:1.5">
+      <div style="font-size:18px;margin-bottom:8px">📍</div>
+      <div style="font-weight:600;margin-bottom:4px">${label} — not available for this location</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.25)">
+        Data is computed for the default observer site (${_DEFAULT_SITE_NAME}).<br>
+        Location-aware ranking requires server-side ephemeris computation.
+      </div>
+    </div>`;
+  }
+
   // ── Topbar: Location ────────────────────────────────────
   const locationEl = document.getElementById("w-location");
   if (locationEl) mountLocation(locationEl, storeApi);
@@ -2455,30 +2519,39 @@
 
   // ── Observer Weather (lazy – inside Events tab) ─────────
   let obsInited = false;
-  function initObsIfNeeded() {
-    if (obsInited) return;
-    obsInited = true;
+
+  function _buildObsWeatherUrl() {
+    const loc = getState()?.location;
+    const p = new URLSearchParams({
+      lat:    String(loc?.lat    ?? _DEFAULT_SITE_LAT),
+      lon:    String(loc?.lon    ?? _DEFAULT_SITE_LON),
+      tz:     loc?.tz            ?? 'Europe/Warsaw',
+      bortle: '5',
+    });
+    return `/api/observer-weather?${p.toString()}`;
+  }
+
+  function _updateObsPanel() {
     const obsEl = document.getElementById('w-observer-weather');
-    if (obsEl && window.runObserverWeatherPanel) {
-      window.runObserverWeatherPanel(obsEl, { jsonUrl: '/data/observer_weather_now.json' });
+    if (!obsEl) return;
+    if (window.runObserverWeatherPanel) {
+      window.runObserverWeatherPanel(obsEl, { jsonUrl: _buildObsWeatherUrl() });
     }
   }
 
-  // ── Helio panels rendered from sw data in loadHero ────
+  function initObsIfNeeded() {
+    if (obsInited) return;
+    obsInited = true;
+    _updateObsPanel();
+  }
 
-  subscribe((newState) => {
-    const loc = newState?.location;
-    if (_helioInstance && loc) {
-      _helioInstance.updateLocation(
-        typeof loc.lat === 'number' ? loc.lat : undefined,
-        typeof loc.lon === 'number' ? loc.lon : undefined,
-        loc.name || undefined
-      );
-    }
-  });
+  // ── Helio data is fetched directly in loadHero() via helio_now.json ──────
+  // (HelioWidget.mount-based instance was removed; helio script tag kept for
+  // the standalone /helio/ page which mounts it independently)
 
   // ── Map (lazy iframe) ───────────────────────────────────
   let mapInited = false;
+  let _mapUnsub = null; // stored so we never register more than one listener
   function initMapIfNeeded() {
     if (mapInited) return;
     mapInited = true;
@@ -2497,7 +2570,8 @@
         iframe.contentWindow.postMessage({ type: "update-location", location: loc }, "*");
       }
     });
-    subscribe(() => {
+    if (_mapUnsub) _mapUnsub();
+    _mapUnsub = subscribe(() => {
       const loc = getState()?.location;
       if (loc && iframe.contentWindow && iframe.src) {
         iframe.contentWindow.postMessage({ type: "update-location", location: loc }, "*");
@@ -2587,33 +2661,38 @@
     try { window.__skyWidget.update(patch); } catch (_) {}
   }
 
-  subscribe(() => { if (skyInited) syncSkyFromState(); });
+  subscribe((s) => {
+    if (skyInited) syncSkyFromState();
+    // Update sky origin badge visibility
+    const skyBadge = document.getElementById('sky-origin-badge');
+    if (skyBadge) skyBadge.style.display = _isDefaultSite(s?.location) ? 'none' : '';
+  });
 
   // ── Nav rail page switching ─────────────────────────────
   const navItems     = document.querySelectorAll('.nav-item[data-page]');
   const consolePages = document.querySelectorAll('.console-page');
 
   function activatePage(pageId) {
-    // weather/helio live inside dashboard — map them there and scroll
-    const effectivePage = (pageId === 'weather' || pageId === 'helio') ? 'dashboard' : pageId;
+    const effectivePage = pageId;
 
     if (effectivePage === 'sky')    { initSkyIfNeeded().then(() => { syncSkyFromState(); setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 100); }); }
     if (effectivePage === 'map')    { initMapIfNeeded(); }
     if (effectivePage === 'events') { initObsIfNeeded(); }
-    if (effectivePage === 'stats')   { initStatsIfNeeded(); }
+    if (effectivePage === 'stats')  { initStatsIfNeeded(); }
+
+    // Lazy-load iframes on first visit
+    if (effectivePage === 'weather') {
+      const ifr = document.getElementById('iframe-weather');
+      if (ifr && !ifr.dataset.loaded) { ifr.src = '/weather/?embed=1'; ifr.dataset.loaded = '1'; }
+    }
+    if (effectivePage === 'helio') {
+      const ifr = document.getElementById('iframe-helio');
+      if (ifr && !ifr.dataset.loaded) { ifr.src = '/helio/'; ifr.dataset.loaded = '1'; }
+    }
 
     navItems.forEach(i => i.classList.remove('is-active'));
     document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('is-active');
     consolePages.forEach(p => p.classList.toggle('is-active', p.id === `page-${effectivePage}`));
-
-    if (pageId === 'weather') {
-      if (typeof _dbOpenPanel === 'function') _dbOpenPanel('weather');
-      else setTimeout(() => document.querySelector('.db-panel-weather')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    }
-    if (pageId === 'helio') {
-      if (typeof _dbOpenPanel === 'function') _dbOpenPanel('helio');
-      else setTimeout(() => document.querySelector('.db-panel-helio')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    }
 
     const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', showcase: 'Showcase', stats: 'Stats', settings: 'Settings' };
     document.title = `Nebulacast — ${titles[pageId] || pageId}`;
@@ -2678,7 +2757,14 @@
     return cls==='excellent'?'#4caf50':cls==='good'?'#8bc34a':cls==='usable'?'#ff9800':cls==='marginal'?'#f44336':'#9e3a3a';
   }
   function _nqiLabel(cls) { return cls ? cls.charAt(0).toUpperCase()+cls.slice(1) : '—'; }
-  function _nopFmtT(iso)   { try { return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}); } catch(_){return'—';} }
+  function _nopFmtT(iso, tz) {
+    try {
+      const opts = { hour: '2-digit', minute: '2-digit', hour12: false };
+      const _tz  = tz || getState()?.location?.tz;
+      if (_tz) opts.timeZone = _tz;
+      return new Date(iso).toLocaleTimeString([], opts);
+    } catch(_) { return '—'; }
+  }
 
   // Parse "2026-Mar-30 07:06Z" format from sun_moon.json
   function _parseSMTime(s) {
@@ -2895,10 +2981,14 @@
 
     let wx = null, sw = null, sunMoon = null;
     try {
+      const loc = getState()?.location;
+      const sunMoonUrl = _isDefaultSite(loc)
+        ? '/sky/data/sun_moon.json'
+        : `/api/sun-moon?lat=${loc.lat}&lon=${loc.lon}&days=7&step_min=10`;
       [wx, sw, sunMoon] = await Promise.all([
-        fetch('/data/observer_weather_now.json', {cache:'no-store'}).then(r => r.ok ? r.json() : null),
+        fetch(_buildObsWeatherUrl(), {cache:'no-store'}).then(r => r.ok ? r.json() : null),
         fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
-        fetch('/sky/data/sun_moon.json').then(r => r.ok ? r.json() : null),
+        fetch(sunMoonUrl, {cache:'no-store'}).then(r => r.ok ? r.json() : null),
       ]);
     } catch (_) {}
     _helioData = sw; // store for _dbRenderHelio
@@ -3064,8 +3154,10 @@
     // ── Panel 0: Date / Time ──
     {
       const _now = new Date();
-      const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-      const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const _obsTz   = getState()?.location?.tz || undefined;
+      const _tzOpts  = _obsTz ? { timeZone: _obsTz } : {};
+      const _dateStr = _now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', ..._tzOpts });
+      const _timeStr = _now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, ..._tzOpts });
 
       // ── Weather chips: icon · temp · cloud · pressure ──
       const _nowHourStr = _now.toISOString().slice(0, 13);
@@ -3101,16 +3193,18 @@
 
       const _dtChips = (_curH == null) ? '' :
         `<div style="display:flex;align-items:center;gap:4px;margin-top:5px;white-space:nowrap">
-          <span style="font-size:13px;line-height:1">${_dtIcon}</span>
+          <span style="font-size:11px;line-height:1;opacity:0.7">🌡</span>
           <span style="font-size:10px;font-weight:600;color:rgba(255,200,120,0.85)">${_dtTempStr}</span>
           <span style="font-size:9px;color:rgba(255,255,255,0.2)">·</span>
+          <span style="font-size:11px;line-height:1;opacity:0.7">${_dtIcon}</span>
           <span style="font-size:10px;font-weight:600;color:rgba(143,182,255,0.8)">${_dtCloudStr}</span>
           <span style="font-size:9px;color:rgba(255,255,255,0.2)">·</span>
+          <span style="font-size:10px;line-height:1;opacity:0.55;color:rgba(100,210,130,0.9);font-weight:700">hPa</span>
           <span style="font-size:10px;font-weight:600;color:rgba(100,210,130,0.8)">${_dtPresStr}</span>
         </div>`;
 
       var p0 = `<div class="hero-card" data-panel="weather" style="flex-shrink:0;align-items:center">
-        <div class="hero-card-label" style="align-self:flex-start">Date &amp; Time</div>
+        <div class="hero-card-label" style="align-self:flex-start">Local Date &amp; Time</div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
           <div id="nop-clock-date" style="font-size:20px;font-weight:600;line-height:1;color:#fff;letter-spacing:0.01em;white-space:nowrap">${_dateStr}</div>
           <div id="nop-clock-time" style="font-size:20px;font-weight:700;line-height:1;color:rgba(255,255,255,0.42);letter-spacing:-0.02em;white-space:nowrap;font-variant-numeric:tabular-nums">${_timeStr}</div>
@@ -3207,6 +3301,10 @@
     // New order: Date | Night Quality | Tonight | Moon | Kp | Sun | Alarm
     hero.innerHTML = [p0, p5, p6, p4, p1, p2, p7].join('');
 
+    // Sun/Moon data is now location-aware (/api/sun-moon for non-default locations).
+    // Remove any stale origin notice that may have been rendered previously.
+    document.getElementById('hero-origin-notice')?.remove();
+
     // Expose data for dashboard subpanel renderers
     window._dbHeroData = { wx, sw, sunMoon, sunsetT, sunriseT, moonriseT, moonsetT, moonIllum, moonWaxing };
 
@@ -3222,9 +3320,11 @@
       const dEl  = document.getElementById('nop-clock-date');
       const tEl  = document.getElementById('nop-clock-time');
       if (!dEl || !tEl) return;
-      const newDate = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      const _tz2    = getState()?.location?.tz || undefined;
+      const _tzO2   = _tz2 ? { timeZone: _tz2 } : {};
+      const newDate = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', ..._tzO2 });
       if (dEl.textContent !== newDate) { dEl.textContent = newDate; _nopClockFontSet = false; }
-      tEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      tEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, ..._tzO2 });
       // Scale time font-size so its rendered width matches the date width
       if (!_nopClockFontSet) {
         requestAnimationFrame(() => {
@@ -3266,7 +3366,15 @@
   function fmtBestTime(iso) {
     if (!iso) return '—';
     try {
-      return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      // best_time_local from /api/sky-ranking is already a local ISO string (no Z suffix) —
+      // just extract HH:MM directly to avoid any TZ re-interpretation.
+      const m = /T(\d{2}):(\d{2})/.exec(iso);
+      if (m) return `${m[1]}:${m[2]}`;
+      // Fallback for plain time strings or UTC timestamps
+      const tz = getState()?.location?.tz;
+      const opts = { hour: '2-digit', minute: '2-digit', hour12: false };
+      if (tz) opts.timeZone = tz;
+      return new Date(iso).toLocaleTimeString([], opts);
     } catch (_) { return '—'; }
   }
 
@@ -3274,8 +3382,15 @@
     const feedEl = document.getElementById('feed-list');
     if (!feedEl) return;
 
+    // Use dynamic /api/sky-ranking for non-default locations, static file for default (Warsaw).
     let data = null;
-    try { data = await fetch('/sky/data/ranking.json').then(r => r.ok ? r.json() : null); } catch (_) {}
+    try {
+      const loc = getState()?.location;
+      const rankingUrl = _isDefaultSite(loc)
+        ? '/sky/data/ranking.json'
+        : `/api/sky-ranking?lat=${loc.lat}&lon=${loc.lon}&tz=${encodeURIComponent(loc.tz || 'UTC')}`;
+      data = await fetch(rankingUrl, { cache: 'no-store' }).then(r => r.ok ? r.json() : null);
+    } catch (_) {}
 
     if (!data?.items?.length) {
       feedEl.innerHTML = '<div class="feed-loading">No targets available.</div>';
@@ -3328,11 +3443,19 @@
 
     feedEl.innerHTML = html;
 
-    // Click → open Sky page focused on that object
+    // Click → open Sky page and highlight the selected object
     feedEl.querySelectorAll('.feed-item').forEach(el => {
       el.addEventListener('click', () => {
+        const objectId = el.dataset.id || null;
         activatePage('sky');
-        // TODO: forward target ID to sky widget when supported
+        if (objectId) {
+          // Sky widget may need to initialise first; wait briefly then highlight
+          initSkyIfNeeded().then(() => {
+            setTimeout(() => {
+              try { window.__skyWidget?.update({ ui: { highlightId: objectId, highlightMs: 5000 } }); } catch (_) {}
+            }, 350);
+          });
+        }
       });
     });
   }
@@ -4269,7 +4392,11 @@
     const skyIframe = document.getElementById('db-sky-iframe');
     if (skyIframe && !skyIframe.getAttribute('src')) {
       skyIframe.addEventListener('load', () => _dbInjectAnchorCss(skyIframe));
-      skyIframe.src = '/sky/';
+      const _skyLoc = getState()?.location;
+      const _skyParams = (_skyLoc && isFinite(_skyLoc.lat) && isFinite(_skyLoc.lon))
+        ? `?lat=${_skyLoc.lat}&lon=${_skyLoc.lon}`
+        : '';
+      skyIframe.src = '/sky/' + _skyParams;
     }
     const mapIframe = document.getElementById('db-map-iframe');
     if (mapIframe && !mapIframe.getAttribute('src')) {
@@ -4345,6 +4472,37 @@
   loadCalendarEvents();
   loadNewsItems();
 
+  // ── Location-reactive reloads ──────────────────────────
+  // Hero and Observer Panel use /api/observer-weather (dynamic, location-aware).
+  // Ranking feed is still site-bound and shows a placeholder for non-Warsaw locations.
+  {
+    let _prevLocKey = _locKey(getState());
+
+    subscribe(_debounce((s) => {
+      const newKey = _locKey(s);
+      if (newKey === null || newKey === _prevLocKey) return;
+      _prevLocKey = newKey;
+      loadHero();
+      loadFeed();
+      // Observer Panel: re-run if already initialized
+      if (obsInited) _updateObsPanel();
+      // Dashboard sky iframe: update projection via same-origin contentWindow
+      try {
+        const _skyIf = document.getElementById('db-sky-iframe');
+        if (_skyIf?.contentWindow?.__skyWidget?.update) {
+          _skyIf.contentWindow.__skyWidget.update({ lat: s.location.lat, lon: s.location.lon });
+        }
+      } catch (_) {}
+      // Dashboard map iframe: send postMessage (same pattern as #mapIframe subscriber)
+      try {
+        const _mapIf = document.getElementById('db-map-iframe');
+        if (_mapIf?.contentWindow && _mapIf.src) {
+          _mapIf.contentWindow.postMessage({ type: 'update-location', location: s.location }, '*');
+        }
+      } catch (_) {}
+    }, 500));
+  }
+
   // ══════════════════════════════════════════════════════════
   //  SETTINGS PAGE
   // ══════════════════════════════════════════════════════════
@@ -4373,22 +4531,23 @@
     const APP_DEFAULT_LOC = { name: 'Warsaw', lat: 52.2297, lon: 21.0122, tz: 'Europe/Warsaw' };
 
     function refreshObserverContext() {
-      const loc = safeGet(STORAGE_LOCATION);
+      const loc = getState()?.location;
       const nameEl   = document.getElementById('stg-loc-name');
       const coordsEl = document.getElementById('stg-loc-coords');
       const tzEl     = document.getElementById('stg-loc-tz');
       if (!nameEl) return;
-      const src = (loc && loc.name) ? loc : null;
-      if (src) {
-        nameEl.textContent   = src.name;
-        coordsEl.textContent = `${src.lat?.toFixed(4)}°, ${src.lon?.toFixed(4)}°`;
-        tzEl.textContent     = src.tz || '—';
+      if (loc && typeof loc.lat === 'number') {
+        nameEl.textContent   = loc.name || `${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}`;
+        coordsEl.textContent = `${loc.lat.toFixed(4)}°, ${loc.lon.toFixed(4)}°`;
+        if (tzEl) tzEl.textContent = loc.tz || '—';
       } else {
         nameEl.textContent   = `${APP_DEFAULT_LOC.name} (default)`;
         coordsEl.textContent = `${APP_DEFAULT_LOC.lat}°, ${APP_DEFAULT_LOC.lon}°`;
-        tzEl.textContent     = APP_DEFAULT_LOC.tz;
+        if (tzEl) tzEl.textContent = APP_DEFAULT_LOC.tz;
       }
     }
+    // Keep settings in sync when location changes from the picker
+    subscribe(refreshObserverContext);
 
     // ── Read current profile + range ──────────────────────
     function getCurrentProfile() {
