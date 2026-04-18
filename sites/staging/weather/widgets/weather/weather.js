@@ -905,43 +905,45 @@ function _cloudPct(hour) {
   return v <= 1 ? Math.round(v * 100) : Math.round(v);
 }
 
-// True if this hour is observing-irrelevant: daytime or fully overcast (100% clouds)
-function isHourExcluded(hour) {
-  if (!hour) return false;
-  if (getSolarState(hour) === "day") return true;
-  if (_cloudPct(hour) >= 100) return true;
-  return false;
+// Daylight gate: sun above horizon → entire score = 0 (hard kill switch)
+function isHourDaytime(hour) {
+  return !!hour && getSolarState(hour) === "day";
 }
 
 function getHourScore(hour) {
   if (!hour) return 0;
-  // Daytime or 100% overcast → score = 0, excluded from night quality summary
-  if (isHourExcluded(hour)) return 0;
+  // Daylight gate: sun above horizon → score = 0 regardless of other metrics
+  if (isHourDaytime(hour)) return 0;
+
   const profile = getActiveProfile();
+  // Clouds=100% gate: atmosphere contribution = 0, but sky_darkness/dew_safety/stability still count
+  const clouds100 = _cloudPct(hour) >= 100;
 
   // Prefer pre-computed sentinel from Python backend (score_breakdown_by_profile[profile])
-  const profBd = hour.score_breakdown_by_profile?.[profile];
-  if (Array.isArray(profBd)) {
-    const sentinel = profBd.find(b => b._final_score != null);
-    if (sentinel != null) return sentinel._final_score;
+  // When clouds=100%, we must recompute without atmosphere — can't use the pre-baked sentinel
+  if (!clouds100) {
+    const profBd = hour.score_breakdown_by_profile?.[profile];
+    if (Array.isArray(profBd)) {
+      const sentinel = profBd.find(b => b._final_score != null);
+      if (sentinel != null) return sentinel._final_score;
+    }
   }
 
   // v5: recompute from the 4 category scores stored on each hour
   if (
-    hour.atmosphere_score != null &&
     hour.sky_darkness_score != null &&
-    hour.dew_safety_score != null &&
-    hour.stability_score != null
+    hour.dew_safety_score   != null &&
+    hour.stability_score    != null
   ) {
     const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
     const skyScore = hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score;
-    const atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
-    // Round each component first so the sum matches the displayed per-category points
+    // atmosphere zeroed when 100% clouds; otherwise use stored score (or 0 if missing)
+    const atmScore = clouds100 ? 0 : (hour.atmosphere_score ?? 0);
     const raw =
-      Math.round(atmW  * hour.atmosphere_score)  +
-      Math.round(skyW  * skyScore)               +
-      Math.round(dewW  * hour.dew_safety_score)  +
-      Math.round(stabW * hour.stability_score);
+      Math.round(w.atmosphere   * atmScore)           +
+      Math.round(w.sky_darkness * skyScore)           +
+      Math.round(w.dew_safety   * hour.dew_safety_score) +
+      Math.round(w.stability    * hour.stability_score);
     return Math.max(0, Math.min(100, raw));
   }
 
@@ -1123,8 +1125,8 @@ function scoreLabelText(sc, score) {
 // Card renderer: Observing mode
 function renderObservingCard(hour, hourIdx, isCurrent = false) {
   const timeStr = formatTime(hour.time);
-  const excluded = isHourExcluded(hour);
-  const score = excluded ? null : formatScore(getHourScore(hour));
+  const isDaytime = isHourDaytime(hour);
+  const score = isDaytime ? null : formatScore(getHourScore(hour));
   const sc = score != null ? scoreClass(score) : "muted";
   const gateStatus = typeof hour.gate === "string" ? hour.gate : ((hour.gate && hour.gate.status) ? hour.gate.status : "OPEN");
   const solarCls = getSolarState(hour);
@@ -1135,8 +1137,8 @@ function renderObservingCard(hour, hourIdx, isCurrent = false) {
   const visKm = formatVisibility(hour.visibility_m);
   const prob = formatPrecipProb(hour.precip_prob);
 
-  // Label for excluded hours
-  const excludedLabel = solarCls === "day" ? "Daytime" : "Overcast";
+  // Label for daytime hours
+  const excludedLabel = "Daytime";
 
   const paramLines = [
     `☁️ ${cloud}%`,
@@ -1156,7 +1158,7 @@ function renderObservingCard(hour, hourIdx, isCurrent = false) {
       </div>
       ${renderConditionMarkers(hour)}
       <div class="obs-score" style="color:var(--${sc})">${score != null ? score : "—"}</div>
-      <div class="score-label ${sc}">${excluded ? excludedLabel : scoreLabelText(sc, score)}</div>
+      <div class="score-label ${sc}">${isDaytime ? excludedLabel : scoreLabelText(sc, score)}</div>
       ${seingIndicator(hour)}
       <div class="hour-params">
         ${paramLines.map(line => `<div class="b">${escapeHtml(line)}</div>`).join("")}
@@ -1168,8 +1170,8 @@ function renderObservingCard(hour, hourIdx, isCurrent = false) {
 // Card renderer: Weather mode
 function renderWeatherCard(hour, hourIdx, isCurrent = false) {
   const timeStr = formatTime(hour.time);
-  const excluded = isHourExcluded(hour);
-  const score = excluded ? null : formatScore(getHourScore(hour));
+  const isDaytime = isHourDaytime(hour);
+  const score = isDaytime ? null : formatScore(getHourScore(hour));
   const sc = score != null ? scoreClass(score) : "muted";
   const gateStatus = typeof hour.gate === "string" ? hour.gate : ((hour.gate && hour.gate.status) ? hour.gate.status : "OPEN");
   const solarCls = getSolarState(hour);
@@ -1203,7 +1205,7 @@ function renderWeatherCard(hour, hourIdx, isCurrent = false) {
       <div class="hour-params">
         ${paramLines.map(line => `<div class="b">${escapeHtml(line)}</div>`).join("")}
       </div>
-      <div class="obs-score-small" style="color:var(--${sc})">${excluded ? (solarCls === "day" ? "Daytime" : "Overcast") : "Obs: " + score}</div>
+      <div class="obs-score-small" style="color:var(--${sc})">${isDaytime ? "Daytime" : "Obs: " + score}</div>
     </div>
   `;
 }
