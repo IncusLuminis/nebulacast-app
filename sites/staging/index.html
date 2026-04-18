@@ -3064,16 +3064,39 @@
     if (sunMoon?.frames?.length) {
       const frames = sunMoon.frames;
       const now = Date.now();
-      const scanStart = now - 8 * 3600e3, scanEnd = now + 32 * 3600e3;
 
-      for (let i = 1; i < frames.length; i++) {
-        const t = _parseSMTime(frames[i].t_utc);
-        if (!t) continue;
-        const ms = t.getTime();
-        if (ms < scanStart || ms > scanEnd) continue;
-        const prevS = frames[i-1].sun?.alt_deg ?? 0, currS = frames[i].sun?.alt_deg ?? 0;
-        if (prevS > 0 && currS <= 0 && !sunsetT)               sunsetT  = t.toISOString();
-        if (prevS <= 0 && currS > 0 && sunsetT && !sunriseT)   sunriseT = t.toISOString();
+      // Use SunCalcLib for exact sunrise/sunset/transit (same source as Sun & Moon tab)
+      // — altitude sign-change from 10-min frames can be off by up to ±10 min
+      const _loc = getState()?.location;
+      const _SC  = window.SunCalc;
+      if (_SC && _loc?.lat != null && _loc?.lon != null) {
+        // Today's times in the observer's timezone
+        const todayLocal = new Intl.DateTimeFormat('en-CA', { timeZone: _loc.tz || 'UTC',
+          year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+        const todayDate = new Date(todayLocal + 'T12:00:00Z'); // noon UTC as date seed
+        const t0 = _SC.getTimes(todayDate, _loc.lat, _loc.lon);
+        // Tomorrow's times to cover the next night
+        const tomorrowDate = new Date(todayDate.getTime() + 86400e3);
+        const t1 = _SC.getTimes(tomorrowDate, _loc.lat, _loc.lon);
+
+        // Pick sunset = today's or tomorrow's depending on which is in the future
+        const nowMs = Date.now();
+        const chosenSunset  = t0.sunset?.getTime()  > nowMs - 3600e3 ? t0.sunset  : t1.sunset;
+        const chosenSunrise = t0.sunrise?.getTime() > chosenSunset?.getTime() ? t0.sunrise : t1.sunrise;
+        if (chosenSunset  instanceof Date && !isNaN(chosenSunset))  sunsetT  = chosenSunset.toISOString();
+        if (chosenSunrise instanceof Date && !isNaN(chosenSunrise)) sunriseT = chosenSunrise.toISOString();
+      } else {
+        // Fallback: altitude sign-change (±10 min precision)
+        const scanStart = now - 8 * 3600e3, scanEnd = now + 32 * 3600e3;
+        for (let i = 1; i < frames.length; i++) {
+          const t = _parseSMTime(frames[i].t_utc);
+          if (!t) continue;
+          const ms = t.getTime();
+          if (ms < scanStart || ms > scanEnd) continue;
+          const prevS = frames[i-1].sun?.alt_deg ?? 0, currS = frames[i].sun?.alt_deg ?? 0;
+          if (prevS > 0 && currS <= 0 && !sunsetT)             sunsetT  = t.toISOString();
+          if (prevS <= 0 && currS > 0 && sunsetT && !sunriseT) sunriseT = t.toISOString();
+        }
       }
       // Moon crossings around tonight
       const nightS = sunsetT  ? new Date(sunsetT).getTime()  - 2*3600e3 : now;

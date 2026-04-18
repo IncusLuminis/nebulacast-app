@@ -1962,23 +1962,44 @@ function parseSunMoonTimeUTC(t) {
   return new Date(Date.UTC(+m[1], _SM_MONTHS[m[2]], +m[3], +m[4], +m[5]));
 }
 
-function computeSunMoonEvents(frames) {
+// Compute moon rise/set events from sun_moon.json frames via altitude interpolation.
+// Moon events use Python-ephemeris data (more accurate than SunCalc for the moon).
+function computeMoonEvents(frames) {
   const events = [];
   for (let i = 1; i < frames.length; i++) {
-    for (const body of ["sun", "moon"]) {
-      const pa = frames[i - 1][body].alt_deg;
-      const ca = frames[i][body].alt_deg;
-      if (pa === ca || pa * ca >= 0) continue; // no sign change
-      const frac = Math.abs(pa) / (Math.abs(pa) + Math.abs(ca));
-      const t0 = parseSunMoonTimeUTC(frames[i - 1].t_utc);
-      const t1 = parseSunMoonTimeUTC(frames[i].t_utc);
-      if (!t0 || !t1) continue;
-      const exactMs = t0.getTime() + (t1.getTime() - t0.getTime()) * frac;
-      const kind = pa < 0
-        ? (body === "sun" ? "sunrise" : "moonrise")
-        : (body === "sun" ? "sunset"  : "moonset");
-      events.push({ kind, ms: exactMs });
-    }
+    const pa = frames[i - 1].moon?.alt_deg;
+    const ca = frames[i].moon?.alt_deg;
+    if (pa == null || ca == null || pa === ca || pa * ca >= 0) continue;
+    const frac = Math.abs(pa) / (Math.abs(pa) + Math.abs(ca));
+    const t0 = parseSunMoonTimeUTC(frames[i - 1].t_utc);
+    const t1 = parseSunMoonTimeUTC(frames[i].t_utc);
+    if (!t0 || !t1) continue;
+    const exactMs = t0.getTime() + (t1.getTime() - t0.getTime()) * frac;
+    events.push({ kind: pa < 0 ? "moonrise" : "moonset", ms: exactMs });
+  }
+  return events;
+}
+
+// Compute sun rise/set/transit events using SunCalcLib for exact times.
+// This matches the Sun & Moon widget (sun_moon.js) which also uses SunCalcLib.getTimes().
+function computeSunEventsFromSunCalc(loc, windowDays) {
+  const SC = window.SunCalc;
+  if (!SC || !loc?.lat || !loc?.lon) return [];
+  const events = [];
+  const tz = loc.tz || "UTC";
+  const nowMs = Date.now();
+  // Compute for today + next `windowDays` days (cover the full sun_moon.json window)
+  for (let d = 0; d <= (windowDays || 7); d++) {
+    const dateMs = nowMs + d * 86400e3;
+    // Resolve calendar date in the observer's timezone (avoids day-boundary errors)
+    const localDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(new Date(dateMs));
+    const seed = new Date(localDate + "T12:00:00Z"); // local noon as seed
+    const t = SC.getTimes(seed, loc.lat, loc.lon);
+    if (t.sunrise instanceof Date && !isNaN(t.sunrise)) events.push({ kind: "sunrise",   ms: t.sunrise.getTime() });
+    if (t.sunset  instanceof Date && !isNaN(t.sunset))  events.push({ kind: "sunset",    ms: t.sunset.getTime() });
+    if (t.solarNoon instanceof Date && !isNaN(t.solarNoon)) events.push({ kind: "solarNoon", ms: t.solarNoon.getTime() });
   }
   return events;
 }
@@ -1994,7 +2015,10 @@ async function fetchSunMoonEvents(loc) {
     const res = await fetch(url);
     if (!res.ok) { sunMoonEventsCache = []; return; }
     const data = await res.json();
-    sunMoonEventsCache = computeSunMoonEvents(data.frames || []);
+    // Sun events: SunCalcLib (exact, matches Sun & Moon tab) — moon: Python ephemeris frames
+    const moonEvts = computeMoonEvents(data.frames || []);
+    const sunEvts  = computeSunEventsFromSunCalc(loc, 7);
+    sunMoonEventsCache = [...sunEvts, ...moonEvts];
   } catch (e) {
     console.warn("[weather] sun_moon load failed:", e.message);
     sunMoonEventsCache = [];
