@@ -3057,7 +3057,9 @@
 
     // ── Sun/moon crossings from sun_moon.json ──
     let sunsetT = null, sunriseT = null, moonriseT = null, moonsetT = null;
-    let moonIllum = wx?.moon?.illumination_percent ?? 0, moonWaxing = true;
+    // moon illumination: sun_moon.json is the authoritative source (Python ephemeris);
+    // observer_weather is a coarser fallback only when sun_moon.json is unavailable
+    let moonIllum = 0, moonWaxing = true;
 
     if (sunMoon?.frames?.length) {
       const frames = sunMoon.frames;
@@ -3093,8 +3095,12 @@
         if (d < minD) { minD = d; closest = f; }
       }
       if (closest?.moon) {
-        if (!moonIllum) moonIllum = closest.moon.illum_pct ?? 0;
+        // Prefer sun_moon.json — always more precise than observer_weather moon
+        moonIllum = closest.moon.illum_pct ?? wx?.moon?.illumination_percent ?? 0;
         moonWaxing = closest.moon.waxing !== false; // default true
+      } else {
+        // Fallback when sun_moon.json unavailable
+        moonIllum = wx?.moon?.illumination_percent ?? 0;
       }
     }
 
