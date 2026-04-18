@@ -898,8 +898,25 @@ const V5_CATEGORY_WEIGHTS = {
   planetary: { atmosphere:0.20, sky_darkness:0.20, dew_safety:0.10, stability:0.50 },
 };
 
+// Normalize cloud_total to 0-100 regardless of whether stored as fraction (0-1) or percent (0-100)
+function _cloudPct(hour) {
+  const v = hour?.cloud_total;
+  if (v == null) return 0;
+  return v <= 1 ? Math.round(v * 100) : Math.round(v);
+}
+
+// True if this hour is observing-irrelevant: daytime or fully overcast (100% clouds)
+function isHourExcluded(hour) {
+  if (!hour) return false;
+  if (getSolarState(hour) === "day") return true;
+  if (_cloudPct(hour) >= 100) return true;
+  return false;
+}
+
 function getHourScore(hour) {
   if (!hour) return 0;
+  // Daytime or 100% overcast → score = 0, excluded from night quality summary
+  if (isHourExcluded(hour)) return 0;
   const profile = getActiveProfile();
 
   // Prefer pre-computed sentinel from Python backend (score_breakdown_by_profile[profile])
@@ -1106,8 +1123,9 @@ function scoreLabelText(sc, score) {
 // Card renderer: Observing mode
 function renderObservingCard(hour, hourIdx, isCurrent = false) {
   const timeStr = formatTime(hour.time);
-  const score = formatScore(getHourScore(hour));
-  const sc = scoreClass(score);
+  const excluded = isHourExcluded(hour);
+  const score = excluded ? null : formatScore(getHourScore(hour));
+  const sc = score != null ? scoreClass(score) : "muted";
   const gateStatus = typeof hour.gate === "string" ? hour.gate : ((hour.gate && hour.gate.status) ? hour.gate.status : "OPEN");
   const solarCls = getSolarState(hour);
 
@@ -1116,6 +1134,9 @@ function renderObservingCard(hour, hourIdx, isCurrent = false) {
   const wind = formatWind(hour.wind_m_s);
   const visKm = formatVisibility(hour.visibility_m);
   const prob = formatPrecipProb(hour.precip_prob);
+
+  // Label for excluded hours
+  const excludedLabel = solarCls === "day" ? "Daytime" : "Overcast";
 
   const paramLines = [
     `☁️ ${cloud}%`,
@@ -1134,8 +1155,8 @@ function renderObservingCard(hour, hourIdx, isCurrent = false) {
         ${renderCelestialBadges(hour)}
       </div>
       ${renderConditionMarkers(hour)}
-      <div class="obs-score" style="color:var(--${sc})">${score}</div>
-      <div class="score-label ${sc}">${scoreLabelText(sc, score)}</div>
+      <div class="obs-score" style="color:var(--${sc})">${score != null ? score : "—"}</div>
+      <div class="score-label ${sc}">${excluded ? excludedLabel : scoreLabelText(sc, score)}</div>
       ${seingIndicator(hour)}
       <div class="hour-params">
         ${paramLines.map(line => `<div class="b">${escapeHtml(line)}</div>`).join("")}
@@ -1147,8 +1168,9 @@ function renderObservingCard(hour, hourIdx, isCurrent = false) {
 // Card renderer: Weather mode
 function renderWeatherCard(hour, hourIdx, isCurrent = false) {
   const timeStr = formatTime(hour.time);
-  const score = formatScore(getHourScore(hour));
-  const sc = scoreClass(score);
+  const excluded = isHourExcluded(hour);
+  const score = excluded ? null : formatScore(getHourScore(hour));
+  const sc = score != null ? scoreClass(score) : "muted";
   const gateStatus = typeof hour.gate === "string" ? hour.gate : ((hour.gate && hour.gate.status) ? hour.gate.status : "OPEN");
   const solarCls = getSolarState(hour);
 
@@ -1181,7 +1203,7 @@ function renderWeatherCard(hour, hourIdx, isCurrent = false) {
       <div class="hour-params">
         ${paramLines.map(line => `<div class="b">${escapeHtml(line)}</div>`).join("")}
       </div>
-      <div class="obs-score-small" style="color:var(--${sc})">Obs: ${score}</div>
+      <div class="obs-score-small" style="color:var(--${sc})">${excluded ? (solarCls === "day" ? "Daytime" : "Overcast") : "Obs: " + score}</div>
     </div>
   `;
 }
@@ -3727,7 +3749,7 @@ function ensureFbStyles() {
     // Observing mode card elements (#102)
     '.obs-score{font-size:27px;font-weight:950;line-height:1;margin-top:9px}',
     '.score-label{font-size:10px;font-weight:700;letter-spacing:.06em;margin-top:2px}',
-    '.score-label.good{color:#4ade80}.score-label.mid{color:#fbbf24}.score-label.bad{color:#f87171}',
+    '.score-label.good{color:#4ade80}.score-label.mid{color:#fbbf24}.score-label.bad{color:#f87171}.score-label.muted{color:rgba(255,255,255,0.3)}',
     '.marginal-badge{font-size:10px;font-weight:700;color:#fbbf24;display:block;margin-top:4px}',
     // Seeing indicator (#102)
     '.seeing-ind{font-size:12px;margin-top:6px;color:var(--muted)}',
