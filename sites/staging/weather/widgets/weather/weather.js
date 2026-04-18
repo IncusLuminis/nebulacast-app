@@ -908,15 +908,14 @@ function _cloudPct(hour) {
 function getHourScore(hour) {
   if (!hour) return 0;
 
-  const profile  = getActiveProfile();
-  const daytime  = getSolarState(hour) === "day";   // sky_darkness gate → zeroed
-  const clouds100 = _cloudPct(hour) >= 100;          // atmosphere gate  → zeroed
+  const profile = getActiveProfile();
+  // Daylight gate: sun above horizon → sky_darkness = 0.
+  // The backend already computes atmosphere/dew/stability correctly for any cloud type,
+  // so we trust those scores and only override sky_darkness on our side.
+  const daytime = getSolarState(hour) === "day";
 
-  // When any gate is active we must recompute — can't use the pre-baked backend sentinel
-  const needsRecompute = daytime || clouds100;
-
-  if (!needsRecompute) {
-    // Prefer pre-computed sentinel from Python backend
+  if (!daytime) {
+    // No gates active — prefer pre-computed sentinel from Python backend
     const profBd = hour.score_breakdown_by_profile?.[profile];
     if (Array.isArray(profBd)) {
       const sentinel = profBd.find(b => b._final_score != null);
@@ -924,15 +923,15 @@ function getHourScore(hour) {
     }
   }
 
-  // v5: recompute from the 4 category scores, applying gates
+  // v5: recompute from the 4 category scores, applying daylight gate to sky_darkness
   if (
     hour.sky_darkness_score != null &&
     hour.dew_safety_score   != null &&
     hour.stability_score    != null
   ) {
     const w        = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
-    const skyScore = daytime   ? 0 : (hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score);
-    const atmScore = clouds100 ? 0 : (hour.atmosphere_score ?? 0);
+    const skyScore = daytime ? 0 : (hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score);
+    const atmScore = hour.atmosphere_score ?? 0;
     const raw =
       Math.round(w.atmosphere   * atmScore)              +
       Math.round(w.sky_darkness * skyScore)              +
@@ -4021,8 +4020,15 @@ function renderHourInspector(hourIdx, overrideEls) {
   // hiBd is already prioritized correctly (v5 score_breakdown preferred, computed above at line ~4077)
   const bdCats  = (hiBd && Array.isArray(hiBd.categories)) ? hiBd.categories : [];
 
-  // Compute category scores for limiting factor detection
-  const catScores = CATS.map(c => ({ key: c.key, bdKey: c.bdKey || c.key.replace("_score",""), label: c.label, ico: c.ico, score: hour[c.key] ?? null }));
+  // Compute category scores for limiting factor detection, applying frontend gates
+  const _hiDaytime = getSolarState(hour) === "day";
+  const catScores = CATS.map(c => {
+    const bdKey = c.bdKey || c.key.replace("_score","");
+    let score = hour[c.key] ?? null;
+    // Daylight gate: zero sky_darkness when sun is above horizon
+    if (_hiDaytime && bdKey === "sky_darkness") score = 0;
+    return { key: c.key, bdKey, label: c.label, ico: c.ico, score };
+  });
   const validScores = catScores.filter(c => c.score != null);
   const minScore  = validScores.length ? Math.min(...validScores.map(c => c.score)) : null;
   const maxScore  = validScores.length ? Math.max(...validScores.map(c => c.score)) : null;
@@ -4051,8 +4057,8 @@ function renderHourInspector(hourIdx, overrideEls) {
     const limiting  = isLimiting(cat);
     const panelId   = idPrefix + "hi-cat-" + cat.bdKey;
 
-    // Per-category gate flags from Python
-    const catClosed = (cat.bdKey === 'sky_darkness' && hour.sky_cat_closed)
+    // Per-category gate flags: from Python backend, or derived on frontend
+    const catClosed = (cat.bdKey === 'sky_darkness' && (_hiDaytime || hour.sky_cat_closed))
                    || (cat.bdKey === 'atmosphere'   && hour.atm_cat_closed);
 
     // Get params from breakdown or fallback
