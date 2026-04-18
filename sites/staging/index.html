@@ -3135,6 +3135,15 @@
       if (v == null || v < 5) return 0;
       return v < 6 ? 1 : v < 7 ? 2 : v < 8 ? 3 : v < 9 ? 4 : 5;
     }
+    // Colour the Kp number by level: quiet→white, G1→green, G2→yellow, G3→orange, G4-5→red
+    function kpColor(v) {
+      if (v == null)  return 'rgba(255,255,255,0.35)';
+      if (v >= 8)     return '#e05c5c';
+      if (v >= 7)     return '#e0a84a';
+      if (v >= 6)     return '#d4cc5c';
+      if (v >= 5)     return '#5cce8c';
+      return '#fff';
+    }
     const gNowLive     = kpToGLive(kp);
     const nowLiveStatus = gNowLive >= 3 ? 'storm' : gNowLive >= 1 ? 'elevated' : (kp != null && kp >= 4) ? 'active' : 'quiet';
     const nowLiveLabel  = { storm:'Storm', elevated:'Elevated', active:'Active', quiet:'Quiet' }[nowLiveStatus];
@@ -3150,7 +3159,7 @@
       <div class="hero-card-label">Kp NOW</div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
         <div style="display:flex;align-items:baseline;gap:6px">
-          <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
+          <span style="font-size:38px;font-weight:700;line-height:1;color:${kpColor(kp)}">${kp!=null?kp.toFixed(1):'—'}</span>
         </div>
         <div><span class="sw-badge ${nowLiveStatus}">${nowLiveLabel}</span></div>
         <div style="font-size:9px;color:rgba(255,255,255,0.55)">Live 3h avg</div>
@@ -3302,7 +3311,7 @@
       <div class="hero-card-label">FORECAST</div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
         <div style="display:flex;align-items:baseline;gap:6px">
-          <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kpFc!=null?kpFc.toFixed(1):'—'}</span>
+          <span style="font-size:38px;font-weight:700;line-height:1;color:${kpColor(kpFc)}">${kpFc!=null?kpFc.toFixed(1):'—'}</span>
           <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${fcArrow}</span>
         </div>
         <div><span class="sw-badge ${fcStatusCls}">${fcStatusLbl}</span></div>
