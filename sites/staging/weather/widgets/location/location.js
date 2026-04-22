@@ -113,6 +113,38 @@ async function lookupTimezone(lat, lon, country) {
 }
 
 /**
+ * Normalize results from Nominatim format
+ */
+function normalizeNominatim(data) {
+  return data.map(item => ({
+    name: item.name || item.display_name?.split(',')[0] || 'Unknown',
+    country: item.address?.country || item.country || '',
+    admin1: item.address?.state || item.admin1 || '',
+    lat: parseFloat(item.lat) || 0,
+    lon: parseFloat(item.lon) || 0,
+    tz: item.tz || item.timezone || ''
+  })).filter(item => item.lat !== 0 && item.lon !== 0).slice(0, 6);
+}
+
+/**
+ * Nominatim fallback search (used when /api/geocode is unavailable)
+ */
+async function searchNominatim(q) {
+  try {
+    const url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(q) +
+      "&format=json&limit=6&addressdetails=1&accept-language=en";
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      return normalizeNominatim(data);
+    }
+  } catch (e) {
+    console.warn("Nominatim fallback failed:", e);
+  }
+  return [];
+}
+
+/**
  * Search for cities via geocode API
  */
 async function searchGeocode(q) {
@@ -131,15 +163,13 @@ async function searchGeocode(q) {
         tz: item.tz || item.timezone || ''
       })).filter(item => item.lat !== 0 && item.lon !== 0).slice(0, 6);
     }
-    if (res.status === 404) {
-      apiAvailable = false;
-      return [];
-    }
-    throw new Error("HTTP " + res.status);
-  } catch (e) {
-    console.warn("Geocode failed:", e);
+    // API unavailable (static server / dev) — fall back to Nominatim
     apiAvailable = false;
-    return [];
+    return await searchNominatim(q);
+  } catch (e) {
+    console.warn("Geocode failed, falling back to Nominatim:", e);
+    apiAvailable = false;
+    return await searchNominatim(q);
   }
 }
 
@@ -376,7 +406,19 @@ async function useMyLocation(elements) {
         const revGeoPromise = fetch(API_REVGEO + "?lat=" + lat + "&lon=" + lon)
           .then(res => res.ok ? res.json() : null)
           .then(data => data?.name || null)
-          .catch(() => null);
+          .catch(() => null)
+          .then(async name => {
+            if (name) return name;
+            // Fallback to Nominatim reverse geocode
+            try {
+              const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);
+              if (r.ok) {
+                const d = await r.json();
+                return d.address?.city || d.address?.town || d.address?.village || d.name || null;
+              }
+            } catch (_) {}
+            return null;
+          });
         
         const tzPromise = lookupTimezone(lat, lon, "").catch(() => "UTC");
         
