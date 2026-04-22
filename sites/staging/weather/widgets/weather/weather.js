@@ -898,33 +898,45 @@ const V5_CATEGORY_WEIGHTS = {
   planetary: { atmosphere:0.20, sky_darkness:0.20, dew_safety:0.10, stability:0.50 },
 };
 
+// Normalize cloud_total to 0-100 regardless of whether stored as fraction (0-1) or percent (0-100)
+function _cloudPct(hour) {
+  const v = hour?.cloud_total;
+  if (v == null) return 0;
+  return v <= 1 ? Math.round(v * 100) : Math.round(v);
+}
+
 function getHourScore(hour) {
   if (!hour) return 0;
-  const profile = getActiveProfile();
 
-  // Prefer pre-computed sentinel from Python backend (score_breakdown_by_profile[profile])
-  const profBd = hour.score_breakdown_by_profile?.[profile];
-  if (Array.isArray(profBd)) {
-    const sentinel = profBd.find(b => b._final_score != null);
-    if (sentinel != null) return sentinel._final_score;
+  const profile = getActiveProfile();
+  // Daylight gate: sun above horizon → sky_darkness = 0.
+  // The backend already computes atmosphere/dew/stability correctly for any cloud type,
+  // so we trust those scores and only override sky_darkness on our side.
+  const daytime = getSolarState(hour) === "day";
+
+  if (!daytime) {
+    // No gates active — prefer pre-computed sentinel from Python backend
+    const profBd = hour.score_breakdown_by_profile?.[profile];
+    if (Array.isArray(profBd)) {
+      const sentinel = profBd.find(b => b._final_score != null);
+      if (sentinel != null) return sentinel._final_score;
+    }
   }
 
-  // v5: recompute from the 4 category scores stored on each hour
+  // v5: recompute from the 4 category scores, applying daylight gate to sky_darkness
   if (
-    hour.atmosphere_score != null &&
     hour.sky_darkness_score != null &&
-    hour.dew_safety_score != null &&
-    hour.stability_score != null
+    hour.dew_safety_score   != null &&
+    hour.stability_score    != null
   ) {
-    const w = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
-    const skyScore = hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score;
-    const atmW = w.atmosphere, skyW = w.sky_darkness, dewW = w.dew_safety, stabW = w.stability;
-    // Round each component first so the sum matches the displayed per-category points
+    const w        = V5_CATEGORY_WEIGHTS[profile] || V5_CATEGORY_WEIGHTS.balanced;
+    const skyScore = daytime ? 0 : (hour.sky_darkness_score_by_profile?.[profile] ?? hour.sky_darkness_score);
+    const atmScore = hour.atmosphere_score ?? 0;
     const raw =
-      Math.round(atmW  * hour.atmosphere_score)  +
-      Math.round(skyW  * skyScore)               +
-      Math.round(dewW  * hour.dew_safety_score)  +
-      Math.round(stabW * hour.stability_score);
+      Math.round(w.atmosphere   * atmScore)              +
+      Math.round(w.sky_darkness * skyScore)              +
+      Math.round(w.dew_safety   * hour.dew_safety_score) +
+      Math.round(w.stability    * hour.stability_score);
     return Math.max(0, Math.min(100, raw));
   }
 
@@ -1950,23 +1962,44 @@ function parseSunMoonTimeUTC(t) {
   return new Date(Date.UTC(+m[1], _SM_MONTHS[m[2]], +m[3], +m[4], +m[5]));
 }
 
-function computeSunMoonEvents(frames) {
+// Compute moon rise/set events from sun_moon.json frames via altitude interpolation.
+// Moon events use Python-ephemeris data (more accurate than SunCalc for the moon).
+function computeMoonEvents(frames) {
   const events = [];
   for (let i = 1; i < frames.length; i++) {
-    for (const body of ["sun", "moon"]) {
-      const pa = frames[i - 1][body].alt_deg;
-      const ca = frames[i][body].alt_deg;
-      if (pa === ca || pa * ca >= 0) continue; // no sign change
-      const frac = Math.abs(pa) / (Math.abs(pa) + Math.abs(ca));
-      const t0 = parseSunMoonTimeUTC(frames[i - 1].t_utc);
-      const t1 = parseSunMoonTimeUTC(frames[i].t_utc);
-      if (!t0 || !t1) continue;
-      const exactMs = t0.getTime() + (t1.getTime() - t0.getTime()) * frac;
-      const kind = pa < 0
-        ? (body === "sun" ? "sunrise" : "moonrise")
-        : (body === "sun" ? "sunset"  : "moonset");
-      events.push({ kind, ms: exactMs });
-    }
+    const pa = frames[i - 1].moon?.alt_deg;
+    const ca = frames[i].moon?.alt_deg;
+    if (pa == null || ca == null || pa === ca || pa * ca >= 0) continue;
+    const frac = Math.abs(pa) / (Math.abs(pa) + Math.abs(ca));
+    const t0 = parseSunMoonTimeUTC(frames[i - 1].t_utc);
+    const t1 = parseSunMoonTimeUTC(frames[i].t_utc);
+    if (!t0 || !t1) continue;
+    const exactMs = t0.getTime() + (t1.getTime() - t0.getTime()) * frac;
+    events.push({ kind: pa < 0 ? "moonrise" : "moonset", ms: exactMs });
+  }
+  return events;
+}
+
+// Compute sun rise/set/transit events using SunCalcLib for exact times.
+// This matches the Sun & Moon widget (sun_moon.js) which also uses SunCalcLib.getTimes().
+function computeSunEventsFromSunCalc(loc, windowDays) {
+  const SC = window.SunCalc;
+  if (!SC || !loc?.lat || !loc?.lon) return [];
+  const events = [];
+  const tz = loc.tz || "UTC";
+  const nowMs = Date.now();
+  // Compute for today + next `windowDays` days (cover the full sun_moon.json window)
+  for (let d = 0; d <= (windowDays || 7); d++) {
+    const dateMs = nowMs + d * 86400e3;
+    // Resolve calendar date in the observer's timezone (avoids day-boundary errors)
+    const localDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(new Date(dateMs));
+    const seed = new Date(localDate + "T12:00:00Z"); // local noon as seed
+    const t = SC.getTimes(seed, loc.lat, loc.lon);
+    if (t.sunrise instanceof Date && !isNaN(t.sunrise)) events.push({ kind: "sunrise",   ms: t.sunrise.getTime() });
+    if (t.sunset  instanceof Date && !isNaN(t.sunset))  events.push({ kind: "sunset",    ms: t.sunset.getTime() });
+    if (t.solarNoon instanceof Date && !isNaN(t.solarNoon)) events.push({ kind: "solarNoon", ms: t.solarNoon.getTime() });
   }
   return events;
 }
@@ -1982,7 +2015,10 @@ async function fetchSunMoonEvents(loc) {
     const res = await fetch(url);
     if (!res.ok) { sunMoonEventsCache = []; return; }
     const data = await res.json();
-    sunMoonEventsCache = computeSunMoonEvents(data.frames || []);
+    // Sun events: SunCalcLib (exact, matches Sun & Moon tab) — moon: Python ephemeris frames
+    const moonEvts = computeMoonEvents(data.frames || []);
+    const sunEvts  = computeSunEventsFromSunCalc(loc, 7);
+    sunMoonEventsCache = [...sunEvts, ...moonEvts];
   } catch (e) {
     console.warn("[weather] sun_moon load failed:", e.message);
     sunMoonEventsCache = [];
@@ -3727,7 +3763,7 @@ function ensureFbStyles() {
     // Observing mode card elements (#102)
     '.obs-score{font-size:27px;font-weight:950;line-height:1;margin-top:9px}',
     '.score-label{font-size:10px;font-weight:700;letter-spacing:.06em;margin-top:2px}',
-    '.score-label.good{color:#4ade80}.score-label.mid{color:#fbbf24}.score-label.bad{color:#f87171}',
+    '.score-label.good{color:#4ade80}.score-label.mid{color:#fbbf24}.score-label.bad{color:#f87171}.score-label.muted{color:rgba(255,255,255,0.3)}',
     '.marginal-badge{font-size:10px;font-weight:700;color:#fbbf24;display:block;margin-top:4px}',
     // Seeing indicator (#102)
     '.seeing-ind{font-size:12px;margin-top:6px;color:var(--muted)}',
@@ -4008,8 +4044,15 @@ function renderHourInspector(hourIdx, overrideEls) {
   // hiBd is already prioritized correctly (v5 score_breakdown preferred, computed above at line ~4077)
   const bdCats  = (hiBd && Array.isArray(hiBd.categories)) ? hiBd.categories : [];
 
-  // Compute category scores for limiting factor detection
-  const catScores = CATS.map(c => ({ key: c.key, bdKey: c.bdKey || c.key.replace("_score",""), label: c.label, ico: c.ico, score: hour[c.key] ?? null }));
+  // Compute category scores for limiting factor detection, applying frontend gates
+  const _hiDaytime = getSolarState(hour) === "day";
+  const catScores = CATS.map(c => {
+    const bdKey = c.bdKey || c.key.replace("_score","");
+    let score = hour[c.key] ?? null;
+    // Daylight gate: zero sky_darkness when sun is above horizon
+    if (_hiDaytime && bdKey === "sky_darkness") score = 0;
+    return { key: c.key, bdKey, label: c.label, ico: c.ico, score };
+  });
   const validScores = catScores.filter(c => c.score != null);
   const minScore  = validScores.length ? Math.min(...validScores.map(c => c.score)) : null;
   const maxScore  = validScores.length ? Math.max(...validScores.map(c => c.score)) : null;
@@ -4038,8 +4081,8 @@ function renderHourInspector(hourIdx, overrideEls) {
     const limiting  = isLimiting(cat);
     const panelId   = idPrefix + "hi-cat-" + cat.bdKey;
 
-    // Per-category gate flags from Python
-    const catClosed = (cat.bdKey === 'sky_darkness' && hour.sky_cat_closed)
+    // Per-category gate flags: from Python backend, or derived on frontend
+    const catClosed = (cat.bdKey === 'sky_darkness' && (_hiDaytime || hour.sky_cat_closed))
                    || (cat.bdKey === 'atmosphere'   && hour.atm_cat_closed);
 
     // Get params from breakdown or fallback

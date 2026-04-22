@@ -207,7 +207,7 @@
     .console-hero {
       background: rgba(14, 18, 28, 0.97);
       border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 10px 20px;
+      padding: 10px 9px;
       display: flex;
       align-items: stretch;
       gap: 1px;
@@ -219,7 +219,7 @@
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      padding: 6px 18px;
+      padding: 6px 11px;
       border-right: 1px solid rgba(255,255,255,0.06);
       gap: 4px;
       min-width: 0;
@@ -1703,7 +1703,7 @@
         <!-- Space Weather (Kp / Sun / Alarm launcher) -->
         <div id="dbp-helio" class="db-subpanel" style="display:none">
           <div class="dbp-header">
-            <span class="dbp-title">Space Weather</span>
+            <span class="dbp-title">Space Weather Forecast</span>
             <button class="dbp-close" data-close="helio">✕</button>
           </div>
           <div class="db-panel" style="overflow-x:auto;overflow-y:hidden">
@@ -3057,21 +3057,46 @@
 
     // ── Sun/moon crossings from sun_moon.json ──
     let sunsetT = null, sunriseT = null, moonriseT = null, moonsetT = null;
-    let moonIllum = wx?.moon?.illumination_percent ?? 0, moonWaxing = true;
+    // moon illumination: sun_moon.json is the authoritative source (Python ephemeris);
+    // observer_weather is a coarser fallback only when sun_moon.json is unavailable
+    let moonIllum = 0, moonWaxing = true;
 
     if (sunMoon?.frames?.length) {
       const frames = sunMoon.frames;
       const now = Date.now();
-      const scanStart = now - 8 * 3600e3, scanEnd = now + 32 * 3600e3;
 
-      for (let i = 1; i < frames.length; i++) {
-        const t = _parseSMTime(frames[i].t_utc);
-        if (!t) continue;
-        const ms = t.getTime();
-        if (ms < scanStart || ms > scanEnd) continue;
-        const prevS = frames[i-1].sun?.alt_deg ?? 0, currS = frames[i].sun?.alt_deg ?? 0;
-        if (prevS > 0 && currS <= 0 && !sunsetT)               sunsetT  = t.toISOString();
-        if (prevS <= 0 && currS > 0 && sunsetT && !sunriseT)   sunriseT = t.toISOString();
+      // Use SunCalcLib for exact sunrise/sunset/transit (same source as Sun & Moon tab)
+      // — altitude sign-change from 10-min frames can be off by up to ±10 min
+      const _loc = getState()?.location;
+      const _SC  = window.SunCalc;
+      if (_SC && _loc?.lat != null && _loc?.lon != null) {
+        // Today's times in the observer's timezone
+        const todayLocal = new Intl.DateTimeFormat('en-CA', { timeZone: _loc.tz || 'UTC',
+          year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+        const todayDate = new Date(todayLocal + 'T12:00:00Z'); // noon UTC as date seed
+        const t0 = _SC.getTimes(todayDate, _loc.lat, _loc.lon);
+        // Tomorrow's times to cover the next night
+        const tomorrowDate = new Date(todayDate.getTime() + 86400e3);
+        const t1 = _SC.getTimes(tomorrowDate, _loc.lat, _loc.lon);
+
+        // Pick sunset = today's or tomorrow's depending on which is in the future
+        const nowMs = Date.now();
+        const chosenSunset  = t0.sunset?.getTime()  > nowMs - 3600e3 ? t0.sunset  : t1.sunset;
+        const chosenSunrise = t0.sunrise?.getTime() > chosenSunset?.getTime() ? t0.sunrise : t1.sunrise;
+        if (chosenSunset  instanceof Date && !isNaN(chosenSunset))  sunsetT  = chosenSunset.toISOString();
+        if (chosenSunrise instanceof Date && !isNaN(chosenSunrise)) sunriseT = chosenSunrise.toISOString();
+      } else {
+        // Fallback: altitude sign-change (±10 min precision)
+        const scanStart = now - 8 * 3600e3, scanEnd = now + 32 * 3600e3;
+        for (let i = 1; i < frames.length; i++) {
+          const t = _parseSMTime(frames[i].t_utc);
+          if (!t) continue;
+          const ms = t.getTime();
+          if (ms < scanStart || ms > scanEnd) continue;
+          const prevS = frames[i-1].sun?.alt_deg ?? 0, currS = frames[i].sun?.alt_deg ?? 0;
+          if (prevS > 0 && currS <= 0 && !sunsetT)             sunsetT  = t.toISOString();
+          if (prevS <= 0 && currS > 0 && sunsetT && !sunriseT) sunriseT = t.toISOString();
+        }
       }
       // Moon crossings around tonight
       const nightS = sunsetT  ? new Date(sunsetT).getTime()  - 2*3600e3 : now;
@@ -3093,19 +3118,13 @@
         const d = Math.abs(t.getTime() - now);
         if (d < minD) { minD = d; closest = f; }
       }
-      const sunMoonFresh = closest && minD < STALE_THRESHOLD_MS;
-      if (sunMoonFresh && closest.moon) {
-        moonIllum  = closest.moon.illum_pct ?? 0;
-        moonWaxing = closest.moon.waxing !== false;
+      if (closest?.moon) {
+        // Prefer sun_moon.json — always more precise than observer_weather moon
+        moonIllum = closest.moon.illum_pct ?? wx?.moon?.illumination_percent ?? 0;
+        moonWaxing = closest.moon.waxing !== false; // default true
       } else {
-        // sun_moon.json is stale (>12h gap) — fall back to SunCalcLib for live illumination
-        const _SC2 = window.SunCalc;
-        if (_SC2) {
-          const mi = _SC2.getMoonIllumination(new Date());
-          moonIllum  = mi.fraction * 100;
-          moonWaxing = mi.phase <= 0.5;
-        }
-        // else moonIllum stays as wx?.moon?.illumination_percent from initialization above
+        // Fallback when sun_moon.json unavailable
+        moonIllum = wx?.moon?.illumination_percent ?? 0;
       }
     }
 
@@ -3131,16 +3150,34 @@
       return [s1, s2, s3].filter(Boolean).join(' ');
     }
 
-    // ── Panel 1: Space Weather ──
-    const kp = sw?.metrics?.kp_latest ?? null;
+    // ── Panel 1: Kp NOW (pure live measurement) ──
+    const kp     = sw?.metrics?.kp_latest ?? null;
     const scales = sw?.scales || {};
-    const gLvl = parseInt((scales.g_scale||'G0').replace(/\D/g,'')) || 0;
+    // R/S come from live X-ray & particle measurements — keep from scales
     const rLvl = parseInt((scales.r_scale||'R0').replace(/\D/g,'')) || 0;
     const sLvl = parseInt((scales.s_scale||'S0').replace(/\D/g,'')) || 0;
-    const trend = sw?.forecast?.trend || 'steady';
-    const trendArrow = trend==='rising'?'↑':trend==='falling'?'↓':'→';
+    // swStatus kept for Sun card border colour (overall status, not used in Kp NOW badge)
     const swStatus = sw?.summary?.status || 'quiet';
     const swLabel  = sw?.summary?.label  || 'Quiet';
+
+    // G derived ONLY from the live Kp reading — no event history, no forecast
+    function kpToGLive(v) {
+      if (v == null || v < 5) return 0;
+      return v < 6 ? 1 : v < 7 ? 2 : v < 8 ? 3 : v < 9 ? 4 : 5;
+    }
+    // Colour the Kp number by level: quiet→white, G1→green, G2→yellow, G3→orange, G4-5→red
+    function kpColor(v) {
+      if (v == null)  return 'rgba(255,255,255,0.35)';
+      if (v >= 8)     return '#e05c5c';
+      if (v >= 7)     return '#e0a84a';
+      if (v >= 6)     return '#d4cc5c';
+      if (v >= 5)     return '#5cce8c';
+      return '#fff';
+    }
+    const gNowLive     = kpToGLive(kp);
+    const nowLiveStatus = gNowLive >= 3 ? 'storm' : gNowLive >= 1 ? 'elevated' : (kp != null && kp >= 4) ? 'active' : 'quiet';
+    const nowLiveLabel  = { storm:'Storm', elevated:'Elevated', active:'Active', quiet:'Quiet' }[nowLiveStatus];
+
     function scaleBadge(l, lvl, max) {
       const on = lvl > 0;
       const hi = lvl / max;
@@ -3148,17 +3185,16 @@
       const bg = !on?'rgba(255,255,255,0.05)':hi>=0.6?'rgba(244,67,54,0.15)':'rgba(255,152,0,0.13)';
       return `<span class="nop-scale-badge" style="color:${c};background:${bg}">${l}${lvl}</span>`;
     }
-    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:118px;flex-shrink:0">
-      <div class="hero-card-label">Kp</div>
+    const p1 = `<div class="hero-card" data-panel="helio" style="min-width:100px;flex-shrink:0">
+      <div class="hero-card-label">Kp NOW</div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
         <div style="display:flex;align-items:baseline;gap:6px">
-          <span style="font-size:38px;font-weight:700;line-height:1;color:#fff">${kp!=null?kp.toFixed(1):'—'}</span>
-          <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${trendArrow}</span>
+          <span style="font-size:38px;font-weight:700;line-height:1;color:${kpColor(kp)}">${kp!=null?kp.toFixed(1):'—'}</span>
         </div>
-        <div><span class="sw-badge ${swStatus}">${swLabel}</span></div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.55)">Current conditions</div>
+        <div><span class="sw-badge ${nowLiveStatus}">${nowLiveLabel}</span></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.55)">Live 3h avg</div>
       </div>
-      <div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gLvl,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
+      <div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gNowLive,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
     </div>`;
 
     // ── Panel 2: Sun ──
@@ -3252,7 +3288,7 @@
         ? '<span style="color:rgba(255,255,255,0.22);font-size:9px"> ↓below</span>' : '';
     const moonRiseSet = (moonriseT||moonsetT)
       ? `<div style="font-size:9px;color:rgba(255,255,255,0.38);margin-top:2px">${moonriseT?'↑'+_nopFmtT(moonriseT):''}${moonriseT&&moonsetT?' ':''  }${moonsetT?'↓'+_nopFmtT(moonsetT):''}</div>` : '';
-    const p4 = `<div class="hero-card" data-panel="sunmoon" style="min-width:110px;flex-shrink:0;align-items:center">
+    const p4 = `<div class="hero-card" data-panel="sunmoon" style="min-width:92px;flex-shrink:0;align-items:center">
       <div class="hero-card-label" style="align-self:flex-start">Moon</div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center">
         <canvas id="nop-moon-canvas" width="72" height="72" style="flex-shrink:0;width:72px;height:72px"></canvas>
@@ -3269,12 +3305,12 @@
     const nqiVal     = activeNqi.value != null ? activeNqi.value.toFixed(1) : '—';
     const nqiCls     = activeNqi.class || 'poor';
     const nqiClr     = _nqiColor(nqiCls);
-    const p5 = `<div class="hero-card" data-panel="matrix" style="min-width:165px;flex-shrink:0">
+    const p5 = `<div class="hero-card" data-panel="matrix" style="min-width:130px;flex-shrink:0">
       <div class="hero-card-label" style="display:flex;align-items:center;gap:4px">Night Quality<button id="nqi-info-btn" class="nqi-info-btn" aria-label="How NQI is calculated" title="How it's calculated">i</button></div>
-      <div style="flex:1;display:flex;align-items:center;gap:12px;margin-top:4px">
+      <div style="flex:1;display:flex;align-items:center;gap:6px;margin-top:4px">
         <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px">
           <div style="display:flex;align-items:baseline;gap:3px">
-            <span id="nop-nqi-val" style="font-size:48px;font-weight:700;line-height:1;color:${nqiClr};font-variant-numeric:tabular-nums">${nqiVal}</span>
+            <span id="nop-nqi-val" style="font-size:28px;font-weight:700;line-height:1;color:${nqiClr};font-variant-numeric:tabular-nums">${nqiVal}</span>
             <span style="font-size:14px;color:rgba(255,255,255,0.55);font-weight:500">/10</span>
           </div>
           <span id="nop-nqi-lbl" style="font-size:14px;font-weight:700;line-height:1;color:${nqiClr};white-space:nowrap">${_nqiLabel(nqiCls)}</span>
@@ -3286,7 +3322,7 @@
     // ── Panel 6: Tonight (merged Best Window + summary) ──
     const bw = _nopBestWindow;
     const winStr = bw ? `${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}` : '—';
-    const p6 = `<div class="hero-card" data-panel="window" style="flex:1;min-width:180px">
+    const p6 = `<div class="hero-card" data-panel="window" style="flex:1;min-width:145px">
       <div class="hero-card-label">Tonight</div>
       <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.65);margin-top:4px;white-space:nowrap">
         Best window: ${winStr}
@@ -3294,41 +3330,28 @@
       <div class="nop-summary-text" style="margin-top:5px">${p3Summary}</div>
     </div>`;
 
-    // ── Panel 7: Mini Alarm Rail (GIF lamps matching helio widget) ──
-    function _chainColor(sev) {
-      return {none:'#3a5060',low:'#5cce8c',moderate:'#d4cc5c',strong:'#e0a84a',severe:'#e05c5c'}[sev]||'#3a5060';
-    }
-    function _chainGif(col, sev) {
-      if (col==='earth'&&(sev==='strong'||sev==='severe')) return '/assets/gifs/beacon_red_storm.gif';
-      const m={none:'off_green_quiet.gif',low:'steady_green_normal.gif',moderate:'blink_fast_yellow_watch.gif',strong:'breathe_slow_red_alert.gif',severe:'breathe_slow_red_alert.gif'};
-      return '/assets/gifs/'+(m[sev]||m.none);
-    }
-    function _miniLamp(col, sev, lbl) {
-      return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
-        <div style="font-size:8px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#4a6068">${col.toUpperCase()}</div>
-        <img src="${_chainGif(col,sev)}" style="width:28px;height:auto;border-radius:2px" alt="">
-        <div style="font-size:9px;font-weight:700;color:${_chainColor(sev)};line-height:1.2">${lbl}</div>
-      </div>`;
-    }
-    // Use chain_panel as single source of truth — same as Sun-Earth Chain panel
-    const _cp       = sw?.chain_panel || {};
-    const sunSev    = _cp.sun?.severity   || 'none';
-    const sunState  = _cp.sun?.label      || 'Quiet';
-    const spaceSev  = _cp.space?.severity || 'none';
-    const spaceState= _cp.space?.label    || 'Clear';
-    const earthSev  = _cp.earth?.severity || 'none';
-    const earthState= _cp.earth?.label    || 'Quiet';
-    const p7 = `<div class="hero-card hero-alarm-rail" data-panel="helio" style="flex-shrink:0;min-width:72px;justify-content:center;padding:6px 14px">
-      <div class="hero-card-label">Alarm</div>
-      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;align-items:center">
-        ${_miniLamp('sun',sunSev,sunState)}
-        ${_miniLamp('space',spaceSev,spaceState)}
-        ${_miniLamp('earth',earthSev,earthState)}
+    // ── Panel 7: FORECAST (Kp max next 24h — pure forward-looking) ──
+    const kpFc       = sw?.forecast?.kp_max_next_24h ?? null;
+    const fcTrend    = sw?.forecast?.trend || 'steady';
+    const fcArrow    = fcTrend === 'rising' ? '↑' : fcTrend === 'falling' ? '↓' : '→';
+    const gFc        = kpToGLive(kpFc);
+    const fcStatusCls  = gFc >= 3 ? 'storm' : gFc >= 1 ? 'elevated' : (kpFc != null && kpFc >= 4) ? 'active' : 'quiet';
+    const fcStatusLbl  = { storm:'Storm Risk', elevated:'Elevated', active:'Active', quiet:'Quiet' }[fcStatusCls];
+    const p7 = `<div class="hero-card" data-panel="helio" style="min-width:100px;flex-shrink:0">
+      <div class="hero-card-label">FORECAST</div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:38px;font-weight:700;line-height:1;color:${kpColor(kpFc)}">${kpFc!=null?kpFc.toFixed(1):'—'}</span>
+          <span style="font-size:20px;color:rgba(255,255,255,0.55);line-height:1">${fcArrow}</span>
+        </div>
+        <div><span class="sw-badge ${fcStatusCls}">${fcStatusLbl}</span></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.4)">Max Kp · Next 24h</div>
       </div>
+      <div class="nop-scales" style="margin-top:auto">${scaleBadge('G',gFc,5)}${scaleBadge('R',rLvl,5)}${scaleBadge('S',sLvl,5)}</div>
     </div>`;
 
     // New order: Date | Night Quality | Tonight | Moon | Kp | Sun | Alarm
-    hero.innerHTML = [p0, p5, p6, p4, p1, p2, p7].join('');
+    hero.innerHTML = [p0, p5, p6, p4, p2, p1, p7].join('');
 
     // Sun/Moon data is now location-aware (/api/sun-moon for non-default locations).
     // Remove any stale origin notice that may have been rendered previously.
@@ -4155,17 +4178,42 @@
 
     // ── 1. Sun–Earth Chain ──────────────────────────────────────────
     const chain = sw.chain_panel || {};
+    const _kpLive = sw.metrics?.kp_latest ?? null;
     const chainCols = ['sun','space','earth'].map((col, i, arr) => {
       const c = chain[col] || {};
       const sev = c.severity || 'none';
-      const msgs = (c.messages || []).map(m => `<span class="dbp-chain-msgs">${m}</span>`).join('');
+
+      // Filter raw Kp readings — never show "Kp X.X" in the chain panel
+      let displayMsgs = (c.messages || []).filter(m => !/^Kp[\s\d]/.test(m));
+
+      if (col === 'earth') {
+        // Combine G-level token + description into one formatted line
+        const gIdx = displayMsgs.findIndex(m => /^G\d$/.test(m));
+        if (gIdx >= 0) {
+          const gToken = displayMsgs[gIdx];
+          const gNum   = parseInt(gToken[1]) || 0;
+          const descIdx = displayMsgs.findIndex((m, j) => j !== gIdx && !/^G\d$/.test(m));
+          const desc    = descIdx >= 0 ? displayMsgs[descIdx] : '';
+          // "Expected" when the live Kp hasn't yet reached this G-level threshold
+          const gKpThreshold = gNum + 4; // G1→kp5, G2→kp6, G3→kp7 …
+          const suffix = (gNum > 0 && _kpLive != null && _kpLive < gKpThreshold) ? ' Expected' : '';
+          // Title-case the description (e.g. "moderate geomagnetic storm" → "Moderate Geomagnetic Storm")
+          const descTc = desc.replace(/\b\w/g, c => c.toUpperCase());
+          const combined = desc
+            ? `${gToken} ${descTc}${suffix}`
+            : `${gToken}${suffix}`;
+          // Rebuild: combined line first, then any remaining messages
+          displayMsgs = [combined, ...displayMsgs.filter((_, j) => j !== gIdx && j !== descIdx)];
+        }
+      }
+
       const arrow = i < arr.length-1
         ? `<div class="dbp-chain-arrow">→</div>` : '';
       return `<div class="dbp-chain-col">
         <div class="dbp-chain-head">${col.toUpperCase()}</div>
         <img class="dbp-chain-gif" src="${chainGif(col,sev)}" alt="">
         <div class="dbp-chain-state" style="color:${chainColor(sev)}">${c.label||'—'}</div>
-        <div style="font-size:10px;color:#7a9298;line-height:1.5;text-align:center">${(c.messages||[]).join('<br>')}</div>
+        <div style="font-size:10px;color:#7a9298;line-height:1.5;text-align:center">${displayMsgs.join('<br>')}</div>
       </div>${arrow}`;
     }).join('');
 

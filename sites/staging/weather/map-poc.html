@@ -66,7 +66,7 @@
       position: relative;
       width: 100%;
       border-radius: 12px;
-      overflow: visible;
+      overflow: hidden;
       border: 1px solid var(--line);
     }
     .map-loading-spinner {
@@ -99,8 +99,6 @@
     #map {
       width: 100%;
       height: 320px;
-      border-radius: 12px;
-      overflow: hidden;
     }
 
     @media (max-width: 560px) {
@@ -3806,11 +3804,36 @@
     return               { label: "Night",                color: "#9aa3b2" };
   }
 
+  // Cache for sun_moon.json — authoritative moon illumination source (Python ephemeris)
+  var _sunMoonCache = null;
+  var _sunMoonFetchDone = false;
+  function _loadSunMoon() {
+    if (_sunMoonFetchDone) return;
+    _sunMoonFetchDone = true;
+    fetch('/sky/data/sun_moon.json').then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) { if (data && data.frames) _sunMoonCache = data.frames; })
+      .catch(function() {});
+  }
+  // Returns illum_pct (0-100) from sun_moon.json for the nearest frame to `date`, or null if unavailable
+  function _sunMoonIllum(date) {
+    if (!_sunMoonCache || !_sunMoonCache.length) return null;
+    var ms = date.getTime(), best = null, bestD = Infinity;
+    for (var i = 0; i < _sunMoonCache.length; i++) {
+      var f = _sunMoonCache[i];
+      var t = f.t_utc ? new Date(f.t_utc).getTime() : NaN;
+      if (isNaN(t)) continue;
+      var d = Math.abs(t - ms);
+      if (d < bestD) { bestD = d; best = f; }
+    }
+    return (best && best.moon && best.moon.illum_pct != null) ? best.moon.illum_pct : null;
+  }
+
   /**
    * Updates moon info panel with current moon phase, altitude, and azimuth.
    * @param {Date} date - The date/time to use for moon calculation (UTC). If not provided, uses current time.
    */
   function updateMoonInfo(date) {
+    _loadSunMoon(); // ensure sun_moon.json is being fetched
     if (!map || !moonInfoOn) {
       var moonPanel = document.getElementById("moonInfoPanel");
       if (moonPanel) {
@@ -3876,14 +3899,12 @@
       phaseEmoji = "🌘";
     }
     
-    // Calculate phase percentage (0% = New Moon, 100% = Full Moon)
-    // phase: 0-0.5 (waxing) → 0-100%, 0.5-1 (waning) → 100-0%
-    var phasePercent;
-    if (phase <= 0.5) {
-      phasePercent = Math.round(phase * 200); // 0-0.5 → 0-100%
-    } else {
-      phasePercent = Math.round((1 - phase) * 200); // 0.5-1 → 100-0%
-    }
+    // Illumination %: prefer sun_moon.json (Python ephemeris) over SunCalcLib
+    // SunCalcLib.fraction can differ significantly from the backend near new/full moon
+    var smIllum = _sunMoonIllum(date);
+    var phasePercent = smIllum != null
+      ? Math.round(smIllum * 10) / 10          // one decimal, e.g. 1.1%
+      : Math.round(fraction * 100);            // SunCalc fallback
     
     // Update UI
     var line1 = document.getElementById("moonInfoLine1");
