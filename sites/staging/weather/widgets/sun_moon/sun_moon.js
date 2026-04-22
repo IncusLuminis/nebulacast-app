@@ -696,7 +696,7 @@ export function mountSunMoon(rootEl, storeApi) {
       }
 
       hourLineEl.textContent =
-        `${timeStr} • Sun ${sunAlt}° • Moon ${moonAlt}° • ${moonInfo.emoji} ${moonInfo.name}, ${moonInfo.pct}%`;
+        `${timeStr} • Sun ${sunAlt}° • Moon ${moonAlt}° • ${moonInfo.emoji} ${moonInfo.name}, illum. ${moonInfo.pct}%`;
     }
 
     drawSunMoonCanvas(canvas, data, selectedHour);

@@ -821,7 +821,7 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
         }
 
         if (pct != null) {
-          const phaseText = `${Math.round(pct)}%${o.waxing === false ? " waning" : " waxing"}`;
+          const phaseText = `Illum. ${Math.round(pct)}%${o.waxing === false ? " · waning" : " · waxing"}`;
           enqueueLabel(ctx, vp, {
             text: phaseText,
             x: x0,

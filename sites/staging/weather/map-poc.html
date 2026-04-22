@@ -3876,21 +3876,15 @@
       phaseEmoji = "🌘";
     }
     
-    // Calculate phase percentage (0% = New Moon, 100% = Full Moon)
-    // phase: 0-0.5 (waxing) → 0-100%, 0.5-1 (waning) → 100-0%
-    var phasePercent;
-    if (phase <= 0.5) {
-      phasePercent = Math.round(phase * 200); // 0-0.5 → 0-100%
-    } else {
-      phasePercent = Math.round((1 - phase) * 200); // 0.5-1 → 100-0%
-    }
-    
+    // Illumination: fraction of the disc that is lit (same metric as hero panel & sky widget)
+    var illumPct = Math.round(fraction * 100);
+
     // Update UI
     var line1 = document.getElementById("moonInfoLine1");
     var line2 = document.getElementById("moonInfoLine2");
     if (line1) {
       var altSign = altDeg >= 0 ? "+" : "";
-      line1.textContent = phaseEmoji + " " + phasePercent + "%  Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
+      line1.textContent = phaseEmoji + " " + phaseName + "  Illum. " + illumPct + "%  Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
     }
     if (line2) line2.style.display = "none";
 
