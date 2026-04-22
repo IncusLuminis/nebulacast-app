@@ -3899,19 +3899,15 @@
       phaseEmoji = "🌘";
     }
     
-    // Illumination %: prefer sun_moon.json (Python ephemeris) over SunCalcLib
-    // SunCalcLib.fraction can differ significantly from the backend near new/full moon
-    var smIllum = _sunMoonIllum(date);
-    var phasePercent = smIllum != null
-      ? Math.round(smIllum * 10) / 10          // one decimal, e.g. 1.1%
-      : Math.round(fraction * 100);            // SunCalc fallback
-    
+    // Illumination: fraction of the disc that is lit (same metric as hero panel & sky widget)
+    var illumPct = Math.round(fraction * 100);
+
     // Update UI
     var line1 = document.getElementById("moonInfoLine1");
     var line2 = document.getElementById("moonInfoLine2");
     if (line1) {
       var altSign = altDeg >= 0 ? "+" : "";
-      line1.textContent = phaseEmoji + " " + phasePercent + "%  Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
+      line1.textContent = phaseEmoji + " " + phaseName + "  Illum. " + illumPct + "%  Alt: " + altSign + Math.round(altDeg) + "°  Az: " + Math.round(azDeg) + "°";
     }
     if (line2) line2.style.display = "none";
 
