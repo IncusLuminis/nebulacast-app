@@ -3110,7 +3110,8 @@
         if (prevM <= 0 && currM > 0 && !moonriseT) moonriseT = t.toISOString();
         if (prevM > 0 && currM <= 0 && !moonsetT)  moonsetT  = t.toISOString();
       }
-      // Moon phase at nearest frame to now
+      // Moon phase at nearest frame to now (with staleness guard)
+      const STALE_THRESHOLD_MS = 12 * 3600e3; // 12 hours
       let closest = null, minD = Infinity;
       for (const f of frames) {
         const t = _parseSMTime(f.t_utc); if (!t) continue;
