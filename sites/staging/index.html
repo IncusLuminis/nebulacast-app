@@ -3067,16 +3067,27 @@
         if (prevM <= 0 && currM > 0 && !moonriseT) moonriseT = t.toISOString();
         if (prevM > 0 && currM <= 0 && !moonsetT)  moonsetT  = t.toISOString();
       }
-      // Moon phase at nearest frame to now
+      // Moon phase at nearest frame to now (with staleness guard)
+      const STALE_THRESHOLD_MS = 12 * 3600e3; // 12 hours
       let closest = null, minD = Infinity;
       for (const f of frames) {
         const t = _parseSMTime(f.t_utc); if (!t) continue;
         const d = Math.abs(t.getTime() - now);
         if (d < minD) { minD = d; closest = f; }
       }
-      if (closest?.moon) {
-        if (!moonIllum) moonIllum = closest.moon.illum_pct ?? 0;
-        moonWaxing = closest.moon.waxing !== false; // default true
+      const sunMoonFresh = closest && minD < STALE_THRESHOLD_MS;
+      if (sunMoonFresh && closest.moon) {
+        moonIllum  = closest.moon.illum_pct ?? 0;
+        moonWaxing = closest.moon.waxing !== false;
+      } else {
+        // sun_moon.json is stale (>12h gap) — fall back to SunCalcLib for live illumination
+        const _SC2 = window.SunCalc;
+        if (_SC2) {
+          const mi = _SC2.getMoonIllumination(new Date());
+          moonIllum  = mi.fraction * 100;
+          moonWaxing = mi.phase <= 0.5;
+        }
+        // else moonIllum stays as wx?.moon?.illumination_percent from initialization above
       }
     }
 
