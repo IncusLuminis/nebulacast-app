@@ -670,9 +670,31 @@ export function mountSunMoon(rootEl, storeApi) {
     // Header right: selected-hour status + moon phase
     if (hourLineEl) {
       const sample = data.samples.find(s => s.hour === selectedHour) || data.samples[0];
-      const timeStr  = String(sample.hour).padStart(2, "0") + ":00";
-      const sunAlt   = sample.sunAlt.toFixed(1);
-      const moonAlt  = sample.moonAlt.toFixed(1);
+      let timeStr, sunAlt, moonAlt;
+
+      // When viewing today's current hour: use live SunCalcLib position (exact current minute)
+      // so the displayed altitude matches the map and sky widget exactly.
+      const isToday   = selectedOffset === 0;
+      const loc       = getLocation(storeApi.getState());
+      const SC        = getSunCalc();
+      const nowLocal  = new Date();
+      // Compare using the same getHours() used to initialise selectedHour
+      const isNowHour = isToday && sample.hour === nowLocal.getHours();
+
+      if (isNowHour && SC && loc.lat != null && loc.lon != null) {
+        const sPos = SC.getPosition(nowLocal, loc.lat, loc.lon);
+        const mPos = SC.getMoonPosition(nowLocal, loc.lat, loc.lon);
+        sunAlt  = (sPos.altitude * 180 / Math.PI).toFixed(1);
+        moonAlt = (mPos.altitude * 180 / Math.PI).toFixed(1);
+        timeStr = nowLocal.toLocaleTimeString("en-GB", {
+          hour: "2-digit", minute: "2-digit", hour12: false, timeZone: loc.tz || "UTC"
+        });
+      } else {
+        sunAlt  = sample.sunAlt.toFixed(1);
+        moonAlt = sample.moonAlt.toFixed(1);
+        timeStr = String(sample.hour).padStart(2, "0") + ":00";
+      }
+
       hourLineEl.textContent =
         `${timeStr} • Sun ${sunAlt}° • Moon ${moonAlt}° • ${moonInfo.emoji} ${moonInfo.name}, ${moonInfo.pct}%`;
     }
