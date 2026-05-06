@@ -776,6 +776,10 @@ function prepareSunMoon(sunMoonJson, observer, viewport) {
   const frame = pickNearestFrame(sunMoonJson.frames, tMs);
   if (!frame) return [];
 
+  const ILLUM_STALE_MS = 12 * 3600e3;
+  const frameMs = parseHorizonsTUTC(frame.t_utc);
+  const sunMoonStale = !isFinite(frameMs) || Math.abs(frameMs - tMs) > ILLUM_STALE_MS;
+
   const out = [];
 
   // tolerant numeric parser: accepts numbers + numeric strings
@@ -817,18 +821,29 @@ function prepareSunMoon(sunMoonJson, observer, viewport) {
     let waxing = null;
 
     if (key === "moon") {
-      // preferred keys from our generator
-      const illumNum = num(b.illum_pct);
-      if (illumNum != null) illum_pct = clamp(illumNum, 0, 100);
+      if (!sunMoonStale) {
+        // preferred keys from our generator
+        const illumNum = num(b.illum_pct);
+        if (illumNum != null) illum_pct = clamp(illumNum, 0, 100);
 
-      const phaseNum = num(b.phase);
-      if (phaseNum != null) {
-        // allow either 0..1 or 0..100 just in case
-        phase = (phaseNum > 1.01) ? (phaseNum / 100) : phaseNum;
-        phase = clamp(phase, 0, 1);
+        const phaseNum = num(b.phase);
+        if (phaseNum != null) {
+          // allow either 0..1 or 0..100 just in case
+          phase = (phaseNum > 1.01) ? (phaseNum / 100) : phaseNum;
+          phase = clamp(phase, 0, 1);
+        }
+
+        if (typeof b.waxing === "boolean") waxing = b.waxing;
+      } else {
+        // sun_moon.json is stale — use SunCalc for live illumination
+        const _SC = (typeof window !== "undefined") && window.SunCalc;
+        if (_SC) {
+          const mi  = _SC.getMoonIllumination(new Date(tMs));
+          illum_pct = mi.fraction * 100;
+          phase     = mi.fraction;
+          waxing    = mi.phase <= 0.5;
+        }
       }
-
-      if (typeof b.waxing === "boolean") waxing = b.waxing;
 
       // backfill either direction
       if (phase == null && illum_pct != null) phase = clamp(illum_pct / 100, 0, 1);
