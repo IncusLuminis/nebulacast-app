@@ -3118,13 +3118,20 @@
         const d = Math.abs(t.getTime() - now);
         if (d < minD) { minD = d; closest = f; }
       }
-      if (closest?.moon) {
-        // Prefer sun_moon.json — always more precise than observer_weather moon
-        moonIllum = closest.moon.illum_pct ?? wx?.moon?.illumination_percent ?? 0;
-        moonWaxing = closest.moon.waxing !== false; // default true
+      if (closest?.moon && minD < STALE_THRESHOLD_MS) {
+        // sun_moon.json is fresh — Python ephemeris is most accurate
+        moonIllum  = closest.moon.illum_pct ?? 0;
+        moonWaxing = closest.moon.waxing !== false;
       } else {
-        // Fallback when sun_moon.json unavailable
-        moonIllum = wx?.moon?.illumination_percent ?? 0;
+        // sun_moon.json is stale (>12 h) or unavailable — fall back to SunCalcLib
+        const _SC2 = window.SunCalc;
+        if (_SC2) {
+          const mi   = _SC2.getMoonIllumination(new Date());
+          moonIllum  = mi.fraction * 100;
+          moonWaxing = mi.phase <= 0.5;
+        } else {
+          moonIllum = wx?.moon?.illumination_percent ?? 0;
+        }
       }
     }
 
