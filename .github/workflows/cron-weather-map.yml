@@ -2,7 +2,7 @@ name: Cron — Weather Map cloud pipeline
 
 on:
   schedule:
-    - cron: "0 */3 * * *"   # every 3 hours
+    - cron: "0 8,20 * * *"  # 2×/day (08:00 and 20:00 UTC)
   workflow_dispatch:
 
 jobs:
