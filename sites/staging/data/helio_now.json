@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-05-09T03:26:09Z",
+  "updated_utc": "2026-05-09T08:00:39Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -17,13 +17,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 2.33,
-    "kp_time_utc": "2026-05-09T00:00:00Z",
+    "kp_latest": 1.33,
+    "kp_time_utc": "2026-05-09T03:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-05-09T06:00:00Z",
-        "kp": 2.67
-      },
       {
         "t_utc": "2026-05-09T09:00:00Z",
         "kp": 2.0
@@ -115,10 +111,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-05-08T06:00:00Z",
-        "kp": 2.0
-      },
-      {
         "t_utc": "2026-05-08T09:00:00Z",
         "kp": 3.0
       },
@@ -141,34 +133,18 @@
       {
         "t_utc": "2026-05-09T00:00:00Z",
         "kp": 2.33
+      },
+      {
+        "t_utc": "2026-05-09T03:00:00Z",
+        "kp": 1.33
       }
     ],
-    "xray_flux_wm2": 8.231626225096988e-07,
+    "xray_flux_wm2": 8.478809263579024e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-05-08T03:00:00Z",
-        "flux": 6.670117234837866e-07
-      },
-      {
-        "t_utc": "2026-05-08T04:00:00Z",
-        "flux": 6.319031513157825e-07
-      },
-      {
-        "t_utc": "2026-05-08T05:00:00Z",
-        "flux": 5.160818043729402e-07
-      },
-      {
-        "t_utc": "2026-05-08T06:00:00Z",
-        "flux": 5.775828374983878e-07
-      },
-      {
-        "t_utc": "2026-05-08T07:00:00Z",
-        "flux": 7.231837154601332e-07
-      },
-      {
         "t_utc": "2026-05-08T08:00:00Z",
-        "flux": 6.565569179883823e-07
+        "flux": 6.570747031974414e-07
       },
       {
         "t_utc": "2026-05-08T09:00:00Z",
@@ -244,54 +220,35 @@
       },
       {
         "t_utc": "2026-05-09T03:00:00Z",
-        "flux": 9.694283167134372e-07
+        "flux": 1.2172327463607265e-06
+      },
+      {
+        "t_utc": "2026-05-09T04:00:00Z",
+        "flux": 1.067089255002429e-06
+      },
+      {
+        "t_utc": "2026-05-09T05:00:00Z",
+        "flux": 1.1353230860322582e-06
+      },
+      {
+        "t_utc": "2026-05-09T06:00:00Z",
+        "flux": 9.767697425407582e-07
+      },
+      {
+        "t_utc": "2026-05-09T07:00:00Z",
+        "flux": 7.319581635360448e-07
       }
     ],
-    "solar_wind_kms": 551.3,
-    "density": 3.68,
-    "pressure_npa": 1.87,
+    "solar_wind_kms": 542.5,
+    "density": 1.89,
+    "pressure_npa": 0.93,
     "wind_history_1h": [
       {
-        "t_utc": "2026-05-08T03:00:00Z",
-        "kms": 413.1,
-        "density": 6.24,
-        "temp_kk": 50.1,
-        "pressure_npa": 1.78
-      },
-      {
-        "t_utc": "2026-05-08T04:00:00Z",
-        "kms": 405.6,
-        "density": 5.71,
-        "temp_kk": 46.1,
-        "pressure_npa": 1.57
-      },
-      {
-        "t_utc": "2026-05-08T05:00:00Z",
-        "kms": 426.0,
-        "density": 8.26,
-        "temp_kk": 79.8,
-        "pressure_npa": 2.5
-      },
-      {
-        "t_utc": "2026-05-08T06:00:00Z",
-        "kms": 439.9,
-        "density": 10.49,
-        "temp_kk": 130.4,
-        "pressure_npa": 3.39
-      },
-      {
-        "t_utc": "2026-05-08T07:00:00Z",
-        "kms": 458.8,
-        "density": 9.64,
-        "temp_kk": 222.2,
-        "pressure_npa": 3.39
-      },
-      {
         "t_utc": "2026-05-08T08:00:00Z",
-        "kms": 514.4,
-        "density": 6.54,
-        "temp_kk": 263.1,
-        "pressure_npa": 2.89
+        "kms": 513.9,
+        "density": 6.49,
+        "temp_kk": 260.1,
+        "pressure_npa": 2.86
       },
       {
         "t_utc": "2026-05-08T09:00:00Z",
@@ -421,38 +378,46 @@
       },
       {
         "t_utc": "2026-05-09T03:00:00Z",
-        "kms": 539.6,
-        "density": 3.86,
-        "temp_kk": 138.0,
-        "pressure_npa": 1.88
+        "kms": 546.1,
+        "density": 3.92,
+        "temp_kk": 144.0,
+        "pressure_npa": 1.95
+      },
+      {
+        "t_utc": "2026-05-09T04:00:00Z",
+        "kms": 536.6,
+        "density": 3.4,
+        "temp_kk": 139.7,
+        "pressure_npa": 1.63
+      },
+      {
+        "t_utc": "2026-05-09T05:00:00Z",
+        "kms": 535.0,
+        "density": 2.44,
+        "temp_kk": 134.7,
+        "pressure_npa": 1.17
+      },
+      {
+        "t_utc": "2026-05-09T06:00:00Z",
+        "kms": 523.2,
+        "density": 1.6,
+        "temp_kk": 145.4,
+        "pressure_npa": 0.73
+      },
+      {
+        "t_utc": "2026-05-09T07:00:00Z",
+        "kms": 527.6,
+        "density": 2.49,
+        "temp_kk": 134.9,
+        "pressure_npa": 1.16
       }
     ],
-    "imf_bz_nt": 3.0,
-    "imf_bt_nt": 3.61,
+    "imf_bz_nt": -2.15,
+    "imf_bt_nt": 2.98,
     "bz_history_1h": [
       {
-        "t_utc": "2026-05-08T03:00:00Z",
-        "bz": 6.68
-      },
-      {
-        "t_utc": "2026-05-08T04:00:00Z",
-        "bz": 9.36
-      },
-      {
-        "t_utc": "2026-05-08T05:00:00Z",
-        "bz": 10.34
-      },
-      {
-        "t_utc": "2026-05-08T06:00:00Z",
-        "bz": 9.44
-      },
-      {
-        "t_utc": "2026-05-08T07:00:00Z",
-        "bz": 1.57
-      },
-      {
         "t_utc": "2026-05-08T08:00:00Z",
-        "bz": 0.57
+        "bz": 0.46
       },
       {
         "t_utc": "2026-05-08T09:00:00Z",
@@ -528,233 +493,29 @@
       },
       {
         "t_utc": "2026-05-09T03:00:00Z",
-        "bz": 1.57
+        "bz": 1.9
+      },
+      {
+        "t_utc": "2026-05-09T04:00:00Z",
+        "bz": 2.54
+      },
+      {
+        "t_utc": "2026-05-09T05:00:00Z",
+        "bz": 2.56
+      },
+      {
+        "t_utc": "2026-05-09T06:00:00Z",
+        "bz": 3.38
+      },
+      {
+        "t_utc": "2026-05-09T07:00:00Z",
+        "bz": 1.23
       }
     ],
     "bz_history_5m": [
       {
-        "t_utc": "2026-05-08T21:25:00Z",
-        "bz": 2.9
-      },
-      {
-        "t_utc": "2026-05-08T21:30:00Z",
-        "bz": 1.45
-      },
-      {
-        "t_utc": "2026-05-08T21:35:00Z",
-        "bz": 1.99
-      },
-      {
-        "t_utc": "2026-05-08T21:40:00Z",
-        "bz": 2.28
-      },
-      {
-        "t_utc": "2026-05-08T21:45:00Z",
-        "bz": 2.59
-      },
-      {
-        "t_utc": "2026-05-08T21:50:00Z",
-        "bz": -1.89
-      },
-      {
-        "t_utc": "2026-05-08T21:55:00Z",
-        "bz": -2.94
-      },
-      {
-        "t_utc": "2026-05-08T22:00:00Z",
-        "bz": 1.06
-      },
-      {
-        "t_utc": "2026-05-08T22:05:00Z",
-        "bz": 1.91
-      },
-      {
-        "t_utc": "2026-05-08T22:10:00Z",
-        "bz": 1.44
-      },
-      {
-        "t_utc": "2026-05-08T22:15:00Z",
-        "bz": 3.18
-      },
-      {
-        "t_utc": "2026-05-08T22:20:00Z",
-        "bz": 1.74
-      },
-      {
-        "t_utc": "2026-05-08T22:25:00Z",
-        "bz": 1.46
-      },
-      {
-        "t_utc": "2026-05-08T22:30:00Z",
-        "bz": 1.76
-      },
-      {
-        "t_utc": "2026-05-08T22:35:00Z",
-        "bz": 3.07
-      },
-      {
-        "t_utc": "2026-05-08T22:40:00Z",
-        "bz": 3.32
-      },
-      {
-        "t_utc": "2026-05-08T22:45:00Z",
-        "bz": 3.95
-      },
-      {
-        "t_utc": "2026-05-08T22:50:00Z",
-        "bz": 2.63
-      },
-      {
-        "t_utc": "2026-05-08T22:55:00Z",
-        "bz": 1.97
-      },
-      {
-        "t_utc": "2026-05-08T23:00:00Z",
-        "bz": 1.05
-      },
-      {
-        "t_utc": "2026-05-08T23:05:00Z",
-        "bz": 1.78
-      },
-      {
-        "t_utc": "2026-05-08T23:10:00Z",
-        "bz": 2.07
-      },
-      {
-        "t_utc": "2026-05-08T23:15:00Z",
-        "bz": 0.85
-      },
-      {
-        "t_utc": "2026-05-08T23:20:00Z",
-        "bz": 1.76
-      },
-      {
-        "t_utc": "2026-05-08T23:25:00Z",
-        "bz": 0.83
-      },
-      {
-        "t_utc": "2026-05-08T23:30:00Z",
-        "bz": -1.16
-      },
-      {
-        "t_utc": "2026-05-08T23:35:00Z",
-        "bz": -2.31
-      },
-      {
-        "t_utc": "2026-05-08T23:40:00Z",
-        "bz": -0.4
-      },
-      {
-        "t_utc": "2026-05-08T23:45:00Z",
-        "bz": 0.03
-      },
-      {
-        "t_utc": "2026-05-08T23:50:00Z",
-        "bz": -0.89
-      },
-      {
-        "t_utc": "2026-05-08T23:55:00Z",
-        "bz": -1.37
-      },
-      {
-        "t_utc": "2026-05-09T00:00:00Z",
-        "bz": 0.2
-      },
-      {
-        "t_utc": "2026-05-09T00:05:00Z",
-        "bz": 0.02
-      },
-      {
-        "t_utc": "2026-05-09T00:10:00Z",
-        "bz": -0.35
-      },
-      {
-        "t_utc": "2026-05-09T00:15:00Z",
-        "bz": -0.54
-      },
-      {
-        "t_utc": "2026-05-09T00:20:00Z",
-        "bz": -0.54
-      },
-      {
-        "t_utc": "2026-05-09T00:25:00Z",
-        "bz": -0.7
-      },
-      {
-        "t_utc": "2026-05-09T00:30:00Z",
-        "bz": -0.33
-      },
-      {
-        "t_utc": "2026-05-09T00:35:00Z",
-        "bz": 0.01
-      },
-      {
-        "t_utc": "2026-05-09T00:40:00Z",
-        "bz": 1.0
-      },
-      {
-        "t_utc": "2026-05-09T00:45:00Z",
-        "bz": 1.7
-      },
-      {
-        "t_utc": "2026-05-09T00:50:00Z",
-        "bz": 0.77
-      },
-      {
-        "t_utc": "2026-05-09T00:55:00Z",
-        "bz": 0.66
-      },
-      {
-        "t_utc": "2026-05-09T01:00:00Z",
-        "bz": 0.82
-      },
-      {
-        "t_utc": "2026-05-09T01:05:00Z",
-        "bz": 0.43
-      },
-      {
-        "t_utc": "2026-05-09T01:10:00Z",
-        "bz": 0.3
-      },
-      {
-        "t_utc": "2026-05-09T01:15:00Z",
-        "bz": 0.3
-      },
-      {
-        "t_utc": "2026-05-09T01:20:00Z",
-        "bz": -0.02
-      },
-      {
-        "t_utc": "2026-05-09T01:25:00Z",
-        "bz": -0.28
-      },
-      {
-        "t_utc": "2026-05-09T01:30:00Z",
-        "bz": -0.31
-      },
-      {
-        "t_utc": "2026-05-09T01:35:00Z",
-        "bz": -0.37
-      },
-      {
-        "t_utc": "2026-05-09T01:40:00Z",
-        "bz": -0.87
-      },
-      {
-        "t_utc": "2026-05-09T01:45:00Z",
-        "bz": -1.14
-      },
-      {
-        "t_utc": "2026-05-09T01:50:00Z",
-        "bz": 0.77
-      },
-      {
-        "t_utc": "2026-05-09T01:55:00Z",
-        "bz": -2.27
-      },
-      {
         "t_utc": "2026-05-09T02:00:00Z",
-        "bz": -0.65
+        "bz": -0.4
       },
       {
         "t_utc": "2026-05-09T02:05:00Z",
@@ -818,18 +579,238 @@
       },
       {
         "t_utc": "2026-05-09T03:20:00Z",
-        "bz": 2.87
+        "bz": 2.96
+      },
+      {
+        "t_utc": "2026-05-09T03:25:00Z",
+        "bz": 3.7
+      },
+      {
+        "t_utc": "2026-05-09T03:30:00Z",
+        "bz": 3.46
+      },
+      {
+        "t_utc": "2026-05-09T03:35:00Z",
+        "bz": 2.33
+      },
+      {
+        "t_utc": "2026-05-09T03:40:00Z",
+        "bz": 1.2
+      },
+      {
+        "t_utc": "2026-05-09T03:45:00Z",
+        "bz": -0.27
+      },
+      {
+        "t_utc": "2026-05-09T03:50:00Z",
+        "bz": 1.63
+      },
+      {
+        "t_utc": "2026-05-09T03:55:00Z",
+        "bz": 2.72
+      },
+      {
+        "t_utc": "2026-05-09T04:00:00Z",
+        "bz": 1.79
+      },
+      {
+        "t_utc": "2026-05-09T04:05:00Z",
+        "bz": 2.68
+      },
+      {
+        "t_utc": "2026-05-09T04:10:00Z",
+        "bz": 3.37
+      },
+      {
+        "t_utc": "2026-05-09T04:15:00Z",
+        "bz": 2.77
+      },
+      {
+        "t_utc": "2026-05-09T04:20:00Z",
+        "bz": 1.44
+      },
+      {
+        "t_utc": "2026-05-09T04:25:00Z",
+        "bz": 3.19
+      },
+      {
+        "t_utc": "2026-05-09T04:30:00Z",
+        "bz": 3.29
+      },
+      {
+        "t_utc": "2026-05-09T04:35:00Z",
+        "bz": 2.76
+      },
+      {
+        "t_utc": "2026-05-09T04:40:00Z",
+        "bz": 2.44
+      },
+      {
+        "t_utc": "2026-05-09T04:45:00Z",
+        "bz": 2.81
+      },
+      {
+        "t_utc": "2026-05-09T04:50:00Z",
+        "bz": 2.53
+      },
+      {
+        "t_utc": "2026-05-09T04:55:00Z",
+        "bz": 1.43
+      },
+      {
+        "t_utc": "2026-05-09T05:00:00Z",
+        "bz": 0.51
+      },
+      {
+        "t_utc": "2026-05-09T05:05:00Z",
+        "bz": 3.5
+      },
+      {
+        "t_utc": "2026-05-09T05:10:00Z",
+        "bz": 2.27
+      },
+      {
+        "t_utc": "2026-05-09T05:15:00Z",
+        "bz": 1.43
+      },
+      {
+        "t_utc": "2026-05-09T05:20:00Z",
+        "bz": 2.0
+      },
+      {
+        "t_utc": "2026-05-09T05:25:00Z",
+        "bz": 1.74
+      },
+      {
+        "t_utc": "2026-05-09T05:30:00Z",
+        "bz": 1.07
+      },
+      {
+        "t_utc": "2026-05-09T05:35:00Z",
+        "bz": 2.59
+      },
+      {
+        "t_utc": "2026-05-09T05:40:00Z",
+        "bz": 1.91
+      },
+      {
+        "t_utc": "2026-05-09T05:45:00Z",
+        "bz": 3.62
+      },
+      {
+        "t_utc": "2026-05-09T05:50:00Z",
+        "bz": 5.14
+      },
+      {
+        "t_utc": "2026-05-09T05:55:00Z",
+        "bz": 4.97
+      },
+      {
+        "t_utc": "2026-05-09T06:00:00Z",
+        "bz": 5.1
+      },
+      {
+        "t_utc": "2026-05-09T06:05:00Z",
+        "bz": 4.94
+      },
+      {
+        "t_utc": "2026-05-09T06:10:00Z",
+        "bz": 4.53
+      },
+      {
+        "t_utc": "2026-05-09T06:15:00Z",
+        "bz": 4.27
+      },
+      {
+        "t_utc": "2026-05-09T06:20:00Z",
+        "bz": 3.93
+      },
+      {
+        "t_utc": "2026-05-09T06:25:00Z",
+        "bz": 1.95
+      },
+      {
+        "t_utc": "2026-05-09T06:30:00Z",
+        "bz": 0.48
+      },
+      {
+        "t_utc": "2026-05-09T06:35:00Z",
+        "bz": 1.93
+      },
+      {
+        "t_utc": "2026-05-09T06:40:00Z",
+        "bz": 2.81
+      },
+      {
+        "t_utc": "2026-05-09T06:45:00Z",
+        "bz": 3.29
+      },
+      {
+        "t_utc": "2026-05-09T06:50:00Z",
+        "bz": 4.06
+      },
+      {
+        "t_utc": "2026-05-09T06:55:00Z",
+        "bz": 3.24
+      },
+      {
+        "t_utc": "2026-05-09T07:00:00Z",
+        "bz": 2.93
+      },
+      {
+        "t_utc": "2026-05-09T07:05:00Z",
+        "bz": 2.71
+      },
+      {
+        "t_utc": "2026-05-09T07:10:00Z",
+        "bz": 3.09
+      },
+      {
+        "t_utc": "2026-05-09T07:15:00Z",
+        "bz": 2.96
+      },
+      {
+        "t_utc": "2026-05-09T07:20:00Z",
+        "bz": 2.29
+      },
+      {
+        "t_utc": "2026-05-09T07:25:00Z",
+        "bz": 1.89
+      },
+      {
+        "t_utc": "2026-05-09T07:30:00Z",
+        "bz": 1.03
+      },
+      {
+        "t_utc": "2026-05-09T07:35:00Z",
+        "bz": 0.78
+      },
+      {
+        "t_utc": "2026-05-09T07:40:00Z",
+        "bz": 0.47
+      },
+      {
+        "t_utc": "2026-05-09T07:45:00Z",
+        "bz": -1.11
+      },
+      {
+        "t_utc": "2026-05-09T07:50:00Z",
+        "bz": -1.19
+      },
+      {
+        "t_utc": "2026-05-09T07:55:00Z",
+        "bz": -1.65
       }
     ]
   },
   "summary": {
-    "status": "active",
-    "label": "Active",
-    "text": "Space weather is mildly active. Conditions may improve aurora chances at high latitudes."
+    "status": "quiet",
+    "label": "Quiet",
+    "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 2.33,
-    "status_label": "Active",
+    "kp": 1.33,
+    "status_label": "Quiet",
     "scales": {
       "g": "G0",
       "r": "R0",
@@ -844,7 +825,7 @@
   },
   "forecast": {
     "kp_max_next_24h": 2.67,
-    "kp_max_at_utc": "2026-05-09T06:00:00Z",
+    "kp_max_at_utc": "2026-05-09T21:00:00Z",
     "trend": "steady"
   },
   "aurora_hint": {
@@ -889,7 +870,7 @@
   },
   "coronal_hole": {
     "status": "active",
-    "estimated_speed_kms": 551.3,
+    "estimated_speed_kms": 542.5,
     "note": "High-speed stream active"
   },
   "alerts_preview": [
@@ -905,7 +886,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5336\r\nIssue Time: 2026 May 08 1725 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected \nValid From: 2026 May 08 1724 UTC\nValid To: 2026 May 08 2359 UTC\nWarning Conditions: Onset\nComment: \r\n\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.947,
+      "relevance": 0.8771,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-05-08T12"
     },
     {
@@ -920,7 +901,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5335\r\nIssue Time: 2026 May 07 1637 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 May 07 1635 UTC\r\nValid To: 2026 May 08 1500 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.5682,
+      "relevance": 0.4983,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-05-07T12"
     }
   ],
@@ -937,7 +918,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5336\r\nIssue Time: 2026 May 08 1725 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected \nValid From: 2026 May 08 1724 UTC\nValid To: 2026 May 08 2359 UTC\nWarning Conditions: Onset\nComment: \r\n\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.947,
+      "relevance": 0.8771,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-05-08T12"
     },
     {
@@ -952,7 +933,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5335\r\nIssue Time: 2026 May 07 1637 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\r\nValid From: 2026 May 07 1635 UTC\r\nValid To: 2026 May 08 1500 UTC\r\nWarning Condition: Onset\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.5682,
+      "relevance": 0.4983,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-05-07T12"
     }
   ],
@@ -1281,7 +1262,7 @@
       "label": "Elevated",
       "messages": [
         "Coronal hole: Active",
-        "Fast solar wind: ~551 km/s"
+        "Fast solar wind: ~542 km/s"
       ]
     },
     "space": {
@@ -1289,7 +1270,7 @@
       "severity": "low",
       "label": "Active",
       "messages": [
-        "High-speed solar wind: 551 km/s",
+        "High-speed solar wind: 542 km/s",
         "No Earth-directed CME tracked"
       ]
     },
@@ -1300,11 +1281,11 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 2.3"
+        "Kp 1.3"
       ]
     }
   },
   "raw": {
-    "alerts_count": 102
+    "alerts_count": 101
   }
 }
