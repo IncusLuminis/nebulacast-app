@@ -79,7 +79,9 @@ jobs:
 
       - name: Install eccodes system library
         if: steps.gfs_check.outputs.skip != 'true'
-        run: sudo apt-get install -y libeccodes-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeccodes-dev
 
       - name: Install Python dependencies
         if: steps.gfs_check.outputs.skip != 'true'
