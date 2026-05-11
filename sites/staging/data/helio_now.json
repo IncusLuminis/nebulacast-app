@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-05-11T09:46:35Z",
+  "updated_utc": "2026-05-11T15:18:00Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -17,17 +17,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 1.0,
-    "kp_time_utc": "2026-05-11T06:00:00Z",
+    "kp_latest": 1.67,
+    "kp_time_utc": "2026-05-11T12:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-05-11T12:00:00Z",
-        "kp": 1.33
-      },
-      {
-        "t_utc": "2026-05-11T15:00:00Z",
-        "kp": 1.33
-      },
       {
         "t_utc": "2026-05-11T18:00:00Z",
         "kp": 2.0
@@ -107,14 +99,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-05-10T12:00:00Z",
-        "kp": 1.33
-      },
-      {
-        "t_utc": "2026-05-10T15:00:00Z",
-        "kp": 1.33
-      },
-      {
         "t_utc": "2026-05-10T18:00:00Z",
         "kp": 1.67
       },
@@ -133,38 +117,22 @@
       {
         "t_utc": "2026-05-11T06:00:00Z",
         "kp": 1.0
+      },
+      {
+        "t_utc": "2026-05-11T09:00:00Z",
+        "kp": 1.0
+      },
+      {
+        "t_utc": "2026-05-11T12:00:00Z",
+        "kp": 1.67
       }
     ],
-    "xray_flux_wm2": 5.898253334635228e-07,
+    "xray_flux_wm2": 6.440198490054172e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-05-10T09:00:00Z",
-        "flux": 1.1576149308194335e-06
-      },
-      {
-        "t_utc": "2026-05-10T10:00:00Z",
-        "flux": 8.06776138991457e-07
-      },
-      {
-        "t_utc": "2026-05-10T11:00:00Z",
-        "flux": 6.839719626820322e-07
-      },
-      {
-        "t_utc": "2026-05-10T12:00:00Z",
-        "flux": 7.095064508651679e-07
-      },
-      {
-        "t_utc": "2026-05-10T13:00:00Z",
-        "flux": 2.2053226984060834e-05
-      },
-      {
-        "t_utc": "2026-05-10T14:00:00Z",
-        "flux": 1.2605165428188533e-05
-      },
-      {
         "t_utc": "2026-05-10T15:00:00Z",
-        "flux": 3.096269290381315e-06
+        "flux": 2.7366674890888645e-06
       },
       {
         "t_utc": "2026-05-10T16:00:00Z",
@@ -236,61 +204,43 @@
       },
       {
         "t_utc": "2026-05-11T09:00:00Z",
-        "flux": 6.516498377674328e-07
+        "flux": 6.858590732387407e-07
+      },
+      {
+        "t_utc": "2026-05-11T10:00:00Z",
+        "flux": 7.709327292104717e-07
+      },
+      {
+        "t_utc": "2026-05-11T11:00:00Z",
+        "flux": 8.129100497929661e-07
+      },
+      {
+        "t_utc": "2026-05-11T12:00:00Z",
+        "flux": 7.386003962513618e-07
+      },
+      {
+        "t_utc": "2026-05-11T13:00:00Z",
+        "flux": 7.048272986291219e-07
+      },
+      {
+        "t_utc": "2026-05-11T14:00:00Z",
+        "flux": 7.907984875525169e-07
+      },
+      {
+        "t_utc": "2026-05-11T15:00:00Z",
+        "flux": 6.356848416544381e-07
       }
     ],
-    "solar_wind_kms": 393.3,
-    "density": 2.5,
-    "pressure_npa": 0.65,
+    "solar_wind_kms": 385.9,
+    "density": 3.62,
+    "pressure_npa": 0.9,
     "wind_history_1h": [
       {
-        "t_utc": "2026-05-10T09:00:00Z",
-        "kms": 431.4,
-        "density": 4.33,
-        "temp_kk": 43.5,
-        "pressure_npa": 1.35
-      },
-      {
-        "t_utc": "2026-05-10T10:00:00Z",
-        "kms": 427.1,
-        "density": 4.35,
-        "temp_kk": 51.6,
-        "pressure_npa": 1.33
-      },
-      {
-        "t_utc": "2026-05-10T11:00:00Z",
-        "kms": 410.0,
-        "density": 4.1,
-        "temp_kk": 70.1,
-        "pressure_npa": 1.15
-      },
-      {
-        "t_utc": "2026-05-10T12:00:00Z",
-        "kms": 414.2,
-        "density": 4.01,
-        "temp_kk": 67.7,
-        "pressure_npa": 1.15
-      },
-      {
-        "t_utc": "2026-05-10T13:00:00Z",
-        "kms": 427.5,
-        "density": 4.68,
-        "temp_kk": 73.0,
-        "pressure_npa": 1.43
-      },
-      {
-        "t_utc": "2026-05-10T14:00:00Z",
-        "kms": 417.8,
-        "density": 4.03,
-        "temp_kk": 66.5,
-        "pressure_npa": 1.17
-      },
-      {
         "t_utc": "2026-05-10T15:00:00Z",
-        "kms": 396.3,
-        "density": 3.35,
-        "temp_kk": 76.5,
-        "pressure_npa": 0.88
+        "kms": 390.7,
+        "density": 3.2,
+        "temp_kk": 82.3,
+        "pressure_npa": 0.82
       },
       {
         "t_utc": "2026-05-10T16:00:00Z",
@@ -413,42 +363,60 @@
       },
       {
         "t_utc": "2026-05-11T09:00:00Z",
-        "kms": 383.0,
-        "density": 3.32,
-        "temp_kk": 59.5,
+        "kms": 383.1,
+        "density": 3.42,
+        "temp_kk": 58.1,
+        "pressure_npa": 0.84
+      },
+      {
+        "t_utc": "2026-05-11T10:00:00Z",
+        "kms": 399.8,
+        "density": 3.72,
+        "temp_kk": 59.7,
+        "pressure_npa": 0.99
+      },
+      {
+        "t_utc": "2026-05-11T11:00:00Z",
+        "kms": 393.6,
+        "density": 3.37,
+        "temp_kk": 68.6,
+        "pressure_npa": 0.87
+      },
+      {
+        "t_utc": "2026-05-11T12:00:00Z",
+        "kms": 376.8,
+        "density": 4.18,
+        "temp_kk": 73.7,
+        "pressure_npa": 0.99
+      },
+      {
+        "t_utc": "2026-05-11T13:00:00Z",
+        "kms": 377.3,
+        "density": 2.92,
+        "temp_kk": 65.6,
+        "pressure_npa": 0.69
+      },
+      {
+        "t_utc": "2026-05-11T14:00:00Z",
+        "kms": 380.5,
+        "density": 3.13,
+        "temp_kk": 63.2,
+        "pressure_npa": 0.76
+      },
+      {
+        "t_utc": "2026-05-11T15:00:00Z",
+        "kms": 382.7,
+        "density": 3.33,
+        "temp_kk": 55.2,
         "pressure_npa": 0.81
       }
     ],
-    "imf_bz_nt": 2.53,
-    "imf_bt_nt": 5.51,
+    "imf_bz_nt": -1.31,
+    "imf_bt_nt": 6.09,
     "bz_history_1h": [
       {
-        "t_utc": "2026-05-10T09:00:00Z",
-        "bz": 0.25
-      },
-      {
-        "t_utc": "2026-05-10T10:00:00Z",
-        "bz": -0.37
-      },
-      {
-        "t_utc": "2026-05-10T11:00:00Z",
-        "bz": -0.24
-      },
-      {
-        "t_utc": "2026-05-10T12:00:00Z",
-        "bz": -0.92
-      },
-      {
-        "t_utc": "2026-05-10T13:00:00Z",
-        "bz": 0.63
-      },
-      {
-        "t_utc": "2026-05-10T14:00:00Z",
-        "bz": 0.24
-      },
-      {
         "t_utc": "2026-05-10T15:00:00Z",
-        "bz": 0.44
+        "bz": 1.13
       },
       {
         "t_utc": "2026-05-10T16:00:00Z",
@@ -520,277 +488,37 @@
       },
       {
         "t_utc": "2026-05-11T09:00:00Z",
-        "bz": -0.24
+        "bz": 0.93
+      },
+      {
+        "t_utc": "2026-05-11T10:00:00Z",
+        "bz": 0.1
+      },
+      {
+        "t_utc": "2026-05-11T11:00:00Z",
+        "bz": -0.07
+      },
+      {
+        "t_utc": "2026-05-11T12:00:00Z",
+        "bz": 1.57
+      },
+      {
+        "t_utc": "2026-05-11T13:00:00Z",
+        "bz": -4.21
+      },
+      {
+        "t_utc": "2026-05-11T14:00:00Z",
+        "bz": -2.3
+      },
+      {
+        "t_utc": "2026-05-11T15:00:00Z",
+        "bz": -1.59
       }
     ],
     "bz_history_5m": [
       {
-        "t_utc": "2026-05-11T03:45:00Z",
-        "bz": 3.19
-      },
-      {
-        "t_utc": "2026-05-11T03:50:00Z",
-        "bz": 2.72
-      },
-      {
-        "t_utc": "2026-05-11T03:55:00Z",
-        "bz": 1.95
-      },
-      {
-        "t_utc": "2026-05-11T04:00:00Z",
-        "bz": 2.31
-      },
-      {
-        "t_utc": "2026-05-11T04:05:00Z",
-        "bz": 2.3
-      },
-      {
-        "t_utc": "2026-05-11T04:10:00Z",
-        "bz": 2.88
-      },
-      {
-        "t_utc": "2026-05-11T04:15:00Z",
-        "bz": 3.44
-      },
-      {
-        "t_utc": "2026-05-11T04:20:00Z",
-        "bz": 3.09
-      },
-      {
-        "t_utc": "2026-05-11T04:25:00Z",
-        "bz": 2.47
-      },
-      {
-        "t_utc": "2026-05-11T04:30:00Z",
-        "bz": 1.98
-      },
-      {
-        "t_utc": "2026-05-11T04:35:00Z",
-        "bz": -1.26
-      },
-      {
-        "t_utc": "2026-05-11T04:40:00Z",
-        "bz": -1.13
-      },
-      {
-        "t_utc": "2026-05-11T04:45:00Z",
-        "bz": 0.07
-      },
-      {
-        "t_utc": "2026-05-11T04:50:00Z",
-        "bz": 2.31
-      },
-      {
-        "t_utc": "2026-05-11T04:55:00Z",
-        "bz": 2.16
-      },
-      {
-        "t_utc": "2026-05-11T05:00:00Z",
-        "bz": 3.04
-      },
-      {
-        "t_utc": "2026-05-11T05:05:00Z",
-        "bz": 3.95
-      },
-      {
-        "t_utc": "2026-05-11T05:10:00Z",
-        "bz": 1.97
-      },
-      {
-        "t_utc": "2026-05-11T05:15:00Z",
-        "bz": -1.11
-      },
-      {
-        "t_utc": "2026-05-11T05:20:00Z",
-        "bz": -0.64
-      },
-      {
-        "t_utc": "2026-05-11T05:25:00Z",
-        "bz": -1.0
-      },
-      {
-        "t_utc": "2026-05-11T05:30:00Z",
-        "bz": 0.72
-      },
-      {
-        "t_utc": "2026-05-11T05:35:00Z",
-        "bz": 1.54
-      },
-      {
-        "t_utc": "2026-05-11T05:40:00Z",
-        "bz": 1.32
-      },
-      {
-        "t_utc": "2026-05-11T05:45:00Z",
-        "bz": 1.95
-      },
-      {
-        "t_utc": "2026-05-11T05:50:00Z",
-        "bz": 1.75
-      },
-      {
-        "t_utc": "2026-05-11T05:55:00Z",
-        "bz": 2.68
-      },
-      {
-        "t_utc": "2026-05-11T06:00:00Z",
-        "bz": 1.28
-      },
-      {
-        "t_utc": "2026-05-11T06:05:00Z",
-        "bz": 0.88
-      },
-      {
-        "t_utc": "2026-05-11T06:10:00Z",
-        "bz": 0.88
-      },
-      {
-        "t_utc": "2026-05-11T06:15:00Z",
-        "bz": 0.81
-      },
-      {
-        "t_utc": "2026-05-11T06:20:00Z",
-        "bz": -2.65
-      },
-      {
-        "t_utc": "2026-05-11T06:25:00Z",
-        "bz": -2.33
-      },
-      {
-        "t_utc": "2026-05-11T06:30:00Z",
-        "bz": -2.43
-      },
-      {
-        "t_utc": "2026-05-11T06:35:00Z",
-        "bz": -1.85
-      },
-      {
-        "t_utc": "2026-05-11T06:40:00Z",
-        "bz": -0.65
-      },
-      {
-        "t_utc": "2026-05-11T06:45:00Z",
-        "bz": -1.23
-      },
-      {
-        "t_utc": "2026-05-11T06:50:00Z",
-        "bz": -0.95
-      },
-      {
-        "t_utc": "2026-05-11T06:55:00Z",
-        "bz": -0.8
-      },
-      {
-        "t_utc": "2026-05-11T07:00:00Z",
-        "bz": -0.37
-      },
-      {
-        "t_utc": "2026-05-11T07:05:00Z",
-        "bz": 0.53
-      },
-      {
-        "t_utc": "2026-05-11T07:10:00Z",
-        "bz": -0.06
-      },
-      {
-        "t_utc": "2026-05-11T07:15:00Z",
-        "bz": 0.57
-      },
-      {
-        "t_utc": "2026-05-11T07:20:00Z",
-        "bz": -0.32
-      },
-      {
-        "t_utc": "2026-05-11T07:25:00Z",
-        "bz": 0.83
-      },
-      {
-        "t_utc": "2026-05-11T07:30:00Z",
-        "bz": 1.22
-      },
-      {
-        "t_utc": "2026-05-11T07:35:00Z",
-        "bz": 0.15
-      },
-      {
-        "t_utc": "2026-05-11T07:40:00Z",
-        "bz": 0.76
-      },
-      {
-        "t_utc": "2026-05-11T07:45:00Z",
-        "bz": 0.74
-      },
-      {
-        "t_utc": "2026-05-11T07:50:00Z",
-        "bz": -1.57
-      },
-      {
-        "t_utc": "2026-05-11T07:55:00Z",
-        "bz": 0.29
-      },
-      {
-        "t_utc": "2026-05-11T08:00:00Z",
-        "bz": 0.94
-      },
-      {
-        "t_utc": "2026-05-11T08:05:00Z",
-        "bz": 0.18
-      },
-      {
-        "t_utc": "2026-05-11T08:10:00Z",
-        "bz": -0.83
-      },
-      {
-        "t_utc": "2026-05-11T08:15:00Z",
-        "bz": 0.7
-      },
-      {
-        "t_utc": "2026-05-11T08:20:00Z",
-        "bz": 1.87
-      },
-      {
-        "t_utc": "2026-05-11T08:25:00Z",
-        "bz": 1.39
-      },
-      {
-        "t_utc": "2026-05-11T08:30:00Z",
-        "bz": 1.0
-      },
-      {
-        "t_utc": "2026-05-11T08:35:00Z",
-        "bz": 1.33
-      },
-      {
-        "t_utc": "2026-05-11T08:40:00Z",
-        "bz": 1.52
-      },
-      {
-        "t_utc": "2026-05-11T08:45:00Z",
-        "bz": -2.01
-      },
-      {
-        "t_utc": "2026-05-11T08:50:00Z",
-        "bz": -1.36
-      },
-      {
-        "t_utc": "2026-05-11T08:55:00Z",
-        "bz": -1.45
-      },
-      {
-        "t_utc": "2026-05-11T09:00:00Z",
-        "bz": 0.67
-      },
-      {
-        "t_utc": "2026-05-11T09:05:00Z",
-        "bz": 3.28
-      },
-      {
-        "t_utc": "2026-05-11T09:10:00Z",
-        "bz": 2.79
-      },
-      {
         "t_utc": "2026-05-11T09:15:00Z",
-        "bz": -0.33
+        "bz": 0.25
       },
       {
         "t_utc": "2026-05-11T09:20:00Z",
@@ -810,34 +538,298 @@
       },
       {
         "t_utc": "2026-05-11T09:40:00Z",
-        "bz": 1.01
+        "bz": 1.03
+      },
+      {
+        "t_utc": "2026-05-11T09:45:00Z",
+        "bz": 4.97
+      },
+      {
+        "t_utc": "2026-05-11T09:50:00Z",
+        "bz": 5.2
+      },
+      {
+        "t_utc": "2026-05-11T09:55:00Z",
+        "bz": 3.73
+      },
+      {
+        "t_utc": "2026-05-11T10:00:00Z",
+        "bz": 2.48
+      },
+      {
+        "t_utc": "2026-05-11T10:05:00Z",
+        "bz": 2.55
+      },
+      {
+        "t_utc": "2026-05-11T10:10:00Z",
+        "bz": 2.04
+      },
+      {
+        "t_utc": "2026-05-11T10:15:00Z",
+        "bz": 1.32
+      },
+      {
+        "t_utc": "2026-05-11T10:20:00Z",
+        "bz": -1.73
+      },
+      {
+        "t_utc": "2026-05-11T10:25:00Z",
+        "bz": -3.92
+      },
+      {
+        "t_utc": "2026-05-11T10:30:00Z",
+        "bz": 0.66
+      },
+      {
+        "t_utc": "2026-05-11T10:35:00Z",
+        "bz": 3.06
+      },
+      {
+        "t_utc": "2026-05-11T10:40:00Z",
+        "bz": 1.98
+      },
+      {
+        "t_utc": "2026-05-11T10:45:00Z",
+        "bz": -2.85
+      },
+      {
+        "t_utc": "2026-05-11T10:50:00Z",
+        "bz": -2.31
+      },
+      {
+        "t_utc": "2026-05-11T10:55:00Z",
+        "bz": -2.12
+      },
+      {
+        "t_utc": "2026-05-11T11:00:00Z",
+        "bz": -1.53
+      },
+      {
+        "t_utc": "2026-05-11T11:05:00Z",
+        "bz": -1.02
+      },
+      {
+        "t_utc": "2026-05-11T11:10:00Z",
+        "bz": -1.4
+      },
+      {
+        "t_utc": "2026-05-11T11:15:00Z",
+        "bz": -1.97
+      },
+      {
+        "t_utc": "2026-05-11T11:20:00Z",
+        "bz": -2.14
+      },
+      {
+        "t_utc": "2026-05-11T11:25:00Z",
+        "bz": -2.23
+      },
+      {
+        "t_utc": "2026-05-11T11:30:00Z",
+        "bz": -1.75
+      },
+      {
+        "t_utc": "2026-05-11T11:35:00Z",
+        "bz": -2.49
+      },
+      {
+        "t_utc": "2026-05-11T11:40:00Z",
+        "bz": -2.14
+      },
+      {
+        "t_utc": "2026-05-11T11:45:00Z",
+        "bz": 4.81
+      },
+      {
+        "t_utc": "2026-05-11T11:50:00Z",
+        "bz": 4.9
+      },
+      {
+        "t_utc": "2026-05-11T11:55:00Z",
+        "bz": 5.82
+      },
+      {
+        "t_utc": "2026-05-11T12:00:00Z",
+        "bz": 5.92
+      },
+      {
+        "t_utc": "2026-05-11T12:05:00Z",
+        "bz": 6.46
+      },
+      {
+        "t_utc": "2026-05-11T12:10:00Z",
+        "bz": 6.07
+      },
+      {
+        "t_utc": "2026-05-11T12:15:00Z",
+        "bz": 4.85
+      },
+      {
+        "t_utc": "2026-05-11T12:20:00Z",
+        "bz": 3.4
+      },
+      {
+        "t_utc": "2026-05-11T12:25:00Z",
+        "bz": 2.22
+      },
+      {
+        "t_utc": "2026-05-11T12:30:00Z",
+        "bz": 1.61
+      },
+      {
+        "t_utc": "2026-05-11T12:35:00Z",
+        "bz": -0.29
+      },
+      {
+        "t_utc": "2026-05-11T12:40:00Z",
+        "bz": -2.58
+      },
+      {
+        "t_utc": "2026-05-11T12:45:00Z",
+        "bz": -2.64
+      },
+      {
+        "t_utc": "2026-05-11T12:50:00Z",
+        "bz": -2.66
+      },
+      {
+        "t_utc": "2026-05-11T12:55:00Z",
+        "bz": -3.49
+      },
+      {
+        "t_utc": "2026-05-11T13:00:00Z",
+        "bz": -5.63
+      },
+      {
+        "t_utc": "2026-05-11T13:05:00Z",
+        "bz": -5.43
+      },
+      {
+        "t_utc": "2026-05-11T13:10:00Z",
+        "bz": -4.38
+      },
+      {
+        "t_utc": "2026-05-11T13:15:00Z",
+        "bz": -5.29
+      },
+      {
+        "t_utc": "2026-05-11T13:20:00Z",
+        "bz": -4.49
+      },
+      {
+        "t_utc": "2026-05-11T13:25:00Z",
+        "bz": -4.31
+      },
+      {
+        "t_utc": "2026-05-11T13:30:00Z",
+        "bz": -3.72
+      },
+      {
+        "t_utc": "2026-05-11T13:35:00Z",
+        "bz": -3.52
+      },
+      {
+        "t_utc": "2026-05-11T13:40:00Z",
+        "bz": -3.42
+      },
+      {
+        "t_utc": "2026-05-11T13:45:00Z",
+        "bz": -3.41
+      },
+      {
+        "t_utc": "2026-05-11T13:50:00Z",
+        "bz": -3.73
+      },
+      {
+        "t_utc": "2026-05-11T13:55:00Z",
+        "bz": -3.14
+      },
+      {
+        "t_utc": "2026-05-11T14:00:00Z",
+        "bz": -2.19
+      },
+      {
+        "t_utc": "2026-05-11T14:05:00Z",
+        "bz": -2.27
+      },
+      {
+        "t_utc": "2026-05-11T14:10:00Z",
+        "bz": -2.06
+      },
+      {
+        "t_utc": "2026-05-11T14:15:00Z",
+        "bz": -0.33
+      },
+      {
+        "t_utc": "2026-05-11T14:20:00Z",
+        "bz": -0.5
+      },
+      {
+        "t_utc": "2026-05-11T14:25:00Z",
+        "bz": -3.13
+      },
+      {
+        "t_utc": "2026-05-11T14:30:00Z",
+        "bz": -3.81
+      },
+      {
+        "t_utc": "2026-05-11T14:35:00Z",
+        "bz": -3.18
+      },
+      {
+        "t_utc": "2026-05-11T14:40:00Z",
+        "bz": -3.23
+      },
+      {
+        "t_utc": "2026-05-11T14:45:00Z",
+        "bz": -2.25
+      },
+      {
+        "t_utc": "2026-05-11T14:50:00Z",
+        "bz": -2.97
+      },
+      {
+        "t_utc": "2026-05-11T14:55:00Z",
+        "bz": -1.72
+      },
+      {
+        "t_utc": "2026-05-11T15:00:00Z",
+        "bz": -1.57
+      },
+      {
+        "t_utc": "2026-05-11T15:05:00Z",
+        "bz": -1.92
+      },
+      {
+        "t_utc": "2026-05-11T15:10:00Z",
+        "bz": -1.22
       }
     ]
   },
   "summary": {
-    "status": "elevated",
-    "label": "Elevated",
-    "text": "Elevated space weather conditions. Aurora chances may improve at high latitudes."
+    "status": "quiet",
+    "label": "Quiet",
+    "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 1.0,
-    "status_label": "Elevated",
+    "kp": 1.67,
+    "status_label": "Quiet",
     "scales": {
       "g": "G0",
-      "r": "R2",
+      "r": "R0",
       "s": "S0",
       "x": "B"
     }
   },
   "scales": {
     "g_scale": "G0",
-    "r_scale": "R2",
+    "r_scale": "R0",
     "s_scale": "S0"
   },
   "forecast": {
     "kp_max_next_24h": 2.67,
     "kp_max_at_utc": "2026-05-11T21:00:00Z",
-    "trend": "steady"
+    "trend": "falling"
   },
   "aurora_hint": {
     "aurora_possible": false,
@@ -854,9 +846,9 @@
     },
     {
       "kind": "radio",
-      "level": "moderate",
+      "level": "none",
       "label": "Radio impact",
-      "summary": "Noticeable HF radio degradation is possible."
+      "summary": "No major radio blackout expected."
     },
     {
       "kind": "solar_activity",
@@ -881,7 +873,7 @@
   },
   "coronal_hole": {
     "status": "quiet",
-    "estimated_speed_kms": 393.3,
+    "estimated_speed_kms": 385.9,
     "note": "Background solar wind"
   },
   "alerts_preview": [
@@ -897,7 +889,7 @@
       "source_code": "ALTXMF",
       "raw_title": "ALERT: X-Ray Flux exceeded M5",
       "raw_body": "Space Weather Message Code: ALTXMF\r\nSerial Number: 528\r\nIssue Time: 2026 May 10 1338 UTC\r\n\r\nALERT: X-Ray Flux exceeded M5 \nThreshold Reached: 2026 May 10 1335 UTC\nNoaa Scale: R2 - Moderate\nComment: \r\n\nNOAA Scale: R2 - Moderate\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact centered on sub-solar point on the sunlit side of Earth. Extent of blackout of HF (high frequency) radio communication dependent upon current X-ray Flux intensity. For real-time information on affected area and expected duration please see http://www.swpc.noaa.gov/products/d-region-absorption-predictions-d-rap.",
-      "relevance": 0.8355,
+      "relevance": 0.7465,
       "dedupe_key": "radio_blackout|R|2|warning|2026-05-10T12"
     },
     {
@@ -912,7 +904,7 @@
       "source_code": "SUMXM5",
       "raw_title": "SUMMARY: X-ray Event exceeded M5",
       "raw_body": "Space Weather Message Code: SUMXM5\r\nSerial Number: 316\r\nIssue Time: 2026 May 10 1414 UTC\r\n\r\nSUMMARY: X-ray Event exceeded M5 \nBegin Time: 2026 May 10 1319 UTC\nMaximum Time: 2026 May 10 1339 UTC\nEnd Time: 2026 May 10 1402 UTC\nXray Class: M5.7\nOptical Class: \nLocation: N18E65\nNoaa Scale: R2 - Moderate\nComment: \r\n\nNOAA Scale: R2 - Moderate\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact centered primarily on sub-solar point on the sunlit side of Earth.\r\nRadio - Limited blackout of HF (high frequency) radio communication for tens of minutes.",
-      "relevance": 0.8016,
+      "relevance": 0.7172,
       "dedupe_key": "radio_blackout|R|2|watch|2026-05-10T12"
     },
     {
@@ -927,7 +919,7 @@
       "source_code": "ALTTP2",
       "raw_title": "ALERT: Type II Radio Emission",
       "raw_body": "Space Weather Message Code: ALTTP2\r\nSerial Number: 1484\r\nIssue Time: 2026 May 10 1347 UTC\r\n\r\nALERT: Type II Radio Emission \nBegin Time: 2026 May 10 1329 UTC\nEstimate Velocity: 650 km/s\nComment:",
-      "relevance": 0.6358,
+      "relevance": 0.5683,
       "dedupe_key": "cme_watch|cme|na|warning|2026-05-10T12"
     }
   ],
@@ -944,7 +936,7 @@
       "source_code": "SUMXM5",
       "raw_title": "SUMMARY: X-ray Event exceeded M5",
       "raw_body": "Space Weather Message Code: SUMXM5\r\nSerial Number: 316\r\nIssue Time: 2026 May 10 1414 UTC\r\n\r\nSUMMARY: X-ray Event exceeded M5 \nBegin Time: 2026 May 10 1319 UTC\nMaximum Time: 2026 May 10 1339 UTC\nEnd Time: 2026 May 10 1402 UTC\nXray Class: M5.7\nOptical Class: \nLocation: N18E65\nNoaa Scale: R2 - Moderate\nComment: \r\n\nNOAA Scale: R2 - Moderate\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact centered primarily on sub-solar point on the sunlit side of Earth.\r\nRadio - Limited blackout of HF (high frequency) radio communication for tens of minutes.",
-      "relevance": 0.8016,
+      "relevance": 0.7172,
       "dedupe_key": "radio_blackout|R|2|watch|2026-05-10T12"
     },
     {
@@ -959,7 +951,7 @@
       "source_code": "SUM10R",
       "raw_title": "SUMMARY: 10cm Radio Burst",
       "raw_body": "Space Weather Message Code: SUM10R\r\nSerial Number: 911\r\nIssue Time: 2026 May 10 1355 UTC\r\n\r\nSUMMARY: 10cm Radio Burst \nBegin Time: 2026 May 10 1328 UTC\nMaximum Time: 2026 May 10 1334 UTC\nEnd Time: 2026 May 10 1343 UTC\nPeak Flux: 550 sfu\nDuration: 15 minutes\nLatest Penticton Noon Flux: 122 sfu\nComment:",
-      "relevance": 0.2173,
+      "relevance": 0.1943,
       "dedupe_key": "space_weather_info|info|na|info|2026-05-10T12"
     },
     {
@@ -974,7 +966,7 @@
       "source_code": "ALTTP2",
       "raw_title": "ALERT: Type II Radio Emission",
       "raw_body": "Space Weather Message Code: ALTTP2\r\nSerial Number: 1484\r\nIssue Time: 2026 May 10 1347 UTC\r\n\r\nALERT: Type II Radio Emission \nBegin Time: 2026 May 10 1329 UTC\nEstimate Velocity: 650 km/s\nComment:",
-      "relevance": 0.6358,
+      "relevance": 0.5683,
       "dedupe_key": "cme_watch|cme|na|warning|2026-05-10T12"
     },
     {
@@ -989,7 +981,7 @@
       "source_code": "ALTXMF",
       "raw_title": "ALERT: X-Ray Flux exceeded M5",
       "raw_body": "Space Weather Message Code: ALTXMF\r\nSerial Number: 528\r\nIssue Time: 2026 May 10 1338 UTC\r\n\r\nALERT: X-Ray Flux exceeded M5 \nThreshold Reached: 2026 May 10 1335 UTC\nNoaa Scale: R2 - Moderate\nComment: \r\n\nNOAA Scale: R2 - Moderate\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact centered on sub-solar point on the sunlit side of Earth. Extent of blackout of HF (high frequency) radio communication dependent upon current X-ray Flux intensity. For real-time information on affected area and expected duration please see http://www.swpc.noaa.gov/products/d-region-absorption-predictions-d-rap.",
-      "relevance": 0.8355,
+      "relevance": 0.7465,
       "dedupe_key": "radio_blackout|R|2|warning|2026-05-10T12"
     },
     {
@@ -1009,36 +1001,6 @@
     }
   ],
   "timeline": [
-    {
-      "event_time": "2026-05-08T10:24:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 547 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 547 km/s\nHalf-angle: 10.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 547.0,
-        "half_angle": 10.0
-      }
-    },
-    {
-      "event_time": "2026-05-08T11:48:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 578 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 578 km/s\nHalf-angle: 10.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 578.0,
-        "half_angle": 10.0
-      }
-    },
     {
       "event_time": "2026-05-08T17:25:25Z",
       "event_type": "geomagnetic_storm",
@@ -1093,7 +1055,7 @@
       "severity_label": "moderate",
       "description": "Brief HF radio degradation possible on the sunlit side of Earth.\nSpace Weather Message Code: ALTXMF\r\nSerial Number: 528\r\nIssue Time: 2026 May 10 1338 UTC\r\n\r\nALERT: X-Ray Flux exceeded M5 \nThreshold Reached: 2026 May 10 1335 UTC\nNoaa Scale: R2 - Moderate\nComment: \r\n\nNOAA Scale: R2 - Moderate\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.g…",
       "source": "NOAA_SWPC",
-      "is_active": true,
+      "is_active": false,
       "is_future": false,
       "metadata": {
         "source_code": "ALTXMF",
@@ -1124,7 +1086,7 @@
       "severity_label": null,
       "description": "Solar ejecta may reach Earth in the forecast window.\nSpace Weather Message Code: ALTTP2\r\nSerial Number: 1484\r\nIssue Time: 2026 May 10 1347 UTC\r\n\r\nALERT: Type II Radio Emission \nBegin Time: 2026 May 10 1329 UTC\nEstimate Velocity: 650 km/s\nComment:",
       "source": "NOAA_SWPC",
-      "is_active": true,
+      "is_active": false,
       "is_future": false,
       "metadata": {
         "source_code": "ALTTP2"
@@ -1174,6 +1136,84 @@
         "source_code": "SUMXM5",
         "severity": 2
       }
+    },
+    {
+      "event_time": "2026-05-10T19:36:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 327 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 327 km/s\nHalf-angle: 12.0°\nSource: N18E58",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 327.0,
+        "half_angle": 12.0,
+        "location": "N18E58"
+      }
+    },
+    {
+      "event_time": "2026-05-10T21:48:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 474 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 474 km/s\nHalf-angle: 13.0°\nSource: N18E57",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 474.0,
+        "half_angle": 13.0,
+        "location": "N18E57"
+      }
+    },
+    {
+      "event_time": "2026-05-10T22:00:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 780 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 780 km/s\nHalf-angle: 10.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 780.0,
+        "half_angle": 10.0
+      }
+    },
+    {
+      "event_time": "2026-05-11T02:36:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 519 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 519 km/s\nHalf-angle: 18.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 519.0,
+        "half_angle": 18.0
+      }
+    },
+    {
+      "event_time": "2026-05-11T08:24:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 367 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 367 km/s\nHalf-angle: 20.0°\nSource: S50E30",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 367.0,
+        "half_angle": 20.0,
+        "location": "S50E30"
+      }
     }
   ],
   "cme_tracker": null,
@@ -1201,11 +1241,11 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 1.0"
+        "Kp 1.7"
       ]
     }
   },
   "raw": {
-    "alerts_count": 100
+    "alerts_count": 99
   }
 }
