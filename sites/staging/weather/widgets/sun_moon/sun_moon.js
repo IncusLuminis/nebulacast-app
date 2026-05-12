@@ -140,7 +140,7 @@ function computeDaySamples(baseDate, offset, lat, lon, tz) {
 
   const times     = SunCalcLib.getTimes(sunCalcDate, lat, lon);
   const moonTimes = SunCalcLib.getMoonTimes(sunCalcDate, lat, lon, true);
-  const illum     = SunCalcLib.getMoonIllumination(sunCalcDate);
+  const illum     = SunCalcLib.getMoonIllumination(new Date());
   const moonInfo = getMoonPhaseInfo(illum);
 
   // approximate moon culmination as max altitude sample
