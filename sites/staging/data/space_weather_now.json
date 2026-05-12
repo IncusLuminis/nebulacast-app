@@ -1,21 +1,28 @@
 {
-  "generated_utc": "2026-05-12T08:27:17Z",
+  "generated_utc": "2026-05-12T13:57:05Z",
   "kp": {
     "latest": null,
     "forecast_3h": [],
     "activity_label": null
   },
   "solar_wind": {
-    "timestamp_utc": "2026-05-12T08:24:00Z",
-    "speed_kms": 372.0,
-    "density_protons_cm3": 3.45
+    "timestamp_utc": "2026-05-12T13:54:00Z",
+    "speed_kms": 347.6,
+    "density_protons_cm3": 2.02
   },
   "xray": {
-    "timestamp_utc": "2026-05-12T08:24:00Z",
-    "flux_wm2": 6.009734079270856e-07,
+    "timestamp_utc": "2026-05-12T13:52:00Z",
+    "flux_wm2": 7.111661375347467e-07,
     "class": "B"
   },
   "alerts": [
+    {
+      "id": "A20F",
+      "timestamp_utc": "2026-05-12T13:26:26Z",
+      "title": "Space Weather Message Code: WATA20",
+      "level": "watch",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "XM5S",
       "timestamp_utc": "2026-05-10T14:14:33Z",
@@ -686,20 +693,6 @@
       "timestamp_utc": "2026-04-13T11:01:31Z",
       "title": "Space Weather Message Code: ALTEF3",
       "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "EF3A",
-      "timestamp_utc": "2026-04-12T13:17:14Z",
-      "title": "Space Weather Message Code: ALTEF3",
-      "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K04W",
-      "timestamp_utc": "2026-04-12T09:45:25Z",
-      "title": "Space Weather Message Code: WARK04",
-      "level": "warning",
       "source": "NOAA SWPC"
     }
   ]
