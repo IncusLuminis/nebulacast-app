@@ -3133,6 +3133,41 @@
           moonIllum = wx?.moon?.illumination_percent ?? 0;
         }
       }
+    } else {
+      // sunMoon unavailable (API failed on localhost / no wrangler) — fall back to SunCalcLib
+      const _SC3 = window.SunCalc;
+      const _loc3 = getState()?.location;
+      if (_SC3 && _loc3?.lat != null && _loc3?.lon != null) {
+        const mi = _SC3.getMoonIllumination(new Date());
+        moonIllum  = mi.fraction * 100;
+        moonWaxing = mi.phase <= 0.5;
+        const todayLocal = new Intl.DateTimeFormat('en-CA', { timeZone: _loc3.tz || 'UTC',
+          year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+        const todayDate    = new Date(todayLocal + 'T12:00:00Z');
+        const tomorrowDate = new Date(todayDate.getTime() + 86400e3);
+        const t0 = _SC3.getTimes(todayDate,    _loc3.lat, _loc3.lon);
+        const t1 = _SC3.getTimes(tomorrowDate, _loc3.lat, _loc3.lon);
+        const nowMs = Date.now();
+        const chosenSunset  = t0.sunset?.getTime()  > nowMs - 3600e3 ? t0.sunset  : t1.sunset;
+        const chosenSunrise = t0.sunrise?.getTime() > chosenSunset?.getTime() ? t0.sunrise : t1.sunrise;
+        if (chosenSunset  instanceof Date && !isNaN(chosenSunset))  sunsetT  = chosenSunset.toISOString();
+        if (chosenSunrise instanceof Date && !isNaN(chosenSunrise)) sunriseT = chosenSunrise.toISOString();
+        const nightS3 = sunsetT  ? new Date(sunsetT).getTime()  - 2*3600e3 : nowMs;
+        const nightE3 = sunriseT ? new Date(sunriseT).getTime() + 2*3600e3 : nowMs + 14*3600e3;
+        for (const mDay of [todayDate, tomorrowDate]) {
+          const mt = _SC3.getMoonTimes(mDay, _loc3.lat, _loc3.lon, true);
+          if (mt.rise instanceof Date && !isNaN(mt.rise)) {
+            const ms = mt.rise.getTime();
+            if (ms >= nightS3 && ms <= nightE3 && !moonriseT) moonriseT = mt.rise.toISOString();
+          }
+          if (mt.set instanceof Date && !isNaN(mt.set)) {
+            const ms = mt.set.getTime();
+            if (ms >= nightS3 && ms <= nightE3 && !moonsetT)  moonsetT  = mt.set.toISOString();
+          }
+        }
+      } else if (wx?.moon?.illumination_percent != null) {
+        moonIllum = wx.moon.illumination_percent;
+      }
     }
 
     // ── Text summary ──
