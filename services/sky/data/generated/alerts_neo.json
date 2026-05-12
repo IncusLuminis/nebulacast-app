@@ -1,92 +1,12 @@
 {
-  "generated_utc": "2026-05-11T14:26:17.469235Z",
+  "generated_utc": "2026-05-12T02:00:19.858860Z",
   "source": "JPL SSD CAD API + JPL Horizons + JPL SBDB",
   "counts": {
     "pha_rows": 0,
-    "ld10_rows": 9,
-    "items": 9
+    "ld10_rows": 6,
+    "items": 6
   },
   "items": [
-    {
-      "id": "2026 JD1",
-      "source": "jpl-cad+horizons+sbdb",
-      "group": "neo",
-      "type": "neo",
-      "title": "2026 JD1",
-      "note": "Close approach within 10 lunar distances",
-      "score_raw": 90.0,
-      "score_norm": 0.9,
-      "ra_deg": 110.24655,
-      "dec_deg": -25.45481,
-      "mag": 17.84,
-      "updated_utc": "2026-05-11T12:05:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
-      "meta": {
-        "t_utc": "2026-May-11 12:05Z",
-        "t_utc_iso": "2026-05-11T12:05:00Z",
-        "date_local": "2026-05-11",
-        "neo_event_id": "neo:2026 JD1:2026-May-11 12:05",
-        "bucket": "10ld",
-        "pha": false,
-        "pha_cad_flag": false,
-        "pha_sbdb_flag": false,
-        "dist_au": 0.00210445412862095,
-        "dist_ld": 0.818995,
-        "v_rel_km_s": 14.2323036171319,
-        "h_cad": 27.295,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
-        "cad_fields_pha": null,
-        "cad_fields_10ld": [
-          "des",
-          "orbit_id",
-          "jd",
-          "cd",
-          "dist",
-          "dist_min",
-          "dist_max",
-          "v_rel",
-          "v_inf",
-          "t_sigma_f",
-          "h"
-        ],
-        "cad_row": [
-          "2026 JD1",
-          "3",
-          "2461172.003305996",
-          "2026-May-11 12:05",
-          "0.00210445412862095",
-          "0.00210051217750439",
-          "0.00210839588937184",
-          "14.2323036171319",
-          "14.1430632386235",
-          "< 00:01",
-          "27.295"
-        ],
-        "alt_deg": 5.131531,
-        "az_deg": 145.26448,
-        "horizons_ok": true,
-        "horizons_error": null,
-        "horizons_query": {
-          "id": "2026 JD1",
-          "jd": 2461172.003472222,
-          "site": {
-            "lat": 52.2297,
-            "lon": 21.0122,
-            "elev_km": 0.1
-          }
-        },
-        "sbdb_ok": true,
-        "sbdb_error": null,
-        "sbdb_moid_au": 0.00155,
-        "sbdb_h": null,
-        "sbdb_albedo": null,
-        "sbdb_diameter_km": null,
-        "sbdb_diameter_est_km": 0.012344143538921111,
-        "sbdb_diameter_source": "h_cad",
-        "risk_score": 0.5385
-      }
-    },
     {
       "id": "2026 JA1",
       "source": "jpl-cad+horizons+sbdb",
@@ -100,7 +20,7 @@
       "dec_deg": -27.60621,
       "mag": 19.06,
       "updated_utc": "2026-05-13T00:36:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
+      "ingested_utc": "2026-05-12T02:00:14.991176Z",
       "meta": {
         "t_utc": "2026-May-13 00:36Z",
         "t_utc_iso": "2026-05-13T00:36:00Z",
@@ -114,8 +34,8 @@
         "dist_ld": 2.531667,
         "v_rel_km_s": 12.5821307118678,
         "h_cad": 27.214,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": null,
         "cad_fields_10ld": [
           "des",
@@ -144,7 +64,7 @@
           "27.214"
         ],
         "alt_deg": -3.61776,
-        "az_deg": 132.357917,
+        "az_deg": 132.357916,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -168,86 +88,6 @@
       }
     },
     {
-      "id": "2026 JH",
-      "source": "jpl-cad+horizons+sbdb",
-      "group": "neo",
-      "type": "neo",
-      "title": "2026 JH",
-      "note": "Close approach within 10 lunar distances",
-      "score_raw": 68.23,
-      "score_norm": 0.6823,
-      "ra_deg": 280.30411,
-      "dec_deg": -22.42972,
-      "mag": 18.55,
-      "updated_utc": "2026-05-11T23:04:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
-      "meta": {
-        "t_utc": "2026-May-11 23:04Z",
-        "t_utc_iso": "2026-05-11T23:04:00Z",
-        "date_local": "2026-05-12",
-        "neo_event_id": "neo:2026 JH:2026-May-11 23:04",
-        "bucket": "10ld",
-        "pha": false,
-        "pha_cad_flag": false,
-        "pha_sbdb_flag": false,
-        "dist_au": 0.0115772278547836,
-        "dist_ld": 4.505538,
-        "v_rel_km_s": 8.77330901110607,
-        "h_cad": 26.383,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
-        "cad_fields_pha": null,
-        "cad_fields_10ld": [
-          "des",
-          "orbit_id",
-          "jd",
-          "cd",
-          "dist",
-          "dist_min",
-          "dist_max",
-          "v_rel",
-          "v_inf",
-          "t_sigma_f",
-          "h"
-        ],
-        "cad_row": [
-          "2026 JH",
-          "4",
-          "2461172.460967045",
-          "2026-May-11 23:04",
-          "0.0115772278547836",
-          "0.011561284086024",
-          "0.0115931713640843",
-          "8.77330901110607",
-          "8.74703689253733",
-          "< 00:01",
-          "26.383"
-        ],
-        "alt_deg": 6.106868,
-        "az_deg": 139.81077,
-        "horizons_ok": true,
-        "horizons_error": null,
-        "horizons_query": {
-          "id": "2026 JH",
-          "jd": 2461172.461111111,
-          "site": {
-            "lat": 52.2297,
-            "lon": 21.0122,
-            "elev_km": 0.1
-          }
-        },
-        "sbdb_ok": true,
-        "sbdb_error": null,
-        "sbdb_moid_au": 0.00302,
-        "sbdb_h": null,
-        "sbdb_albedo": null,
-        "sbdb_diameter_km": null,
-        "sbdb_diameter_est_km": 0.018787152605622037,
-        "sbdb_diameter_source": "h_cad",
-        "risk_score": 0.5252
-      }
-    },
-    {
       "id": "2026 JU",
       "source": "jpl-cad+horizons+sbdb",
       "group": "neo",
@@ -260,7 +100,7 @@
       "dec_deg": 13.2447,
       "mag": 18.64,
       "updated_utc": "2026-05-16T15:50:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
+      "ingested_utc": "2026-05-12T02:00:14.991176Z",
       "meta": {
         "t_utc": "2026-May-16 15:50Z",
         "t_utc_iso": "2026-05-16T15:50:00Z",
@@ -274,8 +114,8 @@
         "dist_ld": 5.214983,
         "v_rel_km_s": 8.40576660722155,
         "h_cad": 26.021,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": null,
         "cad_fields_10ld": [
           "des",
@@ -303,8 +143,8 @@
           "00:03",
           "26.021"
         ],
-        "alt_deg": -17.386273,
-        "az_deg": 37.21039,
+        "alt_deg": -17.386274,
+        "az_deg": 37.210386,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -340,7 +180,7 @@
       "dec_deg": 67.72973,
       "mag": 20.82,
       "updated_utc": "2026-05-14T21:04:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
+      "ingested_utc": "2026-05-12T02:00:14.991176Z",
       "meta": {
         "t_utc": "2026-May-14 21:04Z",
         "t_utc_iso": "2026-05-14T21:04:00Z",
@@ -354,8 +194,8 @@
         "dist_ld": 7.032757,
         "v_rel_km_s": 9.43061247959976,
         "h_cad": 25.887,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": null,
         "cad_fields_10ld": [
           "des",
@@ -420,7 +260,7 @@
       "dec_deg": 72.43891,
       "mag": 21.02,
       "updated_utc": "2026-05-17T19:21:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
+      "ingested_utc": "2026-05-12T02:00:14.991176Z",
       "meta": {
         "t_utc": "2026-May-17 19:21Z",
         "t_utc_iso": "2026-05-17T19:21:00Z",
@@ -434,8 +274,8 @@
         "dist_ld": 7.041682,
         "v_rel_km_s": 6.67843809825819,
         "h_cad": 26.047,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": null,
         "cad_fields_10ld": [
           "des",
@@ -463,8 +303,8 @@
           "< 00:01",
           "26.047"
         ],
-        "alt_deg": 68.265187,
-        "az_deg": 344.331033,
+        "alt_deg": 68.265188,
+        "az_deg": 344.331036,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -500,7 +340,7 @@
       "dec_deg": -30.92451,
       "mag": 22.75,
       "updated_utc": "2026-05-16T22:23:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
+      "ingested_utc": "2026-05-12T02:00:14.991176Z",
       "meta": {
         "t_utc": "2026-May-16 22:23Z",
         "t_utc_iso": "2026-05-16T22:23:00Z",
@@ -514,8 +354,8 @@
         "dist_ld": 7.42961,
         "v_rel_km_s": 2.27995595497985,
         "h_cad": 27.69,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": null,
         "cad_fields_10ld": [
           "des",
@@ -543,8 +383,8 @@
           "08:41",
           "27.69"
         ],
-        "alt_deg": -41.189649,
-        "az_deg": 88.899352,
+        "alt_deg": -41.189651,
+        "az_deg": 88.899349,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -580,7 +420,7 @@
       "dec_deg": -17.58714,
       "mag": 20.64,
       "updated_utc": "2026-05-12T13:48:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
+      "ingested_utc": "2026-05-12T02:00:14.991176Z",
       "meta": {
         "t_utc": "2026-May-12 13:48Z",
         "t_utc_iso": "2026-05-12T13:48:00Z",
@@ -594,8 +434,8 @@
         "dist_ld": 7.88592,
         "v_rel_km_s": 7.43894533731744,
         "h_cad": 27.703,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-12&date-max=2026-05-19&sort=dist&limit=50&dist-max=10LD",
         "cad_fields_pha": null,
         "cad_fields_10ld": [
           "des",
@@ -624,7 +464,7 @@
           "27.703"
         ],
         "alt_deg": -53.318275,
-        "az_deg": 25.068652,
+        "az_deg": 25.068651,
         "horizons_ok": true,
         "horizons_error": null,
         "horizons_query": {
@@ -645,86 +485,6 @@
         "sbdb_diameter_est_km": 0.010229654433116618,
         "sbdb_diameter_source": "h_cad",
         "risk_score": 0.5086
-      }
-    },
-    {
-      "id": "2026 JZ1",
-      "source": "jpl-cad+horizons+sbdb",
-      "group": "neo",
-      "type": "neo",
-      "title": "2026 JZ1",
-      "note": "Close approach within 10 lunar distances",
-      "score_raw": 15.57,
-      "score_norm": 0.1557,
-      "ra_deg": null,
-      "dec_deg": null,
-      "mag": null,
-      "updated_utc": "2026-05-11T03:11:00Z",
-      "ingested_utc": "2026-05-11T14:26:08.967532Z",
-      "meta": {
-        "t_utc": "2026-May-11 03:11Z",
-        "t_utc_iso": "2026-05-11T03:11:00Z",
-        "date_local": "2026-05-11",
-        "neo_event_id": "neo:2026 JZ1:2026-May-11 03:11",
-        "bucket": "10ld",
-        "pha": false,
-        "pha_cad_flag": false,
-        "pha_sbdb_flag": false,
-        "dist_au": 0.0226424964519059,
-        "dist_ld": 8.811835,
-        "v_rel_km_s": 16.4866445405278,
-        "h_cad": 26.204,
-        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&pha=true",
-        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-11&date-max=2026-05-18&sort=dist&limit=50&dist-max=10LD",
-        "cad_fields_pha": null,
-        "cad_fields_10ld": [
-          "des",
-          "orbit_id",
-          "jd",
-          "cd",
-          "dist",
-          "dist_min",
-          "dist_max",
-          "v_rel",
-          "v_inf",
-          "t_sigma_f",
-          "h"
-        ],
-        "cad_row": [
-          "2026 JZ1",
-          "1",
-          "2461171.632731137",
-          "2026-May-11 03:11",
-          "0.0226424964519059",
-          "0.0225668128757687",
-          "0.0227181795932054",
-          "16.4866445405278",
-          "16.4795053361426",
-          "00:01",
-          "26.204"
-        ],
-        "alt_deg": null,
-        "az_deg": null,
-        "horizons_ok": false,
-        "horizons_error": "ValueError: Unknown target (2026 JZ1). Maybe try different id_type?",
-        "horizons_query": {
-          "id": "2026 JZ1",
-          "jd": 2461171.632638889,
-          "site": {
-            "lat": 52.2297,
-            "lon": 21.0122,
-            "elev_km": 0.1
-          }
-        },
-        "sbdb_ok": true,
-        "sbdb_error": null,
-        "sbdb_moid_au": 0.0201,
-        "sbdb_h": null,
-        "sbdb_albedo": null,
-        "sbdb_diameter_km": null,
-        "sbdb_diameter_est_km": 0.020401446608524693,
-        "sbdb_diameter_source": "h_cad",
-        "risk_score": 0.3381
       }
     }
   ]
