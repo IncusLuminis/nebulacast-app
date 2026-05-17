@@ -1,10 +1,10 @@
 {
-  "generated_utc": "2026-05-17T02:00:57.451613Z",
+  "generated_utc": "2026-05-17T12:56:12.323466Z",
   "source": "JPL SSD CAD API + JPL Horizons + JPL SBDB",
   "counts": {
     "pha_rows": 0,
-    "ld10_rows": 12,
-    "items": 12
+    "ld10_rows": 13,
+    "items": 13
   },
   "items": [
     {
@@ -20,7 +20,7 @@
       "dec_deg": -55.66684,
       "mag": 11.79,
       "updated_utc": "2026-05-18T22:00:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-18 22:00Z",
         "t_utc_iso": "2026-05-18T22:00:00Z",
@@ -88,6 +88,86 @@
       }
     },
     {
+      "id": "2026 KD",
+      "source": "jpl-cad+horizons+sbdb",
+      "group": "neo",
+      "type": "neo",
+      "title": "2026 KD",
+      "note": "Close approach within 10 lunar distances",
+      "score_raw": 90.0,
+      "score_norm": 0.9,
+      "ra_deg": 139.76082,
+      "dec_deg": -48.69433,
+      "mag": 16.36,
+      "updated_utc": "2026-05-17T07:29:00Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
+      "meta": {
+        "t_utc": "2026-May-17 07:29Z",
+        "t_utc_iso": "2026-05-17T07:29:00Z",
+        "date_local": "2026-05-17",
+        "neo_event_id": "neo:2026 KD:2026-May-17 07:29",
+        "bucket": "10ld",
+        "pha": false,
+        "pha_cad_flag": false,
+        "pha_sbdb_flag": false,
+        "dist_au": 0.000817254695181293,
+        "dist_ld": 0.318053,
+        "v_rel_km_s": 12.2381118464621,
+        "h_cad": 28.954,
+        "cad_url_pha": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-17&date-max=2026-05-24&sort=dist&limit=50&pha=true",
+        "cad_url_10ld": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-05-17&date-max=2026-05-24&sort=dist&limit=50&dist-max=10LD",
+        "cad_fields_pha": null,
+        "cad_fields_10ld": [
+          "des",
+          "orbit_id",
+          "jd",
+          "cd",
+          "dist",
+          "dist_min",
+          "dist_max",
+          "v_rel",
+          "v_inf",
+          "t_sigma_f",
+          "h"
+        ],
+        "cad_row": [
+          "2026 KD",
+          "1",
+          "2461177.811590496",
+          "2026-May-17 07:29",
+          "0.000817254695181293",
+          "0.000816688856199354",
+          "0.00081782050819825",
+          "12.2381118464621",
+          "11.9687435044708",
+          "< 00:01",
+          "28.954"
+        ],
+        "alt_deg": -59.681421,
+        "az_deg": 103.118244,
+        "horizons_ok": true,
+        "horizons_error": null,
+        "horizons_query": {
+          "id": "2026 KD",
+          "jd": 2461177.8118055556,
+          "site": {
+            "lat": 52.2297,
+            "lon": 21.0122,
+            "elev_km": 0.1
+          }
+        },
+        "sbdb_ok": true,
+        "sbdb_error": null,
+        "sbdb_moid_au": 7.96e-05,
+        "sbdb_h": null,
+        "sbdb_albedo": null,
+        "sbdb_diameter_km": null,
+        "sbdb_diameter_est_km": 0.00574990888945691,
+        "sbdb_diameter_source": "h_cad",
+        "risk_score": 0.5517
+      }
+    },
+    {
       "id": "2026 KB",
       "source": "jpl-cad+horizons+sbdb",
       "group": "neo",
@@ -100,7 +180,7 @@
       "dec_deg": -58.85851,
       "mag": 15.07,
       "updated_utc": "2026-05-18T15:16:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-18 15:16Z",
         "t_utc_iso": "2026-05-18T15:16:00Z",
@@ -180,7 +260,7 @@
       "dec_deg": 51.96155,
       "mag": 16.93,
       "updated_utc": "2026-05-17T13:20:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-17 13:20Z",
         "t_utc_iso": "2026-05-17T13:20:00Z",
@@ -260,7 +340,7 @@
       "dec_deg": -33.07092,
       "mag": 18.82,
       "updated_utc": "2026-05-22T05:25:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-22 05:25Z",
         "t_utc_iso": "2026-05-22T05:25:00Z",
@@ -340,7 +420,7 @@
       "dec_deg": 5.83485,
       "mag": 18.91,
       "updated_utc": "2026-05-19T07:14:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-19 07:14Z",
         "t_utc_iso": "2026-05-19T07:14:00Z",
@@ -420,7 +500,7 @@
       "dec_deg": 72.3905,
       "mag": 18.83,
       "updated_utc": "2026-05-21T05:42:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-21 05:42Z",
         "t_utc_iso": "2026-05-21T05:42:00Z",
@@ -500,7 +580,7 @@
       "dec_deg": -17.26809,
       "mag": 18.22,
       "updated_utc": "2026-05-23T18:06:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-23 18:06Z",
         "t_utc_iso": "2026-05-23T18:06:00Z",
@@ -580,7 +660,7 @@
       "dec_deg": -68.02965,
       "mag": 21.11,
       "updated_utc": "2026-05-21T00:30:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-21 00:30Z",
         "t_utc_iso": "2026-05-21T00:30:00Z",
@@ -660,7 +740,7 @@
       "dec_deg": 72.43856,
       "mag": 20.97,
       "updated_utc": "2026-05-17T19:21:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-17 19:21Z",
         "t_utc_iso": "2026-05-17T19:21:00Z",
@@ -740,7 +820,7 @@
       "dec_deg": 3.6392,
       "mag": 20.62,
       "updated_utc": "2026-05-21T23:18:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-21 23:18Z",
         "t_utc_iso": "2026-05-21T23:18:00Z",
@@ -820,7 +900,7 @@
       "dec_deg": 45.11553,
       "mag": 20.27,
       "updated_utc": "2026-05-17T09:25:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-17 09:25Z",
         "t_utc_iso": "2026-05-17T09:25:00Z",
@@ -900,7 +980,7 @@
       "dec_deg": -25.31193,
       "mag": 19.77,
       "updated_utc": "2026-05-17T11:40:00Z",
-      "ingested_utc": "2026-05-17T02:00:47.965937Z",
+      "ingested_utc": "2026-05-17T12:56:02.023463Z",
       "meta": {
         "t_utc": "2026-May-17 11:40Z",
         "t_utc_iso": "2026-05-17T11:40:00Z",
