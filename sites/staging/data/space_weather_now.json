@@ -1,21 +1,28 @@
 {
-  "generated_utc": "2026-05-16T18:52:01Z",
+  "generated_utc": "2026-05-17T02:10:24Z",
   "kp": {
     "latest": null,
     "forecast_3h": [],
     "activity_label": null
   },
   "solar_wind": {
-    "timestamp_utc": "2026-05-16T18:48:00Z",
-    "speed_kms": 633.6,
-    "density_protons_cm3": 1.35
+    "timestamp_utc": "2026-05-17T02:07:00Z",
+    "speed_kms": 624.7,
+    "density_protons_cm3": 1.43
   },
   "xray": {
-    "timestamp_utc": "2026-05-16T18:48:00Z",
-    "flux_wm2": 1.4903363307894324e-06,
-    "class": "C"
+    "timestamp_utc": "2026-05-17T02:06:00Z",
+    "flux_wm2": 8.081656233116519e-07,
+    "class": "B"
   },
   "alerts": [
+    {
+      "id": "A20F",
+      "timestamp_utc": "2026-05-16T21:34:00Z",
+      "title": "Space Weather Message Code: WATA20",
+      "level": "watch",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "K05W",
       "timestamp_utc": "2026-05-16T18:14:04Z",
@@ -840,13 +847,6 @@
       "timestamp_utc": "2026-04-17T07:31:42Z",
       "title": "Space Weather Message Code: ALTEF3",
       "level": "info",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "A20F",
-      "timestamp_utc": "2026-04-16T22:09:52Z",
-      "title": "Space Weather Message Code: WATA20",
-      "level": "watch",
       "source": "NOAA SWPC"
     }
   ]
