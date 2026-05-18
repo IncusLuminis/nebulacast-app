@@ -1,21 +1,28 @@
 {
-  "generated_utc": "2026-05-17T18:55:11Z",
+  "generated_utc": "2026-05-18T02:31:21Z",
   "kp": {
     "latest": null,
     "forecast_3h": [],
     "activity_label": null
   },
   "solar_wind": {
-    "timestamp_utc": "2026-05-17T18:52:00Z",
-    "speed_kms": 571.8,
-    "density_protons_cm3": 1.68
+    "timestamp_utc": "2026-05-18T02:28:00Z",
+    "speed_kms": 520.0,
+    "density_protons_cm3": 1.7
   },
   "xray": {
-    "timestamp_utc": "2026-05-17T18:52:00Z",
-    "flux_wm2": 5.385433041737997e-07,
+    "timestamp_utc": "2026-05-18T02:28:00Z",
+    "flux_wm2": 5.015907618144411e-07,
     "class": "B"
   },
   "alerts": [
+    {
+      "id": "BHIS",
+      "timestamp_utc": "2026-05-17T21:16:07Z",
+      "title": "Space Weather Message Code: SUM10R",
+      "level": "info",
+      "source": "NOAA SWPC"
+    },
     {
       "id": "A20F",
       "timestamp_utc": "2026-05-17T16:12:50Z",
@@ -853,13 +860,6 @@
       "id": "K05W",
       "timestamp_utc": "2026-04-18T03:17:54Z",
       "title": "Space Weather Message Code: WARK05",
-      "level": "warning",
-      "source": "NOAA SWPC"
-    },
-    {
-      "id": "K04W",
-      "timestamp_utc": "2026-04-18T01:58:19Z",
-      "title": "Space Weather Message Code: WARK04",
       "level": "warning",
       "source": "NOAA SWPC"
     }
