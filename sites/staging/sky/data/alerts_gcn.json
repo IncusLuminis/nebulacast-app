@@ -1,12 +1,10 @@
 {
-  "generated_utc": "2026-05-18T02:12:36.934332Z",
+  "generated_utc": "2026-05-18T14:54:47.008822Z",
   "source": "NASA/GCN Kafka via gcn_kafka",
   "counts": {
-    "items": 1,
-    "by_topic": {
-      "igwn.gwalert": 1
-    },
-    "polls_total": 121,
+    "items": 0,
+    "by_topic": {},
+    "polls_total": 120,
     "polls_empty": 120
   },
   "raw": {
@@ -22,117 +20,5 @@
     "consume_timeout_sec": 1.0,
     "heartbeat_sec": 15
   },
-  "items": [
-    {
-      "id": "gcn:igwn.gwalert:101212",
-      "source": "gcn_kafka",
-      "group": "gcn",
-      "type": "gcn",
-      "title": "GW INITIAL: MS260518b (BNS 1.00000)",
-      "ui_type": "GW alert",
-      "note": "H1,L1,V1 · FAR 5.177e-16 · t=2026-05-18T01:57:10.144Z",
-      "score_raw": null,
-      "score_norm": 0.5,
-      "ra_deg": null,
-      "dec_deg": null,
-      "mag": null,
-      "discovery": null,
-      "updated_utc": "2026-05-18T02:10:57.996000+00:00",
-      "ingested_utc": "2026-05-18T02:10:36.840640Z",
-      "meta": {
-        "topic": "igwn.gwalert",
-        "offset": 101212,
-        "kafka_timestamp_ms": 1779070257996,
-        "payload_text": null,
-        "payload_json": {
-          "alert_type": "INITIAL",
-          "time_created": "2026-05-18T02:10:57Z",
-          "superevent_id": "MS260518b",
-          "urls": {
-            "gracedb": "https://gracedb.ligo.org/superevents/MS260518b/view/"
-          },
-          "event": {
-            "significant": true,
-            "time": "2026-05-18T01:57:10.144Z",
-            "far": 5.176954877338635e-16,
-            "instruments": [
-              "H1",
-              "L1",
-              "V1"
-            ],
-            "group": "CBC",
-            "pipeline": "gstlal",
-            "search": "MDC",
-            "properties": {
-              "HasNS": 1.0,
-              "HasRemnant": 1.0,
-              "HasMassGap": 0.0
-            },
-            "classification": {
-              "BNS": 0.9999999742635651,
-              "NSBH": 0.0,
-              "BBH": 0.0,
-              "Terrestrial": 2.5736434777897492e-08
-            },
-            "duration": null,
-            "central_frequency": null,
-            "skymap_meta": {
-              "present": true,
-              "bytes": 1036800,
-              "sha256": "eae2e45a336e9cd3e3ff15e7c17a9660f5ed4bfeb0ccec36f767b8ad01307328"
-            }
-          },
-          "external_coinc": null
-        },
-        "payload_text_meta": {
-          "present": true,
-          "bytes": 1037422,
-          "sha256": "002a2ac6241e5ff3fb5b5a8952a2dfbcee41ae95e658af3b62bae6e15dc1c22f",
-          "truncated": true,
-          "max_chars": 4096
-        },
-        "gw": {
-          "alert_type": "INITIAL",
-          "time_created_utc": "2026-05-18T02:10:57Z",
-          "superevent_id": "MS260518b",
-          "significant": true,
-          "event_time_utc": "2026-05-18T01:57:10.144Z",
-          "far": 5.176954877338635e-16,
-          "instruments": [
-            "H1",
-            "L1",
-            "V1"
-          ],
-          "group": "CBC",
-          "pipeline": "gstlal",
-          "search": "MDC",
-          "properties": {
-            "HasNS": 1.0,
-            "HasRemnant": 1.0,
-            "HasMassGap": 0.0
-          },
-          "classification": {
-            "BNS": 0.9999999742635651,
-            "NSBH": 0.0,
-            "BBH": 0.0,
-            "Terrestrial": 2.5736434777897492e-08
-          },
-          "classification_top": "BNS",
-          "skymap": {
-            "present": true,
-            "bytes": 1036800,
-            "sha256": "eae2e45a336e9cd3e3ff15e7c17a9660f5ed4bfeb0ccec36f767b8ad01307328"
-          }
-        },
-        "urls": {
-          "gracedb": "https://gracedb.ligo.org/superevents/MS260518b/view/"
-        },
-        "title": "GW INITIAL: MS260518b (BNS 1.00000)",
-        "note": "H1,L1,V1 · FAR 5.177e-16 · t=2026-05-18T01:57:10.144Z",
-        "ui_type": "GW alert",
-        "ui_type_hint": "Gravitational-wave candidate alert (LIGO/Virgo/KAGRA/IGWN). Preliminary machine-generated notice; classification and sky localization can be updated.",
-        "ui_type_html": "<strong>Gravitational-wave candidate</strong> (LIGO/Virgo/KAGRA/IGWN). Preliminary; classification and sky localization may be revised."
-      }
-    }
-  ]
+  "items": []
 }
