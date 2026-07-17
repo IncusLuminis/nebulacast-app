@@ -1,6 +1,6 @@
-# {{PROJECT_NAME}}
+# nebulacast-app
 
-> {{PROJECT_DESCRIPTION}}
+> NebulaCast desktop and mobile applications.
 
 ---
 
