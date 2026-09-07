@@ -21,13 +21,35 @@ if str(_service_root) not in sys.path:
     sys.path.insert(0, str(_service_root))
 
 _SUN_MOON_PATH = Path(__file__).resolve().parents[3] / "sites/staging/sky/data/sun_moon.json"
+_STATIC_SUN_MOON_LOCATION_ID = "default-warsaw"
+_STATIC_SUN_MOON_LAT = 52.2297
+_STATIC_SUN_MOON_LON = 21.0122
+
+
+def _is_static_sun_moon_for_warsaw(data: dict) -> bool:
+    """Return true only for a schema-marked payload owned by Warsaw."""
+    ownership = data.get("ownership") or {}
+    site = data.get("site") or {}
+    try:
+        lat = float(site.get("lat", site.get("lat_deg")))
+        lon = float(site.get("lon", site.get("lon_deg")))
+    except (TypeError, ValueError):
+        return False
+    return (data.get("schema") == "sun_moon.v2" and
+            ownership.get("kind") == "static" and
+            ownership.get("location_id") == _STATIC_SUN_MOON_LOCATION_ID and
+            abs(lat - _STATIC_SUN_MOON_LAT) < 0.05 and
+            abs(lon - _STATIC_SUN_MOON_LON) < 0.05)
 
 
 def _load_sun_moon_frames() -> list:
     """Load sun/moon 10-min frames from sun_moon.json. Returns [] on any error."""
     try:
         with open(_SUN_MOON_PATH, encoding="utf-8") as f:
-            return json.load(f).get("frames", [])
+            data = json.load(f)
+        if not _is_static_sun_moon_for_warsaw(data):
+            return []
+        return data.get("frames", [])
     except Exception:
         return []
 

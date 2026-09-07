@@ -766,8 +766,25 @@ function pickNearestFrame(frames, tMs) {
   return best;
 }
 
+// Static ephemeris is generated for the configured Warsaw pipeline site.  It
+// must not silently be used to render a different observer location.  Dynamic
+// API payloads are location-aware and do not carry this static ownership mark.
+function isSunMoonLocationCompatible(sunMoonJson, observer) {
+  if (sunMoonJson?.ownership?.kind !== "static") return true;
+  if (sunMoonJson.ownership.location_id !== "default-warsaw") return false;
+  const site = sunMoonJson.site || {};
+  const siteLat = Number(site.lat_deg ?? site.lat);
+  const siteLon = Number(site.lon_deg ?? site.lon);
+  const obsLat = Number(observer?.latRad) * 180 / Math.PI;
+  const obsLon = Number(observer?.lonRad) * 180 / Math.PI;
+  return Number.isFinite(siteLat) && Number.isFinite(siteLon) &&
+    Number.isFinite(obsLat) && Number.isFinite(obsLon) &&
+    Math.abs(siteLat - obsLat) < 0.05 && Math.abs(siteLon - obsLon) < 0.05;
+}
+
 function prepareSunMoon(sunMoonJson, observer, viewport) {
-  if (!sunMoonJson || !Array.isArray(sunMoonJson.frames)) return [];
+  if (!sunMoonJson || !Array.isArray(sunMoonJson.frames) ||
+      !isSunMoonLocationCompatible(sunMoonJson, observer)) return [];
 
   const latRad = observer.latRad;
   const lstRad = observer.lstRad;
@@ -1026,6 +1043,7 @@ export const Prepare = {
   buildEquatorialGrid,
   buildEqGrid: buildEquatorialGrid,
   prepareSunMoon,
+  isSunMoonLocationCompatible,
   preparePlanets,
   prepareMessier
 };

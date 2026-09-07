@@ -11,7 +11,10 @@
   "site": {
     "lat": 52.2297,
     "lon": 21.0122,
-    "elevation_km": 0.1
+    "elevation_km": 0.1,
+    "location_id": "default-warsaw",
+    "name": "Warsaw",
+    "timezone": "Europe/Warsaw"
   },
   "window": {
     "start_utc": "2026-09-07T09:27:00Z",
@@ -19189,5 +19192,16 @@
         "phase_name": "Waxing Crescent"
       }
     }
-  ]
+  ],
+  "schema": "sun_moon.v2",
+  "ownership": {
+    "kind": "static",
+    "location_id": "default-warsaw",
+    "location_name": "Warsaw",
+    "timezone": "Europe/Warsaw",
+    "coordinates": {
+      "lat_deg": 52.2297,
+      "lon_deg": 21.0122
+    }
+  }
 }

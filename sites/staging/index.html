@@ -3010,6 +3010,10 @@
         fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
         fetch(sunMoonUrl, {cache:'no-store'}).then(r => r.ok ? r.json() : null),
       ]);
+      // A static sun_moon payload is explicitly owned by Warsaw.  Never let
+      // it leak into a non-Warsaw hero if routing or a cache serves it there.
+      const _heroLoc = getState()?.location;
+      if (sunMoon?.ownership?.kind === 'static' && !_isDefaultSite(_heroLoc)) sunMoon = null;
     } catch (_) {}
     _helioData = sw; // store for _dbRenderHelio
 

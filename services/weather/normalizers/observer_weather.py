@@ -233,6 +233,9 @@ def _best_window(
 # ── Night mask from sun_moon.json ────────────────────────────────────────────
 
 _SUN_MOON_PATH = _repo_root / "sites" / "staging" / "sky" / "data" / "sun_moon.json"
+_STATIC_SUN_MOON_LOCATION_ID = "default-warsaw"
+_STATIC_SUN_MOON_LAT = 52.2297
+_STATIC_SUN_MOON_LON = 21.0122
 _ASTRO_TWILIGHT_ALT = -6.0  # degrees — astronomical twilight threshold
 
 
@@ -241,6 +244,14 @@ def _load_sun_moon() -> List[Dict]:
     try:
         with open(_SUN_MOON_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
+        ownership = data.get("ownership", {})
+        site = data.get("site", {})
+        if (ownership.get("kind") != "static" or
+                ownership.get("location_id") != _STATIC_SUN_MOON_LOCATION_ID or
+                abs(float(site.get("lat", site.get("lat_deg"))) - _STATIC_SUN_MOON_LAT) >= 0.05 or
+                abs(float(site.get("lon", site.get("lon_deg"))) - _STATIC_SUN_MOON_LON) >= 0.05):
+            print("[observer_weather] WARNING: ignoring sun_moon.json with incompatible ownership")
+            return []
         return data.get("frames", [])
     except Exception as e:
         print(f"[observer_weather] WARNING: could not load sun_moon.json: {e}")

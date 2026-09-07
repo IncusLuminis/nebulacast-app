@@ -2015,6 +2015,15 @@ async function fetchSunMoonEvents(loc) {
     const res = await fetch(url);
     if (!res.ok) { sunMoonEventsCache = []; return; }
     const data = await res.json();
+    // Static ephemeris is owned by the Warsaw pipeline site.  A location
+    // selected by the user must use the location-aware API path exclusively.
+    if (data?.ownership?.kind === "static" &&
+        (data.ownership.location_id !== "default-warsaw" ||
+         Math.abs(Number(data.site?.lat ?? data.site?.lat_deg) - Number(loc?.lat)) >= 0.05 ||
+         Math.abs(Number(data.site?.lon ?? data.site?.lon_deg) - Number(loc?.lon)) >= 0.05)) {
+      sunMoonEventsCache = [];
+      return;
+    }
     // Sun events: SunCalcLib (exact, matches Sun & Moon tab) — moon: Python ephemeris frames
     const moonEvts = computeMoonEvents(data.frames || []);
     const sunEvts  = computeSunEventsFromSunCalc(loc, 7);
@@ -4783,4 +4792,3 @@ export function mountWeather(rootEl, storeApi, options) {
     }
   };
 }
-

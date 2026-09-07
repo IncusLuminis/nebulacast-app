@@ -31,6 +31,10 @@ STAGING_DATA_DIR  = PROJECT_ROOT / "sites" / "staging" / "sky" / "data"
 BSP_PATH          = PROJECT_ROOT / "services" / "sky" / "data" / "raw" / "de421.bsp"
 
 OUT_FILENAME = "sun_moon.json"
+SCHEMA_VERSION = 2
+STATIC_LOCATION_ID = "default-warsaw"
+STATIC_LOCATION_NAME = "Warsaw"
+STATIC_TIMEZONE = "Europe/Warsaw"
 
 
 # -----------------------------
@@ -148,8 +152,16 @@ def main() -> None:
     })
 
   out = {
-    "version": 2,
+    "version": SCHEMA_VERSION,
     "lunar_source": lunar_states[0]["source"],
+    "schema": "sun_moon.v2",
+    "ownership": {
+      "kind": "static",
+      "location_id": STATIC_LOCATION_ID,
+      "location_name": STATIC_LOCATION_NAME,
+      "timezone": STATIC_TIMEZONE,
+      "coordinates": {"lat_deg": site.lat, "lon_deg": site.lon},
+    },
     "epoch": "apparent",
     "generated_at": utc_now_iso(),
     "source": "DE421 local kernel via astropy.coordinates",
@@ -158,6 +170,9 @@ def main() -> None:
       "lat": site.lat,
       "lon": site.lon,
       "elevation_km": site.elev_km,
+      "location_id": STATIC_LOCATION_ID,
+      "name": STATIC_LOCATION_NAME,
+      "timezone": STATIC_TIMEZONE,
     },
     "window": {
       "start_utc": iso_utc(start),
