@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+import "./build-lunar.mjs";
 /**
  * Bundle Cloudflare Pages Functions so that services/astro_weather is inlined.
  * Output: functions/api/*.js (ESM, so CF can run them).

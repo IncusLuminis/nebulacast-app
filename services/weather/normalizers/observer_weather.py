@@ -305,25 +305,6 @@ def _apply_night_mask(
 
 # ── Moon metadata ────────────────────────────────────────────────────────────
 
-_PHASE_NAMES: List[Tuple[float, float, str]] = [
-    (0.00, 0.03, "New Moon"),
-    (0.03, 0.25, "Waxing Crescent"),
-    (0.25, 0.27, "First Quarter"),
-    (0.27, 0.50, "Waxing Gibbous"),
-    (0.50, 0.53, "Full Moon"),
-    (0.53, 0.75, "Waning Gibbous"),
-    (0.75, 0.77, "Last Quarter"),
-    (0.77, 1.01, "Waning Crescent"),
-]
-
-
-def _phase_name(phase_0_to_1: float) -> str:
-    for lo, hi, name in _PHASE_NAMES:
-        if lo <= phase_0_to_1 < hi:
-            return name
-    return "Waning Crescent"
-
-
 def _moon_meta(
     sm_index: List[Tuple[datetime, Dict]], now_utc: datetime
 ) -> Optional[Dict]:
@@ -335,11 +316,10 @@ def _moon_meta(
         return None
     moon = frame.get("moon") or {}
     illum = moon.get("illum_pct")
-    phase = moon.get("phase")
     moon_alt = moon.get("alt_deg")
     return {
         "illumination_percent": round(illum, 1) if illum is not None else None,
-        "phase_name": _phase_name(phase) if phase is not None else None,
+        "phase_name": moon.get("phase_name"),
         "moon_up_now": moon_alt is not None and moon_alt > 0,
     }
 

@@ -1,3 +1,4 @@
+import { getLunarState } from "../../frontend/astronomy/lunar";
 // Ephemeris — simplified sun & moon position
 // Accuracy ≈ ±0.5° (sufficient for twilight classification and sky-darkness scoring)
 // Algorithms: Astronomical Almanac simplified / Meeus Ch.47 low-accuracy
@@ -114,21 +115,5 @@ export function moonPositionDeg(
 
   const altDeg = altitude(RA, Dec, lat, lon, JD);
 
-  // Illumination: elongation between sun and moon
-  // Sun's ecliptic longitude (simplified)
-  const n = d;
-  const gSun = norm360(357.528 + 0.9856003 * n) * DEG;
-  const LSun = norm360(280.460 + 0.9856474 * n);
-  const lambdaSun = norm360(LSun + 1.915 * Math.sin(gSun) + 0.020 * Math.sin(2 * gSun)) * DEG;
-
-  // Geocentric elongation (simplified: use ecliptic longitude difference, beta≈0 for sun)
-  const elong = Math.acos(
-    Math.max(-1, Math.min(1,
-      Math.sin(betaMoon) * Math.sin(0) +
-      Math.cos(betaMoon) * Math.cos(0) * Math.cos(lambdaMoon - lambdaSun)
-    ))
-  );
-  const illumPct = ((1 - Math.cos(elong)) / 2) * 100;
-
-  return { altDeg, illumPct: Math.max(0, Math.min(100, illumPct)) };
+  return { altDeg, illumPct: getLunarState(dt).illum_pct };
 }

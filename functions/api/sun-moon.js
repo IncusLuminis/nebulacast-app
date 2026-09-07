@@ -1,3 +1,4 @@
+import { getLunarState, LUNAR_SOURCE } from "../lib/lunar.js";
 /**
  * /api/sun-moon?lat=&lon=&tz=&days=&step_min=
  *
@@ -61,7 +62,7 @@ function sunRaDec(jdate) {
 }
 
 // ── Simplified lunar coordinates (Meeus ch.47 low-precision) ─────────────
-function moonRaDecIllum(jdate) {
+function moonRaDec(jdate) {
   const T  = (jdate - 2451545.0) / 36525.0;
   // Mean longitude, mean anomaly, argument of latitude
   let Lp = (218.3164477 + 481267.88123421 * T) % 360;
@@ -120,20 +121,7 @@ function moonRaDecIllum(jdate) {
   const ra  = Math.atan2(Math.sin(lam) * Math.cos(eps) - Math.tan(bet) * Math.sin(eps), Math.cos(lam)) * RAD;
   const dec = Math.asin(Math.sin(bet) * Math.cos(eps) + Math.cos(bet) * Math.sin(eps) * Math.sin(lam)) * RAD;
 
-  // Illumination: i = elongation angle (Meeus ch.48 simplified)
-  const sunPos = sunRaDec(jdate);
-  const chiRad = Math.acos(
-    Math.sin(sunPos.dec * DEG) * Math.sin(dec * DEG) +
-    Math.cos(sunPos.dec * DEG) * Math.cos(dec * DEG) *
-    Math.cos((sunPos.ra - ra) * DEG)
-  );
-  const illumPct = (1 - Math.cos(Math.PI - chiRad)) / 2 * 100;
-
-  // Waxing if elongation increasing: D increasing (0→180 waxing, 180→360 waning)
-  const dNorm = ((D % 360) + 360) % 360;
-  const waxing = dNorm < 180;
-
-  return { ra: (ra + 360) % 360, dec, illumPct: Math.round(illumPct * 10) / 10, phase: illumPct / 100, waxing };
+  return { ra: (ra + 360) % 360, dec };
 }
 
 // ── Format timestamp as "YYYY-Mon-DD HH:MMZ" ──────────────────────────────
@@ -162,11 +150,21 @@ export async function onRequest(context) {
     "Access-Control-Allow-Origin": "*",
   };
 
+  if (request.method !== "GET") {
+    return new Response(null, { status: 405, headers: { ...respHeaders, Allow: "GET, OPTIONS" } });
+  }
+
   const url    = new URL(request.url);
   const lat    = parseFloat(url.searchParams.get("lat") ?? "");
   const lon    = parseFloat(url.searchParams.get("lon") ?? "");
-  const days   = Math.min(14, Math.max(1, parseInt(url.searchParams.get("days")     ?? "7",  10)));
-  const step   = Math.min(60, Math.max(5,  parseInt(url.searchParams.get("step_min") ?? "10", 10)));
+  const daysRaw = Number(url.searchParams.get("days") ?? "7");
+  const stepRaw = Number(url.searchParams.get("step_min") ?? "10");
+  if (!Number.isInteger(daysRaw) || !Number.isInteger(stepRaw)) {
+    return new Response(JSON.stringify({ error: "days and step_min must be integers" }),
+      { status: 400, headers: { ...respHeaders, "Cache-Control": "no-store" } });
+  }
+  const days = Math.min(14, Math.max(1, daysRaw));
+  const step = Math.min(60, Math.max(5, stepRaw));
 
   if (!isFinite(lat) || !isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
     return new Response(
@@ -176,7 +174,7 @@ export async function onRequest(context) {
   }
 
   const now    = new Date();
-  const startMs = now.getTime();
+  const startMs = Math.floor(now.getTime() / 60000) * 60000;
   const endMs   = startMs + days * 86400000;
   const stepMs  = step * 60000;
 
@@ -185,7 +183,8 @@ export async function onRequest(context) {
     const date   = new Date(t);
     const jdate  = jd(date);
     const sun    = sunRaDec(jdate);
-    const moon   = moonRaDecIllum(jdate);
+    const moon   = moonRaDec(jdate);
+    const lunar = getLunarState(date);
     const sunPos = altAz(sun.ra, sun.dec, lat, lon, jdate);
     const monPos = altAz(moon.ra, moon.dec, lat, lon, jdate);
 
@@ -202,15 +201,17 @@ export async function onRequest(context) {
         dec_deg:  Math.round(moon.dec * 1000) / 1000,
         alt_deg:  Math.round(monPos.altDeg * 10000) / 10000,
         az_deg:   Math.round(monPos.azDeg  * 10000) / 10000,
-        illum_pct: moon.illumPct,
-        phase:     Math.round(moon.phase * 10000) / 10000,
-        waxing:    moon.waxing,
+        illum_pct: lunar.illum_pct,
+        phase:     lunar.phase,
+        waxing:    lunar.waxing,
+        phase_name: lunar.name,
       },
     });
   }
 
   const result = {
-    version: 1,
+    version: 2,
+    lunar_source: LUNAR_SOURCE,
     epoch: "apparent",
     generated_at: now.toISOString(),
     source: "JS low-precision (Meeus)",

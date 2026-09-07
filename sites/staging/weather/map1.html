@@ -45,7 +45,8 @@
   <script type="module" src="./widget.js"></script>
   
   <!-- Map Logic -->
-  <script>
+  <script type="module">
+  import { getLunarState } from "../shared/lunar.mjs";
 (function () {
   "use strict";
   const DEFAULT_CENTER = [52.2297, 21.0122];
@@ -69,15 +70,7 @@
   const ASTRO_TWILIGHT_ALPHA = 0.38; // Dark gray
   const NIGHT_ALPHA = 0.58; // Darkest
   const MOON_UPDATE_INTERVAL_MS = 60000; // Update moon info every 60 seconds
-  // Moon phase boundaries (based on phase value 0-1)
-  const MOON_PHASE_NEW_MAX = 0.03;
-  const MOON_PHASE_WAXING_CRESCENT_MAX = 0.22;
-  const MOON_PHASE_FIRST_QUARTER_MAX = 0.28;
-  const MOON_PHASE_WAXING_GIBBOUS_MAX = 0.47;
-  const MOON_PHASE_FULL_MAX = 0.53;
-  const MOON_PHASE_WANING_GIBBOUS_MAX = 0.72;
-  const MOON_PHASE_LAST_QUARTER_MAX = 0.78;
-  const MOON_PHASE_WANING_CRESCENT_MAX = 0.97;
+
   // Open-Meteo forecast clouds (model)
   const OPEN_METEO_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
   const FORECAST_HOURS = 72;         // горизонт прогноза (часы)
@@ -1807,57 +1800,22 @@
       console.warn("SunCalc not loaded");
       return;
     }
-    // Get moon illumination
-    var moonIllum = SunCalcLib.getMoonIllumination(date);
-    var fraction = moonIllum.fraction; // 0 = new moon, 1 = full moon (illumination)
-    var phase = moonIllum.phase; // 0-1, where 0/1 = new moon, 0.5 = full moon (phase)
+    var moonIllum = getLunarState(date);
     // Get moon position
     var moonPos = SunCalcLib.getMoonPosition(date, center.lat, center.lng);
     var altDeg = moonPos.altitude * 180 / Math.PI;
     var azDeg = moonPos.azimuth * 180 / Math.PI;
     // Convert azimuth from south-based (SunCalc) to north-based (0-360)
     azDeg = (azDeg + 180) % 360;
-    // Determine phase name and emoji based on phase value (not fraction!)
-    var phaseName = "New Moon";
-    var phaseEmoji = "🌑";
-    if (phase < MOON_PHASE_NEW_MAX || phase >= MOON_PHASE_WANING_CRESCENT_MAX) {
-      phaseName = "New Moon";
-      phaseEmoji = "🌑";
-    } else if (phase < MOON_PHASE_WAXING_CRESCENT_MAX) {
-      phaseName = "Waxing Crescent";
-      phaseEmoji = "🌒";
-    } else if (phase < MOON_PHASE_FIRST_QUARTER_MAX) {
-      phaseName = "First Quarter";
-      phaseEmoji = "🌓";
-    } else if (phase < MOON_PHASE_WAXING_GIBBOUS_MAX) {
-      phaseName = "Waxing Gibbous";
-      phaseEmoji = "🌔";
-    } else if (phase < MOON_PHASE_FULL_MAX) {
-      phaseName = "Full Moon";
-      phaseEmoji = "🌕";
-    } else if (phase < MOON_PHASE_WANING_GIBBOUS_MAX) {
-      phaseName = "Waning Gibbous";
-      phaseEmoji = "🌖";
-    } else if (phase < MOON_PHASE_LAST_QUARTER_MAX) {
-      phaseName = "Last Quarter";
-      phaseEmoji = "🌗";
-    } else {
-      phaseName = "Waning Crescent";
-      phaseEmoji = "🌘";
-    }
-    // Calculate phase percentage (0% = New Moon, 100% = Full Moon)
-    // phase: 0-0.5 (waxing) → 0-100%, 0.5-1 (waning) → 100-0%
-    var phasePercent;
-    if (phase <= 0.5) {
-      phasePercent = Math.round(phase * 200); // 0-0.5 → 0-100%
-    } else {
-      phasePercent = Math.round((1 - phase) * 200); // 0.5-1 → 100-0%
-    }
+    var phaseName = moonIllum.name;
+    var phaseEmoji = moonIllum.emoji;
+    var illumPct = moonIllum.pct;
+
     // Update UI
     var line1 = document.getElementById("moonInfoLine1");
     var line2 = document.getElementById("moonInfoLine2");
     if (line1) {
-      line1.textContent = phaseEmoji + " Moon: " + phasePercent + "% (" + phaseName + ")";
+      line1.textContent = phaseEmoji + " Moon: " + illumPct + "% (" + phaseName + ")";
     }
     if (line2) {
       var altSign = altDeg >= 0 ? "+" : "";

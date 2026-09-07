@@ -839,7 +839,8 @@
 </script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <script>
+  <script type="module">
+  import { getLunarState } from "../shared/lunar.mjs";
 (function () {
   "use strict";
 
@@ -866,15 +867,7 @@
   const NIGHT_ALPHA = 0.58; // Darkest
   const MOON_UPDATE_INTERVAL_MS = 60000; // Update moon info every 60 seconds
   
-  // Moon phase boundaries (based on phase value 0-1)
-  const MOON_PHASE_NEW_MAX = 0.03;
-  const MOON_PHASE_WAXING_CRESCENT_MAX = 0.22;
-  const MOON_PHASE_FIRST_QUARTER_MAX = 0.28;
-  const MOON_PHASE_WAXING_GIBBOUS_MAX = 0.47;
-  const MOON_PHASE_FULL_MAX = 0.53;
-  const MOON_PHASE_WANING_GIBBOUS_MAX = 0.72;
-  const MOON_PHASE_LAST_QUARTER_MAX = 0.78;
-  const MOON_PHASE_WANING_CRESCENT_MAX = 0.97;
+
 
   // Open-Meteo forecast clouds (model)
   const OPEN_METEO_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
@@ -3804,36 +3797,11 @@
     return               { label: "Night",                color: "#9aa3b2" };
   }
 
-  // Cache for sun_moon.json — authoritative moon illumination source (Python ephemeris)
-  var _sunMoonCache = null;
-  var _sunMoonFetchDone = false;
-  function _loadSunMoon() {
-    if (_sunMoonFetchDone) return;
-    _sunMoonFetchDone = true;
-    fetch('/sky/data/sun_moon.json').then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(data) { if (data && data.frames) _sunMoonCache = data.frames; })
-      .catch(function() {});
-  }
-  // Returns illum_pct (0-100) from sun_moon.json for the nearest frame to `date`, or null if unavailable
-  function _sunMoonIllum(date) {
-    if (!_sunMoonCache || !_sunMoonCache.length) return null;
-    var ms = date.getTime(), best = null, bestD = Infinity;
-    for (var i = 0; i < _sunMoonCache.length; i++) {
-      var f = _sunMoonCache[i];
-      var t = f.t_utc ? new Date(f.t_utc).getTime() : NaN;
-      if (isNaN(t)) continue;
-      var d = Math.abs(t - ms);
-      if (d < bestD) { bestD = d; best = f; }
-    }
-    return (best && best.moon && best.moon.illum_pct != null) ? best.moon.illum_pct : null;
-  }
-
   /**
    * Updates moon info panel with current moon phase, altitude, and azimuth.
    * @param {Date} date - The date/time to use for moon calculation (UTC). If not provided, uses current time.
    */
   function updateMoonInfo(date) {
-    _loadSunMoon(); // ensure sun_moon.json is being fetched
     if (!map || !moonInfoOn) {
       var moonPanel = document.getElementById("moonInfoPanel");
       if (moonPanel) {
@@ -3857,11 +3825,7 @@
       return;
     }
     
-    // Get moon illumination
-    var moonIllum = SunCalcLib.getMoonIllumination(date);
-    var fraction = moonIllum.fraction; // 0 = new moon, 1 = full moon (illumination)
-    var phase = moonIllum.phase; // 0-1, where 0/1 = new moon, 0.5 = full moon (phase)
-    
+    var moonIllum = getLunarState(date);
     // Get moon position
     var moonPos = SunCalcLib.getMoonPosition(date, center.lat, center.lng);
     var altDeg = moonPos.altitude * 180 / Math.PI;
@@ -3869,38 +3833,9 @@
     // Convert azimuth from south-based (SunCalc) to north-based (0-360)
     azDeg = (azDeg + 180) % 360;
     
-    // Determine phase name and emoji based on phase value (not fraction!)
-    var phaseName = "New Moon";
-    var phaseEmoji = "🌑";
-    
-    if (phase < MOON_PHASE_NEW_MAX || phase >= MOON_PHASE_WANING_CRESCENT_MAX) {
-      phaseName = "New Moon";
-      phaseEmoji = "🌑";
-    } else if (phase < MOON_PHASE_WAXING_CRESCENT_MAX) {
-      phaseName = "Waxing Crescent";
-      phaseEmoji = "🌒";
-    } else if (phase < MOON_PHASE_FIRST_QUARTER_MAX) {
-      phaseName = "First Quarter";
-      phaseEmoji = "🌓";
-    } else if (phase < MOON_PHASE_WAXING_GIBBOUS_MAX) {
-      phaseName = "Waxing Gibbous";
-      phaseEmoji = "🌔";
-    } else if (phase < MOON_PHASE_FULL_MAX) {
-      phaseName = "Full Moon";
-      phaseEmoji = "🌕";
-    } else if (phase < MOON_PHASE_WANING_GIBBOUS_MAX) {
-      phaseName = "Waning Gibbous";
-      phaseEmoji = "🌖";
-    } else if (phase < MOON_PHASE_LAST_QUARTER_MAX) {
-      phaseName = "Last Quarter";
-      phaseEmoji = "🌗";
-    } else {
-      phaseName = "Waning Crescent";
-      phaseEmoji = "🌘";
-    }
-    
-    // Illumination: fraction of the disc that is lit (same metric as hero panel & sky widget)
-    var illumPct = Math.round(fraction * 100);
+    var phaseName = moonIllum.name;
+    var phaseEmoji = moonIllum.emoji;
+    var illumPct = moonIllum.pct;
 
     // Update UI
     var line1 = document.getElementById("moonInfoLine1");

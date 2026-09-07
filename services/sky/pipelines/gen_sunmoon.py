@@ -8,12 +8,12 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-import numpy as np
 import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, get_body, solar_system_ephemeris
 from astropy.time import Time
@@ -74,24 +74,17 @@ class Site:
   elev_km: float
 
 
-def compute_illum_pct(body_xyz: np.ndarray, sun_xyz: np.ndarray) -> np.ndarray:
-  """
-  Illuminated fraction (0–100 %) for each time step.
-
-  body_xyz, sun_xyz: (3, n) arrays in AU in the geocentric (GCRS) frame.
-  Earth is at the GCRS origin, so:
-    body → sun   = sun_xyz  - body_xyz
-    body → earth = (0,0,0)  - body_xyz  = -body_xyz
-  """
-  to_sun   = sun_xyz - body_xyz
-  to_earth = -body_xyz
-
-  dot   = np.einsum("ij,ij->j", to_sun, to_earth)
-  mag_s = np.linalg.norm(to_sun,   axis=0)
-  mag_e = np.linalg.norm(to_earth, axis=0)
-
-  cos_i = np.clip(dot / (mag_s * mag_e), -1.0, 1.0)
-  return (1.0 + cos_i) / 2.0 * 100.0
+def compute_lunar_states(dates: List[datetime]) -> List[Dict[str, Any]]:
+  """Use the same bundled lunar source as the browser and API, without a network."""
+  result = subprocess.run(
+    ["node", str(PROJECT_ROOT / "scripts" / "lunar-batch.mjs")],
+    input=json.dumps([iso_utc(dt) for dt in dates]),
+    capture_output=True, text=True, check=True, timeout=60,
+  )
+  states = json.loads(result.stdout)
+  if len(states) != len(dates):
+    raise ValueError("Lunar batch returned an incomplete time grid")
+  return states
 
 
 def main() -> None:
@@ -118,18 +111,13 @@ def main() -> None:
     sun_topo  = get_body("sun",  times, location)
     sun_altaz = sun_topo.transform_to(altaz_frame)
 
-    # Moon — topocentric apparent position + geocentric for phase angle
+    # Moon — topocentric apparent position; phase comes from the shared lunar module
     moon_topo  = get_body("moon", times, location)
     moon_altaz = moon_topo.transform_to(altaz_frame)
-    moon_gcrs  = get_body("moon", times)                         # geocentric
-    sun_gcrs   = get_body("sun",  times)                         # geocentric (for phase angle)
 
-    moon_xyz = moon_gcrs.cartesian.xyz.to(u.au).value            # (3, n)
-    sun_xyz  = sun_gcrs.cartesian.xyz.to(u.au).value             # (3, n)
-    moon_illum_arr = compute_illum_pct(moon_xyz, sun_xyz)        # (n,)
+  lunar_states = compute_lunar_states(dt_list)
 
   # Assemble frames
-  prev_illum: Optional[float] = None
   frames: List[Dict[str, Any]] = []
 
   for i, dt in enumerate(dt_list):
@@ -147,16 +135,11 @@ def main() -> None:
       "az_deg":  round(float(moon_altaz.az.deg[i]),  4),
     }
 
-    ill = float(moon_illum_arr[i])
-    ill = max(0.0, min(100.0, ill))
-    moon_obj["illum_pct"] = round(ill, 2)
-    moon_obj["phase"]     = round(ill / 100.0, 4)
-
-    if prev_illum is None:
-      moon_obj["waxing"] = True
-    else:
-      moon_obj["waxing"] = (ill >= prev_illum)
-    prev_illum = ill
+    lunar = lunar_states[i]
+    moon_obj.update(
+      illum_pct=lunar["illum_pct"], phase=lunar["phase"],
+      waxing=lunar["waxing"], phase_name=lunar["name"],
+    )
 
     frames.append({
       "t_utc": fmt_tutc(dt),
@@ -165,7 +148,8 @@ def main() -> None:
     })
 
   out = {
-    "version": 1,
+    "version": 2,
+    "lunar_source": lunar_states[0]["source"],
     "epoch": "apparent",
     "generated_at": utc_now_iso(),
     "source": "DE421 local kernel via astropy.coordinates",

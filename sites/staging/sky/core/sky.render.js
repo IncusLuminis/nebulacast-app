@@ -1,9 +1,7 @@
 // core/sky.render.js
 import { UI } from "./sky.constants.js";
 
-// Last sun azimuth (degrees) while the sun was still above the horizon.
-// Frozen at sunset so the moon's lit limb doesn't rotate as the sun travels underground.
-let _lastSunAzDegAboveHorizon = null;
+import { moonLimbRotation } from "./moon.orientation.mjs";
 
 /* -----------------------------
    Label queue + simple collision resolver + DEDUP KEYS
@@ -677,14 +675,6 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
   // Pre-locate the sun so the moon can be rotated to face it
   const sunObj = sunMoonPrepared.find(o => o && o.type === "sun" && o.x != null && o.y != null) || null;
 
-  // Keep the frozen "sunset azimuth" up to date: as long as the sun is above the
-  // horizon we record its current azimuth; the moment it dips below we stop
-  // updating, so _lastSunAzDegAboveHorizon holds exactly the sunset direction.
-  if (sunObj && typeof sunObj.altDeg === "number" && sunObj.altDeg >= 0 &&
-      typeof sunObj.azDeg === "number") {
-    _lastSunAzDegAboveHorizon = sunObj.azDeg;
-  }
-
   for (const o of sunMoonPrepared) {
     if (!o || o.x == null || o.y == null) continue;
     if (o.visible === false || (typeof o.altDeg === "number" && o.altDeg < 0)) continue;
@@ -724,9 +714,6 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       let k = null;
       if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
         k = Math.max(0, Math.min(1, o.illum_pct / 100));
-      } else if (typeof o.phase === "number" && isFinite(o.phase)) {
-        const ph = o.phase > 1.01 ? o.phase / 100 : o.phase;
-        k = Math.max(0, Math.min(1, ph));
       }
       if (k === null) k = 0.5;
 
@@ -744,37 +731,7 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
       ctx.save();
       ctx.translate(o.x, o.y);
 
-      // Rotate the phase shape so the lit limb (drawn on the right) faces the Sun.
-      // drawMoonPhaseShape always places the bright side on the right, so we only
-      // need to rotate by the screen angle toward the Sun — no waxing/waning offset.
-      //
-      // Sun above horizon → screen-space atan2 from Moon to Sun (handles parallactic
-      //   rotation naturally as both bodies move with the sky).
-      // Sun below horizon → use the FROZEN sunset azimuth (the azimuth at which the
-      //   sun last crossed the horizon going down).  The lit limb stays fixed at that
-      //   compass point for the whole night, matching what an observer actually sees.
-      //   Fallback to current underground azimuth only if we have no frozen value yet
-      //   (e.g. page loaded after sunset with no prior above-horizon frame).
-      if (sunObj) {
-        let sunAngle = null;
-
-        if (typeof sunObj.altDeg === "number" && sunObj.altDeg < 0) {
-          // Sun is below horizon — use frozen sunset azimuth
-          const frozenAz = (_lastSunAzDegAboveHorizon !== null)
-            ? _lastSunAzDegAboveHorizon
-            : sunObj.azDeg; // fallback: current underground azimuth
-          if (typeof frozenAz === "number") {
-            const azRad = frozenAz * (Math.PI / 180);
-            sunAngle = Math.atan2(-Math.cos(azRad), -Math.sin(azRad));
-          }
-        } else {
-          const dx = sunObj.x - o.x;
-          const dy = sunObj.y - o.y;
-          if (dx !== 0 || dy !== 0) sunAngle = Math.atan2(dy, dx);
-        }
-
-        if (sunAngle !== null) ctx.rotate(sunAngle);
-      }
+      if (sunObj) ctx.rotate(moonLimbRotation(o, sunObj));
 
       drawMoonPhaseShape(
         ctx, r, k,
@@ -815,9 +772,6 @@ function drawSunMoon(ctx, vp, sunMoonPrepared) {
         let pct = null;
         if (typeof o.illum_pct === "number" && isFinite(o.illum_pct)) {
           pct = Math.max(0, Math.min(100, o.illum_pct));
-        } else if (typeof o.phase === "number" && isFinite(o.phase)) {
-          const ph = (o.phase > 1.01) ? (o.phase / 100) : o.phase;
-          pct = Math.max(0, Math.min(100, ph * 100));
         }
 
         if (pct != null) {

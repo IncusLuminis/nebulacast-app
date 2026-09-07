@@ -2433,6 +2433,8 @@
   import { mountWeather } from "/weather/widgets/weather/weather.js";
   import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js?v=20260422a";
 
+  import { getLunarState } from "/shared/lunar.mjs";
+
   // ── State ──────────────────────────────────────────────
   initState();
   const storeApi = { getState, setState, subscribe };
@@ -3057,9 +3059,8 @@
 
     // ── Sun/moon crossings from sun_moon.json ──
     let sunsetT = null, sunriseT = null, moonriseT = null, moonsetT = null;
-    // moon illumination: sun_moon.json is the authoritative source (Python ephemeris);
-    // observer_weather is a coarser fallback only when sun_moon.json is unavailable
-    let moonIllum = 0, moonWaxing = true;
+    const lunar = getLunarState(new Date());
+    const moonIllum = lunar.illum_pct, moonWaxing = lunar.waxing;
 
     if (sunMoon?.frames?.length) {
       const frames = sunMoon.frames;
@@ -3110,37 +3111,12 @@
         if (prevM <= 0 && currM > 0 && !moonriseT) moonriseT = t.toISOString();
         if (prevM > 0 && currM <= 0 && !moonsetT)  moonsetT  = t.toISOString();
       }
-      // Moon phase at nearest frame to now (with staleness guard)
-      const STALE_THRESHOLD_MS = 12 * 3600e3; // 12 hours
-      let closest = null, minD = Infinity;
-      for (const f of frames) {
-        const t = _parseSMTime(f.t_utc); if (!t) continue;
-        const d = Math.abs(t.getTime() - now);
-        if (d < minD) { minD = d; closest = f; }
-      }
-      if (closest?.moon && minD < STALE_THRESHOLD_MS) {
-        // sun_moon.json is fresh — Python ephemeris is most accurate
-        moonIllum  = closest.moon.illum_pct ?? 0;
-        moonWaxing = closest.moon.waxing !== false;
-      } else {
-        // sun_moon.json is stale (>12 h) or unavailable — fall back to SunCalcLib
-        const _SC2 = window.SunCalc;
-        if (_SC2) {
-          const mi   = _SC2.getMoonIllumination(new Date());
-          moonIllum  = mi.fraction * 100;
-          moonWaxing = mi.phase <= 0.5;
-        } else {
-          moonIllum = wx?.moon?.illumination_percent ?? 0;
-        }
-      }
+
     } else {
       // sunMoon unavailable (API failed on localhost / no wrangler) — fall back to SunCalcLib
       const _SC3 = window.SunCalc;
       const _loc3 = getState()?.location;
       if (_SC3 && _loc3?.lat != null && _loc3?.lon != null) {
-        const mi = _SC3.getMoonIllumination(new Date());
-        moonIllum  = mi.fraction * 100;
-        moonWaxing = mi.phase <= 0.5;
         const todayLocal = new Intl.DateTimeFormat('en-CA', { timeZone: _loc3.tz || 'UTC',
           year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
         const todayDate    = new Date(todayLocal + 'T12:00:00Z');
@@ -3165,8 +3141,6 @@
             if (ms >= nightS3 && ms <= nightE3 && !moonsetT)  moonsetT  = mt.set.toISOString();
           }
         }
-      } else if (wx?.moon?.illumination_percent != null) {
-        moonIllum = wx.moon.illumination_percent;
       }
     }
 

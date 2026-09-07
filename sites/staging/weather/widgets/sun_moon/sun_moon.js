@@ -1,6 +1,8 @@
+import { calendarDate, localMidnightUTC } from "../../../shared/zoned-date.mjs";
+import { getLunarState } from "../../../shared/lunar.mjs";
 /**
  * Sun Equation widget (sun_moon)
- * Pure frontend: uses SunCalc if available.
+ * Sun and Moon positions use SunCalc; lunar phase uses the shared UTC source.
  */
 
 const SUNMOON_DAYS_RANGE = 3; // today ±3 days (7 days total)
@@ -13,51 +15,13 @@ function getSunCalc() {
   return lib;
 }
 
-function formatDateLabel(baseDate, offset) {
-  const d = new Date(baseDate);
-  d.setDate(d.getDate() + offset);
-  const today = new Date();
-  const baseMid = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const dMid = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const diffDays = Math.round((dMid - baseMid) / 86400000);
-  if (diffDays === 0) return "Today";
-  if (diffDays === -1) return "Yesterday";
-  if (diffDays === 1) return "Tomorrow";
-  const opts = { weekday: "short" };
-  return d.toLocaleDateString(undefined, opts);
-}
-
-function getMoonPhaseInfo(illum) {
-  const phase = illum.phase; // 0..1
-  const frac = illum.fraction; // 0..1
-  const pct = Math.round(frac * 100);
-  let name, emoji;
-  if (phase < 0.0625 || phase >= 0.9375) {
-    name = "New Moon";
-    emoji = "🌑";
-  } else if (phase < 0.1875) {
-    name = "Waxing Crescent";
-    emoji = "🌒";
-  } else if (phase < 0.3125) {
-    name = "First Quarter";
-    emoji = "🌓";
-  } else if (phase < 0.4375) {
-    name = "Waxing Gibbous";
-    emoji = "🌔";
-  } else if (phase < 0.5625) {
-    name = "Full Moon";
-    emoji = "🌕";
-  } else if (phase < 0.6875) {
-    name = "Waning Gibbous";
-    emoji = "🌖";
-  } else if (phase < 0.8125) {
-    name = "Last Quarter";
-    emoji = "🌗";
-  } else {
-    name = "Waning Crescent";
-    emoji = "🌘";
-  }
-  return { name, emoji, pct };
+function formatDateLabel(baseDate, offset, tz) {
+  if (offset === 0) return "Today";
+  if (offset === -1) return "Yesterday";
+  if (offset === 1) return "Tomorrow";
+  return calendarDate(baseDate, tz, offset).toLocaleDateString(undefined, {
+    weekday: "short", timeZone: "UTC",
+  });
 }
 
 function getLocalDate(dateUtc, tz) {
@@ -89,38 +53,11 @@ function formatLocalTime(dateUtc, tz) {
   }
 }
 
-/**
- * Returns the UTC Date corresponding to 00:00:00 on (year, month, day) in timezone tz.
- * month is 0-indexed (same as JS Date).
- */
-function getLocalMidnightUTC(year, month, day, tz) {
-  const approxUTC = new Date(Date.UTC(year, month, day, 0, 0, 0));
-  const hmsStr = approxUTC.toLocaleTimeString("en-US", {
-    timeZone: tz || "UTC",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-    hour12: false
-  });
-  const parts = hmsStr.split(":").map(Number);
-  let h = parts[0] || 0, m = parts[1] || 0, s = parts[2] || 0;
-  if (h === 24) h = 0; // some environments return 24:00:00 for midnight
-  const secsIntoDay = h * 3600 + m * 60 + s;
-  // If local time at UTC midnight is in the first half of the day → tz ahead of UTC → subtract
-  // If it's in the second half (≥ 12:00) → tz behind UTC → add remaining seconds to get midnight
-  return secsIntoDay < 43200
-    ? new Date(approxUTC.getTime() - secsIntoDay * 1000)
-    : new Date(approxUTC.getTime() + (86400 - secsIntoDay) * 1000);
-}
-
 function computeDaySamples(baseDate, offset, lat, lon, tz) {
   const SunCalcLib = getSunCalc();
   if (!SunCalcLib) return null;
-  const d = new Date(baseDate);
-  d.setDate(d.getDate() + offset);
-
-  // Resolve the calendar date in the *target* timezone (not the browser's timezone)
-  const dateInTz = d.toLocaleDateString("en-CA", { timeZone: tz || "UTC" }); // "YYYY-MM-DD"
-  const [sy, sm, sd] = dateInTz.split("-").map(Number);
-  const midnightUTC = getLocalMidnightUTC(sy, sm - 1, sd, tz || "UTC");
+  const d = calendarDate(baseDate, tz, offset);
+  const midnightUTC = localMidnightUTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), tz);
 
   // Use local noon (UTC) for SunCalc — keeps it solidly on the right UTC calendar date
   const sunCalcDate = new Date(midnightUTC.getTime() + 12 * 3600000);
@@ -140,8 +77,7 @@ function computeDaySamples(baseDate, offset, lat, lon, tz) {
 
   const times     = SunCalcLib.getTimes(sunCalcDate, lat, lon);
   const moonTimes = SunCalcLib.getMoonTimes(sunCalcDate, lat, lon, true);
-  const illum     = SunCalcLib.getMoonIllumination(new Date());
-  const moonInfo = getMoonPhaseInfo(illum);
+  const moonInfo = getLunarState(sunCalcDate);
 
   // approximate moon culmination as max altitude sample
   let best = samples[0];
@@ -546,7 +482,7 @@ function drawSunMoonCanvas(canvas, data, selectedHour) {
 
 export function mountSunMoon(rootEl, storeApi) {
   const state = storeApi.getState();
-  const baseDate = new Date();
+  let baseDate = new Date();
 
   rootEl.innerHTML = `
     <div class="sunmoon-card">
@@ -591,7 +527,8 @@ export function mountSunMoon(rootEl, storeApi) {
 
   let cachedDays = new Map(); // key: offset, value: computed data
   let selectedOffset = 0;
-  let selectedHour = new Date().getHours();
+  let followNow = true;
+  let selectedHour = Math.floor(getLocalHour(new Date(), storeApi.getState().location.tz));
   let currentData = null;
 
   function getLocation(currentState) {
@@ -605,9 +542,11 @@ export function mountSunMoon(rootEl, storeApi) {
 
   function ensureDay(offset) {
     const loc = getLocation(storeApi.getState());
-    const key = offset + "|" + loc.lat.toFixed(4) + "|" + loc.lon.toFixed(4) + "|" + (loc.tz || "UTC");
+    baseDate = new Date();
+    const key = calendarDate(baseDate, loc.tz).toISOString() + "|" + offset + "|" + loc.lat.toFixed(4) + "|" + loc.lon.toFixed(4) + "|" + (loc.tz || "UTC");
     if (cachedDays.has(key)) return cachedDays.get(key);
     const data = computeDaySamples(baseDate, offset, loc.lat, loc.lon, loc.tz);
+    if (cachedDays.size >= 21) cachedDays.clear();
     cachedDays.set(key, data);
 
     // publish sun:times event for this date
@@ -617,15 +556,15 @@ export function mountSunMoon(rootEl, storeApi) {
         date: data.date.toISOString().slice(0,10),
         location: { lat: loc.lat, lon: loc.lon, tz: loc.tz || "UTC", name: loc.name },
         times: {
-          sunrise: data.times.sunrise ? data.times.sunrise.toISOString() : null,
-          sunset: data.times.sunset ? data.times.sunset.toISOString() : null,
-          solarNoon: data.times.solarNoon ? data.times.solarNoon.toISOString() : null,
-          dawn: data.times.dawn ? data.times.dawn.toISOString() : null,
-          dusk: data.times.dusk ? data.times.dusk.toISOString() : null,
-          nauticalDawn: data.times.nauticalDawn ? data.times.nauticalDawn.toISOString() : null,
-          nauticalDusk: data.times.nauticalDusk ? data.times.nauticalDusk.toISOString() : null,
-          night: data.times.night ? data.times.night.toISOString() : null,
-          nightEnd: data.times.nightEnd ? data.times.nightEnd.toISOString() : null
+          sunrise: Number.isFinite(data.times.sunrise?.getTime()) ? data.times.sunrise.toISOString() : null,
+          sunset: Number.isFinite(data.times.sunset?.getTime()) ? data.times.sunset.toISOString() : null,
+          solarNoon: Number.isFinite(data.times.solarNoon?.getTime()) ? data.times.solarNoon.toISOString() : null,
+          dawn: Number.isFinite(data.times.dawn?.getTime()) ? data.times.dawn.toISOString() : null,
+          dusk: Number.isFinite(data.times.dusk?.getTime()) ? data.times.dusk.toISOString() : null,
+          nauticalDawn: Number.isFinite(data.times.nauticalDawn?.getTime()) ? data.times.nauticalDawn.toISOString() : null,
+          nauticalDusk: Number.isFinite(data.times.nauticalDusk?.getTime()) ? data.times.nauticalDusk.toISOString() : null,
+          night: Number.isFinite(data.times.night?.getTime()) ? data.times.night.toISOString() : null,
+          nightEnd: Number.isFinite(data.times.nightEnd?.getTime()) ? data.times.nightEnd.toISOString() : null
         }
       };
       window.dispatchEvent(new CustomEvent("nc:sun-times", { detail: payload }));
@@ -641,7 +580,7 @@ export function mountSunMoon(rootEl, storeApi) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "sunmoon-daychip" + (offset === selectedOffset ? " is-active" : "");
-      btn.textContent = formatDateLabel(baseDate, offset);
+      btn.textContent = formatDateLabel(baseDate, offset, storeApi.getState().location.tz);
       btn.dataset.offset = String(offset);
       btn.addEventListener("click", () => {
         selectedOffset = offset;
@@ -653,13 +592,14 @@ export function mountSunMoon(rootEl, storeApi) {
   }
 
   function update() {
+    if (followNow) selectedHour = Math.floor(getLocalHour(new Date(), storeApi.getState().location.tz));
     const data = ensureDay(selectedOffset);
     if (!data) {
       if (hourLineEl) hourLineEl.textContent = "SunCalc unavailable";
       return;
     }
     currentData = data;
-    const { moonInfo, times } = data;
+    const { times } = data;
 
     const durations = computeDurations(times);
     if (dayLenEl)   dayLenEl.textContent   = formatDuration(durations.day);
@@ -678,8 +618,9 @@ export function mountSunMoon(rootEl, storeApi) {
       const loc       = getLocation(storeApi.getState());
       const SC        = getSunCalc();
       const nowLocal  = new Date();
-      // Compare using the same getHours() used to initialise selectedHour
-      const isNowHour = isToday && sample.hour === nowLocal.getHours();
+      const isNowHour = isToday && sample.hour === Math.floor(getLocalHour(nowLocal, loc.tz));
+      const moonInfo = getLunarState(isNowHour ? nowLocal : new Date(sample.time));
+      data.moonInfo = moonInfo;
 
       if (isNowHour && SC && loc.lat != null && loc.lon != null) {
         const sPos = SC.getPosition(nowLocal, loc.lat, loc.lon);
@@ -755,6 +696,7 @@ export function mountSunMoon(rootEl, storeApi) {
       const x = e.clientX - rect.left;
       const w = rect.width || 1;
       const hr = Math.round((x / w) * 23);
+      followNow = false;
       selectedHour = Math.max(0, Math.min(23, hr));
       update();
     });
@@ -766,8 +708,9 @@ export function mountSunMoon(rootEl, storeApi) {
   // Re-render at correct pixel density after layout is complete.
   // getBoundingClientRect() can return 0-width on the first synchronous call,
   // so we observe the canvas and redraw whenever it gains a valid width.
+  let ro;
   if (typeof ResizeObserver !== "undefined" && canvas) {
-    const ro = new ResizeObserver((entries) => {
+    ro = new ResizeObserver((entries) => {
       const w = entries[0]?.contentRect?.width;
       if (w && w > 0 && currentData) {
         drawSunMoonCanvas(canvas, currentData, selectedHour);
@@ -782,9 +725,11 @@ export function mountSunMoon(rootEl, storeApi) {
   }
 
   // React to location changes from global store
-  storeApi.subscribe(() => {
+  const unsubscribe = storeApi.subscribe(() => {
     cachedDays.clear();
+    renderControls();
     update();
   });
+  const timer = setInterval(update, 60000);
+  return () => { clearInterval(timer); ro?.disconnect(); unsubscribe?.(); };
 }
-

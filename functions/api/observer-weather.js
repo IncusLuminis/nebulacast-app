@@ -1,3 +1,4 @@
+import { getLunarState } from "../lib/lunar.js";
 /**
  * /api/observer-weather?lat=&lon=&tz=&bortle=
  *
@@ -163,9 +164,10 @@ export async function onRequest(context) {
       return d < Math.abs(new Date(closest.time).getTime() - nowMs) ? h : closest;
     }, base.hours[0]);
 
+    const lunar = getLunarState(new Date(nowMs));
     const moon = {
-      illumination_percent: moonH?.moon_illum_pct  ?? null,
-      phase_name:           null,
+      illumination_percent: lunar.illum_pct,
+      phase_name:           lunar.name,
       moon_up_now:          (moonH?.moon_alt_deg ?? -1) > 0,
     };
 
