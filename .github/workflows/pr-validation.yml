@@ -28,6 +28,22 @@ jobs:
       - name: Build Cloudflare Functions
         run: npm run build:functions
 
+      - name: Install Chromium for browser smoke test
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke test
+        run: npm run test:browser
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-diagnostics
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
       - name: Run lunar regression tests
         run: npm run test:lunar
 
