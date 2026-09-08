@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2020", "DOM"],
+    "types": ["@cloudflare/workers-types", "node"]
+  },
+  "include": [
+    "services/astro_weather/**/*.ts",
+    "services/astro_weather/test_api.ts"
+  ],
+  "exclude": []
+}
