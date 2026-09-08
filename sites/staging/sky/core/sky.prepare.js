@@ -1,4 +1,4 @@
-import { getLunarState } from "../../shared/lunar.mjs";
+import { createLunarSnapshot } from "../../shared/lunar.mjs";
 // core/sky.prepare.js
 import { DEFAULTS } from "./sky.constants.js";
 
@@ -829,9 +829,17 @@ function prepareSunMoon(sunMoonJson, observer, viewport) {
 
     const { x, y } = A.altAzToXY(altRad, azRad, viewport.cx, viewport.cy, R);
 
-    const lunar = key === "moon" ? getLunarState(new Date(tMs)) : null;
-    const illum_pct = lunar?.illum_pct ?? null;
-    const phase = lunar?.phase ?? null;
+    const site = sunMoonJson.site || {};
+    const lunar = key === "moon" ? createLunarSnapshot({
+      instant: new Date(tMs),
+      location: {
+        lat: Number(site.lat_deg ?? site.lat ?? latRad * 180 / Math.PI),
+        lon: Number(site.lon_deg ?? site.lon ?? (Number.isFinite(observer.lonRad) ? observer.lonRad * 180 / Math.PI : 0)),
+        timezone: site.timezone || site.tz || "UTC"
+      }
+    }).lunar : null;
+    const illum_pct = lunar?.illuminated_percent ?? null;
+    const phase = lunar?.cycle_phase ?? null;
     const waxing = lunar?.waxing ?? null;
 
     out.push({
