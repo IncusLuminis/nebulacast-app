@@ -210,6 +210,7 @@ export async function onRequest(context) {
   }
 
   const result = {
+    schema: "sun_moon.v2",
     version: 2,
     lunar_source: LUNAR_SOURCE,
     epoch: "apparent",

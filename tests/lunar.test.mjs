@@ -2,7 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { getLunarState } from '../sites/staging/shared/lunar.mjs';
+import { getLunarState, readIlluminationPct } from '../sites/staging/shared/lunar.mjs';
+
+test('illumination consumer accepts only the versioned percent unit', () => {
+  assert.equal(readIlluminationPct(63), 63);
+  assert.equal(readIlluminationPct(0), 0);
+  assert.equal(readIlluminationPct(101), null);
+  assert.equal(readIlluminationPct('63'), null);
+});
 import { calendarDate, localMidnightUTC } from '../sites/staging/shared/zoned-date.mjs';
 import { moonLimbRotation } from '../sites/staging/sky/core/moon.orientation.mjs';
 import { Prepare } from '../sites/staging/sky/core/sky.prepare.js';
