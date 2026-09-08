@@ -4,18 +4,21 @@ Normalize Open-Meteo + 7Timer data into observer_weather_now.json schema.
 """
 from __future__ import annotations
 
-import json
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 _service_root = Path(__file__).resolve().parent.parent
-_repo_root = _service_root.parent.parent
 if str(_service_root) not in sys.path:
     sys.path.insert(0, str(_service_root))
 
 from pipelines.fetch_weather import fetch_open_meteo, fetch_7timer_astro, merge_to_hourly
+from providers.ephemeris import (
+    EphemerisResult,
+    LocationAwareEphemerisProvider,
+    LocationContext,
+)
 
 try:
     import yaml as _yaml
@@ -230,32 +233,10 @@ def _best_window(
     return best
 
 
-# ── Night mask from sun_moon.json ────────────────────────────────────────────
+# ── Night mask from the location-aware ephemeris provider ───────────────────
 
-_SUN_MOON_PATH = _repo_root / "sites" / "staging" / "sky" / "data" / "sun_moon.json"
-_STATIC_SUN_MOON_LOCATION_ID = "default-warsaw"
-_STATIC_SUN_MOON_LAT = 52.2297
-_STATIC_SUN_MOON_LON = 21.0122
 _ASTRO_TWILIGHT_ALT = -6.0  # degrees — astronomical twilight threshold
-
-
-def _load_sun_moon() -> List[Dict]:
-    """Load sun_moon.json frames. Returns [] on failure."""
-    try:
-        with open(_SUN_MOON_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        ownership = data.get("ownership", {})
-        site = data.get("site", {})
-        if (ownership.get("kind") != "static" or
-                ownership.get("location_id") != _STATIC_SUN_MOON_LOCATION_ID or
-                abs(float(site.get("lat", site.get("lat_deg"))) - _STATIC_SUN_MOON_LAT) >= 0.05 or
-                abs(float(site.get("lon", site.get("lon_deg"))) - _STATIC_SUN_MOON_LON) >= 0.05):
-            print("[observer_weather] WARNING: ignoring sun_moon.json with incompatible ownership")
-            return []
-        return data.get("frames", [])
-    except Exception as e:
-        print(f"[observer_weather] WARNING: could not load sun_moon.json: {e}")
-        return []
+_EPHEMERIS_PROVIDER = LocationAwareEphemerisProvider()
 
 
 def _build_sun_moon_index(frames: List[Dict]) -> List[Tuple[datetime, Dict]]:
@@ -293,20 +274,20 @@ def _nearest_frame(
 
 
 def _apply_night_mask(
-    hourly_out: List[Dict], sm_index: List[Tuple[datetime, Dict]]
+    hourly_out: List[Dict], sm_index: List[Tuple[datetime, Dict]], *, unavailable: bool = False
 ) -> None:
     """Add 'night' (bool) and 'moon_up' (bool) to each hourly record in-place."""
     for h in hourly_out:
         try:
             ts = _parse_utc(h["timestamp_utc"])
         except Exception:
-            h["night"] = False
-            h["moon_up"] = False
+            h["night"] = None if unavailable else False
+            h["moon_up"] = None if unavailable else False
             continue
         frame = _nearest_frame(sm_index, ts)
         if frame is None:
-            h["night"] = False
-            h["moon_up"] = False
+            h["night"] = None if unavailable else False
+            h["moon_up"] = None if unavailable else False
             continue
         sun_alt = (frame.get("sun") or {}).get("alt_deg")
         moon_alt = (frame.get("moon") or {}).get("alt_deg")
@@ -634,6 +615,7 @@ def build_observer_weather(
     lon: float,
     tz: str,
     hours: int = 72,
+    ephemeris_provider: Optional[LocationAwareEphemerisProvider] = None,
 ) -> Dict[str, Any]:
     """
     Fetch Open-Meteo + 7Timer and normalize to observer_weather_now.json schema.
@@ -659,10 +641,6 @@ def build_observer_weather(
     except Exception as e:
         print(f"[observer_weather] ERROR: merge_to_hourly failed: {e}")
         merged = []
-
-    # Load sun_moon data for night mask + moon meta
-    sm_frames = _load_sun_moon()
-    sm_index = _build_sun_moon_index(sm_frames)
 
     hourly_out: List[Dict] = []
     for rec in merged:
@@ -712,8 +690,24 @@ def build_observer_weather(
             "astro": astro,
         })
 
+    context = LocationContext(lat=lat, lon=lon, tz=tz)
+    timestamps = []
+    for hour in hourly_out:
+        try:
+            timestamps.append(_parse_utc(hour["timestamp_utc"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    # Do not use the static Warsaw payload here.  An unavailable provider is
+    # represented explicitly below and leaves night/moon fields unavailable.
+    ephemeris: EphemerisResult = (ephemeris_provider or _EPHEMERIS_PROVIDER).frames_for_times(
+        context, timestamps
+    )
+    sm_index = _build_sun_moon_index(list(ephemeris.frames))
+
     # Apply night mask (adds 'night' and 'moon_up' fields to each hour)
-    _apply_night_mask(hourly_out, sm_index)
+    _apply_night_mask(hourly_out, sm_index, unavailable=ephemeris.status != "available")
+    for hour in hourly_out:
+        hour["ephemeris_status"] = ephemeris.status
 
     decision = _build_decision(hourly_out, now_utc)
     moon = _moon_meta(sm_index, now_utc)
@@ -726,6 +720,12 @@ def build_observer_weather(
             "lat_deg": lat,
             "lon_deg": lon,
             "tz": tz,
+        },
+        "ephemeris": {
+            "status": ephemeris.status,
+            "provider": ephemeris.provider,
+            "location_key": ephemeris.location_key,
+            "error": ephemeris.error,
         },
         "hourly": hourly_out,
         "decision": decision,

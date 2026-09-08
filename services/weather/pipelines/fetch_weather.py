@@ -14,11 +14,18 @@ import urllib.parse
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _service_root = Path(__file__).resolve().parent.parent
 if str(_service_root) not in sys.path:
     sys.path.insert(0, str(_service_root))
+
+from providers.ephemeris import (
+    EphemerisResult,
+    LocationAwareEphemerisProvider,
+    LocationContext,
+)
+
 
 _SUN_MOON_PATH = Path(__file__).resolve().parents[3] / "sites/staging/sky/data/sun_moon.json"
 _STATIC_SUN_MOON_LOCATION_ID = "default-warsaw"
@@ -43,7 +50,12 @@ def _is_static_sun_moon_for_warsaw(data: dict) -> bool:
 
 
 def _load_sun_moon_frames() -> list:
-    """Load sun/moon 10-min frames from sun_moon.json. Returns [] on any error."""
+    """Read the legacy static payload only for its declared Warsaw owner.
+
+    Weather generation no longer calls this function.  It remains a narrow
+    compatibility reader for callers that explicitly need the Warsaw static
+    artefact; it must never be used as a fallback for another LocationContext.
+    """
     try:
         with open(_SUN_MOON_PATH, encoding="utf-8") as f:
             data = json.load(f)
@@ -52,6 +64,34 @@ def _load_sun_moon_frames() -> list:
         return data.get("frames", [])
     except Exception:
         return []
+
+
+_EPHEMERIS_PROVIDER = LocationAwareEphemerisProvider()
+
+
+def _ephemeris_for_hours(
+    hours: list,
+    *,
+    lat: float,
+    lon: float,
+    tz: str,
+    location_id: Optional[str],
+    provider: LocationAwareEphemerisProvider = _EPHEMERIS_PROVIDER,
+) -> EphemerisResult:
+    """Get ephemeris frames for precisely this location, never a static fallback."""
+    context = LocationContext(lat=lat, lon=lon, tz=tz, location_id=location_id)
+    times = []
+    for hour in hours:
+        try:
+            value = datetime.fromisoformat(hour["time"])
+            if value.tzinfo is None:
+                value = value.replace(tzinfo=ZoneInfo(tz))
+            times.append(value)
+        except (KeyError, TypeError, ValueError, ZoneInfoNotFoundError):
+            # A malformed weather timestamp is not a reason to substitute
+            # Warsaw data. Leave its ephemeris values unavailable instead.
+            continue
+    return provider.frames_for_times(context, times)
 
 
 def _merge_moon_data(hours: list, frames: list) -> None:
@@ -934,6 +974,8 @@ def build_weather_payload(
     location_name: str,
     horizon_hours: int,
     thresholds: Dict[str, Any],
+    location_id: Optional[str] = None,
+    ephemeris_provider: Optional[LocationAwareEphemerisProvider] = None,
 ) -> Dict[str, Any]:
     """Build complete weather payload (Open-Meteo + 7Timer, legacy scoring)."""
     print(f"[weather] Fetching Open-Meteo data for {location_name} ({lat}, {lon})...")
@@ -945,7 +987,17 @@ def build_weather_payload(
     print(f"[weather] Merging data...")
     hours = merge_to_hourly(open_meteo, seven_timer, tz, horizon_hours)
     add_derived_per_hour(hours)
-    _merge_moon_data(hours, _load_sun_moon_frames())
+    ephemeris = _ephemeris_for_hours(
+        hours,
+        lat=lat,
+        lon=lon,
+        tz=tz,
+        location_id=location_id,
+        provider=ephemeris_provider or _EPHEMERIS_PROVIDER,
+    )
+    _merge_moon_data(hours, list(ephemeris.frames))
+    for hour in hours:
+        hour["ephemeris_status"] = ephemeris.status
     for h in hours:
         h["solar_state"] = _compute_solar_state(h.get("sun_alt_deg"))
 
@@ -1065,6 +1117,12 @@ def build_weather_payload(
             "generated_at": generated_at,
             "location": {"name": location_name, "lat": lat, "lon": lon, "tz": tz},
             "source": {"open_meteo_fields": list(om_hourly.keys())},
+            "ephemeris": {
+                "status": ephemeris.status,
+                "provider": ephemeris.provider,
+                "location_key": ephemeris.location_key,
+                "error": ephemeris.error,
+            },
             "horizon_hours": horizon_hours,
         },
         "location": {"name": location_name, "lat": lat, "lon": lon, "tz": tz},
@@ -1077,7 +1135,7 @@ def build_weather_payload(
         "scoring_version": "v5",
         "default_profile": "balanced",
         "bortle": bortle,
-        "moon_available": True,
+        "moon_available": ephemeris.status == "available",
     }
 
     print(f"[weather] Generated {len(hours)} hourly records, {len(best_windows)} windows")
