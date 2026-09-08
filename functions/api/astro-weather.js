@@ -1,3 +1,83 @@
+// services/astro_weather/providers/contracts.ts
+var ProviderContractError = class extends Error {
+  constructor(provider, path, message) {
+    super(`${provider} response contract: ${path} ${message}`);
+    this.name = "ProviderContractError";
+    this.provider = provider;
+    this.path = path;
+  }
+};
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function fail(provider, path, message) {
+  throw new ProviderContractError(provider, path, message);
+}
+function finiteNumber(value, provider, path) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    fail(provider, path, "must be a finite number");
+  }
+  return value;
+}
+function optionalNumberArray(value, provider, path, expectedLength) {
+  if (value === void 0) return void 0;
+  if (!Array.isArray(value)) fail(provider, path, "must be an array or omitted");
+  if (value.length !== expectedLength) {
+    fail(provider, path, `length ${value.length} does not match hourly.time length ${expectedLength}`);
+  }
+  return value.map(
+    (entry, index) => entry === null ? null : finiteNumber(entry, provider, `${path}[${index}]`)
+  );
+}
+function validateOpenMeteoResponse(value) {
+  const provider = "Open-Meteo";
+  if (!isRecord(value)) fail(provider, "$", "must be an object");
+  const hourly = value.hourly;
+  if (!isRecord(hourly)) fail(provider, "hourly", "must be an object");
+  const times = hourly.time;
+  if (!Array.isArray(times) || times.length === 0) {
+    fail(provider, "hourly.time", "must be a non-empty array");
+  }
+  if (!times.every((entry) => typeof entry === "string" && entry.length > 0)) {
+    fail(provider, "hourly.time", "must contain only non-empty strings");
+  }
+  const result = { hourly: { time: times } };
+  const resultHourly = result.hourly;
+  const fields = [
+    "cloudcover",
+    "cloudcover_low",
+    "cloudcover_mid",
+    "cloudcover_high",
+    "precipitation",
+    "precipitation_probability",
+    "pressure_msl",
+    "windspeed_10m",
+    "winddirection_10m",
+    "visibility",
+    "temperature_2m",
+    "relativehumidity_2m",
+    "dewpoint_2m",
+    "rain",
+    "snowfall"
+  ];
+  for (const field of fields) {
+    const entries = optionalNumberArray(hourly[field], provider, `hourly.${field}`, times.length);
+    if (entries !== void 0) resultHourly[field] = entries;
+  }
+  if (value.hourly_units !== void 0) {
+    if (!isRecord(value.hourly_units)) fail(provider, "hourly_units", "must be an object or omitted");
+    const units = {};
+    for (const [key, unit] of Object.entries(value.hourly_units)) {
+      if (unit !== void 0 && typeof unit !== "string") {
+        fail(provider, `hourly_units.${key}`, "must be a string");
+      }
+      units[key] = unit;
+    }
+    result.hourly_units = units;
+  }
+  return result;
+}
+
 // services/astro_weather/providers/open_meteo.ts
 async function fetchOpenMeteo(lat, lon, tz, hours, cache2) {
   const forecastDays = Math.min(Math.ceil(hours / 24), 7);
@@ -35,7 +115,7 @@ async function fetchOpenMeteo(lat, lon, tz, hours, cache2) {
     });
     const cached = await cache2.match(cacheKey);
     if (cached) {
-      const data2 = await cached.json();
+      const data2 = validateOpenMeteoResponse(await cached.json());
       return { data: data2, fromCache: true, status: 200 };
     }
   }
@@ -50,7 +130,7 @@ async function fetchOpenMeteo(lat, lon, tz, hours, cache2) {
   if (!response.ok) {
     throw new Error(`Open-Meteo API error: ${response.status} ${response.statusText}`);
   }
-  const data = await response.json();
+  const data = validateOpenMeteoResponse(await response.json());
   if (cache2) {
     const cacheKey = new Request(`https://cache.nebulacast/open-meteo?${params.toString()}`, {
       method: "GET"
@@ -82,11 +162,12 @@ async function fetchSevenTimer(lat, lon) {
       return null;
     }
     const data = await response.json();
-    if (!data || !Array.isArray(data.dataseries)) {
+    const record = typeof data === "object" && data !== null && !Array.isArray(data) ? data : null;
+    if (!record || !Array.isArray(record.dataseries)) {
       console.warn("7Timer: invalid response format");
       return null;
     }
-    return data;
+    return record;
   } catch (error) {
     console.warn("7Timer fetch failed:", error);
     return null;
@@ -2957,7 +3038,7 @@ async function onRequest(context) {
         });
         const staleCached = await cache2.match(staleCacheKey);
         if (staleCached) {
-          const staleData = await staleCached.json();
+          const staleData = validateOpenMeteoResponse(await staleCached.json());
           omResult = { data: staleData, fromCache: true, status: 200 };
         } else {
           const headers = {
@@ -2996,7 +3077,8 @@ async function onRequest(context) {
     }
     for (let i = 0; i < hourRecords.length; i++) {
       const hour = hourRecords[i];
-      const pressureTrend = i + 6 < hourRecords.length ? (hourRecords[i + 6].pressure_hpa ?? null) - (hour.pressure_hpa ?? 0) : null;
+      const nextHour = hourRecords[i + 6];
+      const pressureTrend = nextHour !== void 0 ? (nextHour.pressure_hpa ?? 0) - (hour.pressure_hpa ?? 0) : null;
       const {
         score,
         breakdown,
@@ -3055,24 +3137,24 @@ export {
 astronomy-engine/esm/astronomy.js:
   (**
       @preserve
-
+  
       Astronomy library for JavaScript (browser and Node.js).
       https://github.com/cosinekitty/astronomy
-
+  
       MIT License
-
+  
       Copyright (c) 2019-2023 Don Cross <cosinekitty@gmail.com>
-
+  
       Permission is hereby granted, free of charge, to any person obtaining a copy
       of this software and associated documentation files (the "Software"), to deal
       in the Software without restriction, including without limitation the rights
       to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
       copies of the Software, and to permit persons to whom the Software is
       furnished to do so, subject to the following conditions:
-
+  
       The above copyright notice and this permission notice shall be included in all
       copies or substantial portions of the Software.
-
+  
       THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
       IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
       FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

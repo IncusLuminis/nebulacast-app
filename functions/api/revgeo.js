@@ -1,3 +1,41 @@
+// services/astro_weather/providers/contracts.ts
+var ProviderContractError = class extends Error {
+  constructor(provider, path, message) {
+    super(`${provider} response contract: ${path} ${message}`);
+    this.name = "ProviderContractError";
+    this.provider = provider;
+    this.path = path;
+  }
+};
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function fail(provider, path, message) {
+  throw new ProviderContractError(provider, path, message);
+}
+function optionalString(value, provider, path) {
+  if (value === void 0 || value === null) return void 0;
+  if (typeof value !== "string") fail(provider, path, "must be a string or null");
+  return value;
+}
+function address(value, provider, path) {
+  if (value === void 0 || value === null) return void 0;
+  if (!isRecord(value)) fail(provider, path, "must be an object or null");
+  const result = {};
+  for (const [key, entry] of Object.entries(value)) {
+    result[key] = optionalString(entry, provider, `${path}.${key}`);
+  }
+  return result;
+}
+function validateNominatimReverseResponse(value) {
+  const provider = "Nominatim";
+  if (!isRecord(value)) fail(provider, "$", "reverse response must be an object");
+  return {
+    display_name: optionalString(value.display_name, provider, "display_name"),
+    address: address(value.address, provider, "address")
+  };
+}
+
 // functions/api/revgeo.ts
 async function onRequest(context) {
   const { request } = context;
@@ -52,10 +90,10 @@ async function onRequest(context) {
     if (!response.ok) {
       throw new Error(`Nominatim API error: ${response.status}`);
     }
-    const data = await response.json();
-    const address = data.address || {};
-    const name = data.display_name || address.city || address.town || address.village || "Unknown location";
-    const country = address.country || "";
+    const data = validateNominatimReverseResponse(await response.json());
+    const address2 = data.address || {};
+    const name = data.display_name || address2.city || address2.town || address2.village || "Unknown location";
+    const country = address2.country || "";
     const result = {
       name,
       country
