@@ -101,9 +101,9 @@ def _dew_risk_for_hour(
         return "unknown"
     spread = temp_c - dewpoint_c
     hum = humidity or 0.0
-    if spread < 2.0 or hum > 92.0:
+    if spread < 2.0 or hum > 85.0:
         return "high"
-    if spread < 4.0:
+    if spread < 4.0 or hum > 75.0:
         return "medium"
     return "low"
 
@@ -138,9 +138,9 @@ def _wind_risk_for_hour(gust_mps: Optional[float]) -> str:
     """
     if gust_mps is None:
         return "unknown"
-    if gust_mps > 10.0:
+    if gust_mps > 8.0:
         return "high"
-    if gust_mps > 6.0:
+    if gust_mps > 5.0:
         return "medium"
     return "low"
 
@@ -541,6 +541,23 @@ def _compute_night_summary(
         "components":   components_block,
     }
 
+
+
+def _compute_derived(hourly: List[Dict], now_utc: datetime) -> Dict[str, Any]:
+    """Return legacy derived fields used by the Phase 1 compatibility tests."""
+    upcoming = [
+        h for h in hourly
+        if (_safe_parse_utc(h.get("timestamp_utc")) is not None
+            and _safe_parse_utc(h["timestamp_utc"]) >= now_utc)
+    ]
+    window = _best_window(upcoming, window_h=2, night_only=False)
+    return {
+        "cloud_window": {
+            "best_window_start_utc": window["start"],
+            "best_window_end_utc": window["end"],
+            "cloud_avg": window.get("cloud_avg"),
+        } if window else None
+    }
 
 # ── Main decision builder ─────────────────────────────────────────────────────
 

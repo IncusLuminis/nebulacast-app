@@ -1,0 +1,63 @@
+name: PR validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Cloudflare Functions
+        run: npm run build:functions
+
+      - name: Run lunar regression tests
+        run: npm run test:lunar
+
+      - name: Validate provider contracts
+        run: npm run test:provider-contracts
+
+      - name: Validate ephemeris contract
+        run: npm run test:ephemeris-contract
+
+      - name: Type check production and test sources
+        run: |
+          npm run typecheck
+          npm run typecheck:test
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            services/weather/requirements.txt
+            services/news/requirements.txt
+
+      - name: Install Python test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest -r services/weather/requirements.txt -r services/news/requirements.txt
+
+      - name: Run weather Python unit tests
+        run: PYTHONPATH=.:services/weather pytest -q services/weather/tests
+
+      - name: Run news Python unit tests
+        run: PYTHONPATH=.:services/news pytest -q services/news/tests
