@@ -1,6 +1,8 @@
 // Cloudflare Pages Function: /api/geocode
 // Geocode city search using OpenStreetMap Nominatim
 
+import { validateNominatimSearchResponse } from "../../services/astro_weather/providers/contracts";
+
 interface Env {
   // Cloudflare Pages Functions environment
 }
@@ -64,20 +66,10 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       throw new Error(`Nominatim API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    
-    if (!Array.isArray(data)) {
-      return new Response(JSON.stringify([]), {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=300", // Cache for 5 minutes
-        },
-      });
-    }
+    const data = validateNominatimSearchResponse(await response.json());
 
     // Map Nominatim results to our format
-    const results: GeocodeResult[] = data.map((item: any) => {
+    const results: GeocodeResult[] = data.map((item) => {
       const address = item.address || {};
       const name = item.display_name?.split(",")[0] || item.name || "Unknown";
       const country = address.country || "";

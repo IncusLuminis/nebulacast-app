@@ -33,14 +33,17 @@ export async function fetchSevenTimer(
       return null;
     }
 
-    const data = await response.json();
+    const data: unknown = await response.json();
+    const record = typeof data === "object" && data !== null && !Array.isArray(data)
+      ? data as Record<string, unknown>
+      : null;
     
-    if (!data || !Array.isArray(data.dataseries)) {
+    if (!record || !Array.isArray(record.dataseries)) {
       console.warn("7Timer: invalid response format");
       return null;
     }
 
-    return data as SevenTimerResponse;
+    return record as unknown as SevenTimerResponse;
   } catch (error) {
     console.warn("7Timer fetch failed:", error);
     return null;

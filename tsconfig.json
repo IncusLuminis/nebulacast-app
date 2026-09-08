@@ -12,5 +12,6 @@
   "include": [
     "services/astro_weather/**/*.ts",
     "functions/**/*.ts"
-  ]
+  ],
+  "exclude": ["services/astro_weather/test_api.ts"]
 }
