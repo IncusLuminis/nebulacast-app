@@ -1,6 +1,7 @@
 // Cloudflare Pages Function: /api/astro-weather
 
 import { fetchOpenMeteo } from "../../services/astro_weather/providers/open_meteo";
+import { validateOpenMeteoResponse } from "../../services/astro_weather/providers/contracts";
 import { fetchSevenTimer } from "../../services/astro_weather/providers/seven_timer";
 import { mergeHourlyData } from "../../services/astro_weather/merge";
 import { computeScore } from "../../services/astro_weather/score";
@@ -142,7 +143,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
         });
         const staleCached = await cache.match(staleCacheKey);
         if (staleCached) {
-          const staleData = await staleCached.json();
+          const staleData = validateOpenMeteoResponse(await staleCached.json());
           omResult = { data: staleData, fromCache: true, status: 200 };
         } else {
           // No stale cache - return graceful degradation response
@@ -185,9 +186,10 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
 
     for (let i = 0; i < hourRecords.length; i++) {
       const hour = hourRecords[i];
+      const nextHour = hourRecords[i + 6];
       const pressureTrend =
-        i + 6 < hourRecords.length
-          ? (hourRecords[i + 6].pressure_hpa ?? null) - (hour.pressure_hpa ?? 0)
+        nextHour !== undefined
+          ? (nextHour.pressure_hpa ?? 0) - (hour.pressure_hpa ?? 0)
           : null;
       const {
         score, breakdown, gate,

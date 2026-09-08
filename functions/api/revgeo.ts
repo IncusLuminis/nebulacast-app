@@ -1,6 +1,8 @@
 // Cloudflare Pages Function: /api/revgeo
 // Reverse geocode lat/lon to place name using OpenStreetMap Nominatim
 
+import { validateNominatimReverseResponse } from "../../services/astro_weather/providers/contracts";
+
 interface Env {
   // Cloudflare Pages Functions environment
 }
@@ -73,7 +75,7 @@ export async function onRequest(context: { request: Request; env: Env }): Promis
       throw new Error(`Nominatim API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = validateNominatimReverseResponse(await response.json());
     
     const address = data.address || {};
     const name = data.display_name || address.city || address.town || address.village || "Unknown location";

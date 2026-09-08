@@ -1,5 +1,7 @@
 // Open-Meteo API provider
 
+import { validateOpenMeteoResponse } from "./contracts";
+
 export interface OpenMeteoHourly {
   time: string[];
   cloudcover?: (number | null)[];
@@ -73,7 +75,7 @@ export async function fetchOpenMeteo(
     });
     const cached = await cache.match(cacheKey);
     if (cached) {
-      const data = await cached.json();
+      const data = validateOpenMeteoResponse(await cached.json());
       return { data, fromCache: true, status: 200 };
     }
   }
@@ -93,7 +95,7 @@ export async function fetchOpenMeteo(
     throw new Error(`Open-Meteo API error: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = validateOpenMeteoResponse(await response.json());
   
   // Cache successful response (10 minutes)
   if (cache) {
