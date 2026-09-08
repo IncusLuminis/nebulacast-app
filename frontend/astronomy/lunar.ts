@@ -20,7 +20,50 @@ export interface LunarState {
   emoji: string;
   pct: number;
 }
+export interface LunarLocation { lat: number; lon: number; timezone: string; location_key?: string; }
+export interface LunarSnapshot {
+  schema_version: 'lunar-snapshot.v1';
+  computed_at_utc: string;
+  location_key: string;
+  location: { lat: number; lon: number; timezone: string };
+  source: string;
+  freshness: 'live' | 'generated' | 'stale';
+  status: 'available' | 'stale' | 'unavailable';
+  lunar: { cycle_phase: number; illuminated_fraction: number; illuminated_percent: number; waxing: boolean; phase_name: string; emoji: string; alt_deg: number | null; az_deg: number | null };
+}
 const cache = new Map<number, Readonly<LunarState>>();
+const snapshotCache = new Map<string, Readonly<LunarSnapshot>>();
+
+function normalizeLocation(location: LunarLocation): Required<LunarLocation> {
+  if (!location || !Number.isFinite(location.lat) || location.lat < -90 || location.lat > 90 || !Number.isFinite(location.lon) || location.lon < -180 || location.lon > 180 || !location.timezone) {
+    throw new RangeError('Invalid lunar location');
+  }
+  const lat = Number(location.lat.toFixed(6));
+  const lon = Number(location.lon.toFixed(6));
+  return { lat, lon, timezone: location.timezone, location_key: location.location_key || `${lat}|${lon}|${location.timezone}` };
+}
+
+/** Canonical, presentation-neutral lunar snapshot for all consumers. */
+export function createLunarSnapshot(input: { instant?: Date; location: LunarLocation }): Readonly<LunarSnapshot> {
+  const location = normalizeLocation(input.location);
+  const state = getLunarState(input.instant || new Date());
+  const key = `${state.timestamp_utc}|${location.location_key}`;
+  const cached = snapshotCache.get(key);
+  if (cached) return cached;
+  const snapshot = Object.freeze({
+    schema_version: 'lunar-snapshot.v1' as const,
+    computed_at_utc: state.timestamp_utc,
+    location_key: location.location_key,
+    location: { lat: location.lat, lon: location.lon, timezone: location.timezone },
+    source: state.source,
+    freshness: 'live' as const,
+    status: 'available' as const,
+    lunar: { cycle_phase: state.phase, illuminated_fraction: state.fraction, illuminated_percent: state.illum_pct, waxing: state.waxing, phase_name: state.name, emoji: state.emoji, alt_deg: null, az_deg: null },
+  });
+  if (snapshotCache.size >= 2048) snapshotCache.delete(snapshotCache.keys().next().value!);
+  snapshotCache.set(key, snapshot);
+  return snapshot;
+}
 
 export function getLunarState(date: Date = new Date()): Readonly<LunarState> {
   const ms = date.getTime();
