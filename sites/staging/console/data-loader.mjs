@@ -1,10 +1,14 @@
+import { normalizeLocation } from "../shared/request-registry.mjs";
+
 /** Load the root console's data sources with explicit, testable inputs. */
 async function readJson(fetchImpl, url, options = {}) {
   const response = await fetchImpl(url, options);
   return response.ok ? response.json() : null;
 }
 
-export async function loadConsoleData({ location, isDefaultSite, observerWeatherUrl, fetchImpl = fetch }) {
+export async function loadConsoleData({ location, isDefaultSite, observerWeatherUrl, fetchImpl = fetch, requestRegistry = null }) {
+  const locationKey = normalizeLocation(location) ?? "default";
+  const load = async signal => {
   const sunMoonUrl = isDefaultSite(location)
     ? "/sky/data/sun_moon.json"
     : `/api/sun-moon?lat=${location.lat}&lon=${location.lon}&days=7&step_min=10`;
@@ -29,4 +33,6 @@ export async function loadConsoleData({ location, isDefaultSite, observerWeather
     validatedSunMoon = null;
   }
   return { wx, sw, sunMoon: validatedSunMoon };
+  };
+  return requestRegistry ? requestRegistry.getOrCreate(locationKey, load) : load(new AbortController().signal);
 }
