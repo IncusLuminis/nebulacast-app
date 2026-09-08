@@ -4,6 +4,7 @@
  */
 
 import { parseCoords, clampLatLon, formatCoord, escapeHtml, debounce, showToast } from "../../core/utils.js";
+import { createLifecycle } from "../../../shared/lifecycle.mjs";
 
 const API_BASE = "";
 const API_GEOCODE = API_BASE + "/api/geocode";
@@ -513,6 +514,7 @@ async function checkAPIStatus() {
  * Mount location widget
  */
 export function mountLocation(rootEl, api) {
+  const lifecycle = createLifecycle();
   storeApi = api;
   
   // Create HTML structure
@@ -553,8 +555,9 @@ export function mountLocation(rootEl, api) {
     const debouncedHandleInput = debounce(() => handleInput(elements), 500);
     let isProcessingEnter = false;
     elements.locInput.addEventListener("input", debouncedHandleInput);
+    lifecycle.add(() => elements.locInput.removeEventListener("input", debouncedHandleInput));
     
-    elements.locInput.addEventListener("keydown", async (e) => {
+    const onKeydown = async (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         if (isProcessingEnter) return; // Prevent duplicate Enter handling
@@ -589,28 +592,35 @@ export function mountLocation(rootEl, api) {
       } else if (e.key === "Escape") {
         closeDropdown(elements.locDropdown);
       }
-    });
+    };
+    elements.locInput.addEventListener("keydown", onKeydown);
+    lifecycle.add(() => elements.locInput.removeEventListener("keydown", onKeydown));
   }
   
   if (elements.locGeoBtn) {
-    elements.locGeoBtn.addEventListener("click", () => useMyLocation(elements));
+    const onGeo = () => useMyLocation(elements);
+    elements.locGeoBtn.addEventListener("click", onGeo);
+    lifecycle.add(() => elements.locGeoBtn.removeEventListener("click", onGeo));
   }
   
   if (elements.locShareBtn) {
     elements.locShareBtn.addEventListener("click", shareLocation);
+    lifecycle.add(() => elements.locShareBtn.removeEventListener("click", shareLocation));
   }
   
   // Close dropdown on outside click
-  document.addEventListener("click", (e) => {
+  const onDocumentClick = (e) => {
     if (elements.locDropdown && 
         !elements.locInput?.contains(e.target) && 
         !elements.locDropdown.contains(e.target)) {
       closeDropdown(elements.locDropdown);
     }
-  });
+  };
+  document.addEventListener("click", onDocumentClick);
+  lifecycle.add(() => document.removeEventListener("click", onDocumentClick));
   
   // Subscribe to state changes
-  storeApi.subscribe((state) => {
+  const unsubscribe = storeApi.subscribe((state) => {
     if (elements.locInput && state.location.name) {
       const currentValue = elements.locInput.value;
       const newValue = state.location.name;
@@ -621,11 +631,14 @@ export function mountLocation(rootEl, api) {
     }
     updateStatusLine(state, elements);
   });
+  lifecycle.add(unsubscribe);
   
   // Check API status
   checkAPIStatus().then(() => {
     updateStatusLine(storeApi.getState(), elements);
   });
   
-  return elements;
+  const dispose = () => lifecycle.dispose();
+  dispose.elements = elements;
+  return dispose;
 }

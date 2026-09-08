@@ -10,6 +10,7 @@ let mapInitialized = false;
  * Mount map widget
  */
 export function mountMap(rootEl, storeApi) {
+  let disposed = false;
   const state = storeApi.getState();
   
   // Create iframe to load map-poc.html
@@ -27,25 +28,34 @@ export function mountMap(rootEl, storeApi) {
   mapIframe = rootEl.querySelector("#mapIframe");
   
   // Wait for iframe to load, then send initial location
-  mapIframe.addEventListener("load", function() {
+  const onLoad = function() {
+    if (disposed) return;
     mapInitialized = true;
     updateMapLocation(state);
     
     // Listen for location changes from iframe (if needed)
-    window.addEventListener("message", function(event) {
-      // Handle messages from iframe if needed
-      if (event.data && event.data.type === "map-location-change") {
-        // Could update state if user moves map, but for now we only sync one way
-      }
-    });
-  });
+    window.addEventListener("message", onMessage);
+  };
+  const onMessage = function(event) {
+    if (event.data && event.data.type === "map-location-change") {}
+  };
+  mapIframe.addEventListener("load", onLoad);
   
   // Subscribe to state changes to update map location
-  storeApi.subscribe((newState) => {
+  const unsubscribe = storeApi.subscribe((newState) => {
     if (mapInitialized && mapIframe && mapIframe.contentWindow) {
       updateMapLocation(newState);
     }
   });
+  return () => {
+    if (disposed) return;
+    disposed = true;
+    mapIframe?.removeEventListener("load", onLoad);
+    window.removeEventListener("message", onMessage);
+    unsubscribe?.();
+    if (mapIframe === rootEl.querySelector("#mapIframe")) mapIframe = null;
+    mapInitialized = false;
+  };
 }
 
 /**

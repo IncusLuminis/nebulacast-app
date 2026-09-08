@@ -4645,6 +4645,7 @@ function renderWeatherHTML(rootEl) {
 }
 
 export function mountWeather(rootEl, storeApi, options) {
+  let disposed = false;
   layoutMode = (options && options.layout === "vertical") ? "vertical" : "default";
   fetchSunMoonEvents(storeApi && storeApi.getState && storeApi.getState().location);
 
@@ -4726,6 +4727,7 @@ export function mountWeather(rootEl, storeApi, options) {
 
   let lastLocKey = "";
   const unsubscribe = storeApi.subscribe(async (state) => {
+    if (disposed) return;
     if (!state.location || !state.location.lat || !state.location.lon) return;
     const locKey = state.location.lat + "," + state.location.lon;
     const locationChanged = lastLocKey !== locKey;
@@ -4779,7 +4781,8 @@ export function mountWeather(rootEl, storeApi, options) {
   setupAutoRefresh();
   
   // Pause auto-refresh when tab becomes hidden
-  document.addEventListener("visibilitychange", function() {
+  const onVisibilityChange = function() {
+    if (disposed) return;
     if (document.hidden) {
       if (autoRefreshTimer) {
         clearInterval(autoRefreshTimer);
@@ -4788,11 +4791,17 @@ export function mountWeather(rootEl, storeApi, options) {
     } else {
       setupAutoRefresh();
     }
-  });
-  
-  return {
-    unmount: () => {
-      if (unsubscribe) unsubscribe();
-    }
   };
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    unsubscribe?.();
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+  };
+  dispose.unmount = dispose;
+  return dispose;
 }
