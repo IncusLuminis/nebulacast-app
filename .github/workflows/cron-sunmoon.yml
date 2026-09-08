@@ -76,6 +76,9 @@ jobs:
           PYTHONUNBUFFERED=1 PYTHONPATH=services/sky \
           python -u services/sky/pipelines/gen_sunmoon.py
 
+          python scripts/generated_manifest.py --write --source "sunmoon-pipeline" \
+            sites/staging/sky/data/sun_moon.json services/sky/data/generated/sun_moon.json
+
           ls -la sites/staging/sky/data/sun_moon.json
           ls -la services/sky/data/generated/sun_moon.json
 

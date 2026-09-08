@@ -39,6 +39,13 @@ jobs:
           PYTHONPATH=services/weather python services/weather/pipelines/run_phase1.py
           echo "Phase 1 pipeline completed successfully"
 
+      - name: Attach generated-data manifests
+        run: |
+          python scripts/generated_manifest.py --write --source "weather-pipeline" \
+            sites/staging/weather/daily_weather.json \
+            sites/staging/data/observer_weather_now.json \
+            sites/staging/data/space_weather_now.json
+
       - name: Validate generated JSON files
         run: |
           echo "Validating daily_weather.json..."

@@ -84,6 +84,9 @@ jobs:
               print(f"OK: {len(raster)} raster profiles ({n_frames} frames each)")
           EOF
 
+      - name: Attach generated-data manifest
+        run: python scripts/generated_manifest.py --write --source "weather-map-pipeline" sites/staging/data/weather_map_now.json
+
       # Commit JSON manifest + isobar frames (WebP cloud/wind frames are .gitignored).
       # NOTE: CF Pages deployment is intentionally NOT done here. The cron-grib-tiles
       # workflow is the sole CF Pages deployer — it runs gen_weather_map.py too, so

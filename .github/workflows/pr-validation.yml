@@ -28,6 +28,14 @@ jobs:
       - name: Build Cloudflare Functions
         run: npm run build:functions
 
+      - name: Validate generated-data manifests
+        run: |
+          python scripts/generated_manifest.py --source "committed-artifact" \
+            sites/staging/data/weather_map_now.json \
+            sites/staging/sky/data/sun_moon.json \
+            sites/staging/sky/data/objects_today.json \
+            sites/staging/sky/data/objects_week.json
+
       - name: Install Chromium for browser smoke test
         run: npx playwright install chromium
 
