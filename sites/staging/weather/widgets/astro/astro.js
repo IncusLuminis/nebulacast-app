@@ -25,7 +25,7 @@ export function mountAstro(rootEl, storeApi) {
   `;
   
   // Subscribe to state changes
-  storeApi.subscribe((state) => {
+  const unsubscribe = storeApi.subscribe((state) => {
     const locInfoEl = rootEl.querySelector(".widget-location-info");
     const profileInfoEl = rootEl.querySelector(".widget-profile-info");
     
@@ -37,4 +37,5 @@ export function mountAstro(rootEl, storeApi) {
       profileInfoEl.textContent = `Profile: ${state.profile || "default"}`;
     }
   });
+  return () => unsubscribe?.();
 }

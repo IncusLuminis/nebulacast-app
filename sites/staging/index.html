@@ -2441,6 +2441,18 @@
   initState();
   const storeApi = { getState, setState, subscribe };
   const consoleRequestRegistry = new RequestRegistry();
+  const widgetDisposers = new Map();
+  function mountWidget(key, root, mount) {
+    widgetDisposers.get(key)?.();
+    if (!root) return;
+    const disposer = mount(root, storeApi);
+    const dispose = typeof disposer === "function" ? disposer : disposer?.dispose || disposer?.unmount;
+    if (dispose) widgetDisposers.set(key, dispose);
+  }
+  window.nebulacastWidgetLifecycle = { disposeAll: () => {
+    for (const dispose of widgetDisposers.values()) dispose();
+    widgetDisposers.clear();
+  }};
 
   // ── Utility: debounce ──────────────────────────────────
   function _debounce(fn, ms) {
@@ -2487,23 +2499,23 @@
 
   // ── Topbar: Location ────────────────────────────────────
   const locationEl = document.getElementById("w-location");
-  if (locationEl) mountLocation(locationEl, storeApi);
+  mountWidget("location", locationEl, mountLocation);
 
   // ── Weather (Conditions tab) ────────────────────────────
   const weatherEl = document.getElementById("w-weather");
-  if (weatherEl) mountWeather(weatherEl, storeApi);
+  mountWidget("weather", weatherEl, mountWeather);
 
   // ── Weather matrix (Matrix panel) ───────────────────────
   const weatherMatrixEl = document.getElementById("w-weather-matrix");
-  if (weatherMatrixEl) mountWeather(weatherMatrixEl, storeApi);
+  mountWidget("weather-matrix", weatherMatrixEl, mountWeather);
 
   // ── Sun & Moon tab ──────────────────────────────────────
   const sunEl = document.getElementById("w-sun");
-  if (sunEl) mountSunMoon(sunEl, storeApi);
+  mountWidget("sun", sunEl, mountSunMoon);
 
   // ── Sun & Moon in dashboard sunmoon panel ───────────────
   const sunmoonPanelEl = document.getElementById("w-sunmoon-panel");
-  if (sunmoonPanelEl) mountSunMoon(sunmoonPanelEl, storeApi);
+  mountWidget("sunmoon-panel", sunmoonPanelEl, mountSunMoon);
 
   // ── Calendar & News (always init, DOM ready) ────────────
   window.runCalendarWidget({

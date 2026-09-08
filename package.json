@@ -8,6 +8,7 @@
     "watch:helio": "node scripts/build-helio.mjs --watch",
     "build:lunar": "node scripts/build-lunar.mjs",
     "test:lunar": "node --test tests/lunar.test.mjs",
+    "test:lifecycle": "node --test tests/lifecycle.test.mjs",
     "test:browser": "playwright test",
     "test:provider-contracts": "node scripts/test-provider-contracts.mjs",
     "test:ephemeris-contract": "node scripts/test-ephemeris-contract.mjs",

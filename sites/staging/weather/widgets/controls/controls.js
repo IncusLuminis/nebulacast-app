@@ -4,6 +4,11 @@
  */
 
 export function mountControls(rootEl, storeApi) {
+  const cleanups = [];
+  const listen = (element, event, handler) => {
+    element.addEventListener(event, handler);
+    cleanups.push(() => element.removeEventListener(event, handler));
+  };
   const state = storeApi.getState();
   rootEl.innerHTML = `
     <div class="controls-row">
@@ -22,22 +27,24 @@ export function mountControls(rootEl, storeApi) {
   `;
 
   rootEl.querySelectorAll(".controls-btn[data-profile]").forEach(btn => {
-    btn.addEventListener("click", () => {
+    const onClick = () => {
       rootEl.querySelectorAll(".controls-btn[data-profile]").forEach(b => b.removeAttribute("data-active"));
       btn.setAttribute("data-active", "true");
       storeApi.setState({ profile: btn.dataset.profile });
-    });
+    };
+    listen(btn, "click", onClick);
   });
 
   rootEl.querySelectorAll(".controls-btn[data-range]").forEach(btn => {
-    btn.addEventListener("click", () => {
+    const onClick = () => {
       rootEl.querySelectorAll(".controls-btn[data-range]").forEach(b => b.removeAttribute("data-active"));
       btn.setAttribute("data-active", "true");
       storeApi.setState({ range: btn.dataset.range });
-    });
+    };
+    listen(btn, "click", onClick);
   });
 
-  storeApi.subscribe((newState) => {
+  const unsubscribe = storeApi.subscribe((newState) => {
     rootEl.querySelectorAll(".controls-btn[data-profile]").forEach(b => {
       b.setAttribute("data-active", b.dataset.profile === newState.profile ? "true" : "false");
     });
@@ -45,4 +52,5 @@ export function mountControls(rootEl, storeApi) {
       b.setAttribute("data-active", b.dataset.range === newState.range ? "true" : "false");
     });
   });
+  return () => { unsubscribe?.(); cleanups.splice(0).forEach(fn => fn()); };
 }
