@@ -75,8 +75,23 @@ def test_weather_ephemeris_uses_requested_context_not_static_warsaw_data() -> No
     )
 
     assert result.status == "unavailable"
-    assert result.location_key == "hobart:-42.8826:147.3250:Australia/Hobart"
+    assert result.location_key == "hobart:-42.8826:147.325:Australia/Hobart"
     assert result.frames == ()
+
+
+def test_context_normalization_rejects_invalid_values_and_preserves_close_locations() -> None:
+    first = LocationContext(52.22970000, 21.01220000, " Europe/Warsaw ", " Warsaw ")
+    close = LocationContext(52.22970001, 21.01220001, "Europe/Warsaw", "Warsaw")
+    assert first.location_key == "Warsaw:52.2297:21.0122:Europe/Warsaw"
+    assert first.location_key != close.location_key
+
+    import pytest
+    with pytest.raises(ValueError):
+        LocationContext(91, 0, "UTC")
+    with pytest.raises(ValueError):
+        LocationContext(0, 181, "UTC")
+    with pytest.raises(ValueError):
+        LocationContext(0, 0, "Not/A/Timezone")
 
 
 def test_observer_weather_exposes_unavailable_ephemeris_without_static_fallback(monkeypatch) -> None:
@@ -95,7 +110,7 @@ def test_observer_weather_exposes_unavailable_ephemeris_without_static_fallback(
     )
 
     assert result["ephemeris"]["status"] == "unavailable"
-    assert result["ephemeris"]["location_key"].startswith("coordinates:-42.8826:147.3250")
+    assert result["ephemeris"]["location_key"].startswith("coordinates:-42.8826:147.325:")
     assert result["moon"] is None
     assert result["hourly"][0]["night"] is None
     assert result["hourly"][0]["moon_up"] is None

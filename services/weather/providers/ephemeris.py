@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, Iterable, Optional, Tuple
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 @dataclass(frozen=True)
@@ -23,11 +24,37 @@ class LocationContext:
     tz: str
     location_id: Optional[str] = None
 
+    def __post_init__(self) -> None:
+        try:
+            lat = float(self.lat)
+            lon = float(self.lon)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("latitude and longitude must be numeric") from exc
+        if not (-90.0 <= lat <= 90.0):
+            raise ValueError("latitude must be between -90 and 90 degrees")
+        if not (-180.0 <= lon <= 180.0):
+            raise ValueError("longitude must be between -180 and 180 degrees")
+        tz_name = str(self.tz).strip()
+        try:
+            canonical_tz = ZoneInfo(tz_name).key
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError(f"unknown timezone: {tz_name}") from exc
+        object.__setattr__(self, "lat", lat)
+        object.__setattr__(self, "lon", lon)
+        object.__setattr__(self, "tz", canonical_tz)
+        if self.location_id is not None:
+            location_id = str(self.location_id).strip()
+            object.__setattr__(self, "location_id", location_id or None)
+
     @property
     def location_key(self) -> str:
         """Stable cache key; coordinate precision prevents cross-site reuse."""
         identity = self.location_id or "coordinates"
-        return f"{identity}:{self.lat:.4f}:{self.lon:.4f}:{self.tz}"
+        # Eight decimals retain sub-metre distinctions while producing a
+        # deterministic key for equivalent numeric inputs.
+        lat = f"{self.lat:.8f}".rstrip("0").rstrip(".")
+        lon = f"{self.lon:.8f}".rstrip("0").rstrip(".")
+        return f"{identity}:{lat}:{lon}:{self.tz}"
 
 
 @dataclass(frozen=True)
