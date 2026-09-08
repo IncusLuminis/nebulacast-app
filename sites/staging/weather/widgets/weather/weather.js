@@ -1,4 +1,5 @@
 import { readIlluminationPct } from "../../../shared/lunar.mjs";
+import { classifyDataFreshness, formatFreshnessLabel } from "../../../shared/data-freshness.mjs";
 
 // URL from config (set by weather/index.html)
 const ASTRO_WEATHER_URL = (window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.fallbackLegacyUrl) || "/weather/daily_weather.json";
@@ -2720,7 +2721,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function showError(rootEl, msg) {
   const weatherCard = rootEl.querySelector("#poc-weather") || rootEl;
   const metaEl = weatherCard.querySelector("[data-role=weather-meta]");
-  if (metaEl) metaEl.innerHTML = `<span style="color: var(--bad)">Error: ${escapeHtml(msg)}</span>`;
+  if (metaEl) {
+    metaEl.dataset.freshness = "unavailable";
+    metaEl.innerHTML = `<span style="color: var(--bad)">Unavailable: ${escapeHtml(msg)}</span>`;
+  }
 }
 
 // Non-blocking banner when API failed and we use cached JSON
@@ -3065,7 +3069,9 @@ async function loadWeather(rootEl, state, forceRefresh) {
     if (metaEl) {
       var horizonHours = data.horizon_hours || data.hours.length;
       var updatedTime = data.generated_at ? new Date(data.generated_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—";
-      metaEl.textContent = "Updated " + updatedTime + " · " + (horizonHours >= 70 ? "~" : "") + horizonHours + "h forecast";
+      const freshness = classifyDataFreshness(data);
+      metaEl.dataset.freshness = freshness.status;
+      metaEl.textContent = formatFreshnessLabel(freshness) + " · Updated " + updatedTime + " · " + (horizonHours >= 70 ? "~" : "") + horizonHours + "h forecast";
     }
     var bestWindowsArr = null;
     if (data.summary && Array.isArray(data.summary.best_windows)) {
