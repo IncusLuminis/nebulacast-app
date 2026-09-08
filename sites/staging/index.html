@@ -2433,7 +2433,7 @@
   import { mountWeather } from "/weather/widgets/weather/weather.js";
   import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js?v=20260422a";
 
-  import { getLunarState } from "/shared/lunar.mjs";
+  import { createLunarSnapshot } from "/shared/lunar.mjs";
   import { loadConsoleData } from "/console/data-loader.mjs";
   import { RequestRegistry, normalizeLocation } from "/shared/request-registry.mjs";
 
@@ -3069,8 +3069,13 @@
 
     // ── Sun/moon crossings from sun_moon.json ──
     let sunsetT = null, sunriseT = null, moonriseT = null, moonsetT = null;
-    const lunar = getLunarState(new Date());
-    const moonIllum = lunar.illum_pct, moonWaxing = lunar.waxing;
+    const _heroLoc = getState()?.location || { lat: _DEFAULT_SITE_LAT, lon: _DEFAULT_SITE_LON, tz: "Europe/Warsaw" };
+    const lunarSnapshot = createLunarSnapshot({
+      instant: new Date(),
+      location: { lat: _heroLoc.lat, lon: _heroLoc.lon, timezone: _heroLoc.tz || "UTC" }
+    });
+    const moonIllum = lunarSnapshot.lunar.illuminated_percent;
+    const moonWaxing = lunarSnapshot.lunar.waxing;
 
     if (sunMoon?.frames?.length) {
       const frames = sunMoon.frames;
@@ -3078,7 +3083,7 @@
 
       // Use SunCalcLib for exact sunrise/sunset/transit (same source as Sun & Moon tab)
       // — altitude sign-change from 10-min frames can be off by up to ±10 min
-      const _loc = getState()?.location;
+      const _loc = _heroLoc;
       const _SC  = window.SunCalc;
       if (_SC && _loc?.lat != null && _loc?.lon != null) {
         // Today's times in the observer's timezone
