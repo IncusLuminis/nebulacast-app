@@ -22,3 +22,8 @@ test("core staging page reaches the weather console shell", async ({ page }) => 
     throw error;
   }
 });
+
+test("legacy map URL redirects to the supported map route", async ({ page }) => {
+  await page.goto("/weather/map1.html", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/weather\/map-poc\.html$/);
+});
