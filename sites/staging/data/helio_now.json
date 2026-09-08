@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-08T20:55:10Z",
+  "updated_utc": "2026-09-08T23:15:56Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -15,13 +15,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 4.67,
-    "kp_time_utc": "2026-09-08T15:00:00Z",
+    "kp_latest": 3.0,
+    "kp_time_utc": "2026-09-08T18:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-09-08T21:00:00Z",
-        "kp": 4.67
-      },
       {
         "t_utc": "2026-09-09T00:00:00Z",
         "kp": 5.0
@@ -93,10 +89,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-09-07T21:00:00Z",
-        "kp": 4.33
-      },
-      {
         "t_utc": "2026-09-08T00:00:00Z",
         "kp": 4.33
       },
@@ -119,26 +111,18 @@
       {
         "t_utc": "2026-09-08T15:00:00Z",
         "kp": 4.67
+      },
+      {
+        "t_utc": "2026-09-08T18:00:00Z",
+        "kp": 3.0
       }
     ],
-    "xray_flux_wm2": 8.874528703017859e-07,
+    "xray_flux_wm2": 5.117936439091864e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-09-07T20:00:00Z",
-        "flux": 3.337032339345569e-07
-      },
-      {
-        "t_utc": "2026-09-07T21:00:00Z",
-        "flux": 3.422452730698448e-07
-      },
-      {
-        "t_utc": "2026-09-07T22:00:00Z",
-        "flux": 3.543665281805867e-07
-      },
-      {
         "t_utc": "2026-09-07T23:00:00Z",
-        "flux": 3.905236477900568e-07
+        "flux": 3.8427064132726874e-07
       },
       {
         "t_utc": "2026-09-08T00:00:00Z",
@@ -222,7 +206,19 @@
       },
       {
         "t_utc": "2026-09-08T20:00:00Z",
-        "flux": 6.617193883036688e-07
+        "flux": 6.728680261858244e-07
+      },
+      {
+        "t_utc": "2026-09-08T21:00:00Z",
+        "flux": 7.976185003144565e-07
+      },
+      {
+        "t_utc": "2026-09-08T22:00:00Z",
+        "flux": 9.378781025285813e-07
+      },
+      {
+        "t_utc": "2026-09-08T23:00:00Z",
+        "flux": 5.201017074796255e-07
       }
     ],
     "solar_wind_kms": null,
@@ -240,7 +236,7 @@
     "text": "Elevated space weather conditions. Aurora chances may improve at high latitudes."
   },
   "hero": {
-    "kp": 4.67,
+    "kp": 3.0,
     "status_label": "Elevated",
     "scales": {
       "g": "G1",
@@ -317,7 +313,7 @@
       "source_code": "WARK05",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 5 expected",
       "raw_body": "Space Weather Message Code: WARK05\r\nSerial Number: 2264\r\nIssue Time: 2026 Sep 08 1727 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 5 expected\nExtension to Serial Number: 2263\nValid From: 2026 Sep 07 2000 UTC\nNow Valid Until: 2026 Sep 08 2359 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 1.1232,
+      "relevance": 1.0848,
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-09-08T12"
     },
     {
@@ -332,7 +328,7 @@
       "source_code": "WARK04",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5415\r\nIssue Time: 2026 Sep 08 1730 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\nExtension to Serial Number: 5414\nValid From: 2026 Sep 07 0854 UTC\nNow Valid Until: 2026 Sep 09 0900 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 1.0478,
+      "relevance": 1.0119,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-09-08T12"
     },
     {
@@ -347,7 +343,7 @@
       "source_code": "WATA30",
       "raw_title": "WATCH: Geomagnetic Storm Category G2 Predicted",
       "raw_body": "Space Weather Message Code: WATA30\r\nSerial Number: 281\r\nIssue Time: 2026 Sep 08 1702 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G2 Predicted \nHighest Storm Level Predicted by Day:\nSep 08:  G1 (Minor)   Sep 09:  G2 (Moderate)   Sep 10:  None (Below G1)   \nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 55 degrees Geomagnetic Latitude.\r\nInduced Currents - Power grid fluctuations can occur. High-latitude power systems may experience voltage alarms.\r\nSpacecraft - Satellite orientation irregularities may occur; increased drag on low Earth-orbit satellites is possible.\r\nRadio - HF (high frequency) radio propagation can fade at higher latitudes.\r\nAurora - Aurora may be seen as low as New York to Wisconsin to Washington state.",
-      "relevance": 0.965,
+      "relevance": 0.9318,
       "dedupe_key": "geomagnetic_watch|G|2|watch|2026-09-08T12"
     }
   ],
@@ -364,7 +360,7 @@
       "source_code": "ALTK05",
       "raw_title": "ALERT: Geomagnetic K-index of 5",
       "raw_body": "Space Weather Message Code: ALTK05\r\nSerial Number: 2049\r\nIssue Time: 2026 Sep 08 1751 UTC\r\n\r\nALERT: Geomagnetic K-index of 5 \nThreshold Reached: 2026 Sep 08 1744 UTC\nSynoptic Period: 1500-1800\nActive Warning: YES\nNoaa Scale: G1 - Minor\nComment: \r\n\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.9,
+      "relevance": 0.8693,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-09-08T12"
     },
     {
@@ -379,7 +375,7 @@
       "source_code": "WARK04",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5415\r\nIssue Time: 2026 Sep 08 1730 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\nExtension to Serial Number: 5414\nValid From: 2026 Sep 07 0854 UTC\nNow Valid Until: 2026 Sep 09 0900 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 1.0478,
+      "relevance": 1.0119,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-09-08T12"
     },
     {
@@ -394,7 +390,7 @@
       "source_code": "WARK05",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 5 expected",
       "raw_body": "Space Weather Message Code: WARK05\r\nSerial Number: 2264\r\nIssue Time: 2026 Sep 08 1727 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 5 expected\nExtension to Serial Number: 2263\nValid From: 2026 Sep 07 2000 UTC\nNow Valid Until: 2026 Sep 08 2359 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 1.1232,
+      "relevance": 1.0848,
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-09-08T12"
     },
     {
@@ -409,7 +405,7 @@
       "source_code": "WATA30",
       "raw_title": "WATCH: Geomagnetic Storm Category G2 Predicted",
       "raw_body": "Space Weather Message Code: WATA30\r\nSerial Number: 281\r\nIssue Time: 2026 Sep 08 1702 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G2 Predicted \nHighest Storm Level Predicted by Day:\nSep 08:  G1 (Minor)   Sep 09:  G2 (Moderate)   Sep 10:  None (Below G1)   \nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 55 degrees Geomagnetic Latitude.\r\nInduced Currents - Power grid fluctuations can occur. High-latitude power systems may experience voltage alarms.\r\nSpacecraft - Satellite orientation irregularities may occur; increased drag on low Earth-orbit satellites is possible.\r\nRadio - HF (high frequency) radio propagation can fade at higher latitudes.\r\nAurora - Aurora may be seen as low as New York to Wisconsin to Washington state.",
-      "relevance": 0.965,
+      "relevance": 0.9318,
       "dedupe_key": "geomagnetic_watch|G|2|watch|2026-09-08T12"
     },
     {
@@ -424,7 +420,7 @@
       "source_code": "ALTEF3",
       "raw_title": "ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3737\r\nIssue Time: 2026 Sep 08 1608 UTC\r\n\r\nALERT: Electron 2MeV Integral Flux exceeded 1,000pfu \nThreshold Reached: 2026 Sep 08 1550 UTC\nStation: GOES-19\nComment: Yesterday's max: 373 pfu",
-      "relevance": 0.3735,
+      "relevance": 0.3604,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-08T12"
     },
     {
@@ -439,7 +435,7 @@
       "source_code": "ALTK05",
       "raw_title": "ALERT: Geomagnetic K-index of 5",
       "raw_body": "Space Weather Message Code: ALTK05\r\nSerial Number: 2048\r\nIssue Time: 2026 Sep 08 0734 UTC\r\n\r\nALERT: Geomagnetic K-index of 5 \nThreshold Reached: 2026 Sep 08 0730 UTC\nSynoptic Period: 0600-0900\nActive Warning: YES\nNoaa Scale: G1 - Minor\nComment: \r\n\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.7658,
+      "relevance": 0.7351,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-09-08T06"
     },
     {
@@ -454,7 +450,7 @@
       "source_code": "WARK05",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 5 expected",
       "raw_body": "Space Weather Message Code: WARK05\r\nSerial Number: 2263\r\nIssue Time: 2026 Sep 08 0546 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 5 expected\nExtension to Serial Number: 2262\nValid From: 2026 Sep 07 2000 UTC\nNow Valid Until: 2026 Sep 08 1800 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.9317,
+      "relevance": 0.8933,
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-09-08T00"
     },
     {
@@ -469,7 +465,7 @@
       "source_code": "WARK04",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5414\r\nIssue Time: 2026 Sep 08 0545 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\nExtension to Serial Number: 5413\nValid From: 2026 Sep 07 0854 UTC\nNow Valid Until: 2026 Sep 08 2359 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.8684,
+      "relevance": 0.8326,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-09-08T00"
     },
     {
@@ -484,7 +480,7 @@
       "source_code": "WARK05",
       "raw_title": "WARNING: Geomagnetic K-index of 5 expected",
       "raw_body": "Space Weather Message Code: WARK05\r\nSerial Number: 2262\r\nIssue Time: 2026 Sep 07 2001 UTC\r\n\r\nWARNING: Geomagnetic K-index of 5 expected \nValid From: 2026 Sep 07 2000 UTC\nValid To: 2026 Sep 08 0600 UTC\nWarning Conditions: Onset\nNoaa Scale: G1 - Minor\nComment: \r\n\r\nNOAA Scale: G1 - Minor\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.772,
+      "relevance": 0.7336,
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-09-07T18"
     },
     {
@@ -499,7 +495,7 @@
       "source_code": "WATA20",
       "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
       "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1123\r\nIssue Time: 2026 Sep 07 1635 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted \nHighest Storm Level Predicted by Day:\nSep 08:  G1 (Minor)   Sep 09:  G1 (Minor)   Sep 10:  None (Below G1)   \nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.5701,
+      "relevance": 0.5395,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-09-07T12"
     },
     {
@@ -514,7 +510,7 @@
       "source_code": "WARK04",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5413\r\nIssue Time: 2026 Sep 07 1413 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\nExtension to Serial Number: 5412\nValid From: 2026 Sep 07 0854 UTC\nNow Valid Until: 2026 Sep 08 0900 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.6311,
+      "relevance": 0.5952,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-09-07T12"
     },
     {
@@ -529,7 +525,7 @@
       "source_code": "ALTK04",
       "raw_title": "ALERT: Geomagnetic K-index of 4",
       "raw_body": "Space Weather Message Code: ALTK04\r\nSerial Number: 2682\r\nIssue Time: 2026 Sep 07 1108 UTC\r\n\r\nALERT: Geomagnetic K-index of 4 \nThreshold Reached: 2026 Sep 07 1107 UTC\nSynoptic Period: 0900-1200\nActive Warning: YES\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.4565,
+      "relevance": 0.4285,
       "dedupe_key": "geomagnetic_watch|G|na|watch|2026-09-07T06"
     },
     {
@@ -544,7 +540,7 @@
       "source_code": "WARK04",
       "raw_title": "WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5412\r\nIssue Time: 2026 Sep 07 0855 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected \nValid From: 2026 Sep 07 0854 UTC\nValid To: 2026 Sep 07 1800 UTC\nWarning Conditions: Onset\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.55,
+      "relevance": 0.5141,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-09-07T06"
     },
     {
@@ -559,7 +555,7 @@
       "source_code": "ALTEF3",
       "raw_title": "ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3736\r\nIssue Time: 2026 Sep 06 1824 UTC\r\n\r\nALERT: Electron 2MeV Integral Flux exceeded 1,000pfu \nThreshold Reached: 2026 Sep 06 1822 UTC\nStation: GOES-19\nComment:",
-      "relevance": 0.1194,
+      "relevance": 0.1064,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-06T18"
     },
     {
@@ -574,7 +570,7 @@
       "source_code": "WATA20",
       "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
       "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1122\r\nIssue Time: 2026 Sep 06 1212 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted \nHighest Storm Level Predicted by Day:\nSep 06:  None (Below G1)   Sep 07:  None (Below G1)   Sep 08:  G1 (Minor)   \nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.1995,
+      "relevance": 0.1689,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-09-06T12"
     },
     {
@@ -589,7 +585,7 @@
       "source_code": "SUMPX1",
       "raw_title": "SUMMARY: Proton Event 10MeV Integral Flux exceeded 10pfu",
       "raw_body": "Space Weather Message Code: SUMPX1\r\nSerial Number: 134\r\nIssue Time: 2026 Sep 06 1155 UTC\r\n\r\nSUMMARY: Proton Event 10MeV Integral Flux exceeded 10pfu \nBegin Time: 2026 Sep 05 1615 UTC\nMaximum Time: 2026 Sep 05 1645 UTC\nEnd Time: 2026 Sep 05 2135 UTC\nMaximum 10MeV Flux: 18 pfu\nNoaa Scale: S1 - Minor\nComment: \r\n\r\nNOAA Scale: S1 - Minor",
-      "relevance": 0.2209,
+      "relevance": 0.1863,
       "dedupe_key": "radiation_storm|S|1|warning|2026-09-06T06"
     },
     {
@@ -639,21 +635,6 @@
     }
   ],
   "timeline": [
-    {
-      "event_time": "2026-09-05T22:00:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 875 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 875 km/s\nHalf-angle: 11.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 875.0,
-        "half_angle": 11.0
-      }
-    },
     {
       "event_time": "2026-09-05T23:39:23Z",
       "event_type": "space_weather_info",
@@ -1097,7 +1078,7 @@
       "messages": [
         "G1",
         "Minor geomagnetic storm",
-        "Kp 4.7"
+        "Kp 3.0"
       ]
     }
   },
