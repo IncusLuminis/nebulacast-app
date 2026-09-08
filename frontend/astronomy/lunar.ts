@@ -41,3 +41,10 @@ export function getLunarState(date: Date = new Date()): Readonly<LunarState> {
   cache.set(minute, result);
   return result;
 }
+
+/** Read the wire-contract illumination value, expressed only as 0..100 percent. */
+export function readIlluminationPct(value: unknown): number | null {
+  return typeof value == 'number' && Number.isFinite(value) && value >= 0 && value <= 100
+    ? value
+    : null;
+}

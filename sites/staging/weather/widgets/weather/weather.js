@@ -1,3 +1,5 @@
+import { readIlluminationPct } from "../../../shared/lunar.mjs";
+
 // URL from config (set by weather/index.html)
 const ASTRO_WEATHER_URL = (window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.fallbackLegacyUrl) || "/weather/daily_weather.json";
 const LOCATIONS_INDEX_URL = window.__WEATHER_POC_CONFIG && window.__WEATHER_POC_CONFIG.locationsIndexUrl;
@@ -777,8 +779,9 @@ function getSolarState(hour) {
 
 // Moon phase emoji from illumination fraction (0-1) + waxing flag (#115)
 function moonPhaseEmoji(illumPct, waxing) {
-  if (illumPct == null) return "🌙";
-  const f = illumPct > 1 ? illumPct / 100 : illumPct; // normalise to 0-1
+  const pct = readIlluminationPct(illumPct);
+  if (pct == null) return "🌙";
+  const f = pct / 100
   if (f < 0.03) return "🌑";
   if (f > 0.97) return "🌕";
   if (f < 0.47) return waxing ? "🌒" : "🌘";
@@ -788,8 +791,9 @@ function moonPhaseEmoji(illumPct, waxing) {
 
 // Moon phase name for tooltip (#115)
 function moonPhaseName(illumPct, waxing) {
-  if (illumPct == null) return "Unknown";
-  const f = illumPct > 1 ? illumPct / 100 : illumPct;
+  const pct = readIlluminationPct(illumPct);
+  if (pct == null) return "Unknown";
+  const f = pct / 100;
   if (f < 0.03) return "New Moon";
   if (f > 0.97) return "Full Moon";
   if (f < 0.47) return waxing ? "Waxing Crescent" : "Waning Crescent";
@@ -2335,7 +2339,7 @@ function renderForecastMatrix(rootEl, hours) {
       const nextAlt = i < hours.length - 1 ? hours[i + 1].moon_alt_deg : null;
       const isMoonrise = alt != null && alt <= 0 && nextAlt != null && nextAlt > 0;
       const isMoonset  = alt != null && alt > 0  && nextAlt != null && nextAlt <= 0;
-      const illum = hour.moon_illum_pct != null ? (hour.moon_illum_pct > 1 ? hour.moon_illum_pct : hour.moon_illum_pct * 100) : null;
+      const illum = readIlluminationPct(hour.moon_illum_pct);
       const illumStr = illum != null ? Math.round(illum) + "%" : "—";
       const altStr = alt != null ? Math.round(alt) + "°" : "—";
       const phaseName = moonPhaseName(hour.moon_illum_pct, hour.moon_waxing);

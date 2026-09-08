@@ -3010,6 +3010,13 @@
         fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
         fetch(sunMoonUrl, {cache:'no-store'}).then(r => r.ok ? r.json() : null),
       ]);
+      // Reject unversioned or incompatible ephemeris payloads at the browser boundary.
+      if (sunMoon && sunMoon.schema !== 'sun_moon.v2') {
+        console.error('[ephemeris] Unsupported sun/moon schema', {
+          expected: 'sun_moon.v2', actual: sunMoon.schema ?? sunMoon.version, source: sunMoonUrl,
+        });
+        sunMoon = null;
+      }
       // A static sun_moon payload is explicitly owned by Warsaw.  Never let
       // it leak into a non-Warsaw hero if routing or a cache serves it there.
       const _heroLoc = getState()?.location;
