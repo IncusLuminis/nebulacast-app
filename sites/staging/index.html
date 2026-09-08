@@ -2434,6 +2434,7 @@
   import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js?v=20260422a";
 
   import { getLunarState } from "/shared/lunar.mjs";
+  import { loadConsoleData } from "/console/data-loader.mjs";
 
   // ── State ──────────────────────────────────────────────
   initState();
@@ -3002,25 +3003,9 @@
     let wx = null, sw = null, sunMoon = null;
     try {
       const loc = getState()?.location;
-      const sunMoonUrl = _isDefaultSite(loc)
-        ? '/sky/data/sun_moon.json'
-        : `/api/sun-moon?lat=${loc.lat}&lon=${loc.lon}&days=7&step_min=10`;
-      [wx, sw, sunMoon] = await Promise.all([
-        fetch(_buildObsWeatherUrl(), {cache:'no-store'}).then(r => r.ok ? r.json() : fetch('/data/observer_weather_now.json').then(r2 => r2.ok ? r2.json() : null)),
-        fetch('/data/helio_now.json').then(r => r.ok ? r.json() : null),
-        fetch(sunMoonUrl, {cache:'no-store'}).then(r => r.ok ? r.json() : null),
-      ]);
-      // Reject unversioned or incompatible ephemeris payloads at the browser boundary.
-      if (sunMoon && sunMoon.schema !== 'sun_moon.v2') {
-        console.error('[ephemeris] Unsupported sun/moon schema', {
-          expected: 'sun_moon.v2', actual: sunMoon.schema ?? sunMoon.version, source: sunMoonUrl,
-        });
-        sunMoon = null;
-      }
-      // A static sun_moon payload is explicitly owned by Warsaw.  Never let
-      // it leak into a non-Warsaw hero if routing or a cache serves it there.
-      const _heroLoc = getState()?.location;
-      if (sunMoon?.ownership?.kind === 'static' && !_isDefaultSite(_heroLoc)) sunMoon = null;
+      ({ wx, sw, sunMoon } = await loadConsoleData({
+        location: loc, isDefaultSite: _isDefaultSite, observerWeatherUrl: _buildObsWeatherUrl(),
+      }));
     } catch (_) {}
     _helioData = sw; // store for _dbRenderHelio
 
