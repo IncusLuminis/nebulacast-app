@@ -1,0 +1,83 @@
+/* overlay-controls.css */
+.ovl-controls{
+    position:absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 50;
+  }
+  
+  .ovl-controls-col{
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  /* кнопка */
+  .ovl-btn{
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.35);
+    color: rgba(255,255,255,0.88);
+    border-radius: 12px;
+    cursor:pointer;
+    font-weight: 700;
+    transition: transform .08s ease, border-color .12s ease, background .12s ease;
+    user-select:none;
+    width: 44px;
+    height: 44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0;
+  }
+  
+  .ovl-btn:hover{ border-color: rgba(255,255,255,0.25); background: rgba(0,0,0,0.45); }
+  .ovl-btn:active{ transform: translateY(1px); }
+  .ovl-btn svg{ width: 20px; height: 20px; }
+  
+  .ovl-btn-primary{
+    border-color: rgba(120,180,255,0.60);
+    box-shadow: 0 0 0 2px rgba(90,170,255,0.22) inset;
+  }
+  
+  /* поповер слоёв */
+  .ovl-popover{
+    position:absolute;
+    top: 0;
+    right: 58px;
+    width: 240px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(10,14,22,0.88);
+    backdrop-filter: blur(10px);
+    z-index: 60;
+  }
+  
+  .ovl-popover-title{
+    font-weight: 800;
+    margin-bottom: 10px;
+    opacity: 0.9;
+  }
+  
+  .ovl-check{
+    display:flex;
+    gap: 10px;
+    align-items:center;
+    padding: 6px 0;
+    color: rgba(255,255,255,0.78);
+    font-size: 14px;
+  }
+  
+  .ovl-check input{ transform: translateY(1px); }
+  
+  /* fullscreen режим: ты сам решаешь какой элемент будет "fsTarget",
+     а модуль лишь добавляет класс .is-fs */
+  .is-fs{
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    z-index: 9999 !important;
+  }

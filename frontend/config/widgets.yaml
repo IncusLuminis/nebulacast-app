@@ -1,0 +1,29 @@
+site:
+  title: "Nebulacast"
+  subtitle: "Staging"
+
+paths:
+  out_root: "sites/staging"
+  base_url: "https://news.nebulacast.app"  # for Blogger widget absolute RSS link
+
+widgets:
+  news:
+    enabled: true
+    title: "News Radar"
+    rss: "/news/rss.xml"
+    rss_absolute: "https://news.nebulacast.app/rss.xml"
+    max_items: 12
+    parse_max: 300
+    filters: ["All", "News", "Science", "Videos", "Images", "Nebulacast"]
+  # Calendar (alerts): data source is JSON, not RSS
+  calendar:
+    enabled: true
+    title: "Sky Alerts"
+    json: "/calendar/daily_signal.json"
+    rss: "/alerts/rss.xml"
+    max_items: 20
+    filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"]
+  weather:
+    enabled: true
+    title: "Weather"
+    json: "/weather/daily_weather.json"

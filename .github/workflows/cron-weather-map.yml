@@ -1,0 +1,102 @@
+name: Cron — Weather Map cloud pipeline
+
+on:
+  schedule:
+    - cron: "0 8,20 * * *"  # 2×/day (08:00 and 20:00 UTC)
+  workflow_dispatch:
+
+jobs:
+  weather-map:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r services/weather/requirements.txt
+
+      - name: Run weather map pipeline
+        env:
+          WEATHER_MAP_SKIP_RENDER: "1"
+          WEATHER_MAP_SKIP_WIND: "1"
+        run: PYTHONPATH=services/weather python services/weather/pipelines/gen_weather_map.py
+
+      - name: Validate output
+        env:
+          WEATHER_MAP_SKIP_RENDER: "1"
+          WEATHER_MAP_SKIP_WIND: "1"
+        run: |
+          python3 - <<'EOF'
+          import json, os, sys
+          d = json.load(open("sites/staging/data/weather_map_now.json"))
+          required = ["schema_version", "updated_utc", "timeline", "layers", "playback"]
+          for k in required:
+              if k not in d:
+                  print(f"FAIL: missing key '{k}'"); sys.exit(1)
+
+          skip_render = os.environ.get("WEATHER_MAP_SKIP_RENDER", "0") == "1"
+          skip_wind   = os.environ.get("WEATHER_MAP_SKIP_WIND",   "0") == "1"
+
+          if skip_render:
+              if skip_wind:
+                  # Wind is preserved from the last cron-grib-tiles manifest — no need to validate here.
+                  wind_profiles = d["layers"].get("wind", {}).get("profiles", [])
+                  wind_avail = sum(
+                      sum(1 for f in (p.get("frames") or []) if f.get("available"))
+                      for p in wind_profiles
+                  )
+                  print(f"OK (skip-render + skip-wind mode): wind={wind_avail} frames (preserved), updated {d['updated_utc']}")
+              else:
+                  wind_profiles = d["layers"].get("wind", {}).get("profiles", [])
+                  wind_avail = sum(
+                      sum(1 for f in (p.get("frames") or []) if f.get("available"))
+                      for p in wind_profiles
+                  )
+                  if wind_avail < 50:
+                      print(f"FAIL: only {wind_avail} wind frames available (expected ≥50)"); sys.exit(1)
+                  print(f"OK (skip-render mode): {wind_avail} wind frames, updated {d['updated_utc']}")
+          else:
+              rendered = d["stats"]["rendered_frames"]
+              if rendered < 50:
+                  print(f"FAIL: only {rendered} frames rendered (expected ≥50)"); sys.exit(1)
+              print(f"OK: {rendered} total frames, updated {d['updated_utc']}")
+
+          profiles = d["layers"]["clouds"].get("profiles", [])
+          if not profiles:
+              print("FAIL: no profiles in layers.clouds.profiles"); sys.exit(1)
+          raster = [p for p in profiles if p.get("kind") == "internal_raster"]
+          for p in raster:
+              for pk in ["id", "zoom_min", "zoom_max", "bounds", "frames"]:
+                  if p.get(pk) is None:
+                      print(f"FAIL: raster profile {p['id']} missing '{pk}'"); sys.exit(1)
+          if raster:
+              n_frames = len(raster[0]["frames"])
+              for p in raster[1:]:
+                  if len(p["frames"]) != n_frames:
+                      print(f"FAIL: raster profile {p['id']} frame count mismatch"); sys.exit(1)
+              print(f"OK: {len(raster)} raster profiles ({n_frames} frames each)")
+          EOF
+
+      # Commit JSON manifest + isobar frames (WebP cloud/wind frames are .gitignored).
+      # NOTE: CF Pages deployment is intentionally NOT done here. The cron-grib-tiles
+      # workflow is the sole CF Pages deployer — it runs gen_weather_map.py too, so
+      # both cloud overlay frames AND tile WebPs are present in a single deploy.
+      # Deploying here would wipe the tile WebPs (not on disk in a fresh checkout).
+      - name: Commit outputs
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main 2>/dev/null || true
+          git add sites/staging/data/weather_map_now.json
+          git add sites/staging/data/isobars/
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "data: weather map manifest + isobars $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git pull --rebase origin main
+          git push

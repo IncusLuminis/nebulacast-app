@@ -1,0 +1,412 @@
+# Weather Map — Pressure Isobars Layer  
+## Enhancement Spec v1.1
+
+---
+
+## 1. Purpose
+
+This spec introduces a new optional map layer:
+
+**pressure isobars**
+
+Goal:
+- add synoptic context to the weather map
+- help users understand pressure systems, fronts, and large-scale weather structure
+- preserve the existing Map architecture: shared timeline, shared player, weather-owned domain
+
+This is an additive enhancement over Map v1 / v1.1. The existing cloud layer, player model, and timeline model remain unchanged. The current contract already reserves `layers.isobars` as an optional layer slot, so this enhancement formalizes its semantics and implementation.  [oai_citation:0‡Weather Map Data Contract v1.md](sediment://file_00000000993c720abc292795d3e717f1)
+
+---
+
+## 2. Non-breaking Rule
+
+This layer MUST NOT:
+- change the master timeline
+- change player behavior
+- change cloud layer behavior
+- introduce frontend-side time alignment logic
+- require the map to function only when isobars are available
+
+Map must remain fully operational when:
+- `layers.isobars.available = false`
+
+---
+
+## 3. Layer Role
+
+Isobars are a **context layer**, not the primary layer.
+
+They are intended to:
+- visualize pressure structure
+- complement cloud animation
+- improve interpretation of cloud movement and weather systems
+
+They are not intended to:
+- replace cloud layer
+- act as a standalone forecast product
+- provide local observing scoring
+- drive map timeline
+
+Default behavior remains:
+- `enabled_by_default = false`
+
+This aligns with the current Map overview and data contract, where clouds are the essential animated layer and isobars remain optional.  [oai_citation:1‡Map Overview v1.md](sediment://file_0000000091ac720a9b064d3bcff4655c)  [oai_citation:2‡Weather Map Data Contract v1.md](sediment://file_00000000993c720abc292795d3e717f1)
+
+---
+
+## 4. Temporal Model
+
+Isobars MUST follow the same master timeline as the map.
+
+### Timeline rules
+- range: `[-48h … +72h]`
+- step: `1 hour`
+- frame count: `121`
+- current index: `48`
+
+### Alignment rule
+Each isobar frame MUST align exactly to:
+- `timeline.frames[index].index`
+- `timeline.frames[index].t_utc`
+
+Frontend must be able to do:
+
+```text
+render isobars.frames[current_index]
+
+without guessing or converting time.
+
+This matches the master player contract and the existing alignment rule across layers.  ￼  ￼
+
+⸻
+
+5. Source Model
+
+Allowed source class
+
+forecast_model
+
+Preferred source type:
+	•	hourly pressure field or pressure contours derived from one stable forecast source
+
+Practical source inputs
+
+Acceptable upstream forms:
+	•	mean sea level pressure raster/grid
+	•	precomputed isobar vector lines
+	•	hourly pressure map fields from the same forecast family used by the weather map
+
+Source consistency rule
+
+For MVP-style implementation, use:
+	•	one stable source family
+	•	one pressure variable definition
+	•	one hourly cadence
+
+Do not mix:
+	•	multiple forecast providers per frame
+	•	multiple pressure semantics inside one run
+
+This follows the same single-path source discipline already defined for cloud forecast sources.  ￼
+
+⸻
+
+6. Data Contract
+
+This layer fills the already-defined layers.isobars block in weather_map_now.json.  ￼
+
+Layer structure
+
+interface WeatherMapLayer {
+  enabled_by_default: boolean;
+  available: boolean;
+  opacity: number | null;
+  frames: WeatherMapLayerFrame[];
+}
+
+Frame structure
+
+interface WeatherMapLayerFrame {
+  index: number;
+  t_utc: string;
+  available: boolean;
+  asset_type: "tile" | "image" | "vector";
+  asset_url: string | null;
+  meta?: Record<string, string | number | boolean | null>;
+}
+
+Recommended asset_type
+
+Preferred for v1.1:
+	•	"image"
+
+Allowed later:
+	•	"vector"
+
+Why image first
+
+Rasterized transparent overlays are simpler because:
+	•	they align easily with cloud layer
+	•	they avoid frontend contour rendering complexity
+	•	they are consistent with the cloud asset pipeline style
+
+⸻
+
+7. Layer Metadata
+
+Recommended frame-level metadata:
+
+meta: {
+  source_name: string;
+  pressure_unit: "hPa";
+  contour_step_hpa: number;
+  min_hpa?: number;
+  max_hpa?: number;
+}
+
+Recommended layer-level defaults:
+	•	enabled_by_default = false
+	•	opacity = 0.70
+
+⸻
+
+8. Visual Design
+
+Rendering mode
+
+Preferred v1.1:
+	•	transparent raster overlay with contour lines
+
+Visual goals
+	•	legible over clouds
+	•	readable over base map
+	•	not visually dominant
+	•	stable across timeline playback
+
+Line style
+	•	thin contour lines
+	•	subdued but readable color
+	•	limited label density
+
+Recommended appearance
+	•	line color: light cyan, pale gray-blue, or muted off-white
+	•	low to medium opacity
+	•	thin stroke
+	•	optional sparse pressure labels
+
+Forbidden
+	•	thick neon lines
+	•	dense label spam
+	•	pressure heatmap instead of isobars
+	•	strong color palette conflicting with clouds or wind
+
+This complements the current render policy requirement that cloud overlays remain readable and compatible with other layers.  ￼
+
+⸻
+
+9. Contour Policy
+
+Canonical contour step
+
+Recommended default:
+	•	5 hPa
+
+Optional extended support:
+	•	4 hPa
+	•	10 hPa
+
+But one project-wide default should be fixed.
+
+Labeling policy
+
+For v1.1:
+	•	labels are optional
+	•	if used, keep them sparse
+	•	avoid label overlap with dense cloud regions where possible
+
+Smoothing policy
+
+Allowed:
+	•	light contour smoothing
+	•	simplification for visual clarity
+
+Forbidden:
+	•	aggressive distortion of pressure structure
+	•	label placement that hides cloud interpretation
+
+⸻
+
+10. Spatial Model
+
+Isobar overlays MUST match the active cloud profile’s spatial domain.
+
+If Map v1.1 uses zoom-aware cloud profiles, then isobars must support the same spatial profile selection logic:
+	•	same bbox family
+	•	same projection family
+	•	same frame index
+
+Rule
+
+Time is controlled by player.
+Spatial coverage is controlled by active map profile.
+
+So the isobar layer must be compatible with both:
+	•	current timeline index
+	•	current zoom-selected spatial profile
+
+⸻
+
+11. Profile Compatibility
+
+If map uses coverage profiles such as:
+	•	eu_wide
+	•	eu_central
+	•	local
+
+then isobars should ideally provide the same profile set.
+
+Recommended structure:
+
+layers.isobars.profiles[]
+
+if the map contract has already been extended to profile-based layers.
+
+If the current implementation still uses one fixed domain, then v1.1 may start with:
+	•	one isobar domain only
+
+but long-term target should follow the same zoom-aware model as clouds.
+
+⸻
+
+12. Asset Layout
+
+Recommended path:
+
+assets/weather/map/isobars/
+
+If profile-based:
+
+assets/weather/map/isobars/eu_wide/
+assets/weather/map/isobars/eu_central/
+assets/weather/map/isobars/local/
+
+Naming
+
+isobars_000.webp
+...
+isobars_120.webp
+
+or PNG if preferred.
+
+Keep index-based naming for easy player synchronization.
+
+⸻
+
+13. Pipeline Responsibilities
+
+Add an isobar pipeline branch under weather map generation.
+
+High-level flow
+
+fetch pressure field
+→ align to hourly timeline
+→ normalize to active spatial basis
+→ generate contours
+→ rasterize transparent overlay
+→ publish assets
+→ fill layers.isobars.frames[]
+
+Pipeline must handle
+	•	hourly alignment
+	•	same anchor_utc as clouds
+	•	same index range
+	•	same profile domain if profile-based map is used
+
+Pipeline must not
+	•	change player timeline
+	•	ask frontend to generate contours
+	•	silently switch pressure providers mid-run
+
+⸻
+
+14. Performance Strategy
+
+Because isobars are optional:
+	•	they may be generated after clouds in the pipeline
+	•	they may load lazily on frontend
+	•	they should not block the core map from rendering
+
+Recommended:
+	•	lightweight transparent raster overlays
+	•	reuse profile bounding boxes
+	•	cache per anchor_utc + profile + frame_index + render_version
+
+⸻
+
+15. Failure Handling
+
+Layer-level failure
+
+If the pressure source is unavailable:
+
+{
+  "enabled_by_default": false,
+  "available": false,
+  "opacity": 0.70,
+  "frames": []
+}
+
+or aligned unavailable frames if contract requires full arrays.
+
+Frame-level failure
+
+{
+  "index": 77,
+  "t_utc": "...",
+  "available": false,
+  "asset_type": "image",
+  "asset_url": null
+}
+
+Timeline must remain intact.
+
+Map must continue working with clouds only.
+
+⸻
+
+16. Acceptance Criteria
+
+The isobars layer is complete when:
+	1.	it can be toggled independently
+	2.	it is aligned to the same timeline as clouds
+	3.	it does not require frontend time guessing
+	4.	it remains readable above clouds and base map
+	5.	it does not visually overload the map
+	6.	missing isobar frames do not break playback
+	7.	player behavior remains unchanged
+
+⸻
+
+17. Explicit Non-Goals
+
+This enhancement does NOT introduce:
+	•	pressure heatmaps
+	•	pressure tendency fields
+	•	frontal analysis
+	•	cyclone classification
+	•	frontend contour generation from raw grids
+	•	local pressure scoring logic
+
+⸻
+
+18. Summary
+
+This layer adds synoptic pressure context to the weather map.
+
+It is:
+	•	optional
+	•	timeline-aligned
+	•	weather-owned
+	•	render-ready
+	•	non-breaking to the current player/cloud system
+

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nebulacast — Sun & Moon</title>
+  <link rel="stylesheet" href="/weather/assets/weather.css">
+  <link rel="stylesheet" href="/weather/widgets/sun_moon/sun_moon.css">
+</head>
+<body>
+  <div style="max-width:640px;margin:0 auto;padding:16px 12px 40px;background:#0b0d12;min-height:100vh;">
+    <div id="w-sun"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+  <script type="module">
+    import { initState, getState, setState, subscribe } from '/weather/core/state.js';
+    import { mountSunMoon } from '/weather/widgets/sun_moon/sun_moon.js';
+
+    initState();
+    const storeApi = { getState, setState, subscribe };
+    mountSunMoon(document.getElementById('w-sun'), storeApi);
+  </script>
+</body>
+</html>

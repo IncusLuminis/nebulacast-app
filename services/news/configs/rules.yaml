@@ -1,0 +1,317 @@
+global:
+  content_types:
+    matchers:
+      - type: admin
+        source_in: [nasa_breaking]
+        title_contains_any: ["waiver", "lodging", "gsa", "wags", "ethics", "procurement", "solicitation"]
+      - type: video
+        source_in: [webb_videos, hubble_videos, eso_videos, chandra_videos, chandra_youtube, nasa_svs_youtube, jpl_youtube]
+      - type: photo
+        source_in: [nasa_apod, eso_images, hubble_images, webb_images]
+      - type: news
+        default: true
+
+    types:
+      news:
+        ranking:
+          min_topic_match: 55
+          weights: { topic_match: 0.55, freshness: 0.25, source_priority: 0.15, signal_bonus: 0.05 }
+        topics:
+          title_keywords: ["jwst", "webb", "hubble", "alma", "gaia", "exoplanet", "black hole", "nebula", "galaxy"]
+          summary_keywords: ["spectroscopy", "survey", "nirspec", "nircam", "miri", "supernova"]
+
+      photo:
+        ranking:
+          min_topic_match: 0
+          weights: { topic_match: 0.25, freshness: 0.35, source_priority: 0.35, signal_bonus: 0.05 }
+        topics:
+          title_keywords: ["nebula", "galaxy", "cluster", "planetary nebula", "orion", "spiral"]
+          summary_keywords: ["image", "picture", "potw", "apod", "picture of the month"]
+
+      video:
+        ranking:
+          min_topic_match: 0
+          weights: { topic_match: 0.10, freshness: 0.45, source_priority: 0.40, signal_bonus: 0.10 }
+        topics:
+          title_keywords: ["webb", "jwst", "hubble", "eso", "alma", "chandra", "jpl", "goddard"]
+          summary_keywords: ["video", "episode", "pan", "timelapse", "visualization", "animation"]
+        signals:
+          bonus:
+            - contains_any: ["pan video", "animation", "visualization", "timelapse", "zoom"]
+              value: 10
+
+      admin:
+        ranking:
+          min_topic_match: 100
+          weights: { topic_match: 0.6, freshness: 0.2, source_priority: 0.2, signal_bonus: 0.0 }
+        topics:
+          title_keywords: ["__never_match__"]
+          summary_keywords: ["__never_match__"]
+
+  # defaults used by any stream unless overridden
+  freshness:
+    max_age_days: 4
+    require_published_date: true
+
+  hard_filters:
+    exclude_title_patterns:
+      - "star trek"
+      - "review"
+      - "telescope review"
+      - "space tourists"
+      - "video"
+      - "podcast"
+      - "watch"
+      - "sky at a glance"
+      - "astrophotography"
+      - "giveaway"
+      - "tourism"
+
+  topics:
+    # Strict: only title is checked (good against admin noise in summaries)
+    title_keywords:
+      - apod
+      - astronomy picture of the day
+      - picture of the month
+      - image of the week
+      - potw
+      - potm
+      - hubble
+      - webb
+      - james webb
+      - jwst
+      - eso
+      - esa/hubble
+      - exoplanet
+      - exoplanets
+      - planet
+      - planets
+      - jwst
+      - webb
+      - webbtelescope
+      - hubble
+      - alma
+      - pulsar
+      - magnetar
+      - gravitational wave
+      - gravitational waves
+      - black hole
+      - black holes
+      - galaxy
+      - galaxies
+      - star formation
+      - supernova
+      - supernovae
+      - nebula
+      - nebulae
+      - europa
+      - io
+      - mars
+      - lunar
+      - moon
+
+    # Softer: summary is checked too, but only with "high-signal" keywords
+    summary_keywords:
+      - exoplanet
+      - exoplanets
+      - jwst
+      - webb
+      - hubble
+      - alma
+      - pulsar
+      - magnetar
+      - gravitational wave
+      - gravitational waves
+      - black hole
+      - black holes
+      - galaxy
+      - galaxies
+      - star formation
+      - supernova
+      - supernovae
+      - nebula
+      - nebulae
+      - europa
+      - io
+      - mars
+      - lunar
+      - moon
+
+  sources_priority:
+    # 0..100
+    # --- News (high trust)
+    eso: 90
+    noirlab: 85
+    alma: 85
+    hubble: 85
+    esa_science: 80
+    esa_technology: 70
+    nasa_breaking: 75
+    cnes: 70
+
+    # --- Images
+    nasa_apod: 70
+    eso_images: 70
+    hubble_images: 70
+    webb_images: 70
+
+    # --- Videos (official sites / YouTube)
+    eso_videos: 65
+    hubble_videos: 65
+    webb_videos: 65
+    chandra_youtube: 65
+    nasa_svs_youtube: 70
+    jpl_youtube: 70
+    jpl_raw_youtube: 70
+
+    # --- Science / papers
+    arxiv_astroph: 80
+    nature_astronomy: 85
+    nature_subject_astro: 85
+    aa_journal: 80
+
+    # --- Popular science / media
+    sciencedaily_space: 50
+    universe_today: 50
+    space_com: 45
+    sky_and_telescope: 50
+
+  signals:
+    # lightweight "bonus/malus" rules on title/summary
+    bonus:
+      - contains_any: ["science release", "press release", "release", "discovery", "observations", "first", "new", "reveals", "finds", "detected", "detection"]
+        value: 15
+      - contains_any: ["survey data", "data release", "catalog", "dataset", "analysis"]
+        value: 10
+      - contains_any: ["image", "picture of the day", "photo"]
+        value: 15
+
+    penalty:
+      # NASA admin / policy / generic org posts
+      - contains_any: ["approval", "lodging", "waiver", "widely attended gatherings", "wag", "gsa", "ethics", "procurement", "solicitation", "request for information", "grant", "grantee", "hiring", "internship", "hr"]
+        value: -40
+      # Earth-observatory / weather-style posts (not astronomy)
+      - contains_any: ["earth observatory", "winter", "snow", "storms", "flood", "wildfire", "mitten", "kamchatka"]
+        value: -35
+      # entertainment leakage
+      - contains_any: ["starfleet", "episode", "series", "reboot", "movie", "show"]
+        value: -50
+      - contains_any: ["lunar speed limit", "speed limit", "wheel", "wheels", "vehicle", "traffic", "driving"]
+        value: -25
+
+  ranking:
+    # IMPORTANT: in main feed we don't want freshness to dominate
+    min_topic_match: 0.0
+    weights:
+      topic_match: 0.65
+      freshness: 0.15
+      source_priority: 0.15
+      signal_bonus: 0.05
+
+streams:
+  news:
+    ranking:
+      min_topic_match: 55.0
+
+  images:
+    ranking:
+      min_topic_match: 0.0
+
+  videos:
+    ranking:
+      min_topic_match: 0.0
+    signals:
+      bonus:
+        - contains_any: ["video", "tour", "quick look", "animation", "visualization"]
+          value: 10
+    sources_priority:
+      nasa_svs_youtube: 80
+      jpl_youtube: 80
+      chandra_youtube: 75
+      webb_videos: 70
+      hubble_videos: 70
+      eso_videos: 70
+
+  nebulacast:
+    freshness:
+      max_age_days: 30
+      require_published_date: true
+
+    ranking:
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.30
+        freshness: 0.50
+        source_priority: 0.15
+        signal_bonus: 0.05
+
+    sources_priority:
+      nebulacast: 80
+
+    topics:
+      title_keywords: []
+      summary_keywords: []
+
+    hard_filters:
+      exclude_title_patterns: []
+
+    content_types:
+      matchers:
+        - type: nebulacast
+          source_in: [nebulacast]
+      types:
+        nebulacast:
+          ranking:
+            min_topic_match: 0.0
+            weights:
+              topic_match: 0.30
+              freshness: 0.50
+              source_priority: 0.15
+              signal_bonus: 0.05
+
+  science:
+    freshness:
+      max_age_days: 3
+      require_published_date: true
+
+    topics:
+      keywords:
+        - gravitational wave
+        - gravitational waves
+        - magnetar
+        - magnetars
+        - pulsar
+        - pulsars
+        - black hole
+        - black holes
+        - supernova
+        - supernovae
+        - galaxy
+        - galaxies
+        - cosmology
+        - lens
+        - lense
+        - lensing
+        - transient
+        - x-ray
+        - gamma-ray
+        - polarimetry
+        - spectroscopy
+        - ixpe
+        - chandra
+        - xmm
+        - nustar
+        - alma
+        - jwst
+
+    sources_priority:
+      arxiv_astroph: 80
+
+    ranking:
+      # arxiv already "scientific enough", let topic drive ordering
+      min_topic_match: 0.0
+      weights:
+        topic_match: 0.75
+        freshness: 0.20
+        source_priority: 0.03
+        signal_bonus: 0.02

@@ -1,0 +1,93 @@
+# Backend pipeline: sky planets. Writes to:
+# - services/sky/data/generated/planets.json
+# - sites/staging/sky/data/planets.json
+name: Cron — Sky Planets backend
+
+on:
+  schedule:
+    # Daily at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sky-planets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sky-planets:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Sync branch BEFORE generating anything
+      - name: Sync branch
+        run: |
+          set -euxo pipefail
+          git fetch origin "${{ github.ref_name }}"
+          git pull --rebase origin "${{ github.ref_name }}"
+
+      - name: Restore DE421 kernel from cache
+        uses: actions/cache@v4
+        with:
+          path: services/sky/data/raw/de421.bsp
+          key: de421-bsp-v1
+          restore-keys: |
+            de421-bsp-
+
+      - name: Ensure DE421 kernel present
+        run: |
+          set -euxo pipefail
+          mkdir -p services/sky/data/raw
+          K=services/sky/data/raw/de421.bsp
+
+          if [ ! -s "$K" ]; then
+            echo "[sky] de421.bsp not found in cache; downloading from NAIF..."
+            url="https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/a_old_versions/de421.bsp"
+            curl -L --fail \
+              --retry 6 --retry-delay 5 --retry-all-errors \
+              --connect-timeout 20 --max-time 900 \
+              -o "$K" \
+              "$url"
+          fi
+
+          ls -lah "$K"
+          test "$(stat -c%s "$K")" -gt 1000000
+
+      - name: Install sky deps
+        run: |
+          set -euxo pipefail
+          pip install -r services/sky/requirements.txt
+
+      - name: Run sky planets pipeline
+        run: |
+          set -euxo pipefail
+          PYTHONUNBUFFERED=1 PYTHONPATH=services/sky \
+          python -u services/sky/pipelines/gen_planets.py
+
+          ls -la sites/staging/sky/data/planets.json
+          ls -la services/sky/data/generated/planets.json
+
+      - name: Commit and push outputs
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # stage ONLY JSON outputs (never kernel)
+          git add -A sites/staging/sky/data/planets.json 2>/dev/null || true
+          git add -A services/sky/data/generated/planets.json 2>/dev/null || true
+
+          git status --porcelain
+          git diff --staged --quiet && exit 0
+
+          git commit -m "chore(sky-planets): update planets"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"

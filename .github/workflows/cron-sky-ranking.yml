@@ -1,0 +1,52 @@
+# Backend pipeline: sky ranking. Writes to:
+# - services/sky/data/generated/ranking.json
+# - sites/staging/sky/data/ranking.json
+name: Cron — Sky Ranking backend
+
+on:
+  schedule:
+    # Twice daily (UTC): 00:15 and 12:15 (small offset to reduce collisions)
+    - cron: "15 0,12 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sky-ranking-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sky-ranking:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install sky deps
+        run: pip install -r services/sky/requirements.txt
+
+      - name: Run sky ranking pipeline
+        run: |
+          set -e
+          PYTHONPATH=services/sky python services/sky/pipelines/gen_ranking.py
+          echo "Sky ranking pipeline completed successfully"
+
+      - name: Commit and push outputs
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add services/sky/data/generated/ranking.json 2>/dev/null || true
+          git add sites/staging/sky/data/ranking.json 2>/dev/null || true
+
+          git diff --staged --quiet && exit 0
+
+          git commit -m "chore(sky): update ranking"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"

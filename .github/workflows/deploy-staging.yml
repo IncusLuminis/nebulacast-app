@@ -1,0 +1,28 @@
+name: Deploy — Staging to Cloudflare Pages
+
+# Deploys the current state of sites/staging (git-tracked files only) to CF Pages.
+# Run this manually after committing data updates, HTML/JS changes, or JSON manifests.
+# Note: .gitignored tile WebPs are NOT present in a fresh checkout, so this deploy
+# reflects the latest committed content without regenerating any pipelines.
+#
+# Required secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# Required variable: CF_PAGES_PROJECT
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >
+            pages deploy sites/staging
+            --project-name=${{ vars.CF_PAGES_PROJECT }}
+            --branch=main

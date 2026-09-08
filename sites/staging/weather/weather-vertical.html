@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nebulacast — Weather Vertical Widget</title>
+  <link rel="stylesheet" href="./assets/weather.css?v=20260328c">
+  <link rel="stylesheet" href="./widgets/location/location.css?v=20260328c">
+  <link rel="stylesheet" href="./widgets/weather/weather_vertical.css?v=20260328c">
+</head>
+<body class="weather-vertical-page">
+  <script>
+    if (window.self !== window.top) document.body.classList.add("weather-vertical-embed");
+  </script>
+  <div class="weather-vertical-container">
+    <div class="page-wrap">
+      <div id="w-location" class="widget-container"></div>
+      <div id="w-weather-vertical" class="widget-container"></div>
+    </div>
+  </div>
+
+  <!-- Weather widget modals (required for Hour Inspector) -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 id="modal-title">Parameter Details</h3>
+        <button class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-content" id="modal-content"></div>
+    </div>
+  </div>
+  <div class="factor-tooltip" id="factorTooltip" role="tooltip" aria-hidden="true">
+    <div class="factor-tooltip-title" id="factorTooltipTitle"></div>
+    <div class="factor-tooltip-body" id="factorTooltipBody"></div>
+  </div>
+  <div class="chip-overlay" id="chipOverlay" role="dialog" aria-modal="true" aria-labelledby="chipSheetTitle">
+    <div class="chip-sheet" id="chipSheet">
+      <div class="sheet-hdr">
+        <h3 id="chipSheetTitle"></h3>
+      </div>
+      <div class="chip-sheet-body" id="chipSheetBody"></div>
+    </div>
+  </div>
+  <div class="chart-overlay" id="chartOverlay" role="dialog" aria-modal="true" aria-labelledby="chartOverlayTitle" aria-hidden="true">
+    <div class="chart-overlay-backdrop"></div>
+    <div class="chart-overlay-panel">
+      <div class="chart-overlay-header">
+        <h3 id="chartOverlayTitle">Score</h3>
+        <button class="chart-overlay-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="chart-overlay-subheader" id="chartOverlaySubheader">—</div>
+      <div class="chart-overlay-canvas-wrapper">
+        <canvas id="chartCanvas" width="800" height="300"></canvas>
+        <div class="chart-tooltip" id="chartTooltip" aria-hidden="true"></div>
+      </div>
+      <div class="chart-overlay-footer">
+        <div class="chart-stat"><span class="chart-stat-label">Now:</span><span class="chart-stat-value" id="chartStatNow">—</span></div>
+        <div class="chart-stat"><span class="chart-stat-label">Min:</span><span class="chart-stat-value" id="chartStatMin">—</span></div>
+        <div class="chart-stat"><span class="chart-stat-label">Max:</span><span class="chart-stat-value" id="chartStatMax">—</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="hour-inspector-backdrop" id="hourInspectorBackdrop" aria-hidden="true"></div>
+  <div class="hour-inspector-sheet" id="hourInspectorSheet" role="dialog" aria-modal="true" aria-labelledby="hourInspectorTitle" aria-hidden="true">
+    <div class="hour-inspector-header" id="hourInspectorHeader">
+      <div class="hour-inspector-header-left">
+        <div class="hour-inspector-time" id="hourInspectorTime">—</div>
+        <div class="hour-inspector-score-val" id="hourInspectorScoreVal">—</div>
+        <div class="hour-inspector-score-label" id="hourInspectorScoreLabel">—</div>
+        <div id="hourInspectorMoonLine" class="hour-inspector-moon-line"></div>
+        <div class="hour-inspector-summary" id="hourInspectorSummary">—</div>
+        <div id="hourInspectorScoreBar" class="hour-inspector-score-bar"><div class="hour-inspector-score-bar-fill"></div></div>
+      </div>
+      <div class="hour-inspector-header-right">
+        <div id="hourInspectorChartSlot"></div>
+      </div>
+      <button class="hour-inspector-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="hour-inspector-body" id="hourInspectorBody"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+  <script>
+    window.__WEATHER_POC_CONFIG = window.__WEATHER_POC_CONFIG || {
+      locationsIndexUrl: "/weather/locations_index.json",
+      locationDataBase: "/weather/data",
+      iconBase: "/assets/icons/weather"
+    };
+  </script>
+  <script type="module">
+    import { initState, getState, setState, subscribe } from "./core/state.js?v=20260328c";
+    import { mountLocation } from "./widgets/location/location.js?v=20260328c";
+    import { mountWeatherVertical } from "./widgets/weather/weather_vertical.js?v=20260328c";
+
+    const storeApi = { getState, setState, subscribe };
+    initState();
+
+    const locationEl = document.getElementById("w-location");
+    const weatherEl = document.getElementById("w-weather-vertical");
+
+    if (locationEl) mountLocation(locationEl, storeApi);
+    if (weatherEl) mountWeatherVertical(weatherEl, storeApi);
+  </script>
+</body>
+</html>

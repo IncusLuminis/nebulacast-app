@@ -1,0 +1,141 @@
+# Backend pipeline: weather (Open-Meteo + 7Timer). Runs on schedule and writes to sites/staging/weather/.
+name: Cron — Weather backend
+
+on:
+  schedule:
+    # Every 6 hours (UTC)
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: weather-back-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  weather-back:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install weather deps
+        run: pip install -r services/weather/requirements.txt
+
+      - name: Run weather backend
+        run: |
+          set -e  # Exit on error
+          PYTHONPATH=services/weather python services/weather/pipelines/run_weather.py
+          echo "Weather backend completed successfully"
+
+      - name: Run Phase 1 pipeline (observer + space weather)
+        run: |
+          set -e
+          PYTHONPATH=services/weather python services/weather/pipelines/run_phase1.py
+          echo "Phase 1 pipeline completed successfully"
+
+      - name: Validate generated JSON files
+        run: |
+          echo "Validating daily_weather.json..."
+          python3 << 'EOF'
+          import json
+          import sys
+          from pathlib import Path
+
+          def validate_weather_json(file_path):
+              """Validate that weather JSON has required fields, especially hours array."""
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      data = json.load(f)
+
+                  if 'hours' not in data:
+                      print(f"ERROR: {file_path} missing 'hours' field")
+                      return False
+
+                  if not isinstance(data['hours'], list):
+                      print(f"ERROR: {file_path} 'hours' is not an array (got {type(data['hours'])})")
+                      return False
+
+                  if len(data['hours']) == 0:
+                      print(f"ERROR: {file_path} 'hours' array is empty")
+                      return False
+
+                  print(f"✓ {file_path} valid: {len(data['hours'])} hours")
+                  return True
+              except json.JSONDecodeError as e:
+                  print(f"ERROR: {file_path} is not valid JSON: {e}")
+                  return False
+              except FileNotFoundError:
+                  print(f"ERROR: {file_path} not found")
+                  return False
+              except Exception as e:
+                  print(f"ERROR: {file_path} validation failed: {e}")
+                  return False
+
+          main_file = Path("sites/staging/weather/daily_weather.json")
+          if not main_file.exists():
+              print(f"ERROR: {main_file} does not exist after pipeline run")
+              sys.exit(1)
+
+          if not validate_weather_json(main_file):
+              print("\nValidation failed - aborting commit to prevent corrupted data")
+              sys.exit(1)
+
+          outputs_file = Path("services/weather/outputs/daily_weather.json")
+          if outputs_file.exists():
+              if not validate_weather_json(outputs_file):
+                  print("\nValidation failed for outputs file - aborting commit")
+                  sys.exit(1)
+
+          # Validate Phase 1 outputs
+          def validate_phase1_json(file_path, required_key):
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      data = json.load(f)
+                  if 'generated_utc' not in data:
+                      print(f"ERROR: {file_path} missing 'generated_utc'")
+                      return False
+                  if required_key not in data:
+                      print(f"ERROR: {file_path} missing '{required_key}'")
+                      return False
+                  print(f"✓ {file_path} valid")
+                  return True
+              except Exception as e:
+                  print(f"ERROR: {file_path} validation failed: {e}")
+                  return False
+
+          observer_file = Path("sites/staging/data/observer_weather_now.json")
+          space_file = Path("sites/staging/data/space_weather_now.json")
+          if observer_file.exists():
+              if not validate_phase1_json(observer_file, 'hourly'):
+                  print("\nValidation failed for observer_weather_now.json - aborting")
+                  sys.exit(1)
+          if space_file.exists():
+              if not validate_phase1_json(space_file, 'kp'):
+                  print("\nValidation failed for space_weather_now.json - aborting")
+                  sys.exit(1)
+
+          print("\nAll JSON files validated successfully")
+          EOF
+
+      - name: Commit and push outputs (data only; do not overwrite weather SPA)
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # pull first to reduce push races
+          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
+
+          # stage only expected output paths (including deletions inside them)
+          git add -A sites/staging/weather/daily_weather.json sites/staging/data/weather/ services/weather/outputs/ sites/staging/data/observer_weather_now.json sites/staging/data/space_weather_now.json 2>/dev/null || true
+
+          git diff --staged --quiet && exit 0
+          git commit -m "chore(weather): update backend outputs"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"

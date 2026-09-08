@@ -1,0 +1,165 @@
+name: Cron — GRIB tile pipeline (GFS → WebP cloud tiles)
+
+on:
+  schedule:
+    - cron: "30 5 * * *"   # 1×/day at 05:30 UTC; GFS 00Z data is available by then
+  workflow_dispatch:
+
+jobs:
+  grib-tiles:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Early-exit: probe NOMADS/AWS to discover the latest available GFS run_id,
+      # then compare with the run_id already committed in latest.json.
+      # If they match, there is no new upstream data and we skip the expensive build.
+      - name: Check if upstream GFS data is new
+        id: gfs_check
+        run: |
+          python3 - <<'EOF'
+          import json, sys, urllib.request, urllib.error, os
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+
+          NOMADS = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.{date}/{run:02d}/atmos/gfs.t{run:02d}z.pgrb2.0p25.f{fhour:03d}"
+          AWS_S3 = "https://noaa-gfs-bdp-pds.s3.amazonaws.com/gfs.{date}/{run:02d}/atmos/gfs.t{run:02d}z.pgrb2.0p25.f{fhour:03d}"
+
+          def probe(date_str, run_hour, fhour=24):
+              for tmpl in [NOMADS, AWS_S3]:
+                  url = tmpl.format(date=date_str, run=run_hour, fhour=fhour) + ".idx"
+                  try:
+                      req = urllib.request.Request(url, headers={"User-Agent": "nebulacast/1.0"})
+                      with urllib.request.urlopen(req, timeout=20) as r:
+                          if r.status == 200:
+                              return True
+                  except Exception:
+                      pass
+              return False
+
+          now = datetime.now(timezone.utc)
+          latest_run_id = None
+          for h_back in range(0, 30, 6):
+              candidate = now - timedelta(hours=h_back)
+              run_hour = (candidate.hour // 6) * 6
+              candidate = candidate.replace(hour=run_hour, minute=0, second=0, microsecond=0)
+              date_str = candidate.strftime("%Y%m%d")
+              if probe(date_str, run_hour):
+                  latest_run_id = candidate.strftime("%Y%m%dT%H%MZ")
+                  break
+
+          if latest_run_id is None:
+              print("Could not resolve GFS run — proceeding to be safe")
+              sys.exit(0)
+
+          latest_path = Path("sites/staging/data/tile_manifests/latest.json")
+          if latest_path.exists():
+              current_run_id = json.loads(latest_path.read_text()).get("run_id", "")
+              if current_run_id == latest_run_id:
+                  print(f"Already up to date: run_id={latest_run_id} — skipping build")
+                  gha_out = os.environ.get("GITHUB_OUTPUT", "")
+                  if gha_out:
+                      with open(gha_out, "a") as f:
+                          f.write("skip=true\n")
+                  sys.exit(0)
+              print(f"New run available: {latest_run_id} (current: {current_run_id})")
+          else:
+              print(f"No latest.json found — proceeding with {latest_run_id}")
+          EOF
+
+      - uses: actions/setup-python@v5.6.0
+        if: steps.gfs_check.outputs.skip != 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install eccodes system library
+        if: steps.gfs_check.outputs.skip != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeccodes-dev
+
+      - name: Install Python dependencies
+        if: steps.gfs_check.outputs.skip != 'true'
+        run: pip install -r services/weather/requirements.txt
+
+      - name: Run GRIB tile pipeline
+        if: steps.gfs_check.outputs.skip != 'true'
+        run: PYTHONPATH=services/weather python services/weather/pipelines/gen_grib_tiles.py
+
+      - name: Validate tile output
+        if: steps.gfs_check.outputs.skip != 'true'
+        run: |
+          python3 - <<'EOF'
+          import json, sys
+          from pathlib import Path
+
+          latest_path = Path("sites/staging/data/tile_manifests/latest.json")
+          if not latest_path.exists():
+              print("FAIL: tile_manifests/latest.json not found"); sys.exit(1)
+
+          latest = json.loads(latest_path.read_text())
+          run_id = latest.get("run_id")
+          if not run_id:
+              print("FAIL: latest.json missing run_id"); sys.exit(1)
+          print(f"run_id = {run_id}")
+
+          manifest_path = Path(f"sites/staging/data/tile_manifests/{run_id}.json")
+          if not manifest_path.exists():
+              print(f"FAIL: {manifest_path} not found"); sys.exit(1)
+
+          m = json.loads(manifest_path.read_text())
+          for key in ["profile_id", "run_id", "zoom_min", "zoom_max",
+                      "frame_indexes", "url_template", "generated_at"]:
+              if key not in m:
+                  print(f"FAIL: manifest missing '{key}'"); sys.exit(1)
+
+          n_frames = len(m["frame_indexes"])
+          if n_frames < 10:
+              print(f"FAIL: only {n_frames} tile frames (expected ≥10)"); sys.exit(1)
+
+          fi = m["frame_indexes"][0]
+          tile_path = Path(f"sites/staging/data/clouds/tiles/{run_id}/{fi:03d}/0/0/0.webp")
+          if not tile_path.exists():
+              print(f"FAIL: spot-check tile not found: {tile_path}"); sys.exit(1)
+          size = tile_path.stat().st_size
+          if size < 500:
+              print(f"FAIL: spot-check tile too small ({size} bytes)"); sys.exit(1)
+
+          print(f"OK: {n_frames} frames, zoom {m['zoom_min']}–{m['zoom_max']}, "
+                f"spot tile {size} bytes, run={run_id}")
+          EOF
+
+      # Commit tile manifests only (weather_map_now.json is managed by cron-weather-map.yml).
+      # WebP tiles are .gitignored and are deployed below via wrangler --commit-dirty.
+      - name: Commit tile manifests
+        if: steps.gfs_check.outputs.skip != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main 2>/dev/null || true
+          git add sites/staging/data/tile_manifests/
+          git diff --cached --quiet && echo "No manifest changes" && exit 0
+          git commit -m "data: grib tile manifest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git pull --no-rebase -X ours origin main
+          git push origin main
+
+      # Deploy tiles + git-tracked staging content to Cloudflare Pages.
+      # The --commit-dirty flag includes .gitignored tile WebPs from the current runner.
+      # Required secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+      # Required variable: CF_PAGES_PROJECT
+      - name: Deploy to Cloudflare Pages
+        if: steps.gfs_check.outputs.skip != 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >
+            pages deploy sites/staging
+            --project-name=${{ vars.CF_PAGES_PROJECT }}
+            --branch=main
+            --commit-dirty=true

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{SITE_TITLE}} — {{SITE_SUBTITLE}}</title>
+  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/base.css">
+  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_news.css">
+  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/widget_calendar.css">
+  <link rel="stylesheet" href="{{BASE_PATH}}/assets/css/index_tabs.css">
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <h1>{{SITE_TITLE}}</h1>
+      <p class="subtitle">{{SITE_SUBTITLE}}</p>
+    </header>
+    <nav class="index-tabs" role="tablist" aria-label="Sections">
+      <button type="button" id="tab-news" class="index-tab is-active" data-tab="news" role="tab" aria-selected="true" aria-controls="panel-news">News</button>
+      <button type="button" id="tab-calendar" class="index-tab" data-tab="calendar" role="tab" aria-selected="false" aria-controls="panel-calendar">Calendar</button>
+      <button type="button" id="tab-weather" class="index-tab" data-tab="weather" role="tab" aria-selected="false" aria-controls="panel-weather">Weather</button>
+    </nav>
+    <main class="index-panels">
+      <div id="panel-news" class="index-panel" role="tabpanel" aria-labelledby="tab-news">
+        {{WIDGET_NEWS_SECTION}}
+      </div>
+      <div id="panel-calendar" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-calendar">
+        {{WIDGET_ALERTS_SECTION}}
+      </div>
+      <div id="panel-weather" class="index-panel index-panel--hidden" role="tabpanel" aria-labelledby="tab-weather">
+        {{WIDGET_WEATHER_SECTION}}
+      </div>
+    </main>
+  </div>
+  <script src="{{BASE_PATH}}/assets/js/widget_runtime.js"></script>
+  <script>
+    (function() {
+      var base = '{{BASE_PATH}}';
+      {{WIDGET_NEWS_INIT}}
+      {{WIDGET_ALERTS_INIT}}
+      (function() {
+        var tabToPanel = { news: 'panel-news', calendar: 'panel-calendar', weather: 'panel-weather' };
+        var tabs = document.querySelectorAll('.index-tab');
+        var panels = document.querySelectorAll('.index-panel');
+        function switchTo(panelId, activeTab) {
+          panels.forEach(function(p) {
+            p.classList.toggle('index-panel--hidden', p.id !== panelId);
+          });
+          tabs.forEach(function(t) {
+            var isActive = t.getAttribute('data-tab') === activeTab;
+            t.classList.toggle('is-active', isActive);
+            t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          });
+        }
+        tabs.forEach(function(t) {
+          t.addEventListener('click', function() {
+            var tab = t.getAttribute('data-tab');
+            switchTo(tabToPanel[tab], tab);
+          });
+        });
+      })();
+    })();
+  </script>
+</body>
+</html>
