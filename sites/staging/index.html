@@ -2435,10 +2435,12 @@
 
   import { getLunarState } from "/shared/lunar.mjs";
   import { loadConsoleData } from "/console/data-loader.mjs";
+  import { RequestRegistry, normalizeLocation } from "/shared/request-registry.mjs";
 
   // ── State ──────────────────────────────────────────────
   initState();
   const storeApi = { getState, setState, subscribe };
+  const consoleRequestRegistry = new RequestRegistry();
 
   // ── Utility: debounce ──────────────────────────────────
   function _debounce(fn, ms) {
@@ -3004,7 +3006,7 @@
     try {
       const loc = getState()?.location;
       ({ wx, sw, sunMoon } = await loadConsoleData({
-        location: loc, isDefaultSite: _isDefaultSite, observerWeatherUrl: _buildObsWeatherUrl(),
+        location: loc, isDefaultSite: _isDefaultSite, observerWeatherUrl: _buildObsWeatherUrl(), requestRegistry: consoleRequestRegistry,
       }));
     } catch (_) {}
     _helioData = sw; // store for _dbRenderHelio
