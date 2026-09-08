@@ -1,0 +1,40 @@
+<!-- overlay-controls.html -->
+<!-- Вставляется ВНУТРЬ контейнера-стейджа (position:relative) -->
+
+<div class="ovl-controls" data-ovl-root>
+    <div class="ovl-controls-col">
+      <button type="button" class="ovl-btn ovl-btn-icon ovl-btn-primary" data-ovl-layers aria-label="Layers" title="Layers">
+        <!-- Layers icon (SVG) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </button>
+  
+      <button type="button" class="ovl-btn ovl-btn-icon" data-ovl-home aria-label="Home" title="Home">
+        <!-- Home icon (SVG) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 10.5L12 3l9 7.5"></path>
+          <path d="M5 10v10h14V10"></path>
+          <path d="M9.5 20v-6h5v6"></path>
+        </svg>
+      </button>
+  
+      <button type="button" class="ovl-btn ovl-btn-icon" data-ovl-fs aria-label="Fullscreen" title="Fullscreen">
+        <!-- Fullscreen icon (SVG) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M8 3H3v5"></path>
+          <path d="M16 3h5v5"></path>
+          <path d="M3 16v5h5"></path>
+          <path d="M21 16v5h-5"></path>
+        </svg>
+      </button>
+    </div>
+  
+    <!-- Popover -->
+    <div class="ovl-popover" data-ovl-popover hidden>
+      <div class="ovl-popover-title">Layers</div>
+      <div class="ovl-popover-body" data-ovl-popover-body>
+        <!-- сюда JS вставит чекбоксы -->
+      </div>
+    </div>
+  </div>

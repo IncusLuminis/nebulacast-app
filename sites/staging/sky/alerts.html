@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nebulacast — Sky Alerts</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/widget_alerts_feed.css">
+</head>
+<body>
+  <div style="max-width:640px;margin:0 auto;padding:16px 12px 40px;">
+    <div id="naf-root-page" class="naf-root">
+        <div class="naf-header">
+          <div class="naf-title">Sky Alerts</div>
+          <div class="naf-refresh">Updated every 12 hrs</div>
+        </div>
+        <div class="naf-sort-bar" data-role="sort-bar"></div>
+        <div class="naf-status" data-role="status">Loading…</div>
+        <div class="naf-list" data-role="list"></div>
+      </div>
+  </div>
+  <script src="/assets/js/widget_alerts_feed.js?v=20260328d"></script>
+  <script>
+    (function () {
+      window.runAlertsWidget({
+        rootId:      'naf-root-page',
+        dataUrl:     '/sky/data/alerts_now.json',
+        maxPerGroup: 5
+      });
+    })();
+  </script>
+</body>
+</html>

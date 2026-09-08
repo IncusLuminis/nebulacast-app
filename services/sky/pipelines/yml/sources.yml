@@ -1,0 +1,71 @@
+# yaml/sources.yml
+site:
+  lat_deg: 52.2297
+  lon_deg: 21.0122
+  elev_m: 100
+  timezone: Europe/Warsaw
+
+paths:
+  project_root_parents_up: 3
+
+inputs:
+  calendar_daily_signal: "sites/staging/calendar/daily_signal.json"
+  planets_json: "sites/staging/sky/data/planets.json"
+  dso_seed: "sites/staging/sky/data/dso_seed.json"
+
+outputs:
+  objects_today: "sites/staging/sky/data/objects_today.json"
+  objects_today_copy_to_services: "services/sky/data/generated/objects_today.json"
+
+limits:
+  max_items: 30
+  max_per_group:
+    calendar: 8
+    planets: 6
+    solar_system: 6
+    dso: 20
+
+alerts:
+  grb_fermi:
+    type: heasarc_grb
+    catalog: fermigbrst
+    url: "https://heasarc.gsfc.nasa.gov/db-perl/W3Browse/w3table.pl?tablehead=name%3Dfermigbrst"
+    group: "grb"
+    days_back: 2
+    max_rows: 50
+
+  neocp:
+    type: text
+    url: "https://minorplanetcenter.net/iau/NEO/neocp.txt"
+    group: "neocp"
+
+  tocp:
+    type: rss
+    url: "http://www.cbat.eps.harvard.edu/unconf/tocp.xml"
+    group: "transient"
+
+  gcn_kafka:
+    type: gcn_kafka
+    group: "gcn"          # или отдельная группа "gcn" если фронт не ломается
+    topics:
+      - gcn.notices.einstein_probe.wxt.alert
+      - gcn.notices.icecube.lvk_nu_track_search
+      - gcn.notices.icecube.gold_bronze_track_alerts
+      - igwn.gwalert
+      - gcn.notices.swift.bat.guano
+    max_events: 200
+    lookback_hours: 24
+    max_runtime_sec: 120
+    consume_timeout_sec: 1.0
+
+pha:
+  type: jpl_cad
+  base_url: "https://ssd-api.jpl.nasa.gov/cad.api"
+  group: "pha"
+  body: "Earth"
+  pha: true
+  date_min: "now"
+  date_max_days: 7
+  dist_max: "1LD"
+  sort: "date"
+  limit: 200

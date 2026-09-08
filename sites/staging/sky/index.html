@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sky • Night View</title>
+
+  <link rel="stylesheet" href="/sky/assets/sky.css">
+</head>
+
+<body>
+  <div class="sky-page">
+    <div class="sky-card" id="skyCard">
+      <div class="sky-title">
+        <div class="sky-h1">Sky • Night View</div>
+      </div>
+
+      <!-- top pills -->
+      <div class="sky-topbar">
+        <div class="sky-pill" id="locPill">📍 Location —</div>
+        <div class="sky-pill" id="framePill">🛰 Frame —</div>
+        <div class="sky-pill sky-pill-ok" id="dataPill">● Data</div>
+      </div>
+
+      <!-- stage (THIS goes fullscreen) -->
+      <div class="sky-stage" id="skyStage">
+        <div class="sky-mount" id="skyMount"></div>
+
+        <!-- tooltip -->
+        <div class="sky-tooltip" id="skyTooltip" aria-hidden="true"></div>
+
+        <div class="sky-popover" id="bestPanel" hidden>
+          <div class="sky-popover-title">Best tonight</div>
+          <div class="sky-best-list" id="bestTodayList"></div>
+        </div>
+
+        <!-- PLAYER: ui-player web component -->
+        <ui-player id="skyPlayer"></ui-player>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ✅ MUST exist before widget.js is imported
+  // Read observer location from URL params (lat, lon, tz) with Warsaw fallback.
+  (function() {
+    const p = new URLSearchParams(window.location.search);
+    const lat = parseFloat(p.get('lat') ?? '');
+    const lon = parseFloat(p.get('lon') ?? '');
+    const dt  = p.get('datetime') || null;
+    window.SKY_CONFIG = {
+      baseUrl:     '/sky',
+      mountId:     'skyMount',
+      lat:         (isFinite(lat) && lat >= -90  && lat <= 90)  ? lat : 52.2297,
+      lon:         (isFinite(lon) && lon >= -180 && lon <= 180) ? lon : 21.0122,
+      datetimeISO: dt,
+    };
+  })();
+</script>
+
+<script type="module">
+  import "./core/sky.ui.js";  // ✅ MUST be imported before widget.js
+  import "./widget.js";
+  // bootSkyMapUI() disabled - now using web component architecture (ui-player, ui-side-toolbar, etc.)
+  // import { bootSkyMapUI } from "./core/sky.map.js";
+  // bootSkyMapUI();
+</script>
+
+</body>
+</html>

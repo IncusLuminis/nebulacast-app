@@ -1,0 +1,24 @@
+{
+  "generated_utc": "2026-05-20T02:10:28.423776Z",
+  "source": "NASA/GCN Kafka via gcn_kafka",
+  "counts": {
+    "items": 0,
+    "by_topic": {},
+    "polls_total": 120,
+    "polls_empty": 120
+  },
+  "raw": {
+    "topics": [
+      "gcn.notices.einstein_probe.wxt.alert",
+      "gcn.notices.icecube.lvk_nu_track_search",
+      "gcn.notices.icecube.gold_bronze_track_alerts",
+      "igwn.gwalert",
+      "gcn.notices.swift.bat.guano"
+    ],
+    "max_events": 200,
+    "max_runtime_sec": 120,
+    "consume_timeout_sec": 1.0,
+    "heartbeat_sec": 15
+  },
+  "items": []
+}

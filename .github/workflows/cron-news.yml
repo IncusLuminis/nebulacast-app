@@ -1,0 +1,51 @@
+# Backend pipeline: news (RSS). Runs on schedule and writes to sites/staging/news/.
+name: Cron — News backend
+
+on:
+  schedule:
+    # Daily at 03:30 UTC (04:30 Warsaw in winter, 05:30 in summer)
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: news-back-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  news-back:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install news deps
+        run: pip install -r services/news/requirements.txt
+
+      - name: Run news backend
+        run: |
+          set -e  # Exit on error
+          PYTHONPATH=services/news:services python services/news/pipelines/run_news.py
+          echo "News backend completed successfully"
+
+      - name: Commit and push outputs
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # pull first to reduce push races
+          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
+
+          # stage only expected output paths (including deletions inside them)
+          git add -A sites/staging/news/ services/news/outputs/ 2>/dev/null || true
+
+          git diff --staged --quiet && exit 0
+          git commit -m "chore(news): update backend outputs"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"

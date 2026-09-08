@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Helio Widget Demo</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0e1117;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+      box-sizing: border-box;
+      font-family: system-ui, sans-serif;
+    }
+
+    .demo-wrap {
+      width: 400px;
+    }
+
+    .demo-label {
+      color: #555;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-wrap">
+    <div class="demo-label">400 px container</div>
+    <div id="w-helio"></div>
+  </div>
+
+  <script src="/helio/dist/helio.widget.js"></script>
+  <script>
+    HelioWidget.mount(document.getElementById('w-helio'), {
+      dataUrl:      '/data/helio_now.json',
+      lat:          52.23,
+      lon:          21.01,
+      locationName: 'Warsaw',
+    });
+  </script>
+</body>
+</html>

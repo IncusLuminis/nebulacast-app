@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nebulacast — Weather</title>
+
+  <link rel="stylesheet" href="./assets/weather.css?v=20260401a">
+  <link rel="stylesheet" href="./widgets/location/location.css?v=20260401a">
+  <link rel="stylesheet" href="./widgets/weather/weather.css?v=20260401c">
+  <link rel="stylesheet" href="./widgets/map/map.css?v=20260401a">
+  <link rel="stylesheet" href="./widgets/astro/astro.css?v=20260401a">
+  <link rel="stylesheet" href="./widgets/sun_moon/sun_moon.css?v=20260401a">
+  <link rel="stylesheet" href="./sky_integration.css?v=20260401a">
+  <script>if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.dataset.embed = '1';</script>
+  <style>html[data-embed='1'] #w-location { display: none !important; }</style>
+</head>
+<body>
+  <div class="page-wrap">
+    <main>
+      <!-- Location widget (always visible) -->
+      <div id="w-location" class="widget-container"></div>
+
+      <!-- Tabs for Weather/Map/Astro/Sky -->
+      <div class="widget-tabs">
+        <button class="widget-tab active" data-tab="weather">Weather</button>
+        <button class="widget-tab" data-tab="map">Map</button>
+        <button class="widget-tab" data-tab="sun">Sun</button>
+        <button class="widget-tab" data-tab="sky">Sky</button>
+      </div>
+
+      <!-- Tab content containers -->
+      <div id="w-weather" class="widget-container widget-tab-content active"></div>
+      <div id="w-sun" class="widget-container widget-tab-content"></div>
+      <div id="w-astro" class="widget-container widget-tab-content"></div>
+
+      <!-- SKY tab content: mount point -->
+      <div id="w-sky" class="widget-container widget-tab-content">
+        <div id="skyMount"></div>
+      </div>
+
+      <div id="w-map" class="widget-container widget-tab-content"></div>
+    </main>
+  </div>
+
+  <!-- Weather widget modals (shared across all widgets) -->
+  <!-- Bottom sheet modal (legacy parameter details) -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 id="modal-title">Parameter Details</h3>
+        <button class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-content" id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Factor tooltip (breakdown (i) icons) -->
+  <div class="factor-tooltip" id="factorTooltip" role="tooltip" aria-hidden="true">
+    <div class="factor-tooltip-title" id="factorTooltipTitle"></div>
+    <div class="factor-tooltip-body" id="factorTooltipBody"></div>
+  </div>
+
+  <!-- Chip popover (L1 details) -->
+  <div class="chip-overlay" id="chipOverlay" role="dialog" aria-modal="true" aria-labelledby="chipSheetTitle">
+    <div class="chip-sheet" id="chipSheet">
+      <div class="sheet-hdr">
+        <h3 id="chipSheetTitle"></h3>
+      </div>
+      <div class="chip-sheet-body" id="chipSheetBody"></div>
+    </div>
+  </div>
+
+  <!-- Chart overlay (mini-chart detail view) -->
+  <div class="chart-overlay" id="chartOverlay" role="dialog" aria-modal="true" aria-labelledby="chartOverlayTitle" aria-hidden="true">
+    <div class="chart-overlay-backdrop"></div>
+    <div class="chart-overlay-panel">
+      <div class="chart-overlay-header">
+        <h3 id="chartOverlayTitle">Score • Warsaw</h3>
+        <button class="chart-overlay-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="chart-overlay-subheader" id="chartOverlaySubheader">
+        Horizon: TONIGHT • Profile: Balanced • Updated: —
+      </div>
+      <div class="chart-overlay-canvas-wrapper">
+        <canvas id="chartCanvas" width="800" height="300"></canvas>
+        <div class="chart-tooltip" id="chartTooltip" aria-hidden="true"></div>
+      </div>
+      <div class="chart-overlay-footer">
+        <div class="chart-stat">
+          <span class="chart-stat-label">Now:</span>
+          <span class="chart-stat-value" id="chartStatNow">—</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Min:</span>
+          <span class="chart-stat-value" id="chartStatMin">—</span>
+        </div>
+        <div class="chart-stat">
+          <span class="chart-stat-label">Max:</span>
+          <span class="chart-stat-value" id="chartStatMax">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hour Inspector bottom sheet -->
+  <div class="hour-inspector-backdrop" id="hourInspectorBackdrop" aria-hidden="true"></div>
+  <div class="hour-inspector-sheet" id="hourInspectorSheet" role="dialog" aria-modal="true" aria-labelledby="hourInspectorTitle" aria-hidden="true">
+    <div class="hour-inspector-header" id="hourInspectorHeader">
+      <div class="hour-inspector-header-left">
+        <div class="hour-inspector-time" id="hourInspectorTime">—</div>
+        <div class="hour-inspector-score-val" id="hourInspectorScoreVal">—</div>
+        <div class="hour-inspector-score-label" id="hourInspectorScoreLabel">—</div>
+        <div id="hourInspectorMoonLine" class="hour-inspector-moon-line"></div>
+        <div class="hour-inspector-summary" id="hourInspectorSummary">—</div>
+        <div id="hourInspectorScoreBar" class="hour-inspector-score-bar"><div class="hour-inspector-score-bar-fill"></div></div>
+      </div>
+      <div class="hour-inspector-header-right">
+        <div id="hourInspectorChartSlot"></div>
+      </div>
+      <button class="hour-inspector-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="hour-inspector-body" id="hourInspectorBody">
+      <!-- Content will be rendered by JavaScript -->
+    </div>
+  </div>
+
+  <!-- Sun/Moon calculations for weather widget -->
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+
+  <script type="module">
+    import { initState, getState, setState, subscribe } from "./core/state.js?v=20260328a";
+    import { mountLocation } from "./widgets/location/location.js?v=20260328a";
+    import { mountWeather } from "./widgets/weather/weather.js?v=20260417b";
+    import { mountMap } from "./widgets/map/map.js?v=20260328a";
+    import { mountSunMoon } from "./widgets/sun_moon/sun_moon.js?v=20260328a";
+    import { mountAstro } from "./widgets/astro/astro.js?v=20260328a";
+
+    // Create store API object
+    const storeApi = { getState, setState, subscribe };
+
+    // Initialize state from URL
+    initState();
+
+    // Mount location widget (always visible)
+    const locationEl = document.getElementById("w-location");
+    if (locationEl) mountLocation(locationEl, storeApi);
+
+    // Mount tab widgets
+    const weatherEl = document.getElementById("w-weather");
+    const sunEl = document.getElementById("w-sun");
+    const mapEl = document.getElementById("w-map");
+    const astroEl = document.getElementById("w-astro");
+
+    if (weatherEl) mountWeather(weatherEl, storeApi);
+    if (sunEl) mountSunMoon(sunEl, storeApi);
+    if (mapEl) mountMap(mapEl, storeApi);
+    if (astroEl) mountAstro(astroEl, storeApi);
+
+    // ------------------------------
+    // SKY (lazy init + bind to state)
+    // ------------------------------
+    let skyInited = false;
+
+    function clampMs(t, a, b) { return Math.max(a, Math.min(b, t)); }
+
+    function pickLatLonFromState(s) {
+      // tolerant to your store shape
+      const lat =
+        s?.location?.lat ??
+        s?.loc?.lat ??
+        s?.coords?.lat ??
+        s?.geo?.lat ??
+        null;
+
+      const lon =
+        s?.location?.lon ??
+        s?.location?.lng ??
+        s?.loc?.lon ??
+        s?.loc?.lng ??
+        s?.coords?.lon ??
+        s?.coords?.lng ??
+        s?.geo?.lon ??
+        s?.geo?.lng ??
+        null;
+
+      return {
+        lat: (typeof lat === "number" && isFinite(lat)) ? lat : null,
+        lon: (typeof lon === "number" && isFinite(lon)) ? lon : null
+      };
+    }
+
+    function pickDatetimeISOFromState(s) {
+      const v =
+        s?.time?.datetimeISO ??
+        s?.time?.iso ??
+        s?.time?.selectedISO ??
+        s?.controls?.datetimeISO ??
+        s?.controls?.iso ??
+        s?.selectedTimeISO ??
+        null;
+
+      if (typeof v === "string" && v.trim()) return v.trim();
+      return null;
+    }
+
+    async function initSkyIfNeeded() {
+      if (skyInited) return;
+      skyInited = true;
+
+      // load Sky CSS only when needed
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "/sky/assets/sky.css";
+      document.head.appendChild(css);
+
+      const state = getState();
+      const { lat, lon } = pickLatLonFromState(state);
+
+      // allow only [now .. now+7d]
+      const now = Date.now();
+      const max = now + 7 * 24 * 60 * 60 * 1000;
+
+      let dtISO = pickDatetimeISOFromState(state);
+      if (dtISO) {
+        const t = Date.parse(dtISO);
+        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
+        else dtISO = null;
+      }
+
+      // IMPORTANT: SKY_CONFIG must exist BEFORE importing /sky/widget.js
+      window.SKY_CONFIG = {
+        baseUrl: "/sky",
+        mountId: "skyMount",
+        lat: (lat != null ? lat : 52.2297),
+        lon: (lon != null ? lon : 21.0122),
+        datetimeISO: dtISO,
+        options: {
+          showSunMoon: true,
+          showMilkyWay: true,
+          showGridEq: true,
+          showConstellations: true,
+          showObjects: true,
+          showAlerts: true
+        }
+      };
+
+      // import the widget module (it will bootstrap itself)
+      await import("/sky/widget.js");
+
+      // ensure correct sizing after first mount
+      setTimeout(() => {
+        try { window.__skyWidget?.resize?.(); } catch (_) {}
+      }, 0);
+    }
+
+    function syncSkyFromState() {
+      if (!window.__skyWidget || typeof window.__skyWidget.update !== "function") return;
+
+      const s = getState();
+      const { lat, lon } = pickLatLonFromState(s);
+
+      const now = Date.now();
+      const max = now + 7 * 24 * 60 * 60 * 1000;
+
+      let dtISO = pickDatetimeISOFromState(s);
+      if (dtISO) {
+        const t = Date.parse(dtISO);
+        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
+        else dtISO = null;
+      }
+
+      const patch = {};
+      if (lat != null) patch.lat = lat;
+      if (lon != null) patch.lon = lon;
+      patch.datetimeISO = dtISO; // can be null
+
+      try { window.__skyWidget.update(patch); } catch (_) {}
+    }
+
+    // subscribe to store changes -> update Sky when location/time changes
+    subscribe(() => {
+      if (!skyInited) return;
+      syncSkyFromState();
+    });
+
+    // ----------------
+    // Tab switching
+    // ----------------
+    const tabs = document.querySelectorAll(".widget-tab");
+    const tabContents = document.querySelectorAll(".widget-tab-content");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        const targetTab = tab.dataset.tab;
+
+        // Lazy init Sky on first open
+        if (targetTab === "sky") {
+          initSkyIfNeeded().then(() => {
+            syncSkyFromState();
+            setTimeout(() => {
+              try { window.__skyWidget?.resize?.(); } catch (_) {}
+            }, 0);
+          });
+        }
+
+        // Update active tab
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+
+        // Show/hide content
+        tabContents.forEach(content => {
+          const isTarget = content.id === `w-${targetTab}`;
+          content.classList.toggle("active", isTarget);
+        });
+
+        // Persist active tab
+        try { localStorage.setItem('nc-weather-tab', targetTab); } catch (_) {}
+      });
+    });
+
+    // Restore active tab from previous session
+    (function () {
+      const VALID_TABS = ['weather', 'map', 'sun', 'sky'];
+      let saved;
+      try { saved = localStorage.getItem('nc-weather-tab'); } catch (_) {}
+      if (saved && VALID_TABS.includes(saved) && saved !== 'weather') {
+        const target = document.querySelector(`.widget-tab[data-tab="${saved}"]`);
+        if (target) target.click();
+      }
+    })();
+
+    // Initial render for all widgets (they subscribe to state changes)
+    const initialState = getState();
+    void initialState;
+  </script>
+</body>
+</html>

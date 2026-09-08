@@ -1,0 +1,178 @@
+.nrc-root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #0f1115;
+  color: #e6e6e6;
+}
+.nrc-root .nrc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  margin-bottom: 12px;
+}
+.nrc-root .nrc-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #e6f2ff;
+  margin: 0;
+}
+.nrc-root .nrc-meta {
+  font-size: 12px;
+  display: flex;
+  gap: 12px;
+}
+.nrc-root .nrc-link {
+  color: #8fb6ff;
+  text-decoration: none;
+}
+.nrc-root .nrc-link:hover {
+  text-decoration: underline;
+}
+.nrc-root .nrc-status {
+  padding: 8px 0;
+  font-size: 13px;
+  color: #9aa3b2;
+  text-align: center;
+}
+.nrc-root .nrc-error {
+  padding: 16px;
+  background: #1a1f2a;
+  border: 1px solid #3a4252;
+  border-radius: 8px;
+  color: #e6e6e6;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.nrc-root .nrc-error-title {
+  font-weight: 700;
+  color: #ff6b6b;
+  margin-bottom: 8px;
+}
+.nrc-root .nrc-list {
+  margin: 0;
+  padding: 0;
+}
+.nrc-root .nrc-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  align-items: flex-start;
+}
+.nrc-root .nrc-card:last-child {
+  border-bottom: none;
+}
+.nrc-root .nrc-card-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+  /* Светлые иконки → акцентный синий #8fb6ff (SVG в img не наследует color) */
+  filter: invert(1) sepia(1) saturate(4) hue-rotate(200deg) brightness(0.95);
+}
+.nrc-root .nrc-card-icon.nrc-card-icon-placeholder {
+  display: block;
+  filter: none;
+  background: #2a2f3a;
+  border-radius: 8px;
+}
+.nrc-root .nrc-content {
+  flex: 1;
+  min-width: 0;
+}
+.nrc-root .nrc-titlelink {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #e6f2ff;
+  text-decoration: none;
+  margin-bottom: 6px;
+}
+.nrc-root .nrc-titlelink:hover {
+  color: #8fb6ff;
+  text-decoration: underline;
+}
+.nrc-root .nrc-metaRow {
+  font-size: 11px;
+  color: #9aa3b2;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nrc-root .nrc-date {
+  color: #9aa3b2;
+}
+.nrc-root .nrc-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #2a2f3a;
+  color: #cfe2ff;
+  text-transform: uppercase;
+  font-weight: 600;
+  border: 1px solid #3a4252;
+}
+.nrc-root .nrc-snippet {
+  margin-top: 6px;
+  line-height: 1.35;
+  font-size: 12px;
+  color: #cfe2ff;
+  margin-bottom: 6px;
+}
+.nrc-root .nrc-more {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #8fb6ff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nrc-root .nrc-more:hover {
+  text-decoration: underline;
+}
+.nrc-root .nrc-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  margin-bottom: 12px;
+}
+.nrc-root .nrc-filter {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #2a2f3a;
+  background: #111623;
+  color: #cfe2ff;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+  user-select: none;
+}
+.nrc-root .nrc-filter-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.nrc-root .nrc-filter:hover {
+  border-color: #3a4252;
+  color: #e6f2ff;
+}
+.nrc-root .nrc-filter.is-active {
+  background: #2a2f3a;
+  border-color: #3a4252;
+  color: #e6f2ff;
+}

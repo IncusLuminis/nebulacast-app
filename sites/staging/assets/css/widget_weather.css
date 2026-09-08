@@ -1,0 +1,55 @@
+/* Weather widget — same layout as former astro-weather, naming "weather" */
+.weather-widget {
+  background: rgba(143, 182, 255, 0.05);
+  border: 1px solid rgba(143, 182, 255, 0.15);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.astro-weather-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text, #e6e6e6);
+  margin-bottom: 8px;
+}
+.astro-weather-summary {
+  font-size: 11px;
+  color: #cfe2ff;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.astro-weather-hours {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.astro-hour {
+  padding: 6px 8px;
+  background: var(--bg, #0f1115);
+  border: 1px solid #2a2f3a;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 10px;
+}
+.astro-hour-time {
+  color: var(--muted, #9aa3b2);
+  margin-bottom: 4px;
+}
+.astro-hour-score {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text, #e6e6e6);
+}
+.astro-hour-score.good { color: #4ade80; }
+.astro-hour-score.fair { color: #fbbf24; }
+.astro-hour-score.poor { color: #f87171; }
+
+/* ── Observer Weather decision card overrides (supplement inline styles) ── */
+.owp-decision-card {
+  border-top: 1px solid rgba(143, 182, 255, 0.12);
+}
+.owp-badge--high   { background: #e05c5c !important; }
+.owp-badge--medium { background: #e0a84a !important; }
+.owp-badge--low    { background: #5cce8c !important; }
+.owp-badge--unknown { background: #555 !important; color: #aaa !important; }

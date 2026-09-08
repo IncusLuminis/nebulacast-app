@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Embed Demo — Nebulacast</title>
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --surface: #0f1115;
+      --line: #2a2f3a;
+      --text: #e6e6e6;
+      --muted: #9aa3b2;
+      --title: #e6f2ff;
+      --accent: #5ab4e0;
+      --container-border: #3a6080;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .topbar-back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .topbar-back:hover { color: var(--text); border-color: #3a4a5a; }
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--title);
+    }
+    .topbar-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .share-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: #1a2e3e;
+      border: 1px solid #2a5070;
+      border-radius: 5px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .share-btn:hover { background: #1e3a4e; border-color: #3a6080; }
+
+    /* ── Controls strip ── */
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ctrl-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+    .ctrl-input {
+      width: 72px;
+      padding: 4px 7px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      text-align: right;
+      -moz-appearance: textfield;
+    }
+    .ctrl-input::-webkit-inner-spin-button,
+    .ctrl-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .ctrl-input:focus { outline: none; border-color: var(--accent); }
+    .ctrl-unit {
+      display: flex;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .ctrl-unit-btn {
+      padding: 4px 8px;
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.1s, color 0.1s;
+      font-family: inherit;
+    }
+    .ctrl-unit-btn.active { background: #1a2e3e; color: var(--accent); }
+    .ctrl-sep { width: 1px; background: var(--line); height: 20px; }
+    .ctrl-presets { display: flex; gap: 4px; align-items: center; }
+    .preset-btn {
+      padding: 4px 10px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.1s, border-color 0.1s;
+    }
+    .preset-btn:hover { color: var(--text); border-color: #3a4a5a; }
+    .ctrl-size-display { font-size: 11px; color: #607880; margin-left: auto; }
+
+    /* ── Stage ── */
+    .stage {
+      flex: 1;
+      overflow: auto;
+      padding: 24px 20px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    /* ── Widget container ── */
+    .embed-host-wrap { position: relative; flex-shrink: 0; }
+    .embed-host-wrap .share-btn {
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      z-index: 10;
+      border-radius: 0 4px 0 5px;
+      font-size: 11px;
+      padding: 4px 10px;
+    }
+    .embed-host {
+      position: relative;
+      overflow: hidden;
+      border: 2px dashed var(--container-border);
+      border-radius: 4px;
+      background: #080b0e;
+    }
+    .embed-host iframe { display: block; width: 100%; height: 100%; border: none; }
+    .size-badge {
+      position: absolute;
+      bottom: -1px; right: -1px;
+      background: var(--container-border);
+      color: #fff;
+      font-size: 10px; font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 3px 0 0 0;
+      pointer-events: none;
+      letter-spacing: 0.04em;
+      z-index: 2;
+    }
+    .corner {
+      position: absolute;
+      width: 8px; height: 8px;
+      border-color: var(--container-border);
+      border-style: solid;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .corner-tl { top: -2px; left: -2px; border-width: 2px 0 0 2px; }
+    .corner-tr { top: -2px; right: -2px; border-width: 2px 2px 0 0; }
+    .corner-bl { bottom: -2px; left: -2px; border-width: 0 0 2px 2px; }
+    .corner-br { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
+
+    /* ── Share modal ── */
+    .share-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .share-backdrop.open { display: flex; }
+    .share-panel {
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      z-index: 101;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6);
+      transform: scale(0.96);
+      opacity: 0;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+    .share-backdrop.open .share-panel { transform: scale(1); opacity: 1; }
+    .share-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .share-panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--title);
+    }
+    .share-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .share-close:hover { color: var(--text); }
+    .share-code-wrap {
+      position: relative;
+    }
+    .share-code {
+      display: block;
+      width: 100%;
+      background: #080b0e;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 12px 14px;
+      color: #a8d4e8;
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      overflow: hidden;
+      tab-size: 2;
+      user-select: text;
+    }
+    .share-copy-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      padding: 4px 10px;
+      background: #1a2e3e;
+      border: 1px solid #2a5070;
+      border-radius: 4px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.12s;
+    }
+    .share-copy-btn:hover { background: #1e3a4e; }
+    .share-copy-btn.copied { color: #5cce8c; border-color: #2a5a3a; background: #0e2015; }
+    .share-hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #607880;
+    }
+    .share-hint a { color: #607880; }
+
+    /* Error / loading */
+    .stage-error {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e07070;
+      font-size: 14px;
+      padding: 40px;
+    }
+
+    body { display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="topbar-back" href="/showcase/">← Showcase</a>
+    <span class="topbar-title" id="topbar-title">Embed Demo</span>
+    <span class="topbar-sub" id="topbar-sub"></span>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <span class="ctrl-label">W</span>
+      <input class="ctrl-input" id="ctrl-w" type="number" min="1" value="400">
+      <div class="ctrl-unit">
+        <button class="ctrl-unit-btn active" id="w-px" onclick="setUnit('w','px')">px</button>
+        <button class="ctrl-unit-btn" id="w-pct" onclick="setUnit('w','%')">%</button>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">H</span>
+      <input class="ctrl-input" id="ctrl-h" type="number" min="1" value="600">
+      <div class="ctrl-unit">
+        <button class="ctrl-unit-btn active" id="h-px" onclick="setUnit('h','px')">px</button>
+        <button class="ctrl-unit-btn" id="h-pct" onclick="setUnit('h','%')">%</button>
+      </div>
+    </div>
+    <div class="ctrl-sep"></div>
+    <div class="ctrl-presets">
+      <span class="ctrl-label">Presets</span>
+      <button class="preset-btn" onclick="applyPreset(320,600,'px','px')">320</button>
+      <button class="preset-btn" onclick="applyPreset(375,700,'px','px')">375</button>
+      <button class="preset-btn" onclick="applyPreset(480,700,'px','px')">480</button>
+      <button class="preset-btn" onclick="applyPreset(640,800,'px','px')">640</button>
+      <button class="preset-btn" onclick="applyPreset(100,100,'%','%')">100%</button>
+    </div>
+    <span class="ctrl-size-display" id="size-display"></span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div id="stage-error" class="stage-error" style="display:none">
+      No <code>src</code> parameter. Use <code>/embed/?src=/helio/</code>
+    </div>
+    <div class="embed-host-wrap" id="host-wrap" style="display:none">
+      <button class="share-btn" id="share-btn" onclick="openShare()">&lt;/&gt; Embed code</button>
+      <div class="embed-host" id="embed-host">
+        <iframe id="embed-iframe" src="" title="Widget embed preview"></iframe>
+        <div class="size-badge" id="size-badge"></div>
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share panel -->
+  <div class="share-backdrop" id="share-backdrop" onclick="closeShareOnBackdrop(event)">
+    <div class="share-panel" id="share-panel">
+      <div class="share-panel-header">
+        <span class="share-panel-title">Embed code</span>
+        <button class="share-close" onclick="closeShare()" aria-label="Close">×</button>
+      </div>
+      <div class="share-code-wrap">
+        <pre class="share-code" id="share-code"></pre>
+        <button class="share-copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
+      </div>
+      <p class="share-hint" id="share-hint"></p>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var src    = params.get('src') || '';
+  var title  = params.get('title') || (src ? src.replace(/\//g, '') : '');
+
+  var state = { w: 400, wUnit: 'px', h: 600, hUnit: 'px' };
+
+  if (title) {
+    document.getElementById('topbar-title').textContent = title + ' · Embed Demo';
+    document.title = title + ' · Embed Demo — Nebulacast';
+    document.getElementById('topbar-sub').textContent = src;
+  }
+
+  if (!src) {
+    document.getElementById('stage-error').style.display = '';
+    document.getElementById('share-btn').style.display = 'none';
+    return;
+  }
+  document.getElementById('host-wrap').style.display = '';
+  document.getElementById('embed-iframe').src = src;
+
+  // ── Dimensions ──
+  function applyDimensions() {
+    var host  = document.getElementById('embed-host');
+    var stage = document.getElementById('stage');
+    var badge = document.getElementById('size-badge');
+    var disp  = document.getElementById('size-display');
+
+    if (state.wUnit === '%') {
+      host.style.width = Math.round((stage.clientWidth - 40) * state.w / 100) + 'px';
+    } else {
+      host.style.width = state.w + 'px';
+    }
+    if (state.hUnit === '%') {
+      host.style.height = Math.round((stage.clientHeight - 48) * state.h / 100) + 'px';
+    } else {
+      host.style.height = state.h + 'px';
+    }
+
+    var aw = host.offsetWidth, ah = host.offsetHeight;
+    badge.textContent = aw + ' × ' + ah + ' px';
+    disp.textContent  = state.w + state.wUnit + ' × ' + state.h + state.hUnit
+                      + ' · ' + aw + ' × ' + ah + ' px';
+
+    refreshCode();
+  }
+
+  // ── Embed code generation ──
+  // Unique suffix so multiple instances on same page don't collide
+  var uid = Math.random().toString(36).slice(2, 8);
+
+  function j(lines) { return lines.join('\n'); }
+
+  function buildCode() {
+    var o = 'https://staging.nebulacast.app';
+    var wVal = state.w + state.wUnit;
+    var hVal = state.h + state.hUnit;
+
+    // ── Helio: bundle injects its own CSS, just load + mount ──
+    if (src === '/helio/') {
+      return j([
+        '<!-- Nebulacast · Space Weather widget -->',
+        '<div id="helio-' + uid + '"></div>',
+        '',
+        '<script src="' + o + '/helio/dist/helio.widget.js"><\/script>',
+        '<script>',
+        '(function() {',
+        '  var el = document.getElementById("helio-' + uid + '");',
+        '  window.HelioWidget.mount(el, {',
+        '    dataUrl: "' + o + '/data/helio_now.json"',
+        '  });',
+        '})();',
+        '<\/script>'
+      ]);
+    }
+
+    // ── News: CSS from staging + widget_runtime.js ──
+    if (src === '/news/') {
+      return j([
+        '<!-- Nebulacast · News Radar widget -->',
+        '<div id="nrw-' + uid + '">',
+        '  <div class="nrw-header">',
+        '    <div class="nrw-title">News Radar</div>',
+        '    <div class="nrw-meta">',
+        '      <a class="nrw-rss" href="' + o + '/news/rss.xml" target="_blank" rel="noopener">RSS</a>',
+        '    </div>',
+        '  </div>',
+        '  <div class="nrw-filters" data-role="filters"></div>',
+        '  <div class="nrw-status" data-role="status">Loading...</div>',
+        '  <div class="nrw-list" data-role="list"></div>',
+        '</div>',
+        '',
+        '<link rel="stylesheet" href="' + o + '/assets/css/widget_news.css">',
+        '<script src="' + o + '/assets/js/widget_runtime.js"><\/script>',
+        '<script>',
+        '(function() {',
+        '  window.runNewsWidget({',
+        '    rootId: "nrw-' + uid + '",',
+        '    rssUrl: "' + o + '/news/rss.xml",',
+        '    maxItems: 12,',
+        '    parseMax: 300,',
+        '    filters: ["All","News","Science","Videos","Images","Nebulacast"]',
+        '  });',
+        '})();',
+        '<\/script>'
+      ]);
+    }
+
+    // ── Calendar: CSS from staging + widget_runtime.js ──
+    if (src === '/calendar/') {
+      return j([
+        '<!-- Nebulacast · Sky Alerts widget -->',
+        '<div id="nrc-' + uid + '">',
+        '  <div class="nrc-header">',
+        '    <div class="nrc-title">Sky Alerts</div>',
+        '    <div class="nrc-meta">',
+        '      <a class="nrc-link" href="' + o + '/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>',
+        '    </div>',
+        '  </div>',
+        '  <div class="nrc-filters" data-role="filters"></div>',
+        '  <div class="nrc-status" data-role="status">Loading...</div>',
+        '  <div class="nrc-list" data-role="list"></div>',
+        '</div>',
+        '',
+        '<link rel="stylesheet" href="' + o + '/assets/css/widget_calendar.css">',
+        '<script src="' + o + '/assets/js/widget_runtime.js"><\/script>',
+        '<script>',
+        '(function() {',
+        '  window.runCalendarWidget({',
+        '    rootId: "nrc-' + uid + '",',
+        '    jsonUrl: "' + o + '/calendar/daily_signal.json",',
+        '    maxItems: 20,',
+        '    filters: ["All","METEORS","ECLIPSES","CONJUNCTIONS","OCCULTATIONS","COMETS"],',
+        '    iconBase: "' + o + '/assets/icons/alerts"',
+        '  });',
+        '})();',
+        '<\/script>'
+      ]);
+    }
+
+    // ── Weather / Map / Sky: iframe (module-based, not snippet-embeddable) ──
+    return j([
+      '<iframe',
+      '  src="' + o + src + '"',
+      '  width="' + wVal + '"',
+      '  height="' + hVal + '"',
+      '  frameborder="0"',
+      '  style="border:none;display:block;"',
+      '  title="' + (title || 'Nebulacast widget') + '"',
+      '></iframe>'
+    ]);
+  }
+
+  var SNIPPET_WIDGETS = { '/helio/': true, '/news/': true, '/calendar/': true };
+
+  function refreshCode() {
+    var el = document.getElementById('share-code');
+    if (el) el.textContent = buildCode();
+    var hint = document.getElementById('share-hint');
+    if (!hint) return;
+    if (SNIPPET_WIDGETS[src]) {
+      hint.textContent = 'Snippet loads assets from staging.nebulacast.app. Swap the domain for production before deploying.';
+    } else {
+      hint.textContent = 'iframe embed — loads from staging.nebulacast.app. Replace with production host before deploying.';
+    }
+  }
+
+  // ── Share panel ──
+  window.openShare = function () {
+    refreshCode();
+    document.getElementById('share-backdrop').classList.add('open');
+  };
+  window.closeShare = function () {
+    document.getElementById('share-backdrop').classList.remove('open');
+    resetCopyBtn();
+  };
+  window.closeShareOnBackdrop = function (e) {
+    if (e.target === document.getElementById('share-backdrop')) closeShare();
+  };
+
+  window.copyCode = function () {
+    var code = document.getElementById('share-code').textContent;
+    var btn  = document.getElementById('copy-btn');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(function () { showCopied(btn); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showCopied(btn);
+    }
+  };
+
+  function showCopied(btn) {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(resetCopyBtn, 2000);
+  }
+  function resetCopyBtn() {
+    var btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copy';
+    btn.classList.remove('copied');
+  }
+
+  // ── Controls ──
+  document.getElementById('ctrl-w').addEventListener('input', function () {
+    var v = parseInt(this.value, 10);
+    if (v > 0) { state.w = v; applyDimensions(); }
+  });
+  document.getElementById('ctrl-h').addEventListener('input', function () {
+    var v = parseInt(this.value, 10);
+    if (v > 0) { state.h = v; applyDimensions(); }
+  });
+
+  window.setUnit = function (axis, unit) {
+    if (axis === 'w') {
+      state.wUnit = unit;
+      document.getElementById('w-px').classList.toggle('active', unit === 'px');
+      document.getElementById('w-pct').classList.toggle('active', unit === '%');
+    } else {
+      state.hUnit = unit;
+      document.getElementById('h-px').classList.toggle('active', unit === 'px');
+      document.getElementById('h-pct').classList.toggle('active', unit === '%');
+    }
+    applyDimensions();
+  };
+
+  window.applyPreset = function (w, h, wu, hu) {
+    state.w = w; state.wUnit = wu;
+    state.h = h; state.hUnit = hu;
+    document.getElementById('ctrl-w').value = w;
+    document.getElementById('ctrl-h').value = h;
+    ['w', 'h'].forEach(function (a) {
+      var u = a === 'w' ? wu : hu;
+      document.getElementById(a + '-px').classList.toggle('active', u === 'px');
+      document.getElementById(a + '-pct').classList.toggle('active', u === '%');
+    });
+    applyDimensions();
+  };
+
+  window.addEventListener('resize', applyDimensions);
+  applyDimensions();
+})();
+</script>
+</body>
+</html>

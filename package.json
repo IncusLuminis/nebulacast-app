@@ -1,0 +1,20 @@
+{
+  "name": "nebulacast-app",
+  "private": true,
+  "description": "Staging site + Cloudflare Pages Functions (api/astro-weather, geocode, revgeo)",
+  "scripts": {
+    "build:functions": "node scripts/build-functions.mjs",
+    "build:helio": "node scripts/build-helio.mjs",
+    "watch:helio": "node scripts/build-helio.mjs --watch",
+    "build:lunar": "node scripts/build-lunar.mjs",
+    "test:lunar": "node --test tests/lunar.test.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260313.1",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "astronomy-engine": "2.1.19"
+  }
+}

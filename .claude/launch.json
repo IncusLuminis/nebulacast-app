@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "staging-9191",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "9191", "--directory", "sites/staging"],
+      "port": 9191
+    },
+    {
+      "name": "staging-8181",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8181", "--directory", "sites/staging"],
+      "port": 8181
+    },
+    {
+      "name": "staging",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8787", "--directory", "sites/staging"],
+      "port": 8787
+    },
+    {
+      "name": "main",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8080", "--directory", "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging"],
+      "port": 8080
+    },
+    {
+      "name": "preview-abs",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "9292", "--directory", "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/sites/staging"],
+      "port": 9292
+    },
+    {
+      "name": "worktree-9393",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "9393", "--directory", "/Users/mloktionov/PycharmProjects/Personal/nebulacast-app/.claude/worktrees/laughing-robinson/sites/staging"],
+      "port": 9393
+    }
+  ]
+}

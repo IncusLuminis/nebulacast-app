@@ -1,0 +1,70 @@
+# Photography (broadband): transparency, high clouds, moon placeholder
+profile: photography
+max_score: 100
+factors:
+  - key: transparency
+    label: Transparency
+    max: 35
+    field: transparency
+    enabled: true
+    transform: scale_discrete
+    best_raw: 1
+    worst_raw: 4
+
+  - key: cloud_high
+    label: High clouds
+    max: 25
+    field: cloud_high
+    enabled: true
+    transform: linear_inverse
+    max_raw: 100
+
+  - key: cloud_total
+    label: Clouds total
+    max: 15
+    field: cloud_total
+    enabled: true
+    transform: linear_inverse
+    max_raw: 100
+
+  - key: wind_m_s
+    label: Wind
+    max: 10
+    field: wind_m_s
+    enabled: true
+    transform: threshold
+    good_raw: 4
+    bad_raw: 12
+
+  - key: precip_mm
+    label: Precipitation
+    max: 5
+    field: precip_mm
+    enabled: true
+    transform: linear_inverse
+    max_raw: 0.5
+
+  - key: precip_prob
+    label: Precip probability
+    max: 5
+    field: precip_prob
+    enabled: true
+    transform: linear_inverse
+    max_raw: 100
+
+  - key: visibility_m
+    label: Visibility
+    max: 5
+    field: visibility_m
+    enabled: true
+    transform: linear
+    min_raw: 1000
+    max_raw: 30000
+
+  - key: moon
+    label: Moon
+    max: 0
+    field: moon_phase
+    enabled: false
+    transform: linear_inverse
+    max_raw: 1

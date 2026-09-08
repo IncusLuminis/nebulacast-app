@@ -1,0 +1,141 @@
+(function() {
+  'use strict';
+  var ROOT_ID = '{{ROOT_ID}}';
+  var jsonUrl = {{JSON_URL}};
+  var MAX_ITEMS = {{MAX_ITEMS}};
+  var FILTERS = {{FILTERS_JSON}};
+  var iconBase = {{ICON_BASE_JS}};
+  var FILTER_ICONS = { 'METEORS': 'meteors.svg', 'ECLIPSES': 'eclipses.svg', 'CONJUNCTIONS': 'conjunctions.svg', 'OCCULTATIONS': 'occultations.svg', 'COMETS': 'comets.svg' };
+  var STORAGE_KEY = ROOT_ID + ':filter';
+  var FETCH_TIMEOUT = {{FETCH_TIMEOUT}};
+  var activeFilter = 'All';
+  var cachedItems = [];
+
+  function getRoot() { return document.getElementById(ROOT_ID); }
+  function getStatusEl() { var r = getRoot(); return r ? r.querySelector('[data-role="status"]') : null; }
+  function getListEl() { var r = getRoot(); return r ? r.querySelector('[data-role="list"]') : null; }
+  function getFiltersEl() { var r = getRoot(); return r ? r.querySelector('[data-role="filters"]') : null; }
+  function normCat(s) { return (s || '').trim().toLowerCase(); }
+  function itemCategory(item) { return (item.category || item.stream || '').trim().toLowerCase(); }
+  function loadSavedFilter() { try { var v = localStorage.getItem(STORAGE_KEY); if (v && FILTERS.map(normCat).indexOf(normCat(v)) >= 0) activeFilter = v; } catch (e) {} }
+  function saveFilter(v) { try { localStorage.setItem(STORAGE_KEY, v); } catch (e) {} }
+
+  function renderFilters() {
+    var el = getFiltersEl(); if (!el) return;
+    el.innerHTML = '';
+    FILTERS.forEach(function(label) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'nrc-filter' + (normCat(label) === normCat(activeFilter) ? ' is-active' : '');
+      var iconFile = FILTER_ICONS[label];
+      if (iconFile && iconBase) {
+        var img = document.createElement('img');
+        img.className = 'nrc-filter-icon';
+        img.src = iconBase + '/' + iconFile;
+        img.alt = '';
+        img.setAttribute('aria-hidden', 'true');
+        btn.appendChild(img);
+      }
+      btn.appendChild(document.createTextNode(label));
+      btn.addEventListener('click', function() { activeFilter = label; saveFilter(activeFilter); renderFilters(); applyFilterAndRender(); });
+      el.appendChild(btn);
+    });
+  }
+
+  function applyFilterAndRender() {
+    if (!cachedItems || cachedItems.length === 0) return;
+    var startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    var todayMs = startOfToday.getTime();
+    var futureOnly = cachedItems.filter(function(it) {
+      if (!it.published_at) return false;
+      return new Date(it.published_at).getTime() >= todayMs;
+    });
+    var f = normCat(activeFilter);
+    var filtered = f === 'all' ? futureOnly : futureOnly.filter(function(it) { return itemCategory(it) === f; });
+    filtered.sort(function(a, b) {
+      var tA = (a.published_at) ? new Date(a.published_at).getTime() : Infinity;
+      var tB = (b.published_at) ? new Date(b.published_at).getTime() : Infinity;
+      return tA - tB;
+    });
+    renderItems(filtered.slice(0, MAX_ITEMS));
+  }
+
+  function escapeHtml(text) { if (!text) return ''; var d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try { var date = new Date(dateStr); if (isNaN(date.getTime())) return dateStr; return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) { return dateStr; }
+  }
+  function truncateText(text, maxLen) { if (!text) return ''; maxLen = maxLen || 220; var t = (text + '').trim(); return t.length <= maxLen ? t : t.substring(0, maxLen).trim() + '...'; }
+
+  function renderCard(item) {
+    var title = (item.title || '').trim();
+    var url = (item.url || '').trim();
+    var published_at = item.published_at || '';
+    var category = (item.category || item.stream || '').trim();
+    var summary = item.summary || '';
+    if (!summary && item.summary_html) {
+      var tmp = document.createElement('div'); tmp.innerHTML = item.summary_html;
+      summary = (tmp.textContent || tmp.innerText || '').trim();
+    }
+    var snippet = truncateText(summary, 220);
+    var card = document.createElement('div');
+    card.className = 'nrc-card';
+    var iconFile = FILTER_ICONS[category] || '';
+    var iconHTML = (iconBase && iconFile) ? '<img class="nrc-card-icon" src="' + escapeHtml(iconBase + '/' + iconFile) + '" alt="" aria-hidden="true">' : '<span class="nrc-card-icon nrc-card-icon-placeholder"></span>';
+    var badgeHTML = category ? '<span class="nrc-badge">' + escapeHtml(category) + '</span>' : '';
+    var dateHTML = published_at ? '<span class="nrc-date">' + formatDate(published_at) + '</span>' : '';
+    card.innerHTML = iconHTML +
+      '<div class="nrc-content">' +
+        (url ? '<a class="nrc-titlelink" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(title || '(untitled)') + '</a>' : '<span class="nrc-titlelink">' + escapeHtml(title || '(untitled)') + '</span>') +
+        '<div class="nrc-metaRow">' + dateHTML + badgeHTML + '</div>' +
+        (snippet ? '<div class="nrc-snippet">' + escapeHtml(snippet) + '</div>' : '') +
+        (url ? '<a class="nrc-more" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">more »</a>' : '') +
+      '</div>';
+    return card;
+  }
+
+  function showStatus(text) { var el = getStatusEl(); if (el) { el.textContent = text; el.style.display = 'block'; } }
+  function hideStatus() { var el = getStatusEl(); if (el) el.style.display = 'none'; }
+  function showError(msg) {
+    hideStatus();
+    var listEl = getListEl(); if (!listEl) return;
+    listEl.innerHTML = '<div class="nrc-error"><div class="nrc-error-title">Failed to load calendar</div><div>' + escapeHtml(msg) + '</div></div>';
+  }
+  function renderItems(items) {
+    var listEl = getListEl(); if (!listEl) return;
+    hideStatus();
+    listEl.innerHTML = '';
+    if (items.length === 0) { listEl.innerHTML = '<div class="nrc-error">No items for this filter.</div>'; return; }
+    items.forEach(function(item) { listEl.appendChild(renderCard(item)); });
+  }
+
+  function fetchJson() {
+    var controller = new AbortController();
+    var tid = setTimeout(function() { controller.abort(); }, FETCH_TIMEOUT);
+    return fetch(jsonUrl, { signal: controller.signal })
+      .then(function(r) { clearTimeout(tid); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(data) {
+        var items = (data && data.items) ? data.items : [];
+        if (items.length === 0) throw new Error('No items in calendar data.');
+        cachedItems = items;
+        applyFilterAndRender();
+      })
+      .catch(function(err) {
+        clearTimeout(tid);
+        if (err.name === 'AbortError') showError('Request timeout.');
+        else showError(err.message || 'Unknown error.');
+      });
+  }
+
+  function init() {
+    var root = getRoot(); if (!root) return;
+    loadSavedFilter();
+    renderFilters();
+    showStatus('Loading...');
+    fetchJson();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();

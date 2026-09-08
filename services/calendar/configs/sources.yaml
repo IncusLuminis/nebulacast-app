@@ -1,0 +1,89 @@
+# Calendar (alerts) RSS streams only. No weather — see astro-weather service separately.
+sources:
+  rss:
+    enabled: true
+    type: rss
+
+    fetch_policy:
+      timeout_seconds: 20
+      user_agent: NebulaCast/calendar
+
+    streams:
+      meteors:
+        enabled: true
+        feeds:
+          - name: in_the_sky_meteors
+            url: https://in-the-sky.org/rss.php?feed=meteors&latitude=52.2297&longitude=21.0122&timezone=Europe%2FWarsaw
+        limits:
+          max_items_per_feed: 50
+        freshness:
+          max_age_days: 365
+          require_published_date: false
+        output:
+          top_n: 20
+
+      eclipses:
+        enabled: true
+        feeds:
+          - name: in_the_sky_eclipses
+            url: https://in-the-sky.org/rss.php?feed=eclipses&latitude=52.2297&longitude=21.0122&timezone=Europe%2FWarsaw
+        limits:
+          max_items_per_feed: 50
+        freshness:
+          max_age_days: 365
+          require_published_date: false
+        output:
+          top_n: 20
+
+      conjunctions:
+        enabled: true
+        feeds:
+          - name: in_the_sky_conjunctions
+            url: https://in-the-sky.org/rss.php?feed=appulses&latitude=52.2297&longitude=21.0122&timezone=Europe%2FWarsaw
+        limits:
+          max_items_per_feed: 50
+        freshness:
+          max_age_days: 365
+          require_published_date: false
+        output:
+          top_n: 20
+
+      occultations:
+        enabled: true
+        feeds:
+          - name: in_the_sky_occultations
+            url: https://in-the-sky.org/rss.php?feed=occultations&latitude=52.2297&longitude=21.0122&timezone=Europe%2FWarsaw
+        limits:
+          max_items_per_feed: 50
+        freshness:
+          max_age_days: 365
+          require_published_date: false
+        output:
+          top_n: 20
+
+      comets:
+        enabled: true
+        feeds:
+          - name: in_the_sky_comets
+            url: https://in-the-sky.org/rss.php?feed=comets&latitude=52.2297&longitude=21.0122&timezone=Europe%2FWarsaw
+        limits:
+          max_items_per_feed: 50
+        freshness:
+          max_age_days: 365
+          require_published_date: false
+        output:
+          top_n: 20
+
+      observations:
+        enabled: true
+        fetch_policy:
+          timeout_seconds: 30
+          user_agent: "Mozilla/5.0 (NebulaCast AlertsBot; +https://nebulacast.app)"
+        feeds: []
+        limits:
+          max_items_per_feed: 50
+        freshness:
+          max_age_days: 30
+          require_published_date: false
+        output:
+          top_n: 20

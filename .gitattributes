@@ -9,3 +9,8 @@
 *.zip binary
 *.webm binary
 *.mp4 binary
+
+# Generated location and current-condition payloads are pipeline outputs.
+sites/staging/data/weather/loc/*.json -merge
+sites/staging/weather/daily_weather.json -merge
+sites/staging/data/*_now.json -merge

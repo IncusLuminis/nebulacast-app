@@ -1,90 +1,64 @@
 # nebulacast-app
 
-> NebulaCast desktop and mobile applications.
+Repository for nebulacast-app services and sites. Independent services live under `services/`; deployable sites under `sites/`.
 
----
+## News service (RSS)
 
-## Overview
+The **news** service aggregates astronomy/space RSS feeds, scores and filters them, and produces a public RSS feed compatible with `https://news.nebulacast.app/rss.xml`.
 
-Describe the purpose of the repository, the problem it solves, and its role within the **IncusLuminis** ecosystem.
+### Generate RSS
 
----
+**Запускается только один скрипт** — `run_news.py` (он сам вызывает pipeline и render_rss). Из корня репо:
 
-## Status
-
-| Property | Value |
-|----------|-------|
-| Status | Active |
-| Version | See `VERSION` |
-| License | See `LICENSE` |
-
----
-
-## Repository Structure
-
-```text
-.
-├── assets/                 Static project assets
-├── docs/                   Project documentation
-│   ├── adr/                Architecture Decision Records
-│   ├── api/                API documentation
-│   ├── architecture/       Architecture diagrams and descriptions
-│   ├── decisions/          Project decisions
-│   └── images/             Documentation images
-│
-├── examples/               Example usage
-├── scripts/                Utility scripts
-├── tests/                  Automated tests
-│
-├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── LICENSE
-├── PROJECT.yml
-├── ROADMAP.md
-└── VERSION
+```bash
+python services/news/pipelines/run_news.py
 ```
 
----
+This reads `services/news/configs/sources.yaml` and `services/news/configs/rules.yaml`, runs the pipeline, and writes all artifacts to:
 
-## Getting Started
+- **`sites/staging/news/rss.xml`** — единственный артефакт news в publish-root (Cloudflare Pages деплоит только `sites/staging/`).
 
-Describe here:
+### Local server
 
-- prerequisites
-- installation
-- configuration
-- local development
-- build
-- testing
+Serve the staging site (same root as production deploy):
 
----
+```bash
+make server
+# или: bash infra/scripts/serve_local.sh
+```
 
-## Documentation
+Document root = **`sites/staging/`**. Then open:
 
-Project documentation is located in the `docs/` directory.
+- **Index:** http://localhost:8080/
+- **News RSS:** http://localhost:8080/news/rss.xml
+- **News page:** http://localhost:8080/news/index.html
+- Alerts/astro-weather — когда появятся сервисы: `/alerts/rss.xml`, `/astro-weather/daily_astro_weather.json`
 
-| Directory | Purpose |
-|-----------|---------|
-| docs/architecture | Architecture documentation |
-| docs/adr | Architecture Decision Records |
-| docs/api | API documentation |
-| docs/decisions | Project decisions |
-| docs/images | Images used in documentation |
+### Frontend (статика)
 
----
+Генерация HTML/JS/CSS в `sites/staging/` одним скриптом:
 
-## Contributing
+```bash
+make news-front
+# или: python frontend/build.py
+```
 
-See **CONTRIBUTING.md**
+Полный прогон (бекенд + фронт): `make news`. Только бекенд: `make news-back`.
 
----
+Входы: `frontend/config/widgets.yaml`, `frontend/templates/**`, `frontend/assets/**`.  
+Выход: `sites/staging/index.html`, `sites/staging/news/index.html`, `sites/staging/news/widget.js`, `sites/staging/assets/**`.
 
-## Roadmap
+Виджет для Blogger: подключать `https://your-domain/news/widget.js` — скрипт сам создаёт контейнер и рендерит ленту (разметка и стили как в исходном widget_blogger.html).
 
-See **ROADMAP.md**
+### Tests
 
----
+Install dependencies and pytest, then run from repo root:
 
-## License
+```bash
+pip install -r services/news/requirements.txt
+pip install pytest
+PYTHONPATH=services/news:services pytest services/news/tests/ -v
+```
 
-See **LICENSE**
+- **Unit test:** `test_render_rss_generates_valid_rss` — generates RSS from a minimal record list (no network).
+- **Smoke test:** `test_smoke_run_news_produces_rss` — runs the full pipeline and checks that `sites/staging/news/rss.xml` exists and contains `<rss` and `<item>` (requires network).

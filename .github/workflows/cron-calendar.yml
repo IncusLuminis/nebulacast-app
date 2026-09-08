@@ -1,0 +1,51 @@
+# Backend pipeline: calendar (alerts RSS + JSON). Runs on schedule and writes to sites/staging/alerts/, sites/staging/calendar/.
+name: Cron — Calendar backend
+
+on:
+  schedule:
+    # Daily at 03:20 UTC (04:20 Warsaw in winter, 05:20 in summer)
+    - cron: "20 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: calendar-back-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  calendar-back:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install calendar deps
+        run: pip install -r services/calendar/requirements.txt
+
+      - name: Run calendar backend
+        run: |
+          set -e  # Exit on error
+          PYTHONPATH=services/calendar:services python services/calendar/pipelines/run_calendar.py
+          echo "Calendar backend completed successfully"
+
+      - name: Commit and push outputs
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # pull first to reduce push races
+          git pull --rebase origin "${{ github.ref_name }}" 2>/dev/null || true
+
+          # stage only expected output paths (including deletions inside them)
+          git add -A sites/staging/alerts/ sites/staging/calendar/ services/calendar/outputs/ 2>/dev/null || true
+
+          git diff --staged --quiet && exit 0
+          git commit -m "chore(calendar): update backend outputs"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "${{ github.ref_name }}"

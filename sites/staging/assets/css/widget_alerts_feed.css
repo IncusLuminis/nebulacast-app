@@ -1,0 +1,183 @@
+.naf-root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: #0f1115;
+  color: #e6e6e6;
+}
+.naf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2f3a;
+  margin-bottom: 12px;
+}
+.naf-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #e6f2ff;
+}
+.naf-refresh {
+  font-size: 11px;
+  color: #8a95a8;
+  white-space: nowrap;
+}
+.naf-status {
+  padding: 8px 0;
+  font-size: 13px;
+  color: #9aa3b2;
+  text-align: center;
+}
+.naf-list { margin: 0; padding: 0; }
+
+/* Sort bar */
+.naf-sort-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  position: relative;
+}
+.naf-help-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a2e3e;
+  border: 1px solid #2a5070;
+  color: #5ab4e0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+.naf-help-btn:hover { background: #1e3a4e; }
+.naf-help-pop {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  background: #0f1115;
+  border: 1px solid #2a5070;
+  border-radius: 8px;
+  padding: 14px 16px;
+  min-width: 290px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.6);
+}
+.naf-help-pop.open { display: block; }
+.naf-help-pop dl { margin: 0; }
+.naf-help-pop dt {
+  float: left;
+  clear: left;
+  width: 80px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #5ab4e0;
+  padding: 3px 0;
+}
+.naf-help-pop dd {
+  margin-left: 88px;
+  font-size: 11px;
+  color: #9aa3b2;
+  line-height: 1.45;
+  padding: 3px 0;
+  border-bottom: 1px solid #1e2430;
+}
+.naf-help-pop dd:last-child { border-bottom: none; }
+.naf-sort-btn {
+  padding: 4px 10px;
+  background: #0b0d12;
+  border: 1px solid #2a2f3a;
+  border-radius: 5px;
+  color: #9aa3b2;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.1s, border-color 0.1s;
+  line-height: 1.4;
+}
+.naf-sort-btn:hover { color: #e6e6e6; border-color: #3a4a5a; }
+.naf-sort-btn.active { background: #1a2e3e; color: #5ab4e0; border-color: #2a5070; }
+
+/* Group section */
+.naf-group { margin-bottom: 4px; }
+.naf-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 6px;
+  border-bottom: 1px solid #2a2f3a;
+  margin-bottom: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+.naf-group-toggle {
+  font-size: 10px;
+  color: #8a95a8;
+  flex-shrink: 0;
+  width: 10px;
+}
+.naf-group-icon { font-size: 15px; line-height: 1; }
+.naf-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa3b2;
+}
+.naf-group-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: #8a95a8;
+}
+.naf-more {
+  padding: 3px 0 5px 18px;
+  font-size: 11px;
+  color: #8a95a8;
+}
+
+/* Items — single line */
+.naf-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 6px 0 6px 2px;
+  border-bottom: 1px solid #1e2430;
+}
+.naf-item:last-child { border-bottom: none; }
+.naf-item-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.naf-item-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e6f2ff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.naf-item-detail {
+  font-size: 11px;
+  color: #9aa3b2;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.naf-item-end {
+  font-size: 11px;
+  color: #9aa3b2;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
+}

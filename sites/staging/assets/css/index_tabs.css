@@ -1,0 +1,40 @@
+/* Tabs on index: News / Calendar / Alerts / Weather — one panel visible at a time */
+.index-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #2a2f3a;
+}
+.index-tab {
+  appearance: none;
+  border: 1px solid #2a2f3a;
+  background: #111623;
+  color: #9aa3b2;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.index-tab:hover {
+  border-color: #3a4252;
+  color: #e6f2ff;
+}
+.index-tab.is-active {
+  background: #2a2f3a;
+  border-color: #3a4252;
+  color: #e6f2ff;
+}
+.index-panels {
+  min-height: 200px;
+}
+.index-panel {
+  display: block;
+}
+.index-panel.index-panel--hidden {
+  display: none;
+}

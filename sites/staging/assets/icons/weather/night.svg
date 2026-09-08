@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 24 24"
+     fill="none"
+     stroke-width="1.8"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+
+  <defs>
+    <!-- darker fill for moon body -->
+    <linearGradient id="gMoonNight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB86A"/>
+      <stop offset="1" stop-color="#FF7A3C"/>
+    </linearGradient>
+    <!-- slightly lighter stroke around moon -->
+    <linearGradient id="gMoonNightStroke" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE29B"/>
+      <stop offset="1" stop-color="#FF8C42"/>
+    </linearGradient>
+  </defs>
+
+  <!-- moon + star, slightly smaller and centered via transform -->
+  <g transform="translate(12,13) scale(0.9) translate(-12,-12)">
+    <!-- moon (crescent), filled with warm gradient -->
+    <path d="M14.5 3
+             A6.5 6.5 0 1 0 20 13
+             A5.4 5.4 0 1 1 14.5 3"
+          fill="url(#gMoonNight)"
+          stroke="url(#gMoonNightStroke)"/>
+
+    <!-- star (slightly left) -->
+    <path d="M5.5 7.2
+             l0.8 1.7 1.7 0.8
+             -1.7 0.8 -0.8 1.7
+             -0.8 -1.7 -1.7 -0.8
+             1.7 -0.8z"
+          fill="#E6ECF5" stroke="#E6ECF5"/>
+  </g>
+
+</svg>
+
