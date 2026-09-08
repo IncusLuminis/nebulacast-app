@@ -366,6 +366,7 @@ def _write_multi_location_outputs(
             location_name=loc.name,
             horizon_hours=int(base_weather_cfg.get("horizon_hours", 72)),
             thresholds=base_weather_cfg.get("thresholds") or {},
+            location_id=loc.id,
         )
         loc_payload = _build_location_payload(loc, payload)
 
@@ -437,6 +438,7 @@ def main() -> int:
         location_name=location_name,
         horizon_hours=horizon_hours,
         thresholds=thresholds,
+        location_id=_format_location_id(lat, lon),
     )
 
     # Validate payload has required fields
