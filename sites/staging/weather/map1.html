@@ -46,7 +46,7 @@
   
   <!-- Map Logic -->
   <script type="module">
-  import { getLunarState } from "../shared/lunar.mjs";
+  import { getMoonDisplay } from "../shared/moon-display.mjs";
 (function () {
   "use strict";
   const DEFAULT_CENTER = [52.2297, 21.0122];
@@ -1800,16 +1800,13 @@
       console.warn("SunCalc not loaded");
       return;
     }
-    var moonIllum = getLunarState(date);
-    // Get moon position
-    var moonPos = SunCalcLib.getMoonPosition(date, center.lat, center.lng);
-    var altDeg = moonPos.altitude * 180 / Math.PI;
-    var azDeg = moonPos.azimuth * 180 / Math.PI;
-    // Convert azimuth from south-based (SunCalc) to north-based (0-360)
-    azDeg = (azDeg + 180) % 360;
-    var phaseName = moonIllum.name;
-    var phaseEmoji = moonIllum.emoji;
-    var illumPct = moonIllum.pct;
+    var moonDisplay = getMoonDisplay(date, center.lat, center.lng, SunCalcLib);
+    if (!moonDisplay) return;
+    var altDeg = moonDisplay.altDeg;
+    var azDeg = moonDisplay.azDeg;
+    var phaseName = moonDisplay.phaseName;
+    var phaseEmoji = moonDisplay.phaseEmoji;
+    var illumPct = moonDisplay.illumPct;
 
     // Update UI
     var line1 = document.getElementById("moonInfoLine1");
