@@ -9,6 +9,7 @@
     "build:lunar": "node scripts/build-lunar.mjs",
     "test:lunar": "node --test tests/lunar.test.mjs",
     "test:provider-contracts": "node scripts/test-provider-contracts.mjs",
+    "test:ephemeris-contract": "node scripts/test-ephemeris-contract.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "typecheck:test": "tsc --noEmit -p tsconfig.test.json"
   },

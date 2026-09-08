@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nebulacast.app/schemas/ephemeris.v1.schema.json",
+  "title": "Nebulacast ephemeris v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "time", "position", "sun", "moon", "provider"],
+  "properties": {
+    "schema": { "const": "ephemeris.v1" },
+    "time": { "type": "object", "additionalProperties": false, "required": ["timestamp_utc", "time_basis"], "properties": { "timestamp_utc": { "type": "string", "format": "date-time", "pattern": "Z$" }, "time_basis": { "const": "UTC" } } },
+    "position": { "type": "object", "additionalProperties": false, "required": ["latitude_deg", "longitude_deg", "timezone", "location_key"], "properties": { "latitude_deg": { "type": "number", "minimum": -90, "maximum": 90 }, "longitude_deg": { "type": "number", "minimum": -180, "maximum": 180 }, "timezone": { "type": "string", "minLength": 1 }, "location_key": { "type": "string", "minLength": 1 } } },
+    "sun": { "type": "object", "additionalProperties": false, "required": ["altitude_deg"], "properties": { "altitude_deg": { "type": "number" } } },
+    "moon": { "type": "object", "additionalProperties": false, "required": ["altitude_deg", "lunar_state"], "properties": { "altitude_deg": { "type": "number" }, "lunar_state": { "type": "object", "additionalProperties": false, "required": ["phase", "fraction", "illumination_pct", "waxing"], "properties": { "phase": { "type": "number", "minimum": 0, "maximum": 1 }, "fraction": { "type": "number", "minimum": 0, "maximum": 1 }, "illumination_pct": { "type": "number", "minimum": 0, "maximum": 100 }, "waxing": { "type": "boolean" } } } } },
+    "provider": { "type": "string", "minLength": 1 }
+  }
+}
