@@ -1,5 +1,5 @@
 import { calendarDate, localMidnightUTC } from "../../../shared/zoned-date.mjs";
-import { getLunarState } from "../../../shared/lunar.mjs";
+import { createLunarSnapshot } from "../../../shared/lunar.mjs";
 /**
  * Sun Equation widget (sun_moon)
  * Sun and Moon positions use SunCalc; lunar phase uses the shared UTC source.
@@ -77,7 +77,10 @@ function computeDaySamples(baseDate, offset, lat, lon, tz) {
 
   const times     = SunCalcLib.getTimes(sunCalcDate, lat, lon);
   const moonTimes = SunCalcLib.getMoonTimes(sunCalcDate, lat, lon, true);
-  const moonInfo = getLunarState(sunCalcDate);
+  const moonInfo = createLunarSnapshot({
+    instant: sunCalcDate,
+    location: { lat, lon, timezone: tz || "UTC" }
+  }).lunar;
 
   // approximate moon culmination as max altitude sample
   let best = samples[0];
@@ -619,7 +622,10 @@ export function mountSunMoon(rootEl, storeApi) {
       const SC        = getSunCalc();
       const nowLocal  = new Date();
       const isNowHour = isToday && sample.hour === Math.floor(getLocalHour(nowLocal, loc.tz));
-      const moonInfo = getLunarState(isNowHour ? nowLocal : new Date(sample.time));
+      const moonInfo = createLunarSnapshot({
+        instant: isNowHour ? nowLocal : new Date(sample.time),
+        location: { lat: loc.lat, lon: loc.lon, timezone: loc.tz || "UTC" }
+      }).lunar;
       data.moonInfo = moonInfo;
 
       if (isNowHour && SC && loc.lat != null && loc.lon != null) {
@@ -637,7 +643,7 @@ export function mountSunMoon(rootEl, storeApi) {
       }
 
       hourLineEl.textContent =
-        `${timeStr} • Sun ${sunAlt}° • Moon ${moonAlt}° • ${moonInfo.emoji} ${moonInfo.name}, illum. ${moonInfo.pct}%`;
+        `${timeStr} • Sun ${sunAlt}° • Moon ${moonAlt}° • ${moonInfo.emoji} ${moonInfo.phase_name}, illum. ${Math.round(moonInfo.illuminated_percent)}%`;
     }
 
     drawSunMoonCanvas(canvas, data, selectedHour);
