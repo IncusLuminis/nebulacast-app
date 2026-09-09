@@ -32,6 +32,17 @@ tab uses `sites/staging/weather/widgets/map/map.js` as its production adapter.
 map logic. `sites/staging/weather/widgets/map/map2.js` is classified as POC and
 must not be used as a platform extension point.
 
+## Sky legacy bootstrap boundary
+
+`sites/staging/sky/widget.js` is the authoritative Sky implementation and
+exports `mountSky(root, context, config)`. The Runtime uses it through
+`sites/staging/sky/platform-adapter.mjs`.
+
+`sites/staging/sky/legacy-bootstrap.mjs` is the sole code compatibility bridge
+for `window.SKY_CONFIG` and `window.__skyWidget`. The standalone Sky page and
+existing HTML integrations import that adapter; the platform runtime never
+reads or writes those globals.
+
 ## Scope boundary
 
 Story #66 freezes the current repository topology and does not extract widgets,

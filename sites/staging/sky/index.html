@@ -40,27 +40,9 @@
     </div>
   </div>
 
-<script>
-  // ✅ MUST exist before widget.js is imported
-  // Read observer location from URL params (lat, lon, tz) with Warsaw fallback.
-  (function() {
-    const p = new URLSearchParams(window.location.search);
-    const lat = parseFloat(p.get('lat') ?? '');
-    const lon = parseFloat(p.get('lon') ?? '');
-    const dt  = p.get('datetime') || null;
-    window.SKY_CONFIG = {
-      baseUrl:     '/sky',
-      mountId:     'skyMount',
-      lat:         (isFinite(lat) && lat >= -90  && lat <= 90)  ? lat : 52.2297,
-      lon:         (isFinite(lon) && lon >= -180 && lon <= 180) ? lon : 21.0122,
-      datetimeISO: dt,
-    };
-  })();
-</script>
-
 <script type="module">
-  import "./core/sky.ui.js";  // ✅ MUST be imported before widget.js
-  import "./widget.js";
+  import "./core/sky.ui.js";  // ✅ MUST be imported before the legacy adapter
+  import "./legacy-bootstrap.mjs";
   // bootSkyMapUI() disabled - now using web component architecture (ui-player, ui-side-toolbar, etc.)
   // import { bootSkyMapUI } from "./core/sky.map.js";
   // bootSkyMapUI();

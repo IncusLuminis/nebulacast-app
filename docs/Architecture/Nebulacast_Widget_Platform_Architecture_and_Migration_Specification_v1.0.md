@@ -886,7 +886,12 @@ Migration requirements:
 - expose explicit destroy;
 - support orientation/layout configuration.
 
-The legacy global API may remain temporarily as a compatibility adapter.
+The legacy global API may remain temporarily as a compatibility adapter. For
+Sky, `sites/staging/sky/legacy-bootstrap.mjs` is the only compatibility code
+allowed to read `window.SKY_CONFIG` or write `window.__skyWidget`; standalone
+HTML callers may continue to import that adapter. `sites/staging/sky/widget.js`
+and the platform Runtime path must use the explicit `mountSky()` contract and
+must not read those globals.
 
 ---
 

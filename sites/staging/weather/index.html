@@ -228,7 +228,7 @@
         else dtISO = null;
       }
 
-      // IMPORTANT: SKY_CONFIG must exist BEFORE importing /sky/widget.js
+      // IMPORTANT: SKY_CONFIG must exist BEFORE importing the legacy adapter
       window.SKY_CONFIG = {
         baseUrl: "/sky",
         mountId: "skyMount",
@@ -245,8 +245,8 @@
         }
       };
 
-      // import the widget module (it will bootstrap itself)
-      await import("/sky/widget.js");
+      // import the compatibility adapter (it mounts through mountSky)
+      await import("/sky/legacy-bootstrap.mjs");
 
       // ensure correct sizing after first mount
       setTimeout(() => {

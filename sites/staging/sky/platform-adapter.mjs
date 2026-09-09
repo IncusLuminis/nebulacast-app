@@ -1,8 +1,8 @@
 /**
  * Platform adapter for the explicit Sky mount.
  *
- * The query-qualified import keeps the legacy self-bootstrap out of Runtime
- * mounts. Rendering and data loading remain owned by sky/widget.js.
+ * Rendering and data loading remain owned by sky/widget.js. Legacy standalone
+ * bootstrap is a separate compatibility entrypoint.
  */
 
 function requireContext(context) {
@@ -14,7 +14,7 @@ function requireContext(context) {
 let skyModulePromise;
 
 function loadSkyModule() {
-  if (!skyModulePromise) skyModulePromise = import("./widget.js?platform=1");
+  if (!skyModulePromise) skyModulePromise = import("./widget.js");
   return skyModulePromise;
 }
 

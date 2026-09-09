@@ -197,13 +197,20 @@
       "deploy_paths": ["sites/staging/sky/"],
       "local_test_path": "make server; http://localhost:8080/sky/ and http://localhost:8080/weather/ (Sky tab)",
       "compatibility_paths": [
+        "sites/staging/sky/legacy-bootstrap.mjs",
         "sites/staging/sky/index.html",
+        "sites/staging/weather/index.html",
+        "sites/staging/index.html",
         "sites/staging/sky/objects.html",
         "sites/staging/sky/alerts.html"
       ],
       "path_classification": [
         {"path": "sites/staging/sky/widget.js", "role": "widget entrypoint", "classification": "production"},
+        {"path": "sites/staging/sky/platform-adapter.mjs", "role": "platform runtime adapter", "classification": "production"},
+        {"path": "sites/staging/sky/legacy-bootstrap.mjs", "role": "legacy global bootstrap adapter", "classification": "legacy"},
         {"path": "sites/staging/sky/index.html", "role": "standalone host", "classification": "production"},
+        {"path": "sites/staging/weather/index.html", "role": "legacy Sky integration host", "classification": "legacy"},
+        {"path": "sites/staging/index.html", "role": "legacy Sky integration host", "classification": "legacy"},
         {"path": "sites/staging/sky/objects.html", "role": "standalone compatibility host", "classification": "legacy"},
         {"path": "sites/staging/sky/alerts.html", "role": "standalone compatibility host", "classification": "legacy"}
       ],
@@ -211,7 +218,7 @@
         "sites/staging/sky/core/",
         "services/sky/pipelines/"
       ],
-      "notes": "window.SKY_CONFIG and window.__skyWidget remain legacy bootstrap compatibility; new mounts must use the future runtime API."
+      "notes": "The legacy global allowlist is limited to legacy-bootstrap.mjs and its existing HTML callers. The platform runtime path (widget-runtime -> platform-adapter -> widget.js) never reads or writes window.SKY_CONFIG or window.__skyWidget."
     },
     {
       "id": "news",

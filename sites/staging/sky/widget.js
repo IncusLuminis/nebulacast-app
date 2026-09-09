@@ -31,14 +31,7 @@ import {
   emojiForItem,
 } from "./widgets/widget.utils.js";
 import { el, toHTML } from "./widgets/widget.dom.js";
-import {
-  applyUIHighlight,
-  setHighlightById as setGlobalHighlightById,
-  installHighlightMatcher,
-} from "./widgets/widget.highlight.js";
 import * as Popovers from "./widgets/widget.popovers.js";
-
-const PLATFORM_IMPORT = new URL(import.meta.url).searchParams.get("platform") === "1";
 
 function makeRoot(container) {
     const root = document.createElement("div");
@@ -85,16 +78,9 @@ function makeRoot(container) {
     return { root, wrap, canvas, status };
   }
 
-function resolveMount(cfg, explicitMount) {
+function resolveMount(explicitMount) {
     if (explicitMount) return explicitMount;
-    if (!cfg || !cfg.mountId) {
-      throw new Error("SKY_CONFIG.mountId is required (e.g. 'skyMount').");
-    }
-    const el = document.getElementById(cfg.mountId);
-    if (!el) {
-      throw new Error(`SKY mount element not found: #${cfg.mountId}`);
-    }
-    return el;
+    throw new TypeError("Sky mount requires an explicit root");
   }
 
   function makeStatusText(
@@ -228,10 +214,13 @@ function createPlatformTooltip(element) {
   };
 }
 
-async function init(userCfg, { mount: explicitMount = null, context = null, platform = false } = {}) {
+async function init(userCfg, {
+  mount: explicitMount = null,
+  context = null,
+  compatibility = false,
+} = {}) {
     const cfg = deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), userCfg || {});
-    if (platform) deepMerge(cfg, readContextConfig(context));
-    else installHighlightMatcher();
+    deepMerge(cfg, readContextConfig(context));
     cfg.options = cfg.options || {};
 
     // preserve old behavior: cardinals ON unless explicitly false
@@ -252,7 +241,7 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
       return v == null ? UI_DEFAULTS[name] : !!v;
     }
 
-    const mount = resolveMount(cfg, explicitMount);
+    const mount = resolveMount(explicitMount);
     let requestedOrientation = cfg.orientation || "auto";
     const applyOrientation = () => {
       cfg.orientation = requestedOrientation === "auto"
@@ -270,28 +259,26 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
     let playerSyncRafId = 0;
     const pendingPopoverRafIds = new Set();
 
-    const localHighlightPredicate = platform
-      ? (obj) => {
-          const h = localHighlight.value;
-          if (!h || Date.now() > h.until || !obj) return false;
+    const localHighlightPredicate = (obj) => {
+      const h = localHighlight.value;
+      if (!h || Date.now() > h.until || !obj) return false;
 
-          const hid = normLower(h.id);
-          if (!hid) return false;
+      const hid = normLower(h.id);
+      if (!hid) return false;
 
-          const group = normLower(obj.group);
-          const id = normLower(obj.id);
-          const name = normLower(obj.name);
-          const candidates = [
-            id,
-            name,
-            group && id ? `${group}:${id}` : null,
-            group && name ? `${group}:${name}` : null,
-            obj.meta?.planet_key ? normLower(obj.meta.planet_key) : null,
-          ].filter(Boolean);
+      const group = normLower(obj.group);
+      const id = normLower(obj.id);
+      const name = normLower(obj.name);
+      const candidates = [
+        id,
+        name,
+        group && id ? `${group}:${id}` : null,
+        group && name ? `${group}:${name}` : null,
+        obj.meta?.planet_key ? normLower(obj.meta.planet_key) : null,
+      ].filter(Boolean);
 
-          return candidates.includes(hid);
-        }
-      : null;
+      return candidates.includes(hid);
+    };
 
     function schedulePopoverRaf(callback) {
       let raf = 0;
@@ -324,7 +311,7 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
     // Keep existing tooltip for now (follows mouse)
     const tooltipEl = document.createElement("div");
     root.appendChild(tooltipEl);
-    const tooltip = platform ? createPlatformTooltip(tooltipEl) : SkyUI.createTooltip(root, tooltipEl);
+    const tooltip = compatibility ? SkyUI.createTooltip(root, tooltipEl) : createPlatformTooltip(tooltipEl);
 
     // Modular UI components (custom elements) - optional
     const sideFs  = uiEnabled("sideToolbar") ? document.createElement("ui-side-toolbar") : null;
@@ -346,7 +333,7 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
     }
 
     const modalWC  = uiEnabled("modal") ? document.createElement("ui-modal") : null;
-    const statsDlg = platform ? { open() {}, close() {} } : createStatsDialog(root);
+    const statsDlg = compatibility ? createStatsDialog(root) : { open() {}, close() {} };
     const player = uiEnabled("player") ? document.createElement("ui-player") : null;
     const skyCard = document.createElement("sky-card");
     
@@ -636,11 +623,7 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
       mwPrepared =
         cfg.options.showMilkyWay && milkyway ? Prepare.buildMilkyWay(observer, viewport, milkyway) : null;
 
-      const uiHighlightId = platform
-        ? (localHighlight.value?.id || "")
-        : (typeof window !== "undefined" && window.__skyHighlight && window.__skyHighlight.id != null
-          ? String(window.__skyHighlight.id)
-          : null);
+      const uiHighlightId = localHighlight.value?.id || "";
 
       objectsPrepared =
         cfg.options.showObjects && objectsToday
@@ -774,7 +757,7 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
       if (lifecycleDisposed) return;
       applyOrientation();
       // In fullscreen mode, use window dimensions instead of mount
-      const isFs = !platform && !!document.fullscreenElement;
+      const isFs = compatibility && !!document.fullscreenElement;
       let r;
       
       if (isFs) {
@@ -809,9 +792,7 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
     let rafId = 0;
 
     function isHighlightActive() {
-      const h = platform
-        ? localHighlight.value
-        : (typeof window !== "undefined" ? window.__skyHighlight : null);
+      const h = localHighlight.value;
       return !!(h && Date.now() <= h.until && h.id != null && String(h.id).length > 0);
     }
 
@@ -841,8 +822,7 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
       const id = String(hid || "").trim();
       if (!id) return;
 
-      if (platform) localHighlight.value = { id, until: Date.now() + ms };
-      else setGlobalHighlightById(id, ms);
+      localHighlight.value = { id, until: Date.now() + ms };
       recomputeAll();
       render();
       startAnim();
@@ -859,16 +839,12 @@ async function init(userCfg, { mount: explicitMount = null, context = null, plat
       cfg.ui = cfg.ui || {};
       cfg.ui.components = cfg.ui.components || {};
 
-      if (platform) {
-        const hid = patch?.ui?.highlightId;
-        if (hid) {
-          localHighlight.value = {
-            id: String(hid),
-            until: Date.now() + (patch.ui.highlightMs ?? 3000),
-          };
-        }
-      } else {
-        applyUIHighlight(patch);
+      const hid = patch?.ui?.highlightId;
+      if (hid) {
+        localHighlight.value = {
+          id: String(hid),
+          until: Date.now() + (patch.ui.highlightMs ?? 3000),
+        };
       }
 
       applyOrientation();
@@ -1807,7 +1783,7 @@ function buildAlertsListContent() {
     }
 
     function _fsTarget() {
-      return platform ? root : (document.getElementById("skyStage") || root);
+      return compatibility ? (document.getElementById("skyStage") || root) : root;
     }
 
     function toggleFullscreen() {
@@ -2169,7 +2145,7 @@ function buildAlertsListContent() {
       resize();
     }, 0);
 
-    if (platform && context?.subscribe) {
+    if (context?.subscribe) {
       unsubscribeContext = context.subscribe((snapshot) => {
         if (lifecycleDisposed) return;
         applyContextConfig(cfg, snapshot);
@@ -2234,58 +2210,10 @@ function buildAlertsListContent() {
     };
   }
 
-  function getCfgNow() {
-    return typeof window !== "undefined" && window.SKY_CONFIG ? window.SKY_CONFIG : null;
-  }
-
-  function bootWhenReady() {
-    const cfg = getCfgNow();
-
-    if (cfg && cfg.mountId) {
-      init(cfg)
-        .then((handle) => {
-          window.__skyWidget = handle;
-        })
-        .catch((err) => {
-          console.error("SKY init failed:", err);
-        });
-      return;
-    }
-
-    const startedAt = Date.now();
-    const timeoutMs = 4000;
-
-    const timer = setInterval(() => {
-      const c = getCfgNow();
-      if (c && c.mountId) {
-        clearInterval(timer);
-        init(c)
-          .then((handle) => {
-            window.__skyWidget = handle;
-          })
-          .catch((err) => {
-            console.error("SKY init failed:", err);
-          });
-        return;
-      }
-
-      if (Date.now() - startedAt > timeoutMs) {
-        clearInterval(timer);
-        console.error(
-          "SKY init failed: SKY_CONFIG.mountId is required (e.g. 'skyMount').",
-          "Current SKY_CONFIG:",
-          c
-        );
-      }
-    }, 50);
-  }
-
-export async function mountSky(root, context, config = {}, host) {
+export async function mountSky(root, context, config = {}, host, { compatibility = false } = {}) {
   if (!root || typeof root !== "object") throw new TypeError("Sky mount requires a root");
   if (!context || typeof context.get !== "function" || typeof context.subscribe !== "function") {
     throw new TypeError("Sky platform adapter requires Platform Context");
   }
-  return init(config, { mount: root, context, platform: true, host });
+  return init(config, { mount: root, context, compatibility, host });
 }
-
-if (!PLATFORM_IMPORT && getCfgNow()) bootWhenReady();
