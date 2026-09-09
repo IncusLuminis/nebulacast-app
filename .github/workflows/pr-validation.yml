@@ -55,6 +55,9 @@ jobs:
       - name: Run lunar regression tests
         run: npm run test:lunar
 
+      - name: Run cross-surface lunar consistency tests
+        run: npm run test:lunar-consistency
+
       - name: Validate provider contracts
         run: npm run test:provider-contracts
 
