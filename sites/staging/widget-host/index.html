@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nebulacast Widget Runtime Fixture</title>
+  <link rel="stylesheet" href="/shared/widget-shell.css">
+  <style>
+    body { margin: 24px; background: #0b0d12; color: #e6e6e6; font: 16px system-ui, sans-serif; }
+    main { display: grid; gap: 16px; max-width: 720px; }
+    [data-widget] { min-height: 80px; border: 1px solid #2a2f3a; padding: 12px; }
+    nav { display: flex; flex-wrap: wrap; gap: 8px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    #status { padding: 8px 12px; border: 1px solid #2a2f3a; }
+    #status.error { border-color: #b54b4b; color: #ffaaaa; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Widget Runtime Fixture</h1>
+    <p>This fixture uses registered Phase 1 types with local adapters; production Console routes are not involved.</p>
+    <div id="status" role="status">Starting lifecycle demo…</div>
+    <nav aria-label="Runtime lifecycle controls">
+      <button id="destroy-astro" type="button">Destroy Astro</button>
+      <button id="unmount-sun" type="button">Unmount Sun &amp; Moon</button>
+      <button id="remount" type="button">Remount both</button>
+      <button id="failure" type="button">Simulate mount failure</button>
+    </nav>
+    <form aria-label="Widget state controls">
+      <label for="astro-state">Astro state</label>
+      <select id="astro-state">
+        <option>loading</option>
+        <option selected>ready</option>
+        <option>empty</option>
+        <option>stale</option>
+        <option>degraded</option>
+        <option>error</option>
+      </select>
+      <button id="apply-astro-state" type="submit">Apply Astro state</button>
+    </form>
+    <p><span style="color: rgb(18, 52, 86); padding: 3px; border: 0;">Outside widget sentinel</span></p>
+    <section data-widget="astro" aria-label="Astro widget"></section>
+    <section data-widget="sun-moon" aria-label="Sun &amp; Moon widget"></section>
+  </main>
+  <script type="module">
+    import { createPlatformContext } from "/weather/core/context.js";
+    import { getState, setState, subscribe } from "/weather/core/state.js";
+    import { createWidgetRegistry } from "/shared/widget-registry.mjs";
+    import { widgetCatalog } from "/shared/widget-catalog.mjs";
+    import { createNebulacast } from "/shared/widget-runtime.mjs";
+
+    const context = createPlatformContext({ getState, setState, subscribe }, { locale: "en", theme: "auto" });
+    const statusEl = document.getElementById("status");
+    const roots = {
+      astro: document.querySelector('[data-widget="astro"]'),
+      "sun-moon": document.querySelector('[data-widget="sun-moon"]'),
+    };
+    roots.astro.dataset.fixtureOrientation = "horizontal";
+    roots["sun-moon"].dataset.fixtureOrientation = "vertical";
+    const mountConfigs = {
+      astro: { fixture: true, orientation: "auto", theme: "dark", density: "compact" },
+      "sun-moon": { fixture: true, orientation: "vertical", theme: "light", density: "normal" },
+    };
+    const hosts = new Map();
+
+    // Explicit fixture adapters keep this demo DOM-local and avoid loading the
+    // production Sun & Moon module, which expects the page's SunCalc global.
+    const fixtureDefinitions = widgetCatalog.map(definition => ({
+      ...definition,
+      loader: async () => ({
+        mount(root, _context, config, host) {
+          if (root.dataset.fixtureFailure === "1") throw new Error(`${definition.type} fixture failure`);
+          hosts.set(definition.type, host);
+          root.innerHTML = `<strong>${definition.type}</strong><div>Mounted through the public Runtime API.</div>`;
+          return {
+            update() { root.dataset.updated = "1"; },
+            resize() { root.dataset.resized = "1"; },
+            refresh() { root.dataset.refreshed = "1"; },
+            destroy() {
+              hosts.delete(definition.type);
+              root.textContent = `${definition.type} destroyed`;
+            },
+          };
+        },
+      }),
+    }));
+    const registry = createWidgetRegistry(fixtureDefinitions);
+    const runtime = createNebulacast({
+      context,
+      registry,
+      resolveAutoOrientation: ({ root }) => root.dataset.fixtureOrientation || "auto",
+    });
+    const instances = new Map();
+
+    function setStatus(message, error = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", error);
+    }
+
+    function setWidgetState(type, state) {
+      const host = hosts.get(type);
+      if (!host) throw new Error(`${type} is not mounted`);
+      host.setState(state);
+      setStatus(`${type} state: ${state}`);
+    }
+
+    async function mountType(type) {
+      const instance = await runtime.mount(roots[type], { widget: type, config: mountConfigs[type] });
+      instances.set(type, instance);
+      return instance;
+    }
+
+    async function remountBoth() {
+      runtime.unmount(roots.astro);
+      runtime.unmount(roots["sun-moon"]);
+      await mountType("astro");
+      await mountType("sun-moon");
+      setStatus(`Mounted registered types: ${runtime.getWidgets().map(definition => definition.type).join(", ")}`);
+    }
+
+    document.getElementById("destroy-astro").addEventListener("click", () => {
+      instances.get("astro")?.destroy();
+      instances.delete("astro");
+      setStatus("Astro instance destroyed independently; Sun & Moon remains mounted.");
+    });
+
+    document.getElementById("unmount-sun").addEventListener("click", () => {
+      runtime.unmount(roots["sun-moon"]);
+      instances.delete("sun-moon");
+      setStatus("Sun & Moon instance unmounted independently; Astro remains mounted.");
+    });
+
+    document.getElementById("remount").addEventListener("click", () => {
+      remountBoth().catch(error => setStatus(`Remount failed: ${error.message}`, true));
+    });
+
+    document.getElementById("failure").addEventListener("click", async () => {
+      runtime.unmount(roots["sun-moon"]);
+      instances.delete("sun-moon");
+      roots["sun-moon"].dataset.fixtureFailure = "1";
+      try {
+        await mountType("sun-moon");
+        setStatus("Unexpected success: failure control did not fail.", true);
+      } catch (error) {
+        setStatus(`Expected mount failure: ${error.message}`, true);
+      } finally {
+        delete roots["sun-moon"].dataset.fixtureFailure;
+      }
+    });
+
+    document.getElementById("apply-astro-state").addEventListener("click", event => {
+      event.preventDefault();
+      try {
+        setWidgetState("astro", document.getElementById("astro-state").value);
+      } catch (error) {
+        setStatus(`State change failed: ${error.message}`, true);
+      }
+    });
+
+    try {
+      await remountBoth();
+    } catch (error) {
+      setStatus(`Initial mount failed: ${error.message}`, true);
+    }
+  </script>
+</body>
+</html>

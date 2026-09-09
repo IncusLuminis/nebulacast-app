@@ -1,0 +1,72 @@
+.nc-widget {
+  --nc-widget-background: transparent;
+  --nc-widget-color: inherit;
+  --nc-widget-muted-color: currentColor;
+  --nc-widget-border-color: transparent;
+  --nc-widget-gap: 1rem;
+  --nc-widget-padding: 0;
+  --nc-widget-radius: 0;
+  box-sizing: border-box;
+  background: var(--nc-widget-background);
+  border: 1px solid var(--nc-widget-border-color);
+  border-radius: var(--nc-widget-radius);
+  color: var(--nc-widget-color);
+  padding: var(--nc-widget-padding);
+}
+
+.nc-widget[data-nc-theme="dark"] {
+  --nc-widget-background: #0b0d12;
+  --nc-widget-color: #e6e6e6;
+  --nc-widget-muted-color: #9aa3b2;
+  --nc-widget-border-color: #2a2f3a;
+}
+
+.nc-widget[data-nc-density="compact"] {
+  --nc-widget-gap: 0.5rem;
+  --nc-widget-padding: 0.5rem;
+  --nc-widget-radius: 0.375rem;
+}
+
+.nc-widget[data-nc-density="normal"] {
+  --nc-widget-gap: 1rem;
+  --nc-widget-padding: 1rem;
+  --nc-widget-radius: 0.75rem;
+}
+
+.nc-widget[data-nc-density="comfortable"] {
+  --nc-widget-gap: 1.5rem;
+  --nc-widget-padding: 1.5rem;
+  --nc-widget-radius: 1rem;
+}
+
+.nc-widget[data-nc-orientation="horizontal"] {
+  --nc-widget-layout-direction: row;
+}
+
+.nc-widget[data-nc-orientation="vertical"] {
+  --nc-widget-layout-direction: column;
+}
+
+.nc-widget[data-nc-state="loading"] {
+  --nc-widget-state-color: var(--nc-widget-muted-color);
+}
+
+.nc-widget[data-nc-state="ready"] {
+  --nc-widget-state-color: var(--nc-widget-color);
+}
+
+.nc-widget[data-nc-state="empty"],
+.nc-widget[data-nc-state="stale"],
+.nc-widget[data-nc-state="degraded"] {
+  --nc-widget-state-color: var(--nc-widget-muted-color);
+}
+
+.nc-widget[data-nc-state="error"] {
+  --nc-widget-state-color: #ffaaaa;
+  --nc-widget-border-color: #b54b4b;
+}
+
+.nc-widget .nc-widget__status {
+  color: var(--nc-widget-state-color, var(--nc-widget-muted-color));
+  gap: var(--nc-widget-gap);
+}

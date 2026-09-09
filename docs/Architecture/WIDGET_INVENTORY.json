@@ -1,0 +1,308 @@
+{
+  "schema_version": "1.0",
+  "story": "#66",
+  "title": "Frozen widget inventory, production paths and artifact ownership",
+  "repository": "IncusLuminis/nebulacast-app",
+  "status": "baseline",
+  "canonical_deploy_root": "sites/staging",
+  "canonical_local_test": "make server",
+  "classification_legend": {
+    "production": "Active implementation or active public host in the current product.",
+    "legacy": "Kept for compatibility or historical callers; do not extend as a second implementation.",
+    "POC": "Prototype or exploratory implementation; not a platform extension point."
+  },
+  "ownership_rules": [
+    "Each widget has exactly one authoritative source_of_truth path.",
+    "Generated_or_copied_artifacts are public or derived outputs and are not independently edited implementations.",
+    "Compatibility paths may route to or adapt the authoritative source, but must not duplicate its logic.",
+    "Adding another editable implementation requires updating this manifest in the same change.",
+    "The manifest records the current state only; it does not authorize migration, deletion, deployment, or staging changes."
+  ],
+  "map_decision": {
+    "production_path": "sites/staging/weather/map-poc.html",
+    "production_adapter": "sites/staging/weather/widgets/map/map.js",
+    "compatibility_paths": [
+      "sites/staging/map/index.html",
+      "sites/staging/weather/map1.html"
+    ],
+    "non_production_path": {
+      "path": "sites/staging/weather/widgets/map/map2.js",
+      "classification": "POC"
+    },
+    "rationale": "weather-map-entrypoint.md identifies map-poc.html as the supported route; map1.html only redirects and map/index.html only hosts it."
+  },
+  "widgets": [
+    {
+      "id": "hero",
+      "classification": "production",
+      "source_of_truth": "sites/staging/index.html",
+      "generated_or_copied_artifacts": [],
+      "build_path": "No build step; the dashboard shell is hand-authored and frontend/build.py preserves index.html.",
+      "deploy_paths": ["sites/staging/index.html"],
+      "local_test_path": "make server; http://localhost:8080/",
+      "compatibility_paths": [],
+      "path_classification": [
+        {"path": "sites/staging/index.html", "role": "inline Hero implementation", "classification": "production"}
+      ],
+      "supporting_data_sources": [
+        "sites/staging/data/observer_weather_now.json",
+        "sites/staging/data/helio_now.json",
+        "sites/staging/shared/lunar.mjs"
+      ],
+      "notes": "Hero remains inline until the specified standalone extraction. It must not read another widget's DOM as its source."
+    },
+    {
+      "id": "location",
+      "classification": "production",
+      "source_of_truth": "sites/staging/weather/widgets/location/location.js",
+      "generated_or_copied_artifacts": [],
+      "build_path": "No build step; the modular Weather application is committed under sites/staging/weather/ and preserved by frontend/build.py.",
+      "deploy_paths": [
+        "sites/staging/weather/widgets/location/location.js",
+        "sites/staging/weather/widgets/location/location.css"
+      ],
+      "local_test_path": "make server; http://localhost:8080/weather/",
+      "compatibility_paths": ["sites/staging/weather/index.html"],
+      "path_classification": [
+        {"path": "sites/staging/weather/widgets/location/location.js", "role": "widget implementation", "classification": "production"},
+        {"path": "sites/staging/weather/core/state.js", "role": "shared context dependency", "classification": "production"}
+      ],
+      "supporting_data_sources": [
+        "functions/api/geocode.ts",
+        "functions/api/revgeo.ts",
+        "sites/staging/weather/core/state.js"
+      ],
+      "notes": "The embed query ?embed=1 suppresses the Location UI; it does not create another Location implementation."
+    },
+    {
+      "id": "weather",
+      "classification": "production",
+      "source_of_truth": "sites/staging/weather/widgets/weather/weather.js",
+      "generated_or_copied_artifacts": [
+        "sites/staging/weather/daily_weather.json",
+        "sites/staging/data/observer_weather_now.json"
+      ],
+      "build_path": "make weather-back && make weather-observer; frontend/build.py preserves the Weather runtime under sites/staging/weather/.",
+      "deploy_paths": ["sites/staging/weather/"],
+      "local_test_path": "make server; http://localhost:8080/weather/",
+      "compatibility_paths": [
+        "sites/staging/weather/weather-vertical.html",
+        "sites/staging/weather/embed-vertical.js"
+      ],
+      "path_classification": [
+        {"path": "sites/staging/weather/widgets/weather/weather.js", "role": "widget implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/weather/weather_vertical.js", "role": "vertical compatibility implementation", "classification": "legacy"},
+        {"path": "sites/staging/weather/weather-vertical.html", "role": "vertical compatibility host", "classification": "legacy"},
+        {"path": "sites/staging/weather/embed-vertical.js", "role": "iframe compatibility adapter", "classification": "legacy"}
+      ],
+      "supporting_data_sources": [
+        "functions/api/astro-weather.ts",
+        "sites/staging/weather/daily_weather.json",
+        "sites/staging/data/observer_weather_now.json",
+        "sites/staging/sky/data/sun_moon.json"
+      ],
+      "notes": "The vertical path is compatibility-only and must not become a second independently edited Weather implementation."
+    },
+    {
+      "id": "sun-moon",
+      "classification": "production",
+      "source_of_truth": "sites/staging/weather/widgets/sun_moon/sun_moon.js",
+      "generated_or_copied_artifacts": [
+        "sites/staging/shared/lunar.mjs",
+        "functions/lib/lunar.js",
+        "sites/staging/sky/data/sun_moon.json"
+      ],
+      "build_path": "npm run build:lunar for shared lunar artifacts; make sky-back for the generated static Sky sun_moon dataset.",
+      "deploy_paths": [
+        "sites/staging/weather/widgets/sun_moon/",
+        "sites/staging/shared/lunar.mjs",
+        "sites/staging/sky/data/sun_moon.json"
+      ],
+      "local_test_path": "make server; http://localhost:8080/weather/ (Sun tab)",
+      "compatibility_paths": [],
+      "path_classification": [
+        {"path": "sites/staging/weather/widgets/sun_moon/sun_moon.js", "role": "widget implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/sun_moon/sun_moon_1.js", "role": "historical variant", "classification": "legacy"},
+        {"path": "frontend/astronomy/lunar.ts", "role": "shared lunar computation source", "classification": "production"}
+      ],
+      "supporting_data_sources": [
+        "frontend/astronomy/lunar.ts",
+        "functions/api/sun-moon.js",
+        "sites/staging/sky/data/sun_moon.json"
+      ],
+      "notes": "The shared lunar contract is authoritative for phase and illumination; generated browser/server artifacts are derived outputs."
+    },
+    {
+      "id": "astro",
+      "classification": "production",
+      "source_of_truth": "sites/staging/weather/widgets/astro/astro.js",
+      "generated_or_copied_artifacts": [],
+      "build_path": "No build step; the Astro widget is a committed modular Weather runtime module.",
+      "deploy_paths": [
+        "sites/staging/weather/widgets/astro/astro.js",
+        "sites/staging/weather/widgets/astro/astro.css"
+      ],
+      "local_test_path": "make server; http://localhost:8080/weather/ (Astro tab)",
+      "compatibility_paths": [],
+      "path_classification": [
+        {"path": "sites/staging/weather/widgets/astro/astro.js", "role": "widget implementation", "classification": "production"}
+      ],
+      "supporting_data_sources": [
+        "sites/staging/weather/core/state.js",
+        "functions/api/astro-weather.ts"
+      ],
+      "notes": "Astro consumes the shared Weather context and must not introduce a parallel location/time model."
+    },
+    {
+      "id": "map",
+      "classification": "production",
+      "source_of_truth": "sites/staging/weather/map-poc.html",
+      "generated_or_copied_artifacts": [
+        "sites/staging/data/weather_map_now.json",
+        "sites/staging/data/tile_manifests"
+      ],
+      "build_path": "make weather-map; the map runtime is committed under sites/staging/weather/ and is preserved by frontend/build.py.",
+      "deploy_paths": [
+        "sites/staging/weather/map-poc.html",
+        "sites/staging/weather/widgets/map/map.js",
+        "sites/staging/map/index.html"
+      ],
+      "local_test_path": "make server; http://localhost:8080/weather/ (Map tab) and http://localhost:8080/map/",
+      "compatibility_paths": [
+        "sites/staging/map/index.html",
+        "sites/staging/weather/map1.html"
+      ],
+      "path_classification": [
+        {"path": "sites/staging/weather/map-poc.html", "role": "supported production map implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/map/map.js", "role": "production Weather-tab adapter", "classification": "production"},
+        {"path": "sites/staging/map/index.html", "role": "production compatibility host", "classification": "production"},
+        {"path": "sites/staging/weather/map1.html", "role": "redirect compatibility route", "classification": "legacy"},
+        {"path": "sites/staging/weather/widgets/map/map2.js", "role": "unused alternate implementation", "classification": "POC"}
+      ],
+      "supporting_data_sources": [
+        "sites/staging/data/weather_map_now.json",
+        "sites/staging/data/tile_manifests"
+      ],
+      "notes": "map1.html and map/index.html contain routing/hosting only; map2.js is not a production extension point."
+    },
+    {
+      "id": "sky",
+      "classification": "production",
+      "source_of_truth": "sites/staging/sky/widget.js",
+      "generated_or_copied_artifacts": [
+        "services/sky/data/generated",
+        "sites/staging/sky/data"
+      ],
+      "build_path": "make sky-back; services/sky/pipelines/gen_all.py produces the generated Sky datasets.",
+      "deploy_paths": ["sites/staging/sky/"],
+      "local_test_path": "make server; http://localhost:8080/sky/ and http://localhost:8080/weather/ (Sky tab)",
+      "compatibility_paths": [
+        "sites/staging/sky/index.html",
+        "sites/staging/sky/objects.html",
+        "sites/staging/sky/alerts.html"
+      ],
+      "path_classification": [
+        {"path": "sites/staging/sky/widget.js", "role": "widget entrypoint", "classification": "production"},
+        {"path": "sites/staging/sky/index.html", "role": "standalone host", "classification": "production"},
+        {"path": "sites/staging/sky/objects.html", "role": "standalone compatibility host", "classification": "legacy"},
+        {"path": "sites/staging/sky/alerts.html", "role": "standalone compatibility host", "classification": "legacy"}
+      ],
+      "supporting_data_sources": [
+        "sites/staging/sky/core/",
+        "services/sky/pipelines/"
+      ],
+      "notes": "window.SKY_CONFIG and window.__skyWidget remain legacy bootstrap compatibility; new mounts must use the future runtime API."
+    },
+    {
+      "id": "news",
+      "classification": "production",
+      "source_of_truth": "frontend/assets/js/widget_runtime.js",
+      "generated_or_copied_artifacts": [
+        "sites/staging/news/widget.js",
+        "sites/staging/news/index.html",
+        "sites/staging/assets/js/widget_runtime.js",
+        "sites/staging/assets/css/widget_news.css",
+        "sites/staging/news/rss.xml"
+      ],
+      "build_path": "make news (backend plus frontend) or make news-front for frontend generation only.",
+      "deploy_paths": [
+        "sites/staging/news/",
+        "sites/staging/assets/js/widget_runtime.js",
+        "sites/staging/assets/css/widget_news.css"
+      ],
+      "local_test_path": "make server; http://localhost:8080/news/ and http://localhost:8080/",
+      "compatibility_paths": ["sites/staging/news/widget.js"],
+      "path_classification": [
+        {"path": "frontend/assets/js/widget_runtime.js", "role": "News runtime implementation", "classification": "production"},
+        {"path": "frontend/templates/partials/widget_news.html", "role": "generated markup template", "classification": "production"},
+        {"path": "sites/staging/news/widget.js", "role": "generated Blogger adapter", "classification": "legacy"}
+      ],
+      "supporting_data_sources": [
+        "frontend/templates/partials/widget_news.html",
+        "frontend/templates/partials/widget_news_logic.js.tmpl",
+        "services/news/pipelines/run_news.py",
+        "sites/staging/news/rss.xml"
+      ],
+      "notes": "The runtime and templates together define the existing generated surface; generated files are not edited independently."
+    },
+    {
+      "id": "events",
+      "classification": "production",
+      "source_of_truth": "frontend/assets/js/widget_runtime.js",
+      "generated_or_copied_artifacts": [
+        "sites/staging/calendar/widget.js",
+        "sites/staging/calendar/index.html",
+        "sites/staging/assets/js/widget_runtime.js",
+        "sites/staging/assets/css/widget_calendar.css",
+        "sites/staging/calendar/daily_signal.json",
+        "sites/staging/alerts/rss.xml"
+      ],
+      "build_path": "make calendar (backend plus frontend) or make calendar-front for frontend generation only.",
+      "deploy_paths": [
+        "sites/staging/calendar/",
+        "sites/staging/alerts/rss.xml",
+        "sites/staging/assets/js/widget_runtime.js",
+        "sites/staging/assets/css/widget_calendar.css"
+      ],
+      "local_test_path": "make server; http://localhost:8080/calendar/",
+      "compatibility_paths": ["sites/staging/calendar/widget.js"],
+      "path_classification": [
+        {"path": "frontend/assets/js/widget_runtime.js", "role": "Calendar runtime implementation", "classification": "production"},
+        {"path": "frontend/templates/partials/widget_calendar.html", "role": "generated markup template", "classification": "production"},
+        {"path": "sites/staging/calendar/widget.js", "role": "generated standalone adapter", "classification": "legacy"}
+      ],
+      "supporting_data_sources": [
+        "frontend/templates/partials/widget_calendar.html",
+        "frontend/templates/partials/widget_calendar_logic.js.tmpl",
+        "services/calendar/pipelines/run_calendar.py",
+        "sites/staging/calendar/daily_signal.json"
+      ],
+      "notes": "Calendar is the current Events surface; its generated data flow remains unchanged by Story #66."
+    },
+    {
+      "id": "alerts",
+      "classification": "production",
+      "source_of_truth": "sites/staging/index.html",
+      "generated_or_copied_artifacts": [
+        "sites/staging/sky/data/alerts_now.json",
+        "sites/staging/data/space_weather_now.json",
+        "sites/staging/alerts/rss.xml"
+      ],
+      "build_path": "No standalone widget build; current Console alert rendering is inline. Data refreshes use make sky-back, make weather-observer, and make calendar-back as applicable.",
+      "deploy_paths": ["sites/staging/index.html", "sites/staging/sky/data/", "sites/staging/data/space_weather_now.json"],
+      "local_test_path": "make server; http://localhost:8080/ (Console alert rail)",
+      "compatibility_paths": ["sites/staging/alerts/rss.xml"],
+      "path_classification": [
+        {"path": "sites/staging/index.html", "role": "current Console alert implementation", "classification": "production"},
+        {"path": "sites/staging/sky/data/alerts_now.json", "role": "generated Sky alert dataset", "classification": "production"},
+        {"path": "sites/staging/alerts/rss.xml", "role": "calendar/RSS compatibility feed", "classification": "legacy"}
+      ],
+      "supporting_data_sources": [
+        "services/sky/pipelines/gen_alerts.py",
+        "services/helio/pipelines/gen_helio.py",
+        "services/calendar/pipelines/render_rss.py"
+      ],
+      "notes": "There is no standalone Alerts runtime yet; extraction is a later Story. The current Console implementation is the only authoritative UI path."
+    }
+  ]
+}

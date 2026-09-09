@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weather Platform Fixture</title>
+  <link rel="stylesheet" href="/shared/widget-shell.css">
+  <link rel="stylesheet" href="/weather/widgets/weather/weather.css">
+  <link rel="stylesheet" href="/weather/widgets/weather/weather_vertical.css">
+  <style>
+    body { margin: 0; padding: 16px; background: #101318; color: #e6e6e6; font: 14px system-ui, sans-serif; }
+    [data-weather-root] { min-height: 140px; margin: 12px 0; }
+    #weather-narrow { max-width: 420px; }
+    #weather-sentinel { color: rgb(18, 52, 86); padding: 3px; border: 0; }
+  </style>
+</head>
+<body>
+  <p id="weather-sentinel">Outside weather widget sentinel</p>
+  <section id="weather-wide" data-weather-root aria-label="Wide Weather"></section>
+  <section id="weather-narrow" data-weather-root aria-label="Narrow Weather"></section>
+
+  <script type="module">
+    window.__WEATHER_POC_CONFIG = {
+      apiAstroWeatherUrl: "/api/astro-weather",
+      fallbackLegacyUrl: "/weather/daily_weather.json",
+    };
+
+    function createContext() {
+      let state = {
+        observer: { name: "Warsaw", lat: 52.2297, lon: 21.0122, timezone: "Europe/Warsaw", source: "fixture" },
+        time: { mode: "live", datetimeISO: null },
+        locale: "en",
+        theme: "dark",
+      };
+      const listeners = new Set();
+      return {
+        get: () => structuredClone(state),
+        subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+        update(patch = {}) {
+          state = {
+            ...state,
+            ...structuredClone(patch),
+            observer: patch.observer ? { ...state.observer, ...structuredClone(patch.observer) } : state.observer,
+            time: patch.time ? { ...state.time, ...structuredClone(patch.time) } : state.time,
+          };
+          const next = structuredClone(state);
+          for (const listener of [...listeners]) listener(next);
+          return next;
+        },
+      };
+    }
+
+    const context = createContext();
+    const { widgetCatalog } = await import("/shared/widget-catalog.mjs");
+    const { createNebulacast } = await import("/shared/widget-runtime.mjs");
+    const runtime = createNebulacast({
+      context,
+      resolveAutoOrientation: ({ root }) => root.clientWidth < 520 ? "vertical" : "horizontal",
+    });
+    const roots = {
+      wide: document.querySelector("#weather-wide"),
+      narrow: document.querySelector("#weather-narrow"),
+    };
+    const configs = {
+      wide: { orientation: "auto", profile: "visual", range: "7d" },
+      narrow: { orientation: "auto", profile: "planetary", range: "48h" },
+    };
+    const instances = {};
+
+    async function mount(name) {
+      instances[name] = await runtime.mount(roots[name], { widget: "weather", config: configs[name] });
+      return instances[name];
+    }
+
+    await Promise.all([mount("wide"), mount("narrow")]);
+    window.weatherHost = {
+      context,
+      roots,
+      instances,
+      widgetCatalog,
+      async destroy(name) {
+        instances[name]?.destroy();
+        return true;
+      },
+      async remount(name) {
+        await mount(name);
+        return instances[name];
+      },
+    };
+  </script>
+</body>
+</html>

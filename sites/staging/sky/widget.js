@@ -33,16 +33,14 @@ import {
 import { el, toHTML } from "./widgets/widget.dom.js";
 import {
   applyUIHighlight,
-  setHighlightById,
+  setHighlightById as setGlobalHighlightById,
   installHighlightMatcher,
 } from "./widgets/widget.highlight.js";
 import * as Popovers from "./widgets/widget.popovers.js";
 
-(function () {
-  "use strict";
+const PLATFORM_IMPORT = new URL(import.meta.url).searchParams.get("platform") === "1";
 
-
-  function makeRoot(container) {
+function makeRoot(container) {
     const root = document.createElement("div");
     root.className = "sky-root";
     root.innerHTML = `
@@ -87,7 +85,8 @@ import * as Popovers from "./widgets/widget.popovers.js";
     return { root, wrap, canvas, status };
   }
 
-  function resolveMount(cfg) {
+function resolveMount(cfg, explicitMount) {
+    if (explicitMount) return explicitMount;
     if (!cfg || !cfg.mountId) {
       throw new Error("SKY_CONFIG.mountId is required (e.g. 'skyMount').");
     }
@@ -125,32 +124,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }${planetsOn ? " | Planets" : ""}`;
   }
 
-  // Highlight helper (global) used by Render.drawObjects()
-  window.__skyIsHighlighted = function (obj) {
-    const h = window.__skyHighlight;
-    if (!h) return false;
-    if (Date.now() > h.until) return false;
-    if (!obj) return false;
-
-    const hid = String(h.id || "").trim().toLowerCase();
-    if (!hid) return false;
-
-    const group = obj.group ? String(obj.group).trim().toLowerCase() : "";
-    const id = obj.id ? String(obj.id).trim().toLowerCase() : "";
-    const name = obj.name ? String(obj.name).trim().toLowerCase() : "";
-
-    const candidates = [
-      id,
-      name,
-      group && id ? `${group}:${id}` : null,
-      group && name ? `${group}:${name}` : null,
-      obj.meta?.planet_key ? String(obj.meta.planet_key).trim().toLowerCase() : null,
-    ].filter(Boolean);
-
-    return candidates.includes(hid);
-  };
-
-  function getMousePosCSS(canvasEl, ev) {
+function getMousePosCSS(canvasEl, ev) {
     const r = canvasEl.getBoundingClientRect();
     return { x: ev.clientX - r.left, y: ev.clientY - r.top };
   }
@@ -210,9 +184,54 @@ import * as Popovers from "./widgets/widget.popovers.js";
   // ---- helpers for popover content (safe DOM -> html) ----
 
 
-  async function init(userCfg) {
+function readContextConfig(context) {
+    if (!context || typeof context.get !== "function") return {};
+    const snapshot = context.get() || {};
+    const observer = snapshot.observer || {};
+    const time = snapshot.time || {};
+    const patch = {};
+    if (Number.isFinite(observer.lat)) patch.lat = observer.lat;
+    if (Number.isFinite(observer.lon)) patch.lon = observer.lon;
+    if (Object.prototype.hasOwnProperty.call(time, "datetimeISO")) {
+      patch.datetimeISO = time.datetimeISO || null;
+    }
+    return patch;
+  }
+
+function applyContextConfig(cfg, snapshot) {
+    const observer = snapshot?.observer || {};
+    const time = snapshot?.time || {};
+    if (Number.isFinite(observer.lat)) cfg.lat = observer.lat;
+    if (Number.isFinite(observer.lon)) cfg.lon = observer.lon;
+    if (Object.prototype.hasOwnProperty.call(time, "datetimeISO")) {
+      cfg.datetimeISO = time.datetimeISO || null;
+    }
+  }
+
+function resolveSkyOrientation(cfg, mount) {
+    if (cfg.orientation !== "auto") return cfg.orientation || "horizontal";
+    const rect = mount?.getBoundingClientRect?.();
+    return rect && rect.width < 520 ? "vertical" : "horizontal";
+}
+
+function createPlatformTooltip(element) {
+  return {
+    show(x, y, html) {
+      element.style.left = `${x}px`;
+      element.style.top = `${y}px`;
+      element.innerHTML = html || "";
+      element.style.display = "block";
+    },
+    hide() {
+      element.style.display = "none";
+    },
+  };
+}
+
+async function init(userCfg, { mount: explicitMount = null, context = null, platform = false } = {}) {
     const cfg = deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), userCfg || {});
-    installHighlightMatcher();
+    if (platform) deepMerge(cfg, readContextConfig(context));
+    else installHighlightMatcher();
     cfg.options = cfg.options || {};
 
     // preserve old behavior: cardinals ON unless explicitly false
@@ -233,8 +252,71 @@ import * as Popovers from "./widgets/widget.popovers.js";
       return v == null ? UI_DEFAULTS[name] : !!v;
     }
 
-    const mount = resolveMount(cfg);
+    const mount = resolveMount(cfg, explicitMount);
+    let requestedOrientation = cfg.orientation || "auto";
+    const applyOrientation = () => {
+      cfg.orientation = requestedOrientation === "auto"
+        ? resolveSkyOrientation({ ...cfg, orientation: "auto" }, mount)
+        : requestedOrientation;
+      if (root?.dataset) root.dataset.ncOrientation = cfg.orientation;
+    };
     const { root, wrap, canvas, status } = makeRoot(mount);
+    applyOrientation();
+
+    let lifecycleDisposed = false;
+    let unsubscribeContext = null;
+    const localHighlight = { value: null };
+    let fullscreenResizeTimer = 0;
+    let playerSyncRafId = 0;
+    const pendingPopoverRafIds = new Set();
+
+    const localHighlightPredicate = platform
+      ? (obj) => {
+          const h = localHighlight.value;
+          if (!h || Date.now() > h.until || !obj) return false;
+
+          const hid = normLower(h.id);
+          if (!hid) return false;
+
+          const group = normLower(obj.group);
+          const id = normLower(obj.id);
+          const name = normLower(obj.name);
+          const candidates = [
+            id,
+            name,
+            group && id ? `${group}:${id}` : null,
+            group && name ? `${group}:${name}` : null,
+            obj.meta?.planet_key ? normLower(obj.meta.planet_key) : null,
+          ].filter(Boolean);
+
+          return candidates.includes(hid);
+        }
+      : null;
+
+    function schedulePopoverRaf(callback) {
+      let raf = 0;
+      raf = requestAnimationFrame(() => {
+        pendingPopoverRafIds.delete(raf);
+        if (lifecycleDisposed) return;
+        callback();
+      });
+      pendingPopoverRafIds.add(raf);
+    }
+
+    function cancelPendingPopoverRafs() {
+      for (const raf of pendingPopoverRafIds) cancelAnimationFrame(raf);
+      pendingPopoverRafIds.clear();
+    }
+
+    function cancelFullscreenResize() {
+      if (fullscreenResizeTimer) clearTimeout(fullscreenResizeTimer);
+      fullscreenResizeTimer = 0;
+    }
+
+    function cancelPlayerSync() {
+      if (playerSyncRafId) cancelAnimationFrame(playerSyncRafId);
+      playerSyncRafId = 0;
+    }
 
     let ctx, viewport;
     ({ ctx, viewport } = Layout.setupCanvas(canvas, mount));
@@ -242,7 +324,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
     // Keep existing tooltip for now (follows mouse)
     const tooltipEl = document.createElement("div");
     root.appendChild(tooltipEl);
-    const tooltip = SkyUI.createTooltip(root, tooltipEl);
+    const tooltip = platform ? createPlatformTooltip(tooltipEl) : SkyUI.createTooltip(root, tooltipEl);
 
     // Modular UI components (custom elements) - optional
     const sideFs  = uiEnabled("sideToolbar") ? document.createElement("ui-side-toolbar") : null;
@@ -264,7 +346,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     const modalWC  = uiEnabled("modal") ? document.createElement("ui-modal") : null;
-    const statsDlg = createStatsDialog(root); // stats dialog (overlay appended inside root → visible in fullscreen)
+    const statsDlg = platform ? { open() {}, close() {} } : createStatsDialog(root);
     const player = uiEnabled("player") ? document.createElement("ui-player") : null;
     const skyCard = document.createElement("sky-card");
     
@@ -554,10 +636,11 @@ import * as Popovers from "./widgets/widget.popovers.js";
       mwPrepared =
         cfg.options.showMilkyWay && milkyway ? Prepare.buildMilkyWay(observer, viewport, milkyway) : null;
 
-      const uiHighlightId =
-        typeof window !== "undefined" && window.__skyHighlight && window.__skyHighlight.id != null
+      const uiHighlightId = platform
+        ? (localHighlight.value?.id || "")
+        : (typeof window !== "undefined" && window.__skyHighlight && window.__skyHighlight.id != null
           ? String(window.__skyHighlight.id)
-          : null;
+          : null);
 
       objectsPrepared =
         cfg.options.showObjects && objectsToday
@@ -604,6 +687,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     function render() {
+      if (lifecycleDisposed) return;
       // ── Atmosphere: compute sky brightness factor ─────────────────────────
       let atmosphereFactor = 0;
       if (cfg.options?.showAtmosphere) {
@@ -636,7 +720,9 @@ import * as Popovers from "./widgets/widget.popovers.js";
       // Skip star/object rendering entirely in full daylight (perf + visual)
       if (skyVisibility > 0.01) {
         Render.drawStars(ctx, viewport, starsPrepared);
-        if (cfg.options?.showAlerts && alertsPrepared.length) Render.drawAlerts(ctx, viewport, alertsPrepared);
+        if (cfg.options?.showAlerts && alertsPrepared.length) {
+          Render.drawAlerts(ctx, viewport, alertsPrepared, localHighlightPredicate);
+        }
         if (planetsPrepared && planetsPrepared.length) {
           if (typeof Render.drawPlanets === "function") Render.drawPlanets(ctx, viewport, planetsPrepared);
           else if (typeof Render.drawObjects === "function") Render.drawObjects(ctx, viewport, planetsPrepared);
@@ -646,9 +732,11 @@ import * as Popovers from "./widgets/widget.popovers.js";
           typeof Render.drawMessier === "function" &&
           messierPrepared && messierPrepared.length
         ) {
-          Render.drawMessier(ctx, viewport, messierPrepared);
+          Render.drawMessier(ctx, viewport, messierPrepared, localHighlightPredicate);
         }
-        if (cfg.options?.showObjects && objectsPrepared.length) Render.drawObjects(ctx, viewport, objectsPrepared);
+        if (cfg.options?.showObjects && objectsPrepared.length) {
+          Render.drawObjects(ctx, viewport, objectsPrepared, localHighlightPredicate);
+        }
       }
 
       ctx.restore(); // end atmosphere dimming
@@ -683,8 +771,10 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     function resize() {
+      if (lifecycleDisposed) return;
+      applyOrientation();
       // In fullscreen mode, use window dimensions instead of mount
-      const isFs = !!document.fullscreenElement;
+      const isFs = !platform && !!document.fullscreenElement;
       let r;
       
       if (isFs) {
@@ -719,7 +809,9 @@ import * as Popovers from "./widgets/widget.popovers.js";
     let rafId = 0;
 
     function isHighlightActive() {
-      const h = typeof window !== "undefined" ? window.__skyHighlight : null;
+      const h = platform
+        ? localHighlight.value
+        : (typeof window !== "undefined" ? window.__skyHighlight : null);
       return !!(h && Date.now() <= h.until && h.id != null && String(h.id).length > 0);
     }
 
@@ -729,12 +821,12 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     function startAnim() {
-      if (rafId) return;
+      if (lifecycleDisposed || rafId) return;
 
       const tick = () => {
-        if (!isHighlightActive()) {
+        if (lifecycleDisposed || !isHighlightActive()) {
           stopAnim();
-          render();
+          if (!lifecycleDisposed) render();
           return;
         }
         render();
@@ -745,10 +837,12 @@ import * as Popovers from "./widgets/widget.popovers.js";
     }
 
     function setHighlightById(hid, ms = 3200) {
+      if (lifecycleDisposed) return;
       const id = String(hid || "").trim();
       if (!id) return;
 
-      window.__skyHighlight = { id, until: Date.now() + ms };
+      if (platform) localHighlight.value = { id, until: Date.now() + ms };
+      else setGlobalHighlightById(id, ms);
       recomputeAll();
       render();
       startAnim();
@@ -757,6 +851,7 @@ import * as Popovers from "./widgets/widget.popovers.js";
     function update(patch) {
       if (!patch) return;
 
+      if (patch.orientation !== undefined) requestedOrientation = patch.orientation;
       deepMerge(cfg, patch);
       cfg.options = cfg.options || {};
       if (cfg.options.showCardinals == null) cfg.options.showCardinals = true;
@@ -764,7 +859,19 @@ import * as Popovers from "./widgets/widget.popovers.js";
       cfg.ui = cfg.ui || {};
       cfg.ui.components = cfg.ui.components || {};
 
-      applyUIHighlight(patch);
+      if (platform) {
+        const hid = patch?.ui?.highlightId;
+        if (hid) {
+          localHighlight.value = {
+            id: String(hid),
+            until: Date.now() + (patch.ui.highlightMs ?? 3000),
+          };
+        }
+      } else {
+        applyUIHighlight(patch);
+      }
+
+      applyOrientation();
 
       recomputeAll();
       render();
@@ -1660,7 +1767,7 @@ function buildAlertsListContent() {
       const res = buildRankingContent7();
       popRanking.content = res.html;
       popRanking.open(anchorEl, { placement: "left", offset: 10, boundaryEl: root });
-      requestAnimationFrame(() => {
+      schedulePopoverRaf(() => {
         wirePopoverClicks(popRanking, { onShowAll: () => openAllObjectsModal() });
       });
     }
@@ -1672,7 +1779,7 @@ function buildAlertsListContent() {
 
       popObjects.content = buildObjectsRankingContent();
       popObjects.open(anchorEl, { placement: "left", offset: 10, boundaryEl: root });
-      requestAnimationFrame(() => {
+      schedulePopoverRaf(() => {
         wirePopoverClicks(popObjects, { onShowAll: () => openAllObjectsModal() });
       });
     }
@@ -1684,7 +1791,7 @@ function buildAlertsListContent() {
 
       popAlerts.content = buildAlertsListContent();
       popAlerts.open(anchorEl, { placement: "left", offset: 10, boundaryEl: root });
-      requestAnimationFrame(() => {
+      schedulePopoverRaf(() => {
         wirePopoverClicks(popAlerts, { onShowAll: () => openAllAlertsModal() });
       });
     }
@@ -1700,7 +1807,7 @@ function buildAlertsListContent() {
     }
 
     function _fsTarget() {
-      return document.getElementById("skyStage") || root;
+      return platform ? root : (document.getElementById("skyStage") || root);
     }
 
     function toggleFullscreen() {
@@ -1711,12 +1818,16 @@ function buildAlertsListContent() {
       }
     }
 
-    document.addEventListener("fullscreenchange", () => {
+    const onFullscreenChange = () => {
+      if (lifecycleDisposed) return;
       const isFs = !!document.fullscreenElement;
       if (sideFs) sideFs.setPressed("fullscreen", isFs);
       
       // Resize canvas to fit new dimensions (normal or fullscreen)
-      setTimeout(() => {
+      cancelFullscreenResize();
+      fullscreenResizeTimer = setTimeout(() => {
+        fullscreenResizeTimer = 0;
+        if (lifecycleDisposed) return;
         console.log("[sky] fullscreenchange: isFs =", isFs);
         console.log("[sky] mount client size:", mount.clientWidth, "x", mount.clientHeight);
         console.log("[sky] root client size:", root.clientWidth, "x", root.clientHeight);
@@ -1729,7 +1840,8 @@ function buildAlertsListContent() {
           console.error("[sky] resize after fullscreen failed:", err);
         }
       }, 100);
-    });
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
 
     // ── Player visibility toggle ──
     // Player height: ~84px. Button stays fixed at EDGE, player slides up from below.
@@ -1846,7 +1958,7 @@ function buildAlertsListContent() {
     }
 
     function playerSyncUI() {
-      if (!player) return;
+      if (lifecycleDisposed || !player) return;
       const dur = (_dataWindow.end - _dataWindow.start) / 1000;  // seconds
       const elapsed = (playerCurrentMs() - _dataWindow.start) / 1000;
       player.setTime(Math.max(0, elapsed), dur);
@@ -1856,16 +1968,17 @@ function buildAlertsListContent() {
     function playerStop() {
       _playerPlaying = false;
       if (_playerRafId) { cancelAnimationFrame(_playerRafId); _playerRafId = 0; }
-      if (player) player.setPlaying(false);
+      if (player && !lifecycleDisposed) player.setPlaying(false);
     }
 
     function playerPlay() {
+      if (lifecycleDisposed) return;
       _playerPlaying = true;
       if (player) player.setPlaying(true);
       let lastTs = null;
 
       const tick = (ts) => {
-        if (!_playerPlaying) return;
+        if (lifecycleDisposed || !_playerPlaying) return;
         if (lastTs !== null) {
           const dtSec = (ts - lastTs) / 1000;
           const addMs = dtSec * PLAYER_SPEED_MIN_PER_SEC * 60 * 1000;
@@ -1927,7 +2040,11 @@ function buildAlertsListContent() {
       const initialTime = Math.max(_dataWindow.start, Math.min(_dataWindow.end, Date.now()));
       console.log("[Player] Setting initial time:", new Date(initialTime), "from Date.now():", new Date(Date.now()));
       setTimeISO(new Date(initialTime).toISOString());
-      requestAnimationFrame(() => playerSyncUI());
+      playerSyncRafId = requestAnimationFrame(() => {
+        playerSyncRafId = 0;
+        if (lifecycleDisposed) return;
+        playerSyncUI();
+      });
     }
 
     // --------- HIT TEST / INTERACTIONS ----------
@@ -2028,8 +2145,12 @@ function buildAlertsListContent() {
     }
 
     const onWinResize = () => {
+      if (lifecycleDisposed) return;
       clearTimeout(onWinResize.__t);
-      onWinResize.__t = setTimeout(() => resize(), 50);
+      onWinResize.__t = setTimeout(() => {
+        if (lifecycleDisposed) return;
+        resize();
+      }, 50);
     };
     window.addEventListener("resize", onWinResize);
 
@@ -2043,19 +2164,70 @@ function buildAlertsListContent() {
     // if highlight already exists on boot
     if (isHighlightActive()) startAnim();
 
-    setTimeout(() => resize(), 0);
+    const initialResizeTimer = setTimeout(() => {
+      if (lifecycleDisposed) return;
+      resize();
+    }, 0);
 
-    return makeHandle({ root, update, resize, onWinResize, stopAnim });
+    if (platform && context?.subscribe) {
+      unsubscribeContext = context.subscribe((snapshot) => {
+        if (lifecycleDisposed) return;
+        applyContextConfig(cfg, snapshot);
+        recomputeAll();
+        render();
+        if (isHighlightActive()) startAnim();
+      });
+    }
+
+    function refresh() {
+      if (lifecycleDisposed) return;
+      recomputeAll();
+      render();
+    }
+
+    return makeHandle({
+      root,
+      update,
+      resize,
+      refresh,
+      onWinResize,
+      onFullscreenChange,
+      stopAnim,
+      stopPlayer: playerStop,
+      cancelFullscreenResize,
+      cancelPlayerSync,
+      cancelPendingPopoverRafs,
+      closePopovers,
+      closeStats: statsDlg.close,
+      unsubscribeContext: () => unsubscribeContext?.(),
+      initialResizeTimer,
+      onDestroy: () => { lifecycleDisposed = true; },
+    });
   }
 
   function makeHandle(parts) {
+    let destroyed = false;
     return {
-      update: parts.update || function () {},
-      resize: parts.resize || function () {},
+      update: (...args) => destroyed ? undefined : (parts.update || function () {})(...args),
+      resize: (...args) => destroyed ? undefined : (parts.resize || function () {})(...args),
+      refresh: (...args) => destroyed ? undefined : (parts.refresh || function () {})(...args),
       destroy: function () {
+        if (destroyed) return;
+        destroyed = true;
         try {
+          parts.onDestroy?.();
           if (parts.stopAnim) parts.stopAnim();
+          if (parts.stopPlayer) parts.stopPlayer();
+          parts.cancelFullscreenResize?.();
+          parts.cancelPlayerSync?.();
+          parts.cancelPendingPopoverRafs?.();
+          if (parts.initialResizeTimer) clearTimeout(parts.initialResizeTimer);
+          if (parts.onWinResize?.__t) clearTimeout(parts.onWinResize.__t);
           if (parts.onWinResize) window.removeEventListener("resize", parts.onWinResize);
+          if (parts.onFullscreenChange) document.removeEventListener("fullscreenchange", parts.onFullscreenChange);
+          parts.unsubscribeContext?.();
+          parts.closePopovers?.();
+          parts.closeStats?.();
         } catch (_) {}
         if (parts.root && parts.root.parentNode) parts.root.parentNode.removeChild(parts.root);
       },
@@ -2108,5 +2280,12 @@ function buildAlertsListContent() {
     }, 50);
   }
 
-  bootWhenReady();
-})();
+export async function mountSky(root, context, config = {}, host) {
+  if (!root || typeof root !== "object") throw new TypeError("Sky mount requires a root");
+  if (!context || typeof context.get !== "function" || typeof context.subscribe !== "function") {
+    throw new TypeError("Sky platform adapter requires Platform Context");
+  }
+  return init(config, { mount: root, context, platform: true, host });
+}
+
+if (!PLATFORM_IMPORT && getCfgNow()) bootWhenReady();
