@@ -3,28 +3,28 @@
     "stream": "ALL",
     "freshness_days": null,
     "sources": [
-      "in_the_sky_occultations",
       "in_the_sky_eclipses",
       "in_the_sky_conjunctions",
-      "in_the_sky_comets",
-      "in_the_sky_meteors"
+      "in_the_sky_meteors",
+      "in_the_sky_occultations",
+      "in_the_sky_comets"
     ],
-    "raw_count": 52,
-    "fresh_count": 52,
-    "generated_at": "2026-05-20T06:56:24.982169+00:00",
-    "final_count": 52
+    "raw_count": 59,
+    "fresh_count": 59,
+    "generated_at": "2026-09-09T08:15:36.918747+00:00",
+    "final_count": 59
   },
   "items": [
     {
-      "id": "in_the_sky_comets:fb504bd87f84",
+      "id": "in_the_sky_comets:d1a7f1e71d9b",
       "stream": "comets",
       "category": "COMETS",
       "source": "in_the_sky_comets",
-      "title": "26 Jan 2026 (114 days ago): Comet C/2024 E1 (Wierzchos) reaches peak brightness",
-      "url": "https://in-the-sky.org//news.php?id=2026_19_CK24E010_101",
-      "published_at": "2026-01-26",
-      "summary": "Comet C/2024 E1 (Wierzchos) is forecast to reach the brightest point in its 2026 apparition.",
-      "summary_html": "<p>Comet C/2024 E1 (Wierzchos) is forecast to reach the brightest point in its 2026 apparition.</p>",
+      "title": "25 Aug 2027 (350 days away): Comet 45P/Honda-Mrkos-Pajdusakova reaches peak brightness",
+      "url": "https://in-the-sky.org//news.php?id=2027_19_0045P_100",
+      "published_at": "2027-08-25",
+      "summary": "Comet 45P/Honda-Mrkos-Pajdusakova is forecast to reach the brightest point in its 2027 apparition.",
+      "summary_html": "<p>Comet 45P/Honda-Mrkos-Pajdusakova is forecast to reach the brightest point in its 2027 apparition.</p>",
       "image_url": null,
       "tags": [
         "comets"
@@ -36,14 +36,83 @@
         "source_priority": 0.0,
         "signal_bonus": 25.0
       },
-      "fingerprint": "in_the_sky_comets:fb504bd87f84"
+      "fingerprint": "in_the_sky_comets:d1a7f1e71d9b"
     },
     {
-      "id": "in_the_sky_eclipses:6871e00adefa",
+      "id": "in_the_sky_comets:e1e9715ad276",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "03 Aug 2026 (37 days ago): Comet 10P/Tempel reaches peak brightness",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0010P_101",
+      "published_at": "2026-08-03",
+      "summary": "Comet 10P/Tempel is forecast to reach the brightest point in its 2026 apparition.",
+      "summary_html": "<p>Comet 10P/Tempel is forecast to reach the brightest point in its 2026 apparition.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 37.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 25.0
+      },
+      "fingerprint": "in_the_sky_comets:e1e9715ad276"
+    },
+    {
+      "id": "in_the_sky_eclipses:d122647dcec7",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "02 Aug 2027 (439 days away): Total solar eclipse",
+      "title": "12 Jan 2028 (490 days away): Partial lunar eclipse",
+      "url": "https://in-the-sky.org//news.php?id=20280112_09_100",
+      "published_at": "2028-01-12",
+      "summary": "There will be an eclipse of the Moon, visible from the Americas, Russia, Africa, Europe, Alaska and Asia.",
+      "summary_html": "<p>There will be an eclipse of the Moon, visible from the Americas, Russia, Africa, Europe, Alaska and Asia.</p>",
+      "image_url": null,
+      "tags": [
+        "eclipses"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_eclipses:d122647dcec7"
+    },
+    {
+      "id": "in_the_sky_eclipses:17b4e121425a",
+      "stream": "eclipses",
+      "category": "ECLIPSES",
+      "source": "in_the_sky_eclipses",
+      "title": "17 Aug 2027 (342 days away): Penumbral lunar eclipse",
+      "url": "https://in-the-sky.org//news.php?id=20270817_09_100",
+      "published_at": "2027-08-17",
+      "summary": "There will be an eclipse of the Moon, visible from Antarctica, the Americas and Alaska.",
+      "summary_html": "<p>There will be an eclipse of the Moon, visible from Antarctica, the Americas and Alaska.</p>",
+      "image_url": null,
+      "tags": [
+        "eclipses"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_eclipses:17b4e121425a"
+    },
+    {
+      "id": "in_the_sky_eclipses:39997084fc6c",
+      "stream": "eclipses",
+      "category": "ECLIPSES",
+      "source": "in_the_sky_eclipses",
+      "title": "02 Aug 2027 (327 days away): Total solar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20270802_09_100",
       "published_at": "2027-08-02",
       "summary": "There will be an eclipse of the Sun, visible from parts of Africa, southern Saudi Arabia and western Yemen.",
@@ -59,14 +128,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:6871e00adefa"
+      "fingerprint": "in_the_sky_eclipses:39997084fc6c"
     },
     {
-      "id": "in_the_sky_eclipses:dd3f507dfd05",
+      "id": "in_the_sky_eclipses:9ef0c0d2b346",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "18 Jul 2027 (424 days away): Penumbral lunar eclipse",
+      "title": "18 Jul 2027 (312 days away): Penumbral lunar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20270718_09_100",
       "published_at": "2027-07-18",
       "summary": "There will be an eclipse of the Moon, visible from Antarctica, Asia, south-eastern Russia, Oceania and Africa.",
@@ -82,14 +151,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:dd3f507dfd05"
+      "fingerprint": "in_the_sky_eclipses:9ef0c0d2b346"
     },
     {
-      "id": "in_the_sky_eclipses:512b05f0c089",
+      "id": "in_the_sky_eclipses:024fc7bb7c62",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "20 Feb 2027 (277 days away): Penumbral lunar eclipse",
+      "title": "20 Feb 2027 (165 days away): Penumbral lunar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20270220_09_100",
       "published_at": "2027-02-20",
       "summary": "There will be an eclipse of the Moon, visible from the Americas, Africa, Asia, Russia, Antarctica and Europe.",
@@ -105,14 +174,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:512b05f0c089"
+      "fingerprint": "in_the_sky_eclipses:024fc7bb7c62"
     },
     {
-      "id": "in_the_sky_eclipses:49eda6fea1cc",
+      "id": "in_the_sky_eclipses:77427c6681fa",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "06 Feb 2027 (262 days away): Annular solar eclipse",
+      "title": "06 Feb 2027 (150 days away): Annular solar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20270206_09_100",
       "published_at": "2027-02-06",
       "summary": "There will be an eclipse of the Sun, visible from Argentina and southern Chile.",
@@ -128,14 +197,474 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:49eda6fea1cc"
+      "fingerprint": "in_the_sky_eclipses:77427c6681fa"
     },
     {
-      "id": "in_the_sky_eclipses:c0dfef590f23",
+      "id": "in_the_sky_meteors:4dc41f53c214",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "11 Oct 2026 (32 days away): δ-Aurigid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20261011_10_100",
+      "published_at": "2026-10-11",
+      "summary": "The δ-Aurigid meteor shower reaches its peak.",
+      "summary_html": "<p>The δ-Aurigid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:4dc41f53c214"
+    },
+    {
+      "id": "in_the_sky_meteors:98c82976c556",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "10 Oct 2026 (31 days away): Southern Taurid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20261010_10_100",
+      "published_at": "2026-10-10",
+      "summary": "The Southern Taurid meteor shower reaches its peak.",
+      "summary_html": "<p>The Southern Taurid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:98c82976c556"
+    },
+    {
+      "id": "in_the_sky_meteors:da837f970a3f",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "09 Oct 2026 (30 days away): Draconid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20261009_10_100",
+      "published_at": "2026-10-09",
+      "summary": "The Draconid meteor shower reaches its peak.",
+      "summary_html": "<p>The Draconid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:da837f970a3f"
+    },
+    {
+      "id": "in_the_sky_occultations:db8357a851e5",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "06 Oct 2026 (27 days away): Lunar occultation of Jupiter",
+      "url": "https://in-the-sky.org//news.php?id=20261006_16_100",
+      "published_at": "2026-10-06",
+      "summary": "The Moon will pass in front of Jupiter, creating a lunar occultation visible from parts of Africa, the Americas, the Portuguese Azores, Madeira, the Savage Islands and the Canary Islands.",
+      "summary_html": "<p>The Moon will pass in front of Jupiter, creating a lunar occultation visible from parts of Africa, the Americas, the Portuguese Azores, Madeira, the Savage Islands and the Canary Islands.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:db8357a851e5"
+    },
+    {
+      "id": "in_the_sky_meteors:97856e2b0568",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "06 Oct 2026 (27 days away): October Camelopardalid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20261006_10_100",
+      "published_at": "2026-10-06",
+      "summary": "The October Camelopardalid meteor shower reaches its peak.",
+      "summary_html": "<p>The October Camelopardalid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:97856e2b0568"
+    },
+    {
+      "id": "in_the_sky_occultations:1e0f77cd126b",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "05 Oct 2026 (26 days away): Lunar occultation of Mars",
+      "url": "https://in-the-sky.org//news.php?id=20261005_16_100",
+      "published_at": "2026-10-05",
+      "summary": "The Moon will pass in front of Mars, creating a lunar occultation visible from Canada.",
+      "summary_html": "<p>The Moon will pass in front of Mars, creating a lunar occultation visible from Canada.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:1e0f77cd126b"
+    },
+    {
+      "id": "in_the_sky_occultations:6e64305d07cf",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "02 Oct 2026 (23 days away): Lunar occultation of Beta Tauri",
+      "url": "https://in-the-sky.org//news.php?id=20261002_16_100",
+      "published_at": "2026-10-02",
+      "summary": "The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Brazil, Argentina, Peru and Bolivia amongst others.",
+      "summary_html": "<p>The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Brazil, Argentina, Peru and Bolivia amongst others.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:6e64305d07cf"
+    },
+    {
+      "id": "in_the_sky_meteors:9502909d5869",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "27 Sep 2026 (18 days away): Daytime Sextantid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20260927_10_100",
+      "published_at": "2026-09-27",
+      "summary": "The Daytime Sextantid meteor shower reaches its peak.",
+      "summary_html": "<p>The Daytime Sextantid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:9502909d5869"
+    },
+    {
+      "id": "in_the_sky_conjunctions:15fc222be99a",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "20 Sep 2026 (11 days away): Lunar occultation of Sigma Sagittarii",
+      "url": "https://in-the-sky.org//news.php?id=20260920_16_100",
+      "published_at": "2026-09-20",
+      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from French Polynesia, New Zealand and Pitcairn.",
+      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from French Polynesia, New Zealand and Pitcairn.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:15fc222be99a"
+    },
+    {
+      "id": "in_the_sky_occultations:15fc222be99a",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "20 Sep 2026 (11 days away): Lunar occultation of Sigma Sagittarii",
+      "url": "https://in-the-sky.org//news.php?id=20260920_16_100",
+      "published_at": "2026-09-20",
+      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from French Polynesia, New Zealand and Pitcairn.",
+      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from French Polynesia, New Zealand and Pitcairn.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:15fc222be99a"
+    },
+    {
+      "id": "in_the_sky_conjunctions:bb6a118ae265",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "17 Sep 2026 (8 days away): Lunar occultation of Antares",
+      "url": "https://in-the-sky.org//news.php?id=20260917_16_100",
+      "published_at": "2026-09-17",
+      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Australia, Tasmania and Heard Island and McDonald Islands amongst others.",
+      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Australia, Tasmania and Heard Island and McDonald Islands amongst others.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:bb6a118ae265"
+    },
+    {
+      "id": "in_the_sky_occultations:bb6a118ae265",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "17 Sep 2026 (8 days away): Lunar occultation of Antares",
+      "url": "https://in-the-sky.org//news.php?id=20260917_16_100",
+      "published_at": "2026-09-17",
+      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Australia, Tasmania and Heard Island and McDonald Islands amongst others.",
+      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Australia, Tasmania and Heard Island and McDonald Islands amongst others.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:bb6a118ae265"
+    },
+    {
+      "id": "in_the_sky_conjunctions:f4c5c106d180",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "14 Sep 2026 (5 days away): Lunar occultation of Venus",
+      "url": "https://in-the-sky.org//news.php?id=20260914_16_100",
+      "published_at": "2026-09-14",
+      "summary": "The Moon will pass in front of Venus, creating a lunar occultation visible from parts of Africa, Asia, Europe, Russia, British Indian Ocean Territory, Corsica, Menorca, Mallorca, Ibiza, Isla de Alborán, Melilla, Islas Chafarinas and RAF Akrotiri.",
+      "summary_html": "<p>The Moon will pass in front of Venus, creating a lunar occultation visible from parts of Africa, Asia, Europe, Russia, British Indian Ocean Territory, Corsica, Menorca, Mallorca, Ibiza, Isla de Alborán, Melilla, Islas Chafarinas and RAF Akrotiri.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:f4c5c106d180"
+    },
+    {
+      "id": "in_the_sky_occultations:f4c5c106d180",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "14 Sep 2026 (5 days away): Lunar occultation of Venus",
+      "url": "https://in-the-sky.org//news.php?id=20260914_16_100",
+      "published_at": "2026-09-14",
+      "summary": "The Moon will pass in front of Venus, creating a lunar occultation visible from parts of Africa, Asia, Europe, Russia, British Indian Ocean Territory, Corsica, Menorca, Mallorca, Ibiza, Isla de Alborán, Melilla, Islas Chafarinas and RAF Akrotiri.",
+      "summary_html": "<p>The Moon will pass in front of Venus, creating a lunar occultation visible from parts of Africa, Asia, Europe, Russia, British Indian Ocean Territory, Corsica, Menorca, Mallorca, Ibiza, Isla de Alborán, Melilla, Islas Chafarinas and RAF Akrotiri.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:f4c5c106d180"
+    },
+    {
+      "id": "in_the_sky_meteors:4e5dafcfda3b",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "09 Sep 2026 (Today): September ε-Perseid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20260909_10_100",
+      "published_at": "2026-09-09",
+      "summary": "The September ε-Perseid meteor shower reaches its peak.",
+      "summary_html": "<p>The September ε-Perseid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:4e5dafcfda3b"
+    },
+    {
+      "id": "in_the_sky_conjunctions:dd7c83926d8c",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "08 Sep 2026 (13 hours ago): Lunar occultation of Jupiter",
+      "url": "https://in-the-sky.org//news.php?id=20260908_16_100",
+      "published_at": "2026-09-08",
+      "summary": "The Moon will pass in front of Jupiter, creating a lunar occultation visible from countries and territories including Canada, Greenland, Russia and the Contiguous United States amongst others.",
+      "summary_html": "<p>The Moon will pass in front of Jupiter, creating a lunar occultation visible from countries and territories including Canada, Greenland, Russia and the Contiguous United States amongst others.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:dd7c83926d8c"
+    },
+    {
+      "id": "in_the_sky_occultations:dd7c83926d8c",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "08 Sep 2026 (13 hours ago): Lunar occultation of Jupiter",
+      "url": "https://in-the-sky.org//news.php?id=20260908_16_100",
+      "published_at": "2026-09-08",
+      "summary": "The Moon will pass in front of Jupiter, creating a lunar occultation visible from countries and territories including Canada, Greenland, Russia and the Contiguous United States amongst others.",
+      "summary_html": "<p>The Moon will pass in front of Jupiter, creating a lunar occultation visible from countries and territories including Canada, Greenland, Russia and the Contiguous United States amongst others.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:dd7c83926d8c"
+    },
+    {
+      "id": "in_the_sky_conjunctions:e2ba52c76153",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "05 Sep 2026 (4 days ago): Lunar occultation of Beta Tauri",
+      "url": "https://in-the-sky.org//news.php?id=20260905_16_100",
+      "published_at": "2026-09-05",
+      "summary": "The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from parts of Africa.",
+      "summary_html": "<p>The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from parts of Africa.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:e2ba52c76153"
+    },
+    {
+      "id": "in_the_sky_occultations:e2ba52c76153",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "05 Sep 2026 (4 days ago): Lunar occultation of Beta Tauri",
+      "url": "https://in-the-sky.org//news.php?id=20260905_16_100",
+      "published_at": "2026-09-05",
+      "summary": "The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from parts of Africa.",
+      "summary_html": "<p>The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from parts of Africa.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:e2ba52c76153"
+    },
+    {
+      "id": "in_the_sky_meteors:2686195cb262",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "01 Sep 2026 (8 days ago): Aurigid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20260901_10_100",
+      "published_at": "2026-09-01",
+      "summary": "The Aurigid meteor shower reaches its peak.",
+      "summary_html": "<p>The Aurigid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:2686195cb262"
+    },
+    {
+      "id": "in_the_sky_eclipses:44c59c0e77e9",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "28 Aug 2026 (100 days away): Partial lunar eclipse",
+      "title": "28 Aug 2026 (12 days ago): Partial lunar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20260828_09_100",
       "published_at": "2026-08-28",
       "summary": "There will be an eclipse of the Moon, visible from the Americas, Antarctica, Africa and Europe.",
@@ -151,14 +680,83 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:c0dfef590f23"
+      "fingerprint": "in_the_sky_eclipses:44c59c0e77e9"
     },
     {
-      "id": "in_the_sky_meteors:791c6065fe03",
+      "id": "in_the_sky_occultations:454153723fde",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "23 Aug 2026 (16 days ago): Lunar occultation of Sigma Sagittarii",
+      "url": "https://in-the-sky.org//news.php?id=20260823_16_100",
+      "published_at": "2026-08-23",
+      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from parts of Sub-Saharan Africa, Falkland Islands, South Georgia and the South Sandwich Islands, Antarctica and Bouvet Island.",
+      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from parts of Sub-Saharan Africa, Falkland Islands, South Georgia and the South Sandwich Islands, Antarctica and Bouvet Island.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:454153723fde"
+    },
+    {
+      "id": "in_the_sky_occultations:1cd860767e75",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "21 Aug 2026 (19 days ago): Lunar occultation of Antares",
+      "url": "https://in-the-sky.org//news.php?id=20260821_16_100",
+      "published_at": "2026-08-21",
+      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from Antarctica, Argentina, Chile and Falkland Islands.",
+      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from Antarctica, Argentina, Chile and Falkland Islands.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:1cd860767e75"
+    },
+    {
+      "id": "in_the_sky_meteors:64a428bf5af8",
       "stream": "meteors",
       "category": "METEORS",
       "source": "in_the_sky_meteors",
-      "title": "13 Aug 2026 (85 days away): Perseid meteor shower 2026",
+      "title": "18 Aug 2026 (22 days ago): κ-Cygnid meteor shower 2026",
+      "url": "https://in-the-sky.org//news.php?id=20260818_10_100",
+      "published_at": "2026-08-18",
+      "summary": "The κ-Cygnid meteor shower reaches its peak.",
+      "summary_html": "<p>The κ-Cygnid meteor shower reaches its peak.</p>",
+      "image_url": null,
+      "tags": [
+        "meteors"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_meteors:64a428bf5af8"
+    },
+    {
+      "id": "in_the_sky_meteors:dcb0e43a1484",
+      "stream": "meteors",
+      "category": "METEORS",
+      "source": "in_the_sky_meteors",
+      "title": "13 Aug 2026 (27 days ago): Perseid meteor shower 2026",
       "url": "https://in-the-sky.org//news.php?id=20260813_10_100",
       "published_at": "2026-08-13",
       "summary": "The Perseid meteor shower reaches its peak.",
@@ -174,14 +772,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_meteors:791c6065fe03"
+      "fingerprint": "in_the_sky_meteors:dcb0e43a1484"
     },
     {
-      "id": "in_the_sky_eclipses:e726d8a5c1a2",
+      "id": "in_the_sky_eclipses:b4983891b84d",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "12 Aug 2026 (84 days away): Total solar eclipse",
+      "title": "12 Aug 2026 (28 days ago): Total solar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20260812_09_100",
       "published_at": "2026-08-12",
       "summary": "There will be an eclipse of the Sun, visible from eastern Greenland and Spain.",
@@ -197,14 +795,37 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:e726d8a5c1a2"
+      "fingerprint": "in_the_sky_eclipses:b4983891b84d"
     },
     {
-      "id": "in_the_sky_meteors:efd1ea93e356",
+      "id": "in_the_sky_occultations:5bde58eeaaa9",
+      "stream": "occultations",
+      "category": "OCCULTATIONS",
+      "source": "in_the_sky_occultations",
+      "title": "08 Aug 2026 (32 days ago): Lunar occultation of Beta Tauri",
+      "url": "https://in-the-sky.org//news.php?id=20260808_16_100",
+      "published_at": "2026-08-08",
+      "summary": "The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Australia, Papua New Guinea, Indonesia and Solomon Islands amongst others.",
+      "summary_html": "<p>The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Australia, Papua New Guinea, Indonesia and Solomon Islands amongst others.</p>",
+      "image_url": null,
+      "tags": [
+        "occultations"
+      ],
+      "score": 36.5,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 15.0
+      },
+      "fingerprint": "in_the_sky_occultations:5bde58eeaaa9"
+    },
+    {
+      "id": "in_the_sky_meteors:d8b5f7d32b67",
       "stream": "meteors",
       "category": "METEORS",
       "source": "in_the_sky_meteors",
-      "title": "30 Jul 2026 (71 days away): α-Capricornid meteor shower 2026",
+      "title": "30 Jul 2026 (41 days ago): α-Capricornid meteor shower 2026",
       "url": "https://in-the-sky.org//news.php?id=20260730_10_101",
       "published_at": "2026-07-30",
       "summary": "The α-Capricornid meteor shower reaches its peak.",
@@ -220,14 +841,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_meteors:efd1ea93e356"
+      "fingerprint": "in_the_sky_meteors:d8b5f7d32b67"
     },
     {
-      "id": "in_the_sky_meteors:62f4638525c0",
+      "id": "in_the_sky_meteors:0f3d6fd3e2d2",
       "stream": "meteors",
       "category": "METEORS",
       "source": "in_the_sky_meteors",
-      "title": "30 Jul 2026 (71 days away): Southern δ-Aquariid meteor shower 2026",
+      "title": "30 Jul 2026 (41 days ago): Southern δ-Aquariid meteor shower 2026",
       "url": "https://in-the-sky.org//news.php?id=20260730_10_100",
       "published_at": "2026-07-30",
       "summary": "The Southern δ-Aquariid meteor shower reaches its peak.",
@@ -243,14 +864,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_meteors:62f4638525c0"
+      "fingerprint": "in_the_sky_meteors:0f3d6fd3e2d2"
     },
     {
-      "id": "in_the_sky_meteors:dbbe063ae0e4",
+      "id": "in_the_sky_meteors:bcf6440c8bc0",
       "stream": "meteors",
       "category": "METEORS",
       "source": "in_the_sky_meteors",
-      "title": "29 Jul 2026 (70 days away): Piscis Austrinid meteor shower 2026",
+      "title": "29 Jul 2026 (42 days ago): Piscis Austrinid meteor shower 2026",
       "url": "https://in-the-sky.org//news.php?id=20260729_10_100",
       "published_at": "2026-07-29",
       "summary": "The Piscis Austrinid meteor shower reaches its peak.",
@@ -266,41 +887,18 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_meteors:dbbe063ae0e4"
+      "fingerprint": "in_the_sky_meteors:bcf6440c8bc0"
     },
     {
-      "id": "in_the_sky_meteors:f419ba4176a1",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "27 Jun 2026 (38 days away): June Bootid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260627_10_100",
-      "published_at": "2026-06-27",
-      "summary": "The June Bootid meteor shower reaches its peak.",
-      "summary_html": "<p>The June Bootid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:f419ba4176a1"
-    },
-    {
-      "id": "in_the_sky_occultations:376d3cdd3673",
+      "id": "in_the_sky_occultations:cccc212128d6",
       "stream": "occultations",
       "category": "OCCULTATIONS",
       "source": "in_the_sky_occultations",
-      "title": "27 Jun 2026 (38 days away): Lunar occultation of Antares",
-      "url": "https://in-the-sky.org//news.php?id=20260627_16_100",
-      "published_at": "2026-06-27",
-      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Australia, New Zealand and Tasmania amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Australia, New Zealand and Tasmania amongst others.</p>",
+      "title": "27 Jul 2026 (44 days ago): Lunar occultation of Sigma Sagittarii",
+      "url": "https://in-the-sky.org//news.php?id=20260727_16_100",
+      "published_at": "2026-07-27",
+      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from countries and territories including Australia, Antarctica, New Zealand and Tasmania amongst others.",
+      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from countries and territories including Australia, Antarctica, New Zealand and Tasmania amongst others.</p>",
       "image_url": null,
       "tags": [
         "occultations"
@@ -312,566 +910,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_occultations:376d3cdd3673"
+      "fingerprint": "in_the_sky_occultations:cccc212128d6"
     },
     {
-      "id": "in_the_sky_occultations:89eae2b73fa5",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "19 Jun 2026 (30 days away): Lunar occultation of Regulus",
-      "url": "https://in-the-sky.org//news.php?id=20260619_16_100",
-      "published_at": "2026-06-19",
-      "summary": "The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from countries and territories including South Africa, Mozambique, Madagascar and Zimbabwe amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from countries and territories including South Africa, Mozambique, Madagascar and Zimbabwe amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:89eae2b73fa5"
-    },
-    {
-      "id": "in_the_sky_occultations:54e1b4f66db4",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "17 Jun 2026 (28 days away): Lunar occultation of Venus",
-      "url": "https://in-the-sky.org//news.php?id=20260617_16_100",
-      "published_at": "2026-06-17",
-      "summary": "The Moon will pass in front of Venus, creating a lunar occultation visible from countries and territories including the Contiguous United States, Canada, Brazil and Venezuela amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Venus, creating a lunar occultation visible from countries and territories including the Contiguous United States, Canada, Brazil and Venezuela amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:54e1b4f66db4"
-    },
-    {
-      "id": "in_the_sky_meteors:a6037d5b71a3",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "10 Jun 2026 (21 days away): Daytime Arietid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260610_10_100",
-      "published_at": "2026-06-10",
-      "summary": "The Daytime Arietid meteor shower reaches its peak.",
-      "summary_html": "<p>The Daytime Arietid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:a6037d5b71a3"
-    },
-    {
-      "id": "in_the_sky_conjunctions:70adb04ddfca",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "03 Jun 2026 (14 days away): Lunar occultation of Sigma Sagittarii",
-      "url": "https://in-the-sky.org//news.php?id=20260603_16_100",
-      "published_at": "2026-06-03",
-      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from countries and territories including Argentina, Antarctica, South Africa and Chile amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from countries and territories including Argentina, Antarctica, South Africa and Chile amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:70adb04ddfca"
-    },
-    {
-      "id": "in_the_sky_occultations:70adb04ddfca",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "03 Jun 2026 (14 days away): Lunar occultation of Sigma Sagittarii",
-      "url": "https://in-the-sky.org//news.php?id=20260603_16_100",
-      "published_at": "2026-06-03",
-      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from countries and territories including Argentina, Antarctica, South Africa and Chile amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from countries and territories including Argentina, Antarctica, South Africa and Chile amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:70adb04ddfca"
-    },
-    {
-      "id": "in_the_sky_conjunctions:e1603260c04a",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "31 May 2026 (11 days away): Lunar occultation of Antares",
-      "url": "https://in-the-sky.org//news.php?id=20260531_16_100",
-      "published_at": "2026-05-31",
-      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Argentina, Australia, Chile and New Zealand amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Argentina, Australia, Chile and New Zealand amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:e1603260c04a"
-    },
-    {
-      "id": "in_the_sky_occultations:e1603260c04a",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "31 May 2026 (11 days away): Lunar occultation of Antares",
-      "url": "https://in-the-sky.org//news.php?id=20260531_16_100",
-      "published_at": "2026-05-31",
-      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Argentina, Australia, Chile and New Zealand amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Argentina, Australia, Chile and New Zealand amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:e1603260c04a"
-    },
-    {
-      "id": "in_the_sky_conjunctions:50579222f702",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "23 May 2026 (3 days away): Lunar occultation of Regulus",
-      "url": "https://in-the-sky.org//news.php?id=20260523_16_100",
-      "published_at": "2026-05-23",
-      "summary": "The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from parts of Oceania, Baker Island, Howland Island and Tokelau.",
-      "summary_html": "<p>The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from parts of Oceania, Baker Island, Howland Island and Tokelau.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:50579222f702"
-    },
-    {
-      "id": "in_the_sky_occultations:50579222f702",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "23 May 2026 (3 days away): Lunar occultation of Regulus",
-      "url": "https://in-the-sky.org//news.php?id=20260523_16_100",
-      "published_at": "2026-05-23",
-      "summary": "The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from parts of Oceania, Baker Island, Howland Island and Tokelau.",
-      "summary_html": "<p>The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from parts of Oceania, Baker Island, Howland Island and Tokelau.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:50579222f702"
-    },
-    {
-      "id": "in_the_sky_conjunctions:0e42f49da9c0",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "18 May 2026 (2 days ago): Lunar occultation of Beta Tauri",
-      "url": "https://in-the-sky.org//news.php?id=20260518_16_100",
-      "published_at": "2026-05-18",
-      "summary": "The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Mozambique, Malawi, Tanzania and Zimbabwe amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Mozambique, Malawi, Tanzania and Zimbabwe amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:0e42f49da9c0"
-    },
-    {
-      "id": "in_the_sky_occultations:0e42f49da9c0",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "18 May 2026 (2 days ago): Lunar occultation of Beta Tauri",
-      "url": "https://in-the-sky.org//news.php?id=20260518_16_100",
-      "published_at": "2026-05-18",
-      "summary": "The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Mozambique, Malawi, Tanzania and Zimbabwe amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Mozambique, Malawi, Tanzania and Zimbabwe amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:0e42f49da9c0"
-    },
-    {
-      "id": "in_the_sky_meteors:7bc760405e43",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "08 May 2026 (11 days ago): η-Lyrid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260508_10_100",
-      "published_at": "2026-05-08",
-      "summary": "The η-Lyrid meteor shower reaches its peak.",
-      "summary_html": "<p>The η-Lyrid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:7bc760405e43"
-    },
-    {
-      "id": "in_the_sky_conjunctions:236392463305",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "06 May 2026 (14 days ago): Lunar occultation of Sigma Sagittarii",
-      "url": "https://in-the-sky.org//news.php?id=20260506_16_100",
-      "published_at": "2026-05-06",
-      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from Antarctica, French Southern Territories, Heard Island and McDonald Islands and Bouvet Island.",
-      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from Antarctica, French Southern Territories, Heard Island and McDonald Islands and Bouvet Island.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:236392463305"
-    },
-    {
-      "id": "in_the_sky_occultations:236392463305",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "06 May 2026 (14 days ago): Lunar occultation of Sigma Sagittarii",
-      "url": "https://in-the-sky.org//news.php?id=20260506_16_100",
-      "published_at": "2026-05-06",
-      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from Antarctica, French Southern Territories, Heard Island and McDonald Islands and Bouvet Island.",
-      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from Antarctica, French Southern Territories, Heard Island and McDonald Islands and Bouvet Island.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:236392463305"
-    },
-    {
-      "id": "in_the_sky_meteors:b84e53cde85c",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "06 May 2026 (14 days ago): η-Aquariid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260506_10_100",
-      "published_at": "2026-05-06",
-      "summary": "The η-Aquariid meteor shower reaches its peak.",
-      "summary_html": "<p>The η-Aquariid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:b84e53cde85c"
-    },
-    {
-      "id": "in_the_sky_conjunctions:d504604b4007",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "04 May 2026 (16 days ago): Lunar occultation of Antares",
-      "url": "https://in-the-sky.org//news.php?id=20260504_16_100",
-      "published_at": "2026-05-04",
-      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Argentina, Chile and Bolivia amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Argentina, Chile and Bolivia amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:d504604b4007"
-    },
-    {
-      "id": "in_the_sky_occultations:d504604b4007",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "04 May 2026 (16 days ago): Lunar occultation of Antares",
-      "url": "https://in-the-sky.org//news.php?id=20260504_16_100",
-      "published_at": "2026-05-04",
-      "summary": "The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Argentina, Chile and Bolivia amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Antares (Alpha Scorpii), creating a lunar occultation visible from countries and territories including Antarctica, Argentina, Chile and Bolivia amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:d504604b4007"
-    },
-    {
-      "id": "in_the_sky_conjunctions:6f7892c921cf",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "26 Apr 2026 (24 days ago): Lunar occultation of Regulus",
-      "url": "https://in-the-sky.org//news.php?id=20260426_16_100",
-      "published_at": "2026-04-26",
-      "summary": "The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from countries and territories including Brazil, the Contiguous United States, Colombia and Venezuela amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from countries and territories including Brazil, the Contiguous United States, Colombia and Venezuela amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:6f7892c921cf"
-    },
-    {
-      "id": "in_the_sky_occultations:6f7892c921cf",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "26 Apr 2026 (24 days ago): Lunar occultation of Regulus",
-      "url": "https://in-the-sky.org//news.php?id=20260426_16_100",
-      "published_at": "2026-04-26",
-      "summary": "The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from countries and territories including Brazil, the Contiguous United States, Colombia and Venezuela amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Regulus (Alpha Leonis), creating a lunar occultation visible from countries and territories including Brazil, the Contiguous United States, Colombia and Venezuela amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:6f7892c921cf"
-    },
-    {
-      "id": "in_the_sky_meteors:6dee5a9399cb",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "24 Apr 2026 (26 days ago): π-Puppid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260424_10_100",
-      "published_at": "2026-04-24",
-      "summary": "The π-Puppid meteor shower reaches its peak.",
-      "summary_html": "<p>The π-Puppid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:6dee5a9399cb"
-    },
-    {
-      "id": "in_the_sky_meteors:649d6404a32d",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "22 Apr 2026 (28 days ago): Lyrid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260422_10_100",
-      "published_at": "2026-04-22",
-      "summary": "The Lyrid meteor shower reaches its peak.",
-      "summary_html": "<p>The Lyrid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:649d6404a32d"
-    },
-    {
-      "id": "in_the_sky_occultations:ced101285691",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "21 Apr 2026 (29 days ago): Lunar occultation of Beta Tauri",
-      "url": "https://in-the-sky.org//news.php?id=20260421_16_100",
-      "published_at": "2026-04-21",
-      "summary": "The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Fiji, Samoa, Tonga and American Samoa amongst others.",
-      "summary_html": "<p>The Moon will pass in front of Beta Tauri (Elnath), creating a lunar occultation visible from countries and territories including Fiji, Samoa, Tonga and American Samoa amongst others.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:ced101285691"
-    },
-    {
-      "id": "in_the_sky_occultations:f928dd6a8103",
-      "stream": "occultations",
-      "category": "OCCULTATIONS",
-      "source": "in_the_sky_occultations",
-      "title": "09 Apr 2026 (41 days ago): Lunar occultation of Sigma Sagittarii",
-      "url": "https://in-the-sky.org//news.php?id=20260409_16_100",
-      "published_at": "2026-04-09",
-      "summary": "The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from Antarctica, New Zealand and Macquarie Island.",
-      "summary_html": "<p>The Moon will pass in front of Sigma Sagittarii (Nunki), creating a lunar occultation visible from Antarctica, New Zealand and Macquarie Island.</p>",
-      "image_url": null,
-      "tags": [
-        "occultations"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_occultations:f928dd6a8103"
-    },
-    {
-      "id": "in_the_sky_meteors:2e7c2d9068c5",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "14 Mar 2026 (66 days ago): γ-Normid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260314_10_100",
-      "published_at": "2026-03-14",
-      "summary": "The γ-Normid meteor shower reaches its peak.",
-      "summary_html": "<p>The γ-Normid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:2e7c2d9068c5"
-    },
-    {
-      "id": "in_the_sky_eclipses:eaef1fba889e",
+      "id": "in_the_sky_eclipses:fda282ba9090",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "03 Mar 2026 (78 days ago): Total lunar eclipse",
+      "title": "03 Mar 2026 (190 days ago): Total lunar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20260303_09_100",
       "published_at": "2026-03-03",
       "summary": "There will be an eclipse of the Moon, visible from the Americas, Russia, Asia, Antarctica, Oceania and Alaska.",
@@ -887,14 +933,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:eaef1fba889e"
+      "fingerprint": "in_the_sky_eclipses:fda282ba9090"
     },
     {
-      "id": "in_the_sky_eclipses:45efca23849c",
+      "id": "in_the_sky_eclipses:3155267a2b96",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "17 Feb 2026 (92 days ago): Annular solar eclipse",
+      "title": "17 Feb 2026 (204 days ago): Annular solar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20260217_09_100",
       "published_at": "2026-02-17",
       "summary": "There will be an eclipse of the Sun, visible from Antarctica.",
@@ -910,37 +956,14 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:45efca23849c"
+      "fingerprint": "in_the_sky_eclipses:3155267a2b96"
     },
     {
-      "id": "in_the_sky_meteors:dbaacb848f60",
-      "stream": "meteors",
-      "category": "METEORS",
-      "source": "in_the_sky_meteors",
-      "title": "08 Feb 2026 (101 days ago): α-Centaurid meteor shower 2026",
-      "url": "https://in-the-sky.org//news.php?id=20260208_10_100",
-      "published_at": "2026-02-08",
-      "summary": "The α-Centaurid meteor shower reaches its peak.",
-      "summary_html": "<p>The α-Centaurid meteor shower reaches its peak.</p>",
-      "image_url": null,
-      "tags": [
-        "meteors"
-      ],
-      "score": 36.5,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 15.0
-      },
-      "fingerprint": "in_the_sky_meteors:dbaacb848f60"
-    },
-    {
-      "id": "in_the_sky_eclipses:b266290f8e92",
+      "id": "in_the_sky_eclipses:8f1e40095ab4",
       "stream": "eclipses",
       "category": "ECLIPSES",
       "source": "in_the_sky_eclipses",
-      "title": "21 Sep 2025 (241 days ago): Partial solar eclipse",
+      "title": "21 Sep 2025 (353 days ago): Partial solar eclipse",
       "url": "https://in-the-sky.org//news.php?id=20250921_09_100",
       "published_at": "2025-09-21",
       "summary": "There will be an eclipse of the Sun, visible from parts of Antarctica and Oceania.",
@@ -956,41 +979,133 @@
         "source_priority": 0.0,
         "signal_bonus": 15.0
       },
-      "fingerprint": "in_the_sky_eclipses:b266290f8e92"
+      "fingerprint": "in_the_sky_eclipses:8f1e40095ab4"
     },
     {
-      "id": "in_the_sky_eclipses:8aceded7d915",
-      "stream": "eclipses",
-      "category": "ECLIPSES",
-      "source": "in_the_sky_eclipses",
-      "title": "07 Sep 2025 (255 days ago): Total lunar eclipse",
-      "url": "https://in-the-sky.org//news.php?id=20250907_09_100",
-      "published_at": "2025-09-07",
-      "summary": "There will be an eclipse of the Moon, visible from Antarctica, Asia, Russia, Africa, Oceania and Europe.",
-      "summary_html": "<p>There will be an eclipse of the Moon, visible from Antarctica, Asia, Russia, Africa, Oceania and Europe.</p>",
+      "id": "in_the_sky_comets:49a5c7daa4ad",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "31 Aug 2027 (356 days away): Comet 45P/Honda-Mrkos-Pajdusakova passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2027_19_0045P_101",
+      "published_at": "2027-08-31",
+      "summary": "Comet 45P/Honda-Mrkos-Pajdusakova makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 45P/Honda-Mrkos-Pajdusakova makes its closest approach to the Sun.</p>",
       "image_url": null,
       "tags": [
-        "eclipses"
+        "comets"
       ],
-      "score": 36.5,
+      "score": 35.0,
       "score_breakdown": {
         "topic_match": 0.0,
         "freshness": 100.0,
         "source_priority": 0.0,
-        "signal_bonus": 15.0
+        "signal_bonus": 0.0
       },
-      "fingerprint": "in_the_sky_eclipses:8aceded7d915"
+      "fingerprint": "in_the_sky_comets:49a5c7daa4ad"
     },
     {
-      "id": "in_the_sky_conjunctions:b6ffbe77ea0b",
+      "id": "in_the_sky_comets:629dd0c804c7",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "10 Feb 2027 (154 days away): Comet 2P/Encke passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2027_19_0002P_101",
+      "published_at": "2027-02-10",
+      "summary": "Comet 2P/Encke makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 2P/Encke makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:629dd0c804c7"
+    },
+    {
+      "id": "in_the_sky_comets:fc4c6f2dee2e",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "03 Feb 2027 (147 days away): Comet 2P/Encke passes perigee",
+      "url": "https://in-the-sky.org//news.php?id=2027_19_0002P_100",
+      "published_at": "2027-02-03",
+      "summary": "Comet 2P/Encke makes its closest approach to the Earth.",
+      "summary_html": "<p>Comet 2P/Encke makes its closest approach to the Earth.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:fc4c6f2dee2e"
+    },
+    {
+      "id": "in_the_sky_comets:8dc4f3caa2aa",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "27 Nov 2026 (79 days away): Comet 161P/Hartley-IRAS passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0161P_100",
+      "published_at": "2026-11-27",
+      "summary": "Comet 161P/Hartley-IRAS makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 161P/Hartley-IRAS makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:8dc4f3caa2aa"
+    },
+    {
+      "id": "in_the_sky_comets:7bb98c6c70f9",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "12 Nov 2026 (64 days away): Comet 69P/Taylor passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0069P_100",
+      "published_at": "2026-11-12",
+      "summary": "Comet 69P/Taylor makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 69P/Taylor makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:7bb98c6c70f9"
+    },
+    {
+      "id": "in_the_sky_conjunctions:4d7ccad6af67",
       "stream": "conjunctions",
       "category": "CONJUNCTIONS",
       "source": "in_the_sky_conjunctions",
-      "title": "09 Jun 2026 (20 days away): Close approach of Venus and Jupiter",
-      "url": "https://in-the-sky.org//news.php?id=20260609_15_100",
-      "published_at": "2026-06-09",
-      "summary": "Venus and Jupiter pass within 1°36' of each other.",
-      "summary_html": "<p>Venus and Jupiter pass within 1&deg;36' of each other.</p>",
+      "title": "30 Sep 2026 (21 days away): Close approach of the Moon and M45",
+      "url": "https://in-the-sky.org//news.php?id=20260930_15_100",
+      "published_at": "2026-09-30",
+      "summary": "The Moon and M45 pass close to each other.",
+      "summary_html": "<p>The Moon and M45 pass close to each other.</p>",
       "image_url": null,
       "tags": [
         "conjunctions"
@@ -1002,85 +1117,16 @@
         "source_priority": 0.0,
         "signal_bonus": 0.0
       },
-      "fingerprint": "in_the_sky_conjunctions:b6ffbe77ea0b"
+      "fingerprint": "in_the_sky_conjunctions:4d7ccad6af67"
     },
     {
-      "id": "in_the_sky_conjunctions:21812f2efb0d",
+      "id": "in_the_sky_conjunctions:67c8f80ad443",
       "stream": "conjunctions",
       "category": "CONJUNCTIONS",
       "source": "in_the_sky_conjunctions",
-      "title": "21 May 2026 (Tomorrow): Close approach of the Moon and M44",
-      "url": "https://in-the-sky.org//news.php?id=20260521_15_100",
-      "published_at": "2026-05-21",
-      "summary": "The Moon and M44 pass close to each other.",
-      "summary_html": "<p>The Moon and M44 pass close to each other.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 35.0,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 0.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:21812f2efb0d"
-    },
-    {
-      "id": "in_the_sky_conjunctions:7b067dc33bfe",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "20 May 2026 (6 hours away): Close approach of the Moon and Jupiter",
-      "url": "https://in-the-sky.org//news.php?id=20260520_15_100",
-      "published_at": "2026-05-20",
-      "summary": "The Moon and Jupiter pass close to each other.",
-      "summary_html": "<p>The Moon and Jupiter pass close to each other.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 35.0,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 0.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:7b067dc33bfe"
-    },
-    {
-      "id": "in_the_sky_conjunctions:a4d542929603",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "19 May 2026 (Yesterday): Close approach of the Moon and Venus",
-      "url": "https://in-the-sky.org//news.php?id=20260519_15_100",
-      "published_at": "2026-05-19",
-      "summary": "The Moon and Venus pass close to each other.",
-      "summary_html": "<p>The Moon and Venus pass close to each other.</p>",
-      "image_url": null,
-      "tags": [
-        "conjunctions"
-      ],
-      "score": 35.0,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 0.0
-      },
-      "fingerprint": "in_the_sky_conjunctions:a4d542929603"
-    },
-    {
-      "id": "in_the_sky_conjunctions:8f36a8f63277",
-      "stream": "conjunctions",
-      "category": "CONJUNCTIONS",
-      "source": "in_the_sky_conjunctions",
-      "title": "13 May 2026 (7 days ago): Close approach of the Moon and Saturn",
-      "url": "https://in-the-sky.org//news.php?id=20260513_15_100",
-      "published_at": "2026-05-13",
+      "title": "27 Sep 2026 (18 days away): Close approach of the Moon and Saturn",
+      "url": "https://in-the-sky.org//news.php?id=20260927_15_100",
+      "published_at": "2026-09-27",
       "summary": "The Moon and Saturn pass close to each other.",
       "summary_html": "<p>The Moon and Saturn pass close to each other.</p>",
       "image_url": null,
@@ -1094,14 +1140,198 @@
         "source_priority": 0.0,
         "signal_bonus": 0.0
       },
-      "fingerprint": "in_the_sky_conjunctions:8f36a8f63277"
+      "fingerprint": "in_the_sky_conjunctions:67c8f80ad443"
     },
     {
-      "id": "in_the_sky_comets:0f48799a6f8f",
+      "id": "in_the_sky_conjunctions:33478d8daf24",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "14 Sep 2026 (5 days away): Close approach of the Moon and Venus",
+      "url": "https://in-the-sky.org//news.php?id=20260914_15_100",
+      "published_at": "2026-09-14",
+      "summary": "The Moon and Venus pass close to each other.",
+      "summary_html": "<p>The Moon and Venus pass close to each other.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:33478d8daf24"
+    },
+    {
+      "id": "in_the_sky_conjunctions:940bb46b2148",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "08 Sep 2026 (13 hours ago): Close approach of the Moon and Jupiter",
+      "url": "https://in-the-sky.org//news.php?id=20260908_15_101",
+      "published_at": "2026-09-08",
+      "summary": "The Moon and Jupiter pass close to each other.",
+      "summary_html": "<p>The Moon and Jupiter pass close to each other.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:940bb46b2148"
+    },
+    {
+      "id": "in_the_sky_conjunctions:9fab164d6b46",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "08 Sep 2026 (Yesterday): Close approach of the Moon and M44",
+      "url": "https://in-the-sky.org//news.php?id=20260908_15_100",
+      "published_at": "2026-09-08",
+      "summary": "The Moon and M44 pass close to each other.",
+      "summary_html": "<p>The Moon and M44 pass close to each other.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:9fab164d6b46"
+    },
+    {
+      "id": "in_the_sky_conjunctions:9daa1a1bd7c6",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "06 Sep 2026 (3 days ago): Close approach of the Moon and Mars",
+      "url": "https://in-the-sky.org//news.php?id=20260906_15_100",
+      "published_at": "2026-09-06",
+      "summary": "The Moon and Mars pass close to each other.",
+      "summary_html": "<p>The Moon and Mars pass close to each other.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:9daa1a1bd7c6"
+    },
+    {
+      "id": "in_the_sky_conjunctions:38e27986928e",
+      "stream": "conjunctions",
+      "category": "CONJUNCTIONS",
+      "source": "in_the_sky_conjunctions",
+      "title": "03 Sep 2026 (6 days ago): Close approach of the Moon and M45",
+      "url": "https://in-the-sky.org//news.php?id=20260903_15_100",
+      "published_at": "2026-09-03",
+      "summary": "The Moon and M45 pass close to each other.",
+      "summary_html": "<p>The Moon and M45 pass close to each other.</p>",
+      "image_url": null,
+      "tags": [
+        "conjunctions"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_conjunctions:38e27986928e"
+    },
+    {
+      "id": "in_the_sky_comets:2947807e6ab0",
       "stream": "comets",
       "category": "COMETS",
       "source": "in_the_sky_comets",
-      "title": "26 Apr 2026 (24 days ago): Comet C/2025 R3 (PANSTARRS) passes perigee",
+      "title": "03 Aug 2026 (37 days ago): Comet 10P/Tempel passes perigee",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0010P_102",
+      "published_at": "2026-08-03",
+      "summary": "Comet 10P/Tempel makes its closest approach to the Earth.",
+      "summary_html": "<p>Comet 10P/Tempel makes its closest approach to the Earth.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:2947807e6ab0"
+    },
+    {
+      "id": "in_the_sky_comets:cc56334ed150",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "02 Aug 2026 (38 days ago): Comet 10P/Tempel passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0010P_100",
+      "published_at": "2026-08-02",
+      "summary": "Comet 10P/Tempel makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 10P/Tempel makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:cc56334ed150"
+    },
+    {
+      "id": "in_the_sky_comets:78da300cee3a",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "25 Jun 2026 (76 days ago): Comet 78P/Gehrels passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0078P_100",
+      "published_at": "2026-06-25",
+      "summary": "Comet 78P/Gehrels makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 78P/Gehrels makes its closest approach to the Sun.</p>",
+      "image_url": null,
+      "tags": [
+        "comets"
+      ],
+      "score": 35.0,
+      "score_breakdown": {
+        "topic_match": 0.0,
+        "freshness": 100.0,
+        "source_priority": 0.0,
+        "signal_bonus": 0.0
+      },
+      "fingerprint": "in_the_sky_comets:78da300cee3a"
+    },
+    {
+      "id": "in_the_sky_comets:fe78502eccbd",
+      "stream": "comets",
+      "category": "COMETS",
+      "source": "in_the_sky_comets",
+      "title": "26 Apr 2026 (136 days ago): Comet C/2025 R3 (PANSTARRS) passes perigee",
       "url": "https://in-the-sky.org//news.php?id=2026_19_CK25R030_101",
       "published_at": "2026-04-26",
       "summary": "Comet C/2025 R3 (PANSTARRS) makes its closest approach to the Earth.",
@@ -1117,18 +1347,18 @@
         "source_priority": 0.0,
         "signal_bonus": 0.0
       },
-      "fingerprint": "in_the_sky_comets:0f48799a6f8f"
+      "fingerprint": "in_the_sky_comets:fe78502eccbd"
     },
     {
-      "id": "in_the_sky_comets:440fbaa5283b",
+      "id": "in_the_sky_comets:afb08e94c9e0",
       "stream": "comets",
       "category": "COMETS",
       "source": "in_the_sky_comets",
-      "title": "19 Apr 2026 (31 days ago): Comet C/2025 R3 (PANSTARRS) passes perihelion",
-      "url": "https://in-the-sky.org//news.php?id=2026_19_CK25R030_100",
-      "published_at": "2026-04-19",
-      "summary": "Comet C/2025 R3 (PANSTARRS) makes its closest approach to the Sun.",
-      "summary_html": "<p>Comet C/2025 R3 (PANSTARRS) makes its closest approach to the Sun.</p>",
+      "title": "23 Apr 2026 (139 days ago): Comet 141P/Machholz passes perihelion",
+      "url": "https://in-the-sky.org//news.php?id=2026_19_0141P_100",
+      "published_at": "2026-04-23",
+      "summary": "Comet 141P/Machholz makes its closest approach to the Sun.",
+      "summary_html": "<p>Comet 141P/Machholz makes its closest approach to the Sun.</p>",
       "image_url": null,
       "tags": [
         "comets"
@@ -1140,76 +1370,7 @@
         "source_priority": 0.0,
         "signal_bonus": 0.0
       },
-      "fingerprint": "in_the_sky_comets:440fbaa5283b"
-    },
-    {
-      "id": "in_the_sky_comets:a3fb9d23f493",
-      "stream": "comets",
-      "category": "COMETS",
-      "source": "in_the_sky_comets",
-      "title": "06 Apr 2026 (44 days ago): Comet C/2026 A1 (MAPS) passes perigee",
-      "url": "https://in-the-sky.org//news.php?id=2026_19_CK26A010_101",
-      "published_at": "2026-04-06",
-      "summary": "Comet C/2026 A1 (MAPS) makes its closest approach to the Earth.",
-      "summary_html": "<p>Comet C/2026 A1 (MAPS) makes its closest approach to the Earth.</p>",
-      "image_url": null,
-      "tags": [
-        "comets"
-      ],
-      "score": 35.0,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 0.0
-      },
-      "fingerprint": "in_the_sky_comets:a3fb9d23f493"
-    },
-    {
-      "id": "in_the_sky_comets:9eacb1220e24",
-      "stream": "comets",
-      "category": "COMETS",
-      "source": "in_the_sky_comets",
-      "title": "04 Apr 2026 (46 days ago): Comet C/2026 A1 (MAPS) passes perihelion",
-      "url": "https://in-the-sky.org//news.php?id=2026_19_CK26A010_100",
-      "published_at": "2026-04-04",
-      "summary": "Comet C/2026 A1 (MAPS) makes its closest approach to the Sun.",
-      "summary_html": "<p>Comet C/2026 A1 (MAPS) makes its closest approach to the Sun.</p>",
-      "image_url": null,
-      "tags": [
-        "comets"
-      ],
-      "score": 35.0,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 0.0
-      },
-      "fingerprint": "in_the_sky_comets:9eacb1220e24"
-    },
-    {
-      "id": "in_the_sky_comets:ad0441f79aaf",
-      "stream": "comets",
-      "category": "COMETS",
-      "source": "in_the_sky_comets",
-      "title": "17 Feb 2026 (92 days ago): Comet C/2024 E1 (Wierzchos) passes perigee",
-      "url": "https://in-the-sky.org//news.php?id=2026_19_CK24E010_102",
-      "published_at": "2026-02-17",
-      "summary": "Comet C/2024 E1 (Wierzchos) makes its closest approach to the Earth.",
-      "summary_html": "<p>Comet C/2024 E1 (Wierzchos) makes its closest approach to the Earth.</p>",
-      "image_url": null,
-      "tags": [
-        "comets"
-      ],
-      "score": 35.0,
-      "score_breakdown": {
-        "topic_match": 0.0,
-        "freshness": 100.0,
-        "source_priority": 0.0,
-        "signal_bonus": 0.0
-      },
-      "fingerprint": "in_the_sky_comets:ad0441f79aaf"
+      "fingerprint": "in_the_sky_comets:afb08e94c9e0"
     }
   ]
 }
