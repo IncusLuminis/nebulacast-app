@@ -78,3 +78,19 @@ the widget in `#fs-sky`. The legacy
 [`assets/js/widget_alerts_feed.js`](../../sites/staging/assets/js/widget_alerts_feed.js)
 and [`sky/alerts.html`](../../sites/staging/sky/alerts.html) paths remain
 compatibility surfaces and are not removed.
+
+## Hero Widget Runtime migration
+
+Hero is registered once in the common Widget Runtime with observer-aware,
+time-aware, and multi-instance capabilities. Its authoritative implementation
+is [`hero/widget.js`](../../sites/staging/hero/widget.js), mounted through the
+delegation-only [`hero/platform-adapter.mjs`](../../sites/staging/hero/platform-adapter.mjs)
+and styled by the root-scoped [`hero/widget.css`](../../sites/staging/hero/widget.css).
+
+The Console host in [`index.html`](../../sites/staging/index.html) preserves the
+existing Hero layout, panel IDs, and launcher behavior. It provides the shared
+Platform Context and consumes Hero data/actions through scoped
+`nc:hero-data`/`nc:hero-action` events; it does not own Hero rendering, clock
+timers, or a `window._dbHeroData` bridge. The former inline renderer is not an
+active implementation. `console/data-loader.mjs` remains a temporary
+compatibility data-loader path, and no generated or copied Hero widget exists.

@@ -14,10 +14,16 @@ function createRuntime(definitions) {
 }
 
 test("catalog exposes Phase 1 platform adapter definitions", async () => {
-  assert.deepEqual(widgetCatalog.map(definition => definition.type), ["astro", "sun-moon", "weather", "map", "location", "sky", "news", "events", "alerts"]);
-  assert.equal(typeof widgetCatalog[0].loader, "function");
-  assert.equal(widgetCatalog[0].capabilities.multiInstance, true);
-  assert.equal(widgetCatalog[1].capabilities.multiInstance, true);
+  const catalogTypes = widgetCatalog.map(definition => definition.type);
+  assert.deepEqual(catalogTypes, ["hero", "astro", "sun-moon", "weather", "map", "location", "sky", "news", "events", "alerts"]);
+  assert.equal(catalogTypes.filter(type => type === "hero").length, 1);
+  const hero = widgetCatalog.find(definition => definition.type === "hero");
+  assert.equal(typeof hero.loader, "function");
+  const astro = widgetCatalog.find(definition => definition.type === "astro");
+  const sunMoon = widgetCatalog.find(definition => definition.type === "sun-moon");
+  assert.equal(typeof astro.loader, "function");
+  assert.equal(astro.capabilities.multiInstance, true);
+  assert.equal(sunMoon.capabilities.multiInstance, true);
   const weather = widgetCatalog.find(definition => definition.type === "weather");
   assert.deepEqual(weather.capabilities, {
     observerAware: true,
@@ -34,8 +40,8 @@ test("catalog exposes Phase 1 platform adapter definitions", async () => {
     embed: true,
   });
   const [astroModule, sunMoonModule, weatherModule, mapModule] = await Promise.all([
-    widgetCatalog[0].loader(),
-    widgetCatalog[1].loader(),
+    astro.loader(),
+    sunMoon.loader(),
     weather.loader(),
     map.loader(),
   ]);

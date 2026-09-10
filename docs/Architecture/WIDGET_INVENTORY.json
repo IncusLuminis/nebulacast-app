@@ -35,21 +35,25 @@
     {
       "id": "hero",
       "classification": "production",
-      "source_of_truth": "sites/staging/index.html",
+      "source_of_truth": "sites/staging/hero/widget.js",
       "generated_or_copied_artifacts": [],
-      "build_path": "No build step; the dashboard shell is hand-authored and frontend/build.py preserves index.html.",
-      "deploy_paths": ["sites/staging/index.html"],
+      "build_path": "No build step; the canonical Hero widget, delegation-only adapter, and root-scoped CSS are committed under sites/staging/hero/.",
+      "deploy_paths": ["sites/staging/hero/widget.js", "sites/staging/hero/platform-adapter.mjs", "sites/staging/hero/widget.css", "sites/staging/index.html"],
       "local_test_path": "make server; http://localhost:8080/",
-      "compatibility_paths": [],
+      "compatibility_paths": ["sites/staging/index.html", "sites/staging/console/data-loader.mjs"],
       "path_classification": [
-        {"path": "sites/staging/index.html", "role": "inline Hero implementation", "classification": "production"}
+        {"path": "sites/staging/hero/widget.js", "role": "canonical root-scoped Hero implementation", "classification": "production"},
+        {"path": "sites/staging/hero/platform-adapter.mjs", "role": "delegation-only Runtime adapter", "classification": "production"},
+        {"path": "sites/staging/hero/widget.css", "role": "root-scoped Hero styles", "classification": "production"},
+        {"path": "sites/staging/index.html", "role": "Console host and scoped event integration; former inline renderer is compatibility history only", "classification": "legacy"},
+        {"path": "sites/staging/console/data-loader.mjs", "role": "temporary compatibility data-loader path", "classification": "legacy"}
       ],
       "supporting_data_sources": [
         "sites/staging/data/observer_weather_now.json",
         "sites/staging/data/helio_now.json",
         "sites/staging/shared/lunar.mjs"
       ],
-      "notes": "Hero remains inline until the specified standalone extraction. It must not read another widget's DOM as its source."
+      "notes": "Hero owns mount/update/resize/refresh/destroy, data loading, rendering, clock, and scoped launcher events. The Console retains panel IDs and consumes only the explicit nc:hero-data/nc:hero-action boundary. No generated Hero copy exists; index.html and console/data-loader.mjs remain compatibility/integration paths and are not second Hero implementations."
     },
     {
       "id": "location",

@@ -6,19 +6,19 @@ async function readJson(fetchImpl, url, options = {}) {
   return response.ok ? response.json() : null;
 }
 
-export async function loadConsoleData({ location, isDefaultSite, observerWeatherUrl, fetchImpl = fetch, requestRegistry = null }) {
+export async function loadConsoleData({ location, isDefaultSite, observerWeatherUrl, fetchImpl = fetch, requestRegistry = null, signal = null }) {
   const locationKey = normalizeLocation(location) ?? "default";
-  const load = async signal => {
+  const load = async requestSignal => {
   const sunMoonUrl = isDefaultSite(location)
     ? "/sky/data/sun_moon.json"
     : `/api/sun-moon?lat=${location.lat}&lon=${location.lon}&days=7&step_min=10`;
 
   const [wxPrimary, sw, sunMoon] = await Promise.all([
-    readJson(fetchImpl, observerWeatherUrl, { cache: "no-store" }),
-    readJson(fetchImpl, "/data/helio_now.json"),
-    readJson(fetchImpl, sunMoonUrl, { cache: "no-store" }),
+    readJson(fetchImpl, observerWeatherUrl, { cache: "no-store", signal: requestSignal }),
+    readJson(fetchImpl, "/data/helio_now.json", { signal: requestSignal }),
+    readJson(fetchImpl, sunMoonUrl, { cache: "no-store", signal: requestSignal }),
   ]);
-  const wx = wxPrimary ?? await readJson(fetchImpl, "/data/observer_weather_now.json");
+  const wx = wxPrimary ?? await readJson(fetchImpl, "/data/observer_weather_now.json", { signal: requestSignal });
 
   let validatedSunMoon = sunMoon;
   if (validatedSunMoon && validatedSunMoon.schema !== "sun_moon.v2") {
@@ -34,5 +34,5 @@ export async function loadConsoleData({ location, isDefaultSite, observerWeather
   }
   return { wx, sw, sunMoon: validatedSunMoon };
   };
-  return requestRegistry ? requestRegistry.getOrCreate(locationKey, load) : load(new AbortController().signal);
+  return requestRegistry ? requestRegistry.getOrCreate(locationKey, load) : load(signal || new AbortController().signal);
 }

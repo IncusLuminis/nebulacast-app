@@ -8,6 +8,13 @@ const commonCapabilities = Object.freeze({
 
 export const widgetCatalog = Object.freeze([
   Object.freeze({
+    type: "hero",
+    version: 1,
+    defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
+    capabilities: commonCapabilities,
+    loader: () => import("../hero/platform-adapter.mjs"),
+  }),
+  Object.freeze({
     type: "astro",
     version: 1,
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
