@@ -13,6 +13,15 @@ function normalizeError(error) {
   return error instanceof Error ? error : new Error(String(error));
 }
 
+function standaloneStylesheet(definition) {
+  const href = definition?.standaloneStylesheet;
+  if (href === undefined) return null;
+  if (typeof href !== "string" || !/^\/(?!\/)[^<>\s?#]+$/.test(href)) {
+    throw new TypeError(`Invalid standalone stylesheet for ${definition?.type || "widget"}`);
+  }
+  return href;
+}
+
 /** A bounded standalone host for catalog definitions explicitly marked standaloneHost. */
 export function createStandaloneWidgetHost({
   root,
@@ -30,6 +39,7 @@ export function createStandaloneWidgetHost({
   const widgetRuntime = runtime || createNebulacast({ context, registry });
   let instance = null;
   let pending = null;
+  let stylesheetLink = null;
   let destroyed = false;
 
   function setStatus(message, state = "idle") {
@@ -49,6 +59,8 @@ export function createStandaloneWidgetHost({
     try {
       await instance?.destroy?.();
     } finally {
+      stylesheetLink?.remove?.();
+      stylesheetLink = null;
       instance = null;
       pending = null;
       disableDestroy(true);
@@ -63,8 +75,19 @@ export function createStandaloneWidgetHost({
     if (instance) return instance;
     if (pending) return pending;
     let widgetConfig;
+    let definition;
     try {
       widgetConfig = parseStandaloneWidgetQuery(registry, nextSearch);
+      definition = registry.get(widgetConfig.widget);
+      const href = standaloneStylesheet(definition);
+      if (href && documentRef?.head?.appendChild && typeof documentRef.createElement === "function") {
+        const link = documentRef.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        link.setAttribute?.("data-nc-standalone-stylesheet", widgetConfig.widget);
+        documentRef.head.appendChild(link);
+        stylesheetLink = link;
+      }
     } catch (error) {
       const normalized = normalizeError(error);
       setStatus(`Unable to mount widget: ${normalized.message}`, "error");
@@ -89,6 +112,8 @@ export function createStandaloneWidgetHost({
         setStatus(`${widgetConfig.widget} mounted.`, "mounted");
         return mounted;
       } catch (error) {
+        stylesheetLink?.remove?.();
+        stylesheetLink = null;
         const normalized = normalizeError(error);
         setStatus(`Unable to mount widget: ${normalized.message}`, "error");
         disableDestroy(true);

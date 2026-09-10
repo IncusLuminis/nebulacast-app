@@ -123,6 +123,8 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "events",
     version: 1,
+    standaloneHost: true,
+    standaloneStylesheet: "/assets/css/widget_calendar.css",
     ...galleryMetadata("Calendar", "Upcoming meteors, eclipses, conjunctions, occultations, and comets.", COMMON_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({
       orientation: "auto",
@@ -141,6 +143,7 @@ export const widgetCatalog = Object.freeze([
     type: "alerts",
     version: 1,
     standaloneHost: true,
+    standaloneStylesheet: "/alerts/widget.css",
     ...galleryMetadata("Sky Alerts", "Live space-event alerts grouped by risk, NEO, transient, and related types.", COMMON_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({
       orientation: "auto",

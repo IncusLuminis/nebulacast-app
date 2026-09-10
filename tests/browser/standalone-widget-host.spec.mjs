@@ -1,6 +1,30 @@
 import { test, expect } from "@playwright/test";
 
 const alertPayload = { items: [{ id: "canary-1", group: "risk", title: "Canary alert", note: "Standalone host" }] };
+const eventsPayload = { items: [{ title: "Meteor canary", category: "METEORS", published_at: "2099-01-02T12:00:00Z", url: "https://example.test/meteor", summary: "Standalone event" }] };
+
+test("standalone widget host mounts Events with catalog defaults and cleans up on pagehide", async ({ page }) => {
+  await page.route("**/calendar/daily_signal.json", route => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(eventsPayload),
+  }));
+  await page.goto("/widgets/widget.html?widget=events", { waitUntil: "domcontentloaded" });
+
+  const root = page.locator("#widget-root");
+  await expect(root).toHaveAttribute("data-nc-widget", "events");
+  await expect(root).toHaveAttribute("data-nc-state", "ready");
+  await expect(root).toHaveAttribute("data-nc-orientation", "auto");
+  await expect(root).toHaveAttribute("data-nc-theme", "inherit");
+  await expect(root).toHaveAttribute("data-nc-density", "normal");
+  await expect(root.locator('[data-role="filters"] .nrc-filter')).toHaveCount(6);
+  await expect(root.locator('[data-role="list"] .nrc-card')).toHaveCount(1);
+  await expect(page.locator('link[href="/assets/css/widget_calendar.css"]')).toHaveCount(1);
+
+  await page.evaluate(() => window.dispatchEvent(new Event("pagehide")));
+  await expect(root).not.toHaveAttribute("data-nc-widget");
+  await expect(page.locator("#host-status")).toHaveText("Widget destroyed.");
+});
 
 test("standalone widget host mounts only the Alerts canary and cleans up explicitly", async ({ page }) => {
   const requests = [];
@@ -19,6 +43,7 @@ test("standalone widget host mounts only the Alerts canary and cleans up explici
   await expect(root).toHaveAttribute("data-nc-density", "compact");
   await expect(root).toHaveAttribute("data-nc-state", "ready");
   await expect(root.locator('[data-role="item"]')).toHaveCount(1);
+  await expect(page.locator('link[href="/alerts/widget.css"]')).toHaveCount(1);
   expect(requests.some(url => url.includes("hero/platform-adapter") || url.includes("weather/widgets"))).toBeFalsy();
 
   await page.getByRole("button", { name: "Destroy widget" }).click();
