@@ -152,7 +152,7 @@ test("Hero source and adapter keep the Console and DOM boundaries explicit", asy
   assert.doesNotMatch(consoleSource, /function\s+loadHero|loadHero\(|window\._dbHeroData/);
   assert.doesNotMatch(consoleSource, /document\.querySelectorAll\(['"]\.hero-card/);
   assert.match(consoleSource, /heroInstance\?\.update\?\.\(\{ activePanels:/);
-  assert.match(consoleSource, /heroInstance = instance; _dbAfterHeroRender\(\)/);
-  assert.match(consoleSource, /mountConsoleHero\(\)/);
+  assert.match(consoleSource, /heroInstance = consoleComposer\.getInstance\('hero'\)[\s\S]*_dbAfterHeroRender\(\)/);
+  assert.match(consoleSource, /mountConsoleComposer\(\)/);
   assert.match(consoleSource, /nc:hero-action/);
 });

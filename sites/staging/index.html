@@ -2195,14 +2195,11 @@
 <!-- Main app: state, widgets, console logic -->
 <script type="module">
   import { initState, getState, setState, subscribe } from "/weather/core/state.js";
-  import { mountLocation } from "/weather/widgets/location/location.js";
-  import { mountWeather } from "/weather/widgets/weather/weather.js";
-  import { mountSunMoon } from "/weather/widgets/sun_moon/sun_moon.js?v=20260422a";
 
   import { normalizeLocation } from "/shared/request-registry.mjs";
   import { createPlatformContext } from "/weather/core/context.js";
-  import { createCatalogRegistry } from "/shared/widget-catalog.mjs";
-  import { createNebulacast } from "/shared/widget-runtime.mjs";
+  import { createConsoleComposer } from "/console/console-composer.mjs";
+  import { consoleConfig } from "/console/console-config.mjs";
 
   const STORAGE_SKY_ALERT_FILTERS = 'nc-sky-alert-filters';
   const DEFAULT_SKY_GROUPS = ['risk', 'neo', 'neocp', 'transient', 'nova'];
@@ -2219,10 +2216,15 @@
   initState();
   const storeApi = { getState, setState, subscribe };
   const platformContext = createPlatformContext(storeApi, { locale: 'en', theme: 'auto' });
-  const widgetRuntime = createNebulacast({
+  const consoleComposer = createConsoleComposer({
     context: platformContext,
-    registry: createCatalogRegistry(),
+    config: consoleConfig,
     resolveAutoOrientation: ({ root }) => root.clientWidth < 520 ? 'vertical' : 'horizontal',
+    resolveConfig: slot => {
+      if (slot.id === 'hero') return { sunCalc: globalThis.SunCalc };
+      if (slot.id === 'alerts') return { groups: getSkyAlertGroups() };
+      return {};
+    },
   });
   const heroRoot = document.getElementById('console-hero');
   let heroInstance = null;
@@ -2231,12 +2233,12 @@
   let _nopNightHours = [];
   let _nopBestWindow = null;
   let _nopActiveMetric = 'moon';
-  function mountConsoleHero() {
-    if (!heroRoot) return Promise.resolve();
-    return widgetRuntime.mount(heroRoot, {
-      widget: 'hero',
-      config: { sunCalc: globalThis.SunCalc },
-    }).then(instance => { heroInstance = instance; _dbAfterHeroRender(); return instance; });
+  function mountConsoleComposer() {
+    return consoleComposer.mount().then(snapshot => {
+      heroInstance = consoleComposer.getInstance('hero') || null;
+      _dbAfterHeroRender();
+      return snapshot;
+    });
   }
   heroRoot?.addEventListener('nc:hero-data', event => {
     heroDataSnapshot = event.detail || null;
@@ -2254,31 +2256,7 @@
     if (detail.action === 'profile-change') _dbSyncWeatherProfile(detail.profile);
     if (detail.action === 'nqi-info') window.dispatchEvent(new CustomEvent('nc:hero-nqi-info', { detail: detail.element }));
   });
-  let skyAlertsInstance = null;
-  async function mountConsoleSkyAlerts() {
-    const root = document.getElementById('fs-sky');
-    if (!root) return;
-    skyAlertsInstance = await widgetRuntime.mount(root, {
-      widget: 'alerts',
-      config: {
-        orientation: 'vertical',
-        groups: getSkyAlertGroups(),
-        maxItems: 20,
-      },
-    });
-  }
-  const widgetDisposers = new Map();
-  function mountWidget(key, root, mount) {
-    widgetDisposers.get(key)?.();
-    if (!root) return;
-    const disposer = mount(root, storeApi);
-    const dispose = typeof disposer === "function" ? disposer : disposer?.dispose || disposer?.unmount;
-    if (dispose) widgetDisposers.set(key, dispose);
-  }
-  window.nebulacastWidgetLifecycle = { disposeAll: () => {
-    for (const dispose of widgetDisposers.values()) dispose();
-    widgetDisposers.clear();
-  }};
+  window.nebulacastWidgetLifecycle = { disposeAll: () => consoleComposer.destroy() };
 
   // ── Utility: debounce ──────────────────────────────────
   function _debounce(fn, ms) {
@@ -2322,43 +2300,6 @@
       </div>
     </div>`;
   }
-
-  // ── Topbar: Location ────────────────────────────────────
-  const locationEl = document.getElementById("w-location");
-  mountWidget("location", locationEl, mountLocation);
-
-  // ── Weather (Conditions tab) ────────────────────────────
-  const weatherEl = document.getElementById("w-weather");
-  mountWidget("weather", weatherEl, mountWeather);
-
-  // ── Weather matrix (Matrix panel) ───────────────────────
-  const weatherMatrixEl = document.getElementById("w-weather-matrix");
-  mountWidget("weather-matrix", weatherMatrixEl, mountWeather);
-
-  // ── Sun & Moon tab ──────────────────────────────────────
-  const sunEl = document.getElementById("w-sun");
-  mountWidget("sun", sunEl, mountSunMoon);
-
-  // ── Sun & Moon in dashboard sunmoon panel ───────────────
-  const sunmoonPanelEl = document.getElementById("w-sunmoon-panel");
-  mountWidget("sunmoon-panel", sunmoonPanelEl, mountSunMoon);
-
-  // ── Calendar & News (always init, DOM ready) ────────────
-  window.runCalendarWidget({
-    rootId:   'nrc-main',
-    jsonUrl:  '/calendar/daily_signal.json',
-    maxItems: 25,
-    filters:  ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"],
-    iconBase: '/assets/icons/alerts'
-  });
-
-  window.runNewsWidget({
-    rootId:   'nrw-main',
-    rssUrl:   '/news/rss.xml',
-    maxItems: 15,
-    parseMax: 300,
-    filters:  ["All", "News", "Science", "Videos", "Images", "Nebulacast"]
-  });
 
   // ── Observer Weather (lazy – inside Events tab) ─────────
   let obsInited = false;
@@ -3656,10 +3597,9 @@
   });
 
   // ── Boot ───────────────────────────────────────────────
-  mountConsoleHero().catch(error => console.error('Hero mount failed:', error));
+  mountConsoleComposer().catch(error => console.error('Console Composer mount failed:', error));
   loadFeed();
   loadSwxAlerts();
-  mountConsoleSkyAlerts().catch(error => console.error('Sky Alerts mount failed:', error));
   loadCalendarEvents();
   loadNewsItems();
 
@@ -3998,7 +3938,7 @@
       }
       saveSkyAlertGroups(groups);
       btn.classList.toggle('is-active', groups.includes(grp));
-      skyAlertsInstance?.update({ groups });
+      consoleComposer.getInstance('alerts')?.update({ groups });
     });
 
     // ── Reset model now also resets strictness ─────────────

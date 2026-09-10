@@ -134,6 +134,7 @@ test("Alerts source boundaries keep the canonical widget local and adapter deleg
   const widgetSource = await readFile(new URL("../sites/staging/alerts/widget.js", import.meta.url), "utf8");
   const adapterSource = await readFile(new URL("../sites/staging/alerts/platform-adapter.mjs", import.meta.url), "utf8");
   const consoleSource = await readFile(new URL("../sites/staging/index.html", import.meta.url), "utf8");
+  const consoleConfigSource = await readFile(new URL("../sites/staging/console/console-config.mjs", import.meta.url), "utf8");
   const stylesheet = await readFile(new URL("../sites/staging/alerts/widget.css", import.meta.url), "utf8");
   assert.doesNotMatch(widgetSource, /document\.getElementById|document\.querySelector|window\./);
   assert.match(widgetSource, /\/sky\/data\/alerts_now\.json/);
@@ -141,7 +142,7 @@ test("Alerts source boundaries keep the canonical widget local and adapter deleg
   assert.match(widgetSource, /inFlight/);
   assert.doesNotMatch(adapterSource, /fetch|innerHTML|querySelector|document/);
   assert.match(adapterSource, /mountAlerts/);
-  assert.match(consoleSource, /orientation: 'vertical'/);
+  assert.match(consoleConfigSource, /id: "alerts"[\s\S]*orientation: "vertical"/);
   assert.match(consoleSource, /groups: getSkyAlertGroups\(\)/);
   assert.match(stylesheet, /max-height:\s*230px/);
   assert.match(stylesheet, /overflow-y:\s*auto/);
