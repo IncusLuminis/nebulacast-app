@@ -44,6 +44,13 @@ html, body {
 .gallery-copy-status { color: #718090; font-size: 11px; min-height: 16px; }
 .gallery-copy-status[data-copy-state="copied"] { color: #5cce8c; }
 .gallery-copy-status[data-copy-state="error"] { color: #e07070; }
+.gallery-embed-output { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #0b0f16; }
+.gallery-output-label { color: var(--muted); font-size: 11px; font-weight: 600; }
+.gallery-iframe-url, .gallery-iframe-snippet { display: block; max-height: 96px; overflow: auto; overflow-wrap: anywhere; white-space: pre-wrap; color: #bcd5ff; font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; user-select: all; }
+.gallery-iframe-snippet { margin: 0; }
+.gallery-output-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.gallery-output-copy-status, .gallery-output-unavailable { color: #718090; font-size: 11px; min-height: 16px; }
+.gallery-output-copy-status[data-copy-state="error"] { color: #e07070; }
 .card-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 .card-link { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 12px; font-weight: 500; color: var(--link); text-decoration: none; padding: 4px 10px; border: 1px solid #1e2c42; border-radius: 5px; background: #0a1520; transition: background 0.12s, border-color 0.12s; cursor: pointer; }
 .card-link:hover { background: #0f1e30; border-color: #2a4060; }

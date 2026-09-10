@@ -1,5 +1,6 @@
 export const WIDGET_CONFIG_SCHEMA = "widget-config.v1";
 export const STANDALONE_WIDGET_QUERY_KEYS = Object.freeze(["widget", "orientation", "theme", "density"]);
+export const STANDALONE_WIDGET_HOST_PATH = "/widgets/widget.html";
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -22,6 +23,54 @@ function allowedValues(definition, key) {
   const values = definition?.supportedOptions?.[key];
   if (!Array.isArray(values)) return [];
   return values.filter(safeString);
+}
+
+function assertStandaloneFields(value, path = "standalone widget") {
+  if (!isObject(value)) throw new TypeError(`${path} must be an object`);
+  for (const key of Object.keys(value)) {
+    if (!STANDALONE_WIDGET_QUERY_KEYS.slice(1).includes(key)) {
+      throw new TypeError(`${path} contains an unsupported field: ${key}`);
+    }
+  }
+}
+
+function standaloneConfig(registry, widgetOrExport, requested) {
+  let widget = widgetOrExport;
+  let source = requested;
+  if (isObject(widgetOrExport)) {
+    const exportKeys = ["schema", "widget", "version", "config"];
+    const hasExportShape = Object.prototype.hasOwnProperty.call(widgetOrExport, "schema") ||
+      Object.prototype.hasOwnProperty.call(widgetOrExport, "version") ||
+      Object.prototype.hasOwnProperty.call(widgetOrExport, "config");
+    if (hasExportShape) {
+      if (Object.keys(widgetOrExport).some(key => !exportKeys.includes(key)) ||
+          widgetOrExport.schema !== WIDGET_CONFIG_SCHEMA ||
+          !Number.isInteger(widgetOrExport.version) ||
+          !isObject(widgetOrExport.config)) {
+        throw new TypeError("Expected a widget-config.v1 standalone export");
+      }
+      widget = widgetOrExport.widget;
+      source = widgetOrExport.config;
+      const definition = definitionFrom(registry, widget);
+      if (widgetOrExport.version !== definition.version) throw new TypeError("Standalone widget config version mismatch");
+    } else if (Object.prototype.hasOwnProperty.call(widgetOrExport, "widget")) {
+      widget = widgetOrExport.widget;
+      source = { ...widgetOrExport };
+      delete source.widget;
+    } else {
+      throw new TypeError("Standalone widget input requires a widget type");
+    }
+  }
+  const definition = definitionFrom(registry, widget);
+  if (definition.standaloneHost !== true) throw new Error(`Widget ${widget} is not allowed in the standalone host`);
+  const input = source === undefined ? {} : source;
+  assertStandaloneFields(input);
+  for (const key of STANDALONE_WIDGET_QUERY_KEYS.slice(1)) {
+    if (input[key] !== undefined && !allowedValues(definition, key).includes(input[key])) {
+      throw new TypeError(`Invalid ${key} for standalone widget ${widget}`);
+    }
+  }
+  return createWidgetConfig(registry, widget, input);
 }
 
 export function getWidgetOptionValues(registry, widget, key) {
@@ -132,6 +181,15 @@ export function serializeWidgetConfig(value) {
 
 export function exportWidgetConfig(registry, widget, requested = {}) {
   return serializeWidgetConfig(createWidgetConfig(registry, widget, requested));
+}
+
+/** Build the deterministic URL for the bounded standalone host. */
+export function buildStandaloneWidgetUrl(registry, widgetOrExport, requested = {}) {
+  const configExport = standaloneConfig(registry, widgetOrExport, requested);
+  const params = new URLSearchParams();
+  params.set("widget", configExport.widget);
+  for (const key of STANDALONE_WIDGET_QUERY_KEYS.slice(1)) params.set(key, configExport.config[key]);
+  return `${STANDALONE_WIDGET_HOST_PATH}?${params.toString()}`;
 }
 
 /** Parse the bounded standalone host query without ever evaluating a loader. */

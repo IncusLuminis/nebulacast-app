@@ -51,6 +51,29 @@ test("Showcase preserves the legacy standalone entry points in an allow-listed s
   }
 });
 
+test("Showcase generates host output only for standalone-enabled registry widgets", async () => {
+  const { documentRef, root } = createGalleryRoot();
+  const gallery = createShowcaseGallery({ root, documentRef, context: createGalleryContext(), runtime: createGalleryRuntime() });
+  await gallery.mount();
+
+  const alertsCard = root.querySelector('[data-widget-type="alerts"]');
+  const eventsCard = root.querySelector('[data-widget-type="events"]');
+  const heroCard = root.querySelector('[data-widget-type="hero"]');
+  assert.equal(alertsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=alerts&orientation=auto&theme=inherit&density=normal");
+  assert.equal(eventsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=events&orientation=auto&theme=inherit&density=normal");
+  assert.equal(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, '<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" loading="lazy"></iframe>');
+  assert.equal(heroCard.querySelector(".gallery-output-unavailable").textContent, "Iframe output unavailable");
+
+  const orientation = alertsCard.querySelector('[data-gallery-option="orientation"]');
+  const theme = alertsCard.querySelector('[data-gallery-option="theme"]');
+  orientation.value = "vertical";
+  theme.value = "dark";
+  orientation.dispatchEvent({ type: "change", target: orientation });
+  theme.dispatchEvent({ type: "change", target: theme });
+  assert.equal(alertsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=alerts&orientation=vertical&theme=dark&density=normal");
+  assert.match(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, /orientation=vertical&amp;theme=dark/);
+});
+
 test("preview uses registry metadata, sanitizes config, is idempotent, and closes cleanly", async () => {
   const { documentRef, root } = createGalleryRoot();
   const runtime = createGalleryRuntime();
@@ -92,6 +115,11 @@ test("Copy config uses clipboard when available and an accessible fallback other
   documentRef.execCommand = command => command === "copy";
   assert.equal(await gallery.copyConfig("hero"), true);
   assert.equal(root.querySelector('[data-widget-type="hero"]').querySelector('[data-role="copy-status"]').textContent, "Copied config (fallback)");
+
+  const copyUrl = root.querySelector('[data-widget-type="alerts"]').querySelector('[data-gallery-action="copy-iframe-url"]');
+  copyUrl.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(root.querySelector('[data-widget-type="alerts"]').querySelector('[data-role="iframe-copy-status"]').textContent, "Copied URL (fallback)");
 });
 
 test("one preview failure stays local and gallery destroy releases remaining instances", async () => {
