@@ -48,3 +48,17 @@ reads or writes those globals.
 Story #66 freezes the current repository topology and does not extract widgets,
 move files, delete legacy/POC paths, change the runtime, update staging, or
 change deployment behavior.
+
+## News and Events runtime migration
+
+News and Events are registered once each in the common Widget Runtime catalog.
+Both definitions are `observerAware: false`, `timeAware: false`, and
+`multiInstance: true`; their adapters only delegate supplied-root mounts to the
+canonical [`frontend/assets/js/widget_runtime.js`](../../frontend/assets/js/widget_runtime.js).
+
+The generated copy at `sites/staging/assets/js/widget_runtime.js` and the
+existing generated/legacy `news/widget.js` and `calendar/widget.js` paths remain
+compatibility artifacts. News continues to read `/news/rss.xml`; Events
+continues to read `/calendar/daily_signal.json` and retains its JSON/RSS links.
+No backend, pipeline, data schema, Console, Sky, Weather, or Builder/Gallery
+surface is part of this migration.

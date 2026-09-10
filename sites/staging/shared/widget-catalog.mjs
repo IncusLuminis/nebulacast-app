@@ -70,6 +70,37 @@ export const widgetCatalog = Object.freeze([
     capabilities: commonCapabilities,
     loader: () => import("../sky/platform-adapter.mjs"),
   }),
+  Object.freeze({
+    type: "news",
+    version: 1,
+    defaults: Object.freeze({
+      orientation: "auto",
+      theme: "inherit",
+      density: "normal",
+      rssUrl: "/news/rss.xml",
+      maxItems: 12,
+      parseMax: 300,
+      filters: Object.freeze(["All", "News", "Science", "Videos", "Images", "Nebulacast"]),
+    }),
+    capabilities: Object.freeze({ observerAware: false, timeAware: false, multiInstance: true }),
+    loader: () => import("../news/platform-adapter.mjs"),
+  }),
+  Object.freeze({
+    type: "events",
+    version: 1,
+    defaults: Object.freeze({
+      orientation: "auto",
+      theme: "inherit",
+      density: "normal",
+      jsonUrl: "/calendar/daily_signal.json",
+      rssUrl: "/alerts/rss.xml",
+      maxItems: 20,
+      filters: Object.freeze(["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"]),
+      iconBase: "/assets/icons/alerts",
+    }),
+    capabilities: Object.freeze({ observerAware: false, timeAware: false, multiInstance: true }),
+    loader: () => import("../calendar/platform-adapter.mjs"),
+  }),
 ]);
 
 export function createCatalogRegistry() {

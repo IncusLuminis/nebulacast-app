@@ -14,7 +14,7 @@ function createRuntime(definitions) {
 }
 
 test("catalog exposes Phase 1 platform adapter definitions", async () => {
-  assert.deepEqual(widgetCatalog.map(definition => definition.type), ["astro", "sun-moon", "weather", "map", "location", "sky"]);
+  assert.deepEqual(widgetCatalog.map(definition => definition.type), ["astro", "sun-moon", "weather", "map", "location", "sky", "news", "events"]);
   assert.equal(typeof widgetCatalog[0].loader, "function");
   assert.equal(widgetCatalog[0].capabilities.multiInstance, true);
   assert.equal(widgetCatalog[1].capabilities.multiInstance, true);
@@ -61,6 +61,16 @@ test("catalog exposes Phase 1 platform adapter definitions", async () => {
   });
   const skyModule = await sky.loader();
   assert.equal(typeof skyModule.mount, "function");
+  const news = widgetCatalog.find(definition => definition.type === "news");
+  const events = widgetCatalog.find(definition => definition.type === "events");
+  assert.equal(widgetCatalog.filter(definition => definition.type === "news").length, 1);
+  assert.equal(widgetCatalog.filter(definition => definition.type === "events").length, 1);
+  assert.deepEqual(news.capabilities, { observerAware: false, timeAware: false, multiInstance: true });
+  assert.deepEqual(events.capabilities, { observerAware: false, timeAware: false, multiInstance: true });
+  assert.equal(typeof news.loader, "function");
+  assert.equal(typeof events.loader, "function");
+  assert.equal(typeof (await news.loader()).mount, "function");
+  assert.equal(typeof (await events.loader()).mount, "function");
 });
 
 test("mount creates the public instance shape, merges immutable config, and caches lazy loading", async () => {

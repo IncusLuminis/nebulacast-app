@@ -241,6 +241,7 @@
       "compatibility_paths": ["sites/staging/news/widget.js"],
       "path_classification": [
         {"path": "frontend/assets/js/widget_runtime.js", "role": "News runtime implementation", "classification": "production"},
+        {"path": "sites/staging/news/platform-adapter.mjs", "role": "common Widget Runtime adapter", "classification": "production"},
         {"path": "frontend/templates/partials/widget_news.html", "role": "generated markup template", "classification": "production"},
         {"path": "sites/staging/news/widget.js", "role": "generated Blogger adapter", "classification": "legacy"}
       ],
@@ -250,7 +251,7 @@
         "services/news/pipelines/run_news.py",
         "sites/staging/news/rss.xml"
       ],
-      "notes": "The runtime and templates together define the existing generated surface; generated files are not edited independently."
+      "notes": "News is registered as a non-location/time-aware multi-instance Widget Runtime type. The canonical root-scoped implementation is frontend/assets/js/widget_runtime.js; the platform adapter delegates to it, while generated files are not edited independently."
     },
     {
       "id": "events",
@@ -275,6 +276,7 @@
       "compatibility_paths": ["sites/staging/calendar/widget.js"],
       "path_classification": [
         {"path": "frontend/assets/js/widget_runtime.js", "role": "Calendar runtime implementation", "classification": "production"},
+        {"path": "sites/staging/calendar/platform-adapter.mjs", "role": "common Widget Runtime adapter", "classification": "production"},
         {"path": "frontend/templates/partials/widget_calendar.html", "role": "generated markup template", "classification": "production"},
         {"path": "sites/staging/calendar/widget.js", "role": "generated standalone adapter", "classification": "legacy"}
       ],
@@ -284,7 +286,7 @@
         "services/calendar/pipelines/run_calendar.py",
         "sites/staging/calendar/daily_signal.json"
       ],
-      "notes": "Calendar is the current Events surface; its generated data flow remains unchanged by Story #66."
+      "notes": "Calendar is the current Events surface and is registered as a non-location/time-aware multi-instance Widget Runtime type. The canonical root-scoped implementation remains frontend/assets/js/widget_runtime.js; daily_signal JSON, alerts RSS, pipelines, and generated compatibility files remain unchanged."
     },
     {
       "id": "alerts",
