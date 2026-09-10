@@ -1,6 +1,8 @@
 export const WIDGET_CONFIG_SCHEMA = "widget-config.v1";
 export const STANDALONE_WIDGET_QUERY_KEYS = Object.freeze(["widget", "orientation", "theme", "density"]);
 export const STANDALONE_WIDGET_HOST_PATH = "/widgets/widget.html";
+export const JAVASCRIPT_EMBED_MODULE_PATH = "/widgets/runtime/index.mjs";
+export const JAVASCRIPT_EMBED_CONFIG_KEYS = Object.freeze(["orientation", "theme", "density", "baseUrl"]);
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -17,6 +19,12 @@ function safeString(value) {
   return typeof value === "string" &&
     !/[<>]/.test(value) &&
     !/^(?:javascript:|data:|https?:\/\/|\/\/)/i.test(value);
+}
+
+function safeEmbedBaseUrl(value) {
+  return typeof value === "string" && value.length > 0 && !/[<>\s?#]/.test(value) &&
+    !/(?:^|\/)[^/]*\.(?:html?|m?js)(?:\/|$)/i.test(value) &&
+    (/^\/(?!\/)/.test(value) || /^https?:\/\/[^/]+(?:\/[^/]*)*\/?$/i.test(value));
 }
 
 function allowedValues(definition, key) {
@@ -190,6 +198,44 @@ export function buildStandaloneWidgetUrl(registry, widgetOrExport, requested = {
   params.set("widget", configExport.widget);
   for (const key of STANDALONE_WIDGET_QUERY_KEYS.slice(1)) params.set(key, configExport.config[key]);
   return `${STANDALONE_WIDGET_HOST_PATH}?${params.toString()}`;
+}
+
+/** Normalize the public JavaScript embed specification without exposing loaders or data URLs. */
+export function normalizeJavascriptEmbedInput(registry, specification = {}) {
+  if (!isObject(specification)) throw new TypeError("JavaScript embed specification must be an object");
+  for (const key of Object.keys(specification)) {
+    if (!["widget", "config", "baseUrl"].includes(key)) {
+      throw new TypeError(`JavaScript embed specification contains an unsupported field: ${key}`);
+    }
+  }
+  const widget = specification.widget;
+  const definition = definitionFrom(registry, widget);
+  if (definition.javascriptEmbed !== true) throw new Error(`Widget ${widget} is not enabled for JavaScript embed`);
+  const supplied = specification.config === undefined ? {} : specification.config;
+  if (!isObject(supplied)) throw new TypeError("JavaScript embed config must be an object");
+  for (const key of Object.keys(supplied)) {
+    if (!JAVASCRIPT_EMBED_CONFIG_KEYS.includes(key)) {
+      throw new TypeError(`JavaScript embed config contains an unsupported field: ${key}`);
+    }
+  }
+  if (specification.baseUrl !== undefined && supplied.baseUrl !== undefined && specification.baseUrl !== supplied.baseUrl) {
+    throw new TypeError("JavaScript embed baseUrl was provided twice");
+  }
+  const requested = { ...supplied };
+  if (specification.baseUrl !== undefined) requested.baseUrl = specification.baseUrl;
+  if (requested.baseUrl !== undefined && !safeEmbedBaseUrl(requested.baseUrl)) {
+    throw new TypeError("JavaScript embed baseUrl must be a safe data/assets URL prefix");
+  }
+  const common = createWidgetConfig(registry, widget, requested);
+  const config = { ...common.config };
+  if (requested.baseUrl !== undefined) config.baseUrl = requested.baseUrl;
+  return Object.freeze({ widget: common.widget, config: deepFreeze(config) });
+}
+
+/** Serialize the bounded JavaScript embed specification with stable key ordering. */
+export function serializeJavascriptEmbedSpecification(registry, specification = {}) {
+  const normalized = normalizeJavascriptEmbedInput(registry, specification);
+  return stableValue({ widget: normalized.widget, config: normalized.config });
 }
 
 /** Parse the bounded standalone host query without ever evaluating a loader. */

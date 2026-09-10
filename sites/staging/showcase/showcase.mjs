@@ -1,6 +1,13 @@
 import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
-import { buildStandaloneWidgetUrl, createWidgetConfig, getWidgetOptionValues, serializeWidgetConfig } from "../shared/widget-config.mjs";
+import {
+  buildStandaloneWidgetUrl,
+  createWidgetConfig,
+  getWidgetOptionValues,
+  JAVASCRIPT_EMBED_MODULE_PATH,
+  serializeJavascriptEmbedSpecification,
+  serializeWidgetConfig,
+} from "../shared/widget-config.mjs";
 
 const STANDALONE_LINKS = Object.freeze({
   hero: Object.freeze({ href: "/", label: "Console" }),
@@ -105,6 +112,14 @@ export function createShowcaseGallery({
       cardState.hostOutput.iframeSnippetOutput.textContent = cardState.iframeSnippet;
       cardState.hostOutput.openHost.href = url;
     }
+    if (cardState.javascriptOutput) {
+      const serializedSpecification = serializeJavascriptEmbedSpecification(registry, {
+        widget: definition.type,
+        config: cardState.configExport.config,
+      });
+      cardState.javascriptSnippet = `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nmount(root, ${serializedSpecification});`;
+      cardState.javascriptOutput.snippet.textContent = cardState.javascriptSnippet;
+    }
     cardState.copyStatus.textContent = "Ready to copy";
   }
 
@@ -167,6 +182,27 @@ export function createShowcaseGallery({
       }
     } catch (_) {}
     cardState.hostOutput.outputCopyStatus.textContent = "Copy unavailable — select the output text";
+    return false;
+  }
+
+  async function copyJavascriptSnippet(type) {
+    const cardState = cards.get(type);
+    if (!cardState?.javascriptOutput) return false;
+    const navigatorRef = documentRef.defaultView?.navigator || (typeof navigator !== "undefined" ? navigator : null);
+    try {
+      if (typeof navigatorRef?.clipboard?.writeText === "function") {
+        try {
+          await navigatorRef.clipboard.writeText(cardState.javascriptSnippet);
+          cardState.javascriptOutput.status.textContent = "Copied JavaScript";
+          return true;
+        } catch (_) {}
+      }
+      if (fallbackCopy(cardState.javascriptSnippet)) {
+        cardState.javascriptOutput.status.textContent = "Copied JavaScript (fallback)";
+        return true;
+      }
+    } catch (_) {}
+    cardState.javascriptOutput.status.textContent = "Copy unavailable — select the JavaScript text";
     return false;
   }
 
@@ -359,6 +395,35 @@ export function createShowcaseGallery({
       card.appendChild(outputBlock);
     }
 
+    const javascriptEmbed = definition.javascriptEmbed === true;
+    let javascriptOutputState = null;
+    const javascriptOutputBlock = documentRef.createElement("div");
+    javascriptOutputBlock.className = "gallery-javascript-output";
+    if (javascriptEmbed) {
+      javascriptOutputBlock.setAttribute("data-role", "javascript-embed-output");
+      javascriptOutputBlock.appendChild(appendText(documentRef, "div", "gallery-output-label", "JavaScript embed"));
+      const javascriptSnippet = documentRef.createElement("pre");
+      javascriptSnippet.className = "gallery-javascript-snippet";
+      javascriptSnippet.setAttribute("data-role", "javascript-embed-snippet");
+      javascriptOutputBlock.appendChild(javascriptSnippet);
+      const copyJavascript = documentRef.createElement("button");
+      copyJavascript.type = "button";
+      copyJavascript.className = "card-link gallery-copy-output-button";
+      copyJavascript.setAttribute("data-gallery-action", "copy-javascript-embed");
+      copyJavascript.textContent = "Copy JavaScript";
+      javascriptOutputBlock.appendChild(copyJavascript);
+      const javascriptStatus = appendText(documentRef, "span", "gallery-javascript-copy-status", "Ready to copy");
+      javascriptStatus.setAttribute("data-role", "javascript-embed-copy-status");
+      javascriptStatus.setAttribute("aria-live", "polite");
+      javascriptOutputBlock.appendChild(javascriptStatus);
+      card.appendChild(javascriptOutputBlock);
+      javascriptOutputState = { snippet: javascriptSnippet, copy: copyJavascript, status: javascriptStatus };
+    } else {
+      javascriptOutputBlock.appendChild(appendText(documentRef, "span", "gallery-output-unavailable", "JavaScript embed unavailable"));
+      javascriptOutputBlock.setAttribute("data-role", "javascript-embed-unavailable");
+      card.appendChild(javascriptOutputBlock);
+    }
+
     const links = documentRef.createElement("div");
     links.className = "card-links";
     const standalone = STANDALONE_LINKS[sourceDefinition.type];
@@ -400,7 +465,7 @@ export function createShowcaseGallery({
     preview.appendChild(close);
     card.appendChild(preview);
 
-    const cardState = { card, controls, status, previewRoot, close, configOutput, copyStatus, hostOutput: hostOutputState, configExport: null, serializedConfig: "" };
+    const cardState = { card, controls, status, previewRoot, close, configOutput, copyStatus, hostOutput: hostOutputState, javascriptOutput: javascriptOutputState, javascriptSnippet: "", configExport: null, serializedConfig: "" };
     cards.set(sourceDefinition.type, cardState);
     updateCardConfig(cardState, definition);
     for (const control of controls.values()) {
@@ -414,6 +479,7 @@ export function createShowcaseGallery({
     copyButton.addEventListener("click", () => { void copyConfig(sourceDefinition.type); });
     cardState.hostOutput?.copyUrlButton.addEventListener("click", () => { void copyStandaloneOutput(sourceDefinition.type, "url"); });
     cardState.hostOutput?.copyHtmlButton.addEventListener("click", () => { void copyStandaloneOutput(sourceDefinition.type, "html"); });
+    cardState.javascriptOutput?.copy.addEventListener("click", () => { void copyJavascriptSnippet(sourceDefinition.type); });
     return card;
   }
 

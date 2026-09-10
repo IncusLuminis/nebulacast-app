@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nebulacast JavaScript Embed Canary</title>
+  <link rel="stylesheet" href="/shared/widget-shell.css">
+  <style>
+    body { margin: 24px; background: #0b0d12; color: #e6e6e6; font: 14px/1.5 system-ui, sans-serif; }
+    main { max-width: 960px; margin: 0 auto; }
+    .embed-grid { display: grid; gap: 16px; }
+    .embed-container { border: 1px solid #2a2f3a; padding: 12px; min-width: 0; }
+    .embed-fixed { width: 640px; max-width: 100%; }
+    .embed-responsive { width: 100%; }
+    .embed-narrow { width: 280px; max-width: 100%; }
+    .embed-label { color: #9aa3b2; font-size: 12px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>JavaScript Embed Canary</h1>
+    <p class="embed-label">Local foreign-host-style integration demo using the public Registry/Runtime API.</p>
+    <div class="embed-grid">
+      <section class="embed-container embed-fixed">
+        <div class="embed-label">Fixed Alerts container</div>
+        <div id="embed-alerts-fixed"></div>
+      </section>
+      <section class="embed-container embed-responsive">
+        <div class="embed-label">Responsive Events container</div>
+        <div id="embed-events-responsive"></div>
+      </section>
+      <section class="embed-container embed-narrow">
+        <div class="embed-label">Narrow Alerts container</div>
+        <div id="embed-alerts-narrow"></div>
+      </section>
+    </div>
+  </main>
+  <script type="module">
+    import { mount } from "/widgets/runtime/index.mjs";
+
+    const embedConfig = { baseUrl: "/", density: "compact" };
+    void Promise.all([
+      mount(document.getElementById("embed-alerts-fixed"), { widget: "alerts", config: { ...embedConfig, orientation: "horizontal" } }),
+      mount(document.getElementById("embed-events-responsive"), { widget: "events", config: { ...embedConfig, orientation: "auto" } }),
+      mount(document.getElementById("embed-alerts-narrow"), { widget: "alerts", config: { ...embedConfig, orientation: "vertical" } }),
+    ]);
+  </script>
+</body>
+</html>

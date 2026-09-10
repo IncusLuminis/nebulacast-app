@@ -63,6 +63,11 @@ test("Showcase generates host output only for standalone-enabled registry widget
   assert.equal(eventsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=events&orientation=auto&theme=inherit&density=normal");
   assert.equal(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, '<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" loading="lazy"></iframe>');
   assert.equal(heroCard.querySelector(".gallery-output-unavailable").textContent, "Iframe output unavailable");
+  assert.match(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /from "\/widgets\/runtime\/index\.mjs"/);
+  assert.match(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /"widget":"alerts"/);
+  assert.match(eventsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /"widget":"events"/);
+  assert.doesNotMatch(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /dataUrl|loader|innerHTML|<script/);
+  assert.equal(heroCard.querySelectorAll(".gallery-output-unavailable")[1]?.textContent, "JavaScript embed unavailable");
 
   const orientation = alertsCard.querySelector('[data-gallery-option="orientation"]');
   const theme = alertsCard.querySelector('[data-gallery-option="theme"]');
@@ -72,6 +77,7 @@ test("Showcase generates host output only for standalone-enabled registry widget
   theme.dispatchEvent({ type: "change", target: theme });
   assert.equal(alertsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=alerts&orientation=vertical&theme=dark&density=normal");
   assert.match(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, /orientation=vertical&amp;theme=dark/);
+  assert.match(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /"theme":"dark"/);
 });
 
 test("preview uses registry metadata, sanitizes config, is idempotent, and closes cleanly", async () => {
@@ -120,6 +126,11 @@ test("Copy config uses clipboard when available and an accessible fallback other
   copyUrl.click();
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(root.querySelector('[data-widget-type="alerts"]').querySelector('[data-role="iframe-copy-status"]').textContent, "Copied URL (fallback)");
+
+  const copyJavascript = root.querySelector('[data-widget-type="alerts"]').querySelector('[data-gallery-action="copy-javascript-embed"]');
+  copyJavascript.click();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(root.querySelector('[data-widget-type="alerts"]').querySelector('[data-role="javascript-embed-copy-status"]').textContent, "Copied JavaScript (fallback)");
 });
 
 test("one preview failure stays local and gallery destroy releases remaining instances", async () => {

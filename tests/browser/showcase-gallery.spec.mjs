@@ -16,6 +16,10 @@ test("Showcase generates bounded standalone output and opens the corresponding h
   await expect(alerts.locator('[data-role="iframe-url"]')).toHaveText(generatedUrl);
   await expect(alerts.locator('[data-role="iframe-snippet"]')).toHaveText(`<iframe src="${generatedUrl.replaceAll("&", "&amp;")}" title="Sky Alerts" loading="lazy"></iframe>`);
   await expect(alerts.locator('[data-gallery-action="open-host"]')).toHaveAttribute("href", generatedUrl);
+  await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('from "/widgets/runtime/index.mjs"');
+  await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('"widget":"alerts"');
+  await expect(events.locator('[data-role="javascript-embed-snippet"]')).toContainText('"widget":"events"');
+  await expect(page.locator('[data-widget-type="hero"] [data-role="javascript-embed-unavailable"]')).toContainText("JavaScript embed unavailable");
 
   await page.evaluate(() => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
@@ -23,6 +27,8 @@ test("Showcase generates bounded standalone output and opens the corresponding h
   });
   await alerts.locator('[data-gallery-action="copy-iframe-url"]').click();
   await expect(alerts.locator('[data-role="iframe-copy-status"]')).toHaveText("Copied URL (fallback)");
+  await alerts.locator('[data-gallery-action="copy-javascript-embed"]').click();
+  await expect(alerts.locator('[data-role="javascript-embed-copy-status"]')).toHaveText("Copied JavaScript (fallback)");
 
   const hostPage = await context.newPage();
   await hostPage.route("**/sky/data/alerts_now.json", route => route.fulfill({
