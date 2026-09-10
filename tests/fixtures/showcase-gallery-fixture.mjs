@@ -33,6 +33,8 @@ export class GalleryElement {
 
   get textContent() { return this._textContent; }
 
+  select() { this.selected = true; }
+
   setAttribute(name, value) { this.attributes.set(name, String(value)); }
   getAttribute(name) { return this.attributes.get(name) ?? null; }
   removeAttribute(name) { this.attributes.delete(name); }
@@ -42,6 +44,14 @@ export class GalleryElement {
     this.children.push(child);
     return child;
   }
+
+  removeChild(child) {
+    this.children = this.children.filter(item => item !== child);
+    child.parentElement = null;
+    return child;
+  }
+
+  remove() { this.parentElement?.removeChild(this); }
 
   addEventListener(type, listener) {
     const listeners = this.listeners.get(type) || new Set();
@@ -85,9 +95,11 @@ export class GalleryElement {
 
 export class GalleryDocument {
   constructor() {
-    this.defaultView = { CustomEvent: class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } } };
+    this.defaultView = { CustomEvent: class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } }, navigator: {} };
     this.elementsById = new Map();
     this.createElement = tagName => new GalleryElement(this, tagName);
+    this.body = this.createElement("body");
+    this.execCommand = () => false;
   }
 
   getElementById(id) { return this.elementsById.get(id) || null; }

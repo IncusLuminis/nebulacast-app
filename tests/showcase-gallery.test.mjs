@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
-import { createShowcaseGallery, LEGACY_STANDALONE_LINKS, sanitizeGalleryConfig } from "../sites/staging/showcase/showcase.mjs";
+import { createShowcaseGallery, LEGACY_STANDALONE_LINKS } from "../sites/staging/showcase/showcase.mjs";
+import { serializeWidgetConfig } from "../sites/staging/shared/widget-config.mjs";
 import { createGalleryContext, createGalleryRoot, createGalleryRuntime } from "./fixtures/showcase-gallery-fixture.mjs";
 
 test("catalog exposes immutable Showcase metadata without changing widget contracts", () => {
@@ -62,13 +63,35 @@ test("preview uses registry metadata, sanitizes config, is idempotent, and close
   const second = await gallery.openPreview("hero");
   assert.strictEqual(first, second);
   assert.equal(runtime.calls.filter(call => call.type === "mount").length, 1);
-  assert.deepEqual(runtime.calls[0].specification.config, { orientation: "auto", theme: "inherit", density: "normal" });
+  assert.deepEqual(runtime.calls[0].specification.config, gallery.getConfig("hero").config);
+  assert.equal(gallery.getSerializedConfig("hero"), '{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"inherit"}}');
   await gallery.closePreview("hero");
   assert.equal(runtime.calls.filter(call => call.type === "destroy").length, 1);
   assert.equal(gallery.getInstances().size, 0);
-  assert.deepEqual(sanitizeGalleryConfig(widgetCatalog.find(definition => definition.type === "weather"), { profile: "visual", url: "/evil", loader: () => {} }), {
-    orientation: "auto", theme: "inherit", density: "normal", profile: "visual", range: "7d",
+  const weatherCard = root.querySelector('[data-widget-type="weather"]');
+  const profile = weatherCard.querySelector('[data-gallery-option="profile"]');
+  profile.value = "visual";
+  profile.dispatchEvent({ type: "change", target: profile });
+  const weatherExport = gallery.getConfig("weather");
+  assert.deepEqual(weatherExport.config, {
+    density: "normal", orientation: "auto", profile: "visual", range: "7d", theme: "inherit",
   });
+  assert.equal(gallery.getSerializedConfig("weather"), serializeWidgetConfig(weatherExport));
+});
+
+test("Copy config uses clipboard when available and an accessible fallback otherwise", async () => {
+  const { documentRef, root } = createGalleryRoot();
+  const gallery = createShowcaseGallery({ root, documentRef, context: createGalleryContext(), runtime: createGalleryRuntime() });
+  await gallery.mount();
+  let copied = "";
+  documentRef.defaultView.navigator.clipboard = { writeText: async text => { copied = text; } };
+  assert.equal(await gallery.copyConfig("hero"), true);
+  assert.equal(copied, gallery.getSerializedConfig("hero"));
+
+  documentRef.defaultView.navigator.clipboard = undefined;
+  documentRef.execCommand = command => command === "copy";
+  assert.equal(await gallery.copyConfig("hero"), true);
+  assert.equal(root.querySelector('[data-widget-type="hero"]').querySelector('[data-role="copy-status"]').textContent, "Copied config (fallback)");
 });
 
 test("one preview failure stays local and gallery destroy releases remaining instances", async () => {

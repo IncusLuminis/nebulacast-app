@@ -11,13 +11,27 @@ test("Showcase builds cards from catalog and mounts previews only on action", as
   await expect(page.locator('[data-widget-type="hero"] .meta-version')).toHaveText("Version 1");
   await expect(page.locator('[data-widget-type="hero"] [data-gallery-action="preview"]')).toBeEnabled();
   await expect(page.locator('[data-widget-type="map"] [data-gallery-action="preview"]')).toBeDisabled();
+  const heroConfig = page.locator('[data-widget-type="hero"] [data-role="config-output"]');
+  await expect(heroConfig).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"inherit"}}');
+  await page.locator('[data-widget-type="hero"] [data-gallery-option="theme"]').selectOption("dark");
+  await expect(heroConfig).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"dark"}}');
   expect(requests.some(url => /observer-weather|astro-weather|alerts_now|sun_moon|widget_runtime/.test(url))).toBeFalsy();
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+    document.execCommand = () => true;
+  });
+  await page.locator('[data-widget-type="hero"] [data-gallery-action="copy-config"]').click();
+  await expect(page.locator('[data-widget-type="hero"] [data-role="copy-status"]')).toHaveText("Copied config (fallback)");
 
   await page.locator('[data-widget-type="hero"] [data-gallery-action="preview"]').click();
   await expect(page.locator('[data-widget-type="hero"] .gallery-preview-root')).toHaveAttribute("data-nc-widget", "hero");
+  await expect(page.locator('[data-widget-type="hero"] .gallery-preview-root')).toHaveAttribute("data-nc-theme", "dark");
   await expect(page.locator('[data-widget-type="hero"]')).toHaveAttribute("data-gallery-state", /ready|error/);
   await page.locator('[data-widget-type="hero"] [data-gallery-action="preview"]').click();
   await expect(page.locator('[data-widget-type="hero"] .gallery-preview-root[data-nc-widget="hero"]')).toHaveCount(1);
   await page.locator('[data-widget-type="hero"] [data-gallery-action="close"]').click();
   await expect(page.locator('[data-widget-type="hero"] .gallery-preview-root')).not.toHaveAttribute("data-nc-widget", "hero");
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-widget-type="hero"] [data-role="config-output"]')).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"inherit"}}');
 });

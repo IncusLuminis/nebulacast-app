@@ -1,5 +1,6 @@
 import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
+import { createWidgetConfig, getWidgetOptionValues, serializeWidgetConfig } from "../shared/widget-config.mjs";
 
 const STANDALONE_LINKS = Object.freeze({
   hero: Object.freeze({ href: "/", label: "Console" }),
@@ -19,34 +20,6 @@ const LEGACY_STANDALONE_LINKS = Object.freeze([
   Object.freeze({ id: "space-weather", href: "/helio/", label: "Space Weather" }),
   Object.freeze({ id: "best-objects", href: "/sky/objects.html", label: "Best Objects" }),
 ]);
-
-function isObject(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function optionValues(definition, key) {
-  const values = definition?.supportedOptions?.[key];
-  return Array.isArray(values) ? values.filter(value => typeof value === "string") : [];
-}
-
-/**
- * Keep Showcase configuration inside the immutable catalog allow-list.
- * Widget-specific URLs, loaders, and markup never enter this boundary.
- */
-export function sanitizeGalleryConfig(definition, requested = {}) {
-  const source = isObject(requested) ? requested : {};
-  const config = {};
-  for (const key of Object.keys(definition?.supportedOptions || {})) {
-    const allowed = optionValues(definition, key);
-    if (!allowed.length) continue;
-    const requestedValue = source[key];
-    const defaultValue = definition.defaults?.[key];
-    config[key] = allowed.includes(requestedValue)
-      ? requestedValue
-      : (allowed.includes(defaultValue) ? defaultValue : allowed[0]);
-  }
-  return config;
-}
 
 function labelFor(value) {
   return String(value).replace(/[-_]/g, " ").replace(/\b\w/g, character => character.toUpperCase());
@@ -103,7 +76,52 @@ export function createShowcaseGallery({
   function readCardConfig(cardState, definition) {
     const requested = {};
     for (const [key, control] of cardState.controls) requested[key] = control.value;
-    return sanitizeGalleryConfig(definition, requested);
+    return createWidgetConfig(registry, definition.type, requested);
+  }
+
+  function updateCardConfig(cardState, definition) {
+    cardState.configExport = readCardConfig(cardState, definition);
+    cardState.serializedConfig = serializeWidgetConfig(cardState.configExport);
+    cardState.configOutput.textContent = cardState.serializedConfig;
+    cardState.copyStatus.textContent = "Ready to copy";
+  }
+
+  function fallbackCopy(text) {
+    const textarea = documentRef.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    const container = documentRef.body || root;
+    container.appendChild(textarea);
+    textarea.select?.();
+    let copied = false;
+    try { copied = documentRef.execCommand?.("copy") === true; } catch (_) {}
+    if (typeof textarea.remove === "function") textarea.remove();
+    else container.removeChild?.(textarea);
+    return copied;
+  }
+
+  async function copyConfig(type) {
+    const cardState = cards.get(type);
+    if (!cardState) return false;
+    const text = cardState.serializedConfig;
+    const navigatorRef = documentRef.defaultView?.navigator || (typeof navigator !== "undefined" ? navigator : null);
+    try {
+      if (typeof navigatorRef?.clipboard?.writeText === "function") {
+        try {
+          await navigatorRef.clipboard.writeText(text);
+          cardState.copyStatus.textContent = "Copied config";
+          return true;
+        } catch (_) {}
+      }
+      if (fallbackCopy(text)) {
+        cardState.copyStatus.textContent = "Copied config (fallback)";
+        return true;
+      }
+    } catch (_) {}
+    cardState.copyStatus.textContent = "Copy unavailable — select the config text";
+    return false;
   }
 
   async function closePreview(type) {
@@ -140,7 +158,7 @@ export function createShowcaseGallery({
     if (instances.has(type)) return Promise.resolve(instances.get(type));
     if (pending.has(type)) return pending.get(type);
 
-    const config = readCardConfig(cardState, definition);
+    const config = cardState.configExport.config;
     cardState.previewRoot.textContent = "";
     setCardState(cardState, "loading", "Loading preview…");
     const request = (async () => {
@@ -196,7 +214,7 @@ export function createShowcaseGallery({
     options.className = "gallery-options";
     const controls = new Map();
     for (const [key] of Object.entries(definition.supportedOptions || {})) {
-      const allowed = optionValues(definition, key);
+      const allowed = getWidgetOptionValues(registry, definition.type, key);
       if (!allowed.length) continue;
       const label = documentRef.createElement("label");
       label.className = "gallery-option";
@@ -215,6 +233,28 @@ export function createShowcaseGallery({
       options.appendChild(label);
     }
     card.appendChild(options);
+
+    const configBlock = documentRef.createElement("div");
+    configBlock.className = "gallery-config-block";
+    const configLabel = appendText(documentRef, "div", "gallery-config-label", "Widget config");
+    configLabel.setAttribute("data-role", "config-label");
+    configBlock.appendChild(configLabel);
+    const configOutput = documentRef.createElement("pre");
+    configOutput.className = "gallery-config-output";
+    configOutput.setAttribute("data-role", "config-output");
+    configBlock.appendChild(configOutput);
+    const copyButton = documentRef.createElement("button");
+    copyButton.type = "button";
+    copyButton.className = "card-link gallery-copy-button";
+    copyButton.setAttribute("data-gallery-action", "copy-config");
+    copyButton.setAttribute("aria-label", `Copy ${definition.type} widget config`);
+    copyButton.textContent = "Copy config";
+    configBlock.appendChild(copyButton);
+    const copyStatus = appendText(documentRef, "span", "gallery-copy-status", "Ready to copy");
+    copyStatus.setAttribute("data-role", "copy-status");
+    copyStatus.setAttribute("aria-live", "polite");
+    configBlock.appendChild(copyStatus);
+    card.appendChild(configBlock);
 
     const links = documentRef.createElement("div");
     links.className = "card-links";
@@ -257,10 +297,18 @@ export function createShowcaseGallery({
     preview.appendChild(close);
     card.appendChild(preview);
 
-    const cardState = { card, controls, status, previewRoot, close };
+    const cardState = { card, controls, status, previewRoot, close, configOutput, copyStatus, configExport: null, serializedConfig: "" };
     cards.set(sourceDefinition.type, cardState);
+    updateCardConfig(cardState, definition);
+    for (const control of controls.values()) {
+      control.addEventListener("change", () => {
+        updateCardConfig(cardState, definition);
+        if (instances.has(sourceDefinition.type)) void closePreview(sourceDefinition.type);
+      });
+    }
     previewButton.addEventListener("click", () => { void openPreview(sourceDefinition.type); });
     close.addEventListener("click", () => { void closePreview(sourceDefinition.type); });
+    copyButton.addEventListener("click", () => { void copyConfig(sourceDefinition.type); });
     return card;
   }
 
@@ -330,6 +378,9 @@ export function createShowcaseGallery({
     getInstance: type => instances.get(type),
     getInstances: () => new Map(instances),
     getErrors: () => new Map(errors),
+    getConfig: type => cards.get(type)?.configExport,
+    getSerializedConfig: type => cards.get(type)?.serializedConfig,
+    copyConfig,
     getSnapshot: () => snapshotOf(cards, instances, errors),
   });
 }
