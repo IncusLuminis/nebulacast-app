@@ -24,7 +24,7 @@
 .nc-alerts-title { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .nc-alerts-count { color: #8a95a8; font-size: 10px; margin-left: auto; }
 .nc-alerts-body { padding: 0 12px 8px; }
-[data-nc-widget="alerts"] .nc-alerts-body { max-height: 230px; overflow-y: auto; }
+.nc-widget[data-nc-widget="alerts"] .nc-alerts-body { max-height: 230px; overflow-y: auto; }
 .nc-alerts-status { color: var(--nc-widget-muted-color, #9aa3b2); padding: 12px 0; text-align: center; }
 .nc-alerts-list { display: flex; flex-direction: column; min-width: 0; }
 
@@ -51,9 +51,9 @@
 .nc-alert-item.is-grb .nc-alert-badge { background: rgba(255, 112, 67, .12); color: #ff8a65; }
 .nc-alert-item.is-other .nc-alert-badge { background: rgba(255, 255, 255, .08); color: #c4ccd8; }
 
-[data-nc-density="compact"] .nc-alerts-root .nc-alert-item { padding: 4px 0; }
-[data-nc-density="comfortable"] .nc-alerts-root .nc-alert-item { padding: 10px 0; }
-[data-nc-theme="light"] .nc-alerts-root { color: #17202b; }
-[data-nc-theme="light"] .nc-alerts-root .nc-alert-item-title { color: #17202b; }
-[data-nc-orientation="horizontal"] .nc-alerts-root .nc-alerts-list { display: grid; gap: 0 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-[data-nc-orientation="horizontal"] .nc-alerts-root .nc-alert-item { min-width: 0; }
+.nc-widget[data-nc-widget="alerts"][data-nc-density="compact"] .nc-alerts-root .nc-alert-item { padding: 4px 0; }
+.nc-widget[data-nc-widget="alerts"][data-nc-density="comfortable"] .nc-alerts-root .nc-alert-item { padding: 10px 0; }
+.nc-widget[data-nc-widget="alerts"][data-nc-theme="light"] .nc-alerts-root { color: #17202b; }
+.nc-widget[data-nc-widget="alerts"][data-nc-theme="light"] .nc-alerts-root .nc-alert-item-title { color: #17202b; }
+.nc-widget[data-nc-widget="alerts"][data-nc-orientation="horizontal"] .nc-alerts-root .nc-alerts-list { display: grid; gap: 0 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.nc-widget[data-nc-widget="alerts"][data-nc-orientation="horizontal"] .nc-alerts-root .nc-alert-item { min-width: 0; }
