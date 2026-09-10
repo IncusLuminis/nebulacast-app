@@ -101,6 +101,19 @@ export const widgetCatalog = Object.freeze([
     capabilities: Object.freeze({ observerAware: false, timeAware: false, multiInstance: true }),
     loader: () => import("../calendar/platform-adapter.mjs"),
   }),
+  Object.freeze({
+    type: "alerts",
+    version: 1,
+    defaults: Object.freeze({
+      orientation: "auto",
+      theme: "inherit",
+      density: "normal",
+      dataUrl: "/sky/data/alerts_now.json",
+      maxItems: 20,
+    }),
+    capabilities: Object.freeze({ observerAware: false, timeAware: false, multiInstance: true, embed: true }),
+    loader: () => import("../alerts/platform-adapter.mjs"),
+  }),
 ]);
 
 export function createCatalogRegistry() {

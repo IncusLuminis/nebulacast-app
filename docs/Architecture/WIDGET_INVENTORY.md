@@ -62,3 +62,19 @@ compatibility artifacts. News continues to read `/news/rss.xml`; Events
 continues to read `/calendar/daily_signal.json` and retains its JSON/RSS links.
 No backend, pipeline, data schema, Console, Sky, Weather, or Builder/Gallery
 surface is part of this migration.
+
+## Alerts Widget Runtime migration
+
+Alerts is registered once in the common Widget Runtime with no observer or time
+subscription and with multi-instance/embed support. Its authoritative UI source
+is [`sites/staging/alerts/widget.js`](../../sites/staging/alerts/widget.js),
+mounted through the delegation-only
+[`platform-adapter.mjs`](../../sites/staging/alerts/platform-adapter.mjs) and
+the root-scoped [`widget.css`](../../sites/staging/alerts/widget.css).
+
+The widget reads only `/sky/data/alerts_now.json`; the Sky alert generator,
+backend, schema, RSS feed, and pipelines remain unchanged. The Console mounts
+the widget in `#fs-sky`. The legacy
+[`assets/js/widget_alerts_feed.js`](../../sites/staging/assets/js/widget_alerts_feed.js)
+and [`sky/alerts.html`](../../sites/staging/sky/alerts.html) paths remain
+compatibility surfaces and are not removed.

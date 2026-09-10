@@ -14,7 +14,7 @@ function createRuntime(definitions) {
 }
 
 test("catalog exposes Phase 1 platform adapter definitions", async () => {
-  assert.deepEqual(widgetCatalog.map(definition => definition.type), ["astro", "sun-moon", "weather", "map", "location", "sky", "news", "events"]);
+  assert.deepEqual(widgetCatalog.map(definition => definition.type), ["astro", "sun-moon", "weather", "map", "location", "sky", "news", "events", "alerts"]);
   assert.equal(typeof widgetCatalog[0].loader, "function");
   assert.equal(widgetCatalog[0].capabilities.multiInstance, true);
   assert.equal(widgetCatalog[1].capabilities.multiInstance, true);

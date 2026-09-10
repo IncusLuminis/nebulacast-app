@@ -1,0 +1,59 @@
+.nc-alerts-root {
+  color: var(--nc-widget-color, #e6e6e6);
+  font: 12px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-width: 0;
+}
+
+.nc-alerts-header {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  cursor: pointer;
+  display: flex;
+  gap: 7px;
+  min-height: 34px;
+  padding: 8px 12px;
+  user-select: none;
+}
+
+.nc-alerts-header:focus-visible {
+  outline: 2px solid #5ab4e0;
+  outline-offset: -2px;
+}
+
+.nc-alerts-chevron { color: #8a95a8; font-size: 10px; width: 9px; }
+.nc-alerts-title { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.nc-alerts-count { color: #8a95a8; font-size: 10px; margin-left: auto; }
+.nc-alerts-body { padding: 0 12px 8px; }
+[data-nc-widget="alerts"] .nc-alerts-body { max-height: 230px; overflow-y: auto; }
+.nc-alerts-status { color: var(--nc-widget-muted-color, #9aa3b2); padding: 12px 0; text-align: center; }
+.nc-alerts-list { display: flex; flex-direction: column; min-width: 0; }
+
+.nc-alert-item {
+  align-items: baseline;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+  padding: 7px 0;
+}
+
+.nc-alert-item:last-child { border-bottom: 0; }
+.nc-alert-badge { border-radius: 3px; flex: 0 0 auto; font-size: 9px; font-weight: 700; letter-spacing: .04em; padding: 2px 4px; }
+.nc-alert-info { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+.nc-alert-item-title { color: var(--nc-widget-color, #e6f2ff); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-alert-detail { color: var(--nc-widget-muted-color, #9aa3b2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-alert-time { color: var(--nc-widget-muted-color, #8a95a8); flex: 0 0 auto; font-size: 10px; white-space: nowrap; }
+
+.nc-alert-item.is-risk .nc-alert-badge { background: rgba(244, 67, 54, .15); color: #f44336; }
+.nc-alert-item.is-neo .nc-alert-badge { background: rgba(66, 165, 245, .12); color: #42a5f5; }
+.nc-alert-item.is-transient .nc-alert-badge { background: rgba(171, 71, 188, .13); color: #ab47bc; }
+.nc-alert-item.is-nova .nc-alert-badge { background: rgba(255, 238, 88, .11); color: #ffee58; }
+.nc-alert-item.is-grb .nc-alert-badge { background: rgba(255, 112, 67, .12); color: #ff8a65; }
+.nc-alert-item.is-other .nc-alert-badge { background: rgba(255, 255, 255, .08); color: #c4ccd8; }
+
+[data-nc-density="compact"] .nc-alerts-root .nc-alert-item { padding: 4px 0; }
+[data-nc-density="comfortable"] .nc-alerts-root .nc-alert-item { padding: 10px 0; }
+[data-nc-theme="light"] .nc-alerts-root { color: #17202b; }
+[data-nc-theme="light"] .nc-alerts-root .nc-alert-item-title { color: #17202b; }
+[data-nc-orientation="horizontal"] .nc-alerts-root .nc-alerts-list { display: grid; gap: 0 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+[data-nc-orientation="horizontal"] .nc-alerts-root .nc-alert-item { min-width: 0; }

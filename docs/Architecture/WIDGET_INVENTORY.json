@@ -291,27 +291,28 @@
     {
       "id": "alerts",
       "classification": "production",
-      "source_of_truth": "sites/staging/index.html",
+      "source_of_truth": "sites/staging/alerts/widget.js",
       "generated_or_copied_artifacts": [
-        "sites/staging/sky/data/alerts_now.json",
-        "sites/staging/data/space_weather_now.json",
-        "sites/staging/alerts/rss.xml"
+        "sites/staging/sky/data/alerts_now.json"
       ],
-      "build_path": "No standalone widget build; current Console alert rendering is inline. Data refreshes use make sky-back, make weather-observer, and make calendar-back as applicable.",
-      "deploy_paths": ["sites/staging/index.html", "sites/staging/sky/data/", "sites/staging/data/space_weather_now.json"],
+      "build_path": "No standalone widget build; the common Widget Runtime adapter mounts the root-scoped Alerts implementation. The existing Sky alert pipeline continues to produce alerts_now.json.",
+      "deploy_paths": ["sites/staging/alerts/widget.js", "sites/staging/alerts/platform-adapter.mjs", "sites/staging/alerts/widget.css", "sites/staging/index.html", "sites/staging/sky/data/alerts_now.json"],
       "local_test_path": "make server; http://localhost:8080/ (Console alert rail)",
-      "compatibility_paths": ["sites/staging/alerts/rss.xml"],
+      "compatibility_paths": ["sites/staging/assets/js/widget_alerts_feed.js", "sites/staging/sky/alerts.html", "sites/staging/alerts/rss.xml"],
       "path_classification": [
-        {"path": "sites/staging/index.html", "role": "current Console alert implementation", "classification": "production"},
+        {"path": "sites/staging/alerts/widget.js", "role": "canonical root-scoped Alerts widget", "classification": "production"},
+        {"path": "sites/staging/alerts/platform-adapter.mjs", "role": "common Widget Runtime adapter", "classification": "production"},
+        {"path": "sites/staging/alerts/widget.css", "role": "root-scoped Alerts stylesheet", "classification": "production"},
+        {"path": "sites/staging/index.html", "role": "Console Runtime host", "classification": "production"},
         {"path": "sites/staging/sky/data/alerts_now.json", "role": "generated Sky alert dataset", "classification": "production"},
+        {"path": "sites/staging/assets/js/widget_alerts_feed.js", "role": "legacy standalone Alerts implementation", "classification": "legacy"},
+        {"path": "sites/staging/sky/alerts.html", "role": "legacy standalone Alerts host", "classification": "legacy"},
         {"path": "sites/staging/alerts/rss.xml", "role": "calendar/RSS compatibility feed", "classification": "legacy"}
       ],
       "supporting_data_sources": [
-        "services/sky/pipelines/gen_alerts.py",
-        "services/helio/pipelines/gen_helio.py",
-        "services/calendar/pipelines/render_rss.py"
+        "services/sky/pipelines/gen_alerts.py"
       ],
-      "notes": "There is no standalone Alerts runtime yet; extraction is a later Story. The current Console implementation is the only authoritative UI path."
+      "notes": "Alerts is registered once as a non-observer-aware, non-time-aware, multi-instance, embeddable Widget Runtime type. The canonical implementation reads only /sky/data/alerts_now.json. The legacy widget_alerts_feed.js and /sky/alerts.html paths remain compatibility surfaces; backend, generator, schema, RSS, and pipeline paths are unchanged."
     }
   ]
 }

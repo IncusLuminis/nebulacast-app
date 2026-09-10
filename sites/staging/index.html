@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/widget_news.css">
   <link rel="stylesheet" href="/assets/css/widget_calendar.css">
+  <link rel="stylesheet" href="/alerts/widget.css">
 
   <!-- Weather widget styles -->
   <link rel="stylesheet" href="/weather/assets/weather.css">
@@ -2280,19 +2281,8 @@
       </div>
     </div>
 
-    <!-- 2. Sky Alerts -->
-    <div class="feed-section" id="fs-sky">
-      <div class="feed-section-hdr" data-toggle="sky">
-        <span class="fsh-chevron">▾</span>
-        <span class="fsh-title">Sky Alerts</span>
-        <span class="fsh-badge" id="sky-badge"></span>
-      </div>
-      <div class="feed-section-body" id="fsb-sky">
-        <div class="alerts-list" id="sky-list">
-          <div class="feed-loading">Loading…</div>
-        </div>
-      </div>
-    </div>
+    <!-- 2. Sky Alerts: mounted through the common Widget Runtime. -->
+    <div class="feed-section" id="fs-sky"></div>
 
     <!-- 3. Best Objects Today -->
     <div class="feed-section" id="fs-ranking">
@@ -2436,10 +2426,43 @@
   import { createLunarSnapshot } from "/shared/lunar.mjs";
   import { loadConsoleData } from "/console/data-loader.mjs";
   import { RequestRegistry, normalizeLocation } from "/shared/request-registry.mjs";
+  import { createPlatformContext } from "/weather/core/context.js";
+  import { createCatalogRegistry } from "/shared/widget-catalog.mjs";
+  import { createNebulacast } from "/shared/widget-runtime.mjs";
+
+  const STORAGE_SKY_ALERT_FILTERS = 'nc-sky-alert-filters';
+  const DEFAULT_SKY_GROUPS = ['risk', 'neo', 'neocp', 'transient', 'nova'];
+  function getSkyAlertGroups() {
+    try {
+      const filters = JSON.parse(localStorage.getItem(STORAGE_SKY_ALERT_FILTERS));
+      return Array.isArray(filters?.groups) ? filters.groups : [...DEFAULT_SKY_GROUPS];
+    } catch (_) {
+      return [...DEFAULT_SKY_GROUPS];
+    }
+  }
 
   // ── State ──────────────────────────────────────────────
   initState();
   const storeApi = { getState, setState, subscribe };
+  const platformContext = createPlatformContext(storeApi, { locale: 'en', theme: 'auto' });
+  const widgetRuntime = createNebulacast({
+    context: platformContext,
+    registry: createCatalogRegistry(),
+    resolveAutoOrientation: ({ root }) => root.clientWidth < 520 ? 'vertical' : 'horizontal',
+  });
+  let skyAlertsInstance = null;
+  async function mountConsoleSkyAlerts() {
+    const root = document.getElementById('fs-sky');
+    if (!root) return;
+    skyAlertsInstance = await widgetRuntime.mount(root, {
+      widget: 'alerts',
+      config: {
+        orientation: 'vertical',
+        groups: getSkyAlertGroups(),
+        maxItems: 20,
+      },
+    });
+  }
   const consoleRequestRegistry = new RequestRegistry();
   const widgetDisposers = new Map();
   function mountWidget(key, root, mount) {
@@ -3601,51 +3624,6 @@
     list.innerHTML = html;
   }
 
-  // ── Sky Alerts ──────────────────────────────────────────
-  async function loadSkyAlerts() {
-    const list = document.getElementById('sky-list');
-    const badge = document.getElementById('sky-badge');
-    if (!list) return;
-
-    let data = null;
-    try { data = await fetch('/sky/data/alerts_now.json').then(r => r.ok ? r.json() : null); } catch (_) {}
-
-    let allowedGroups = new Set(['risk', 'neo', 'neocp', 'transient', 'nova']);
-    try { const f = JSON.parse(localStorage.getItem('nc-sky-alert-filters')); if (Array.isArray(f?.groups)) allowedGroups = new Set(f.groups); } catch (_) {}
-
-    const items = (data?.items || []).filter(a => allowedGroups.has(a.group || a.type || 'neo')).slice(0, 10);
-    if (!items.length) {
-      list.innerHTML = '<div class="alerts-empty">No active alerts.</div>';
-      if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
-      return;
-    }
-    if (badge) { badge.textContent = items.length; badge.style.display = ''; }
-
-    const GRP_LABEL = { risk: 'RISK', neo: 'NEO', neocp: 'NEO?', transient: 'TRAN', nova: 'NOVA' };
-    const GRP_CLS   = { risk: 'sky-risk', neo: 'sky-neo', neocp: 'sky-neo', transient: 'sky-tran', nova: 'sky-nova' };
-
-    let html = '';
-    for (const a of items) {
-      const grp = a.group || a.type || 'neo';
-      const lbl = GRP_LABEL[grp] || grp.toUpperCase().slice(0, 4);
-      const cls = GRP_CLS[grp] || 'sky-neo';
-      const time = fmtAge(a.updated_utc || a.ingested_utc);
-      const title = (a.title || a.id || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const note = (a.note || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const mag = a.mag != null ? `mag&nbsp;${a.mag.toFixed(1)}` : '';
-      const sub = [note, mag].filter(Boolean).join(' · ');
-      html += `<div class="alert-item ${cls}">
-        <div class="alert-badge">${lbl}</div>
-        <div class="alert-info">
-          <div class="alert-title">${title}</div>
-          ${sub ? `<div class="alert-sub">${sub}</div>` : ''}
-        </div>
-        ${time ? `<div class="alert-time-col">${time}</div>` : ''}
-      </div>`;
-    }
-    list.innerHTML = html;
-  }
-
   // ── Calendar Events ─────────────────────────────────────
   async function loadCalendarEvents() {
     const list = document.getElementById('cal-list');
@@ -4576,7 +4554,7 @@
   loadHero();
   loadFeed();
   loadSwxAlerts();
-  loadSkyAlerts();
+  mountConsoleSkyAlerts().catch(error => console.error('Sky Alerts mount failed:', error));
   loadCalendarEvents();
   loadNewsItems();
 
@@ -4797,12 +4775,10 @@
     // ══ PHASE 2 ══════════════════════════════════════════
 
     const STORAGE_SKY_FILTERS       = 'nc-sky-filters';
-    const STORAGE_SKY_ALERT_FILTERS = 'nc-sky-alert-filters';
     const STORAGE_SWX_FILTERS       = 'nc-swx-filters';
     const STORAGE_STRICTNESS        = 'nc-weather-strictness';
 
     const DEFAULT_SKY_FILTERS = { minAltObjects: 10, maxObjects: 8 };
-    const DEFAULT_SKY_GROUPS  = ['risk', 'neo', 'neocp', 'transient', 'nova'];
     const DEFAULT_SWX_SEV     = 1;
     const DEFAULT_STRICTNESS  = 'recommended';
 
@@ -4832,9 +4808,6 @@
     }
 
     // ── Sky alert group filters ────────────────────────────
-    function getSkyAlertGroups() {
-      try { const f = safeGet(STORAGE_SKY_ALERT_FILTERS); return Array.isArray(f?.groups) ? f.groups : [...DEFAULT_SKY_GROUPS]; } catch (_) { return [...DEFAULT_SKY_GROUPS]; }
-    }
     function saveSkyAlertGroups(groups) {
       try { localStorage.setItem(STORAGE_SKY_ALERT_FILTERS, JSON.stringify({ groups })); } catch (_) {}
     }
@@ -4920,7 +4893,7 @@
       }
       saveSkyAlertGroups(groups);
       btn.classList.toggle('is-active', groups.includes(grp));
-      loadSkyAlerts();
+      skyAlertsInstance?.update({ groups });
     });
 
     // ── Reset model now also resets strictness ─────────────
