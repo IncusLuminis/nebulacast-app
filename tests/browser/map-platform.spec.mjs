@@ -72,8 +72,8 @@ test("real catalog Map adapter keeps iframe, observer, lifecycle, and route boun
   await expect(firstRoot.locator("iframe")).toHaveAttribute("src", "./map-poc.html");
   await expect(secondRoot.locator("iframe")).toHaveAttribute("src", "./map-poc.html");
   await expect.poll(() => page.evaluate(() => ({
-    first: document.querySelector('[data-test-id="map-one"] iframe')?.contentDocument?.body.textContent || "",
-    second: document.querySelector('[data-test-id="map-two"] iframe')?.contentDocument?.body.textContent || "",
+    first: document.querySelector('[data-test-id="map-one"] iframe')?.contentDocument?.querySelector("#map-message")?.textContent || "",
+    second: document.querySelector('[data-test-id="map-two"] iframe')?.contentDocument?.querySelector("#map-message")?.textContent || "",
   }))).toEqual({
     first: '{"type":"update-location","location":{"name":"Warsaw","lat":52.2297,"lon":21.0122}}',
     second: '{"type":"update-location","location":{"name":"Warsaw","lat":52.2297,"lon":21.0122}}',
@@ -89,8 +89,8 @@ test("real catalog Map adapter keeps iframe, observer, lifecycle, and route boun
     } });
   });
   await expect.poll(() => page.evaluate(() => ({
-    first: document.querySelector('[data-test-id="map-one"] iframe')?.contentDocument?.body.textContent || "",
-    second: document.querySelector('[data-test-id="map-two"] iframe')?.contentDocument?.body.textContent || "",
+    first: document.querySelector('[data-test-id="map-one"] iframe')?.contentDocument?.querySelector("#map-message")?.textContent || "",
+    second: document.querySelector('[data-test-id="map-two"] iframe')?.contentDocument?.querySelector("#map-message")?.textContent || "",
     profile: window.__mapPlatform.first.config.profile,
     secondProfile: window.__mapPlatform.second.config.profile,
   }))).toEqual({
@@ -116,7 +116,7 @@ test("real catalog Map adapter keeps iframe, observer, lifecycle, and route boun
   await expect(firstRoot).not.toHaveAttribute("data-nc-widget");
   await expect(secondRoot).toHaveAttribute("data-nc-widget", "map");
   await expect.poll(() => page.evaluate(() => document
-    .querySelector('[data-test-id="map-two"] iframe')?.contentDocument?.body.textContent || "")).toBe(
+    .querySelector('[data-test-id="map-two"] iframe')?.contentDocument?.querySelector("#map-message")?.textContent || "")).toBe(
     '{"type":"update-location","location":{"name":"Gdansk","lat":54.352,"lon":18.6466}}',
   );
 
@@ -129,7 +129,7 @@ test("real catalog Map adapter keeps iframe, observer, lifecycle, and route boun
   });
   await expect(firstRoot).toHaveAttribute("data-nc-widget", "map");
   await expect.poll(() => page.evaluate(() => document
-    .querySelector('[data-test-id="map-one"] iframe')?.contentDocument?.body.textContent || "")).toBe(
+    .querySelector('[data-test-id="map-one"] iframe')?.contentDocument?.querySelector("#map-message")?.textContent || "")).toBe(
     '{"type":"update-location","location":{"name":"Gdansk","lat":54.352,"lon":18.6466}}',
   );
 

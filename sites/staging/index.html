@@ -2212,6 +2212,23 @@
     }
   }
 
+  // Composer resolves Sky configuration before the settings IIFE is initialized.
+  // Keep this read local and dependency-free; the settings IIFE retains its own
+  // compatibility helper for the existing controls and persistence behavior.
+  const CONSOLE_SKY_FILTER_STORAGE = 'nc-sky-filters';
+  const CONSOLE_SKY_FILTER_DEFAULTS = { minAltObjects: 10, maxObjects: 8 };
+  function getConsoleSkyFilters() {
+    try {
+      const raw = globalThis.localStorage?.getItem(CONSOLE_SKY_FILTER_STORAGE);
+      const filters = raw ? JSON.parse(raw) : null;
+      return filters && typeof filters === 'object'
+        ? { ...CONSOLE_SKY_FILTER_DEFAULTS, ...filters }
+        : { ...CONSOLE_SKY_FILTER_DEFAULTS };
+    } catch (_) {
+      return { ...CONSOLE_SKY_FILTER_DEFAULTS };
+    }
+  }
+
   // ── State ──────────────────────────────────────────────
   initState();
   const storeApi = { getState, setState, subscribe };
@@ -2224,7 +2241,7 @@
       if (slot.id === 'hero') return { sunCalc: globalThis.SunCalc };
       if (slot.id === 'alerts') return { groups: getSkyAlertGroups() };
       if (slot.id === 'sky') {
-        const filters = getSkyFilters();
+        const filters = getConsoleSkyFilters();
         return { options: {
           minAltObjectsDeg: filters.minAltObjects,
           minAltAlertsDeg: filters.minAltObjects,

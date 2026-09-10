@@ -16,8 +16,27 @@ function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+// Configs may carry host-provided operational references (for example a
+// browser Window or Navigator). Freeze owned records and arrays, but never
+// traverse or freeze host/class instances across realm boundaries.
+function isFreezableConfigContainer(value) {
+  if (Array.isArray(value)) return true;
+  let prototype;
+  try {
+    prototype = Object.getPrototypeOf(value);
+    if (prototype === null) return true;
+    return Object.prototype.toString.call(value) === "[object Object]" &&
+      Object.prototype.toString.call(prototype) === "[object Object]" &&
+      prototype.constructor?.name === "Object";
+  } catch (_) {
+    return false;
+  }
+}
+
 function deepFreeze(value, seen = new WeakSet()) {
-  if (value === null || typeof value !== "object" || seen.has(value)) return value;
+  if (value === null || typeof value !== "object" || seen.has(value) || !isFreezableConfigContainer(value)) {
+    return value;
+  }
   seen.add(value);
   for (const child of Object.values(value)) deepFreeze(child, seen);
   return Object.freeze(value);

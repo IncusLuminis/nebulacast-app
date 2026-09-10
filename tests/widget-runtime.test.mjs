@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 import { createWidgetRegistry } from "../sites/staging/shared/widget-registry.mjs";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
@@ -122,6 +123,36 @@ test("mount creates the public instance shape, merges immutable config, and cach
   runtime.unmount(firstRoot);
   assert.deepEqual(lifecycleCalls.map(call => call[0]), ["update", "resize", "refresh", "destroy"]);
   assert.equal(second.type, "fake");
+});
+
+test("freezes owned config records without freezing host objects", async () => {
+  class BrowserHost {}
+  const hostObject = new BrowserHost();
+  const crossRealmRecord = vm.runInNewContext("({ nested: { value: 1 } })");
+  let mountedConfig;
+  const runtime = createNebulacast({
+    context: createFakeContext(),
+    registry: createWidgetRegistry([createFakeDefinition({
+      loader: async () => ({ mount: (_root, _context, config) => {
+        mountedConfig = config;
+        return { destroy() {} };
+      } }),
+    })]),
+  });
+
+  const instance = await runtime.mount(createFakeRoot("host-config"), {
+    widget: "fake",
+    config: { hostObject, crossRealmRecord, options: { enabled: true } },
+  });
+
+  assert.strictEqual(instance.config, mountedConfig);
+  assert.strictEqual(instance.config.hostObject, hostObject);
+  assert.equal(Object.isFrozen(instance.config), true);
+  assert.equal(Object.isFrozen(instance.config.options), true);
+  assert.equal(Object.isFrozen(crossRealmRecord), true);
+  assert.equal(Object.isFrozen(crossRealmRecord.nested), true);
+  assert.equal(Object.isFrozen(hostObject), false);
+  instance.destroy();
 });
 
 test("mounts with common host metadata and permits destroy then remount", async () => {
