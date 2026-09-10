@@ -6,10 +6,31 @@ const commonCapabilities = Object.freeze({
   multiInstance: true,
 });
 
+const COMMON_SUPPORTED_OPTIONS = Object.freeze({
+  orientation: Object.freeze(["auto", "horizontal", "vertical"]),
+  theme: Object.freeze(["inherit", "auto", "dark", "light"]),
+  density: Object.freeze(["compact", "normal", "comfortable"]),
+});
+const WEATHER_SUPPORTED_OPTIONS = Object.freeze({
+  ...COMMON_SUPPORTED_OPTIONS,
+  profile: Object.freeze(["balanced", "visual", "broadband", "planetary"]),
+  range: Object.freeze(["today", "48h", "7d"]),
+});
+const ASTRO_SUPPORTED_OPTIONS = Object.freeze({
+  ...COMMON_SUPPORTED_OPTIONS,
+  profile: Object.freeze(["default", "visual", "broadband", "planetary"]),
+  range: Object.freeze(["today", "48h", "7d"]),
+});
+
+function galleryMetadata(title, description, supportedOptions = COMMON_SUPPORTED_OPTIONS, galleryPreview = false) {
+  return Object.freeze({ title, description, supportedOptions, galleryPreview });
+}
+
 export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "hero",
     version: 1,
+    ...galleryMetadata("Hero", "Console hero strip with NQI, weather, Sun/Moon, Kp, clock, and panel launchers.", COMMON_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: commonCapabilities,
     loader: () => import("../hero/platform-adapter.mjs"),
@@ -17,6 +38,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "astro",
     version: 1,
+    ...galleryMetadata("Astronomy", "Location-aware astronomy conditions and observing windows.", ASTRO_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: commonCapabilities,
     loader: () => import("../weather/widgets/astro/platform-adapter.mjs"),
@@ -24,6 +46,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "sun-moon",
     version: 1,
+    ...galleryMetadata("Sun & Moon", "Sun altitude, twilight bands, Moon phase, and daily ephemeris.", COMMON_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: commonCapabilities,
     loader: () => import("../weather/widgets/sun_moon/platform-adapter.mjs"),
@@ -31,6 +54,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "weather",
     version: 1,
+    ...galleryMetadata("Weather", "Observer conditions with forecast profiles, hourly quality, and atmospheric parameters.", WEATHER_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({
       orientation: "auto",
       theme: "inherit",
@@ -49,6 +73,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "map",
     version: 1,
+    ...galleryMetadata("Cloud Map", "Interactive cloud, radar, wind, and terrain map.", COMMON_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: Object.freeze({
       observerAware: true,
@@ -61,6 +86,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "location",
     version: 1,
+    ...galleryMetadata("Location", "Root-scoped observer location search and selection control.", COMMON_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: Object.freeze({ observerAware: true, timeAware: false, multiInstance: true, embed: true }),
     loader: async () => ({
@@ -73,6 +99,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "sky",
     version: 1,
+    ...galleryMetadata("Sky", "Canvas sky chart with stars, objects, planets, and alert overlays.", COMMON_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: commonCapabilities,
     loader: () => import("../sky/platform-adapter.mjs"),
@@ -80,6 +107,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "news",
     version: 1,
+    ...galleryMetadata("News", "RSS astronomy and space news feed with category filters.", COMMON_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({
       orientation: "auto",
       theme: "inherit",
@@ -95,6 +123,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "events",
     version: 1,
+    ...galleryMetadata("Calendar", "Upcoming meteors, eclipses, conjunctions, occultations, and comets.", COMMON_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({
       orientation: "auto",
       theme: "inherit",
@@ -111,6 +140,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "alerts",
     version: 1,
+    ...galleryMetadata("Sky Alerts", "Live space-event alerts grouped by risk, NEO, transient, and related types.", COMMON_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({
       orientation: "auto",
       theme: "inherit",
