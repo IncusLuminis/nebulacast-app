@@ -6,10 +6,11 @@ test("Console Composer mounts declared platform roots and preserves Hero launche
   page.on("pageerror", error => diagnostics.push(`pageerror: ${error.message}`));
   await page.goto("/", { waitUntil: "domcontentloaded" });
   try {
-    for (const selector of ["#console-hero", "#w-location", "#w-weather", "#w-weather-matrix", "#w-sun", "#w-sunmoon-panel", "#fs-sky", "#nrc-main", "#nrw-main"]) {
+    for (const selector of ["#console-hero", "#w-location", "#w-weather", "#w-weather-matrix", "#w-sun", "#w-sunmoon-panel", "#skyMount", "#fs-sky", "#nrc-main", "#nrw-main"]) {
       await expect(page.locator(selector)).toHaveAttribute("data-nc-widget", /.+/, { timeout: 15_000 });
     }
     await expect(page.locator("#console-hero")).toHaveAttribute("data-nc-widget", "hero");
+    await expect(page.locator("#skyMount")).toHaveAttribute("data-nc-widget", "sky");
     await expect(page.locator("#console-hero .hero-card[data-panel]")).toHaveCount(7);
     await page.locator('#console-hero .hero-card[data-panel="matrix"]').click();
     await expect(page.locator("#dbp-matrix")).toBeVisible();

@@ -12,6 +12,7 @@ const expectedSlots = [
   ["weather-matrix", "#w-weather-matrix", "weather"],
   ["sun", "#w-sun", "sun-moon"],
   ["sunmoon-panel", "#w-sunmoon-panel", "sun-moon"],
+  ["sky", "#skyMount", "sky"],
   ["alerts", "#fs-sky", "alerts"],
   ["events", "#nrc-main", "events"],
   ["news", "#nrw-main", "news"],
@@ -63,8 +64,11 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   const indexSource = await readFile(new URL("../sites/staging/index.html", import.meta.url), "utf8");
   assert.match(composerSource, /createNebulacast/);
   assert.match(composerSource, /createCatalogRegistry/);
-  assert.doesNotMatch(indexSource, /mountWidget\("(?:location|weather|weather-matrix|sun|sunmoon-panel)"/);
+  assert.doesNotMatch(indexSource, /mountWidget\("(?:location|weather|weather-matrix|sun|sunmoon-panel|sky)"/);
   assert.doesNotMatch(indexSource, /window\.run(?:News|Calendar)Widget/);
+  assert.doesNotMatch(indexSource, /initSkyIfNeeded|legacy-bootstrap\.mjs|window\.__(?:skyWidget|SKY_CONFIG)/);
+  assert.match(indexSource, /getInstance\('sky'\)\?\.update/);
+  assert.match(indexSource, /getInstance\('sky'\)\?\.resize/);
   assert.match(indexSource, /nc:hero-data/);
   assert.match(indexSource, /nc:hero-action/);
 });

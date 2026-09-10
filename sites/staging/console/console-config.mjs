@@ -8,6 +8,16 @@ const slots = [
   { id: "weather-matrix", selector: "#w-weather-matrix", widget: "weather", config: {} },
   { id: "sun", selector: "#w-sun", widget: "sun-moon", config: {} },
   { id: "sunmoon-panel", selector: "#w-sunmoon-panel", widget: "sun-moon", config: {} },
+  { id: "sky", selector: "#skyMount", widget: "sky", config: {
+    options: {
+      showSunMoon: true,
+      showMilkyWay: true,
+      showGridEq: true,
+      showConstellations: true,
+      showObjects: true,
+      showAlerts: true,
+    },
+  } },
   { id: "alerts", selector: "#fs-sky", widget: "alerts", config: { orientation: "vertical", maxItems: 20 } },
   { id: "events", selector: "#nrc-main", widget: "events", config: {
     jsonUrl: "/calendar/daily_signal.json",

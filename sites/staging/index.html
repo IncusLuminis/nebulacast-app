@@ -2223,6 +2223,14 @@
     resolveConfig: slot => {
       if (slot.id === 'hero') return { sunCalc: globalThis.SunCalc };
       if (slot.id === 'alerts') return { groups: getSkyAlertGroups() };
+      if (slot.id === 'sky') {
+        const filters = getSkyFilters();
+        return { options: {
+          minAltObjectsDeg: filters.minAltObjects,
+          minAltAlertsDeg: filters.minAltObjects,
+          maxObjects: filters.maxObjects,
+        } };
+      }
       return {};
     },
   });
@@ -2380,90 +2388,7 @@
     });
   }
 
-  // ── Sky (lazy) ──────────────────────────────────────────
-  let skyInited = false;
-
-  function clampMs(t, a, b) { return Math.max(a, Math.min(b, t)); }
-
-  function pickLatLon(s) {
-    const lat = s?.location?.lat ?? s?.loc?.lat ?? s?.coords?.lat ?? null;
-    const lon = s?.location?.lon ?? s?.location?.lng ?? s?.loc?.lon ?? s?.loc?.lng ?? s?.coords?.lon ?? s?.coords?.lng ?? null;
-    return {
-      lat: (typeof lat === 'number' && isFinite(lat)) ? lat : null,
-      lon: (typeof lon === 'number' && isFinite(lon)) ? lon : null,
-    };
-  }
-
-  function pickDatetimeISO(s) {
-    const v = s?.time?.datetimeISO ?? s?.time?.iso ?? s?.controls?.datetimeISO ?? s?.selectedTimeISO ?? null;
-    if (typeof v === 'string' && v.trim()) return v.trim();
-    return null;
-  }
-
-  async function initSkyIfNeeded() {
-    if (skyInited) return;
-    skyInited = true;
-
-    const css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = '/sky/assets/sky.css';
-    document.head.appendChild(css);
-
-    const state = getState();
-    const { lat, lon } = pickLatLon(state);
-    const now = Date.now();
-    const max = now + 7 * 24 * 60 * 60 * 1000;
-    let dtISO = pickDatetimeISO(state);
-    if (dtISO) {
-      const t = Date.parse(dtISO);
-      dtISO = isFinite(t) ? new Date(clampMs(t, now, max)).toISOString() : null;
-    }
-
-    let _skyF = { minAltObjects: 10, maxObjects: 8 };
-    try { const _sf = JSON.parse(localStorage.getItem('nc-sky-filters')); if (_sf) _skyF = { ..._skyF, ..._sf }; } catch (_) {}
-
-    window.SKY_CONFIG = {
-      baseUrl:     '/sky',
-      mountId:     'skyMount',
-      lat:         (lat != null ? lat : 52.2297),
-      lon:         (lon != null ? lon : 21.0122),
-      datetimeISO: dtISO,
-      options: {
-        showSunMoon:        true,
-        showMilkyWay:       true,
-        showGridEq:         true,
-        showConstellations: true,
-        showObjects:        true,
-        showAlerts:         true,
-        minAltObjectsDeg:   _skyF.minAltObjects,
-        minAltAlertsDeg:    _skyF.minAltObjects,
-        maxObjects:         _skyF.maxObjects,
-      }
-    };
-
-    await import('/sky/legacy-bootstrap.mjs');
-    setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 0);
-  }
-
-  function syncSkyFromState() {
-    if (!window.__skyWidget || typeof window.__skyWidget.update !== 'function') return;
-    const s = getState();
-    const { lat, lon } = pickLatLon(s);
-    const now = Date.now(), max = now + 7 * 24 * 60 * 60 * 1000;
-    let dtISO = pickDatetimeISO(s);
-    if (dtISO) {
-      const t = Date.parse(dtISO);
-      dtISO = isFinite(t) ? new Date(clampMs(t, now, max)).toISOString() : null;
-    }
-    const patch = {};
-    if (lat != null) patch.lat = lat;
-    if (lon != null) patch.lon = lon;
-    patch.datetimeISO = dtISO;
-    try { window.__skyWidget.update(patch); } catch (_) {}
-  }
-
   subscribe((s) => {
-    if (skyInited) syncSkyFromState();
     // Update sky origin badge visibility
     const skyBadge = document.getElementById('sky-origin-badge');
     if (skyBadge) skyBadge.style.display = _isDefaultSite(s?.location) ? 'none' : '';
@@ -2476,7 +2401,7 @@
   function activatePage(pageId) {
     const effectivePage = pageId;
 
-    if (effectivePage === 'sky')    { initSkyIfNeeded().then(() => { syncSkyFromState(); setTimeout(() => { try { window.__skyWidget?.resize?.(); } catch (_) {} }, 100); }); }
+    if (effectivePage === 'sky')    { consoleComposer.getInstance('sky')?.resize?.(); }
     if (effectivePage === 'map')    { initMapIfNeeded(); }
     if (effectivePage === 'events') { initObsIfNeeded(); }
     if (effectivePage === 'stats')  { initStatsIfNeeded(); }
@@ -2623,12 +2548,7 @@
         const objectId = el.dataset.id || null;
         activatePage('sky');
         if (objectId) {
-          // Sky widget may need to initialise first; wait briefly then highlight
-          initSkyIfNeeded().then(() => {
-            setTimeout(() => {
-              try { window.__skyWidget?.update({ ui: { highlightId: objectId, highlightMs: 5000 } }); } catch (_) {}
-            }, 350);
-          });
+          try { consoleComposer.getInstance('sky')?.update({ ui: { highlightId: objectId, highlightMs: 5000 } }); } catch (_) {}
         }
       });
     });
@@ -3836,19 +3756,11 @@
     }
     function applySkyFiltersToWidget(filters) {
       try {
-        if (window.__skyWidget && typeof window.__skyWidget.update === 'function') {
-          window.__skyWidget.update({ options: {
-            minAltObjectsDeg: filters.minAltObjects,
-            minAltAlertsDeg:  filters.minAltObjects,
-            maxObjects:       filters.maxObjects,
-          }});
-        }
-        // Also update SKY_CONFIG so next init picks it up
-        if (window.SKY_CONFIG?.options) {
-          window.SKY_CONFIG.options.minAltObjectsDeg = filters.minAltObjects;
-          window.SKY_CONFIG.options.minAltAlertsDeg  = filters.minAltObjects;
-          window.SKY_CONFIG.options.maxObjects        = filters.maxObjects;
-        }
+        consoleComposer.getInstance('sky')?.update({ options: {
+          minAltObjectsDeg: filters.minAltObjects,
+          minAltAlertsDeg:  filters.minAltObjects,
+          maxObjects:       filters.maxObjects,
+        }});
       } catch (_) {}
     }
 
