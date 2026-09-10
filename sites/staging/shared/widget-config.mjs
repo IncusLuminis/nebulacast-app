@@ -1,4 +1,5 @@
 export const WIDGET_CONFIG_SCHEMA = "widget-config.v1";
+export const STANDALONE_WIDGET_QUERY_KEYS = Object.freeze(["widget", "orientation", "theme", "density"]);
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -131,4 +132,32 @@ export function serializeWidgetConfig(value) {
 
 export function exportWidgetConfig(registry, widget, requested = {}) {
   return serializeWidgetConfig(createWidgetConfig(registry, widget, requested));
+}
+
+/** Parse the bounded standalone host query without ever evaluating a loader. */
+export function parseStandaloneWidgetQuery(registry, search = "") {
+  const params = search && typeof search.entries === "function"
+    ? search
+    : new URLSearchParams(String(search).replace(/^\?/, ""));
+  const accepted = new Set(STANDALONE_WIDGET_QUERY_KEYS);
+  const seen = new Set();
+  for (const [key] of params.entries()) {
+    if (!accepted.has(key)) throw new TypeError(`Unsupported standalone widget parameter: ${key}`);
+    if (seen.has(key)) throw new TypeError(`Duplicate standalone widget parameter: ${key}`);
+    seen.add(key);
+  }
+  if (!params.has("widget") || !params.get("widget")) throw new TypeError("Standalone widget parameter is required");
+  const widget = params.get("widget");
+  const definition = definitionFrom(registry, widget);
+  if (definition.standaloneHost !== true) throw new Error(`Widget ${widget} is not allowed in the standalone host`);
+  const requested = {};
+  for (const key of ["orientation", "theme", "density"]) {
+    if (!params.has(key)) continue;
+    const value = params.get(key);
+    if (!allowedValues(definition, key).includes(value)) {
+      throw new TypeError(`Invalid ${key} for standalone widget ${widget}`);
+    }
+    requested[key] = value;
+  }
+  return createWidgetConfig(registry, widget, requested);
 }

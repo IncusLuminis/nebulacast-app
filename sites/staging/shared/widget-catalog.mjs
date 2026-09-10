@@ -140,6 +140,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "alerts",
     version: 1,
+    standaloneHost: true,
     ...galleryMetadata("Sky Alerts", "Live space-event alerts grouped by risk, NEO, transient, and related types.", COMMON_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({
       orientation: "auto",

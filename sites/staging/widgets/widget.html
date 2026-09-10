@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nebulacast Widget Host</title>
+  <link rel="stylesheet" href="/shared/widget-shell.css">
+  <link rel="stylesheet" href="/alerts/widget.css">
+  <style>
+    body { margin: 24px; background: #0b0d12; color: #e6e6e6; font: 14px/1.5 system-ui, sans-serif; }
+    main { max-width: 720px; margin: 0 auto; }
+    h1 { color: #e6f2ff; font-size: 20px; }
+    #host-status { border: 1px solid #2a2f3a; color: #9aa3b2; margin: 12px 0; padding: 8px 12px; }
+    #host-status[data-state="error"] { border-color: #b54b4b; color: #ffaaaa; }
+    #host-status[data-state="mounted"] { color: #5cce8c; }
+    #widget-root { min-height: 80px; border: 1px solid #2a2f3a; padding: 12px; }
+    #destroy-widget { margin-top: 12px; padding: 6px 10px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Standalone Widget Host</h1>
+    <p>Bounded canary host for registry-approved standalone widgets.</p>
+    <div id="host-status" role="status" aria-live="polite">Waiting for widget configuration…</div>
+    <section id="widget-root" aria-label="Standalone widget"></section>
+    <button id="destroy-widget" type="button" disabled>Destroy widget</button>
+  </main>
+  <script type="module">
+    import { createStandaloneWidgetHost } from "/widgets/widget-host.mjs";
+
+    const host = createStandaloneWidgetHost({
+      root: document.getElementById("widget-root"),
+      status: document.getElementById("host-status"),
+      destroyButton: document.getElementById("destroy-widget"),
+    });
+    void host.mount();
+  </script>
+</body>
+</html>
