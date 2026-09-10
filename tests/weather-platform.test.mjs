@@ -1,5 +1,6 @@
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   createResizeObserverMock,
   createWeatherBrowserFixture,
@@ -236,6 +237,14 @@ test("Weather aborts pending requests and permits destroy/remount", async () => 
 
   const remounted = await runtime.mount(root, { widget: "weather", config: { orientation: "horizontal", profile: "balanced" } });
   remounted.destroy();
+});
+
+test("Weather parses error bodies with endpoint diagnostics instead of leaking SyntaxError", async () => {
+  const source = await readFile(new URL("../sites/staging/weather/widgets/weather/weather.js", import.meta.url), "utf8");
+  assert.match(source, /async function readJsonResponse\(response, \{ allowInvalid = false \} = \{\}\)/);
+  assert.match(source, /Invalid JSON from \$\{endpoint\} \(HTTP \$\{response\.status\}\)/);
+  assert.match(source, /readJsonResponse\(res, \{ allowInvalid: true \}\)/);
+  assert.match(source, /data = \(await readJsonResponse\(res\)\)\.data/);
 });
 
 test("legacy mountWeather remains callable and disposer-compatible", async () => {

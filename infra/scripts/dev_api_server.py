@@ -6,6 +6,7 @@ Uses existing Python weather pipeline code.
 from __future__ import annotations
 
 import json
+import math
 import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -24,6 +25,13 @@ except ImportError:
     print("WARNING: weather service not available, /api/astro-weather will not work")
 
 try:
+    from services.weather.normalizers.observer_weather import build_observer_weather
+    _OBSERVER_WEATHER_AVAILABLE = True
+except ImportError:
+    _OBSERVER_WEATHER_AVAILABLE = False
+    print("WARNING: observer weather service not available, /api/observer-weather will not work")
+
+try:
     from timezonefinder import TimezoneFinder
     _TF = TimezoneFinder()
     _TZ_FINDER_AVAILABLE = True
@@ -33,7 +41,80 @@ except ImportError as e:
     print(f"WARNING: timezonefinder not available ({e}), /api/timezone will return UTC", file=sys.stderr)
 
 
+def json_safe(value):
+    """Convert pipeline/native scalar values into strict JSON values.
+
+    Weather providers can return numpy scalars (including numpy.bool_) even
+    though the public response schema is ordinary JSON. Non-finite numbers are
+    represented as null instead of emitting invalid NaN/Infinity tokens.
+    """
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {str(key): json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [json_safe(item) for item in value]
+
+    # numpy scalar/array compatibility without making numpy a server dependency.
+    item = getattr(value, "item", None)
+    if callable(item):
+        try:
+            return json_safe(item())
+        except (TypeError, ValueError):
+            pass
+    tolist = getattr(value, "tolist", None)
+    if callable(tolist):
+        try:
+            return json_safe(tolist())
+        except (TypeError, ValueError):
+            pass
+    return str(value)
+
+
+def resolve_tile_manifest_path(staging_dir, requested_path):
+    """Resolve a missing versioned tile manifest to existing owned data.
+
+    The generated weather manifest may point at a run that is not checked out
+    locally. Follow the catalogued latest pointer when its target exists;
+    otherwise use the newest dated manifest actually present. No data is
+    generated or fabricated by this fallback.
+    """
+    manifest_dir = (staging_dir / "data" / "tile_manifests").resolve()
+    requested = requested_path.resolve()
+    try:
+        requested.relative_to(manifest_dir)
+    except ValueError:
+        return requested_path
+    if requested.name == "latest.json" or requested.exists():
+        return requested_path
+
+    latest_path = manifest_dir / "latest.json"
+    try:
+        pointer = json.loads(latest_path.read_text(encoding="utf-8"))
+        target = (staging_dir / str(pointer.get("manifest_url", "")).lstrip("/")).resolve()
+        target.relative_to(manifest_dir)
+        if target.is_file():
+            return target
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        pass
+
+    candidates = sorted(path for path in manifest_dir.glob("20*.json") if path.is_file())
+    return candidates[-1] if candidates else requested_path
+
+
 class APIHandler(BaseHTTPRequestHandler):
+    def send_json(self, status, payload, cors_headers, cache_control=None):
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        if cache_control:
+            self.send_header("Cache-Control", cache_control)
+        for key, value in cors_headers.items():
+            self.send_header(key, value)
+        self.end_headers()
+        self.wfile.write(json.dumps(json_safe(payload), ensure_ascii=False, allow_nan=False).encode("utf-8"))
+
     def do_OPTIONS(self):
         """Handle CORS preflight."""
         self.send_response(200)
@@ -62,6 +143,8 @@ class APIHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/"):
             if path == "/api/astro-weather":
                 self.handle_astro_weather(query, cors_headers)
+            elif path == "/api/observer-weather":
+                self.handle_observer_weather(query, cors_headers)
             elif path == "/api/geocode":
                 self.handle_geocode(query, cors_headers)
             elif path == "/api/revgeo":
@@ -82,14 +165,7 @@ class APIHandler(BaseHTTPRequestHandler):
     def handle_astro_weather(self, query, cors_headers):
         """Handle /api/astro-weather endpoint."""
         if not _WEATHER_AVAILABLE:
-            self.send_response(503)
-            self.send_header("Content-Type", "application/json")
-            for k, v in cors_headers.items():
-                self.send_header(k, v)
-            self.end_headers()
-            self.wfile.write(
-                json.dumps({"error": "Weather service not available"}).encode()
-            )
+            self.send_json(503, {"error": "Weather service not available"}, cors_headers)
             return
 
         try:
@@ -162,29 +238,38 @@ class APIHandler(BaseHTTPRequestHandler):
                 },
             }
 
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Cache-Control", "public, max-age=600")
-            for k, v in cors_headers.items():
-                self.send_header(k, v)
-            self.end_headers()
-            self.wfile.write(json.dumps(response_data, ensure_ascii=False).encode())
+            self.send_json(200, response_data, cors_headers, "public, max-age=600")
 
         except (ValueError, KeyError) as e:
-            self.send_response(400)
-            self.send_header("Content-Type", "application/json")
-            for k, v in cors_headers.items():
-                self.send_header(k, v)
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": str(e)}).encode())
+            self.send_json(400, {"error": str(e)}, cors_headers)
         except Exception as e:
             print(f"Error in astro-weather: {e}", file=sys.stderr)
-            self.send_response(500)
-            self.send_header("Content-Type", "application/json")
-            for k, v in cors_headers.items():
-                self.send_header(k, v)
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": str(e)}).encode())
+            self.send_json(500, {"error": str(e)}, cors_headers)
+
+    def handle_observer_weather(self, query, cors_headers):
+        """Handle the location-aware observer weather schema locally."""
+        if not _OBSERVER_WEATHER_AVAILABLE:
+            self.send_json(503, {"error": "Observer weather service not available"}, cors_headers)
+            return
+        try:
+            lat = float(query.get("lat", [""])[0])
+            lon = float(query.get("lon", [""])[0])
+            tz = query.get("tz", ["Europe/Warsaw"])[0]
+            if lat < -90 or lat > 90 or lon < -180 or lon > 180:
+                raise ValueError("Invalid coordinates")
+        except (ValueError, KeyError) as error:
+            self.send_json(400, {"error": str(error)}, cors_headers)
+            return
+
+        try:
+            payload = build_observer_weather(lat=lat, lon=lon, tz=tz, hours=72)
+            if not payload.get("hourly"):
+                self.send_json(502, {"error": "Weather data unavailable from local pipeline"}, cors_headers)
+                return
+            self.send_json(200, payload, cors_headers, "public, max-age=600")
+        except Exception as error:
+            print(f"Error in observer-weather: {error}", file=sys.stderr)
+            self.send_json(500, {"error": str(error)}, cors_headers)
 
     def handle_geocode(self, query, cors_headers):
         """Handle /api/geocode endpoint using Nominatim."""
@@ -456,6 +541,8 @@ class APIHandler(BaseHTTPRequestHandler):
             file_path = file_path / "index.html"
         
         if not file_path.exists() or not file_path.is_file():
+            file_path = resolve_tile_manifest_path(staging_dir, file_path)
+        if not file_path.exists() or not file_path.is_file():
             self.send_response(404)
             self.end_headers()
             self.wfile.write(b"Not found")
@@ -470,6 +557,7 @@ class APIHandler(BaseHTTPRequestHandler):
             ".css": "text/css; charset=utf-8",
             ".json": "application/json; charset=utf-8",
             ".svg": "image/svg+xml",
+            ".ico": "image/x-icon",
             ".png": "image/png",
             ".jpg": "image/jpeg",
             ".jpeg": "image/jpeg",
@@ -500,7 +588,7 @@ def main():
     server = HTTPServer(("localhost", port), APIHandler)
     print(f"API dev server running at http://localhost:{port}")
     print(f"Serving static files from: {staging_dir}")
-    print("Endpoints: /api/astro-weather, /api/geocode, /api/revgeo")
+    print("Endpoints: /api/astro-weather, /api/observer-weather, /api/geocode, /api/revgeo")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

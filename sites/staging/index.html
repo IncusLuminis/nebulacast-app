@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nebulacast — Console</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
   <!-- Base styles -->
   <link rel="stylesheet" href="/assets/css/base.css">
@@ -2258,6 +2259,7 @@
   let _nopNightHours = [];
   let _nopBestWindow = null;
   let _nopActiveMetric = 'moon';
+  let _stormTab = 'G';
   function mountConsoleComposer() {
     return consoleComposer.mount().then(snapshot => {
       heroInstance = consoleComposer.getInstance('hero') || null;

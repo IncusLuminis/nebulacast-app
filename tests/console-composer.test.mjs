@@ -69,6 +69,8 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.doesNotMatch(indexSource, /initSkyIfNeeded|legacy-bootstrap\.mjs|window\.__(?:skyWidget|SKY_CONFIG)/);
   assert.match(indexSource, /function getConsoleSkyFilters\(\)/);
   assert.match(indexSource, /slot\.id === 'sky'[\s\S]*getConsoleSkyFilters\(\)/);
+  assert.match(indexSource, /let _stormTab = 'G';/);
+  assert.match(indexSource, /href="\/favicon\.svg"/);
   assert.match(indexSource, /getInstance\('sky'\)\?\.update/);
   assert.match(indexSource, /getInstance\('sky'\)\?\.resize/);
   assert.match(indexSource, /nc:hero-data/);

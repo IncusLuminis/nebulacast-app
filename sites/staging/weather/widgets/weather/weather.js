@@ -1361,6 +1361,19 @@ async function fetchWeatherResource(url, instance) {
   }
 }
 
+async function readJsonResponse(response, { allowInvalid = false } = {}) {
+  const rawText = await response.text();
+  if (!rawText.trim()) return { data: null, rawText };
+  try {
+    return { data: JSON.parse(rawText), rawText };
+  } catch (cause) {
+    if (allowInvalid) return { data: null, rawText, cause };
+    const endpoint = response.url || "weather API";
+    const preview = rawText.replace(/\s+/g, " ").slice(0, 240);
+    throw new Error(`Invalid JSON from ${endpoint} (HTTP ${response.status}): ${preview || "empty response"}`, { cause });
+  }
+}
+
 // Helper: FWHM seeing indicator for observing mode cards
 function seingIndicator(hour) {
   const fwhm = hour.seeing && hour.seeing.fwhm_arcsec;
@@ -3165,7 +3178,7 @@ async function loadWeather(rootEl, state, forceRefresh, instance = null) {
       if (useApi && state && state.location) {
         var errBody = null;
         try {
-          errBody = await res.json();
+          errBody = (await readJsonResponse(res, { allowInvalid: true })).data;
         } catch (e) {
           errBody = null;
         }
@@ -3185,7 +3198,7 @@ async function loadWeather(rootEl, state, forceRefresh, instance = null) {
           var text2 = await res2.text();
           throw new Error("Expected JSON but got " + contentType2);
         }
-        data = await res2.json();
+        data = (await readJsonResponse(res2)).data;
       } else {
         throw new Error("HTTP " + res.status + ": " + res.statusText);
       }
@@ -3197,7 +3210,7 @@ async function loadWeather(rootEl, state, forceRefresh, instance = null) {
           console.error("[weather] Expected JSON but got:", contentType, "Body preview:", text.slice(0, 200));
           throw new Error("Expected JSON but got " + contentType);
         }
-        data = await res.json();
+        data = (await readJsonResponse(res)).data;
         console.log("[weather] JSON parsed successfully. Keys:", Object.keys(data || {}), "hasHours:", !!data.hours, "hoursLength:", data && Array.isArray(data.hours) ? data.hours.length : "N/A");
         // Log successful API response structure for debugging
         if (useApi) {
@@ -3279,7 +3292,7 @@ async function loadWeather(rootEl, state, forceRefresh, instance = null) {
             console.log("[weather] Legacy JSON raw response preview (last 200 chars):", responseText.slice(-200));
             console.log("[weather] Legacy JSON response length:", responseText.length, "chars");
             
-            var legacyData = await res2.json();
+            var legacyData = (await readJsonResponse(res2)).data;
             console.log("[weather] Legacy JSON parsed, hasHours:", !!legacyData && !!legacyData.hours, "hoursLength:", legacyData && Array.isArray(legacyData.hours) ? legacyData.hours.length : "N/A", "keys:", legacyData ? Object.keys(legacyData) : []);
             if (legacyData && legacyData.hours && Array.isArray(legacyData.hours) && legacyData.hours.length > 0) {
               data = legacyData; // Use legacy data if valid
