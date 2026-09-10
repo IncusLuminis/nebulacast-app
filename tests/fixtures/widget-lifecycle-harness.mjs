@@ -47,14 +47,20 @@ function lifecycleError(instanceOrType, phase, error) {
   return wrapped;
 }
 
-export function createWidgetLifecycleHarness({ includeBroken = false } = {}) {
-  const ledger = createResourceLedger();
+export function createWidgetLifecycleHarness({
+  includeBroken = false,
+  context: suppliedContext,
+  definitions: suppliedDefinitions,
+  ledger: suppliedLedger,
+  rootFactory = createFakeRoot,
+} = {}) {
+  const ledger = suppliedLedger || createResourceLedger();
   const events = [];
-  const context = createFakeContext({
+  const context = suppliedContext || createFakeContext({
     observer: { name: "Harness observer", lat: 52.2297, lon: 21.0122, timezone: "Europe/Warsaw" },
     time: { mode: "live", datetimeISO: "2026-09-09T12:00:00Z" },
   });
-  const definitions = [
+  const definitions = suppliedDefinitions ? [...suppliedDefinitions] : [
     createDeterministicWidgetDefinition({ ledger, events, type: LIFECYCLE_FIXTURE_TYPE }),
     createDeterministicWidgetDefinition({ ledger, events, type: LIFECYCLE_FOUNDATION_TYPE }),
   ];
@@ -64,13 +70,13 @@ export function createWidgetLifecycleHarness({ includeBroken = false } = {}) {
     registry: createWidgetRegistry(definitions),
   });
   const roots = {
-    one: createFakeRoot("harness-one"),
-    two: createFakeRoot("harness-two"),
-    foundationOne: createFakeRoot("harness-foundation-one"),
-    foundationTwo: createFakeRoot("harness-foundation-two"),
-    sibling: createFakeRoot("harness-sibling"),
-    foundationSibling: createFakeRoot("harness-foundation-sibling"),
-    broken: createFakeRoot("harness-broken"),
+    one: rootFactory("harness-one"),
+    two: rootFactory("harness-two"),
+    foundationOne: rootFactory("harness-foundation-one"),
+    foundationTwo: rootFactory("harness-foundation-two"),
+    sibling: rootFactory("harness-sibling"),
+    foundationSibling: rootFactory("harness-foundation-sibling"),
+    broken: rootFactory("harness-broken"),
   };
 
   async function mount(root, specification = {}) {

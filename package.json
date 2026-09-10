@@ -10,7 +10,7 @@
     "test:lunar": "node --test tests/lunar.test.mjs",
     "test:lunar-consistency": "node --test tests/lunar-consistency.test.mjs",
     "test:lifecycle": "node --test tests/lifecycle.test.mjs",
-    "test:widget-lifecycle": "node --test tests/widget-lifecycle.test.mjs",
+    "test:widget-lifecycle": "node --test tests/widget-lifecycle.test.mjs tests/widget-lifecycle-adapters.test.mjs",
     "test:weather-platform": "node --test tests/weather-platform.test.mjs",
     "test:browser": "playwright test",
     "test:provider-contracts": "node scripts/test-provider-contracts.mjs",

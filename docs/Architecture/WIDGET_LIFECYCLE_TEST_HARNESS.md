@@ -17,10 +17,18 @@ isolation, and errors annotated with widget type and lifecycle phase.
 ## Resource ledger
 
 `tests/fixtures/widget-lifecycle-harness.mjs` provides deterministic ledger
-tokens for timers, observers, listeners, subscriptions, and requests. The
-fixtures do not create real timers or browser resources. Each deterministic
-instance acquires one token of each kind and releases all tokens during
-destroy; the test asserts that the ledger returns to zero.
+tokens for timers, observers, listeners, subscriptions, and requests. It also
+accepts real catalog definitions, a supplied Platform Context, and a root
+factory. `tests/fixtures/widget-lifecycle-contract.mjs` executes the common
+mount/update/resize/refresh/destroy/remount/two-instance contract through that
+public harness interface. The same executor runs against the real Astro and
+Sun/Moon foundation adapters in `tests/widget-lifecycle-adapters.test.mjs`.
+
+The deterministic fixtures do not create real timers or browser resources.
+Each deterministic instance acquires one token of each kind and releases all
+tokens during destroy; the test asserts that the ledger returns to zero. The
+real-adapter test tracks subscriptions, timers, and ResizeObservers in the
+same way while preserving the adapters' own DOM and context behavior.
 
 ## Broken cleanup fixture
 

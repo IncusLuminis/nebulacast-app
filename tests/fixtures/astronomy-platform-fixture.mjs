@@ -77,6 +77,22 @@ export function createAstronomyRoot() {
   return root;
 }
 
+export function createAstronomyRuntimeRoot(name) {
+  const domRoot = createAstronomyRoot();
+  const attributes = new Map();
+  return {
+    name,
+    classList: domRoot.classList,
+    querySelector: selector => domRoot.querySelector(selector),
+    querySelectorAll: selector => domRoot.querySelectorAll(selector),
+    setAttribute(attribute, value) { attributes.set(attribute, String(value)); },
+    removeAttribute(attribute) { attributes.delete(attribute); },
+    getAttribute(attribute) { return attributes.get(attribute) ?? null; },
+    get innerHTML() { return domRoot.innerHTML; },
+    set innerHTML(value) { domRoot.innerHTML = value; },
+  };
+}
+
 export function createPlatformContext(initial = {}) {
   let snapshot = structuredClone({
     observer: {
@@ -114,8 +130,85 @@ export function createPlatformContext(initial = {}) {
   };
 }
 
+export function createTrackedContext(ledger, initial = {}) {
+  const context = createPlatformContext(initial);
+  return {
+    get: context.get,
+    subscribe(listener) {
+      const release = ledger.acquire("subscriptions");
+      const unsubscribe = context.subscribe(listener);
+      let active = true;
+      return () => {
+        if (!active) return;
+        active = false;
+        release();
+        unsubscribe();
+      };
+    },
+    update: context.update,
+  };
+}
+
 export function createEventTarget() {
   return createNode();
+}
+
+export function installSunMoonEnvironment(ledger, events) {
+  const names = ["window", "document", "CustomEvent", "ResizeObserver", "setInterval", "clearInterval"];
+  const descriptors = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+  const date = value => new Date(`2026-09-${String(value).padStart(2, "0")}T06:00:00Z`);
+  const times = {
+    sunrise: date(9),
+    sunset: date(9),
+    solarNoon: date(9),
+    dawn: date(9),
+    dusk: date(9),
+    nauticalDawn: date(9),
+    nauticalDusk: date(9),
+    night: date(9),
+    nightEnd: date(9),
+  };
+
+  globalThis.window = {
+    devicePixelRatio: 1,
+    SunCalc: {
+      getPosition: () => ({ altitude: 0.1, azimuth: 0.2 }),
+      getMoonPosition: () => ({ altitude: 0.2, azimuth: 0.3 }),
+      getTimes: () => ({ ...times }),
+      getMoonTimes: () => ({}),
+    },
+    dispatchEvent(event) {
+      events.push(event);
+      return true;
+    },
+  };
+  globalThis.document = { createElement: () => createEventTarget() };
+  globalThis.CustomEvent = class CustomEvent {
+    constructor(type, init = {}) {
+      this.type = type;
+      this.detail = init.detail;
+    }
+  };
+  globalThis.setInterval = () => {
+    const release = ledger.acquire("timers");
+    return { release };
+  };
+  globalThis.clearInterval = handle => handle?.release?.();
+  globalThis.ResizeObserver = class ResizeObserver {
+    constructor() { this.release = ledger.acquire("observers"); }
+    observe() {}
+    disconnect() {
+      this.release?.();
+      this.release = null;
+    }
+  };
+
+  return () => {
+    for (const [name, descriptor] of descriptors) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  };
 }
 
 export function createResourceLedger() {
