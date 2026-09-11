@@ -63,12 +63,14 @@
       "build_path": "No build step; the modular Weather application is committed under sites/staging/weather/ and preserved by frontend/build.py.",
       "deploy_paths": [
         "sites/staging/weather/widgets/location/location.js",
-        "sites/staging/weather/widgets/location/location.css"
+        "sites/staging/weather/widgets/location/location.css",
+        "sites/staging/weather/widgets/location/platform-adapter.mjs"
       ],
       "local_test_path": "make server; http://localhost:8080/weather/",
       "compatibility_paths": ["sites/staging/weather/index.html"],
       "path_classification": [
         {"path": "sites/staging/weather/widgets/location/location.js", "role": "widget implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/location/platform-adapter.mjs", "role": "Platform Runtime adapter", "classification": "production"},
         {"path": "sites/staging/weather/core/state.js", "role": "shared context dependency", "classification": "production"}
       ],
       "supporting_data_sources": [
@@ -87,17 +89,21 @@
         "sites/staging/data/observer_weather_now.json"
       ],
       "build_path": "make weather-back && make weather-observer; frontend/build.py preserves the Weather runtime under sites/staging/weather/.",
-      "deploy_paths": ["sites/staging/weather/"],
+      "deploy_paths": ["sites/staging/weather/", "sites/staging/weather/widgets/weather/platform-adapter.mjs"],
       "local_test_path": "make server; http://localhost:8080/weather/",
       "compatibility_paths": [
         "sites/staging/weather/weather-vertical.html",
-        "sites/staging/weather/embed-vertical.js"
+        "sites/staging/weather/embed-vertical.js",
+        "sites/staging/weather/widgets/weather/weather_vertical.css"
       ],
       "path_classification": [
         {"path": "sites/staging/weather/widgets/weather/weather.js", "role": "widget implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/weather/platform-adapter.mjs", "role": "Platform Runtime adapter", "classification": "production"},
         {"path": "sites/staging/weather/widgets/weather/weather_vertical.js", "role": "vertical compatibility implementation", "classification": "legacy"},
+        {"path": "sites/staging/weather/widgets/weather/weather_vertical.css", "role": "vertical compatibility stylesheet", "classification": "legacy"},
         {"path": "sites/staging/weather/weather-vertical.html", "role": "vertical compatibility host", "classification": "legacy"},
-        {"path": "sites/staging/weather/embed-vertical.js", "role": "iframe compatibility adapter", "classification": "legacy"}
+        {"path": "sites/staging/weather/embed-vertical.js", "role": "iframe compatibility adapter", "classification": "legacy"},
+        {"path": "sites/staging/poc.html", "role": "historical Astro Weather locations POC host", "classification": "POC"}
       ],
       "supporting_data_sources": [
         "functions/api/astro-weather.ts",
@@ -105,7 +111,7 @@
         "sites/staging/data/observer_weather_now.json",
         "sites/staging/sky/data/sun_moon.json"
       ],
-      "notes": "The vertical path is compatibility-only and must not become a second independently edited Weather implementation."
+      "notes": "The vertical path is compatibility-only and must not become a second independently edited Weather implementation. sites/staging/poc.html is a historical POC host and is not a production extension point."
     },
     {
       "id": "sun-moon",
@@ -119,15 +125,19 @@
       "build_path": "npm run build:lunar for shared lunar artifacts; make sky-back for the generated static Sky sun_moon dataset.",
       "deploy_paths": [
         "sites/staging/weather/widgets/sun_moon/",
+        "sites/staging/weather/widgets/sun_moon/platform-adapter.mjs",
         "sites/staging/shared/lunar.mjs",
-        "sites/staging/sky/data/sun_moon.json"
+        "sites/staging/sky/data/sun_moon.json",
+        "sites/staging/sun/index.html"
       ],
       "local_test_path": "make server; http://localhost:8080/weather/ (Sun tab)",
       "compatibility_paths": [],
       "path_classification": [
         {"path": "sites/staging/weather/widgets/sun_moon/sun_moon.js", "role": "widget implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/sun_moon/platform-adapter.mjs", "role": "Platform Runtime adapter", "classification": "production"},
         {"path": "sites/staging/weather/widgets/sun_moon/sun_moon_1.js", "role": "historical variant", "classification": "legacy"},
-        {"path": "frontend/astronomy/lunar.ts", "role": "shared lunar computation source", "classification": "production"}
+        {"path": "frontend/astronomy/lunar.ts", "role": "shared lunar computation source", "classification": "production"},
+        {"path": "sites/staging/sun/index.html", "role": "standalone Sun & Moon host", "classification": "production"}
       ],
       "supporting_data_sources": [
         "frontend/astronomy/lunar.ts",
@@ -144,12 +154,14 @@
       "build_path": "No build step; the Astro widget is a committed modular Weather runtime module.",
       "deploy_paths": [
         "sites/staging/weather/widgets/astro/astro.js",
-        "sites/staging/weather/widgets/astro/astro.css"
+        "sites/staging/weather/widgets/astro/astro.css",
+        "sites/staging/weather/widgets/astro/platform-adapter.mjs"
       ],
       "local_test_path": "make server; http://localhost:8080/weather/ (Astro tab)",
       "compatibility_paths": [],
       "path_classification": [
-        {"path": "sites/staging/weather/widgets/astro/astro.js", "role": "widget implementation", "classification": "production"}
+        {"path": "sites/staging/weather/widgets/astro/astro.js", "role": "widget implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/astro/platform-adapter.mjs", "role": "Platform Runtime adapter", "classification": "production"}
       ],
       "supporting_data_sources": [
         "sites/staging/weather/core/state.js",
@@ -169,6 +181,7 @@
       "deploy_paths": [
         "sites/staging/weather/map-poc.html",
         "sites/staging/weather/widgets/map/map.js",
+        "sites/staging/weather/widgets/map/platform-adapter.mjs",
         "sites/staging/map/index.html"
       ],
       "local_test_path": "make server; http://localhost:8080/weather/ (Map tab) and http://localhost:8080/map/",
@@ -179,15 +192,18 @@
       "path_classification": [
         {"path": "sites/staging/weather/map-poc.html", "role": "supported production map implementation", "classification": "production"},
         {"path": "sites/staging/weather/widgets/map/map.js", "role": "production Weather-tab adapter", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/map/platform-adapter.mjs", "role": "Platform Runtime adapter", "classification": "production"},
         {"path": "sites/staging/map/index.html", "role": "production compatibility host", "classification": "production"},
         {"path": "sites/staging/weather/map1.html", "role": "redirect compatibility route", "classification": "legacy"},
-        {"path": "sites/staging/weather/widgets/map/map2.js", "role": "unused alternate implementation", "classification": "POC"}
+        {"path": "sites/staging/weather/widgets/map/map2.js", "role": "unused alternate implementation", "classification": "POC"},
+        {"path": "sites/staging/weather/widgets/map/map2.css", "role": "stylesheet for the unused alternate implementation", "classification": "POC"},
+        {"path": "sites/staging/weather/widget.js", "role": "unreferenced historical Map UI initializer", "classification": "POC"}
       ],
       "supporting_data_sources": [
         "sites/staging/data/weather_map_now.json",
         "sites/staging/data/tile_manifests"
       ],
-      "notes": "map1.html and map/index.html contain routing/hosting only; map2.js is not a production extension point."
+      "notes": "map1.html and map/index.html contain routing/hosting only; map2.js, map2.css, and the unreferenced weather/widget.js initializer are not production extension points."
     },
     {
       "id": "sky",

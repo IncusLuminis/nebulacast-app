@@ -13,6 +13,11 @@ Sun & Moon, Astro, Map, Sky, News, Events, and Alerts. Each entry records one
 authoritative implementation path, derived/public artifacts, build path, deploy
 path, local test path, and compatibility paths.
 
+The current Runtime adapters are production delivery paths, not alternate
+widget implementations: Location, Weather, Map, Sun & Moon, and Astro use the
+`platform-adapter.mjs` file recorded beside each widget's authoritative source.
+Each adapter delegates to that source and does not establish a second owner.
+
 ## Ownership rule
 
 Files listed as generated, copied, compatibility, legacy, or POC are not a
@@ -29,8 +34,15 @@ tab uses `sites/staging/weather/widgets/map/map.js` as its production adapter.
 
 `sites/staging/map/index.html` is a public host for the supported route, and
 `sites/staging/weather/map1.html` is a redirect kept for bookmarks. Neither owns
-map logic. `sites/staging/weather/widgets/map/map2.js` is classified as POC and
-must not be used as a platform extension point.
+map logic. `sites/staging/weather/widgets/map/map2.js`, its `map2.css`, and the
+unreferenced `sites/staging/weather/widget.js` UI initializer are classified as
+POC and must not be used as platform extension points.
+
+The standalone Sun & Moon host is `sites/staging/sun/index.html`; it mounts the
+same authoritative `weather/widgets/sun_moon/sun_moon.js` implementation. The
+vertical Weather host remains compatibility-only, including
+`weather_vertical.css`, and `sites/staging/poc.html` remains a historical Astro
+Weather POC host.
 
 ## Sky legacy bootstrap boundary
 

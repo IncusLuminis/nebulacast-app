@@ -32,6 +32,13 @@ REQUIRED_WIDGET_FIELDS = (
     "local_test_path",
     "compatibility_paths",
     "path_classification",
+    "supporting_data_sources",
+)
+PATH_LIST_FIELDS = (
+    "generated_or_copied_artifacts",
+    "deploy_paths",
+    "compatibility_paths",
+    "supporting_data_sources",
 )
 
 
@@ -84,32 +91,80 @@ def validate(manifest_path: Path) -> None:
         if not isinstance(widget["local_test_path"], str) or "make server" not in widget["local_test_path"]:
             fail(f"{widget_id}: local_test_path must document make server")
 
-        validate_path(repo_root, widget["source_of_truth"], "source_of_truth", widget_id)
-        for field in ("generated_or_copied_artifacts", "deploy_paths", "compatibility_paths"):
+        source_path = repo_root / widget["source_of_truth"]
+        if not source_path.is_file():
+            fail(f"{widget_id}.source_of_truth must be a file: {widget['source_of_truth']}")
+        for field in PATH_LIST_FIELDS:
             values = widget[field]
             if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
                 fail(f"{widget_id}.{field} must be an array of paths")
+            if field == "supporting_data_sources" and not values:
+                fail(f"{widget_id}.supporting_data_sources must not be empty")
             for value in values:
                 validate_path(repo_root, value, field, widget_id)
 
         classifications = widget["path_classification"]
         if not isinstance(classifications, list) or not classifications:
             fail(f"{widget_id}.path_classification must be a non-empty array")
+        classified_paths = []
         source_entries = [
             item for item in classifications
             if isinstance(item, dict) and item.get("path") == widget["source_of_truth"]
         ]
         if len(source_entries) != 1:
             fail(f"{widget_id}: source_of_truth must appear exactly once in path_classification")
+        if source_entries[0].get("classification") != widget["classification"]:
+            fail(f"{widget_id}: source_of_truth classification must match widget classification")
         for item in classifications:
             if not isinstance(item, dict) or not isinstance(item.get("path"), str):
                 fail(f"{widget_id}: invalid path_classification entry")
+            if item["path"] in classified_paths:
+                fail(f"{widget_id}: duplicate path_classification path: {item['path']}")
+            classified_paths.append(item["path"])
             if item.get("classification") not in CLASSIFICATIONS:
                 fail(f"{widget_id}: invalid path classification for {item.get('path')}")
             validate_path(repo_root, item["path"], "path_classification", widget_id)
 
-    if data.get("map_decision", {}).get("production_path") != "sites/staging/weather/map-poc.html":
+    map_decision = data.get("map_decision")
+    if not isinstance(map_decision, dict):
+        fail("map_decision must be an object")
+    map_widget = next(widget for widget in widgets if widget.get("id") == "map")
+    map_classifications = {
+        item["path"]: item["classification"]
+        for item in map_widget["path_classification"]
+    }
+
+    production_path = map_decision.get("production_path")
+    if production_path != "sites/staging/weather/map-poc.html":
         fail("map_decision.production_path must identify the supported production Map path")
+    production_adapter = map_decision.get("production_adapter")
+    if not isinstance(production_adapter, str) or not production_adapter:
+        fail("map_decision.production_adapter must be a non-empty path")
+    for field, value in (("production_path", production_path), ("production_adapter", production_adapter)):
+        validate_path(repo_root, value, f"map_decision.{field}", "map")
+        if map_classifications.get(value) != "production":
+            fail(f"map_decision.{field} must be classified as production")
+
+    compatibility_paths = map_decision.get("compatibility_paths")
+    if not isinstance(compatibility_paths, list) or any(not isinstance(value, str) for value in compatibility_paths):
+        fail("map_decision.compatibility_paths must be an array of paths")
+    for value in compatibility_paths:
+        validate_path(repo_root, value, "map_decision.compatibility_paths", "map")
+        if value not in map_classifications:
+            fail(f"map_decision.compatibility_paths path is not classified: {value}")
+
+    non_production = map_decision.get("non_production_path")
+    if not isinstance(non_production, dict):
+        fail("map_decision.non_production_path must be an object")
+    non_production_path = non_production.get("path")
+    if not isinstance(non_production_path, str) or not non_production_path:
+        fail("map_decision.non_production_path.path must be a non-empty path")
+    if non_production.get("classification") != "POC":
+        fail("map_decision.non_production_path.classification must be POC")
+    validate_path(repo_root, non_production_path, "map_decision.non_production_path", "map")
+    if map_classifications.get(non_production_path) != "POC":
+        fail("map_decision.non_production_path must match the Map POC classification")
+
     print(f"OK {manifest_path}: {len(widgets)} widgets, all ownership paths exist")
 
 
