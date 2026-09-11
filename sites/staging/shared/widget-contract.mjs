@@ -98,7 +98,7 @@ function metadataFrom(config, id, type) {
  * Attach runtime-owned host metadata and state to a supplied root.
  * The host never changes children or parent-page selectors.
  */
-export function createWidgetHost(root, { id, type, config, state = "loading" } = {}) {
+export function createWidgetHost(root, { id, type, config, state = "loading", requestedOrientation = config?.orientation } = {}) {
   if (!canHostMetadata(root)) throw new TypeError("Widget root must support class and attribute metadata");
   if (typeof id !== "string" || !id) throw new TypeError("Widget host id must be a non-empty string");
   if (typeof type !== "string" || !type) throw new TypeError("Widget host type must be a non-empty string");
@@ -130,6 +130,12 @@ export function createWidgetHost(root, { id, type, config, state = "loading" } =
 
   return {
     root,
+    setRequestedOrientation(nextOrientation) {
+      requestedOrientation = nextOrientation;
+    },
+    getRequestedOrientation() {
+      return requestedOrientation;
+    },
     getMetadata() {
       return metadata;
     },

@@ -75,11 +75,12 @@ export function createNebulacast({ context, registry = defaultRegistry, resolveA
     try {
       const suppliedConfig = specification.config === undefined ? {} : specification.config;
       if (!isObject(suppliedConfig)) normalizeWidgetConfig(suppliedConfig);
+      const requestedOrientation = ({ ...definition.defaults, ...suppliedConfig }).orientation ?? "auto";
       let config = normalizeWidgetConfig(
         { ...definition.defaults, ...suppliedConfig },
         { root, resolveAutoOrientation },
       );
-      host = createWidgetHost(root, { id, type, config, state: "loading" });
+      host = createWidgetHost(root, { id, type, config, state: "loading", requestedOrientation });
       const module = await load(definition);
       const mounted = normalizeMountedApi(await module.mount(root, context, config, host), type);
       let destroyed = false;
@@ -96,6 +97,9 @@ export function createNebulacast({ context, registry = defaultRegistry, resolveA
           if (destroyed) return undefined;
           if (args[0] !== undefined) {
             if (!isObject(args[0])) normalizeWidgetConfig(args[0]);
+            if (Object.prototype.hasOwnProperty.call(args[0], "orientation")) {
+              host.setRequestedOrientation?.(args[0].orientation);
+            }
             config = normalizeWidgetConfig(
               { ...config, ...args[0] },
               { root, resolveAutoOrientation },

@@ -218,6 +218,7 @@ async function init(userCfg, {
   mount: explicitMount = null,
   context = null,
   compatibility = false,
+  host = null,
 } = {}) {
     const cfg = deepMerge(JSON.parse(JSON.stringify(DEFAULTS)), userCfg || {});
     deepMerge(cfg, readContextConfig(context));
@@ -242,12 +243,13 @@ async function init(userCfg, {
     }
 
     const mount = resolveMount(explicitMount);
-    let requestedOrientation = cfg.orientation || "auto";
+    let requestedOrientation = (host?.getRequestedOrientation?.() ?? cfg.orientation) || "auto";
     const applyOrientation = () => {
       cfg.orientation = requestedOrientation === "auto"
         ? resolveSkyOrientation({ ...cfg, orientation: "auto" }, mount)
         : requestedOrientation;
       if (root?.dataset) root.dataset.ncOrientation = cfg.orientation;
+      if (mount?.dataset) mount.dataset.ncOrientation = cfg.orientation;
     };
     const { root, wrap, canvas, status } = makeRoot(mount);
     applyOrientation();

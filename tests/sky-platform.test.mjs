@@ -37,10 +37,10 @@ test("Sky catalog preserves root-sized layouts, canvas output, and text status",
     resolveAutoOrientation: ({ root }) => root.clientWidth < 520 ? "vertical" : "horizontal",
   });
   const cases = [
-    { name: "auto-wide", width: 720, height: 360, orientation: "auto", resolved: "horizontal" },
-    { name: "auto-narrow", width: 360, height: 480, orientation: "auto", resolved: "vertical" },
-    { name: "explicit-horizontal", width: 280, height: 480, orientation: "horizontal", resolved: "horizontal" },
-    { name: "explicit-vertical", width: 720, height: 300, orientation: "vertical", resolved: "vertical" },
+    { name: "auto-wide", width: 720, height: 360, orientation: "auto", resolved: "horizontal", resized: "vertical" },
+    { name: "auto-narrow", width: 360, height: 480, orientation: "auto", resolved: "vertical", resized: "vertical" },
+    { name: "explicit-horizontal", width: 280, height: 480, orientation: "horizontal", resolved: "horizontal", resized: "horizontal" },
+    { name: "explicit-vertical", width: 720, height: 300, orientation: "vertical", resolved: "vertical", resized: "vertical" },
   ];
   const instances = [];
 
@@ -65,6 +65,7 @@ test("Sky catalog preserves root-sized layouts, canvas output, and text status",
       instance.resize();
       assert.equal(canvas.width, 400);
       assert.equal(canvas.height, 260);
+      assert.equal(root.dataset.ncOrientation, scenario.resized, scenario.name);
     }
   } finally {
     for (const { instance } of instances) instance.destroy();
