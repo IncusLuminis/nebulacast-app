@@ -18,7 +18,11 @@ export async function loadConsoleData({ location, isDefaultSite, observerWeather
     readJson(fetchImpl, "/data/helio_now.json", { signal: requestSignal }),
     readJson(fetchImpl, sunMoonUrl, { cache: "no-store", signal: requestSignal }),
   ]);
-  const wx = wxPrimary ?? await readJson(fetchImpl, "/data/observer_weather_now.json", { signal: requestSignal });
+  // The generated snapshot belongs to the default Warsaw site.  Never use it
+  // to mask a failed observer-specific request for another context.
+  const wx = wxPrimary ?? (isDefaultSite(location)
+    ? await readJson(fetchImpl, "/data/observer_weather_now.json", { signal: requestSignal })
+    : null);
 
   let validatedSunMoon = sunMoon;
   if (validatedSunMoon && validatedSunMoon.schema !== "sun_moon.v2") {
