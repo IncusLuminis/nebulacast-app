@@ -97,13 +97,14 @@ export function createNebulacast({ context, registry = defaultRegistry, resolveA
           if (destroyed) return undefined;
           if (args[0] !== undefined) {
             if (!isObject(args[0])) normalizeWidgetConfig(args[0]);
-            if (Object.prototype.hasOwnProperty.call(args[0], "orientation")) {
-              host.setRequestedOrientation?.(args[0].orientation);
-            }
-            config = normalizeWidgetConfig(
+            const nextConfig = normalizeWidgetConfig(
               { ...config, ...args[0] },
               { root, resolveAutoOrientation },
             );
+            if (Object.prototype.hasOwnProperty.call(args[0], "orientation")) {
+              host.setRequestedOrientation?.(args[0].orientation);
+            }
+            config = nextConfig;
             host.setConfig(config);
           }
           return mounted.update?.(...args);
