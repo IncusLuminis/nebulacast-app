@@ -97,6 +97,13 @@ test("Alerts handles loading, empty, error, stale-on-error, timeout, and in-flig
   assert.equal(emptyRoot.getAttribute("data-nc-state"), "empty");
   assert.match(emptyRoot.querySelector('[data-role="status"]').textContent, /No active alerts/);
 
+  const degradedRoot = makeRoot(documentRef, "alerts-degraded");
+  const degradedPayload = { items: [...alertData.items, null] };
+  const degraded = await runtime.mount(degradedRoot, { widget: "alerts", config: { fetch: makeFetch({ "/sky/data/alerts_now.json": degradedPayload }) } });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(degradedRoot.getAttribute("data-nc-state"), "degraded");
+  assert.equal(degradedRoot.querySelector('[data-role="list"]').children.length, alertData.items.length);
+
   let release;
   const pendingFetch = makeFetch({ "/sky/data/alerts_now.json": () => new Promise(resolve => { release = resolve; }) });
   const pendingRoot = makeRoot(documentRef, "alerts-pending");
@@ -126,6 +133,7 @@ test("Alerts handles loading, empty, error, stale-on-error, timeout, and in-flig
   root.querySelector('[data-role="toggle"]').click();
   instance.destroy();
   empty.destroy();
+  degraded.destroy();
   pending.destroy();
   timeout.destroy();
 });

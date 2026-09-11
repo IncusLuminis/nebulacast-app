@@ -98,6 +98,12 @@ function itemGroup(item) {
   return String(item?.group || item?.type || "other").toLowerCase();
 }
 
+function parsePayload(data) {
+  if (!Array.isArray(data?.items)) return { items: [], degraded: false };
+  const items = data.items.filter(isObject);
+  return { items, degraded: items.length !== data.items.length };
+}
+
 /** Canonical root-scoped Sky Alerts implementation for the Widget Runtime. */
 export function mountAlerts(root, _context, suppliedConfig = {}, host) {
   if (!isObject(root) || typeof root.querySelector !== "function") {
@@ -258,14 +264,15 @@ export function mountAlerts(root, _context, suppliedConfig = {}, host) {
     const promise = requestJson(config.dataUrl, current)
       .then(data => {
         if (!alive || current !== sequence) return;
-        cachedItems = Array.isArray(data?.items) ? data.items.filter(isObject) : [];
+        const payload = parsePayload(data);
+        cachedItems = payload.items;
         hasData = true;
         if (renderItems()) {
           hideStatus();
-          setState("ready");
+          setState(payload.degraded ? "degraded" : "ready");
         } else {
           showStatus("No active alerts.");
-          setState("empty");
+          setState(payload.degraded ? "degraded" : "empty");
         }
       })
       .catch(error => {
