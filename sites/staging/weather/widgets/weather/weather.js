@@ -19,10 +19,15 @@ let currentLocationCoords = null; // {lat, lon, tz} for API mode
 let isFetchingWeather = false;
 let lastWeatherFetchTime = 0;
 const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const WEATHER_RANGES = new Set(["today", "48h", "7d"]);
 let sunMoonEventsCache = null; // null = not loaded yet; [] = loaded (may be empty)
 let layoutMode = "default"; // "default" | "vertical"
 let activeWeatherInstance = null;
 let legacyWeatherInstance = null;
+
+function normalizeWeatherRange(range) {
+  return WEATHER_RANGES.has(range) ? range : "7d";
+}
 
 function createWeatherInstanceStorage() {
   const values = new Map();
@@ -3371,7 +3376,7 @@ async function loadWeather(rootEl, state, forceRefresh, instance = null) {
           activeProfile = (_storedProfile && PROFILE_IDS.includes(_storedProfile)) ? _storedProfile : "balanced";
         } catch (_) { activeProfile = "balanced"; }
       }
-      currentMode = "7d"; // Always show full 7D view (issue #99)
+      currentMode = normalizeWeatherRange(state?.range);
       data.hours.sort(function(a,b){ var da=parseISO(a.time),db=parseISO(b.time); if(!da||!db)return 0; return da.getTime()-db.getTime(); });
       var nowHourResult = findNearestHour(data.hours || []);
       var nowHour = nowHourResult.hour;
@@ -5143,6 +5148,7 @@ export function mountWeather(rootEl, storeApi, options = {}) {
     bindPlatformLayoutHandlers(rootEl, instance);
 
     let lastLocKey = "";
+    let resizeWeather = null;
     const unsubscribe = storeApi.subscribe((state) => {
       if (instance.destroyed) return;
       withWeatherInstance(instance, () => {
@@ -5151,7 +5157,7 @@ export function mountWeather(rootEl, storeApi, options = {}) {
         const locationChanged = lastLocKey !== locKey;
         lastLocKey = locKey;
         activeProfile = (state.profile && state.profile !== "default") ? state.profile : "balanced";
-        currentMode = "7d";
+        currentMode = normalizeWeatherRange(state.range);
         if (locationChanged) {
           void loadWeather(rootEl, state, false, instance);
         } else if (weatherData && weatherData.hours) {
@@ -5239,6 +5245,10 @@ export function mountWeather(rootEl, storeApi, options = {}) {
       };
       instance.resizeObserver = new ResizeObserver(updateRootOrientation);
       instance.resizeObserver.observe(rootEl);
+      resizeWeather = size => {
+        const width = typeof size === "number" ? size : size?.width;
+        updateRootOrientation([{ contentRect: { width: Number.isFinite(width) ? width : rootEl.clientWidth || 0 } }]);
+      };
       updateRootOrientation([{ contentRect: { width: rootEl.clientWidth || 0 } }]);
     }
 
@@ -5263,6 +5273,28 @@ export function mountWeather(rootEl, storeApi, options = {}) {
       instance.resizeObserver = null;
     };
     dispose.unmount = dispose;
+    dispose.update = patch => {
+      if (instance.destroyed) return undefined;
+      const nextState = storeApi.getState();
+      const nextProfile = nextState?.profile && nextState.profile !== "default"
+        ? nextState.profile : "balanced";
+      const profileChanged = instance.activeProfile !== nextProfile;
+      withWeatherInstance(instance, () => {
+        activeProfile = nextProfile;
+        currentMode = normalizeWeatherRange(nextState?.range);
+        if (!profileChanged && weatherData?.hours) renderPlatformLayout(rootEl, instance);
+      });
+      return profileChanged ? loadWeather(rootEl, nextState, true, instance) : undefined;
+    };
+    dispose.resize = size => {
+      if (instance.destroyed) return undefined;
+      resizeWeather?.(size);
+      return undefined;
+    };
+    dispose.refresh = () => {
+      if (instance.destroyed) return undefined;
+      return loadWeather(rootEl, storeApi.getState(), true, instance);
+    };
     saveWeatherInstance(instance);
     restoreWeatherGlobals(previousGlobals);
     activeWeatherInstance = null;

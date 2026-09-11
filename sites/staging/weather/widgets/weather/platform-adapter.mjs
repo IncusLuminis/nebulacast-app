@@ -62,7 +62,15 @@ function createLegacyStoreFacade(context, configRef = {}) {
 }
 
 function normalizeLegacyMount(mounted) {
-  if (typeof mounted === "function") return { destroy: mounted };
+  if (typeof mounted === "function") {
+    return {
+      destroy: mounted,
+      unmount: mounted.unmount,
+      update: mounted.update,
+      resize: mounted.resize,
+      refresh: mounted.refresh,
+    };
+  }
   if (!mounted || typeof mounted !== "object") return {};
   if (typeof mounted.destroy === "function") return mounted;
   if (typeof mounted.unmount === "function") {
@@ -122,6 +130,13 @@ export async function mount(root, context, config = {}, host) {
   }
 
   let destroyed = false;
+  const destroy = () => {
+    if (destroyed) return undefined;
+    destroyed = true;
+    facade.dispose();
+    return mounted.destroy?.();
+  };
+
   return {
     update(patch) {
       if (destroyed) return undefined;
@@ -136,11 +151,7 @@ export async function mount(root, context, config = {}, host) {
       if (destroyed) return undefined;
       return mounted.refresh?.();
     },
-    destroy() {
-      if (destroyed) return undefined;
-      destroyed = true;
-      facade.dispose();
-      return mounted.destroy?.();
-    },
+    destroy,
+    unmount: destroy,
   };
 }

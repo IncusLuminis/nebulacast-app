@@ -128,12 +128,23 @@ test("two Weather instances keep explicit config, context, requests, orientation
     { lat: "42.3601", lon: "-71.0589", tz: "Europe/Warsaw", hours: "72", profile: "planetary", name: "Boston" },
   ]);
 
-  first.update({ profile: "balanced" });
+  await first.update({ profile: "balanced" });
   assert.equal(first.config.profile, "balanced");
   assert.equal(second.config.profile, "planetary");
   firstContext.update({ observer: { name: "Krakow", lat: 50.0647, lon: 19.945 } });
   await waitForAsyncWork();
   assert.equal(calls.some(request => request.searchParams.get("name") === "Krakow"), true);
+
+  await first.update({ profile: "balanced", range: "today" });
+  await waitForAsyncWork();
+  assert.equal(first.config.profile, "balanced");
+  assert.equal(first.config.range, "today");
+  assert.equal(second.config.profile, "planetary");
+  assert.equal(second.config.range, "48h");
+  assert.equal(calls.at(-1).searchParams.get("profile"), "balanced");
+  await first.refresh();
+  await waitForAsyncWork();
+  assert.equal(calls.at(-1).searchParams.get("profile"), "balanced");
 
   const observers = fixture.ResizeObserver.instances;
   assert.equal(observers.length, 2);
