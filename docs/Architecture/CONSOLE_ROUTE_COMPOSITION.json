@@ -1,0 +1,300 @@
+{
+  "schema_version": "1.0",
+  "story": "#98",
+  "title": "Console route composition descriptors and ownership matrix",
+  "repository": "IncusLuminis/nebulacast-app",
+  "canonical_deploy_root": "sites/staging",
+  "registry_source": "sites/staging/shared/widget-catalog.mjs",
+  "context_contract": "Platform Context",
+  "classification_legend": {
+    "runtime_widget": "The surface is mounted through the common Widget Runtime and owns its own root-scoped UI and lifecycle.",
+    "host_shell": "The page owns navigation, landmarks, placement, sizing, tabs, or application controls; it is not a widget.",
+    "temporary_adapter": "The visible surface is still reached through a legacy, inline, global, or iframe composition path and must be migrated or explicitly retained as compatibility."
+  },
+  "public_layout_contract": {
+    "sky": {
+      "shape": "square",
+      "public_modes": ["square"],
+      "rule": "Finite positive width and height must be equal."
+    },
+    "oriented_widget": {
+      "shape": "oriented",
+      "public_modes": ["horizontal", "vertical"],
+      "rule": "Horizontal requires width > height; vertical requires height > width."
+    },
+    "auto": {
+      "public": false,
+      "allowed_only_as": "internal Runtime or legacy compatibility resolution"
+    }
+  },
+  "routes": [
+    {
+      "id": "console-dashboard",
+      "path": "/",
+      "page": "dashboard",
+      "host": {
+        "root": ".console-root",
+        "source": "sites/staging/index.html",
+        "classification": "host_shell"
+      },
+      "platform_context": "Shared Platform Context created by the Console host.",
+      "visible_surfaces": [
+        {
+          "id": "dashboard-hero",
+          "label": "Hero",
+          "registry_type": "hero",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "hero", "root": "#console-hero"},
+          "platform_context": "Shared Platform Context; observer and time aware.",
+          "authoritative_source": "sites/staging/hero/widget.js",
+          "compatibility_route": [],
+          "classification": "runtime_widget",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/console/console-composer.mjs"
+        },
+        {
+          "id": "dashboard-location",
+          "label": "Observer Location",
+          "registry_type": "location",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "location", "root": "#w-location"},
+          "platform_context": "Shared Platform Context; observer context owner.",
+          "authoritative_source": "sites/staging/weather/widgets/location/platform-adapter.mjs",
+          "compatibility_route": ["/weather/"],
+          "classification": "runtime_widget",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/console/console-composer.mjs"
+        },
+        {
+          "id": "dashboard-weather",
+          "label": "Weather Conditions",
+          "registry_type": "weather",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "weather", "root": "#w-weather"},
+          "platform_context": "Shared Platform Context; observer and time aware.",
+          "authoritative_source": "sites/staging/weather/widgets/weather/weather.js",
+          "compatibility_route": ["/weather/"],
+          "classification": "temporary_adapter",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/index.html via console-composer slot"
+        },
+        {
+          "id": "dashboard-weather-matrix",
+          "label": "Forecast Matrix",
+          "registry_type": "weather",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "weather-matrix", "root": "#w-weather-matrix"},
+          "platform_context": "Shared Platform Context; observer and time aware.",
+          "authoritative_source": "sites/staging/weather/widgets/weather/weather.js",
+          "compatibility_route": ["/weather/"],
+          "classification": "temporary_adapter",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/index.html via dashboard panel orchestration"
+        },
+        {
+          "id": "dashboard-sun-moon",
+          "label": "Sun & Moon",
+          "registry_type": "sun-moon",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "sunmoon-panel", "root": "#w-sunmoon-panel"},
+          "platform_context": "Shared Platform Context; observer and time aware.",
+          "authoritative_source": "sites/staging/weather/widgets/sun_moon/sun_moon.js",
+          "compatibility_route": ["/sun/"],
+          "classification": "runtime_widget",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/console/console-composer.mjs"
+        },
+        {
+          "id": "dashboard-sky-iframe",
+          "label": "Sky anchor",
+          "registry_type": "sky",
+          "registry_registered": true,
+          "root_or_slot": {"slot": null, "root": "#db-sky-iframe"},
+          "platform_context": "Not passed to the compatibility iframe; migration must use shared Platform Context.",
+          "authoritative_source": "sites/staging/sky/widget.js",
+          "compatibility_route": ["/sky/"],
+          "classification": "temporary_adapter",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "square", "public_modes": ["square"]},
+          "current_owner": "sites/staging/index.html iframe anchor"
+        },
+        {
+          "id": "dashboard-alerts",
+          "label": "Sky Alerts",
+          "registry_type": "alerts",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "alerts", "root": "#fs-sky"},
+          "platform_context": "Shared Platform Context; data-only widget.",
+          "authoritative_source": "sites/staging/alerts/widget.js",
+          "compatibility_route": ["/sky/alerts.html"],
+          "classification": "runtime_widget",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/console/console-composer.mjs"
+        },
+        {
+          "id": "dashboard-events",
+          "label": "Events",
+          "registry_type": "events",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "events", "root": "#nrc-main"},
+          "platform_context": "No observer or time context required by the current Events widget.",
+          "authoritative_source": "frontend/assets/js/widget_runtime.js",
+          "compatibility_route": ["/calendar/"],
+          "classification": "runtime_widget",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/console/console-composer.mjs"
+        },
+        {
+          "id": "dashboard-news",
+          "label": "News",
+          "registry_type": "news",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "news", "root": "#nrw-main"},
+          "platform_context": "No observer or time context required by the current News widget.",
+          "authoritative_source": "frontend/assets/js/widget_runtime.js",
+          "compatibility_route": ["/news/"],
+          "classification": "runtime_widget",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/console/console-composer.mjs"
+        },
+        {
+          "id": "dashboard-observing-window",
+          "label": "Best observing window",
+          "registry_type": "weather",
+          "registry_registered": true,
+          "root_or_slot": {"slot": null, "root": "#dbp-window-body"},
+          "platform_context": "Reads dashboard-owned weather snapshot; not a Runtime mount.",
+          "authoritative_source": "sites/staging/index.html",
+          "compatibility_route": ["/weather/"],
+          "classification": "temporary_adapter",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/index.html inline renderer _dbRenderWindow"
+        },
+        {
+          "id": "dashboard-space-weather",
+          "label": "Space Weather Forecast",
+          "registry_type": "space-weather",
+          "registry_registered": false,
+          "root_or_slot": {"slot": null, "root": "#dbp-helio-body"},
+          "platform_context": "Not passed to the inline dashboard renderer; A2 must define the widget context boundary.",
+          "authoritative_source": "sites/staging/helio/dist/helio.widget.js",
+          "compatibility_route": ["/helio/"],
+          "classification": "temporary_adapter",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/index.html inline renderer _dbRenderHelio"
+        },
+        {
+          "id": "dashboard-solar-activity",
+          "label": "Solar Activity",
+          "registry_type": "space-weather",
+          "registry_registered": false,
+          "root_or_slot": {"slot": null, "root": "#dbp-solar-body"},
+          "platform_context": "Not passed to the inline dashboard renderer; A2 must define the widget context boundary.",
+          "authoritative_source": "sites/staging/helio/dist/helio.widget.js",
+          "compatibility_route": ["/helio/"],
+          "classification": "temporary_adapter",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/index.html inline renderer _dbRenderSolar"
+        },
+        {
+          "id": "dashboard-map-iframe",
+          "label": "Weather Map anchor",
+          "registry_type": "map",
+          "registry_registered": true,
+          "root_or_slot": {"slot": null, "root": "#db-map-iframe"},
+          "platform_context": "Not passed to the compatibility iframe; migration must use shared Platform Context.",
+          "authoritative_source": "sites/staging/weather/map-poc.html",
+          "compatibility_route": ["/map/"],
+          "classification": "temporary_adapter",
+          "target_classification": "runtime_widget",
+          "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
+          "current_owner": "sites/staging/index.html iframe anchor"
+        }
+      ]
+    },
+    {
+      "id": "weather-page",
+      "path": "/weather/",
+      "page": "weather",
+      "host": {"root": ".page-wrap", "source": "sites/staging/weather/index.html", "classification": "host_shell"},
+      "platform_context": "Weather page store is the current context bridge; target is the shared Platform Context.",
+      "visible_surfaces": [
+        {"id": "weather-location", "label": "Observer Location", "registry_type": "location", "registry_registered": true, "root_or_slot": {"slot": "location", "root": "#w-location"}, "platform_context": "Weather store facade; target shared Platform Context.", "authoritative_source": "sites/staging/weather/widgets/location/platform-adapter.mjs", "compatibility_route": [], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/weather/index.html direct legacy mount"},
+        {"id": "weather-main", "label": "Weather Conditions", "registry_type": "weather", "registry_registered": true, "root_or_slot": {"slot": "weather", "root": "#w-weather"}, "platform_context": "Weather store facade; target shared Platform Context.", "authoritative_source": "sites/staging/weather/widgets/weather/weather.js", "compatibility_route": ["/weather/weather-vertical.html", "/weather/embed-vertical.js"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/weather/index.html direct legacy mount"},
+        {"id": "weather-sun-moon", "label": "Sun & Moon tab", "registry_type": "sun-moon", "registry_registered": true, "root_or_slot": {"slot": "sun", "root": "#w-sun"}, "platform_context": "Weather store facade; target shared Platform Context.", "authoritative_source": "sites/staging/weather/widgets/sun_moon/sun_moon.js", "compatibility_route": ["/sun/"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/weather/index.html direct legacy mount"},
+        {"id": "weather-astro", "label": "Astronomy tab", "registry_type": "astro", "registry_registered": true, "root_or_slot": {"slot": "astro", "root": "#w-astro"}, "platform_context": "Weather store facade; target shared Platform Context.", "authoritative_source": "sites/staging/weather/widgets/astro/astro.js", "compatibility_route": [], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/weather/index.html direct legacy mount"},
+        {"id": "weather-sky", "label": "Sky tab", "registry_type": "sky", "registry_registered": true, "root_or_slot": {"slot": "sky", "root": "#skyMount"}, "platform_context": "SKY_CONFIG/global bootstrap; target shared Platform Context.", "authoritative_source": "sites/staging/sky/widget.js", "compatibility_route": ["/sky/", "sites/staging/sky/legacy-bootstrap.mjs"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "square", "public_modes": ["square"]}, "current_owner": "sites/staging/weather/index.html legacy Sky bootstrap"},
+        {"id": "weather-map", "label": "Map tab", "registry_type": "map", "registry_registered": true, "root_or_slot": {"slot": "map", "root": "#w-map"}, "platform_context": "Weather store facade; target shared Platform Context.", "authoritative_source": "sites/staging/weather/map-poc.html", "compatibility_route": ["/map/", "/weather/map1.html"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/weather/index.html direct legacy mount"}
+      ]
+    },
+    {
+      "id": "sky-page",
+      "path": "/sky/",
+      "page": "sky",
+      "host": {"root": ".sky-page", "source": "sites/staging/sky/index.html", "classification": "host_shell"},
+      "platform_context": "Standalone Sky page currently uses the legacy bootstrap; target is shared Platform Context.",
+      "visible_surfaces": [
+        {"id": "sky-chart", "label": "Sky chart", "registry_type": "sky", "registry_registered": true, "root_or_slot": {"slot": "sky-stage", "root": "#skyMount"}, "platform_context": "Legacy SKY_CONFIG/__skyWidget bridge; target shared Platform Context.", "authoritative_source": "sites/staging/sky/widget.js", "compatibility_route": ["/sky/legacy-bootstrap.mjs", "/sky/objects.html"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "square", "public_modes": ["square"]}, "current_owner": "sites/staging/sky/legacy-bootstrap.mjs"},
+        {"id": "sky-player", "label": "Sky time/player controls", "registry_type": null, "registry_registered": false, "root_or_slot": {"slot": null, "root": "#skyPlayer"}, "platform_context": "Host-owned page control coordinating the Sky presentation.", "authoritative_source": "sites/staging/sky/index.html", "compatibility_route": [], "classification": "host_shell", "target_classification": "host_shell", "layout": null, "current_owner": "sites/staging/sky/index.html"}
+      ]
+    },
+    {
+      "id": "space-weather-page",
+      "path": "/helio/",
+      "page": "space-weather",
+      "host": {"root": ".page-shell", "source": "sites/staging/helio/index.html", "classification": "host_shell"},
+      "platform_context": "No Platform Context on the current global Helio path; A2 defines it.",
+      "visible_surfaces": [
+        {"id": "space-weather-main", "label": "Space Weather", "registry_type": "space-weather", "registry_registered": false, "root_or_slot": {"slot": "space-weather", "root": "#w-helio"}, "platform_context": "None on current path; target shared Platform Context.", "authoritative_source": "sites/staging/helio/dist/helio.widget.js", "compatibility_route": ["/helio/dist/helio.widget.js"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/helio/index.html via window.HelioWidget"},
+        {"id": "space-weather-diagnostics", "label": "Diagnostics", "registry_type": null, "registry_registered": false, "root_or_slot": {"slot": null, "root": ".page-diag"}, "platform_context": "Host-owned diagnostic chrome.", "authoritative_source": "sites/staging/helio/index.html", "compatibility_route": [], "classification": "host_shell", "target_classification": "host_shell", "layout": null, "current_owner": "sites/staging/helio/index.html"}
+      ]
+    },
+    {
+      "id": "map-page",
+      "path": "/map/",
+      "page": "map",
+      "host": {"root": "body", "source": "sites/staging/map/index.html", "classification": "host_shell"},
+      "platform_context": "Not passed across the current iframe boundary; target direct Runtime mount.",
+      "visible_surfaces": [
+        {"id": "map-main", "label": "Weather Map", "registry_type": "map", "registry_registered": true, "root_or_slot": {"slot": "map", "root": "iframe[src='/weather/map-poc.html']"}, "platform_context": "None on current iframe path; target shared Platform Context.", "authoritative_source": "sites/staging/weather/map-poc.html", "compatibility_route": ["/weather/map1.html"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/map/index.html iframe host"}
+      ]
+    },
+    {
+      "id": "events-page",
+      "path": "/calendar/",
+      "page": "events",
+      "host": {"root": ".page-wrap", "source": "sites/staging/calendar/index.html", "classification": "host_shell"},
+      "platform_context": "No observer or time context required by the current Events widget.",
+      "visible_surfaces": [
+        {"id": "events-main", "label": "Events calendar", "registry_type": "events", "registry_registered": true, "root_or_slot": {"slot": "events", "root": "#nrc-root-page"}, "platform_context": "No Platform Context required by current data contract.", "authoritative_source": "frontend/assets/js/widget_runtime.js", "compatibility_route": ["/calendar/widget.js"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/calendar/index.html via window.runCalendarWidget"},
+        {"id": "events-feed-links", "label": "JSON/RSS links", "registry_type": null, "registry_registered": false, "root_or_slot": {"slot": null, "root": ".rss-link"}, "platform_context": "Host-owned compatibility links.", "authoritative_source": "sites/staging/calendar/index.html", "compatibility_route": ["/calendar/daily_signal.json", "/alerts/rss.xml"], "classification": "host_shell", "target_classification": "host_shell", "layout": null, "current_owner": "sites/staging/calendar/index.html"}
+      ]
+    },
+    {
+      "id": "sun-page",
+      "path": "/sun/",
+      "page": "sun-moon",
+      "host": {"root": "body", "source": "sites/staging/sun/index.html", "classification": "host_shell"},
+      "platform_context": "Standalone page currently supplies a legacy weather store; target shared Platform Context.",
+      "visible_surfaces": [
+        {"id": "sun-moon-main", "label": "Sun & Moon", "registry_type": "sun-moon", "registry_registered": true, "root_or_slot": {"slot": "sun-moon", "root": "#w-sun"}, "platform_context": "Legacy weather store facade; target shared Platform Context.", "authoritative_source": "sites/staging/weather/widgets/sun_moon/sun_moon.js", "compatibility_route": [], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/sun/index.html direct legacy mount"}
+      ]
+    }
+  ],
+  "excluded_host_applications": [
+    {"id": "showcase", "route": "/showcase/", "root": "body", "source": "sites/staging/showcase/index.html", "classification": "host_shell", "reason": "Widget Lab constructor; intentionally remains an application host."},
+    {"id": "settings", "route": "/?page=settings", "root": "#page-settings", "source": "sites/staging/index.html", "classification": "host_shell", "reason": "Application settings and persistence; explicitly outside widget migration."},
+    {"id": "stats", "route": "/?page=stats", "root": "#page-stats", "source": "sites/staging/index.html", "classification": "host_shell", "reason": "Application analytics/diagnostics; explicitly outside widget migration."}
+  ]
+}
