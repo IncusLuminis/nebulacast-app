@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createNebulacast } from "../sites/staging/shared/widget-runtime.mjs";
+import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
+import { loadRankingJson } from "../sites/staging/sky/widgets/widget.utils.js";
 import {
   createSkyBrowserFixture,
   createSkyContext,
@@ -24,6 +26,77 @@ const quietSkyOptions = {
   showPlanets: false,
 };
 const quietSkyUI = { components: { sideToolbar: false, bottomToolbar: false, popover: false, modal: false, player: false } };
+
+test("Sky catalog preserves root-sized layouts, canvas output, and text status", async () => {
+  const baseUrl = "/sky-platform-layout-regression";
+  const fixture = createSkyBrowserFixture();
+  const restore = installSkyBrowserGlobals(fixture);
+  const context = createSkyContext();
+  const runtime = createNebulacast({
+    context,
+    resolveAutoOrientation: ({ root }) => root.clientWidth < 520 ? "vertical" : "horizontal",
+  });
+  const cases = [
+    { name: "auto-wide", width: 720, height: 360, orientation: "auto", resolved: "horizontal" },
+    { name: "auto-narrow", width: 360, height: 480, orientation: "auto", resolved: "vertical" },
+    { name: "explicit-horizontal", width: 280, height: 480, orientation: "horizontal", resolved: "horizontal" },
+    { name: "explicit-vertical", width: 720, height: 300, orientation: "vertical", resolved: "vertical" },
+  ];
+  const instances = [];
+
+  try {
+    for (const scenario of cases) {
+      const root = createSkyRoot(scenario.name, scenario, fixture.document);
+      const instance = await runtime.mount(root, {
+        widget: "sky",
+        config: { baseUrl, orientation: scenario.orientation, options: quietSkyOptions, ui: quietSkyUI },
+      });
+      instances.push({ instance, root });
+
+      const canvas = root.querySelector("canvas.sky-canvas");
+      assert.equal(instance.config.orientation, scenario.resolved);
+      assert.equal(root.getAttribute("data-nc-orientation"), scenario.resolved);
+      assert.equal(canvas.width, scenario.width);
+      assert.equal(canvas.height, scenario.height);
+      assert.match(root.querySelector(".sky-status").textContent, /stars 0/);
+
+      root.clientWidth = 400;
+      root.clientHeight = 260;
+      instance.resize();
+      assert.equal(canvas.width, 400);
+      assert.equal(canvas.height, 260);
+    }
+  } finally {
+    for (const { instance } of instances) instance.destroy();
+    restore();
+  }
+});
+
+test("Sky catalog and ranking loader retain the registered data path", async () => {
+  const definition = widgetCatalog.find(entry => entry.type === "sky");
+  assert.ok(definition);
+  assert.deepEqual(definition.defaults, { orientation: "auto", theme: "inherit", density: "normal" });
+  assert.deepEqual(definition.supportedOptions.orientation, ["auto", "horizontal", "vertical"]);
+  assert.deepEqual(definition.capabilities, { observerAware: true, timeAware: true, multiInstance: true });
+  assert.equal(definition.galleryPreview, false);
+
+  const baseUrl = "/sky-platform-ranking-regression";
+  const fixture = createSkyBrowserFixture({
+    [`${baseUrl}/data/ranking.json`]: {
+      items: [
+        { id: "first", group: "dso", score: 900 },
+        { id: "second", group: "planets", score: 800 },
+      ],
+    },
+  });
+  const restore = installSkyBrowserGlobals(fixture);
+  try {
+    const ranking = await loadRankingJson(baseUrl);
+    assert.deepEqual(ranking.items.map(item => item.id), ["first", "second"]);
+  } finally {
+    restore();
+  }
+});
 
 test("Sky Runtime mounts two roots without legacy globals and cleans up for remount", async () => {
   const fixture = createSkyBrowserFixture();
@@ -228,4 +301,38 @@ test("Sky destroy cancels deferred fullscreen resize and player sync work", asyn
     globalThis.setTimeout = realSetTimeout;
     globalThis.clearTimeout = realClearTimeout;
   }
+});
+
+test("Sky repeated remount keeps context subscriptions and root-owned output isolated", async () => {
+  const fixture = createSkyBrowserFixture();
+  const restore = installSkyBrowserGlobals(fixture);
+  const root = createSkyRoot("repeated-remount", { width: 640, height: 360 }, fixture.document);
+  const context = createSkyContext();
+  const runtime = createNebulacast({ context });
+  const ids = new Set();
+
+  try {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const instance = await runtime.mount(root, {
+        widget: "sky",
+        config: { orientation: "horizontal", options: quietSkyOptions, ui: quietSkyUI },
+      });
+      ids.add(instance.id);
+      assert.equal(context.listenerCount(), 1);
+      assert.ok(root.querySelector("canvas.sky-canvas"));
+
+      context.update({ observer: { name: `Remount ${attempt}`, lat: 40 + attempt, lon: 20 + attempt } });
+      assert.match(root.querySelector(".sky-status").textContent, new RegExp(`lat ${(40 + attempt).toFixed(2)}°`));
+
+      instance.destroy();
+      instance.destroy();
+      assert.equal(context.listenerCount(), 0);
+      assert.equal(root.querySelector(".sky-root"), null);
+    }
+  } finally {
+    runtime.unmount(root)?.destroy();
+    restore();
+  }
+
+  assert.equal(ids.size, 3);
 });
