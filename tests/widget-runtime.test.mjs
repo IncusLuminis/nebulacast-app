@@ -16,7 +16,7 @@ function createRuntime(definitions) {
 
 test("catalog exposes Phase 1 platform adapter definitions", async () => {
   const catalogTypes = widgetCatalog.map(definition => definition.type);
-  assert.deepEqual(catalogTypes, ["hero", "astro", "sun-moon", "weather", "map", "location", "sky", "news", "events", "alerts"]);
+  assert.deepEqual(catalogTypes, ["hero", "astro", "sun-moon", "weather", "map", "location", "sky", "news", "events", "alerts", "space-weather"]);
   assert.equal(catalogTypes.filter(type => type === "hero").length, 1);
   const hero = widgetCatalog.find(definition => definition.type === "hero");
   assert.equal(typeof hero.loader, "function");
@@ -78,6 +78,11 @@ test("catalog exposes Phase 1 platform adapter definitions", async () => {
   assert.equal(typeof events.loader, "function");
   assert.equal(typeof (await news.loader()).mount, "function");
   assert.equal(typeof (await events.loader()).mount, "function");
+  const spaceWeather = widgetCatalog.find(definition => definition.type === "space-weather");
+  assert.deepEqual(spaceWeather.defaults, { orientation: "horizontal", theme: "inherit", density: "normal" });
+  assert.deepEqual(spaceWeather.supportedOptions.orientation, ["horizontal", "vertical"]);
+  assert.deepEqual(spaceWeather.capabilities, { observerAware: false, timeAware: false, multiInstance: true, embed: false });
+  assert.equal(typeof (await spaceWeather.loader()).mount, "function");
 });
 
 test("mount creates the public instance shape, merges immutable config, and caches lazy loading", async () => {

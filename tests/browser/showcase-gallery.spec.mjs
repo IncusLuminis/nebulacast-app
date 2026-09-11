@@ -48,7 +48,7 @@ test("Showcase builds cards from catalog and mounts previews only on action", as
   await page.goto("/showcase/", { waitUntil: "domcontentloaded" });
 
   const cards = page.locator("[data-widget-type]");
-  await expect(cards).toHaveCount(10);
+  await expect(cards).toHaveCount(11);
   await expect(page.locator('[data-widget-type="hero"] .card-name')).toHaveText("Hero");
   await expect(page.locator('[data-widget-type="hero"] .meta-version')).toHaveText("Version 1");
   await expect(page.locator('[data-widget-type="hero"] [data-gallery-action="preview"]')).toBeEnabled();

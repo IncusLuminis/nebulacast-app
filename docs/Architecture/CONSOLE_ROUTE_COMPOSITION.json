@@ -183,10 +183,10 @@
           "id": "dashboard-space-weather",
           "label": "Space Weather Forecast",
           "registry_type": "space-weather",
-          "registry_registered": false,
+          "registry_registered": true,
           "root_or_slot": {"slot": null, "root": "#dbp-helio-body"},
-          "platform_context": "Not passed to the inline dashboard renderer; A2 must define the widget context boundary.",
-          "authoritative_source": "sites/staging/helio/dist/helio.widget.js",
+          "platform_context": "The independent space-weather type is registered; this dashboard inline renderer is still awaiting the later Console composition migration.",
+          "authoritative_source": "sites/staging/helio/src/helio.widget.ts",
           "compatibility_route": ["/helio/"],
           "classification": "temporary_adapter",
           "target_classification": "runtime_widget",
@@ -254,9 +254,9 @@
       "path": "/helio/",
       "page": "space-weather",
       "host": {"root": ".page-shell", "source": "sites/staging/helio/index.html", "classification": "host_shell"},
-      "platform_context": "No Platform Context on the current global Helio path; A2 defines it.",
+      "platform_context": "The Space Weather Runtime adapter consumes the shared Platform Context; the legacy page host remains a compatibility route until its later composition migration.",
       "visible_surfaces": [
-        {"id": "space-weather-main", "label": "Space Weather", "registry_type": "space-weather", "registry_registered": false, "root_or_slot": {"slot": "space-weather", "root": "#w-helio"}, "platform_context": "None on current path; target shared Platform Context.", "authoritative_source": "sites/staging/helio/dist/helio.widget.js", "compatibility_route": ["/helio/dist/helio.widget.js"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/helio/index.html via window.HelioWidget"},
+        {"id": "space-weather-main", "label": "Space Weather", "registry_type": "space-weather", "registry_registered": true, "root_or_slot": {"slot": "space-weather", "root": "#w-helio"}, "platform_context": "Runtime adapter consumes the shared Platform Context; this legacy host is not yet the canonical Runtime composition.", "authoritative_source": "sites/staging/helio/src/helio.widget.ts", "compatibility_route": ["/helio/dist/helio.widget.js"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/helio/index.html via window.HelioWidget"},
         {"id": "space-weather-diagnostics", "label": "Diagnostics", "registry_type": null, "registry_registered": false, "root_or_slot": {"slot": null, "root": ".page-diag"}, "platform_context": "Host-owned diagnostic chrome.", "authoritative_source": "sites/staging/helio/index.html", "compatibility_route": [], "classification": "host_shell", "target_classification": "host_shell", "layout": null, "current_owner": "sites/staging/helio/index.html"}
       ]
     },

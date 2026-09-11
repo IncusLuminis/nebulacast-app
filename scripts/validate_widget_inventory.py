@@ -20,6 +20,7 @@ EXPECTED_WIDGETS = {
     "news",
     "events",
     "alerts",
+    "space-weather",
 }
 CLASSIFICATIONS = {"production", "legacy", "POC"}
 REQUIRED_WIDGET_FIELDS = (

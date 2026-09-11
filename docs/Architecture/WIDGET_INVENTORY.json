@@ -333,6 +333,43 @@
         "services/sky/pipelines/gen_alerts.py"
       ],
       "notes": "Alerts is registered once as a non-observer-aware, non-time-aware, multi-instance, embeddable Widget Runtime type. The canonical implementation reads only /sky/data/alerts_now.json. The legacy widget_alerts_feed.js and /sky/alerts.html paths remain compatibility surfaces; backend, generator, schema, RSS, and pipeline paths are unchanged."
+    },
+    {
+      "id": "space-weather",
+      "classification": "production",
+      "source_of_truth": "sites/staging/helio/src/helio.widget.ts",
+      "generated_or_copied_artifacts": [
+        "sites/staging/helio/dist/helio.widget.js",
+        "sites/staging/helio/dist/helio.widget.mjs"
+      ],
+      "build_path": "npm run build:helio produces the legacy IIFE and the ESM Widget Runtime artifact.",
+      "deploy_paths": [
+        "sites/staging/helio/src/helio.widget.ts",
+        "sites/staging/helio/dist/helio.widget.js",
+        "sites/staging/helio/dist/helio.widget.mjs",
+        "sites/staging/helio/platform-adapter.mjs",
+        "sites/staging/data/helio_now.json"
+      ],
+      "local_test_path": "make server; http://localhost:8080/helio/ and Widget Runtime host fixtures",
+      "compatibility_paths": [
+        "sites/staging/helio/index.html",
+        "sites/staging/helio-demo.html",
+        "sites/staging/embed/index.html"
+      ],
+      "path_classification": [
+        {"path": "sites/staging/helio/src/helio.widget.ts", "role": "canonical root-scoped Space Weather implementation", "classification": "production"},
+        {"path": "sites/staging/helio/platform-adapter.mjs", "role": "common Widget Runtime adapter", "classification": "production"},
+        {"path": "sites/staging/helio/dist/helio.widget.js", "role": "legacy IIFE compatibility artifact", "classification": "legacy"},
+        {"path": "sites/staging/helio/dist/helio.widget.mjs", "role": "ESM Widget Runtime artifact", "classification": "production"},
+        {"path": "sites/staging/helio/index.html", "role": "legacy global standalone host", "classification": "legacy"},
+        {"path": "sites/staging/helio-demo.html", "role": "legacy standalone demo host", "classification": "legacy"},
+        {"path": "sites/staging/embed/index.html", "role": "legacy embed host", "classification": "legacy"}
+      ],
+      "supporting_data_sources": [
+        "sites/staging/data/helio_now.json",
+        "sites/staging/helio/src/helio.types.ts"
+      ],
+      "notes": "Space Weather is registered as a non-observer-aware, non-time-aware, multi-instance Runtime widget. The ESM adapter imports the canonical Helio implementation directly and keeps /data/helio_now.json as the data contract. The legacy IIFE remains available only for existing global-host callers."
     }
   ]
 }

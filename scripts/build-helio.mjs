@@ -20,24 +20,36 @@ const outdir = join(repoRoot, "sites/staging/helio/dist");
 const watchMode = process.argv.includes("--watch");
 
 /** @type {import("esbuild").BuildOptions} */
-const cfg = {
+const common = {
   entryPoints: [entry],
   bundle:      true,
-  format:      "iife",
-  globalName:  "HelioWidgetModule",
   platform:    "browser",
   target:      "es2017",
-  outdir,
-  outExtension: { ".js": ".js" },
-  minify:       !watchMode,
-  sourcemap:    watchMode ? "inline" : false,
+  minify:      !watchMode,
+  sourcemap:   watchMode ? "inline" : false,
 };
 
+const builds = [
+  {
+    ...common,
+    format:     "iife",
+    globalName: "HelioWidgetModule",
+    outfile:    join(outdir, "helio.widget.js"),
+    define:     { HELIO_LEGACY_GLOBAL: "true" },
+  },
+  {
+    ...common,
+    format:  "esm",
+    outfile: join(outdir, "helio.widget.mjs"),
+    define:  { HELIO_LEGACY_GLOBAL: "false" },
+  },
+];
+
 if (watchMode) {
-  const ctx = await esbuild.context(cfg);
-  await ctx.watch();
+  const contexts = await Promise.all(builds.map(build => esbuild.context(build)));
+  await Promise.all(contexts.map(ctx => ctx.watch()));
   console.log("[helio.build] Watching for changes…");
 } else {
-  await esbuild.build(cfg);
-  console.log("[helio.build] Built: sites/staging/helio/dist/helio.widget.js");
+  await Promise.all(builds.map(build => esbuild.build(build)));
+  console.log("[helio.build] Built: IIFE and ESM Helio bundles");
 }

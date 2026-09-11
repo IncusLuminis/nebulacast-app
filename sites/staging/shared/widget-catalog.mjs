@@ -25,6 +25,11 @@ const EVENTS_SUPPORTED_OPTIONS = Object.freeze({
   ...COMMON_SUPPORTED_OPTIONS,
   timeRange: Object.freeze(["upcoming", "all"]),
 });
+const SPACE_WEATHER_SUPPORTED_OPTIONS = Object.freeze({
+  orientation: Object.freeze(["horizontal", "vertical"]),
+  theme: Object.freeze(["inherit", "auto", "dark", "light"]),
+  density: Object.freeze(["compact", "normal", "comfortable"]),
+});
 
 function galleryMetadata(title, description, supportedOptions = COMMON_SUPPORTED_OPTIONS, galleryPreview = false) {
   return Object.freeze({ title, description, supportedOptions, galleryPreview });
@@ -164,6 +169,16 @@ export const widgetCatalog = Object.freeze([
     }),
     capabilities: Object.freeze({ observerAware: false, timeAware: false, multiInstance: true, embed: true }),
     loader: () => import("../alerts/platform-adapter.mjs"),
+  }),
+  Object.freeze({
+    type: "space-weather",
+    version: 1,
+    shape: "oriented",
+    userModes: Object.freeze(["horizontal", "vertical"]),
+    ...galleryMetadata("Space Weather", "Solar, geomagnetic, aurora, and satellite-impact conditions.", SPACE_WEATHER_SUPPORTED_OPTIONS, true),
+    defaults: Object.freeze({ orientation: "horizontal", theme: "inherit", density: "normal" }),
+    capabilities: Object.freeze({ observerAware: false, timeAware: false, multiInstance: true, embed: false }),
+    loader: () => import("../helio/platform-adapter.mjs"),
   }),
 ]);
 
