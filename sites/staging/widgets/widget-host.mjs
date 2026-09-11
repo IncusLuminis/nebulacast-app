@@ -3,10 +3,29 @@ import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { parseStandaloneWidgetQuery, serializeWidgetConfig } from "../shared/widget-config.mjs";
 
 function defaultContext() {
-  return Object.freeze({
-    get: () => Object.freeze({ observer: Object.freeze({}), time: Object.freeze({ mode: "live", datetimeISO: null }) }),
-    subscribe: () => () => {},
-  });
+  let current = {
+    observer: { name: "Warsaw", lat: 52.2297, lon: 21.0122, timezone: "Europe/Warsaw", source: "standalone-host" },
+    time: { mode: "live", datetimeISO: null },
+  };
+  const listeners = new Set();
+  const snapshot = () => structuredClone(current);
+  return {
+    get: snapshot,
+    getObserver: () => structuredClone(current.observer),
+    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    update(patch = {}) {
+      if (!patch || typeof patch !== "object") return snapshot();
+      current = {
+        ...current,
+        ...patch,
+        observer: { ...current.observer, ...(patch.observer || {}) },
+        time: { ...current.time, ...(patch.time || {}) },
+      };
+      const next = snapshot();
+      for (const listener of [...listeners]) listener(next);
+      return next;
+    },
+  };
 }
 
 function normalizeError(error) {

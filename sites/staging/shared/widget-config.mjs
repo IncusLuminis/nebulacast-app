@@ -58,9 +58,18 @@ function standaloneConfig(registry, widgetOrExport, requested) {
         throw new TypeError("Expected a widget-config.v1 standalone export");
       }
       widget = widgetOrExport.widget;
-      source = widgetOrExport.config;
       const definition = definitionFrom(registry, widget);
       if (widgetOrExport.version !== definition.version) throw new TypeError("Standalone widget config version mismatch");
+      const supported = new Set(Object.keys(definition.supportedOptions || {}));
+      for (const key of Object.keys(widgetOrExport.config)) {
+        if (!supported.has(key)) throw new TypeError(`standalone widget contains an unsupported field: ${key}`);
+      }
+      // The standalone URL exposes only the documented common host fields;
+      // widget-specific catalog defaults remain valid in the versioned export
+      // without becoming executable query parameters.
+      source = Object.fromEntries(STANDALONE_WIDGET_QUERY_KEYS.slice(1)
+        .filter(key => widgetOrExport.config[key] !== undefined)
+        .map(key => [key, widgetOrExport.config[key]]));
     } else if (Object.prototype.hasOwnProperty.call(widgetOrExport, "widget")) {
       widget = widgetOrExport.widget;
       source = { ...widgetOrExport };

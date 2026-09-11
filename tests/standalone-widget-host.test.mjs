@@ -66,7 +66,9 @@ function createHostFixture(search = "") {
 }
 
 test("standalone query parser only accepts opted-in widgets and bounded common options", () => {
-  assert.deepEqual(widgetCatalog.filter(definition => definition.standaloneHost === true).map(definition => definition.type), ["events", "alerts"]);
+  assert.deepEqual(widgetCatalog.filter(definition => definition.standaloneHost === true).map(definition => definition.type), ["weather", "events", "alerts"]);
+  assert.equal(widgetCatalog.find(definition => definition.type === "weather").standaloneHost, true);
+  assert.equal(widgetCatalog.find(definition => definition.type === "weather").standaloneStylesheet, "/weather/widgets/weather/weather.css");
   assert.equal(widgetCatalog.find(definition => definition.type === "alerts").standaloneHost, true);
   assert.equal(widgetCatalog.find(definition => definition.type === "events").standaloneHost, true);
   assert.equal(widgetCatalog.find(definition => definition.type === "events").standaloneStylesheet, "/assets/css/widget_calendar.css");
@@ -75,10 +77,25 @@ test("standalone query parser only accepts opted-in widgets and bounded common o
   assert.equal(serializeWidgetConfig(config), '{"schema":"widget-config.v1","widget":"alerts","version":1,"config":{"density":"compact","orientation":"vertical","theme":"dark"}}');
   assert.deepEqual(parseStandaloneWidgetQuery(registry, "?widget=alerts").config, { density: "normal", orientation: "auto", theme: "inherit" });
   const events = parseStandaloneWidgetQuery(registry, "?widget=events&orientation=vertical");
-  assert.deepEqual(events.config, { density: "normal", orientation: "vertical", theme: "inherit" });
-  for (const query of ["", "?widget=news", "?widget=weather", "?widget=sky", "?widget=hero", "?widget=alerts&profile=visual", "?widget=alerts&theme=<script>", "?widget=events&url=https://evil.example"]) {
+  assert.deepEqual(events.config, { density: "normal", orientation: "vertical", theme: "inherit", timeRange: "upcoming" });
+  const weather = parseStandaloneWidgetQuery(registry, "?widget=weather&orientation=horizontal");
+  assert.deepEqual(weather.config, { density: "normal", orientation: "horizontal", theme: "inherit", profile: "balanced", range: "7d" });
+  for (const query of ["", "?widget=news", "?widget=sky", "?widget=hero", "?widget=alerts&profile=visual", "?widget=alerts&theme=<script>", "?widget=events&url=https://evil.example"]) {
     assert.throws(() => parseStandaloneWidgetQuery(registry, query));
   }
+});
+
+test("standalone host mounts Weather with the shared Runtime and catalog stylesheet", async () => {
+  const fixture = createHostFixture("?widget=weather&orientation=horizontal");
+  const host = createStandaloneWidgetHost({ ...fixture, context: makeContext(), registry });
+  await host.mount();
+  const mountCall = fixture.runtime.calls.find(call => call.type === "mount");
+  assert.equal(mountCall.specification.widget, "weather");
+  assert.deepEqual(mountCall.specification.config, { density: "normal", orientation: "horizontal", theme: "inherit", profile: "balanced", range: "7d" });
+  assert.equal(fixture.stylesheets.length, 1);
+  assert.equal(fixture.stylesheets[0].href, "/weather/widgets/weather/weather.css");
+  await host.destroy();
+  assert.equal(fixture.stylesheets.length, 0);
 });
 
 test("host mounts Events through the same Runtime path and owns only catalog stylesheet", async () => {
@@ -89,7 +106,7 @@ test("host mounts Events through the same Runtime path and owns only catalog sty
   await mounting;
   const mountCall = fixture.runtime.calls.find(call => call.type === "mount");
   assert.equal(mountCall.specification.widget, "events");
-  assert.deepEqual(mountCall.specification.config, { density: "normal", orientation: "horizontal", theme: "dark" });
+  assert.deepEqual(mountCall.specification.config, { density: "normal", orientation: "horizontal", theme: "dark", timeRange: "upcoming" });
   assert.equal(fixture.stylesheets.length, 1);
   assert.equal(fixture.stylesheets[0].href, "/assets/css/widget_calendar.css");
   await host.destroy();

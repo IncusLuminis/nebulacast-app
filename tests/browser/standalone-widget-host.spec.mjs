@@ -2,6 +2,35 @@ import { test, expect } from "@playwright/test";
 
 const alertPayload = { items: [{ id: "canary-1", group: "risk", title: "Canary alert", note: "Standalone host" }] };
 const eventsPayload = { items: [{ title: "Meteor canary", category: "METEORS", published_at: "2099-01-02T12:00:00Z", url: "https://example.test/meteor", summary: "Standalone event" }] };
+const weatherPayload = {
+  ok: true,
+  source: "fixture",
+  generated_at: "2099-01-01T00:00:00Z",
+  location: { name: "Warsaw", lat: 52.2297, lon: 21.0122, tz: "Europe/Warsaw" },
+  horizon_hours: 1,
+  profiles: ["balanced"],
+  default_profile: "balanced",
+  hours: [],
+};
+
+test("standalone widget host mounts the allow-listed Weather widget", async ({ page }) => {
+  await page.route("**/api/astro-weather*", route => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(weatherPayload),
+  }));
+  await page.goto("/widgets/widget.html?widget=weather", { waitUntil: "domcontentloaded" });
+
+  const root = page.locator("#widget-root");
+  await expect(root).toHaveAttribute("data-nc-widget", "weather");
+  await expect(root).toHaveAttribute("data-nc-orientation", "auto");
+  await expect(root).toHaveAttribute("data-nc-theme", "inherit");
+  await expect(root).toHaveAttribute("data-nc-density", "normal");
+  await expect(page.locator('link[href="/weather/widgets/weather/weather.css"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Destroy widget" }).click();
+  await expect(root).not.toHaveAttribute("data-nc-widget");
+  await expect(page.locator("#host-status")).toHaveText("Widget destroyed.");
+});
 
 test("standalone widget host mounts Events with catalog defaults and cleans up on pagehide", async ({ page }) => {
   await page.route("**/calendar/daily_signal.json", route => route.fulfill({
