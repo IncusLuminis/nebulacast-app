@@ -185,13 +185,13 @@
           "registry_type": "space-weather",
           "registry_registered": true,
           "root_or_slot": {"slot": null, "root": "#dbp-helio-body"},
-          "platform_context": "The independent space-weather type is registered; this dashboard inline renderer is still awaiting the later Console composition migration.",
+          "platform_context": "Console Composer mounts the registered space-weather Runtime adapter with the shared Platform Context.",
           "authoritative_source": "sites/staging/helio/src/helio.widget.ts",
           "compatibility_route": ["/helio/"],
-          "classification": "temporary_adapter",
+          "classification": "runtime_widget",
           "target_classification": "runtime_widget",
           "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
-          "current_owner": "sites/staging/index.html inline renderer _dbRenderHelio"
+          "current_owner": "sites/staging/console/console-composer.mjs via dashboard-space-weather slot"
         },
         {
           "id": "dashboard-solar-activity",

@@ -42,6 +42,9 @@ const slots = [
     parseMax: 300,
     filters: NEWS_FILTERS,
   } },
+  { id: "dashboard-space-weather", selector: "#dbp-helio-body", widget: "space-weather", config: {
+    orientation: "horizontal",
+  } },
 ];
 
 export const consoleConfig = Object.freeze({

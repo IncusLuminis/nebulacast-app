@@ -3004,6 +3004,9 @@
   }
 
   function _dbRenderHelio() {
+    // Space Weather is mounted by Console Composer; keep this legacy hook inert
+    // until the remaining dashboard panel renderers are migrated.
+    return;
     const body = document.getElementById('dbp-helio-body');
     if (!body) return;
     const sw = _helioData;
