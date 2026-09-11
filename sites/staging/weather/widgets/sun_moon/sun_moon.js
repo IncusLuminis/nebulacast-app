@@ -495,7 +495,7 @@ export function mountSunMoon(rootEl, storeApi) {
       </div>
       <div class="sunmoon-controls" data-role="day-controls"></div>
       <div class="sunmoon-graph-wrap">
-        <canvas class="sunmoon-canvas" data-role="canvas"></canvas>
+        <canvas class="sunmoon-canvas" data-role="canvas" role="img" tabindex="0" aria-label="Sun and Moon altitude chart. Use arrow keys to inspect an hour."></canvas>
         <div class="sunmoon-tooltip" data-role="tooltip"></div>
       </div>
       <div class="sunmoon-summary">
@@ -644,6 +644,7 @@ export function mountSunMoon(rootEl, storeApi) {
 
       hourLineEl.textContent =
         `${timeStr} • Sun ${sunAlt}° • Moon ${moonAlt}° • ${moonInfo.emoji} ${moonInfo.phase_name}, illum. ${Math.round(moonInfo.illuminated_percent)}%`;
+      canvas?.setAttribute("aria-label", `Sun and Moon altitude chart for ${timeStr}: Sun ${sunAlt} degrees, Moon ${moonAlt} degrees, ${moonInfo.phase_name}, ${Math.round(moonInfo.illuminated_percent)}% illuminated. Use arrow keys to inspect an hour.`);
     }
 
     drawSunMoonCanvas(canvas, data, selectedHour);
@@ -695,6 +696,17 @@ export function mountSunMoon(rootEl, storeApi) {
 
     canvas.addEventListener("mouseleave", () => {
       if (tooltipEl) tooltipEl.style.display = "none";
+    });
+
+    canvas.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      followNow = false;
+      if (event.key === "ArrowLeft") selectedHour = Math.max(0, selectedHour - 1);
+      if (event.key === "ArrowRight") selectedHour = Math.min(23, selectedHour + 1);
+      if (event.key === "Home") selectedHour = 0;
+      if (event.key === "End") selectedHour = 23;
+      update();
     });
 
     canvas.addEventListener("click", (e) => {

@@ -12,8 +12,12 @@ export const SIDE_TOOLBAR_CSS = baseHostCSS(`
   cursor:pointer;
   border: 1px solid rgba(255,255,255,0.10);
   background: var(--ui-surface);
+  color: inherit;
+  padding: 0;
+  font: inherit;
 }
 .btn:hover{ background: var(--ui-hover); }
+.btn:focus-visible{ outline: 2px solid var(--ui-accent); outline-offset: 2px; }
 .btn[aria-pressed="true"]{ background: var(--ui-accent); border-color: var(--ui-accent-border); }
 .btn[aria-disabled="true"]{ opacity:0.4; pointer-events:none; }
 

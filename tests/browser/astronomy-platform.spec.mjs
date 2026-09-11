@@ -109,6 +109,13 @@ test("real Astro and Sun/Moon surfaces keep public platform boundaries", async (
   await expect(sunMoonOne).toHaveAttribute("data-nc-widget", "sun-moon");
   await expect(sunMoonOne).toHaveAttribute("data-nc-orientation", "horizontal");
   await expect(sunMoonTwo).toHaveAttribute("data-nc-orientation", "vertical");
+  const sunMoonCanvas = sunMoonOne.locator("canvas[data-role=canvas]");
+  await expect(sunMoonCanvas).toHaveAttribute("role", "img");
+  await expect(sunMoonCanvas).toHaveAttribute("tabindex", "0");
+  await expect(sunMoonCanvas).toHaveAttribute("aria-label", /Sun and Moon altitude chart/);
+  await sunMoonCanvas.focus();
+  await sunMoonCanvas.press("Home");
+  await expect(sunMoonCanvas).toHaveAttribute("aria-label", /00:00/);
 
   await page.evaluate(() => {
     const contract = window.__astronomyPlatform;

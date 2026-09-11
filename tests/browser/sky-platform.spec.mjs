@@ -135,3 +135,43 @@ test("Sky browser path preserves layout, data loading, context updates, and inst
   await expect(first).not.toHaveAttribute("data-nc-widget");
   await expect(second).not.toHaveAttribute("data-nc-widget");
 });
+
+test("Sky canvas and custom controls expose keyboard and accessible-name contracts", async ({ page }) => {
+  await page.route("**/sky/data/*.json", route => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ items: [], stars: [], constellations: [], points: [], frames: [] }),
+  }));
+  await page.goto("/widget-host/", { waitUntil: "domcontentloaded" });
+  await page.evaluate(async ({ options }) => {
+    const { createCatalogRegistry } = await import("/shared/widget-catalog.mjs");
+    const { createNebulacast } = await import("/shared/widget-runtime.mjs");
+    const state = { observer: { name: "Warsaw", lat: 52.2297, lon: 21.0122 }, time: { mode: "live" } };
+    const context = { get: () => structuredClone(state), subscribe: () => () => {} };
+    const runtime = createNebulacast({ context, registry: createCatalogRegistry() });
+    const root = document.createElement("section");
+    root.id = "sky-accessibility-root";
+    root.style.width = "640px";
+    root.style.height = "360px";
+    document.body.append(root);
+    const instance = await runtime.mount(root, { widget: "sky", config: { orientation: "horizontal", options, ui: {} } });
+    window.__skyAccessibility = { root, instance };
+  }, { options: quietOptions });
+
+  const root = page.locator("#sky-accessibility-root");
+  await expect(root.locator("canvas.sky-canvas")).toHaveAttribute("role", "img");
+  await expect(root.locator("canvas.sky-canvas")).toHaveAttribute("aria-label", /Interactive sky chart/);
+  const sideButton = root.locator("ui-side-toolbar").first().locator("button").first();
+  await expect(sideButton).toHaveAttribute("type", "button");
+  await expect(sideButton).toHaveAttribute("aria-label", /Fullscreen/);
+  await sideButton.focus();
+  await expect(sideButton).toBeFocused();
+  const layerButton = root.locator("ui-bottom-toolbar").locator("button").first();
+  const before = await layerButton.getAttribute("aria-pressed");
+  await layerButton.focus();
+  await layerButton.press(" ");
+  await expect(layerButton).not.toHaveAttribute("aria-pressed", before || "false");
+
+  await page.evaluate(() => window.__skyAccessibility.instance.destroy());
+  await expect(root).not.toHaveAttribute("data-nc-widget");
+});

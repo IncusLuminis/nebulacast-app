@@ -41,3 +41,16 @@ test("generic iframe output works in a foreign-style host and preserves same-ori
   await expect(invalid.contentFrame().locator("#widget-root")).not.toHaveAttribute("data-nc-widget");
   await expect(invalid.contentFrame().locator('link[data-nc-standalone-stylesheet]')).toHaveCount(0);
 });
+
+test("iframe host rejects executable and arbitrary-module query parameters locally", async ({ page }) => {
+  for (const query of [
+    "html=%3Cscript%3Ealert(1)%3C%2Fscript%3E",
+    "loader=https%3A%2F%2Fevil.example%2Fwidget.mjs",
+    "moduleUrl=https%3A%2F%2Fevil.example%2Fwidget.mjs",
+  ]) {
+    await page.goto(`/widgets/widget.html?widget=weather&${query}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#host-status")).toHaveAttribute("data-state", "error");
+    await expect(page.locator("#widget-root")).not.toHaveAttribute("data-nc-widget");
+    await expect(page.locator('link[data-nc-standalone-stylesheet]')).toHaveCount(0);
+  }
+});

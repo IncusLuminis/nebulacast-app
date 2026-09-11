@@ -13,6 +13,20 @@ test("Console Hero is mounted by the common Runtime and keeps launcher behavior 
     await expect(hero).not.toContainText("Loading conditions…", { timeout: 10000 });
     expect(await page.evaluate(() => Object.prototype.hasOwnProperty.call(window, "_dbHeroData"))).toBe(false);
 
+    await expect(hero.locator(".hero-card[data-panel]").first()).toHaveAttribute("role", "button");
+    await expect(hero.locator(".hero-card[data-panel]").first()).toHaveAttribute("tabindex", "0");
+    await expect(hero.locator("#nop-moon-canvas")).toHaveAttribute("role", "img");
+    await expect(hero.locator("#nop-moon-canvas")).toHaveAttribute("aria-label", /illuminated/);
+    const profile = hero.locator(".nop-profile-btn").first();
+    await expect(profile).toHaveAttribute("aria-pressed", "true");
+    await profile.focus();
+    await expect(profile).toBeFocused();
+    await hero.locator('.hero-card[data-panel="matrix"]').focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#dbp-matrix")).toBeVisible();
+    await page.locator('#dbp-matrix .dbp-close[data-close="matrix"]').click();
+    await expect(page.locator("#dbp-matrix")).toBeHidden();
+
     await hero.locator('.hero-card[data-panel="matrix"]').click();
     await expect(page.locator("#dbp-matrix")).toBeVisible();
   } catch (error) {

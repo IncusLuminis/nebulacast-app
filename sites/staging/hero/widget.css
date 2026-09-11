@@ -16,6 +16,8 @@
 .nc-hero .hero-card:last-child { border-right:none; }
 .nc-widget[data-nc-widget="hero"] .hero-card:hover,
 .nc-hero .hero-card:hover { background:rgba(255,255,255,0.04); }
+.nc-widget[data-nc-widget="hero"] .hero-card:focus-visible,
+.nc-hero .hero-card:focus-visible { outline:2px solid #8fb6ff; outline-offset:-2px; }
 .nc-widget[data-nc-widget="hero"] .hero-card-label,
 .nc-hero .hero-card-label { font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.45); white-space:nowrap; }
 .nc-widget[data-nc-widget="hero"] .hero-card-center,
@@ -42,6 +44,10 @@
 .nc-widget[data-nc-widget="hero"] .nop-profiles, .nc-hero .nop-profiles { display:flex; flex-direction:column; gap:3px; flex:1; }
 .nc-widget[data-nc-widget="hero"] .nop-profile-btn, .nc-hero .nop-profile-btn { font-size:9px; font-weight:600; padding:3px 8px; border-radius:3px; border:1px solid rgba(255,255,255,.1); background:transparent; color:rgba(255,255,255,.38); cursor:pointer; text-align:left; white-space:nowrap; }
 .nc-widget[data-nc-widget="hero"] .nop-profile-btn.is-active, .nc-widget[data-nc-widget="hero"] .nop-profile-btn:hover, .nc-hero .nop-profile-btn.is-active, .nc-hero .nop-profile-btn:hover { background:rgba(74,111,165,.2); border-color:rgba(74,111,165,.4); color:rgba(255,255,255,.82); }
+.nc-widget[data-nc-widget="hero"] .nqi-info-btn:focus-visible,
+.nc-widget[data-nc-widget="hero"] .nop-profile-btn:focus-visible,
+.nc-hero .nqi-info-btn:focus-visible,
+.nc-hero .nop-profile-btn:focus-visible { outline:2px solid #8fb6ff; outline-offset:2px; }
 .nc-widget[data-nc-widget="hero"] .window-time, .nc-hero .window-time { font-size:12px; font-weight:600; color:rgba(255,255,255,.65); margin-top:4px; white-space:nowrap; }
 .nc-widget[data-nc-widget="hero"] .nop-summary-text, .nc-hero .nop-summary-text { font-size:11px; color:rgba(255,255,255,.62); line-height:1.55; margin-top:5px; }
 .nc-widget[data-nc-widget="hero"] .sun-disc, .nc-hero .sun-disc { position:relative; width:86px; height:86px; border-radius:50%; overflow:hidden; background:#0a0a0a; flex-shrink:0; }

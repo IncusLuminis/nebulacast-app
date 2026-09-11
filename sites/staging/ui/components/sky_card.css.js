@@ -90,11 +90,19 @@ export const SKY_CARD_CSS = `
   font-size: 20px;
   line-height: 1;
   user-select: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
 }
 
 .sky-card-close:hover {
   background: rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.95);
+}
+.sky-card-close:focus-visible,
+.sky-card-tab:focus-visible {
+  outline: 2px solid rgba(100, 180, 255, 0.95);
+  outline-offset: 2px;
 }
 
 .sky-card-body {
@@ -252,6 +260,12 @@ export const SKY_CARD_CSS = `
   user-select: none;
   transition: color 0.12s;
   margin-bottom: -1px;
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  font-family: inherit;
+  text-align: left;
 }
 .sky-card-tab:hover { color: rgba(255, 255, 255, 0.60); }
 .sky-card-tab.active {

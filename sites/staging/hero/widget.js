@@ -167,7 +167,14 @@ export function mountHero(root, context, suppliedConfig = {}, host) {
   const emit = (type, detail) => { if (alive) root.dispatchEvent(createEvent(root, type, detail, config)); };
   const localTime = (iso, timezone) => formatTime(iso, timezone);
 
-  function renderStatus(message) { root.innerHTML = `<div class="hero-skeleton" data-role="status">${escapeText(message)}</div>`; }
+  function renderStatus(message) { root.innerHTML = `<div class="hero-skeleton" data-role="status" role="status" aria-live="polite">${escapeText(message)}</div>`; }
+  function moonCanvasLabel(illumination, crossings) {
+    const phase = illumination?.phase_name || "Moon";
+    const percent = illumination?.illuminated_percent == null ? "unknown" : `${Math.round(illumination.illuminated_percent)}%`;
+    const rise = crossings?.moonrise ? ` Moonrise ${localTime(crossings.moonrise, currentLocation.tz)}.` : "";
+    const set = crossings?.moonset ? ` Moonset ${localTime(crossings.moonset, currentLocation.tz)}.` : "";
+    return `${phase}, ${percent} illuminated.${rise}${set}`;
+  }
   function renderPanelState() {
     root.querySelectorAll(".hero-card[data-panel]").forEach(card => {
       card.classList.toggle("db-panel-open", Boolean(activePanels[card.dataset.panel]));
@@ -209,15 +216,24 @@ export function mountHero(root, context, suppliedConfig = {}, host) {
     const sunBorder = { quiet: "#5cce8c", active: "#d4cc5c", elevated: "#e0a84a", storm: "#e05c5c" }[status] || "#5cce8c", sunWave = { quiet: "171", active: "195", elevated: "284", storm: "304" }[status] || "171";
     const currentHour = (wx?.hourly || []).findIndex(hour => (hour.timestamp_utc || "").slice(0, 13) >= new Date().toISOString().slice(0, 13)), currentWeather = currentHour >= 0 ? wx.hourly[currentHour] : null, nextWeather = currentHour >= 0 ? wx.hourly[currentHour + 1] : null;
     const cloud = currentWeather?.cloud?.total_percent ?? null, precipitation = currentWeather?.precip?.probability_percent ?? 0, icon = cloud == null ? "" : cloud < 15 ? "☀" : cloud < 40 ? "🌤" : cloud < 75 ? "⛅" : precipitation > 30 ? "🌧" : "☁", temperature = currentWeather?.air?.temperature_c ?? null, nextTemperature = nextWeather?.air?.temperature_c ?? null, temperatureArrow = temperature != null && nextTemperature != null ? nextTemperature > temperature + 0.4 ? "↑" : nextTemperature < temperature - 0.4 ? "↓" : "" : "", pressure = currentWeather?.air?.pressure_hpa ?? null, pressureTrend = wx?.decision?.pressure?.trend_label || "", pressureArrow = pressureTrend === "rising" ? "↑" : pressureTrend === "falling" ? "↓" : "";
-    const activeNqi = nqi[activeProfile] || {}, profileLabels = { balanced: "Balanced", visual: "Visual", photography: "Photo", broadband: "Broadband", planetary: "Planetary" }, profilesHtml = profileKeys.map(key => `<button class="nop-profile-btn${key === activeProfile ? " is-active" : ""}" data-profile="${escapeText(key)}">${escapeText(profileLabels[key] || key)}</button>`).join("");
+    const activeNqi = nqi[activeProfile] || {}, profileLabels = { balanced: "Balanced", visual: "Visual", photography: "Photo", broadband: "Broadband", planetary: "Planetary" }, profilesHtml = profileKeys.map(key => `<button type="button" class="nop-profile-btn${key === activeProfile ? " is-active" : ""}" data-profile="${escapeText(key)}" aria-pressed="${key === activeProfile}">${escapeText(profileLabels[key] || key)}</button>`).join("");
     const illumination = createLunarSnapshot({ instant: new Date(), location: { lat: currentLocation.lat || DEFAULT_LOCATION.lat, lon: currentLocation.lon || DEFAULT_LOCATION.lon, timezone: currentLocation.tz || DEFAULT_LOCATION.tz } }).lunar;
     const weatherChips = currentWeather ? `<div class="hero-weather-chips"><span>🌡</span><span class="temp">${temperature != null ? `${Math.round(temperature)}°${temperatureArrow}` : "—"}</span><span class="separator">·</span><span>${icon}</span><span class="cloud">${cloud != null ? `${Math.round(cloud)}%` : "—"}</span><span class="separator">·</span><span class="pressure-label">hPa</span><span class="pressure">${pressure != null ? `${Math.round(pressure)}${pressureArrow}` : "—"}</span></div>` : "";
     const forecastLabel = ({ storm: "Storm Risk", elevated: "Elevated", active: "Active", quiet: "Quiet" })[forecastStatus];
     const moonStatus = wx?.moon?.moon_up_now === true ? "↑up" : wx?.moon?.moon_up_now === false ? "↓below" : "";
     const moonStatusHtml = moonStatus ? `<span class="moon-status">${escapeText(moonStatus)}</span>` : "";
     root.innerHTML = `<div class="hero-card" data-panel="weather"><div class="hero-card-label">Local Date &amp; Time</div><div class="hero-card-center"><div data-role="clock-date"></div><div data-role="clock-time"></div>${weatherChips}</div></div><div class="hero-card" data-panel="matrix"><div class="hero-card-label">Night Quality<button id="nqi-info-btn" class="nqi-info-btn" aria-label="How NQI is calculated" title="How it's calculated">i</button></div><div class="hero-card-row"><div><div class="nqi-value" style="color:${nqiColor(activeNqi.class)}">${activeNqi.value != null ? activeNqi.value.toFixed(1) : "—"}<span>/10</span></div><span class="nqi-label" style="color:${nqiColor(activeNqi.class)}">${nqiLabel(activeNqi.class)}</span></div><div class="nop-profiles">${profilesHtml}</div></div></div><div class="hero-card" data-panel="window"><div class="hero-card-label">Tonight</div><div class="window-time">Best window: ${bestWindow ? `${localTime(bestWindow.start, currentLocation.tz)} – ${localTime(bestWindow.end, currentLocation.tz)}` : "—"}</div><div class="nop-summary-text">${escapeText(buildSummary(wx, sw))}</div></div><div class="hero-card" data-panel="sunmoon"><div class="hero-card-label">Moon</div><div class="hero-card-center"><canvas id="nop-moon-canvas" width="72" height="72"></canvas></div><div class="moon-meta">Illum. ${Math.round(illumination.illuminated_percent)}% ${moonStatusHtml} ${crossings.moonrise ? `↑${localTime(crossings.moonrise, currentLocation.tz)}` : ""}${crossings.moonrise && crossings.moonset ? " " : ""}${crossings.moonset ? `↓${localTime(crossings.moonset, currentLocation.tz)}` : ""}</div></div><div class="hero-card" data-panel="solar"><div class="hero-card-label">Sun</div><div class="hero-card-center"><div class="sun-disc" style="border-color:${sunBorder}44;box-shadow:0 0 10px ${sunBorder}55,0 0 24px ${sunBorder}22"><img src="/assets/gifs/current_eit_${sunWave}.gif" alt="Sun EIT ${sunWave}"></div></div><div class="sun-times">↓ ${localTime(crossings.sunset, currentLocation.tz)} &nbsp; ↑ ${localTime(crossings.sunrise, currentLocation.tz)}</div></div><div class="hero-card" data-panel="helio"><div class="hero-card-label">Kp NOW</div><div class="hero-card-body"><span class="kp-value" style="color:${kpColor(kp)}">${kp != null ? kp.toFixed(1) : "—"}</span><span class="sw-badge ${liveStatus}">${liveLabel}</span><span class="card-note">Live 3h avg</span></div><div class="nop-scales">${scaleBadge("G", kpToG(kp))}${scaleBadge("R", rLevel)}${scaleBadge("S", sLevel)}</div></div><div class="hero-card" data-panel="helio"><div class="hero-card-label">FORECAST</div><div class="hero-card-body"><span class="kp-value" style="color:${kpColor(forecast)}">${forecast != null ? forecast.toFixed(1) : "—"} <span class="forecast-arrow">${trendArrow}</span></span><span class="sw-badge ${forecastStatus}">${forecastLabel}</span><span class="card-note">Max Kp · Next 24h</span></div><div class="nop-scales">${scaleBadge("G", forecastG)}${scaleBadge("R", rLevel)}${scaleBadge("S", sLevel)}</div></div>`;
+    const panelLabels = { weather: "Local Date and Time", matrix: "Night Quality", window: "Tonight", sunmoon: "Moon", solar: "Sun", helio: "Kp forecast" };
+    root.querySelectorAll(".hero-card[data-panel]").forEach(card => {
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("aria-label", `Open ${panelLabels[card.dataset.panel] || "panel"}`);
+    });
+    const moonCanvas = root.querySelector("#nop-moon-canvas");
+    moonCanvas?.setAttribute("role", "img");
+    moonCanvas?.setAttribute("aria-label", moonCanvasLabel(illumination, crossings));
     renderPanelState();
-    drawMoon(root, root.querySelector("#nop-moon-canvas"), illumination.illuminated_fraction, illumination.waxing);
+    drawMoon(root, moonCanvas, illumination.illuminated_fraction, illumination.waxing);
     renderClock();
     emit("nc:hero-data", { wx, sw, sunMoon, sunsetT: crossings.sunset, sunriseT: crossings.sunrise, moonriseT: crossings.moonrise, moonsetT: crossings.moonset, moonIllum: illumination.illuminated_percent, moonWaxing: illumination.waxing, nightHours, bestWindow, profiles, nqi, averages, activeProfile, activeMetric });
   }
@@ -255,8 +271,14 @@ export function mountHero(root, context, suppliedConfig = {}, host) {
     if (profile) { activeProfile = profile.dataset.profile || activeProfile; render(); emit("nc:hero-action", { action: "profile-change", profile: activeProfile }); return; }
     if (card) emit("nc:hero-action", { action: "toggle-panel", panel: card.dataset.panel });
   }
+  function onKeyDown(event) {
+    const card = event.target?.closest?.(".hero-card[data-panel]");
+    if (!card || card !== event.target || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    emit("nc:hero-action", { action: "toggle-panel", panel: card.dataset.panel });
+  }
 
-  root.classList.add("nc-hero"); root.addEventListener("click", onClick); renderStatus("Loading conditions…");
+  root.classList.add("nc-hero"); root.addEventListener("click", onClick); root.addEventListener("keydown", onKeyDown); renderStatus("Loading conditions…");
   contextUnsubscribe = context?.subscribe?.(onContextChange);
   const ResizeObserverRef = config.ResizeObserver || globalThis.ResizeObserver;
   if (typeof ResizeObserverRef === "function") { resizeObserver = new ResizeObserverRef(() => renderClock()); resizeObserver.observe(root); }
@@ -265,7 +287,7 @@ export function mountHero(root, context, suppliedConfig = {}, host) {
     update(patch = {}) { if (!alive || !isObject(patch)) return; if (patch.location) updateLocation(patch.location); const sourceChanged = ["fetch", "fetchTimeout", "data", "sunCalc", "AbortController"].some(key => patch[key] !== undefined), panelStateChanged = patch.activePanels !== undefined; if (panelStateChanged) activePanels = { ...(patch.activePanels || {}) }; config = { ...config, ...patch }; if (patch.data !== undefined) { data = patch.data; render(); } else if (sourceChanged) return requestData(true); else if (panelStateChanged) renderPanelState(); else renderClock(); },
     resize() { renderClock(); },
     refresh() { return requestData(true); },
-    destroy() { if (destroyed) return; destroyed = true; alive = false; ++sequence; controller?.abort?.(); if (timeoutTimer) clearTimeoutRef(timeoutTimer); if (clockTimer) clearIntervalRef(clockTimer); resizeObserver?.disconnect?.(); contextUnsubscribe?.(); root.removeEventListener("click", onClick); root.classList.remove("nc-hero"); inFlight = null; },
+    destroy() { if (destroyed) return; destroyed = true; alive = false; ++sequence; controller?.abort?.(); if (timeoutTimer) clearTimeoutRef(timeoutTimer); if (clockTimer) clearIntervalRef(clockTimer); resizeObserver?.disconnect?.(); contextUnsubscribe?.(); root.removeEventListener("click", onClick); root.removeEventListener("keydown", onKeyDown); root.classList.remove("nc-hero"); inFlight = null; },
   };
 }
 

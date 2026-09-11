@@ -46,6 +46,11 @@ function makeRoot(container) {
     const canvas = root.querySelector("canvas.sky-canvas");
     const status = root.querySelector('[data-role="status"]');
 
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute("aria-label", "Interactive sky chart. Use the visible controls or pointer to inspect sky objects.");
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+
     root.style.position = "relative";
     root.style.width = "100%";
     root.style.height = "100%";
@@ -402,7 +407,11 @@ async function init(userCfg, {
       transition: "bottom 0.25s ease",
       display: "flex", alignItems: "center", justifyContent: "center",
     });
-    const btnTogglePlayer = document.createElement("div");
+    const btnTogglePlayer = document.createElement("button");
+    btnTogglePlayer.type = "button";
+    btnTogglePlayer.className = "sky-btn sky-btn-icon";
+    btnTogglePlayer.setAttribute("aria-label", "Show or hide player");
+    btnTogglePlayer.setAttribute("aria-pressed", "false");
     btnTogglePlayer.title = "Show/hide player";
     btnTogglePlayer.innerHTML = SVG_PLAYER_HIDE;
     Object.assign(btnTogglePlayer.style, {
@@ -430,7 +439,11 @@ async function init(userCfg, {
       transition: "bottom 0.25s ease",
       display: "flex", alignItems: "center", justifyContent: "center",
     });
-    const btnToggleBottom = document.createElement("div");
+    const btnToggleBottom = document.createElement("button");
+    btnToggleBottom.type = "button";
+    btnToggleBottom.className = "sky-btn sky-btn-icon";
+    btnToggleBottom.setAttribute("aria-label", "Show or hide layers");
+    btnToggleBottom.setAttribute("aria-pressed", "false");
     btnToggleBottom.title = "Show/hide layers";
     btnToggleBottom.innerHTML = SVG_LAYERS_SHOW;
     Object.assign(btnToggleBottom.style, {
@@ -1833,6 +1846,7 @@ function buildAlertsListContent() {
     btnTogglePlayer.style.background = "var(--ui-accent, #4a6fa5)";
     btnTogglePlayer.addEventListener("click", () => {
       _playerVisible = !_playerVisible;
+      btnTogglePlayer.setAttribute("aria-pressed", String(_playerVisible));
       if (player) {
         player.style.opacity = _playerVisible ? "1" : "0";
         // Slide up from below, visible position is -32px to clear the button
@@ -1853,6 +1867,7 @@ function buildAlertsListContent() {
     btnToggleBottom.style.background = "var(--ui-accent, #4a6fa5)";
     btnToggleBottom.addEventListener("click", () => {
       _bottomVisible = !_bottomVisible;
+      btnToggleBottom.setAttribute("aria-pressed", String(_bottomVisible));
       if (bottom) {
         bottom.style.opacity = _bottomVisible ? "1" : "0";
         // Slide up from below, visible position is -32px to clear the button

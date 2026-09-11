@@ -70,3 +70,28 @@ test("external-style v1 fixture imports, mounts, updates, and destroys Weather s
   await expect(page.locator('link[data-nc-embed-stylesheet="weather"]')).toHaveCount(0);
   await expect(page.locator("#embed-status")).toHaveText("Weather destroyed.");
 });
+
+test("JavaScript embed rejects malicious HTML, executable values, and arbitrary modules", async ({ page }) => {
+  await page.goto("/embed/javascript-canary.html", { waitUntil: "domcontentloaded" });
+  const rejected = await page.evaluate(async () => {
+    const { mount } = await import("/widgets/runtime/index.mjs");
+    const root = document.createElement("div");
+    document.body.append(root);
+    const specifications = [
+      { widget: "weather", config: { html: "<img src=x onerror=alert(1)>" } },
+      { widget: "weather", config: { onMount: "alert(1)" } },
+      { widget: "weather", config: { loader: "https://evil.example/widget.mjs" } },
+      { widget: "weather", config: { moduleUrl: "https://evil.example/widget.mjs" } },
+    ];
+    return Promise.all(specifications.map(async specification => {
+      try {
+        await mount(root, specification);
+        return false;
+      } catch (_) {
+        return true;
+      }
+    }));
+  });
+  expect(rejected).toEqual([true, true, true, true]);
+  await expect(page.locator("body")).not.toContainText("evil.example");
+});

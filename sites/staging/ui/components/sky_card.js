@@ -219,7 +219,9 @@ export class SkyCard extends HTMLElement {
     this._title = document.createElement('div');
     this._title.className = 'sky-card-title';
 
-    this._closeBtn = document.createElement('div');
+    this._closeBtn = document.createElement('button');
+    this._closeBtn.type = 'button';
+    this._closeBtn.setAttribute('aria-label', 'Close sky object details');
     this._closeBtn.className = 'sky-card-close';
     this._closeBtn.textContent = '×';
     this._closeBtn.title = 'Close';
@@ -690,6 +692,7 @@ export class SkyCard extends HTMLElement {
 
     const tabBar = document.createElement('div');
     tabBar.className = 'sky-card-tabs';
+    tabBar.setAttribute('role', 'tablist');
 
     const panesWrap = document.createElement('div');
     panesWrap.className = 'sky-card-panes';
@@ -697,19 +700,29 @@ export class SkyCard extends HTMLElement {
     (data.alertTabs || []).forEach((tab, idx) => {
       const isFirst = idx === 0;
 
-      const tabBtn = document.createElement('div');
+      const tabBtn = document.createElement('button');
+      tabBtn.type = 'button';
       tabBtn.className = 'sky-card-tab' + (isFirst ? ' active' : '');
       tabBtn.textContent = tab.label;
+      tabBtn.id = `sky-card-tab-${idx}`;
+      tabBtn.setAttribute('role', 'tab');
+      tabBtn.setAttribute('aria-selected', String(isFirst));
+      tabBtn.setAttribute('aria-controls', `sky-card-pane-${idx}`);
+      tabBtn.tabIndex = isFirst ? 0 : -1;
       tabBar.appendChild(tabBtn);
 
       const pane = document.createElement('div');
       pane.className = 'sky-card-pane' + (isFirst ? ' active' : '');
+      pane.id = `sky-card-pane-${idx}`;
+      pane.setAttribute('role', 'tabpanel');
+      pane.setAttribute('aria-labelledby', tabBtn.id);
       this._fillPane(pane, tab);
       panesWrap.appendChild(pane);
 
       tabBtn.addEventListener('click', () => {
         tabBar.querySelectorAll('.sky-card-tab').forEach(t => t.classList.remove('active'));
         panesWrap.querySelectorAll('.sky-card-pane').forEach(p => p.classList.remove('active'));
+        tabBar.querySelectorAll('.sky-card-tab').forEach(t => t.setAttribute('aria-selected', String(t === tabBtn)));
         tabBtn.classList.add('active');
         pane.classList.add('active');
       });

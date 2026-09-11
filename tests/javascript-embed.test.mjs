@@ -118,6 +118,25 @@ test("only catalog javascriptEmbed opt-ins normalize through the bounded public 
   }
 });
 
+test("external embed configuration rejects HTML, executable values, and arbitrary modules", () => {
+  const maliciousSpecifications = [
+    { widget: "weather", config: { html: "<img src=x onerror=alert(1)>" } },
+    { widget: "weather", config: { onMount: "alert(1)" } },
+    { widget: "weather", config: { loader: "https://evil.example/widget.mjs" } },
+    { widget: "weather", config: { module: "https://evil.example/widget.mjs" } },
+    { widget: "weather", config: { moduleUrl: "https://evil.example/widget.mjs" } },
+    { widget: "weather", config: { baseUrl: "javascript:alert(1)" } },
+    { widget: "weather", config: { baseUrl: "https://evil.example/widget.mjs" } },
+  ];
+
+  for (const specification of maliciousSpecifications) {
+    assert.throws(
+      () => normalizeJavascriptEmbedInput(registry, specification),
+      `${JSON.stringify(specification)} must be rejected`,
+    );
+  }
+});
+
 test("public API mounts two roots through the shared Runtime and unmounts their styles/disposers", async () => {
   const documentRef = createDocument();
   const runtime = createRuntime();
