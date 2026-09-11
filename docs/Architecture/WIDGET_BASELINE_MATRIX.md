@@ -15,8 +15,8 @@ python3 scripts/validate_widget_baseline.py
 ```
 
 The server must serve `sites/staging/` on port `8080`. The runner performs the
-local route/static-file smoke checks. The interaction cases below are manual
-browser checks because they require viewport, input, and network controls.
+local route/static-file smoke checks. The interaction cases below are covered by
+the bounded Playwright matrix and can also be repeated manually.
 
 The baseline is local-only. It does not build, deploy, write generated data, or
 call a remote environment.
@@ -33,19 +33,31 @@ call a remote environment.
 
 ## Execution record
 
-Record each manual case as `PASS`, `FAIL`, or `BLOCKED` in the review. A case is
-`BLOCKED` only when the local environment cannot perform the interaction (for
-example, no browser automation or devtools network interception); it is not a
-runtime failure.
+Record each case as `PASS`, `FAIL`, or `BLOCKED` in the review. A case is
+`BLOCKED` only when the local environment cannot perform the interaction; it is
+not a runtime failure.
+
+Execution recorded 2026-09-11 from the repository root with the local server on
+`127.0.0.1:8080`:
+
+```bash
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 \
+npx playwright test tests/browser/widget-baseline-matrix.spec.mjs \
+  --workers=1 --reporter=line --trace=off
+```
+
+Result: `5/5 PASS` (Console, Weather, Sky, News, Calendar). The run covered
+normal load, narrow resize, route-specific observer/time or filter changes,
+and mocked loading/error states. Screenshots were retained as transient test
+artifacts only; none are committed as baseline assets.
 
 | Case group | Local route smoke | Manual interaction | Result |
 |---|---|---|---|
-| Console | `validate_widget_baseline.py` | normal / resize / observer-time / loading-error | Pending local browser run |
-| Weather | `validate_widget_baseline.py` | normal / resize / observer-time / loading-error | Pending local browser run |
-| Sky | `validate_widget_baseline.py` | normal / resize / observer-time / loading-error | Pending local browser run |
-| News | `validate_widget_baseline.py` | normal / resize / filter / loading-error | Pending local browser run |
-| Calendar | `validate_widget_baseline.py` | normal / resize / filter / loading-error | Pending local browser run |
+| Console | `validate_widget_baseline.py` | normal / resize / observer-time / loading-error | PASS — Playwright matrix |
+| Weather | `validate_widget_baseline.py` | normal / resize / observer-time / loading-error | PASS — Playwright matrix |
+| Sky | `validate_widget_baseline.py` | normal / resize / observer-time / loading-error | PASS — Playwright matrix |
+| News | `validate_widget_baseline.py` | normal / resize / filter / loading-error | PASS — Playwright matrix |
+| Calendar | `validate_widget_baseline.py` | normal / resize / filter / loading-error | PASS — Playwright matrix |
 
 Screenshots are optional evidence for this story. None are committed by the
-baseline artifact; the current checkout has no Playwright module available, so
-visual evidence must be captured manually if needed.
+baseline artifact; Playwright retains transient screenshots on failure only.
