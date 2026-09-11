@@ -144,6 +144,35 @@ test("catalog lazily registers platform adapters and legacy exports remain calla
   assert.equal(typeof mountSunMoon, "function");
 });
 
+test("Astro and Sun/Moon reject an incomplete Platform Context before mounting", async () => {
+  const complete = createPlatformContext(INITIAL_STATE);
+  const incomplete = {
+    get: complete.get,
+    subscribe: complete.subscribe,
+  };
+  const runtime = createNebulacast({
+    context: incomplete,
+    registry: createCatalogRegistry(),
+  });
+
+  await assert.rejects(
+    runtime.mount(createRuntimeRoot("astro-incomplete-context"), { widget: "astro" }),
+    /Astro platform adapter requires Platform Context/,
+  );
+
+  const ledger = createResourceLedger();
+  const events = [];
+  const restore = installSunMoonEnvironment(ledger, events);
+  try {
+    await assert.rejects(
+      runtime.mount(createRuntimeRoot("sun-moon-incomplete-context"), { widget: "sun-moon" }),
+      /Sun\/Moon platform adapter requires Platform Context/,
+    );
+  } finally {
+    restore();
+  }
+});
+
 test("Astro uses explicit context/config and keeps same-type lifecycle ownership independent", async () => {
   const ledger = createResourceLedger();
   const context = createTrackedContext(ledger);

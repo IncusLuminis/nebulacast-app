@@ -62,7 +62,8 @@ function normalizeLegacyMount(mounted) {
  * @param {object} host
  */
 export async function mount(root, context, config = {}, host) {
-  if (!context || typeof context.get !== "function" || typeof context.subscribe !== "function") {
+  if (!context || typeof context.get !== "function" ||
+      typeof context.subscribe !== "function" || typeof context.update !== "function") {
     throw new TypeError("Sun/Moon platform adapter requires Platform Context");
   }
 
