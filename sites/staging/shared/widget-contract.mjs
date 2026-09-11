@@ -107,6 +107,7 @@ export function createWidgetHost(root, { id, type, config, state = "loading", re
 
   let metadata = metadataFrom(config, id, type);
   let currentState = state;
+  let stateManagedByWidget = false;
   const ownedAttributes = [
     "data-nc-widget",
     "data-nc-widget-id",
@@ -142,9 +143,13 @@ export function createWidgetHost(root, { id, type, config, state = "loading", re
     getState() {
       return currentState;
     },
+    hasManagedState() {
+      return stateManagedByWidget;
+    },
     setState(nextState) {
       assertValue("widget state", nextState, STATE_SET);
       currentState = nextState;
+      stateManagedByWidget = true;
       root.setAttribute("data-nc-state", currentState);
       return currentState;
     },

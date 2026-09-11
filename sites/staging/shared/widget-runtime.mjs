@@ -84,7 +84,10 @@ export function createNebulacast({ context, registry = defaultRegistry, resolveA
       const module = await load(definition);
       const mounted = normalizeMountedApi(await module.mount(root, context, config, host), type);
       let destroyed = false;
-      host.setState("ready");
+      // A widget may own an asynchronous loading lifecycle after mount. Keep
+      // its state (loading/stale/degraded/error) when it has already changed
+      // the host; default to ready only for widgets without one.
+      if (host.getState() === "loading" && !host.hasManagedState?.()) host.setState("ready");
 
       const instance = {
         id,

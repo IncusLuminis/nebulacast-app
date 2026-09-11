@@ -84,6 +84,7 @@ test("Hero handles loading/error locally and cleans clock, context, observer, an
   const pendingContext = makeContext();
   const pendingRoot = makeRoot(documentRef, "hero-loading");
   const pending = await runtime(pendingContext).mount(pendingRoot, { widget: "hero", config: { fetch: pendingFetch, ...pendingTimers } });
+  assert.equal(pendingRoot.getAttribute("data-nc-state"), "loading");
   assert.match(pendingRoot.querySelector('[data-role="status"]').textContent, /Loading/);
   pending.destroy();
   release?.({ ok: false, json: async () => ({}) });

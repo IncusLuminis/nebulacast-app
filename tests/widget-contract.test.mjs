@@ -100,6 +100,7 @@ test("attaches isolated root metadata, theme/density attributes, and all state t
 
   for (const state of STATES) {
     assert.equal(firstHost.setState(state), state);
+    assert.equal(firstHost.hasManagedState(), true);
     assert.equal(firstHost.getState(), state);
     assert.equal(firstRoot.getAttribute("data-nc-state"), state);
   }
