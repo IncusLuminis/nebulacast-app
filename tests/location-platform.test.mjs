@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { createWidgetRegistry } from "../sites/staging/shared/widget-registry.mjs";
 import { createNebulacast } from "../sites/staging/shared/widget-runtime.mjs";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
@@ -12,6 +13,15 @@ import {
 } from "./fixtures/location-platform-fixture.mjs";
 
 const locationDefinition = widgetCatalog.find(definition => definition.type === "location");
+
+test("legacy Location entrypoint is a thin bridge to the canonical adapter", async () => {
+  const legacySource = await readFile(new URL("../sites/staging/weather/widgets/location/location.js", import.meta.url), "utf8");
+  const adapterSource = await readFile(new URL("../sites/staging/weather/widgets/location/platform-adapter.mjs", import.meta.url), "utf8");
+  assert.match(legacySource, /import \{ createLocationController \} from "\.\/platform-adapter\.mjs"/);
+  assert.doesNotMatch(legacySource, /\bfetch\s*\(|addEventListener|createLifecycle|API_TIMEZONE/);
+  assert.match(adapterSource, /export function createLocationController\(/);
+  assert.match(adapterSource, /export function mountLocationPlatform\(/);
+});
 
 function createRuntime(context, extra = {}) {
   return createNebulacast({
@@ -65,7 +75,6 @@ test("mounts through real Runtime and supports search/select, coordinates, geolo
   const fetch = createFetchMock({
     "/api/geocode": { results: [{ name: "Prague", country: "Czech Republic", lat: 50.0755, lon: 14.4378, tz: "Europe/Prague" }] },
     "/api/revgeo": { name: "Gdansk" },
-    "/api/timezone": { timezone: "Europe/Warsaw" },
   });
   const runtime = createRuntime(context);
   const instance = await runtime.mount(root, {
@@ -98,7 +107,7 @@ test("mounts through real Runtime and supports search/select, coordinates, geolo
   await flush();
   assert.equal(context.get().observer.lat, 90);
   assert.equal(context.get().observer.lon, 180);
-  assert.equal(context.get().observer.timezone, "Europe/Warsaw");
+  assert.equal(context.get().observer.timezone, "UTC");
 
   root.querySelector(".loc-geo-button").click();
   await geo.resolve({ coords: { latitude: 54.352, longitude: 18.6466 } });
@@ -114,6 +123,7 @@ test("mounts through real Runtime and supports search/select, coordinates, geolo
   assert.match(copied[0], /tz=Europe%2FWarsaw/);
   assert.match(copied[0], /profile=visual/);
   assert.match(copied[0], /range=48h/);
+  assert.equal(fetch.calls.some(call => call.url.startsWith("/api/timezone")), false);
   instance.destroy();
 });
 

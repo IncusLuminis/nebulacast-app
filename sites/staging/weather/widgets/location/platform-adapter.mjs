@@ -2,7 +2,6 @@ import { clampLatLon, formatCoord, parseCoords } from "../../core/utils.js";
 
 const API_GEOCODE = "/api/geocode";
 const API_REVGEO = "/api/revgeo";
-const API_TIMEZONE = "/api/timezone";
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -98,11 +97,6 @@ export function createLocationController(root, context, config = {}, host) {
     }
   }
 
-  async function lookupTimezone(lat, lon, country) {
-    const data = await requestJson(`${API_TIMEZONE}?lat=${lat}&lon=${lon}`);
-    return data?.timezone || fallbackTimezone(lat, lon, country);
-  }
-
   function snapshot() {
     const value = context.get() || {};
     return value.observer || {};
@@ -154,7 +148,7 @@ export function createLocationController(root, context, config = {}, host) {
   async function selectLocation(item) {
     if (!alive) return;
     closeDropdown();
-    const timezone = item.tz || await lookupTimezone(item.lat, item.lon, item.country);
+    const timezone = item.tz || fallbackTimezone(item.lat, item.lon, item.country);
     if (!alive) return;
     context.update({ observer: {
       name: item.name,
@@ -182,7 +176,7 @@ export function createLocationController(root, context, config = {}, host) {
     const coords = parseCoords(value);
     if (coords) {
       const { lat, lon } = clampLatLon(coords.lat, coords.lon);
-      const timezone = await lookupTimezone(lat, lon, "");
+      const timezone = fallbackTimezone(lat, lon, "");
       if (!alive) return;
       context.update({ observer: {
         name: formatCoord(lat, lon), lat, lon, timezone, source: "user",
@@ -205,7 +199,7 @@ export function createLocationController(root, context, config = {}, host) {
       if (!alive || sequence !== geoSequence) return;
       const { latitude: lat, longitude: lon } = position.coords;
       const reverse = await requestJson(`${API_REVGEO}?lat=${lat}&lon=${lon}`);
-      const timezone = await lookupTimezone(lat, lon, "");
+      const timezone = fallbackTimezone(lat, lon, "");
       if (!alive || sequence !== geoSequence) return;
       const name = reverse?.name || reverse?.address?.city || "My location";
       context.update({ observer: { name, lat, lon, timezone, source: "geolocate" } });
@@ -248,13 +242,13 @@ export function createLocationController(root, context, config = {}, host) {
       <div class="loc-action-bar">
         <span class="loc-action-label">Location</span>
         <div class="loc-input-wrapper">
-          <input type="text" class="loc-input" placeholder='City or "lat, lon"' autocomplete="off">
-          <div class="loc-dd" role="listbox"></div>
+          <input type="text" class="loc-input" id="locInput" placeholder='City or "lat, lon"' autocomplete="off">
+          <div class="loc-dd" id="locDropdown" role="listbox"></div>
         </div>
-        <button type="button" class="loc-btn-secondary loc-geo-button">📍 My location</button>
-        <button type="button" class="loc-btn-icon loc-share-button">🔗</button>
+        <button type="button" class="loc-btn-secondary loc-geo-button" id="locGeoBtn">📍 My location</button>
+        <button type="button" class="loc-btn-icon loc-share-button" id="locShareBtn">🔗</button>
       </div>
-      <div class="loc-status-line"><span class="loc-status-content"></span></div>
+      <div class="loc-status-line" id="locStatusLine"><span class="loc-status-content" id="locStatusContent"></span></div>
     `;
     elements = {
       input: root.querySelector(".loc-input"),

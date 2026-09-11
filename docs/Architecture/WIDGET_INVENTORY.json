@@ -58,19 +58,19 @@
     {
       "id": "location",
       "classification": "production",
-      "source_of_truth": "sites/staging/weather/widgets/location/location.js",
+      "source_of_truth": "sites/staging/weather/widgets/location/platform-adapter.mjs",
       "generated_or_copied_artifacts": [],
       "build_path": "No build step; the modular Weather application is committed under sites/staging/weather/ and preserved by frontend/build.py.",
       "deploy_paths": [
+        "sites/staging/weather/widgets/location/platform-adapter.mjs",
         "sites/staging/weather/widgets/location/location.js",
-        "sites/staging/weather/widgets/location/location.css",
-        "sites/staging/weather/widgets/location/platform-adapter.mjs"
+        "sites/staging/weather/widgets/location/location.css"
       ],
       "local_test_path": "make server; http://localhost:8080/weather/",
-      "compatibility_paths": ["sites/staging/weather/index.html"],
+      "compatibility_paths": ["sites/staging/weather/index.html", "sites/staging/weather/widgets/location/location.js"],
       "path_classification": [
-        {"path": "sites/staging/weather/widgets/location/location.js", "role": "widget implementation", "classification": "production"},
-        {"path": "sites/staging/weather/widgets/location/platform-adapter.mjs", "role": "Platform Runtime adapter", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/location/platform-adapter.mjs", "role": "canonical Location controller and Platform Runtime adapter", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/location/location.js", "role": "legacy mountLocation(root, storeApi) compatibility bridge", "classification": "legacy"},
         {"path": "sites/staging/weather/core/state.js", "role": "shared context dependency", "classification": "production"}
       ],
       "supporting_data_sources": [
@@ -78,7 +78,7 @@
         "functions/api/revgeo.ts",
         "sites/staging/weather/core/state.js"
       ],
-      "notes": "The embed query ?embed=1 suppresses the Location UI; it does not create another Location implementation."
+      "notes": "The Platform adapter is the sole Location controller/API/lifecycle implementation. location.js preserves the legacy mountLocation(root, storeApi) entrypoint by translating the legacy store into Platform Context; it contains no independent UI or request logic. Timezone is derived from geocoder data when present or the adapter's country/coordinate fallback because this repository has no /api/timezone endpoint."
     },
     {
       "id": "weather",

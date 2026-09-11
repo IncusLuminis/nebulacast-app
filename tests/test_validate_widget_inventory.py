@@ -56,6 +56,13 @@ class WidgetInventoryValidatorTest(unittest.TestCase):
         hero["path_classification"].append(copy.deepcopy(hero["path_classification"][0]))
         self.assert_invalid(data, r"source_of_truth must appear exactly once")
 
+    def test_source_classification_must_match_widget(self):
+        data = self.load_manifest()
+        location = next(item for item in data["widgets"] if item["id"] == "location")
+        source = next(item for item in location["path_classification"] if item["path"] == location["source_of_truth"])
+        source["classification"] = "legacy"
+        self.assert_invalid(data, r"location: source_of_truth classification must match")
+
     def test_map_decision_must_match_classified_paths(self):
         data = self.load_manifest()
         data["map_decision"]["non_production_path"]["classification"] = "legacy"

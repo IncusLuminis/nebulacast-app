@@ -14,9 +14,16 @@ authoritative implementation path, derived/public artifacts, build path, deploy
 path, local test path, and compatibility paths.
 
 The current Runtime adapters are production delivery paths, not alternate
-widget implementations: Location, Weather, Map, Sun & Moon, and Astro use the
-`platform-adapter.mjs` file recorded beside each widget's authoritative source.
-Each adapter delegates to that source and does not establish a second owner.
+widget implementations: Weather, Map, Sun & Moon, and Astro use the
+`platform-adapter.mjs` path recorded beside each widget's authoritative source.
+For Location, `weather/widgets/location/platform-adapter.mjs` is the canonical
+controller and `location.js` is only the legacy `mountLocation(root, storeApi)`
+compatibility bridge. The adapters do not establish a second owner.
+
+Location timezone resolution uses timezone data returned by geocoding when
+available, then the documented country/coordinate fallback. There is no
+`functions/api/timezone.*` endpoint in this repository, so `/api/timezone` is
+not an implementation or ownership dependency.
 
 ## Ownership rule
 
