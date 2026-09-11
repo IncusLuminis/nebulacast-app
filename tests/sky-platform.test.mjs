@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createNebulacast } from "../sites/staging/shared/widget-runtime.mjs";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
+import { Data } from "../sites/staging/sky/core/sky.data.js";
 import { loadRankingJson } from "../sites/staging/sky/widgets/widget.utils.js";
 import {
   createSkyBrowserFixture,
@@ -94,6 +95,31 @@ test("Sky catalog and ranking loader retain the registered data path", async () 
   try {
     const ranking = await loadRankingJson(baseUrl);
     assert.deepEqual(ranking.items.map(item => item.id), ["first", "second"]);
+  } finally {
+    restore();
+  }
+});
+
+test("Sky data cache reuses one response without sharing mutable payloads", async () => {
+  const baseUrl = "/sky-platform-cache-isolation";
+  let fetches = 0;
+  const fixture = createSkyBrowserFixture({
+    [`${baseUrl}/data/payload.json`]: () => {
+      fetches += 1;
+      return { items: [{ id: "shared", metadata: { visible: true } }] };
+    },
+  });
+  const restore = installSkyBrowserGlobals(fixture);
+
+  try {
+    const first = await Data.loadJSON(`${baseUrl}/data/payload.json`);
+    first.items[0].metadata.visible = false;
+    first.items.push({ id: "first-only" });
+
+    const second = await Data.loadJSON(`${baseUrl}/data/payload.json`);
+    assert.equal(fetches, 1, "the parsed response remains network-cached");
+    assert.notStrictEqual(second, first, "each caller receives its own payload object");
+    assert.deepEqual(second, { items: [{ id: "shared", metadata: { visible: true } }] });
   } finally {
     restore();
   }
