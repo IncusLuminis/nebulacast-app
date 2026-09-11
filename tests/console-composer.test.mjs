@@ -15,7 +15,9 @@ const expectedSlots = [
   ["sky", "#skyMount", "sky"],
   ["alerts", "#fs-sky", "alerts"],
   ["events", "#nrc-main", "events"],
+  ["sidebar-events", "#fs-cal", "events"],
   ["news", "#nrw-main", "news"],
+  ["sidebar-news", "#fs-news", "news"],
 ];
 
 test("Console config declares the platform-managed roots and preserves configs", () => {
@@ -23,6 +25,8 @@ test("Console config declares the platform-managed roots and preserves configs",
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "alerts").config, { orientation: "vertical", maxItems: 20 });
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "events").config.maxItems, 25);
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "news").config.parseMax, 300);
+  assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-events").config.maxItems, 8);
+  assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-news").config.parseMax, 300);
 });
 
 test("Composer mounts through the supplied Runtime, is idempotent, and isolates roots", async () => {
@@ -66,6 +70,7 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.match(composerSource, /createCatalogRegistry/);
   assert.doesNotMatch(indexSource, /mountWidget\("(?:location|weather|weather-matrix|sun|sunmoon-panel|sky)"/);
   assert.doesNotMatch(indexSource, /window\.run(?:News|Calendar)Widget/);
+  assert.doesNotMatch(indexSource, /load(?:SwxAlerts|CalendarEvents|NewsItems)\s*\(/);
   assert.doesNotMatch(indexSource, /initSkyIfNeeded|legacy-bootstrap\.mjs|window\.__(?:skyWidget|SKY_CONFIG)/);
   assert.match(indexSource, /function getConsoleSkyFilters\(\)/);
   assert.match(indexSource, /slot\.id === 'sky'[\s\S]*getConsoleSkyFilters\(\)/);

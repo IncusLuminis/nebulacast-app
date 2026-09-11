@@ -26,9 +26,19 @@ const slots = [
     filters: EVENT_FILTERS,
     iconBase: "/assets/icons/alerts",
   } },
+  { id: "sidebar-events", selector: "#fs-cal", widget: "events", config: {
+    maxItems: 8,
+    filters: EVENT_FILTERS,
+    iconBase: "/assets/icons/alerts",
+  } },
   { id: "news", selector: "#nrw-main", widget: "news", config: {
     rssUrl: "/news/rss.xml",
     maxItems: 15,
+    parseMax: 300,
+    filters: NEWS_FILTERS,
+  } },
+  { id: "sidebar-news", selector: "#fs-news", widget: "news", config: {
+    maxItems: 8,
     parseMax: 300,
     filters: NEWS_FILTERS,
   } },
