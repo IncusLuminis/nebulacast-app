@@ -1,14 +1,48 @@
 import { createCatalogRegistry } from "../../shared/widget-catalog.mjs";
 import { createNebulacast } from "../../shared/widget-runtime.mjs";
-import { normalizeJavascriptEmbedInput } from "../../shared/widget-config.mjs";
+import {
+  JAVASCRIPT_EMBED_API_VERSION,
+  normalizeJavascriptEmbedInput,
+} from "../../shared/widget-config.mjs";
 
 const DATA_ASSET_KEYS = Object.freeze(["dataUrl", "jsonUrl", "rssUrl", "iconBase"]);
 
 function defaultContext() {
-  return Object.freeze({
-    get: () => Object.freeze({ observer: Object.freeze({}), time: Object.freeze({ mode: "live", datetimeISO: null }) }),
-    subscribe: () => () => {},
-  });
+  let current = {
+    observer: {
+      name: "Warsaw",
+      lat: 52.2297,
+      lon: 21.0122,
+      timezone: "Europe/Warsaw",
+      source: "javascript-embed",
+    },
+    time: { mode: "live", datetimeISO: null },
+  };
+  const listeners = new Set();
+  const snapshot = () => structuredClone(current);
+  return {
+    get: snapshot,
+    getObserver: () => structuredClone(current.observer),
+    subscribe(listener) {
+      if (typeof listener !== "function") throw new TypeError("JavaScript embed subscriber must be a function");
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    update(patch = {}) {
+      if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+        throw new TypeError("JavaScript embed context update must be an object");
+      }
+      current = {
+        ...current,
+        ...structuredClone(patch),
+        observer: { ...current.observer, ...(patch.observer || {}) },
+        time: { ...current.time, ...(patch.time || {}) },
+      };
+      const next = snapshot();
+      for (const listener of [...listeners]) listener(next);
+      return next;
+    },
+  };
 }
 
 function stylesheetPath(definition) {
@@ -100,7 +134,7 @@ export function createJavascriptEmbedRuntime({
         type: record.instance?.type || normalized.widget,
         root,
         get config() { return record.instance?.config || config; },
-        update: (...args) => record.instance?.update?.(...args),
+        update: (patch, ...args) => record.instance?.update?.(normalizeUpdate(normalized.widget, patch), ...args),
         resize: (...args) => record.instance?.resize?.(...args),
         refresh: (...args) => record.instance?.refresh?.(...args),
         destroy: () => unmount(root),
@@ -111,6 +145,15 @@ export function createJavascriptEmbedRuntime({
     } finally {
       pendingRoots.delete(root);
     }
+  }
+
+  function normalizeUpdate(type, patch) {
+    if (patch === undefined) return undefined;
+    if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+      throw new TypeError("JavaScript embed update must be a configuration object");
+    }
+    const normalized = normalizeJavascriptEmbedInput(registry, { widget: type, config: patch });
+    return Object.freeze(Object.fromEntries(Object.keys(patch).map(key => [key, normalized.config[key]])));
   }
 
   function unmount(root) {
@@ -142,6 +185,7 @@ export function createJavascriptEmbedRuntime({
     unmount,
     destroy,
     getInstance: root => instances.get(root)?.instance || null,
+    apiVersion: JAVASCRIPT_EMBED_API_VERSION,
   });
 }
 
@@ -149,4 +193,5 @@ const publicRuntime = createJavascriptEmbedRuntime();
 
 export const mount = publicRuntime.mount;
 export const unmount = publicRuntime.unmount;
-export default Object.freeze({ mount, unmount });
+export const apiVersion = JAVASCRIPT_EMBED_API_VERSION;
+export default Object.freeze({ apiVersion, mount, unmount });

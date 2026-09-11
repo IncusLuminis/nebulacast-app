@@ -59,6 +59,7 @@ export const widgetCatalog = Object.freeze([
     type: "weather",
     version: 1,
     standaloneHost: true,
+    javascriptEmbed: true,
     standaloneStylesheet: "/weather/widgets/weather/weather.css",
     ...galleryMetadata("Weather", "Observer conditions with forecast profiles, hourly quality, and atmospheric parameters.", WEATHER_SUPPORTED_OPTIONS, true),
     defaults: Object.freeze({

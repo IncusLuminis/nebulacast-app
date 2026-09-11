@@ -5,7 +5,6 @@ import {
   buildIframeEmbedSnippet,
   createWidgetConfig,
   getWidgetOptionValues,
-  JAVASCRIPT_EMBED_CONFIG_KEYS,
   JAVASCRIPT_EMBED_MODULE_PATH,
   serializeJavascriptEmbedSpecification,
   serializeWidgetConfig,
@@ -105,9 +104,7 @@ export function createShowcaseGallery({
     if (cardState.javascriptOutput) {
       const serializedSpecification = serializeJavascriptEmbedSpecification(registry, {
         widget: definition.type,
-        config: Object.fromEntries(JAVASCRIPT_EMBED_CONFIG_KEYS
-          .filter(key => cardState.configExport.config[key] !== undefined)
-          .map(key => [key, cardState.configExport.config[key]])),
+        config: cardState.configExport.config,
       });
       cardState.javascriptSnippet = `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nmount(root, ${serializedSpecification});`;
       cardState.javascriptOutput.snippet.textContent = cardState.javascriptSnippet;

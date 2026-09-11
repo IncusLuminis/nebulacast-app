@@ -7,6 +7,7 @@ export const IFRAME_EMBED_DEFAULTS = Object.freeze({
   loading: "lazy",
 });
 export const JAVASCRIPT_EMBED_MODULE_PATH = "/widgets/runtime/index.mjs";
+export const JAVASCRIPT_EMBED_API_VERSION = 1;
 export const JAVASCRIPT_EMBED_CONFIG_KEYS = Object.freeze(["orientation", "theme", "density", "baseUrl"]);
 
 function isObject(value) {
@@ -264,9 +265,13 @@ export function normalizeJavascriptEmbedInput(registry, specification = {}) {
   if (definition.javascriptEmbed !== true) throw new Error(`Widget ${widget} is not enabled for JavaScript embed`);
   const supplied = specification.config === undefined ? {} : specification.config;
   if (!isObject(supplied)) throw new TypeError("JavaScript embed config must be an object");
+  const supported = new Set(Object.keys(definition.supportedOptions || {}));
   for (const key of Object.keys(supplied)) {
-    if (!JAVASCRIPT_EMBED_CONFIG_KEYS.includes(key)) {
+    if (key !== "baseUrl" && !supported.has(key)) {
       throw new TypeError(`JavaScript embed config contains an unsupported field: ${key}`);
+    }
+    if (key !== "baseUrl" && !allowedValues(definition, key).includes(supplied[key])) {
+      throw new TypeError(`Invalid ${key} for JavaScript embed widget ${widget}`);
     }
   }
   if (specification.baseUrl !== undefined && supplied.baseUrl !== undefined && specification.baseUrl !== supplied.baseUrl) {
@@ -277,14 +282,8 @@ export function normalizeJavascriptEmbedInput(registry, specification = {}) {
   if (requested.baseUrl !== undefined && !safeEmbedBaseUrl(requested.baseUrl)) {
     throw new TypeError("JavaScript embed baseUrl must be a safe data/assets URL prefix");
   }
-  const common = createWidgetConfig(registry, widget, Object.fromEntries(
-    STANDALONE_WIDGET_QUERY_KEYS.slice(1)
-      .filter(key => requested[key] !== undefined)
-      .map(key => [key, requested[key]]),
-  ));
-  const config = Object.fromEntries(STANDALONE_WIDGET_QUERY_KEYS.slice(1)
-    .filter(key => common.config[key] !== undefined)
-    .map(key => [key, common.config[key]]));
+  const common = createWidgetConfig(registry, widget, requested);
+  const config = { ...common.config };
   if (requested.baseUrl !== undefined) config.baseUrl = requested.baseUrl;
   return Object.freeze({ widget: common.widget, config: deepFreeze(config) });
 }

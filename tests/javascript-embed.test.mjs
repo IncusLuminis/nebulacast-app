@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createWidgetRegistry } from "../sites/staging/shared/widget-registry.mjs";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
 import {
+  JAVASCRIPT_EMBED_API_VERSION,
   normalizeJavascriptEmbedInput,
   serializeJavascriptEmbedSpecification,
 } from "../sites/staging/shared/widget-config.mjs";
@@ -64,6 +65,9 @@ function createRuntime() {
         id: `${specification.widget}-${calls.length}`,
         type: specification.widget,
         config: specification.config,
+        update(patch) {
+          calls.push({ type: "update", root, patch });
+        },
         destroy() {
           if (!alive) return;
           alive = false;
@@ -78,7 +82,15 @@ function createRuntime() {
 }
 
 test("only catalog javascriptEmbed opt-ins normalize through the bounded public config", async () => {
-  assert.deepEqual(widgetCatalog.filter(definition => definition.javascriptEmbed === true).map(definition => definition.type), ["events", "alerts"]);
+  assert.equal(JAVASCRIPT_EMBED_API_VERSION, 1);
+  assert.deepEqual(widgetCatalog.filter(definition => definition.javascriptEmbed === true).map(definition => definition.type), ["weather", "events", "alerts"]);
+  const weather = normalizeJavascriptEmbedInput(registry, {
+    widget: "weather",
+    config: { orientation: "vertical", profile: "visual", range: "48h" },
+  });
+  assert.deepEqual(weather.config, {
+    density: "normal", orientation: "vertical", profile: "visual", range: "48h", theme: "inherit",
+  });
   const normalized = normalizeJavascriptEmbedInput(registry, {
     widget: "alerts",
     config: { theme: "dark", baseUrl: "https://cdn.example.test/nebulacast" },
@@ -87,12 +99,13 @@ test("only catalog javascriptEmbed opt-ins normalize through the bounded public 
     widget: "alerts",
     config: { baseUrl: "https://cdn.example.test/nebulacast", density: "normal", orientation: "auto", theme: "dark" },
   });
-  assert.equal(serializeJavascriptEmbedSpecification(registry, { widget: "events", config: { orientation: "vertical" } }), '{"config":{"density":"normal","orientation":"vertical","theme":"inherit"},"widget":"events"}');
+  assert.equal(serializeJavascriptEmbedSpecification(registry, { widget: "events", config: { orientation: "vertical" } }), '{"config":{"density":"normal","orientation":"vertical","theme":"inherit","timeRange":"upcoming"},"widget":"events"}');
 
   for (const specification of [
     { widget: "news" },
-    { widget: "weather" },
     { widget: "sky" },
+    { widget: "weather", config: { moduleUrl: "/evil.mjs" } },
+    { widget: "weather", config: { profile: "unsupported" } },
     { widget: "alerts", config: { dataUrl: "/evil.json" } },
     { widget: "events", config: { loader: () => {} } },
     { widget: "alerts", config: { html: "<script>bad</script>" } },
@@ -138,6 +151,32 @@ test("public API mounts two roots through the shared Runtime and unmounts their 
   documentRef.defaultView.dispatchEvent({ type: "pagehide" });
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(eventsRoot.getAttribute("data-nc-widget"), null);
+  assert.equal(documentRef.stylesheets.length, 0);
+});
+
+test("v1 public API mounts, updates, and destroys Weather while rejecting unsupported updates", async () => {
+  const documentRef = createDocument();
+  const runtime = createRuntime();
+  const api = createJavascriptEmbedRuntime({ registry, runtime, documentRef });
+  assert.equal(api.apiVersion, 1);
+  const root = createRoot("weather");
+
+  const weather = await api.mount(root, {
+    widget: "weather",
+    config: { orientation: "vertical", profile: "balanced", range: "7d" },
+  });
+  assert.equal(weather.type, "weather");
+  assert.deepEqual(runtime.calls[0].specification.config, {
+    density: "normal", orientation: "vertical", profile: "balanced", range: "7d", theme: "inherit",
+  });
+
+  await weather.update({ profile: "visual" });
+  assert.deepEqual(runtime.calls.find(call => call.type === "update").patch, { profile: "visual" });
+  assert.throws(() => weather.update({ moduleUrl: "/evil.mjs" }), /unsupported field/);
+  assert.throws(() => weather.update({ range: "not-supported" }), /Invalid range/);
+
+  await weather.destroy();
+  assert.equal(root.getAttribute("data-nc-widget"), null);
   assert.equal(documentRef.stylesheets.length, 0);
 });
 
