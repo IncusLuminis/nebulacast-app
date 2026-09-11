@@ -33,7 +33,7 @@
   <script src="/assets/js/widget_runtime.js"></script>
   <script>
     (function() {
-      var config = {"rootId": "nrc-root-page", "jsonUrl": "/calendar/daily_signal.json", "maxItems": 20, "filters": ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], "iconBase": "/assets/icons/alerts"};
+      var config = {"rootId": "nrc-root-page", "jsonUrl": "/calendar/daily_signal.json", "maxItems": 20, "timeRange": "upcoming", "filters": ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"], "iconBase": "/assets/icons/alerts"};
       if (window.runCalendarWidget) window.runCalendarWidget(config);
     })();
   </script>

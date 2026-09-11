@@ -47,7 +47,7 @@ def load_config() -> dict:
             "paths": {"out_root": "sites/staging", "base_url": "https://news.nebulacast.app"},
             "widgets": {
                 "news": {"enabled": True, "title": "News Radar", "rss": "/news/rss.xml", "rss_absolute": "https://news.nebulacast.app/rss.xml", "max_items": 12, "parse_max": 300, "filters": ["All", "News", "Science", "Videos", "Images", "Nebulacast"]},
-                "calendar": {"enabled": True, "title": "Sky Alerts", "json": "/calendar/daily_signal.json", "rss": "/alerts/rss.xml", "max_items": 20, "filters": ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"]},
+                "calendar": {"enabled": True, "title": "Sky Alerts", "json": "/calendar/daily_signal.json", "rss": "/alerts/rss.xml", "max_items": 20, "time_range": "upcoming", "filters": ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"]},
             },
         }
     with open(CONFIG_PATH, encoding="utf-8") as f:
@@ -206,6 +206,7 @@ def main() -> int:
     calendar_json = calendar_cfg.get("json", "/calendar/daily_signal.json")
     calendar_rss = calendar_cfg.get("rss", "/alerts/rss.xml")
     calendar_max_items = int(calendar_cfg.get("max_items", 20))
+    calendar_time_range = calendar_cfg.get("time_range", "upcoming")
     calendar_filters = calendar_cfg.get("filters") or ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"]
 
     cal_html_partial = read_tmpl("widget_calendar.html")
@@ -218,6 +219,7 @@ def main() -> int:
         cal_logic_tmpl.replace("{{ROOT_ID}}", root_id_cal_blogger)
         .replace("{{JSON_URL}}", json.dumps("https://alerts.nebulacast.app".rstrip("/") + calendar_json))
         .replace("{{MAX_ITEMS}}", str(calendar_max_items))
+        .replace("{{TIME_RANGE}}", json.dumps(calendar_time_range))
         .replace("{{FILTERS_JSON}}", json.dumps(calendar_filters))
         .replace("{{ICON_BASE_JS}}", json.dumps("https://alerts.nebulacast.app/assets/icons/alerts"))
         .replace("{{FETCH_TIMEOUT}}", "15000")
@@ -252,7 +254,7 @@ def main() -> int:
     calendar_section_wrapped = '<section class="widget-section" id="widget-calendar">' + cal_section_html + "</section>"
     calendar_init = ""
     if calendar_enabled:
-        calendar_init = "window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '" + calendar_json + "', maxItems: " + str(calendar_max_items) + ", filters: " + json.dumps(calendar_filters) + ", iconBase: base + '/assets/icons/alerts' });"
+        calendar_init = "window.runCalendarWidget({ rootId: 'nrc-main', jsonUrl: base + '" + calendar_json + "', maxItems: " + str(calendar_max_items) + ", timeRange: " + json.dumps(calendar_time_range) + ", filters: " + json.dumps(calendar_filters) + ", iconBase: base + '/assets/icons/alerts' });"
 
     # --- sites/staging/calendar/index.html ---
     cal_page_tmpl = read_tmpl("calendar.html", "pages")
@@ -266,6 +268,7 @@ def main() -> int:
         "rootId": root_id_cal_page,
         "jsonUrl": (base_path or "") + calendar_json,
         "maxItems": calendar_max_items,
+        "timeRange": calendar_time_range,
         "filters": calendar_filters,
         "iconBase": (base_path or "") + "/assets/icons/alerts",
     }

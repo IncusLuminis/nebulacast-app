@@ -22,6 +22,7 @@ widgets:
     json: "/calendar/daily_signal.json"
     rss: "/alerts/rss.xml"
     max_items: 20
+    time_range: "upcoming"
     filters: ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"]
   weather:
     enabled: true

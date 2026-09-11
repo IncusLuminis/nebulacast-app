@@ -192,6 +192,9 @@ test("catalog and adapters expose exactly the non-aware News and Events types", 
     assert.deepEqual(definition.capabilities, { observerAware: false, timeAware: false, multiInstance: true });
     assert.equal(typeof (await definition.loader()).mount, "function");
   }
+  const eventsDefinition = widgetCatalog.find(item => item.type === "events");
+  assert.equal(eventsDefinition.defaults.timeRange, "upcoming");
+  assert.deepEqual(eventsDefinition.supportedOptions.timeRange, ["upcoming", "all"]);
   const [newsAdapter, eventsAdapter] = await Promise.all([widgetCatalog.find(item => item.type === "news").loader(), widgetCatalog.find(item => item.type === "events").loader()]);
   assert.equal(typeof newsAdapter.mount, "function");
   assert.equal(typeof eventsAdapter.mount, "function");
@@ -240,11 +243,14 @@ test("Events uses only daily_signal JSON, keeps future/category behavior, and is
   const runtime = createNebulacast({ context, registry: createWidgetRegistry([widgetCatalog.find(item => item.type === "events")]) });
   const firstRoot = makeRoot(documentRef, "events-one");
   const secondRoot = makeRoot(documentRef, "events-two");
+  const allRoot = makeRoot(documentRef, "events-all");
   const first = await runtime.mount(firstRoot, { widget: "events", config: { maxItems: 1, fetch } });
   const second = await runtime.mount(secondRoot, { widget: "events", config: { maxItems: 2, fetch } });
+  const all = await runtime.mount(allRoot, { widget: "events", config: { maxItems: 5, timeRange: "all", fetch } });
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(firstRoot.querySelector('[data-role="list"]').children.length, 1);
   assert.equal(secondRoot.querySelector('[data-role="list"]').children.length, 2);
+  assert.equal(allRoot.querySelector('[data-role="list"]').children.length, 3);
   const calls = fetch.calls.length;
   context.update({ observer: { name: "Ignored" }, time: { mode: "fixed" } });
   assert.equal(fetch.calls.length, calls);
@@ -254,7 +260,7 @@ test("Events uses only daily_signal JSON, keeps future/category behavior, and is
   assert.equal(second.config.maxItems, 1);
   await second.refresh();
   assert.equal(fetch.calls.at(-1).url, "/calendar/daily_signal.json");
-  first.destroy(); first.destroy(); second.destroy();
+  first.destroy(); first.destroy(); second.destroy(); all.destroy();
 });
 
 test("News timeout creates a fresh controller for the proxy fallback", async () => {
@@ -315,6 +321,7 @@ test("News and Events scope loading/error messages and retain legacy facades", a
 
 test("source boundaries keep canonical APIs root-scoped and adapters delegation-only", async () => {
   const runtimeSource = await readFile(new URL("../frontend/assets/js/widget_runtime.js", import.meta.url), "utf8");
+  const generatedCalendar = await readFile(new URL("../sites/staging/calendar/index.html", import.meta.url), "utf8");
   const newsAdapter = await readFile(new URL("../sites/staging/news/platform-adapter.mjs", import.meta.url), "utf8");
   const eventsAdapter = await readFile(new URL("../sites/staging/calendar/platform-adapter.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(runtimeSource, /document\.getElementById/);
@@ -322,6 +329,9 @@ test("source boundaries keep canonical APIs root-scoped and adapters delegation-
   assert.match(runtimeSource, /\/calendar\/daily_signal\.json/);
   assert.match(runtimeSource, /30000/);
   assert.match(runtimeSource, /15000/);
+  assert.match(runtimeSource, /timeRange: 'upcoming'/);
+  assert.match(generatedCalendar, /"timeRange": "upcoming"/);
+  assert.match(generatedCalendar, /widget_runtime\.js/);
   for (const adapter of [newsAdapter, eventsAdapter]) {
     assert.doesNotMatch(adapter, /fetch|DOMParser|innerHTML|querySelector/);
     assert.match(adapter, /NebulacastWidgetRuntime/);

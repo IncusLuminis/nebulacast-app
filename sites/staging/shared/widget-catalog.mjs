@@ -21,6 +21,10 @@ const ASTRO_SUPPORTED_OPTIONS = Object.freeze({
   profile: Object.freeze(["default", "visual", "broadband", "planetary"]),
   range: Object.freeze(["today", "48h", "7d"]),
 });
+const EVENTS_SUPPORTED_OPTIONS = Object.freeze({
+  ...COMMON_SUPPORTED_OPTIONS,
+  timeRange: Object.freeze(["upcoming", "all"]),
+});
 
 function galleryMetadata(title, description, supportedOptions = COMMON_SUPPORTED_OPTIONS, galleryPreview = false) {
   return Object.freeze({ title, description, supportedOptions, galleryPreview });
@@ -126,7 +130,7 @@ export const widgetCatalog = Object.freeze([
     standaloneHost: true,
     standaloneStylesheet: "/assets/css/widget_calendar.css",
     javascriptEmbed: true,
-    ...galleryMetadata("Calendar", "Upcoming meteors, eclipses, conjunctions, occultations, and comets.", COMMON_SUPPORTED_OPTIONS, false),
+    ...galleryMetadata("Calendar", "Upcoming meteors, eclipses, conjunctions, occultations, and comets.", EVENTS_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({
       orientation: "auto",
       theme: "inherit",
@@ -134,6 +138,7 @@ export const widgetCatalog = Object.freeze([
       jsonUrl: "/calendar/daily_signal.json",
       rssUrl: "/alerts/rss.xml",
       maxItems: 20,
+      timeRange: "upcoming",
       filters: Object.freeze(["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"]),
       iconBase: "/assets/icons/alerts",
     }),

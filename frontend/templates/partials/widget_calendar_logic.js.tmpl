@@ -3,6 +3,7 @@
   var ROOT_ID = '{{ROOT_ID}}';
   var jsonUrl = {{JSON_URL}};
   var MAX_ITEMS = {{MAX_ITEMS}};
+  var TIME_RANGE = {{TIME_RANGE}};
   var FILTERS = {{FILTERS_JSON}};
   var iconBase = {{ICON_BASE_JS}};
   var FILTER_ICONS = { 'METEORS': 'meteors.svg', 'ECLIPSES': 'eclipses.svg', 'CONJUNCTIONS': 'conjunctions.svg', 'OCCULTATIONS': 'occultations.svg', 'COMETS': 'comets.svg' };
@@ -49,7 +50,7 @@
     var todayMs = startOfToday.getTime();
     var futureOnly = cachedItems.filter(function(it) {
       if (!it.published_at) return false;
-      return new Date(it.published_at).getTime() >= todayMs;
+      return normCat(TIME_RANGE) === 'all' || new Date(it.published_at).getTime() >= todayMs;
     });
     var f = normCat(activeFilter);
     var filtered = f === 'all' ? futureOnly : futureOnly.filter(function(it) { return itemCategory(it) === f; });

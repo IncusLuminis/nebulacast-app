@@ -59,7 +59,8 @@ canonical [`frontend/assets/js/widget_runtime.js`](../../frontend/assets/js/widg
 The generated copy at `sites/staging/assets/js/widget_runtime.js` and the
 existing generated/legacy `news/widget.js` and `calendar/widget.js` paths remain
 compatibility artifacts. News continues to read `/news/rss.xml`; Events
-continues to read `/calendar/daily_signal.json` and retains its JSON/RSS links.
+continues to read `/calendar/daily_signal.json`, supports `timeRange` (`upcoming`
+by default), and retains its JSON/RSS links.
 No backend, pipeline, data schema, Console, Sky, Weather, or Builder/Gallery
 surface is part of this migration.
 

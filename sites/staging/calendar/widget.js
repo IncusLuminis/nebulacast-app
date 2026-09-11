@@ -12,6 +12,7 @@
   var ROOT_ID = 'nrc-blogger';
   var jsonUrl = "https://alerts.nebulacast.app/calendar/daily_signal.json";
   var MAX_ITEMS = 20;
+  var TIME_RANGE = "upcoming";
   var FILTERS = ["All", "METEORS", "ECLIPSES", "CONJUNCTIONS", "OCCULTATIONS", "COMETS"];
   var iconBase = "https://alerts.nebulacast.app/assets/icons/alerts";
   var FILTER_ICONS = { 'METEORS': 'meteors.svg', 'ECLIPSES': 'eclipses.svg', 'CONJUNCTIONS': 'conjunctions.svg', 'OCCULTATIONS': 'occultations.svg', 'COMETS': 'comets.svg' };
@@ -58,7 +59,7 @@
     var todayMs = startOfToday.getTime();
     var futureOnly = cachedItems.filter(function(it) {
       if (!it.published_at) return false;
-      return new Date(it.published_at).getTime() >= todayMs;
+      return normCat(TIME_RANGE) === 'all' || new Date(it.published_at).getTime() >= todayMs;
     });
     var f = normCat(activeFilter);
     var filtered = f === 'all' ? futureOnly : futureOnly.filter(function(it) { return itemCategory(it) === f; });
