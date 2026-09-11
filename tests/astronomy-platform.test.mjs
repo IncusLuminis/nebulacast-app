@@ -245,6 +245,9 @@ test("Sun/Moon uses the real catalog adapter with isolated resources and contrac
     assert.deepEqual(ledger.snapshot(), { timers: 2, observers: 2, subscriptions: 2 });
     assert.ok(events.some(event => event.type === "nc:sun-times" && event.detail.type === "sun:times"));
     assert.match(firstRoot.querySelector("[data-role=hour-line]").textContent, /illum\. \d+%/);
+    // This lightweight canvas mock intentionally has no setAttribute method;
+    // the real DOM still receives aria-label through the optional method call.
+    assert.equal(typeof firstRoot.querySelector("[data-role=canvas]").setAttribute, "undefined");
 
     const snapshot = createLunarSnapshot({
       instant: new Date("2026-09-09T12:00:00Z"),

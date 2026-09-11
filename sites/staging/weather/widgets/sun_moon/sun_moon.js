@@ -644,7 +644,7 @@ export function mountSunMoon(rootEl, storeApi) {
 
       hourLineEl.textContent =
         `${timeStr} • Sun ${sunAlt}° • Moon ${moonAlt}° • ${moonInfo.emoji} ${moonInfo.phase_name}, illum. ${Math.round(moonInfo.illuminated_percent)}%`;
-      canvas?.setAttribute("aria-label", `Sun and Moon altitude chart for ${timeStr}: Sun ${sunAlt} degrees, Moon ${moonAlt} degrees, ${moonInfo.phase_name}, ${Math.round(moonInfo.illuminated_percent)}% illuminated. Use arrow keys to inspect an hour.`);
+      canvas?.setAttribute?.("aria-label", `Sun and Moon altitude chart for ${timeStr}: Sun ${sunAlt} degrees, Moon ${moonAlt} degrees, ${moonInfo.phase_name}, ${Math.round(moonInfo.illuminated_percent)}% illuminated. Use arrow keys to inspect an hour.`);
     }
 
     drawSunMoonCanvas(canvas, data, selectedHour);
