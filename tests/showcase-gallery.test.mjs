@@ -61,7 +61,7 @@ test("Showcase generates host output only for standalone-enabled registry widget
   const heroCard = root.querySelector('[data-widget-type="hero"]');
   assert.equal(alertsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=alerts&orientation=auto&theme=inherit&density=normal");
   assert.equal(eventsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=events&orientation=auto&theme=inherit&density=normal");
-  assert.equal(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, '<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" loading="lazy"></iframe>');
+  assert.equal(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, '<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>');
   assert.equal(heroCard.querySelector(".gallery-output-unavailable").textContent, "Iframe output unavailable");
   assert.match(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /from "\/widgets\/runtime\/index\.mjs"/);
   assert.match(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /"widget":"alerts"/);

@@ -1,6 +1,11 @@
 export const WIDGET_CONFIG_SCHEMA = "widget-config.v1";
 export const STANDALONE_WIDGET_QUERY_KEYS = Object.freeze(["widget", "orientation", "theme", "density"]);
 export const STANDALONE_WIDGET_HOST_PATH = "/widgets/widget.html";
+export const IFRAME_EMBED_DEFAULTS = Object.freeze({
+  width: "100%",
+  height: "600",
+  loading: "lazy",
+});
 export const JAVASCRIPT_EMBED_MODULE_PATH = "/widgets/runtime/index.mjs";
 export const JAVASCRIPT_EMBED_CONFIG_KEYS = Object.freeze(["orientation", "theme", "density", "baseUrl"]);
 
@@ -25,6 +30,26 @@ function safeEmbedBaseUrl(value) {
   return typeof value === "string" && value.length > 0 && !/[<>\s?#]/.test(value) &&
     !/(?:^|\/)[^/]*\.(?:html?|m?js)(?:\/|$)/i.test(value) &&
     (/^\/(?!\/)/.test(value) || /^https?:\/\/[^/]+(?:\/[^/]*)*\/?$/i.test(value));
+}
+
+function safeIframeOrigin(value) {
+  if (value === undefined) return "";
+  if (typeof value !== "string" || !/^https?:\/\/[^/]+\/?$/i.test(value)) {
+    throw new TypeError("Iframe embed origin must be an absolute HTTP(S) origin");
+  }
+  const origin = new URL(value).origin;
+  if (origin === "null") throw new TypeError("Iframe embed origin must be an absolute HTTP(S) origin");
+  return origin;
+}
+
+function escapeAttribute(value) {
+  return String(value ?? "").replace(/[&<>\"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '\"': "&quot;",
+    "'": "&#39;",
+  }[character]));
 }
 
 function allowedValues(definition, key) {
@@ -209,6 +234,23 @@ export function buildStandaloneWidgetUrl(registry, widgetOrExport, requested = {
   return `${STANDALONE_WIDGET_HOST_PATH}?${params.toString()}`;
 }
 
+/** Build safe copy/paste iframe markup for the generic standalone host. */
+export function buildIframeEmbedSnippet(registry, widgetOrExport, options = {}) {
+  if (!isObject(options)) throw new TypeError("Iframe embed options must be an object");
+  for (const key of Object.keys(options)) {
+    if (!["origin", "title"].includes(key)) {
+      throw new TypeError(`Iframe embed options contain an unsupported field: ${key}`);
+    }
+  }
+  const configExport = standaloneConfig(registry, widgetOrExport);
+  const definition = definitionFrom(registry, configExport.widget);
+  const origin = safeIframeOrigin(options.origin);
+  const title = options.title === undefined ? (definition.title || definition.type) : options.title;
+  if (!safeString(title)) throw new TypeError("Iframe embed title contains an unsafe string");
+  const src = `${origin}${buildStandaloneWidgetUrl(registry, configExport)}`;
+  return `<iframe src="${escapeAttribute(src)}" title="${escapeAttribute(title)}" width="${IFRAME_EMBED_DEFAULTS.width}" height="${IFRAME_EMBED_DEFAULTS.height}" loading="${IFRAME_EMBED_DEFAULTS.loading}" style="border:0;display:block"></iframe>`;
+}
+
 /** Normalize the public JavaScript embed specification without exposing loaders or data URLs. */
 export function normalizeJavascriptEmbedInput(registry, specification = {}) {
   if (!isObject(specification)) throw new TypeError("JavaScript embed specification must be an object");
@@ -235,8 +277,14 @@ export function normalizeJavascriptEmbedInput(registry, specification = {}) {
   if (requested.baseUrl !== undefined && !safeEmbedBaseUrl(requested.baseUrl)) {
     throw new TypeError("JavaScript embed baseUrl must be a safe data/assets URL prefix");
   }
-  const common = createWidgetConfig(registry, widget, requested);
-  const config = { ...common.config };
+  const common = createWidgetConfig(registry, widget, Object.fromEntries(
+    STANDALONE_WIDGET_QUERY_KEYS.slice(1)
+      .filter(key => requested[key] !== undefined)
+      .map(key => [key, requested[key]]),
+  ));
+  const config = Object.fromEntries(STANDALONE_WIDGET_QUERY_KEYS.slice(1)
+    .filter(key => common.config[key] !== undefined)
+    .map(key => [key, common.config[key]]));
   if (requested.baseUrl !== undefined) config.baseUrl = requested.baseUrl;
   return Object.freeze({ widget: common.widget, config: deepFreeze(config) });
 }

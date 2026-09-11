@@ -2,8 +2,10 @@ import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
 import {
   buildStandaloneWidgetUrl,
+  buildIframeEmbedSnippet,
   createWidgetConfig,
   getWidgetOptionValues,
+  JAVASCRIPT_EMBED_CONFIG_KEYS,
   JAVASCRIPT_EMBED_MODULE_PATH,
   serializeJavascriptEmbedSpecification,
   serializeWidgetConfig,
@@ -37,20 +39,6 @@ function appendText(documentRef, tagName, className, text) {
   if (className) element.className = className;
   element.textContent = String(text ?? "");
   return element;
-}
-
-function escapeAttribute(value) {
-  return String(value ?? "").replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  }[character]));
-}
-
-function standaloneIframeSnippet(url, title) {
-  return `<iframe src="${escapeAttribute(url)}" title="${escapeAttribute(title)}" loading="lazy"></iframe>`;
 }
 
 function snapshotOf(cards, instances, errors) {
@@ -107,7 +95,9 @@ export function createShowcaseGallery({
     if (cardState.hostOutput) {
       const url = buildStandaloneWidgetUrl(registry, cardState.configExport);
       cardState.iframeUrl = url;
-      cardState.iframeSnippet = standaloneIframeSnippet(url, definition.title || definition.type);
+      cardState.iframeSnippet = buildIframeEmbedSnippet(registry, cardState.configExport, {
+        title: definition.title || definition.type,
+      });
       cardState.hostOutput.iframeUrlOutput.textContent = url;
       cardState.hostOutput.iframeSnippetOutput.textContent = cardState.iframeSnippet;
       cardState.hostOutput.openHost.href = url;
@@ -115,7 +105,9 @@ export function createShowcaseGallery({
     if (cardState.javascriptOutput) {
       const serializedSpecification = serializeJavascriptEmbedSpecification(registry, {
         widget: definition.type,
-        config: cardState.configExport.config,
+        config: Object.fromEntries(JAVASCRIPT_EMBED_CONFIG_KEYS
+          .filter(key => cardState.configExport.config[key] !== undefined)
+          .map(key => [key, cardState.configExport.config[key]])),
       });
       cardState.javascriptSnippet = `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nmount(root, ${serializedSpecification});`;
       cardState.javascriptOutput.snippet.textContent = cardState.javascriptSnippet;

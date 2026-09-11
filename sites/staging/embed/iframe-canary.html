@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>External iframe Embed Canary</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f3efe8; color: #24201c; font: 16px/1.5 Georgia, serif; padding: 24px; }
+    main { max-width: 760px; margin: 0 auto; }
+    .foreign-card { background: white; border: 5px solid #24201c; padding: 16px; }
+    .foreign-card + .foreign-card { margin-top: 18px; }
+    .foreign-card h1 { font: 700 22px/1.2 Georgia, serif; margin-bottom: 8px; }
+    .foreign-card p { margin-bottom: 12px; }
+    .iframe-slot { width: 100%; min-width: 0; }
+    .iframe-slot iframe { display: block; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <main data-fixture="external-iframe-host">
+    <section class="foreign-card">
+      <h1>Foreign host weather</h1>
+      <p>This intentionally applies unrelated host typography, resets, spacing, and constrained width.</p>
+      <div class="iframe-slot">
+        <iframe id="valid-weather" src="/widgets/widget.html?widget=weather&orientation=vertical&theme=dark&density=compact" title="Weather" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>
+      </div>
+    </section>
+    <section class="foreign-card">
+      <h1>Foreign host invalid configuration</h1>
+      <div class="iframe-slot">
+        <iframe id="invalid-weather" src="/widgets/widget.html?widget=weather&html=%3Cscript%3Ealert(1)%3C%2Fscript%3E" title="Invalid Weather" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

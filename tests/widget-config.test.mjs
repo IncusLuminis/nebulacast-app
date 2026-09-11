@@ -4,6 +4,7 @@ import { createWidgetRegistry } from "../sites/staging/shared/widget-registry.mj
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
 import {
   WIDGET_CONFIG_SCHEMA,
+  buildIframeEmbedSnippet,
   buildStandaloneWidgetUrl,
   createWidgetConfig,
   exportWidgetConfig,
@@ -86,4 +87,26 @@ test("standalone host URL is deterministic, encoded, and limited to host config"
     version: 1,
     config: { orientation: "auto", theme: "inherit", density: "normal", html: "<iframe>" },
   }), /unsupported field/);
+});
+
+test("iframe output uses bounded host configuration and documented safe sizing", () => {
+  assert.equal(
+    buildIframeEmbedSnippet(registry, "weather"),
+    '<iframe src="/widgets/widget.html?widget=weather&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Weather" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>',
+  );
+  assert.equal(
+    buildIframeEmbedSnippet(registry, "alerts", { origin: "https://widgets.example.test", title: 'Alerts & "canary"' }),
+    '<iframe src="https://widgets.example.test/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Alerts &amp; &quot;canary&quot;" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>',
+  );
+  for (const options of [
+    { origin: "javascript:alert(1)" },
+    { origin: "https://widgets.example.test/path" },
+    { origin: "//widgets.example.test" },
+    { title: "<script>alert(1)</script>" },
+    { unsupported: "value" },
+  ]) {
+    assert.throws(() => buildIframeEmbedSnippet(registry, "alerts", options));
+  }
+  assert.throws(() => buildIframeEmbedSnippet(registry, "news"), /not allowed/);
+  assert.throws(() => buildIframeEmbedSnippet(registry, "alerts", { origin: "https://widgets.example.test/?q=unsafe" }), /origin/);
 });

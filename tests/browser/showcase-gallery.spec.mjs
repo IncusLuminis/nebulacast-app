@@ -7,14 +7,14 @@ test("Showcase generates bounded standalone output and opens the corresponding h
   const events = page.locator('[data-widget-type="events"]');
   await expect(alerts.locator('[data-role="iframe-url"]')).toHaveText("/widgets/widget.html?widget=alerts&orientation=auto&theme=inherit&density=normal");
   await expect(events.locator('[data-role="iframe-url"]')).toHaveText("/widgets/widget.html?widget=events&orientation=auto&theme=inherit&density=normal");
-  await expect(alerts.locator('[data-role="iframe-snippet"]')).toHaveText('<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" loading="lazy"></iframe>');
+  await expect(alerts.locator('[data-role="iframe-snippet"]')).toHaveText('<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>');
   await expect(page.locator('[data-widget-type="hero"] [data-role="iframe-unavailable"]')).toHaveText("Iframe output unavailable");
 
   await alerts.locator('[data-gallery-option="orientation"]').selectOption("vertical");
   await alerts.locator('[data-gallery-option="theme"]').selectOption("dark");
   const generatedUrl = "/widgets/widget.html?widget=alerts&orientation=vertical&theme=dark&density=normal";
   await expect(alerts.locator('[data-role="iframe-url"]')).toHaveText(generatedUrl);
-  await expect(alerts.locator('[data-role="iframe-snippet"]')).toHaveText(`<iframe src="${generatedUrl.replaceAll("&", "&amp;")}" title="Sky Alerts" loading="lazy"></iframe>`);
+  await expect(alerts.locator('[data-role="iframe-snippet"]')).toHaveText(`<iframe src="${generatedUrl.replaceAll("&", "&amp;")}" title="Sky Alerts" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>`);
   await expect(alerts.locator('[data-gallery-action="open-host"]')).toHaveAttribute("href", generatedUrl);
   await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('from "/widgets/runtime/index.mjs"');
   await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('"widget":"alerts"');
