@@ -1505,7 +1505,7 @@
       <!-- ── Persistent Anchor Panels: SKY + MAP ── -->
       <div id="db-anchors">
         <div class="db-anchor" id="db-anchor-sky">
-          <iframe class="db-anchor-iframe" id="db-sky-iframe" src="" frameborder="0" title="Sky view" loading="lazy"></iframe>
+          <div class="db-anchor-frame" id="db-sky-root" data-nc-shape="square" aria-label="Sky view"></div>
         </div>
         <div class="db-anchor" id="db-anchor-map">
           <iframe class="db-anchor-iframe" id="db-map-iframe" src="" frameborder="0" title="Weather Map" loading="lazy"></iframe>
@@ -2232,7 +2232,7 @@
     resolveConfig: slot => {
       if (slot.id === 'hero') return { sunCalc: globalThis.SunCalc };
       if (slot.id === 'alerts') return { groups: getSkyAlertGroups() };
-      if (slot.id === 'sky') {
+      if (slot.id === 'sky' || slot.id === 'dashboard-sky') {
         const filters = getConsoleSkyFilters();
         return { options: {
           minAltObjectsDeg: filters.minAltObjects,
@@ -2254,6 +2254,7 @@
   function mountConsoleComposer() {
     return consoleComposer.mount().then(snapshot => {
       heroInstance = consoleComposer.getInstance('hero') || null;
+      consoleComposer.getInstance('dashboard-sky')?.resize?.();
       _dbAfterHeroRender();
       return snapshot;
     });
@@ -2412,6 +2413,7 @@
     const effectivePage = pageId;
 
     if (effectivePage === 'sky')    { consoleComposer.getInstance('sky')?.resize?.(); }
+    if (effectivePage === 'dashboard') { consoleComposer.getInstance('dashboard-sky')?.resize?.(); }
     if (effectivePage === 'map')    { initMapIfNeeded(); }
     if (effectivePage === 'events') { initObsIfNeeded(); }
     if (effectivePage === 'stats')  { initStatsIfNeeded(); }
@@ -3264,21 +3266,13 @@
     body.innerHTML = winHtml + `<div class="dbp-nqi-grid">${cards}</div>`;
   }
 
-  // ── Anchor iframe init (sky + map) ──
+  // ── Dashboard Map iframe init ──
   const _DB_ANCHOR_CSS = `
-    /* hide all labels/controls — components fill full iframe */
-    .sky-title, .sky-topbar,
-    #locPill, #framePill, #dataPill,
-    .controls-row, .card h2,
+    /* hide Map labels/controls — the component fills its compatibility iframe */
     .map-tip { display: none !important; }
 
     /* base: no margins/padding/scroll */
     html, body { height: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; box-sizing: border-box !important; }
-
-    /* Sky: stage fills everything */
-    .sky-page, .sky-card { box-sizing: border-box !important; height: 100% !important; width: 100% !important; display: flex !important; flex-direction: column !important; padding: 0 !important; margin: 0 !important; border: none !important; border-radius: 0 !important; background: transparent !important; }
-    .sky-stage { flex: 1 !important; min-height: 0 !important; width: 100% !important; overflow: hidden !important; border: none !important; }
-    .sky-stage canvas { display: block !important; width: 100% !important; height: 100% !important; }
 
     /* Map: map fills everything */
     .page-wrap { box-sizing: border-box !important; height: 100% !important; width: 100% !important; display: flex !important; flex-direction: column !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
@@ -3301,15 +3295,6 @@
   function _dbInitAnchors() {
     if (_dbAnchorsInited) return;
     _dbAnchorsInited = true;
-    const skyIframe = document.getElementById('db-sky-iframe');
-    if (skyIframe && !skyIframe.getAttribute('src')) {
-      skyIframe.addEventListener('load', () => _dbInjectAnchorCss(skyIframe));
-      const _skyLoc = getState()?.location;
-      const _skyParams = (_skyLoc && isFinite(_skyLoc.lat) && isFinite(_skyLoc.lon))
-        ? `?lat=${_skyLoc.lat}&lon=${_skyLoc.lon}`
-        : '';
-      skyIframe.src = '/sky/' + _skyParams;
-    }
     const mapIframe = document.getElementById('db-map-iframe');
     if (mapIframe && !mapIframe.getAttribute('src')) {
       mapIframe.addEventListener('load', () => {
@@ -3394,13 +3379,9 @@
       loadFeed();
       // Observer Panel: re-run if already initialized
       if (obsInited) _updateObsPanel();
-      // Dashboard sky iframe: update projection via same-origin contentWindow
-      try {
-        const _skyIf = document.getElementById('db-sky-iframe');
-        if (_skyIf?.contentWindow?.__skyWidget?.update) {
-          _skyIf.contentWindow.__skyWidget.update({ lat: s.location.lat, lon: s.location.lon });
-        }
-      } catch (_) {}
+      // Dashboard Sky receives observer/time changes through Platform Context.
+      // Keep the direct instance available for explicit resize/update callers.
+      try { consoleComposer.getInstance('dashboard-sky')?.update?.({ lat: s.location.lat, lon: s.location.lon }); } catch (_) {}
       // Dashboard map iframe: send postMessage (same pattern as #mapIframe subscriber)
       try {
         const _mapIf = document.getElementById('db-map-iframe');

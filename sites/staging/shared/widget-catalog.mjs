@@ -111,6 +111,8 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "sky",
     version: 1,
+    shape: "square",
+    userModes: Object.freeze(["square"]),
     ...galleryMetadata("Sky", "Canvas sky chart with stars, objects, planets, and alert overlays.", COMMON_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: commonCapabilities,

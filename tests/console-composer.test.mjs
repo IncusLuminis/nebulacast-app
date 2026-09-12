@@ -13,6 +13,7 @@ const expectedSlots = [
   ["sun", "#w-sun", "sun-moon"],
   ["sunmoon-panel", "#w-sunmoon-panel", "sun-moon"],
   ["sky", "#skyMount", "sky"],
+  ["dashboard-sky", "#db-sky-root", "sky"],
   ["alerts", "#fs-sky", "alerts"],
   ["events", "#nrc-main", "events"],
   ["sidebar-events", "#fs-cal", "events"],
@@ -29,6 +30,7 @@ test("Console config declares the platform-managed roots and preserves configs",
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-events").config.maxItems, 8);
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-news").config.parseMax, 300);
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-space-weather").config, { orientation: "horizontal" });
+  assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-sky").config, { orientation: "horizontal" });
 });
 
 test("Composer mounts through the supplied Runtime, is idempotent, and isolates roots", async () => {
@@ -75,6 +77,10 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.match(indexSource, /function _dbRenderHelio\(\) \{[\s\S]*return;/);
   assert.doesNotMatch(indexSource, /load(?:SwxAlerts|CalendarEvents|NewsItems)\s*\(/);
   assert.doesNotMatch(indexSource, /initSkyIfNeeded|legacy-bootstrap\.mjs|window\.__(?:skyWidget|SKY_CONFIG)/);
+  assert.doesNotMatch(indexSource, /db-sky-iframe|skyIframe|Dashboard sky iframe|contentWindow\.__skyWidget/);
+  assert.match(indexSource, /id="db-sky-root"[^>]*data-nc-shape="square"/);
+  assert.match(indexSource, /consoleComposer\.getInstance\('dashboard-sky'\)\?\.update/);
+  assert.match(indexSource, /consoleComposer\.getInstance\('dashboard-sky'\)\?\.resize/);
   assert.match(indexSource, /function getConsoleSkyFilters\(\)/);
   assert.match(indexSource, /slot\.id === 'sky'[\s\S]*getConsoleSkyFilters\(\)/);
   assert.match(indexSource, /let _stormTab = 'G';/);
@@ -83,4 +89,13 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.match(indexSource, /getInstance\('sky'\)\?\.resize/);
   assert.match(indexSource, /nc:hero-data/);
   assert.match(indexSource, /nc:hero-action/);
+});
+
+test("Sky declares square metadata for the dashboard's caller-owned anchor", async () => {
+  const { widgetCatalog } = await import("../sites/staging/shared/widget-catalog.mjs");
+  const sky = widgetCatalog.find(definition => definition.type === "sky");
+  assert.equal(sky.shape, "square");
+  assert.deepEqual(sky.userModes, ["square"]);
+  assert.equal(sky.userModes.includes("horizontal"), false);
+  assert.equal(sky.userModes.includes("vertical"), false);
 });

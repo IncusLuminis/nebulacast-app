@@ -110,18 +110,18 @@
           "current_owner": "sites/staging/console/console-composer.mjs"
         },
         {
-          "id": "dashboard-sky-iframe",
+          "id": "dashboard-sky",
           "label": "Sky anchor",
           "registry_type": "sky",
           "registry_registered": true,
-          "root_or_slot": {"slot": null, "root": "#db-sky-iframe"},
-          "platform_context": "Not passed to the compatibility iframe; migration must use shared Platform Context.",
+          "root_or_slot": {"slot": "dashboard-sky", "root": "#db-sky-root"},
+          "platform_context": "Console Composer mounts the registered Sky Runtime adapter with the shared Platform Context; the caller-owned anchor is square.",
           "authoritative_source": "sites/staging/sky/widget.js",
           "compatibility_route": ["/sky/"],
-          "classification": "temporary_adapter",
+          "classification": "runtime_widget",
           "target_classification": "runtime_widget",
           "layout": {"shape": "square", "public_modes": ["square"]},
-          "current_owner": "sites/staging/index.html iframe anchor"
+          "current_owner": "sites/staging/console/console-composer.mjs via dashboard-sky slot"
         },
         {
           "id": "dashboard-alerts",

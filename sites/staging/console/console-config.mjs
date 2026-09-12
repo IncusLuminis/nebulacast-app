@@ -18,6 +18,11 @@ const slots = [
       showAlerts: true,
     },
   } },
+  { id: "dashboard-sky", selector: "#db-sky-root", widget: "sky", config: {
+    // The dashboard anchor owns a square box; orientation stays internal to
+    // the existing Sky renderer and is never exposed as a user mode here.
+    orientation: "horizontal",
+  } },
   { id: "alerts", selector: "#fs-sky", widget: "alerts", config: { orientation: "vertical", maxItems: 20 } },
   { id: "events", selector: "#nrc-main", widget: "events", config: {
     jsonUrl: "/calendar/daily_signal.json",
