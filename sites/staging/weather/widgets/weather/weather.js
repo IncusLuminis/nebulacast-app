@@ -2142,6 +2142,10 @@ function renderProfileSwitcher(rootEl, instance = activeWeatherInstance) {
         const pill = e.target.closest(".profile-pill[data-profile]");
         if (!pill) return;
         activeProfile = pill.dataset.profile;
+        weatherCard.querySelectorAll(".profile-pill[data-profile]").forEach(function(item) {
+          if (item.dataset.profile === activeProfile) item.setAttribute("data-active", "true");
+          else item.removeAttribute("data-active");
+        });
         try { getWeatherStorage()?.setItem(STORAGE_KEY_PROFILE, activeProfile); } catch (_) {}
         const r = findNearestHour(weatherData && weatherData.hours || []);
         renderNow(rootEl, r.hour);
@@ -3425,6 +3429,7 @@ async function loadWeather(rootEl, state, forceRefresh, instance = null) {
           if (_mEl) _mEl.style.display = "";
         }
       }
+      if (layoutMode !== "vertical") renderProfileSwitcher(rootEl, owner);
     });
     owner.lastWeatherFetchTime = Date.now();
   } catch (err) {
@@ -5318,7 +5323,7 @@ export function mountWeather(rootEl, storeApi, options = {}) {
         activeProfile = nextProfile;
         currentMode = nextRange;
         if (nextMode !== undefined) hourlyMode = nextMode;
-        if (weatherData?.hours && (modeChanged || rangeChanged || !profileChanged)) {
+        if (weatherData?.hours && (modeChanged || rangeChanged || profileChanged)) {
           renderPlatformLayout(rootEl, instance);
         }
       });

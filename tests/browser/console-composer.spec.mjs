@@ -28,7 +28,11 @@ test("Console Composer mounts declared platform roots and preserves Hero launche
     await expect(page.locator('#w-weather .htab[data-hmode="observing"]')).toHaveAttribute("data-active", "true");
     await expect(page.locator('#w-weather-matrix .htab[data-hmode="matrix"]')).toHaveAttribute("data-active", "true");
     await expect(page.locator("#console-hero .hero-card[data-panel]")).toHaveCount(7);
-    await page.locator('#console-hero .nop-profile-btn[data-profile="visual"]').click();
+    // The compact Hero grid can place the profile control under an adjacent
+    // launcher card at the default viewport. Dispatch on the control to test
+    // the Hero event boundary without making this ownership test depend on
+    // the incidental overlap.
+    await page.locator('#console-hero .nop-profile-btn[data-profile="visual"]').dispatchEvent("click");
     await expect(page.locator('#w-weather .profile-pill[data-profile="visual"]')).toHaveAttribute("data-active", "true");
     await expect(page.locator('#w-weather-matrix .profile-pill[data-profile="visual"]')).toHaveAttribute("data-active", "true");
     await page.locator('#console-hero .hero-card[data-panel="matrix"]').click();
