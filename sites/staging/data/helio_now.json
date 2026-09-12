@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-12T20:22:11Z",
+  "updated_utc": "2026-09-12T22:54:05Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -15,13 +15,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 1.33,
-    "kp_time_utc": "2026-09-12T15:00:00Z",
+    "kp_latest": 1.0,
+    "kp_time_utc": "2026-09-12T18:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-09-12T21:00:00Z",
-        "kp": 2.33
-      },
       {
         "t_utc": "2026-09-13T00:00:00Z",
         "kp": 2.33
@@ -93,10 +89,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-09-11T21:00:00Z",
-        "kp": 2.0
-      },
-      {
         "t_utc": "2026-09-12T00:00:00Z",
         "kp": 1.33
       },
@@ -119,22 +111,18 @@
       {
         "t_utc": "2026-09-12T15:00:00Z",
         "kp": 1.33
+      },
+      {
+        "t_utc": "2026-09-12T18:00:00Z",
+        "kp": 1.0
       }
     ],
-    "xray_flux_wm2": 4.118644483241951e-07,
+    "xray_flux_wm2": 3.6181342011332163e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-09-11T20:00:00Z",
-        "flux": 3.6670950816482514e-07
-      },
-      {
-        "t_utc": "2026-09-11T21:00:00Z",
-        "flux": 3.9914963676275907e-07
-      },
-      {
         "t_utc": "2026-09-11T22:00:00Z",
-        "flux": 5.461866244254683e-07
+        "flux": 5.991474608890712e-07
       },
       {
         "t_utc": "2026-09-11T23:00:00Z",
@@ -222,7 +210,15 @@
       },
       {
         "t_utc": "2026-09-12T20:00:00Z",
-        "flux": 4.0901861995591486e-07
+        "flux": 4.1969053086177157e-07
+      },
+      {
+        "t_utc": "2026-09-12T21:00:00Z",
+        "flux": 3.816022314140355e-07
+      },
+      {
+        "t_utc": "2026-09-12T22:00:00Z",
+        "flux": 3.715875473805069e-07
       }
     ],
     "solar_wind_kms": null,
@@ -240,7 +236,7 @@
     "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 1.33,
+    "kp": 1.0,
     "status_label": "Quiet",
     "scales": {
       "g": "G0",
@@ -255,9 +251,9 @@
     "s_scale": "S0"
   },
   "forecast": {
-    "kp_max_next_24h": 2.67,
-    "kp_max_at_utc": "2026-09-13T18:00:00Z",
-    "trend": "steady"
+    "kp_max_next_24h": 3.33,
+    "kp_max_at_utc": "2026-09-13T21:00:00Z",
+    "trend": "rising"
   },
   "aurora_hint": {
     "aurora_possible": false,
@@ -317,7 +313,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3742\r\nIssue Time: 2026 Sep 12 0645 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3741\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 7008 pfu\nMax time: 2026 Sep 11 1355 UTC",
-      "relevance": 0.3244,
+      "relevance": 0.3103,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-12T06"
     },
     {
@@ -332,23 +328,23 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3741\r\nIssue Time: 2026 Sep 11 0501 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3740\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 1391 pfu\nMax time: 2026 Sep 11 0455 UTC",
-      "relevance": 0.1815,
+      "relevance": 0.1674,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-11T00"
     },
     {
-      "t_utc": "2026-09-09T21:01:32Z",
-      "kind": "geomagnetic_watch",
-      "domain": "G",
-      "severity": 2,
-      "severity_label": "moderate",
-      "level": "watch",
-      "title": "Geomagnetic storm watch",
-      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
-      "source_code": "WATA30",
-      "raw_title": "CANCEL WATCH: Geomagnetic Storm Category G2 Predicted",
-      "raw_body": "Space Weather Message Code: WATA30\r\nSerial Number: 282\r\nIssue Time: 2026 Sep 09 2101 UTC\r\n\r\nCANCEL WATCH: Geomagnetic Storm Category G2 Predicted \nCancel Serial Number: 281\nOriginal Issue Time: 2026 Sep 08 1702 UTC\nCancelled Level Predicted:\nSep 08  : None (Bellow G1)  Sep 09  : None (Bellow G1)  Sep 10  : None (Bellow G1)  \nConditions no longer warrant watch criteria.\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 55 degrees Geomagnetic Latitude.\r\nInduced Currents - Power grid fluctuations can occur. High-latitude power systems may experience voltage alarms.\r\nSpacecraft - Satellite orientation irregularities may occur; increased drag on low Earth-orbit satellites is possible.\r\nRadio - HF (high frequency) radio propagation can fade at higher latitudes.\r\nAurora - Aurora may be seen as low as New York to Wisconsin to Washington state.",
-      "relevance": 0.153,
-      "dedupe_key": "geomagnetic_watch|G|2|watch|2026-09-09T18"
+      "t_utc": "2026-09-10T13:06:18Z",
+      "kind": "space_weather_info",
+      "domain": "info",
+      "severity": null,
+      "severity_label": null,
+      "level": "warning",
+      "title": "Space weather update",
+      "summary_short": "General space weather information update.",
+      "source_code": "ALTEF3",
+      "raw_title": "ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
+      "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3739\r\nIssue Time: 2026 Sep 10 1306 UTC\r\n\r\nALERT: Electron 2MeV Integral Flux exceeded 1,000pfu \nThreshold Reached: 2026 Sep 10 1304 UTC\nStation: GOES-19\nComment: Yesterday's max: 1037 pfu",
+      "relevance": 0.0789,
+      "dedupe_key": "space_weather_info|info|na|warning|2026-09-10T12"
     }
   ],
   "alerts_all": [
@@ -364,7 +360,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3742\r\nIssue Time: 2026 Sep 12 0645 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3741\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 7008 pfu\nMax time: 2026 Sep 11 1355 UTC",
-      "relevance": 0.3244,
+      "relevance": 0.3103,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-12T06"
     },
     {
@@ -379,7 +375,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3741\r\nIssue Time: 2026 Sep 11 0501 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3740\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 1391 pfu\nMax time: 2026 Sep 11 0455 UTC",
-      "relevance": 0.1815,
+      "relevance": 0.1674,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-11T00"
     },
     {
@@ -394,56 +390,11 @@
       "source_code": "ALTEF3",
       "raw_title": "ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3739\r\nIssue Time: 2026 Sep 10 1306 UTC\r\n\r\nALERT: Electron 2MeV Integral Flux exceeded 1,000pfu \nThreshold Reached: 2026 Sep 10 1304 UTC\nStation: GOES-19\nComment: Yesterday's max: 1037 pfu",
-      "relevance": 0.093,
+      "relevance": 0.0789,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-10T12"
-    },
-    {
-      "t_utc": "2026-09-09T21:01:32Z",
-      "kind": "geomagnetic_watch",
-      "domain": "G",
-      "severity": 2,
-      "severity_label": "moderate",
-      "level": "watch",
-      "title": "Geomagnetic storm watch",
-      "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
-      "source_code": "WATA30",
-      "raw_title": "CANCEL WATCH: Geomagnetic Storm Category G2 Predicted",
-      "raw_body": "Space Weather Message Code: WATA30\r\nSerial Number: 282\r\nIssue Time: 2026 Sep 09 2101 UTC\r\n\r\nCANCEL WATCH: Geomagnetic Storm Category G2 Predicted \nCancel Serial Number: 281\nOriginal Issue Time: 2026 Sep 08 1702 UTC\nCancelled Level Predicted:\nSep 08  : None (Bellow G1)  Sep 09  : None (Bellow G1)  Sep 10  : None (Bellow G1)  \nConditions no longer warrant watch criteria.\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 55 degrees Geomagnetic Latitude.\r\nInduced Currents - Power grid fluctuations can occur. High-latitude power systems may experience voltage alarms.\r\nSpacecraft - Satellite orientation irregularities may occur; increased drag on low Earth-orbit satellites is possible.\r\nRadio - HF (high frequency) radio propagation can fade at higher latitudes.\r\nAurora - Aurora may be seen as low as New York to Wisconsin to Washington state.",
-      "relevance": 0.153,
-      "dedupe_key": "geomagnetic_watch|G|2|watch|2026-09-09T18"
     }
   ],
   "timeline": [
-    {
-      "event_time": "2026-09-09T21:01:32Z",
-      "event_type": "geomagnetic_watch",
-      "event_title": "Geomagnetic storm watch",
-      "level": "watch",
-      "severity_label": "moderate",
-      "description": "Geomagnetic conditions may intensify in the next forecast window.\nSpace Weather Message Code: WATA30\r\nSerial Number: 282\r\nIssue Time: 2026 Sep 09 2101 UTC\r\n\r\nCANCEL WATCH: Geomagnetic Storm Category G2 Predicted \nCancel Serial Number: 281\nOriginal Issue Time: 2026 Sep 08 1702 UTC\nCancelled Level Predicted:\nSep 08  : None (Bellow G1)  Sep 09  : None (Bellow G1)  Se…",
-      "source": "NOAA_SWPC",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "source_code": "WATA30",
-        "severity": 2
-      }
-    },
-    {
-      "event_time": "2026-09-09T21:45:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 510 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 510 km/s\nHalf-angle: 36.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 510.0,
-        "half_angle": 36.0
-      }
-    },
     {
       "event_time": "2026-09-10T05:24:00Z",
       "event_type": "cme_launch",
@@ -707,7 +658,7 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 1.3"
+        "Kp 1.0"
       ]
     }
   },
