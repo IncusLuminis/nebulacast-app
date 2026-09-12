@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-12T15:17:23Z",
+  "updated_utc": "2026-09-12T20:22:11Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -15,13 +15,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 2.0,
-    "kp_time_utc": "2026-09-12T12:00:00Z",
+    "kp_latest": 1.33,
+    "kp_time_utc": "2026-09-12T15:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-09-12T18:00:00Z",
-        "kp": 2.0
-      },
       {
         "t_utc": "2026-09-12T21:00:00Z",
         "kp": 2.33
@@ -97,10 +93,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-09-11T18:00:00Z",
-        "kp": 1.0
-      },
-      {
         "t_utc": "2026-09-11T21:00:00Z",
         "kp": 2.0
       },
@@ -123,34 +115,18 @@
       {
         "t_utc": "2026-09-12T12:00:00Z",
         "kp": 2.0
+      },
+      {
+        "t_utc": "2026-09-12T15:00:00Z",
+        "kp": 1.33
       }
     ],
-    "xray_flux_wm2": 3.141487354696437e-07,
+    "xray_flux_wm2": 4.118644483241951e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-09-11T15:00:00Z",
-        "flux": 3.458406569377205e-07
-      },
-      {
-        "t_utc": "2026-09-11T16:00:00Z",
-        "flux": 3.473194719087284e-07
-      },
-      {
-        "t_utc": "2026-09-11T17:00:00Z",
-        "flux": 3.455982759229907e-07
-      },
-      {
-        "t_utc": "2026-09-11T18:00:00Z",
-        "flux": 3.593625739502689e-07
-      },
-      {
-        "t_utc": "2026-09-11T19:00:00Z",
-        "flux": 3.62124422300288e-07
-      },
-      {
         "t_utc": "2026-09-11T20:00:00Z",
-        "flux": 3.6592579419902906e-07
+        "flux": 3.6670950816482514e-07
       },
       {
         "t_utc": "2026-09-11T21:00:00Z",
@@ -226,7 +202,27 @@
       },
       {
         "t_utc": "2026-09-12T15:00:00Z",
-        "flux": 3.1481874884775607e-07
+        "flux": 3.1480458015190983e-07
+      },
+      {
+        "t_utc": "2026-09-12T16:00:00Z",
+        "flux": 5.566859878551137e-07
+      },
+      {
+        "t_utc": "2026-09-12T17:00:00Z",
+        "flux": 1.2465488945660278e-06
+      },
+      {
+        "t_utc": "2026-09-12T18:00:00Z",
+        "flux": 5.786891586960034e-07
+      },
+      {
+        "t_utc": "2026-09-12T19:00:00Z",
+        "flux": 4.5723901678229593e-07
+      },
+      {
+        "t_utc": "2026-09-12T20:00:00Z",
+        "flux": 4.0901861995591486e-07
       }
     ],
     "solar_wind_kms": null,
@@ -244,7 +240,7 @@
     "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 2.0,
+    "kp": 1.33,
     "status_label": "Quiet",
     "scales": {
       "g": "G0",
@@ -259,8 +255,8 @@
     "s_scale": "S0"
   },
   "forecast": {
-    "kp_max_next_24h": 2.33,
-    "kp_max_at_utc": "2026-09-12T21:00:00Z",
+    "kp_max_next_24h": 2.67,
+    "kp_max_at_utc": "2026-09-13T18:00:00Z",
     "trend": "steady"
   },
   "aurora_hint": {
@@ -321,7 +317,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3742\r\nIssue Time: 2026 Sep 12 0645 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3741\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 7008 pfu\nMax time: 2026 Sep 11 1355 UTC",
-      "relevance": 0.3526,
+      "relevance": 0.3244,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-12T06"
     },
     {
@@ -336,7 +332,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3741\r\nIssue Time: 2026 Sep 11 0501 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3740\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 1391 pfu\nMax time: 2026 Sep 11 0455 UTC",
-      "relevance": 0.2097,
+      "relevance": 0.1815,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-11T00"
     },
     {
@@ -368,7 +364,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3742\r\nIssue Time: 2026 Sep 12 0645 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3741\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 7008 pfu\nMax time: 2026 Sep 11 1355 UTC",
-      "relevance": 0.3526,
+      "relevance": 0.3244,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-12T06"
     },
     {
@@ -383,7 +379,7 @@
       "source_code": "ALTEF3",
       "raw_title": "CONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3741\r\nIssue Time: 2026 Sep 11 0501 UTC\r\n\r\nCONTINUED ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu\nContinuation of Serial Number: 3740\nBegin Time: 2026 Sep 10 1304 UTC\n\nYesterday Maximum 2MeV Flux: 1391 pfu\nMax time: 2026 Sep 11 0455 UTC",
-      "relevance": 0.2097,
+      "relevance": 0.1815,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-11T00"
     },
     {
@@ -398,7 +394,7 @@
       "source_code": "ALTEF3",
       "raw_title": "ALERT: Electron 2MeV Integral Flux exceeded 1,000pfu",
       "raw_body": "Space Weather Message Code: ALTEF3\r\nSerial Number: 3739\r\nIssue Time: 2026 Sep 10 1306 UTC\r\n\r\nALERT: Electron 2MeV Integral Flux exceeded 1,000pfu \nThreshold Reached: 2026 Sep 10 1304 UTC\nStation: GOES-19\nComment: Yesterday's max: 1037 pfu",
-      "relevance": 0.1212,
+      "relevance": 0.093,
       "dedupe_key": "space_weather_info|info|na|warning|2026-09-10T12"
     },
     {
@@ -418,36 +414,6 @@
     }
   ],
   "timeline": [
-    {
-      "event_time": "2026-09-09T16:00:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 282 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 282 km/s\nHalf-angle: 35.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 282.0,
-        "half_angle": 35.0
-      }
-    },
-    {
-      "event_time": "2026-09-09T16:09:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 228 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 228 km/s\nHalf-angle: 44.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 228.0,
-        "half_angle": 44.0
-      }
-    },
     {
       "event_time": "2026-09-09T21:01:32Z",
       "event_type": "geomagnetic_watch",
@@ -672,6 +638,21 @@
       }
     },
     {
+      "event_time": "2026-09-12T01:26:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 268 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 268 km/s\nHalf-angle: 10.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 268.0,
+        "half_angle": 10.0
+      }
+    },
+    {
       "event_time": "2026-09-12T06:45:35Z",
       "event_type": "space_weather_info",
       "event_title": "Space weather update",
@@ -683,6 +664,21 @@
       "is_future": false,
       "metadata": {
         "source_code": "ALTEF3"
+      }
+    },
+    {
+      "event_time": "2026-09-12T08:38:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 337 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 337 km/s\nHalf-angle: 13.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 337.0,
+        "half_angle": 13.0
       }
     }
   ],
@@ -711,7 +707,7 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 2.0"
+        "Kp 1.3"
       ]
     }
   },
