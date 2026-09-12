@@ -9,16 +9,18 @@ let mapInitialized = false;
 /**
  * Mount map widget
  */
-export function mountMap(rootEl, storeApi) {
+export function mountMap(rootEl, storeApi, config = {}) {
   let disposed = false;
   const state = storeApi.getState();
+  const mapUrl = typeof config.mapUrl === "string" && config.mapUrl
+    ? config.mapUrl
+    : "./map-poc.html";
   
   // Create iframe to load map-poc.html
   rootEl.innerHTML = `
     <div class="widget-map-container">
       <iframe 
         id="mapIframe" 
-        src="./map-poc.html" 
         class="widget-map-iframe"
         title="Weather Map"
       ></iframe>
@@ -26,6 +28,7 @@ export function mountMap(rootEl, storeApi) {
   `;
   
   mapIframe = rootEl.querySelector("#mapIframe");
+  mapIframe?.setAttribute("src", mapUrl);
   
   // Wait for iframe to load, then send initial location
   const onLoad = function() {

@@ -172,3 +172,14 @@ test("weather map entrypoint and compatibility routes preserve the supported pat
   assert.match(standalone, /src="\/weather\/map-poc\.html"/);
   assert.doesNotMatch(standalone, /map1\.html|map2\.js/);
 });
+
+test("Map adapter accepts an explicit compatibility URL for a Runtime-owned host", async t => {
+  const globals = installMapGlobals(createMapWindow());
+  t.after(() => globals.restore());
+  const context = createMapContext({ observer: { name: "Warsaw", lat: 52.2297, lon: 21.0122 } });
+  const root = createMapRoot("dashboard-map");
+  const runtime = createMapRuntime(context);
+  const instance = await runtime.mount(root, { widget: "map", config: { mapUrl: "/weather/map-poc.html" } });
+  assert.equal(root.getIframe().getAttribute("src"), "/weather/map-poc.html");
+  instance.destroy();
+});

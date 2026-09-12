@@ -50,6 +50,10 @@ const slots = [
   { id: "dashboard-space-weather", selector: "#dbp-helio-body", widget: "space-weather", config: {
     orientation: "horizontal",
   } },
+  { id: "dashboard-map", selector: "#db-map-root", widget: "map", config: {
+    orientation: "horizontal",
+    mapUrl: "/weather/map-poc.html",
+  } },
 ];
 
 export const consoleConfig = Object.freeze({

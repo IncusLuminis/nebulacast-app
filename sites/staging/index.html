@@ -1326,6 +1326,12 @@
     .db-anchor-frame, .db-anchor-iframe {
       flex: 1; min-height: 0; width: 100%; border: none; display: block;
     }
+    .db-anchor-frame[data-nc-widget="map"] .widget-map-container {
+      width: 100%; height: 100%; min-height: 0; border: none; border-radius: 0;
+    }
+    .db-anchor-frame[data-nc-widget="map"] .widget-map-iframe {
+      width: 100%; height: 100%; min-height: 0;
+    }
   </style>
 </head>
 <body>
@@ -1508,7 +1514,7 @@
           <div class="db-anchor-frame" id="db-sky-root" data-nc-shape="square" aria-label="Sky view"></div>
         </div>
         <div class="db-anchor" id="db-anchor-map">
-          <iframe class="db-anchor-iframe" id="db-map-iframe" src="" frameborder="0" title="Weather Map" loading="lazy"></iframe>
+          <div class="db-anchor-frame" id="db-map-root" data-nc-shape="oriented" aria-label="Weather Map"></div>
         </div>
       </div>
 
@@ -3217,7 +3223,6 @@
     // Activate matrix tab last so it always overrides any observing activation
     if (matrixOpen) _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     _dbSyncHeroActive();
-    _dbInitAnchors();
   }
 
   // Close buttons inside subpanels
@@ -3266,48 +3271,7 @@
     body.innerHTML = winHtml + `<div class="dbp-nqi-grid">${cards}</div>`;
   }
 
-  // ── Dashboard Map iframe init ──
-  const _DB_ANCHOR_CSS = `
-    /* hide Map labels/controls — the component fills its compatibility iframe */
-    .map-tip { display: none !important; }
-
-    /* base: no margins/padding/scroll */
-    html, body { height: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; box-sizing: border-box !important; }
-
-    /* Map: map fills everything */
-    .page-wrap { box-sizing: border-box !important; height: 100% !important; width: 100% !important; display: flex !important; flex-direction: column !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
-    .card { flex: 1 !important; min-height: 0 !important; width: 100% !important; display: flex !important; flex-direction: column !important; padding: 0 !important; margin: 0 !important; border: none !important; border-radius: 0 !important; box-sizing: border-box !important; }
-    .map-wrapper { flex: 1 !important; min-height: 0 !important; width: 100% !important; border: none !important; border-radius: 0 !important; position: relative !important; }
-    #map { position: absolute !important; inset: 0 !important; height: 100% !important; width: 100% !important; border-radius: 0 !important; }
-  `;
-
-  function _dbInjectAnchorCss(iframe) {
-    try {
-      const doc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (!doc) return;
-      const s = doc.createElement('style');
-      s.textContent = _DB_ANCHOR_CSS;
-      doc.head.appendChild(s);
-    } catch (_) {}
-  }
-
-  let _dbAnchorsInited = false;
-  function _dbInitAnchors() {
-    if (_dbAnchorsInited) return;
-    _dbAnchorsInited = true;
-    const mapIframe = document.getElementById('db-map-iframe');
-    if (mapIframe && !mapIframe.getAttribute('src')) {
-      mapIframe.addEventListener('load', () => {
-        _dbInjectAnchorCss(mapIframe);
-        const loc = typeof getState === 'function' ? getState()?.location : null;
-        if (loc && mapIframe.contentWindow) {
-          mapIframe.contentWindow.postMessage({ type: 'update-location', location: loc }, '*');
-        }
-      });
-      mapIframe.src = '/weather/map-poc.html';
-    }
-  }
-
+  // ── Dashboard anchor styling is owned by the Runtime adapters ──
   // ══════════════════════════════════════════════════════════
   //  CONTROL BAR — TIME PLAYER
   // ══════════════════════════════════════════════════════════
@@ -3382,13 +3346,7 @@
       // Dashboard Sky receives observer/time changes through Platform Context.
       // Keep the direct instance available for explicit resize/update callers.
       try { consoleComposer.getInstance('dashboard-sky')?.update?.({ lat: s.location.lat, lon: s.location.lon }); } catch (_) {}
-      // Dashboard map iframe: send postMessage (same pattern as #mapIframe subscriber)
-      try {
-        const _mapIf = document.getElementById('db-map-iframe');
-        if (_mapIf?.contentWindow && _mapIf.src) {
-          _mapIf.contentWindow.postMessage({ type: 'update-location', location: s.location }, '*');
-        }
-      } catch (_) {}
+      // Dashboard Map receives observer changes through its Runtime adapter.
     }, 500));
   }
 

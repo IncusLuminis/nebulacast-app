@@ -20,6 +20,7 @@ const expectedSlots = [
   ["news", "#nrw-main", "news"],
   ["sidebar-news", "#fs-news", "news"],
   ["dashboard-space-weather", "#dbp-helio-body", "space-weather"],
+  ["dashboard-map", "#db-map-root", "map"],
 ];
 
 test("Console config declares the platform-managed roots and preserves configs", () => {
@@ -30,6 +31,7 @@ test("Console config declares the platform-managed roots and preserves configs",
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-events").config.maxItems, 8);
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-news").config.parseMax, 300);
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-space-weather").config, { orientation: "horizontal" });
+  assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-map").config, { orientation: "horizontal", mapUrl: "/weather/map-poc.html" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-sky").config, { orientation: "horizontal" });
 });
 
@@ -81,6 +83,8 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.match(indexSource, /id="db-sky-root"[^>]*data-nc-shape="square"/);
   assert.match(indexSource, /consoleComposer\.getInstance\('dashboard-sky'\)\?\.update/);
   assert.match(indexSource, /consoleComposer\.getInstance\('dashboard-sky'\)\?\.resize/);
+  assert.doesNotMatch(indexSource, /db-map-iframe|Dashboard map iframe|mapIframe\.contentWindow/);
+  assert.match(indexSource, /id="db-map-root"[^>]*data-nc-shape="oriented"/);
   assert.match(indexSource, /function getConsoleSkyFilters\(\)/);
   assert.match(indexSource, /slot\.id === 'sky'[\s\S]*getConsoleSkyFilters\(\)/);
   assert.match(indexSource, /let _stormTab = 'G';/);

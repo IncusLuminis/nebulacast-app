@@ -208,18 +208,18 @@
           "current_owner": "sites/staging/index.html inline renderer _dbRenderSolar"
         },
         {
-          "id": "dashboard-map-iframe",
+          "id": "dashboard-map",
           "label": "Weather Map anchor",
           "registry_type": "map",
           "registry_registered": true,
-          "root_or_slot": {"slot": null, "root": "#db-map-iframe"},
-          "platform_context": "Not passed to the compatibility iframe; migration must use shared Platform Context.",
-          "authoritative_source": "sites/staging/weather/map-poc.html",
+          "root_or_slot": {"slot": "dashboard-map", "root": "#db-map-root"},
+          "platform_context": "Console Composer mounts the registered Map adapter with the shared Platform Context; the legacy POC remains inside the adapter.",
+          "authoritative_source": "sites/staging/weather/widgets/map/platform-adapter.mjs",
           "compatibility_route": ["/map/"],
-          "classification": "temporary_adapter",
+          "classification": "runtime_widget",
           "target_classification": "runtime_widget",
           "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
-          "current_owner": "sites/staging/index.html iframe anchor"
+          "current_owner": "sites/staging/console/console-composer.mjs via dashboard-map slot"
         }
       ]
     },
