@@ -24,7 +24,7 @@ python3 scripts/validate_widget_inventory.py
 
 | Route | Host root/source | Visible data and visualization surfaces | Current boundary | Target boundary |
 |---|---|---|---|---|
-| `/` Dashboard | `.console-root` · `sites/staging/index.html` | Hero `#console-hero`; Location `#w-location`; Weather `#w-weather`; Forecast Matrix `#w-weather-matrix`; Sun & Moon `#w-sunmoon-panel`; Sky `#db-sky-root`; Alerts `#fs-sky`; Events `#nrc-main`; News `#nrw-main`; observing window `#dbp-window-body`; Space Weather `#dbp-helio-body`; Solar Activity `#dbp-solar-body`; Map `#db-map-root` | Composer widgets are Runtime-backed, including dashboard Weather, Forecast Matrix, Sky, Space Weather, Map, and Best observing window slots. Weather instances own their internal observing/matrix modes and receive profile/range updates through Runtime APIs. The observing-window widget owns its root and loads observer weather plus Sun/Moon data through Platform Context. Map still uses the legacy POC iframe inside its adapter; inline solar renderer remains a temporary adapter. | All data/visualization surfaces become independent Runtime instances; Console keeps shell and empty roots. |
+| `/` Dashboard | `.console-root` · `sites/staging/index.html` | Hero `#console-hero`; Location `#w-location`; Weather `#w-weather`; Forecast Matrix `#w-weather-matrix`; Sun & Moon `#w-sunmoon-panel`; Sky `#db-sky-root`; Alerts `#fs-sky`; Events `#nrc-main`; News `#nrw-main`; observing window `#dbp-window-body`; Space Weather `#dbp-helio-body`; Solar Activity `#dbp-solar-body`; Map `#db-map-root` | Composer widgets are Runtime-backed, including dashboard Weather, Forecast Matrix, Sky, Space Weather, Map, and Best observing window slots. Weather instances own their internal observing/matrix modes and receive profile/range updates through Runtime APIs. The observing-window widget owns its root and loads observer weather plus Sun/Moon data through Platform Context. Map still uses the legacy POC iframe inside its adapter; inline solar renderer remains a temporary adapter. The Solar Activity v1 contract is recorded in [`Solar Activity Widget Contract v1`](../Helio/Solar%20Activity%20Widget%20Contract%20v1.md); no registry or implementation change is made here. | All data/visualization surfaces become independent Runtime instances; Console keeps shell and empty roots. |
 | `/weather/` Weather | `.page-wrap` · `sites/staging/weather/index.html` | Location `#w-location`; Weather `#w-weather`; Sun & Moon `#w-sun`; Astro `#w-astro`; Sky `#skyMount`; Map `#w-map` | Direct legacy mounts and Sky global bootstrap are temporary adapters. Tabs remain host shell. | One Runtime composition using shared Platform Context; Sky stays square-only. |
 | `/sky/` Sky | `.sky-page` · `sites/staging/sky/index.html` | Sky chart `#skyMount`; player `#skyPlayer` | Sky chart uses the documented legacy bootstrap; player is host-owned control. | Direct Runtime Sky instance in a square root; legacy bootstrap remains compatibility-only. |
 | `/helio/` Space Weather | `.page-shell` · `sites/staging/helio/index.html` | Space Weather `#w-helio`; diagnostics `.page-diag` | The independent `space-weather` type is registered and its Runtime adapter consumes Platform Context; the current page remains a legacy global compatibility host. Diagnostics are host shell. | A later composition story mounts the registered widget directly and retires the page-global path. |
@@ -45,3 +45,13 @@ The complete per-surface fields, including exact source paths and compatibility 
 ## Non-duplication boundary
 
 This descriptor references the existing Registry and the authoritative paths in `WIDGET_INVENTORY.json`. It does not define loaders, schemas, mount functions, or a second catalog. Future migration stories must update the descriptor and its checks when a surface changes classification, while continuing to update the inventory only when ownership paths change.
+
+## Solar Activity contract-first note
+
+[`Solar Activity Widget Contract v1`](../Helio/Solar%20Activity%20Widget%20Contract%20v1.md)
+defines the future `solar-activity` type, its horizontal/vertical layout, the
+three-column X-Ray/Solar Activity/Solar Wind presentation, and the canonical
+`helio_now/v1` timeline fields. The descriptor intentionally continues to
+record `#dbp-solar-body` as a `temporary_adapter` owned by
+`_dbRenderSolar`. Registration, Runtime implementation, and removal of the
+inline renderer are deferred to the next implementation step.

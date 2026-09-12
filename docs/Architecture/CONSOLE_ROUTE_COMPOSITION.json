@@ -199,13 +199,15 @@
           "registry_type": "space-weather",
           "registry_registered": false,
           "root_or_slot": {"slot": null, "root": "#dbp-solar-body"},
-          "platform_context": "Not passed to the inline dashboard renderer; A2 must define the widget context boundary.",
+          "platform_context": "Contract-first only: the future solar-activity Runtime will consume the existing helio_now/v1 dataset; no observer or time context is required in v1.",
           "authoritative_source": "sites/staging/helio/dist/helio.widget.js",
           "compatibility_route": ["/helio/"],
           "classification": "temporary_adapter",
           "target_classification": "runtime_widget",
           "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
-          "current_owner": "sites/staging/index.html inline renderer _dbRenderSolar"
+          "current_owner": "sites/staging/index.html inline renderer _dbRenderSolar",
+          "contract_reference": "docs/Helio/Solar Activity Widget Contract v1.md",
+          "migration_note": "Contract recorded only; do not register solar-activity or remove _dbRenderSolar in this step."
         },
         {
           "id": "dashboard-map",
