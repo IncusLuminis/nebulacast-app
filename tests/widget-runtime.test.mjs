@@ -16,7 +16,7 @@ function createRuntime(definitions) {
 
 test("catalog exposes Phase 1 platform adapter definitions", async () => {
   const catalogTypes = widgetCatalog.map(definition => definition.type);
-  assert.deepEqual(catalogTypes, ["hero", "astro", "sun-moon", "weather", "map", "location", "sky", "news", "events", "alerts", "space-weather"]);
+  assert.deepEqual(catalogTypes, ["hero", "astro", "sun-moon", "weather", "observing-window", "map", "location", "sky", "news", "events", "alerts", "space-weather"]);
   assert.equal(catalogTypes.filter(type => type === "hero").length, 1);
   const hero = widgetCatalog.find(definition => definition.type === "hero");
   assert.equal(typeof hero.loader, "function");
@@ -32,6 +32,11 @@ test("catalog exposes Phase 1 platform adapter definitions", async () => {
     multiInstance: true,
     embed: true,
   });
+  const observingWindow = widgetCatalog.find(definition => definition.type === "observing-window");
+  assert.deepEqual(observingWindow.defaults, { orientation: "horizontal", theme: "inherit", density: "normal" });
+  assert.deepEqual(observingWindow.capabilities, { observerAware: true, timeAware: true, multiInstance: true, embed: false });
+  assert.deepEqual(observingWindow.supportedOptions.orientation, ["horizontal", "vertical"]);
+  assert.equal(typeof (await observingWindow.loader()).mount, "function");
   const map = widgetCatalog.find(definition => definition.type === "map");
   assert.ok(map);
   assert.deepEqual(map.capabilities, {

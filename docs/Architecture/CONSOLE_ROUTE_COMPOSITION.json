@@ -168,16 +168,16 @@
         {
           "id": "dashboard-observing-window",
           "label": "Best observing window",
-          "registry_type": "weather",
+          "registry_type": "observing-window",
           "registry_registered": true,
-          "root_or_slot": {"slot": null, "root": "#dbp-window-body"},
-          "platform_context": "Reads dashboard-owned weather snapshot; not a Runtime mount.",
-          "authoritative_source": "sites/staging/index.html",
+          "root_or_slot": {"slot": "dashboard-observing-window", "root": "#dbp-window-body"},
+          "platform_context": "Console Composer mounts the registered observing-window Runtime adapter with the shared Platform Context; the widget loads observer weather and Sun/Moon data in its own root.",
+          "authoritative_source": "sites/staging/weather/widgets/observing-window/observing-window.js",
           "compatibility_route": ["/weather/"],
-          "classification": "temporary_adapter",
+          "classification": "runtime_widget",
           "target_classification": "runtime_widget",
           "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
-          "current_owner": "sites/staging/index.html inline renderer _dbRenderWindow"
+          "current_owner": "sites/staging/console/console-composer.mjs via dashboard-observing-window slot"
         },
         {
           "id": "dashboard-space-weather",

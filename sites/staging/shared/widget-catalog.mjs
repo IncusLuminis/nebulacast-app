@@ -16,6 +16,11 @@ const WEATHER_SUPPORTED_OPTIONS = Object.freeze({
   profile: Object.freeze(["balanced", "visual", "broadband", "planetary"]),
   range: Object.freeze(["today", "48h", "7d"]),
 });
+const OBSERVING_WINDOW_SUPPORTED_OPTIONS = Object.freeze({
+  orientation: Object.freeze(["horizontal", "vertical"]),
+  theme: Object.freeze(["inherit", "auto", "dark", "light"]),
+  density: Object.freeze(["compact", "normal", "comfortable"]),
+});
 const ASTRO_SUPPORTED_OPTIONS = Object.freeze({
   ...COMMON_SUPPORTED_OPTIONS,
   profile: Object.freeze(["default", "visual", "broadband", "planetary"]),
@@ -81,6 +86,19 @@ export const widgetCatalog = Object.freeze([
       embed: true,
     }),
     loader: () => import("../weather/widgets/weather/platform-adapter.mjs"),
+  }),
+  Object.freeze({
+    type: "observing-window",
+    version: 1,
+    ...galleryMetadata("Best observing window", "Tonight's best observing interval with hourly sky-quality drivers.", OBSERVING_WINDOW_SUPPORTED_OPTIONS, false),
+    defaults: Object.freeze({ orientation: "horizontal", theme: "inherit", density: "normal" }),
+    capabilities: Object.freeze({
+      observerAware: true,
+      timeAware: true,
+      multiInstance: true,
+      embed: false,
+    }),
+    loader: () => import("../weather/widgets/observing-window/platform-adapter.mjs"),
   }),
   Object.freeze({
     type: "map",

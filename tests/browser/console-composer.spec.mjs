@@ -6,7 +6,7 @@ test("Console Composer mounts declared platform roots and preserves Hero launche
   page.on("pageerror", error => diagnostics.push(`pageerror: ${error.message}`));
   await page.goto("/", { waitUntil: "domcontentloaded" });
   try {
-    for (const selector of ["#console-hero", "#w-location", "#w-weather", "#w-weather-matrix", "#w-sun", "#w-sunmoon-panel", "#skyMount", "#db-sky-root", "#fs-sky", "#nrc-main", "#nrw-main", "#dbp-helio-body", "#db-map-root"]) {
+    for (const selector of ["#console-hero", "#w-location", "#w-weather", "#w-weather-matrix", "#w-sun", "#w-sunmoon-panel", "#skyMount", "#db-sky-root", "#fs-sky", "#nrc-main", "#nrw-main", "#dbp-helio-body", "#dbp-window-body", "#db-map-root"]) {
       await expect(page.locator(selector)).toHaveAttribute("data-nc-widget", /.+/, { timeout: 15_000 });
     }
     await expect(page.locator("#console-hero")).toHaveAttribute("data-nc-widget", "hero");
@@ -22,6 +22,7 @@ test("Console Composer mounts declared platform roots and preserves Hero launche
     expect(square.width).toBeGreaterThan(0);
     expect(square.width).toBe(square.height);
     await expect(page.locator("#dbp-helio-body")).toHaveAttribute("data-nc-widget", "space-weather");
+    await expect(page.locator("#dbp-window-body")).toHaveAttribute("data-nc-widget", "observing-window");
     await expect(page.locator("#db-map-root")).toHaveAttribute("data-nc-widget", "map");
     await expect(page.locator("#db-map-root iframe")).toHaveAttribute("src", "/weather/map-poc.html");
     await expect(page.locator("#console-hero .hero-card[data-panel]")).toHaveCount(7);

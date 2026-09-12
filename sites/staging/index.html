@@ -2253,9 +2253,6 @@
   let heroInstance = null;
   let heroDataSnapshot = null;
   let _helioData = null;
-  let _nopNightHours = [];
-  let _nopBestWindow = null;
-  let _nopActiveMetric = 'moon';
   let _stormTab = 'G';
   function mountConsoleComposer() {
     return consoleComposer.mount().then(snapshot => {
@@ -2268,10 +2265,7 @@
   heroRoot?.addEventListener('nc:hero-data', event => {
     heroDataSnapshot = event.detail || null;
     _helioData = heroDataSnapshot?.sw || null;
-    _nopNightHours = heroDataSnapshot?.nightHours || [];
-    _nopBestWindow = heroDataSnapshot?.bestWindow || null;
     if (_DB_PANELS?.includes('matrix')) _dbRenderMatrix();
-    if (_DB_PANELS?.includes('window')) _dbRenderWindow();
     if (_DB_PANELS?.includes('helio')) _dbRenderHelio();
     if (_DB_PANELS?.includes('solar')) _dbRenderSolar();
   });
@@ -2697,74 +2691,9 @@
   }
   function _dbActivateWeatherObserving() { _dbActivateWeatherTab('w-weather', 'observing'); }
 
-  const _NOP_CHIP_KEYS = ['moon', 'cloud', 'dew', 'wind', 'pressure', 'temp'];
-  const _NOP_CHIP_LABELS = { moon:'🌙 Moon', cloud:'☁ Cloud', dew:'💧 Dew', wind:'💨 Wind', pressure:'⬆ Pressure', temp:'🌡 Temp' };
-  const _NOP_METRICS = {
-    cloud: { get: h => h.cloud?.total_percent ?? null, fmt: v => `${Math.round(v)}%`, min: 0, max: 100, color: 'rgba(143,182,255,.55)' },
-    dew: { get: h => h.air?.temperature_c != null && h.air?.dewpoint_c != null ? +(h.air.temperature_c - h.air.dewpoint_c).toFixed(1) : null, fmt: v => `${v.toFixed(1)}° spread`, min: 0, color: 'rgba(80,210,220,.55)' },
-    wind: { get: h => h.wind?.speed_mps ?? null, fmt: v => `${v.toFixed(1)} m/s`, min: 0, color: 'rgba(190,150,255,.55)' },
-    pressure: { get: h => h.air?.pressure_hpa ?? null, fmt: v => `${Math.round(v)} hPa`, color: 'rgba(100,210,130,.55)' },
-    temp: { get: h => h.air?.temperature_c ?? null, fmt: v => `${v.toFixed(1)}°C`, color: 'rgba(255,160,80,.55)' },
-    moon: { get: h => h._moon_alt ?? null, fmt: v => `${v.toFixed(1)}° alt`, min: 0, color: 'rgba(210,210,165,.50)' },
-  };
-  function _nopFmtT(iso) {
+  function _dbFormatLocalTime(iso) {
     try { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: getState()?.location?.tz || 'UTC' }); } catch (_) { return '—'; }
   }
-  function _nopRenderChart(metric, chartEl) {
-    const chart = chartEl || document.getElementById('nop-chart');
-    if (!chart) return;
-    const model = _NOP_METRICS[metric] || _NOP_METRICS.cloud;
-    const values = _nopNightHours.map(model.get), defined = values.filter(value => value != null);
-    let min = model.min ?? (defined.length ? Math.min(...defined) : 0), max = model.max ?? (defined.length ? Math.max(...defined) : 1);
-    if (max - min < 1) { const middle = (max + min) / 2; min = middle - 1; max = middle + 1; }
-    chart.innerHTML = _nopNightHours.map((hour, index) => {
-      const value = values[index], normalized = value == null ? null : Math.max(0, Math.min(1, (value - min) / (max - min)));
-      const height = normalized == null ? 3 : Math.max(3, Math.round(normalized * 24));
-      const selected = _nopBestWindow && hour.timestamp_utc >= _nopBestWindow.start && hour.timestamp_utc < _nopBestWindow.end;
-      return `<div class="nop-bar" style="height:${height}px;background:${selected ? model.color.replace('.55', '.92') : model.color}" data-tip="${_nopFmtT(hour.timestamp_utc)}: ${value == null ? '—' : model.fmt(value)}"></div>`;
-    }).join('');
-  }
-
-  function _dbRenderWindow() {
-    const body = document.getElementById('dbp-window-body');
-    if (!body) return;
-
-    // Best window time line
-    let winHtml = '';
-    if (_nopBestWindow?.start && _nopBestWindow?.end) {
-      winHtml = `<div class="dbp-window-info">
-        <div class="dbp-window-time">${_nopFmtT(_nopBestWindow.start)} – ${_nopFmtT(_nopBestWindow.end)}</div>
-        <div class="dbp-window-sub">Best observing window tonight</div>
-      </div>`;
-    } else if (!_nopNightHours.length) {
-      winHtml = `<div class="dbp-window-info"><div class="dbp-window-sub">No weather data available for tonight.</div></div>`;
-    }
-
-    // Chip row
-    const chipHtml = _NOP_CHIP_KEYS.map(k =>
-      `<button class="dbp-window-chip${_nopActiveMetric===k?' is-active':''}" data-wmetric="${k}">${_NOP_CHIP_LABELS[k]}</button>`
-    ).join('');
-
-    body.innerHTML = winHtml +
-      `<div id="dbp-window-chart" class="dbp-window-chart"></div>` +
-      `<div class="dbp-window-chip-row">${chipHtml}</div>`;
-
-    _nopRenderChart(_nopActiveMetric, body.querySelector('#dbp-window-chart'));
-
-    // Chip clicks (bind once per body lifetime via flag)
-    if (!body._wChipsBound) {
-      body._wChipsBound = true;
-      body.addEventListener('click', e => {
-        const ch = e.target.closest('.dbp-window-chip');
-        if (!ch) return;
-        _nopActiveMetric = ch.dataset.wmetric;
-        body.querySelectorAll('.dbp-window-chip').forEach(c =>
-          c.classList.toggle('is-active', c.dataset.wmetric === _nopActiveMetric));
-        _nopRenderChart(_nopActiveMetric, body.querySelector('#dbp-window-chart'));
-      });
-    }
-  }
-
   // ── KP card tab content renderer ─────────────────────────────────
   function _stormTabBody(tab, sw) {
     const scales  = sw?.scales || {};
@@ -3175,7 +3104,6 @@
       }
     }
     if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
-    if (panelId === 'window')  _dbRenderWindow();
     if (panelId === 'helio')   _dbRenderHelio();
     if (panelId === 'solar')   _dbRenderSolar();
     // scroll into view
@@ -3213,7 +3141,6 @@
       if (saved[id]) {
         el.style.display = '';
         if (id === 'matrix')  matrixOpen = true;
-        if (id === 'window')  _dbRenderWindow();
         if (id === 'helio')   _dbRenderHelio();
         if (id === 'solar')   _dbRenderSolar();
       } else {
@@ -3265,7 +3192,7 @@
     const winHtml = bw
       ? `<div style="margin-bottom:14px">
           <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px">Best Observing Window</div>
-          <span style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.82)">${_nopFmtT(bw.start)} – ${_nopFmtT(bw.end)}</span>
+          <span style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.82)">${_dbFormatLocalTime(bw.start)} – ${_dbFormatLocalTime(bw.end)}</span>
          </div>` : '';
 
     body.innerHTML = winHtml + `<div class="dbp-nqi-grid">${cards}</div>`;

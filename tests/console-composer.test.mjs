@@ -20,6 +20,7 @@ const expectedSlots = [
   ["news", "#nrw-main", "news"],
   ["sidebar-news", "#fs-news", "news"],
   ["dashboard-space-weather", "#dbp-helio-body", "space-weather"],
+  ["dashboard-observing-window", "#dbp-window-body", "observing-window"],
   ["dashboard-map", "#db-map-root", "map"],
 ];
 
@@ -31,6 +32,7 @@ test("Console config declares the platform-managed roots and preserves configs",
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-events").config.maxItems, 8);
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-news").config.parseMax, 300);
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-space-weather").config, { orientation: "horizontal" });
+  assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-observing-window").config, { orientation: "horizontal" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-map").config, { orientation: "horizontal", mapUrl: "/weather/map-poc.html" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-sky").config, { orientation: "horizontal" });
 });
@@ -77,6 +79,8 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.doesNotMatch(indexSource, /mountWidget\("(?:location|weather|weather-matrix|sun|sunmoon-panel|sky)"/);
   assert.doesNotMatch(indexSource, /window\.run(?:News|Calendar)Widget/);
   assert.match(indexSource, /function _dbRenderHelio\(\) \{[\s\S]*return;/);
+  assert.doesNotMatch(indexSource, /_dbRenderWindow|_nopNightHours|_nopBestWindow|_nopActiveMetric|_NOP_CHIP_KEYS|_nopRenderChart/);
+  assert.match(indexSource, /id="dbp-window-body"/);
   assert.doesNotMatch(indexSource, /load(?:SwxAlerts|CalendarEvents|NewsItems)\s*\(/);
   assert.doesNotMatch(indexSource, /initSkyIfNeeded|legacy-bootstrap\.mjs|window\.__(?:skyWidget|SKY_CONFIG)/);
   assert.doesNotMatch(indexSource, /db-sky-iframe|skyIframe|Dashboard sky iframe|contentWindow\.__skyWidget/);

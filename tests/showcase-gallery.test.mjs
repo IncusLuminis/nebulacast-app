@@ -7,7 +7,7 @@ import { serializeWidgetConfig } from "../sites/staging/shared/widget-config.mjs
 import { createGalleryContext, createGalleryRoot, createGalleryRuntime } from "./fixtures/showcase-gallery-fixture.mjs";
 
 test("catalog exposes immutable Showcase metadata without changing widget contracts", () => {
-  assert.equal(widgetCatalog.length, 11);
+  assert.equal(widgetCatalog.length, 12);
   for (const definition of widgetCatalog) {
     assert.equal(typeof definition.title, "string");
     assert.equal(typeof definition.description, "string");

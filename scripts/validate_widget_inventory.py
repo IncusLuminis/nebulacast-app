@@ -20,6 +20,7 @@ EXPECTED_WIDGETS = {
     "news",
     "events",
     "alerts",
+    "observing-window",
     "space-weather",
 }
 CLASSIFICATIONS = {"production", "legacy", "POC"}

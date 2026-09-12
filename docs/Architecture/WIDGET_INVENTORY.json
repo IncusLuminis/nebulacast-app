@@ -335,6 +335,33 @@
       "notes": "Alerts is registered once as a non-observer-aware, non-time-aware, multi-instance, embeddable Widget Runtime type. The canonical implementation reads only /sky/data/alerts_now.json. The legacy widget_alerts_feed.js and /sky/alerts.html paths remain compatibility surfaces; backend, generator, schema, RSS, and pipeline paths are unchanged."
     },
     {
+      "id": "observing-window",
+      "classification": "production",
+      "source_of_truth": "sites/staging/weather/widgets/observing-window/observing-window.js",
+      "generated_or_copied_artifacts": [],
+      "build_path": "No build step; the root-scoped Best observing window widget and Platform Runtime adapter are committed under sites/staging/weather/widgets/observing-window/.",
+      "deploy_paths": [
+        "sites/staging/weather/widgets/observing-window/observing-window.js",
+        "sites/staging/weather/widgets/observing-window/platform-adapter.mjs",
+        "sites/staging/index.html",
+        "sites/staging/console/console-config.mjs"
+      ],
+      "local_test_path": "make server; http://localhost:8080/ (Dashboard Best observing window)",
+      "compatibility_paths": ["sites/staging/console/data-loader.mjs"],
+      "path_classification": [
+        {"path": "sites/staging/weather/widgets/observing-window/observing-window.js", "role": "canonical root-scoped Best observing window implementation", "classification": "production"},
+        {"path": "sites/staging/weather/widgets/observing-window/platform-adapter.mjs", "role": "common Widget Runtime adapter", "classification": "production"},
+        {"path": "sites/staging/index.html", "role": "Dashboard host shell and panel placement", "classification": "production"},
+        {"path": "sites/staging/console/console-config.mjs", "role": "Console Composer slot declaration", "classification": "production"}
+      ],
+      "supporting_data_sources": [
+        "sites/staging/console/data-loader.mjs",
+        "sites/staging/data/observer_weather_now.json",
+        "sites/staging/sky/data/sun_moon.json"
+      ],
+      "notes": "Best observing window is an observer/time-aware multi-instance Runtime widget. It owns its root-scoped chart and metric chips, loads the existing observer-weather and Sun/Moon contracts through Platform Context, and leaves Dashboard panel shell/navigation plus all legacy compatibility routes unchanged."
+    },
+    {
       "id": "space-weather",
       "classification": "production",
       "source_of_truth": "sites/staging/helio/src/helio.widget.ts",

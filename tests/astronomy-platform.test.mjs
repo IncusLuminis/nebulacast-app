@@ -133,7 +133,7 @@ test("catalog lazily registers platform adapters and legacy exports remain calla
   const sunMoon = registry.get("sun-moon");
 
   const definitionTypes = definitions.map(definition => definition.type);
-  assert.deepEqual(definitionTypes, ["hero", "astro", "sun-moon", "weather", "map", "location", "sky", "news", "events", "alerts"]);
+  assert.deepEqual(definitionTypes, ["hero", "astro", "sun-moon", "weather", "observing-window", "map", "location", "sky", "news", "events", "alerts", "space-weather"]);
   assert.equal(definitionTypes.filter(type => type === "hero").length, 1);
   assert.equal(typeof astro.loader, "function");
   assert.equal(typeof sunMoon.loader, "function");
