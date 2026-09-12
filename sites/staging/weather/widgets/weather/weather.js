@@ -20,6 +20,7 @@ let isFetchingWeather = false;
 let lastWeatherFetchTime = 0;
 const WEATHER_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const WEATHER_RANGES = new Set(["today", "48h", "7d"]);
+const WEATHER_MODES = new Set(["observing", "matrix", "weather"]);
 let sunMoonEventsCache = null; // null = not loaded yet; [] = loaded (may be empty)
 let layoutMode = "default"; // "default" | "vertical"
 let activeWeatherInstance = null;
@@ -27,6 +28,16 @@ let legacyWeatherInstance = null;
 
 function normalizeWeatherRange(range) {
   return WEATHER_RANGES.has(range) ? range : "7d";
+}
+
+function initialWeatherRange(options = {}) {
+  return Object.prototype.hasOwnProperty.call(options, "range")
+    ? normalizeWeatherRange(options.range)
+    : "today";
+}
+
+function normalizeWeatherMode(mode) {
+  return WEATHER_MODES.has(mode) ? mode : undefined;
 }
 
 function createWeatherInstanceStorage() {
@@ -1175,8 +1186,11 @@ function createWeatherInstanceState(rootEl, options = {}) {
     lastWeatherFetchTime: 0,
     sunMoonEventsCache: null,
     layoutMode,
-    currentMode: "today",
-    hourlyMode: "observing",
+    // Legacy mountWeather() historically starts on today's horizon when no
+    // range option is supplied. Platform Runtime mounts receive the catalog
+    // range explicitly through their normalized config.
+    currentMode: initialWeatherRange(options),
+    hourlyMode: normalizeWeatherMode(options.mode) || "observing",
     matrixOverlayParams: new Set(["sun", "moon"]),
     currentChartParam: null,
     hourInspectorOpen: false,
@@ -3376,7 +3390,9 @@ async function loadWeather(rootEl, state, forceRefresh, instance = null) {
           activeProfile = (_storedProfile && PROFILE_IDS.includes(_storedProfile)) ? _storedProfile : "balanced";
         } catch (_) { activeProfile = "balanced"; }
       }
-      currentMode = normalizeWeatherRange(state?.range);
+      currentMode = state?.range !== undefined
+        ? normalizeWeatherRange(state.range)
+        : (owner.currentMode || "today");
       data.hours.sort(function(a,b){ var da=parseISO(a.time),db=parseISO(b.time); if(!da||!db)return 0; return da.getTime()-db.getTime(); });
       var nowHourResult = findNearestHour(data.hours || []);
       var nowHour = nowHourResult.hour;
@@ -5130,7 +5146,10 @@ export function mountWeather(rootEl, storeApi, options = {}) {
     }
     var tabParam = typeof window !== "undefined" && window.location.search
       ? new URLSearchParams(window.location.search).get("tab") : null;
-    if (tabParam === "observing" || tabParam === "weather" || tabParam === "matrix") {
+    const configuredMode = IS_PLATFORM_IMPORT ? normalizeWeatherMode(options.mode) : undefined;
+    if (configuredMode) {
+      hourlyMode = configuredMode;
+    } else if (tabParam === "observing" || tabParam === "weather" || tabParam === "matrix") {
       hourlyMode = tabParam;
     } else {
       try {
@@ -5275,14 +5294,33 @@ export function mountWeather(rootEl, storeApi, options = {}) {
     dispose.unmount = dispose;
     dispose.update = patch => {
       if (instance.destroyed) return undefined;
-      const nextState = storeApi.getState();
+      const updatePatch = patch && typeof patch === "object" ? patch : {};
+      const storeState = storeApi.getState() || {};
+      const nextState = {
+        ...storeState,
+        ...(Object.prototype.hasOwnProperty.call(updatePatch, "profile")
+          ? { profile: updatePatch.profile }
+          : {}),
+        ...(Object.prototype.hasOwnProperty.call(updatePatch, "range")
+          ? { range: updatePatch.range }
+          : {}),
+      };
       const nextProfile = nextState?.profile && nextState.profile !== "default"
         ? nextState.profile : "balanced";
+      const nextRange = nextState?.range !== undefined
+        ? normalizeWeatherRange(nextState.range)
+        : (instance.currentMode || "today");
+      const nextMode = normalizeWeatherMode(updatePatch.mode);
       const profileChanged = instance.activeProfile !== nextProfile;
+      const rangeChanged = instance.currentMode !== nextRange;
+      const modeChanged = nextMode !== undefined && instance.hourlyMode !== nextMode;
       withWeatherInstance(instance, () => {
         activeProfile = nextProfile;
-        currentMode = normalizeWeatherRange(nextState?.range);
-        if (!profileChanged && weatherData?.hours) renderPlatformLayout(rootEl, instance);
+        currentMode = nextRange;
+        if (nextMode !== undefined) hourlyMode = nextMode;
+        if (weatherData?.hours && (modeChanged || rangeChanged || !profileChanged)) {
+          renderPlatformLayout(rootEl, instance);
+        }
       });
       return profileChanged ? loadWeather(rootEl, nextState, true, instance) : undefined;
     };

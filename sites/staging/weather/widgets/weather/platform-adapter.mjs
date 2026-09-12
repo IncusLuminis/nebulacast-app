@@ -15,6 +15,12 @@ function isObject(value) {
   return value !== null && typeof value === "object";
 }
 
+const WEATHER_MODES = new Set(["observing", "matrix", "weather"]);
+
+function normalizeWeatherMode(mode) {
+  return WEATHER_MODES.has(mode) ? mode : undefined;
+}
+
 function requireContext(context) {
   if (!isObject(context) || typeof context.get !== "function" ||
       typeof context.subscribe !== "function" || typeof context.update !== "function") {
@@ -140,7 +146,11 @@ export async function mount(root, context, config = {}, host) {
   return {
     update(patch) {
       if (destroyed) return undefined;
-      if (patch && typeof patch === "object") Object.assign(configRef, patch);
+      if (patch && typeof patch === "object") {
+        const nextMode = normalizeWeatherMode(patch.mode);
+        Object.assign(configRef, patch);
+        if (nextMode) configRef.mode = nextMode;
+      }
       return mounted.update?.(patch);
     },
     resize(size) {

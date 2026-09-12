@@ -4,8 +4,14 @@ const NEWS_FILTERS = Object.freeze(["All", "News", "Science", "Videos", "Images"
 const slots = [
   { id: "hero", selector: "#console-hero", widget: "hero", config: {} },
   { id: "location", selector: "#w-location", widget: "location", config: {} },
-  { id: "weather", selector: "#w-weather", widget: "weather", config: {} },
-  { id: "weather-matrix", selector: "#w-weather-matrix", widget: "weather", config: {} },
+  { id: "weather", selector: "#w-weather", widget: "weather", config: {
+    orientation: "horizontal",
+    mode: "observing",
+  } },
+  { id: "weather-matrix", selector: "#w-weather-matrix", widget: "weather", config: {
+    orientation: "horizontal",
+    mode: "matrix",
+  } },
   { id: "sun", selector: "#w-sun", widget: "sun-moon", config: {} },
   { id: "sunmoon-panel", selector: "#w-sunmoon-panel", widget: "sun-moon", config: {} },
   { id: "sky", selector: "#skyMount", widget: "sky", config: {

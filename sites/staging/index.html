@@ -701,17 +701,6 @@
     .db-panel-weather #forecastMatrix,
     .db-panel-weather .weather-meta { display: none !important; }
 
-    /* Show only forecast matrix section in dashboard matrix panel */
-    .db-panel-matrix #w-weather-matrix { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
-    .db-panel-matrix .api-fallback-banner,
-    .db-panel-matrix .top-panel-v2,
-    .db-panel-matrix .overall-explain-wrap,
-    .db-panel-matrix .hourly-header,
-    .db-panel-matrix .hourly,
-    .db-panel-matrix .legend,
-    .db-panel-matrix .weather-meta { display: none !important; }
-    .db-panel-matrix #forecastMatrix { display: block !important; }
-
     /* Tonight / Night chart panel */
     .dbp-window-body { max-width: 1200px; margin: 0 auto; padding: 12px 20px; }
     .dbp-window-chart { display: flex; align-items: flex-end; gap: 2px; height: 60px; margin-bottom: 8px; }
@@ -2265,14 +2254,13 @@
   heroRoot?.addEventListener('nc:hero-data', event => {
     heroDataSnapshot = event.detail || null;
     _helioData = heroDataSnapshot?.sw || null;
-    if (_DB_PANELS?.includes('matrix')) _dbRenderMatrix();
     if (_DB_PANELS?.includes('helio')) _dbRenderHelio();
     if (_DB_PANELS?.includes('solar')) _dbRenderSolar();
   });
   heroRoot?.addEventListener('nc:hero-action', event => {
     const detail = event.detail || {};
     if (detail.action === 'toggle-panel') _dbTogglePanel(detail.panel);
-    if (detail.action === 'profile-change') _dbSyncWeatherProfile(detail.profile);
+    if (detail.action === 'profile-change') _dbUpdateWeatherProfiles(detail.profile);
     if (detail.action === 'nqi-info') window.dispatchEvent(new CustomEvent('nc:hero-nqi-info', { detail: detail.element }));
   });
   window.nebulacastWidgetLifecycle = { disposeAll: () => consoleComposer.destroy() };
@@ -2622,23 +2610,14 @@
     });
   })();
 
-  // Sync profile selection to weather widget instances (pills are hidden but still clickable)
-  // NQI uses "photography" key; weather widget uses "broadband" for the same profile
+  // Profile changes cross the Dashboard boundary through Runtime instance APIs.
+  // NQI uses "photography" key; Weather uses "broadband" for the same profile.
   const _DB_PROFILE_MAP = { photography: 'broadband' };
-  function _dbSyncWeatherProfile(profileKey) {
+  function _dbUpdateWeatherProfiles(profileKey) {
     const wxKey = _DB_PROFILE_MAP[profileKey] || profileKey;
-    ['w-weather', 'w-weather-matrix'].forEach(id => {
-      const pill = document.querySelector(`#${id} .profile-pill[data-profile="${wxKey}"]`);
-      if (pill) pill.click();
+    ['weather', 'weather-matrix'].forEach(id => {
+      consoleComposer.getInstance(id)?.update?.({ profile: wxKey });
     });
-    // The pill click handler calls renderNow + renderHourly but NOT renderForecastMatrix.
-    // Force a matrix tab re-click (clear data-active first so the guard passes).
-    if (document.getElementById('dbp-matrix')?.style.display !== 'none') {
-      setTimeout(() => {
-        const btn = document.querySelector('#w-weather-matrix .htab[data-hmode="matrix"]');
-        if (btn) { btn.removeAttribute('data-active'); btn.click(); }
-      }, 30);
-    }
   }
 
   // ══════════════════════════════════════════════════════════
@@ -2664,36 +2643,6 @@
     return s;
   }
 
-  // Force a specific tab active in a weather widget instance.
-  // Retries with backoff until the tab button appears in the DOM (weather widget may still be rendering).
-  // For 'matrix' mode: also verifies that rows actually rendered after click (weatherData may not be
-  // ready yet), and retries if content is still empty.
-  function _dbActivateWeatherTab(widgetId, mode) {
-    const _attempt = (delay) => setTimeout(() => {
-      const btn = document.querySelector(`#${widgetId} .htab[data-hmode="${mode}"]`);
-      if (!btn) {
-        if (delay < 4000) _attempt(Math.min(delay * 2, 1000));
-        return;
-      }
-      if (!btn.hasAttribute('data-active')) btn.click();
-      // Matrix: verify rows actually appeared ~300ms after click (weatherData may still be loading).
-      // If still empty, force a re-click so renderForecastMatrix runs once data is ready.
-      if (mode === 'matrix' && delay < 4000) {
-        setTimeout(() => {
-          if (document.querySelectorAll(`#${widgetId} .matrix-row`).length === 0) {
-            btn.removeAttribute('data-active');
-            _attempt(Math.min(delay * 2, 1000));
-          }
-        }, 300);
-      }
-    }, delay);
-    _attempt(50);
-  }
-  function _dbActivateWeatherObserving() { _dbActivateWeatherTab('w-weather', 'observing'); }
-
-  function _dbFormatLocalTime(iso) {
-    try { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: getState()?.location?.tz || 'UTC' }); } catch (_) { return '—'; }
-  }
   // ── KP card tab content renderer ─────────────────────────────────
   function _stormTabBody(tab, sw) {
     const scales  = sw?.scales || {};
@@ -3095,15 +3044,6 @@
     const el = document.getElementById(`dbp-${panelId}`);
     if (!el) return;
     el.style.display = '';
-    // Activate weather tabs — matrix must always win over observing
-    if (panelId === 'weather') {
-      _dbActivateWeatherObserving();
-      // If matrix is also open, re-assert matrix mode after a tick
-      if (document.getElementById('dbp-matrix')?.style.display !== 'none') {
-        setTimeout(() => _dbActivateWeatherTab('w-weather-matrix', 'matrix'), 80);
-      }
-    }
-    if (panelId === 'matrix')  _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     if (panelId === 'helio')   _dbRenderHelio();
     if (panelId === 'solar')   _dbRenderSolar();
     // scroll into view
@@ -3134,21 +3074,17 @@
   // Restore open panels from localStorage and sync hero state
   function _dbAfterHeroRender() {
     const saved = _dbLoadState();
-    let matrixOpen = false;
     _DB_PANELS.forEach(id => {
       const el = document.getElementById(`dbp-${id}`);
       if (!el) return;
       if (saved[id]) {
         el.style.display = '';
-        if (id === 'matrix')  matrixOpen = true;
         if (id === 'helio')   _dbRenderHelio();
         if (id === 'solar')   _dbRenderSolar();
       } else {
         el.style.display = 'none';
       }
     });
-    // Activate matrix tab last so it always overrides any observing activation
-    if (matrixOpen) _dbActivateWeatherTab('w-weather-matrix', 'matrix');
     _dbSyncHeroActive();
   }
 
@@ -3158,45 +3094,6 @@
     if (!btn) return;
     _dbClosePanel(btn.dataset.close);
   });
-
-  // ── Night Quality Matrix renderer ──
-  function _dbRenderMatrix() {
-    const body = document.getElementById('dbp-matrix-body');
-    if (!body) return;
-    const d = heroDataSnapshot;
-    const nqi  = d?.wx?.night_summary?.nqi        || {};
-    const avg  = d?.wx?.night_summary?.avg_score   || {};
-    const modes = d?.wx?.decision?.mode_scores     || {};
-    const PLBL = { balanced:'Balanced', visual:'Visual', photography:'Photo', broadband:'Broadband', planetary:'Planetary' };
-    const profileKeys = Object.keys(nqi).length ? Object.keys(nqi) : Object.keys(modes);
-
-    if (!profileKeys.length) { body.innerHTML = '<p style="color:rgba(255,255,255,0.35);font-size:12px">No data available.</p>'; return; }
-
-    function nqiColor(cls) { return cls==='excellent'?'#4caf50':cls==='good'?'#8bc34a':cls==='usable'?'#ff9800':cls==='marginal'?'#f44336':'#9e3a3a'; }
-
-    const cards = profileKeys.map(k => {
-      const n = nqi[k] || {};
-      const val = n.value != null ? n.value.toFixed(1) : '—';
-      const cls = n.class || 'poor';
-      const clr = nqiColor(cls);
-      const avgS = avg[k] != null ? avg[k] : (modes[k] != null ? modes[k] : null);
-      const sub  = avgS != null ? `Avg score ${Math.round(avgS)}` : '';
-      return `<div class="dbp-nqi-card">
-        <div class="dbp-nqi-card-lbl">${PLBL[k] || k}</div>
-        <div class="dbp-nqi-card-val" style="color:${clr}">${val}<span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:500"> /10</span></div>
-        <div class="dbp-nqi-card-sub">${cls.charAt(0).toUpperCase()+cls.slice(1)}${sub?' · '+sub:''}</div>
-      </div>`;
-    }).join('');
-
-    const bw = d?.wx?.decision?.best_tonight;
-    const winHtml = bw
-      ? `<div style="margin-bottom:14px">
-          <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px">Best Observing Window</div>
-          <span style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.82)">${_dbFormatLocalTime(bw.start)} – ${_dbFormatLocalTime(bw.end)}</span>
-         </div>` : '';
-
-    body.innerHTML = winHtml + `<div class="dbp-nqi-grid">${cards}</div>`;
-  }
 
   // ── Dashboard anchor styling is owned by the Runtime adapters ──
   // ══════════════════════════════════════════════════════════

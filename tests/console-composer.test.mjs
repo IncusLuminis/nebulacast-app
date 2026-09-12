@@ -31,6 +31,8 @@ test("Console config declares the platform-managed roots and preserves configs",
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "news").config.parseMax, 300);
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-events").config.maxItems, 8);
   assert.equal(consoleConfig.slots.find(slotRef => slotRef.id === "sidebar-news").config.parseMax, 300);
+  assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "weather").config, { orientation: "horizontal", mode: "observing" });
+  assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "weather-matrix").config, { orientation: "horizontal", mode: "matrix" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-space-weather").config, { orientation: "horizontal" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-observing-window").config, { orientation: "horizontal" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-map").config, { orientation: "horizontal", mapUrl: "/weather/map-poc.html" });
@@ -80,6 +82,9 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.doesNotMatch(indexSource, /window\.run(?:News|Calendar)Widget/);
   assert.match(indexSource, /function _dbRenderHelio\(\) \{[\s\S]*return;/);
   assert.doesNotMatch(indexSource, /_dbRenderWindow|_nopNightHours|_nopBestWindow|_nopActiveMetric|_NOP_CHIP_KEYS|_nopRenderChart/);
+  assert.doesNotMatch(indexSource, /_dbSyncWeatherProfile|_dbActivateWeatherTab|_dbActivateWeatherObserving|_dbRenderMatrix/);
+  assert.match(indexSource, /function _dbUpdateWeatherProfiles\(profileKey\)[\s\S]*getInstance\(id\)\?\.update\?\.\(\{ profile: wxKey \}\)/);
+  assert.doesNotMatch(indexSource, /querySelector\(`#\$\{id\} \.profile-pill/);
   assert.match(indexSource, /id="dbp-window-body"/);
   assert.doesNotMatch(indexSource, /load(?:SwxAlerts|CalendarEvents|NewsItems)\s*\(/);
   assert.doesNotMatch(indexSource, /initSkyIfNeeded|legacy-bootstrap\.mjs|window\.__(?:skyWidget|SKY_CONFIG)/);

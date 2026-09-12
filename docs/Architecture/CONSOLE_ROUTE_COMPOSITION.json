@@ -73,13 +73,13 @@
           "registry_type": "weather",
           "registry_registered": true,
           "root_or_slot": {"slot": "weather", "root": "#w-weather"},
-          "platform_context": "Shared Platform Context; observer and time aware.",
+          "platform_context": "Shared Platform Context; observer and time aware. Dashboard config selects the internal observing mode and horizontal layout; profile and range updates use the Runtime instance API.",
           "authoritative_source": "sites/staging/weather/widgets/weather/weather.js",
           "compatibility_route": ["/weather/"],
-          "classification": "temporary_adapter",
+          "classification": "runtime_widget",
           "target_classification": "runtime_widget",
           "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
-          "current_owner": "sites/staging/index.html via console-composer slot"
+          "current_owner": "sites/staging/console/console-composer.mjs"
         },
         {
           "id": "dashboard-weather-matrix",
@@ -87,13 +87,13 @@
           "registry_type": "weather",
           "registry_registered": true,
           "root_or_slot": {"slot": "weather-matrix", "root": "#w-weather-matrix"},
-          "platform_context": "Shared Platform Context; observer and time aware.",
+          "platform_context": "Shared Platform Context; observer and time aware. Dashboard config selects the internal matrix mode and horizontal layout; profile and range updates use the Runtime instance API.",
           "authoritative_source": "sites/staging/weather/widgets/weather/weather.js",
           "compatibility_route": ["/weather/"],
-          "classification": "temporary_adapter",
+          "classification": "runtime_widget",
           "target_classification": "runtime_widget",
           "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
-          "current_owner": "sites/staging/index.html via dashboard panel orchestration"
+          "current_owner": "sites/staging/console/console-composer.mjs"
         },
         {
           "id": "dashboard-sun-moon",

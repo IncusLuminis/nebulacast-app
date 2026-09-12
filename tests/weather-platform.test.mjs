@@ -93,8 +93,8 @@ test("two Weather instances keep explicit config, context, requests, orientation
   const secondRuntime = makeRuntime(secondContext);
 
   const [first, second] = await Promise.all([
-    firstRuntime.mount(firstRoot, { widget: "weather", config: { orientation: "auto", profile: "visual", range: "7d" } }),
-    secondRuntime.mount(secondRoot, { widget: "weather", config: { orientation: "auto", profile: "planetary", range: "48h" } }),
+    firstRuntime.mount(firstRoot, { widget: "weather", config: { orientation: "auto", mode: "observing", profile: "visual", range: "7d" } }),
+    secondRuntime.mount(secondRoot, { widget: "weather", config: { orientation: "auto", mode: "matrix", profile: "planetary", range: "48h" } }),
   ]);
   await waitForAsyncWork();
 
@@ -104,12 +104,16 @@ test("two Weather instances keep explicit config, context, requests, orientation
   assert.equal(second.config.profile, "planetary");
   assert.equal(first.config.range, "7d");
   assert.equal(second.config.range, "48h");
+  assert.equal(first.config.mode, "observing");
+  assert.equal(second.config.mode, "matrix");
   assert.equal(firstRoot.dataset.ncWeatherOrientation, "horizontal");
   assert.equal(secondRoot.dataset.ncWeatherOrientation, "vertical");
   const firstRootKeydownListeners = firstRoot.listenerCount("keydown");
   assert.equal(fixture.document.listenerCount("keydown"), 0);
   assert.equal(firstRoot.classList.contains("nc-weather-platform-horizontal"), true);
   assert.equal(secondRoot.classList.contains("nc-weather-platform-vertical"), true);
+  assert.equal(firstRoot.querySelectorAll(".htab[data-hmode]")[0].getAttribute("data-active"), "true");
+  assert.equal(secondRoot.querySelectorAll(".htab[data-hmode]")[1].getAttribute("data-active"), "true");
   assert.equal(fixture.document.listenerCount("DOMContentLoaded"), 0);
   assert.equal(fixture.document.listenerCount("keydown"), 0);
   assert.equal(fixture.document.listenerCount("click"), 0);
@@ -142,6 +146,11 @@ test("two Weather instances keep explicit config, context, requests, orientation
   assert.equal(second.config.profile, "planetary");
   assert.equal(second.config.range, "48h");
   assert.equal(calls.at(-1).searchParams.get("profile"), "balanced");
+  await first.update({ mode: "weather" });
+  assert.equal(first.config.mode, "weather");
+  assert.equal(second.config.mode, "matrix");
+  assert.equal(firstRoot.querySelectorAll(".htab[data-hmode]")[2].getAttribute("data-active"), "true");
+  assert.equal(secondRoot.querySelectorAll(".htab[data-hmode]")[1].getAttribute("data-active"), "true");
   await first.refresh();
   await waitForAsyncWork();
   assert.equal(calls.at(-1).searchParams.get("profile"), "balanced");

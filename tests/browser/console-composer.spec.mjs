@@ -25,7 +25,12 @@ test("Console Composer mounts declared platform roots and preserves Hero launche
     await expect(page.locator("#dbp-window-body")).toHaveAttribute("data-nc-widget", "observing-window");
     await expect(page.locator("#db-map-root")).toHaveAttribute("data-nc-widget", "map");
     await expect(page.locator("#db-map-root iframe")).toHaveAttribute("src", "/weather/map-poc.html");
+    await expect(page.locator('#w-weather .htab[data-hmode="observing"]')).toHaveAttribute("data-active", "true");
+    await expect(page.locator('#w-weather-matrix .htab[data-hmode="matrix"]')).toHaveAttribute("data-active", "true");
     await expect(page.locator("#console-hero .hero-card[data-panel]")).toHaveCount(7);
+    await page.locator('#console-hero .nop-profile-btn[data-profile="visual"]').click();
+    await expect(page.locator('#w-weather .profile-pill[data-profile="visual"]')).toHaveAttribute("data-active", "true");
+    await expect(page.locator('#w-weather-matrix .profile-pill[data-profile="visual"]')).toHaveAttribute("data-active", "true");
     await page.locator('#console-hero .hero-card[data-panel="matrix"]').click();
     await expect(page.locator("#dbp-matrix")).toBeVisible();
     await expect(page.locator("#nrw-main [data-role=filters]")).toHaveCount(1);
