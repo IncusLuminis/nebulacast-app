@@ -59,9 +59,9 @@ test("Showcase generates host output only for standalone-enabled registry widget
   const alertsCard = root.querySelector('[data-widget-type="alerts"]');
   const eventsCard = root.querySelector('[data-widget-type="events"]');
   const heroCard = root.querySelector('[data-widget-type="hero"]');
-  assert.equal(alertsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=alerts&orientation=auto&theme=inherit&density=normal");
-  assert.equal(eventsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=events&orientation=auto&theme=inherit&density=normal");
-  assert.equal(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, '<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>');
+  assert.equal(alertsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=alerts&orientation=horizontal&theme=inherit&density=normal");
+  assert.equal(eventsCard.querySelector('[data-role="iframe-url"]').textContent, "/widgets/widget.html?widget=events&orientation=horizontal&theme=inherit&density=normal");
+  assert.equal(alertsCard.querySelector('[data-role="iframe-snippet"]').textContent, '<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=horizontal&amp;theme=inherit&amp;density=normal" title="Sky Alerts" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>');
   assert.equal(heroCard.querySelector(".gallery-output-unavailable").textContent, "Iframe output unavailable");
   assert.match(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /from "\/widgets\/runtime\/index\.mjs"/);
   assert.match(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /"widget":"alerts"/);
@@ -69,7 +69,7 @@ test("Showcase generates host output only for standalone-enabled registry widget
   assert.doesNotMatch(alertsCard.querySelector('[data-role="javascript-embed-snippet"]').textContent, /dataUrl|loader|innerHTML|<script/);
   assert.equal(heroCard.querySelectorAll(".gallery-output-unavailable")[1]?.textContent, "JavaScript embed unavailable");
 
-  const orientation = alertsCard.querySelector('[data-gallery-option="orientation"]');
+  const orientation = alertsCard.querySelector('[data-gallery-layout-mode]');
   const theme = alertsCard.querySelector('[data-gallery-option="theme"]');
   orientation.value = "vertical";
   theme.value = "dark";
@@ -86,14 +86,14 @@ test("preview uses registry metadata, sanitizes config, is idempotent, and close
   const gallery = createShowcaseGallery({ root, documentRef, context: createGalleryContext(), runtime });
   await gallery.mount();
   const heroCard = root.querySelector('[data-widget-type="hero"]');
-  const orientation = heroCard.querySelector('[data-gallery-option="orientation"]');
-  orientation.value = "not-allowed";
+  const theme = heroCard.querySelector('[data-gallery-option="theme"]');
+  theme.value = "not-allowed";
   const first = await gallery.openPreview("hero");
   const second = await gallery.openPreview("hero");
   assert.strictEqual(first, second);
   assert.equal(runtime.calls.filter(call => call.type === "mount").length, 1);
   assert.deepEqual(runtime.calls[0].specification.config, gallery.getConfig("hero").config);
-  assert.equal(gallery.getSerializedConfig("hero"), '{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"inherit"}}');
+  assert.equal(gallery.getSerializedConfig("hero"), '{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"horizontal","theme":"inherit"}}');
   await gallery.closePreview("hero");
   assert.equal(runtime.calls.filter(call => call.type === "destroy").length, 1);
   assert.equal(gallery.getInstances().size, 0);
@@ -103,7 +103,7 @@ test("preview uses registry metadata, sanitizes config, is idempotent, and close
   profile.dispatchEvent({ type: "change", target: profile });
   const weatherExport = gallery.getConfig("weather");
   assert.deepEqual(weatherExport.config, {
-    density: "normal", orientation: "auto", profile: "visual", range: "7d", theme: "inherit",
+    density: "normal", orientation: "horizontal", profile: "visual", range: "7d", theme: "inherit",
   });
   assert.equal(gallery.getSerializedConfig("weather"), serializeWidgetConfig(weatherExport));
 });

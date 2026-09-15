@@ -9,6 +9,7 @@ import {
   serializeJavascriptEmbedSpecification,
   serializeWidgetConfig,
 } from "../shared/widget-config.mjs";
+import { validateWidgetLabLayout } from "./widget-lab-model.mjs";
 
 const STANDALONE_LINKS = Object.freeze({
   hero: Object.freeze({ href: "/", label: "Console" }),
@@ -84,10 +85,25 @@ export function createShowcaseGallery({
   function readCardConfig(cardState, definition) {
     const requested = {};
     for (const [key, control] of cardState.controls) requested[key] = control.value;
+    const mode = cardState.layoutControls.mode.value;
+    requested.orientation = mode === "square" ? "auto" : mode;
     return createWidgetConfig(registry, definition.type, requested);
   }
 
   function updateCardConfig(cardState, definition) {
+    cardState.layoutState = validateWidgetLabLayout(definition, {
+      mode: cardState.layoutControls.mode.value,
+      width: cardState.layoutControls.width.value,
+      height: cardState.layoutControls.height.value,
+    });
+    cardState.card.setAttribute("data-gallery-layout-mode", cardState.layoutState.mode);
+    cardState.card.setAttribute("data-gallery-layout-valid", String(cardState.layoutState.valid));
+    cardState.layoutStatus.textContent = cardState.layoutState.valid
+      ? `${labelFor(cardState.layoutState.mode)} · ${cardState.layoutState.width} × ${cardState.layoutState.height}`
+      : cardState.layoutState.error;
+    cardState.layoutStatus.setAttribute("data-layout-valid", String(cardState.layoutState.valid));
+    cardState.layoutControls.width.setAttribute("aria-invalid", String(!cardState.layoutState.valid));
+    cardState.layoutControls.height.setAttribute("aria-invalid", String(!cardState.layoutState.valid));
     cardState.configExport = readCardConfig(cardState, definition);
     cardState.serializedConfig = serializeWidgetConfig(cardState.configExport);
     cardState.configOutput.textContent = cardState.serializedConfig;
@@ -230,6 +246,10 @@ export function createShowcaseGallery({
     if (pending.has(type)) return pending.get(type);
 
     const config = cardState.configExport.config;
+    if (!cardState.layoutState.valid) {
+      setCardState(cardState, "error", cardState.layoutState.error);
+      return Promise.resolve(null);
+    }
     cardState.previewRoot.textContent = "";
     setCardState(cardState, "loading", "Loading preview…");
     const request = (async () => {
@@ -280,6 +300,53 @@ export function createShowcaseGallery({
       meta.appendChild(appendText(documentRef, "span", "meta-capability", `${labelFor(capability)}: ${enabled ? "yes" : "no"}`));
     }
     card.appendChild(meta);
+
+    const layoutBlock = documentRef.createElement("fieldset");
+    layoutBlock.className = "gallery-layout-controls";
+    const layoutLegend = documentRef.createElement("legend");
+    layoutLegend.textContent = "Preview container";
+    layoutBlock.appendChild(layoutLegend);
+    const layoutControls = {};
+    const modeLabel = documentRef.createElement("label");
+    modeLabel.className = "gallery-option";
+    modeLabel.appendChild(appendText(documentRef, "span", "gallery-option-name", "Mode"));
+    const modeSelect = documentRef.createElement("select");
+    modeSelect.setAttribute("data-gallery-layout-mode", "");
+    for (const mode of definition.userModes || (definition.shape === "square" ? ["square"] : ["horizontal", "vertical"])) {
+      const option = documentRef.createElement("option");
+      option.value = mode;
+      option.textContent = labelFor(mode);
+      const defaultMode = definition.shape === "square" ? "square" : definition.defaults?.orientation;
+      option.selected = mode === (defaultMode === "horizontal" || defaultMode === "vertical" ? defaultMode : (definition.shape === "square" ? "square" : "horizontal"));
+      modeSelect.appendChild(option);
+    }
+    modeSelect.value = definition.shape === "square"
+      ? "square"
+      : (definition.defaults?.orientation === "vertical" ? "vertical" : "horizontal");
+    layoutControls.mode = modeSelect;
+    modeLabel.appendChild(modeSelect);
+    layoutBlock.appendChild(modeLabel);
+    for (const [key, defaultValue] of [["width", definition.shape === "square" ? 400 : 640], ["height", definition.shape === "square" ? 400 : 360]]) {
+      const label = documentRef.createElement("label");
+      label.className = "gallery-option";
+      label.appendChild(appendText(documentRef, "span", "gallery-option-name", labelFor(key)));
+      const input = documentRef.createElement("input");
+      input.type = "number";
+      input.min = "160";
+      input.max = "1600";
+      input.step = "1";
+      input.value = String(defaultValue);
+      input.setAttribute("data-gallery-layout", key);
+      input.setAttribute("aria-label", `${labelFor(key)} of preview container`);
+      layoutControls[key] = input;
+      label.appendChild(input);
+      layoutBlock.appendChild(label);
+    }
+    const layoutStatus = appendText(documentRef, "p", "gallery-layout-status", "Checking dimensions");
+    layoutStatus.setAttribute("data-role", "layout-status");
+    layoutStatus.setAttribute("aria-live", "polite");
+    layoutBlock.appendChild(layoutStatus);
+    card.appendChild(layoutBlock);
 
     const options = documentRef.createElement("div");
     options.className = "gallery-options";
@@ -454,10 +521,16 @@ export function createShowcaseGallery({
     preview.appendChild(close);
     card.appendChild(preview);
 
-    const cardState = { card, controls, status, previewRoot, close, configOutput, copyStatus, hostOutput: hostOutputState, javascriptOutput: javascriptOutputState, javascriptSnippet: "", configExport: null, serializedConfig: "" };
+    const cardState = { card, controls, layoutControls, layoutStatus, layoutState: null, status, previewRoot, close, configOutput, copyStatus, hostOutput: hostOutputState, javascriptOutput: javascriptOutputState, javascriptSnippet: "", configExport: null, serializedConfig: "" };
     cards.set(sourceDefinition.type, cardState);
     updateCardConfig(cardState, definition);
     for (const control of controls.values()) {
+      control.addEventListener("change", () => {
+        updateCardConfig(cardState, definition);
+        if (instances.has(sourceDefinition.type)) void closePreview(sourceDefinition.type);
+      });
+    }
+    for (const control of Object.values(layoutControls)) {
       control.addEventListener("change", () => {
         updateCardConfig(cardState, definition);
         if (instances.has(sourceDefinition.type)) void closePreview(sourceDefinition.type);

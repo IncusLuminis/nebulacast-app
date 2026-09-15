@@ -5,12 +5,12 @@ test("Showcase generates bounded standalone output and opens the corresponding h
 
   const alerts = page.locator('[data-widget-type="alerts"]');
   const events = page.locator('[data-widget-type="events"]');
-  await expect(alerts.locator('[data-role="iframe-url"]')).toHaveText("/widgets/widget.html?widget=alerts&orientation=auto&theme=inherit&density=normal");
-  await expect(events.locator('[data-role="iframe-url"]')).toHaveText("/widgets/widget.html?widget=events&orientation=auto&theme=inherit&density=normal");
-  await expect(alerts.locator('[data-role="iframe-snippet"]')).toHaveText('<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky Alerts" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>');
+  await expect(alerts.locator('[data-role="iframe-url"]')).toHaveText("/widgets/widget.html?widget=alerts&orientation=horizontal&theme=inherit&density=normal");
+  await expect(events.locator('[data-role="iframe-url"]')).toHaveText("/widgets/widget.html?widget=events&orientation=horizontal&theme=inherit&density=normal");
+  await expect(alerts.locator('[data-role="iframe-snippet"]')).toHaveText('<iframe src="/widgets/widget.html?widget=alerts&amp;orientation=horizontal&amp;theme=inherit&amp;density=normal" title="Sky Alerts" width="100%" height="600" loading="lazy" style="border:0;display:block"></iframe>');
   await expect(page.locator('[data-widget-type="hero"] [data-role="iframe-unavailable"]')).toHaveText("Iframe output unavailable");
 
-  await alerts.locator('[data-gallery-option="orientation"]').selectOption("vertical");
+  await alerts.locator('[data-gallery-layout-mode]').selectOption("vertical");
   await alerts.locator('[data-gallery-option="theme"]').selectOption("dark");
   const generatedUrl = "/widgets/widget.html?widget=alerts&orientation=vertical&theme=dark&density=normal";
   await expect(alerts.locator('[data-role="iframe-url"]')).toHaveText(generatedUrl);
@@ -48,15 +48,19 @@ test("Showcase builds cards from catalog and mounts previews only on action", as
   await page.goto("/showcase/", { waitUntil: "domcontentloaded" });
 
   const cards = page.locator("[data-widget-type]");
-  await expect(cards).toHaveCount(11);
+  await expect(cards).toHaveCount(13);
   await expect(page.locator('[data-widget-type="hero"] .card-name')).toHaveText("Hero");
   await expect(page.locator('[data-widget-type="hero"] .meta-version')).toHaveText("Version 1");
   await expect(page.locator('[data-widget-type="hero"] [data-gallery-action="preview"]')).toBeEnabled();
   await expect(page.locator('[data-widget-type="map"] [data-gallery-action="preview"]')).toBeDisabled();
+  await expect(page.locator('[data-widget-type="hero"] [data-gallery-layout-mode] option')).toHaveCount(2);
+  await expect(page.locator('[data-widget-type="hero"] [data-gallery-layout-mode] option')).toHaveText(["Horizontal", "Vertical"]);
+  await expect(page.locator('[data-widget-type="sky"] [data-gallery-layout-mode]')).toHaveValue("square");
+  await expect(page.locator('[data-widget-type="sky"] [data-gallery-layout-mode] option')).toHaveCount(1);
   const heroConfig = page.locator('[data-widget-type="hero"] [data-role="config-output"]');
-  await expect(heroConfig).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"inherit"}}');
+  await expect(heroConfig).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"horizontal","theme":"inherit"}}');
   await page.locator('[data-widget-type="hero"] [data-gallery-option="theme"]').selectOption("dark");
-  await expect(heroConfig).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"dark"}}');
+  await expect(heroConfig).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"horizontal","theme":"dark"}}');
   expect(requests.some(url => /observer-weather|astro-weather|alerts_now|sun_moon|widget_runtime/.test(url))).toBeFalsy();
 
   await page.evaluate(() => {
@@ -75,5 +79,5 @@ test("Showcase builds cards from catalog and mounts previews only on action", as
   await page.locator('[data-widget-type="hero"] [data-gallery-action="close"]').click();
   await expect(page.locator('[data-widget-type="hero"] .gallery-preview-root')).not.toHaveAttribute("data-nc-widget", "hero");
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-widget-type="hero"] [data-role="config-output"]')).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"auto","theme":"inherit"}}');
+  await expect(page.locator('[data-widget-type="hero"] [data-role="config-output"]')).toHaveText('{"schema":"widget-config.v1","widget":"hero","version":1,"config":{"density":"normal","orientation":"horizontal","theme":"inherit"}}');
 });
