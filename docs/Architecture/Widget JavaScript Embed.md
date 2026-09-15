@@ -25,6 +25,7 @@ styles, data lifecycle, and cleanup.
   const root = document.querySelector("#nc-weather");
   const weather = await mount(root, {
     widget: "weather",
+    layout: { mode: "vertical", width: 360, height: 640 },
     config: {
       orientation: "vertical",
       profile: "balanced",
@@ -44,9 +45,14 @@ backwards-compatible equivalent of destroying the instance at that root.
 
 ## Configuration boundary
 
-Only widgets explicitly marked for JavaScript embedding in the catalog are
-accepted. Configuration is checked against that definition's
-`supportedOptions` and the common host options. Current Weather options are:
+Only widgets explicitly marked `divEmbed: true` in the Registry are accepted.
+Configuration is checked against that definition's `supportedOptions` and the
+common host options. The optional host-owned `layout` is separate from widget
+configuration and contains a public `mode`, integer `width`, and integer
+`height` between 160 and 1600 pixels. `Sky` is square-only; all other enabled
+widgets accept exactly `horizontal` or `vertical`.
+
+Current Weather options are:
 
 - `orientation`: `auto`, `horizontal`, `vertical`;
 - `theme`: `inherit`, `auto`, `dark`, `light`;
@@ -59,6 +65,12 @@ It may rewrite catalog-declared data paths, but never selects a module or
 loader. Unknown fields, invalid values, executable references, arbitrary
 module URLs, HTML, and data/API URL overrides are rejected before mounting.
 The same validation is applied to `instance.update()`.
+
+When `layout` is supplied, the API records it on the caller-owned root as
+`data-nc-embed-mode`, `data-nc-embed-width`, and `data-nc-embed-height`, and
+applies the selected pixel dimensions without replacing the host element.
+`layout.mode` determines the internal Runtime orientation (`auto` is retained
+only for square Sky); `auto` is never a public Widget Lab mode.
 
 ## Versioning and compatibility
 

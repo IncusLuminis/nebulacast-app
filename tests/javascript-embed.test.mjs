@@ -6,6 +6,7 @@ import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
 import {
   JAVASCRIPT_EMBED_API_VERSION,
   normalizeJavascriptEmbedInput,
+  normalizeJavascriptEmbedLayout,
   serializeJavascriptEmbedSpecification,
 } from "../sites/staging/shared/widget-config.mjs";
 import { createJavascriptEmbedRuntime } from "../sites/staging/widgets/runtime/index.mjs";
@@ -83,7 +84,7 @@ function createRuntime() {
 
 test("only catalog javascriptEmbed opt-ins normalize through the bounded public config", async () => {
   assert.equal(JAVASCRIPT_EMBED_API_VERSION, 1);
-  assert.deepEqual(widgetCatalog.filter(definition => definition.javascriptEmbed === true).map(definition => definition.type), ["weather", "events", "alerts"]);
+  assert.deepEqual(widgetCatalog.filter(definition => definition.divEmbed === true).map(definition => definition.type), ["weather", "sky", "events", "alerts"]);
   const weather = normalizeJavascriptEmbedInput(registry, {
     widget: "weather",
     config: { orientation: "vertical", profile: "visual", range: "48h" },
@@ -103,7 +104,6 @@ test("only catalog javascriptEmbed opt-ins normalize through the bounded public 
 
   for (const specification of [
     { widget: "news" },
-    { widget: "sky" },
     { widget: "weather", config: { moduleUrl: "/evil.mjs" } },
     { widget: "weather", config: { profile: "unsupported" } },
     { widget: "alerts", config: { dataUrl: "/evil.json" } },
@@ -116,6 +116,17 @@ test("only catalog javascriptEmbed opt-ins normalize through the bounded public 
   ]) {
     assert.throws(() => normalizeJavascriptEmbedInput(registry, specification));
   }
+});
+
+test("public div embed normalizes and validates host layout independently of widget config", () => {
+  assert.deepEqual(normalizeJavascriptEmbedLayout(registry, "sky", { mode: "square", width: 400, height: 400 }), {
+    mode: "square", width: 400, height: 400,
+  });
+  assert.deepEqual(normalizeJavascriptEmbedLayout(registry, "weather", { mode: "vertical", width: 360, height: 640 }), {
+    mode: "vertical", width: 360, height: 640,
+  });
+  assert.throws(() => normalizeJavascriptEmbedLayout(registry, "sky", { mode: "horizontal", width: 400, height: 400 }), /mode/);
+  assert.throws(() => normalizeJavascriptEmbedLayout(registry, "weather", { mode: "vertical", width: 640, height: 360 }), /greater/);
 });
 
 test("external embed configuration rejects HTML, executable values, and arbitrary modules", () => {
@@ -170,6 +181,24 @@ test("public API mounts two roots through the shared Runtime and unmounts their 
   documentRef.defaultView.dispatchEvent({ type: "pagehide" });
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(eventsRoot.getAttribute("data-nc-widget"), null);
+  assert.equal(documentRef.stylesheets.length, 0);
+});
+
+test("public API mounts the square Sky contract with caller-owned layout metadata", async () => {
+  const documentRef = createDocument();
+  const runtime = createRuntime();
+  const api = createJavascriptEmbedRuntime({ registry, runtime, documentRef });
+  const root = createRoot("sky");
+  const sky = await api.mount(root, {
+    widget: "sky",
+    layout: { mode: "square", width: 400, height: 400 },
+  });
+  assert.equal(root.getAttribute("data-nc-embed-mode"), "square");
+  assert.equal(root.getAttribute("data-nc-embed-width"), "400");
+  assert.equal(root.getAttribute("data-nc-embed-height"), "400");
+  assert.equal(runtime.calls[0].specification.config.orientation, "auto");
+  assert.equal(documentRef.stylesheets[0].href, "/sky/assets/sky.css");
+  await sky.destroy();
   assert.equal(documentRef.stylesheets.length, 0);
 });
 

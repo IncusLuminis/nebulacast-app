@@ -9,6 +9,7 @@ export const IFRAME_EMBED_DEFAULTS = Object.freeze({
 export const JAVASCRIPT_EMBED_MODULE_PATH = "/widgets/runtime/index.mjs";
 export const JAVASCRIPT_EMBED_API_VERSION = 1;
 export const JAVASCRIPT_EMBED_CONFIG_KEYS = Object.freeze(["orientation", "theme", "density", "baseUrl"]);
+export const JAVASCRIPT_EMBED_LAYOUT_LIMITS = Object.freeze({ minDimension: 160, maxDimension: 1600 });
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -118,6 +119,39 @@ function standaloneConfig(registry, widgetOrExport, requested) {
 
 export function getWidgetOptionValues(registry, widget, key) {
   return allowedValues(definitionFrom(registry, widget), key);
+}
+
+/** Normalize the caller-owned host rectangle for the public div embed API. */
+export function normalizeJavascriptEmbedLayout(registry, widget, requested) {
+  if (!isObject(requested)) throw new TypeError("JavaScript embed layout must be an object");
+  const definition = definitionFrom(registry, widget);
+  const expectedModes = definition.shape === "square" ? ["square"] : ["horizontal", "vertical"];
+  for (const key of Object.keys(requested)) {
+    if (!["mode", "width", "height"].includes(key)) {
+      throw new TypeError(`JavaScript embed layout contains an unsupported field: ${key}`);
+    }
+  }
+  if (!expectedModes.includes(requested.mode)) {
+    throw new TypeError(`Invalid layout mode for JavaScript embed widget ${widget}`);
+  }
+  const dimensions = {};
+  for (const key of ["width", "height"]) {
+    const value = typeof requested[key] === "number" ? requested[key] : Number(requested[key]);
+    if (!Number.isInteger(value) || value < JAVASCRIPT_EMBED_LAYOUT_LIMITS.minDimension || value > JAVASCRIPT_EMBED_LAYOUT_LIMITS.maxDimension) {
+      throw new TypeError(`JavaScript embed ${key} must be an integer between ${JAVASCRIPT_EMBED_LAYOUT_LIMITS.minDimension} and ${JAVASCRIPT_EMBED_LAYOUT_LIMITS.maxDimension}`);
+    }
+    dimensions[key] = value;
+  }
+  if (definition.shape === "square" && dimensions.width !== dimensions.height) {
+    throw new TypeError("Sky JavaScript embed layout must be square");
+  }
+  if (requested.mode === "horizontal" && dimensions.width <= dimensions.height) {
+    throw new TypeError("Horizontal JavaScript embed layout requires width greater than height");
+  }
+  if (requested.mode === "vertical" && dimensions.height <= dimensions.width) {
+    throw new TypeError("Vertical JavaScript embed layout requires height greater than width");
+  }
+  return Object.freeze({ mode: requested.mode, ...dimensions });
 }
 
 function definitionFrom(registry, widget) {
@@ -256,13 +290,13 @@ export function buildIframeEmbedSnippet(registry, widgetOrExport, options = {}) 
 export function normalizeJavascriptEmbedInput(registry, specification = {}) {
   if (!isObject(specification)) throw new TypeError("JavaScript embed specification must be an object");
   for (const key of Object.keys(specification)) {
-    if (!["widget", "config", "baseUrl"].includes(key)) {
+    if (!["widget", "config", "baseUrl", "layout"].includes(key)) {
       throw new TypeError(`JavaScript embed specification contains an unsupported field: ${key}`);
     }
   }
   const widget = specification.widget;
   const definition = definitionFrom(registry, widget);
-  if (definition.javascriptEmbed !== true) throw new Error(`Widget ${widget} is not enabled for JavaScript embed`);
+  if (definition.divEmbed !== true && definition.javascriptEmbed !== true) throw new Error(`Widget ${widget} is not enabled for JavaScript embed`);
   const supplied = specification.config === undefined ? {} : specification.config;
   if (!isObject(supplied)) throw new TypeError("JavaScript embed config must be an object");
   const supported = new Set(Object.keys(definition.supportedOptions || {}));
@@ -285,13 +319,24 @@ export function normalizeJavascriptEmbedInput(registry, specification = {}) {
   const common = createWidgetConfig(registry, widget, requested);
   const config = { ...common.config };
   if (requested.baseUrl !== undefined) config.baseUrl = requested.baseUrl;
-  return Object.freeze({ widget: common.widget, config: deepFreeze(config) });
+  const layout = specification.layout === undefined
+    ? undefined
+    : normalizeJavascriptEmbedLayout(registry, widget, specification.layout);
+  return Object.freeze({
+    widget: common.widget,
+    config: deepFreeze(config),
+    ...(layout ? { layout } : {}),
+  });
 }
 
 /** Serialize the bounded JavaScript embed specification with stable key ordering. */
 export function serializeJavascriptEmbedSpecification(registry, specification = {}) {
   const normalized = normalizeJavascriptEmbedInput(registry, specification);
-  return stableValue({ widget: normalized.widget, config: normalized.config });
+  return stableValue({
+    widget: normalized.widget,
+    config: normalized.config,
+    ...(normalized.layout ? { layout: normalized.layout } : {}),
+  });
 }
 
 /** Parse the bounded standalone host query without ever evaluating a loader. */

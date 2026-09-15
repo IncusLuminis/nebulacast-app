@@ -40,9 +40,9 @@
 
     const embedConfig = { baseUrl: "/", density: "compact" };
     void Promise.all([
-      mount(document.getElementById("embed-alerts-fixed"), { widget: "alerts", config: { ...embedConfig, orientation: "horizontal" } }),
-      mount(document.getElementById("embed-events-responsive"), { widget: "events", config: { ...embedConfig, orientation: "auto" } }),
-      mount(document.getElementById("embed-alerts-narrow"), { widget: "alerts", config: { ...embedConfig, orientation: "vertical" } }),
+      mount(document.getElementById("embed-alerts-fixed"), { widget: "alerts", layout: { mode: "horizontal", width: 640, height: 300 }, config: { ...embedConfig, orientation: "horizontal" } }),
+      mount(document.getElementById("embed-events-responsive"), { widget: "events", layout: { mode: "horizontal", width: 640, height: 360 }, config: { ...embedConfig, orientation: "horizontal" } }),
+      mount(document.getElementById("embed-alerts-narrow"), { widget: "alerts", layout: { mode: "vertical", width: 280, height: 560 }, config: { ...embedConfig, orientation: "vertical" } }),
     ]);
   </script>
 </body>

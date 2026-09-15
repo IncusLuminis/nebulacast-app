@@ -118,11 +118,20 @@ export function createShowcaseGallery({
       cardState.hostOutput.openHost.href = url;
     }
     if (cardState.javascriptOutput) {
-      const serializedSpecification = serializeJavascriptEmbedSpecification(registry, {
-        widget: definition.type,
-        config: cardState.configExport.config,
-      });
-      cardState.javascriptSnippet = `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nmount(root, ${serializedSpecification});`;
+      if (cardState.layoutState.valid) {
+        const serializedSpecification = serializeJavascriptEmbedSpecification(registry, {
+          widget: definition.type,
+          config: cardState.configExport.config,
+          layout: {
+            mode: cardState.layoutState.mode,
+            width: cardState.layoutState.width,
+            height: cardState.layoutState.height,
+          },
+        });
+        cardState.javascriptSnippet = `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nmount(root, ${serializedSpecification});`;
+      } else {
+        cardState.javascriptSnippet = "JavaScript embed unavailable until the preview container dimensions are valid.";
+      }
       cardState.javascriptOutput.snippet.textContent = cardState.javascriptSnippet;
     }
     cardState.copyStatus.textContent = "Ready to copy";
@@ -532,6 +541,14 @@ export function createShowcaseGallery({
     }
     for (const control of Object.values(layoutControls)) {
       control.addEventListener("change", () => {
+        if (control === layoutControls.mode) {
+          const mode = layoutControls.mode.value;
+          const dimensions = mode === "square"
+            ? [400, 400]
+            : (mode === "vertical" ? [360, 640] : [640, 360]);
+          layoutControls.width.value = String(dimensions[0]);
+          layoutControls.height.value = String(dimensions[1]);
+        }
         updateCardConfig(cardState, definition);
         if (instances.has(sourceDefinition.type)) void closePreview(sourceDefinition.type);
       });

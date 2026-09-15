@@ -22,6 +22,9 @@ test("JavaScript embed canary mounts Alerts and Events in fixed/responsive/narro
   await expect(page.locator("#embed-alerts-fixed")).toHaveAttribute("data-nc-state", "ready");
   await expect(page.locator("#embed-events-responsive")).toHaveAttribute("data-nc-state", "ready");
   await expect(page.locator("#embed-alerts-narrow")).toHaveAttribute("data-nc-orientation", "vertical");
+  await expect(page.locator("#embed-alerts-fixed")).toHaveAttribute("data-nc-embed-mode", "horizontal");
+  await expect(page.locator("#embed-alerts-fixed")).toHaveAttribute("data-nc-embed-width", "640");
+  await expect(page.locator("#embed-alerts-narrow")).toHaveAttribute("data-nc-embed-mode", "vertical");
   await expect(page.locator("#embed-alerts-fixed [data-role='item']")).toHaveCount(1);
   await expect(page.locator("#embed-events-responsive [data-role='list'] .nrc-card")).toHaveCount(1);
   await expect(page.locator('link[data-nc-embed-stylesheet="alerts"]')).toHaveCount(1);

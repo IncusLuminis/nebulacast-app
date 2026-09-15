@@ -64,6 +64,17 @@ function resolveDataAssets(definition, config) {
   return resolved;
 }
 
+function applyEmbedLayout(root, layout) {
+  if (!layout) return;
+  if (root.style) {
+    root.style.width = `${layout.width}px`;
+    root.style.height = `${layout.height}px`;
+  }
+  root.setAttribute("data-nc-embed-mode", layout.mode);
+  root.setAttribute("data-nc-embed-width", layout.width);
+  root.setAttribute("data-nc-embed-height", layout.height);
+}
+
 /** Create an isolated public JavaScript embed API backed by the common Runtime. */
 export function createJavascriptEmbedRuntime({
   registry = createCatalogRegistry(),
@@ -121,7 +132,11 @@ export function createJavascriptEmbedRuntime({
       const definition = registry.get(normalized.widget);
       acquireStylesheet(definition);
       record = { instance: null, stylesheetType: definition.type, stylesheetReleased: false };
-      const config = resolveDataAssets(definition, normalized.config);
+      const config = resolveDataAssets(definition, {
+        ...normalized.config,
+        ...(normalized.layout ? { orientation: normalized.layout.mode === "square" ? "auto" : normalized.layout.mode } : {}),
+      });
+      applyEmbedLayout(root, normalized.layout);
       record.instance = await widgetRuntime.mount(root, { widget: normalized.widget, config });
       if (destroyed) {
         await record.instance?.destroy?.();
@@ -133,6 +148,7 @@ export function createJavascriptEmbedRuntime({
         id: record.instance?.id,
         type: record.instance?.type || normalized.widget,
         root,
+        layout: normalized.layout,
         get config() { return record.instance?.config || config; },
         update: (patch, ...args) => record.instance?.update?.(normalizeUpdate(normalized.widget, patch), ...args),
         resize: (...args) => record.instance?.resize?.(...args),
