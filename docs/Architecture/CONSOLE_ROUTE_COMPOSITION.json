@@ -255,9 +255,9 @@
       "path": "/helio/",
       "page": "space-weather",
       "host": {"root": ".page-shell", "source": "sites/staging/helio/index.html", "classification": "host_shell"},
-      "platform_context": "The Space Weather Runtime adapter consumes the shared Platform Context; the legacy page host remains a compatibility route until its later composition migration.",
+      "platform_context": "Standalone Space Weather page creates a bounded route context and mounts the registered Runtime adapter.",
       "visible_surfaces": [
-        {"id": "space-weather-main", "label": "Space Weather", "registry_type": "space-weather", "registry_registered": true, "root_or_slot": {"slot": "space-weather", "root": "#w-helio"}, "platform_context": "Runtime adapter consumes the shared Platform Context; this legacy host is not yet the canonical Runtime composition.", "authoritative_source": "sites/staging/helio/src/helio.widget.ts", "compatibility_route": ["/helio/dist/helio.widget.js"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/helio/index.html via window.HelioWidget"},
+        {"id": "space-weather-main", "label": "Space Weather", "registry_type": "space-weather", "registry_registered": true, "root_or_slot": {"slot": "space-weather", "root": "#w-helio"}, "platform_context": "Shared route Platform Context; the registered Runtime adapter owns the widget root and Helio data lifecycle.", "authoritative_source": "sites/staging/helio/platform-adapter.mjs", "compatibility_route": ["/helio/dist/helio.widget.js"], "classification": "runtime_widget", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/helio/page-composer.mjs"},
         {"id": "space-weather-diagnostics", "label": "Diagnostics", "registry_type": null, "registry_registered": false, "root_or_slot": {"slot": null, "root": ".page-diag"}, "platform_context": "Host-owned diagnostic chrome.", "authoritative_source": "sites/staging/helio/index.html", "compatibility_route": [], "classification": "host_shell", "target_classification": "host_shell", "layout": null, "current_owner": "sites/staging/helio/index.html"}
       ]
     },
@@ -278,7 +278,7 @@
       "host": {"root": ".page-wrap", "source": "sites/staging/calendar/index.html", "classification": "host_shell"},
       "platform_context": "No observer or time context required by the current Events widget.",
       "visible_surfaces": [
-        {"id": "events-main", "label": "Events calendar", "registry_type": "events", "registry_registered": true, "root_or_slot": {"slot": "events", "root": "#nrc-root-page"}, "platform_context": "No Platform Context required by current data contract.", "authoritative_source": "frontend/assets/js/widget_runtime.js", "compatibility_route": ["/calendar/widget.js"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/calendar/index.html via window.runCalendarWidget"},
+        {"id": "events-main", "label": "Events calendar", "registry_type": "events", "registry_registered": true, "root_or_slot": {"slot": "events", "root": "#nrc-root-page"}, "platform_context": "No observer or time context is needed; the Runtime adapter owns the registered Events instance.", "authoritative_source": "sites/staging/calendar/platform-adapter.mjs", "compatibility_route": ["/calendar/widget.js"], "classification": "runtime_widget", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/calendar/page-composer.mjs"},
         {"id": "events-feed-links", "label": "JSON/RSS links", "registry_type": null, "registry_registered": false, "root_or_slot": {"slot": null, "root": ".rss-link"}, "platform_context": "Host-owned compatibility links.", "authoritative_source": "sites/staging/calendar/index.html", "compatibility_route": ["/calendar/daily_signal.json", "/alerts/rss.xml"], "classification": "host_shell", "target_classification": "host_shell", "layout": null, "current_owner": "sites/staging/calendar/index.html"}
       ]
     },
@@ -287,9 +287,9 @@
       "path": "/sun/",
       "page": "sun-moon",
       "host": {"root": "body", "source": "sites/staging/sun/index.html", "classification": "host_shell"},
-      "platform_context": "Standalone page currently supplies a legacy weather store; target shared Platform Context.",
+      "platform_context": "Standalone Sun/Moon page creates the shared Platform Context from the weather state and mounts the registered Runtime widget.",
       "visible_surfaces": [
-        {"id": "sun-moon-main", "label": "Sun & Moon", "registry_type": "sun-moon", "registry_registered": true, "root_or_slot": {"slot": "sun-moon", "root": "#w-sun"}, "platform_context": "Legacy weather store facade; target shared Platform Context.", "authoritative_source": "sites/staging/weather/widgets/sun_moon/sun_moon.js", "compatibility_route": [], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/sun/index.html direct legacy mount"}
+        {"id": "sun-moon-main", "label": "Sun & Moon", "registry_type": "sun-moon", "registry_registered": true, "root_or_slot": {"slot": "sun-moon", "root": "#w-sun"}, "platform_context": "Shared Platform Context; Sun/Moon receives observer and time updates through the registered adapter.", "authoritative_source": "sites/staging/weather/widgets/sun_moon/platform-adapter.mjs", "compatibility_route": [], "classification": "runtime_widget", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/sun/page-composer.mjs"}
       ]
     }
   ],

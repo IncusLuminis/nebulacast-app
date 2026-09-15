@@ -15,11 +15,11 @@
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
   <script type="module">
     import { initState, getState, setState, subscribe } from '/weather/core/state.js';
-    import { mountSunMoon } from '/weather/widgets/sun_moon/sun_moon.js';
+    import { mountSunPage } from './page-composer.mjs?v=20260915a';
 
     initState();
     const storeApi = { getState, setState, subscribe };
-    mountSunMoon(document.getElementById('w-sun'), storeApi);
+    window.sunPageComposer = await mountSunPage({ stateApi: storeApi });
   </script>
 </body>
 </html>

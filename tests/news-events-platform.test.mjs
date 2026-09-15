@@ -322,6 +322,7 @@ test("News and Events scope loading/error messages and retain legacy facades", a
 test("source boundaries keep canonical APIs root-scoped and adapters delegation-only", async () => {
   const runtimeSource = await readFile(new URL("../frontend/assets/js/widget_runtime.js", import.meta.url), "utf8");
   const generatedCalendar = await readFile(new URL("../sites/staging/calendar/index.html", import.meta.url), "utf8");
+  const calendarComposer = await readFile(new URL("../sites/staging/calendar/page-composer.mjs", import.meta.url), "utf8");
   const newsAdapter = await readFile(new URL("../sites/staging/news/platform-adapter.mjs", import.meta.url), "utf8");
   const eventsAdapter = await readFile(new URL("../sites/staging/calendar/platform-adapter.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(runtimeSource, /document\.getElementById/);
@@ -330,8 +331,9 @@ test("source boundaries keep canonical APIs root-scoped and adapters delegation-
   assert.match(runtimeSource, /30000/);
   assert.match(runtimeSource, /15000/);
   assert.match(runtimeSource, /timeRange: 'upcoming'/);
-  assert.match(generatedCalendar, /"timeRange": "upcoming"/);
-  assert.match(generatedCalendar, /widget_runtime\.js/);
+  assert.match(calendarComposer, /timeRange: "upcoming"/);
+  assert.match(generatedCalendar, /page-composer\.mjs/);
+  assert.doesNotMatch(generatedCalendar, /widget_runtime\.js|runCalendarWidget/);
   for (const adapter of [newsAdapter, eventsAdapter]) {
     assert.doesNotMatch(adapter, /fetch|DOMParser|innerHTML|querySelector/);
     assert.match(adapter, /NebulacastWidgetRuntime/);
