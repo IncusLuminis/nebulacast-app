@@ -66,10 +66,11 @@ function createHostFixture(search = "") {
 }
 
 test("standalone query parser only accepts opted-in widgets and bounded common options", () => {
-  assert.deepEqual(widgetCatalog.filter(definition => definition.standaloneHost === true).map(definition => definition.type), ["weather", "events", "alerts"]);
+  assert.deepEqual(widgetCatalog.filter(definition => definition.standaloneHost === true).map(definition => definition.type), ["weather", "sky", "events", "alerts"]);
   assert.equal(widgetCatalog.find(definition => definition.type === "weather").standaloneHost, true);
   assert.equal(widgetCatalog.find(definition => definition.type === "weather").standaloneStylesheet, "/weather/widgets/weather/weather.css");
   assert.equal(widgetCatalog.find(definition => definition.type === "alerts").standaloneHost, true);
+  assert.equal(widgetCatalog.find(definition => definition.type === "sky").standaloneStylesheet, "/sky/assets/sky.css");
   assert.equal(widgetCatalog.find(definition => definition.type === "events").standaloneHost, true);
   assert.equal(widgetCatalog.find(definition => definition.type === "events").standaloneStylesheet, "/assets/css/widget_calendar.css");
   const config = parseStandaloneWidgetQuery(registry, "?widget=alerts&orientation=vertical&theme=dark&density=compact");
@@ -80,7 +81,9 @@ test("standalone query parser only accepts opted-in widgets and bounded common o
   assert.deepEqual(events.config, { density: "normal", orientation: "vertical", theme: "inherit", timeRange: "upcoming" });
   const weather = parseStandaloneWidgetQuery(registry, "?widget=weather&orientation=horizontal");
   assert.deepEqual(weather.config, { density: "normal", orientation: "horizontal", theme: "inherit", profile: "balanced", range: "7d" });
-  for (const query of ["", "?widget=news", "?widget=sky", "?widget=hero", "?widget=alerts&profile=visual", "?widget=alerts&theme=<script>", "?widget=events&url=https://evil.example"]) {
+  const sky = parseStandaloneWidgetQuery(registry, "?widget=sky");
+  assert.deepEqual(sky.config, { density: "normal", orientation: "auto", theme: "inherit" });
+  for (const query of ["", "?widget=news", "?widget=hero", "?widget=alerts&profile=visual", "?widget=alerts&theme=<script>", "?widget=events&url=https://evil.example"]) {
     assert.throws(() => parseStandaloneWidgetQuery(registry, query));
   }
 });
