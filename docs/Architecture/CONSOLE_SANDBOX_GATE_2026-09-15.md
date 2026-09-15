@@ -44,7 +44,7 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npx playwright test \
   tests/browser/showcase-gallery.spec.mjs \
   tests/browser/console-sandbox.spec.mjs \
   --workers=1 --reporter=line --trace=off
-20 passed
+21 passed
 ```
 
 ## Covered behavior
@@ -58,6 +58,8 @@ PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npx playwright test \
 - empty, loading, ready, error, timeout, and invalid-state messaging;
 - keyboard-reachable actions, selection semantics, live statuses, and safe DOM
   construction;
+- focus return to a neighboring card after removal and to palette Add after
+  Reset all;
 - existing Console, Weather, Sky, News, Calendar, Map, Helio, Sun/Moon, Widget
   Lab, and embed regression surfaces.
 

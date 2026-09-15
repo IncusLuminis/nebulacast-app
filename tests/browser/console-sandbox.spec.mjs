@@ -42,3 +42,14 @@ test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", asy
   await page.locator('[data-sandbox-control="viewport"]').selectOption("narrow");
   await expect(page.locator('[data-role="canvas"]')).toHaveAttribute("data-viewport", "narrow");
 });
+
+test("Console Sandbox returns focus after remove and reset-all", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  await page.locator('[data-sandbox-action="add"]').click();
+  await page.locator('[data-sandbox-action="add"]').click();
+  const secondId = await page.locator('[data-role="instance-list"] [data-sandbox-action="select"]').nth(1).getAttribute("data-sandbox-instance");
+  await page.locator('article[data-sandbox-instance="console-sandbox-1"] [data-sandbox-action="remove"]').click();
+  await expect(page.locator(`[data-role="instance-list"] [data-sandbox-action="select"][data-sandbox-instance="${secondId}"]`)).toBeFocused();
+  await page.locator('[data-sandbox-action="reset-all"]').click();
+  await expect(page.locator('[data-sandbox-action="add"]')).toBeFocused();
+});

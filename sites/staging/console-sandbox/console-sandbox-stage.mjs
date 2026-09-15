@@ -65,6 +65,8 @@ export function createConsoleSandbox({
   const model = createConsoleSandboxModel({ registry, onChange: render });
   let selectedWidget = catalog[0]?.type || registry.list()[0]?.type || "";
   let destroyed = false;
+  let focusAfterRenderId = null;
+  let focusAfterRenderFallback = null;
 
   const shell = text(documentRef, "div", "console-sandbox-shell");
   const paletteRegion = text(documentRef, "aside", "console-sandbox-panel");
@@ -88,7 +90,8 @@ export function createConsoleSandbox({
   const paletteDescription = text(documentRef, "p", "console-sandbox-description");
   paletteDescription.setAttribute("data-role", "palette-description");
   paletteRegion.appendChild(paletteDescription);
-  paletteRegion.appendChild(button(documentRef, "Add to canvas", "add", "sandbox-button sandbox-button-primary"));
+  const addButton = button(documentRef, "Add to canvas", "add", "sandbox-button sandbox-button-primary");
+  paletteRegion.appendChild(addButton);
   paletteRegion.appendChild(text(documentRef, "h3", "console-sandbox-subheading", "Composition"));
   const instanceList = text(documentRef, "div", "console-sandbox-instance-list");
   instanceList.dataset.role = "instance-list";
@@ -159,6 +162,29 @@ export function createConsoleSandbox({
   function selectedInstance() {
     const state = snapshot();
     return state.instances.find(instance => instance.id === state.selectedId) || null;
+  }
+
+  function requestFocusAfterRender(instanceId = null, fallback = "palette-add") {
+    focusAfterRenderId = instanceId;
+    focusAfterRenderFallback = fallback;
+  }
+
+  function focusReplacementFor(instanceId) {
+    const instances = snapshot().instances;
+    const index = instances.findIndex(instance => instance.id === instanceId);
+    return instances[index + 1]?.id || instances[index - 1]?.id || null;
+  }
+
+  function restoreFocusAfterRender() {
+    if (!focusAfterRenderId && !focusAfterRenderFallback) return;
+    const instanceId = focusAfterRenderId;
+    const fallback = focusAfterRenderFallback;
+    focusAfterRenderId = null;
+    focusAfterRenderFallback = null;
+    const target = instanceId
+      ? instanceList.querySelector(`[data-sandbox-action="select"][data-sandbox-instance="${instanceId}"]`)
+      : null;
+    (target || (fallback === "palette-add" ? addButton : null))?.focus?.();
   }
 
   function renderPaletteDescription() {
@@ -275,6 +301,7 @@ export function createConsoleSandbox({
     renderCanvas(state);
     renderInspector(state);
     canvasStatus.textContent = state.instances.length ? `${state.instances.length} widget${state.instances.length === 1 ? "" : "s"} in composition.` : "Empty composition.";
+    restoreFocusAfterRender();
     queueRuntimeSync(state);
   }
 
@@ -364,13 +391,13 @@ export function createConsoleSandbox({
       const instanceId = action.dataset.sandboxInstance;
       switch (action.dataset.sandboxAction) {
         case "add": model.createInstance({ widget: selectedWidget }); break;
-        case "select": model.select(instanceId); break;
-        case "remove": model.remove(instanceId); break;
-        case "retry": model.retryInstance(instanceId); break;
-        case "move-left": if (selectedInstance()) model.move(selectedInstance().id, -1); break;
-        case "move-right": if (selectedInstance()) model.move(selectedInstance().id, 1); break;
-        case "reset-card": if (selectedInstance()) model.resetCard(selectedInstance().id); break;
-        case "reset-all": model.resetAll(); break;
+        case "select": requestFocusAfterRender(instanceId); model.select(instanceId); break;
+        case "remove": requestFocusAfterRender(focusReplacementFor(instanceId)); model.remove(instanceId); break;
+        case "retry": requestFocusAfterRender(instanceId); model.retryInstance(instanceId); break;
+        case "move-left": if (selectedInstance()) { requestFocusAfterRender(selectedInstance().id); model.move(selectedInstance().id, -1); } break;
+        case "move-right": if (selectedInstance()) { requestFocusAfterRender(selectedInstance().id); model.move(selectedInstance().id, 1); } break;
+        case "reset-card": if (selectedInstance()) { requestFocusAfterRender(focusReplacementFor(selectedInstance().id)); model.resetCard(selectedInstance().id); } break;
+        case "reset-all": requestFocusAfterRender(null); model.resetAll(); break;
         case "apply": break;
         default: break;
       }
