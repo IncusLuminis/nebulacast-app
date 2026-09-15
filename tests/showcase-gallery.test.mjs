@@ -150,7 +150,7 @@ test("one preview failure stays local and gallery destroy releases remaining ins
 
 test("Showcase shell is declarative and loads the gallery module and stylesheet", async () => {
   const source = await readFile(new URL("../sites/staging/showcase/index.html", import.meta.url), "utf8");
-  assert.match(source, /showcase\.mjs/);
+  assert.match(source, /widget-lab-stage\.mjs/);
   assert.match(source, /showcase\.css/);
   assert.doesNotMatch(source, /class="card"/);
   assert.doesNotMatch(source, /fresh-(?:weather|map|sky|helio|objects|alerts|news|calendar)/);
