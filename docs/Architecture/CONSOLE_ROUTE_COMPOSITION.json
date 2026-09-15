@@ -244,9 +244,9 @@
       "path": "/sky/",
       "page": "sky",
       "host": {"root": ".sky-page", "source": "sites/staging/sky/index.html", "classification": "host_shell"},
-      "platform_context": "Standalone Sky page currently uses the legacy bootstrap; target is shared Platform Context.",
+      "platform_context": "Standalone Sky page creates a bounded route context and mounts the registered Runtime widget.",
       "visible_surfaces": [
-        {"id": "sky-chart", "label": "Sky chart", "registry_type": "sky", "registry_registered": true, "root_or_slot": {"slot": "sky-stage", "root": "#skyMount"}, "platform_context": "Legacy SKY_CONFIG/__skyWidget bridge; target shared Platform Context.", "authoritative_source": "sites/staging/sky/widget.js", "compatibility_route": ["/sky/legacy-bootstrap.mjs", "/sky/objects.html"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "square", "public_modes": ["square"]}, "current_owner": "sites/staging/sky/legacy-bootstrap.mjs"},
+        {"id": "sky-chart", "label": "Sky chart", "registry_type": "sky", "registry_registered": true, "root_or_slot": {"slot": "sky-stage", "root": "#skyMount"}, "platform_context": "Shared route Platform Context; square host root is mounted through the registered Sky adapter.", "authoritative_source": "sites/staging/sky/widget.js", "compatibility_route": ["/sky/legacy-bootstrap.mjs", "/sky/objects.html"], "classification": "runtime_widget", "target_classification": "runtime_widget", "layout": {"shape": "square", "public_modes": ["square"]}, "current_owner": "sites/staging/sky/page-composer.mjs"},
         {"id": "sky-player", "label": "Sky time/player controls", "registry_type": null, "registry_registered": false, "root_or_slot": {"slot": null, "root": "#skyPlayer"}, "platform_context": "Host-owned page control coordinating the Sky presentation.", "authoritative_source": "sites/staging/sky/index.html", "compatibility_route": [], "classification": "host_shell", "target_classification": "host_shell", "layout": null, "current_owner": "sites/staging/sky/index.html"}
       ]
     },
@@ -266,9 +266,9 @@
       "path": "/map/",
       "page": "map",
       "host": {"root": "body", "source": "sites/staging/map/index.html", "classification": "host_shell"},
-      "platform_context": "Not passed across the current iframe boundary; target direct Runtime mount.",
+      "platform_context": "Standalone Map page creates a bounded route context and mounts the registered Runtime adapter.",
       "visible_surfaces": [
-        {"id": "map-main", "label": "Weather Map", "registry_type": "map", "registry_registered": true, "root_or_slot": {"slot": "map", "root": "iframe[src='/weather/map-poc.html']"}, "platform_context": "None on current iframe path; target shared Platform Context.", "authoritative_source": "sites/staging/weather/map-poc.html", "compatibility_route": ["/weather/map1.html"], "classification": "temporary_adapter", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/map/index.html iframe host"}
+        {"id": "map-main", "label": "Weather Map", "registry_type": "map", "registry_registered": true, "root_or_slot": {"slot": "map", "root": "#mapRoot"}, "platform_context": "Shared route Platform Context; Map compatibility iframe remains inside the registered adapter.", "authoritative_source": "sites/staging/weather/widgets/map/platform-adapter.mjs", "compatibility_route": ["/weather/map1.html", "/weather/map-poc.html"], "classification": "runtime_widget", "target_classification": "runtime_widget", "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]}, "current_owner": "sites/staging/map/map-composer.mjs"}
       ]
     },
     {

@@ -169,7 +169,8 @@ test("weather map entrypoint and compatibility routes preserve the supported pat
   assert.doesNotMatch(mapPoc, /http-equiv=["']refresh/i);
   assert.match(map1, /http-equiv="refresh"[^>]+map-poc\.html/);
   assert.match(map1, /target\.search\s*=\s*window\.location\.search/);
-  assert.match(standalone, /src="\/weather\/map-poc\.html"/);
+  assert.match(standalone, /id="mapRoot" data-nc-shape="oriented"/);
+  assert.match(standalone, /map-composer\.mjs/);
   assert.doesNotMatch(standalone, /map1\.html|map2\.js/);
 });
 

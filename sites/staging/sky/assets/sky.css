@@ -74,7 +74,9 @@ body{
 .sky-stage{
   position: relative;
   width: min(96vw, var(--stage-max));
-  height: min(70vh, 800px); /* подбери как нравится */
+  aspect-ratio: 1;
+  height: auto;
+  max-height: min(70vh, 800px);
   margin: 0 auto;
   border-radius: 20px;
   overflow: hidden;

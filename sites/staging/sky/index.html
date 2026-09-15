@@ -24,7 +24,7 @@
 
       <!-- stage (THIS goes fullscreen) -->
       <div class="sky-stage" id="skyStage">
-        <div class="sky-mount" id="skyMount"></div>
+        <div class="sky-mount" id="skyMount" data-nc-shape="square"></div>
 
         <!-- tooltip -->
         <div class="sky-tooltip" id="skyTooltip" aria-hidden="true"></div>
@@ -41,11 +41,8 @@
   </div>
 
 <script type="module">
-  import "./core/sky.ui.js";  // ✅ MUST be imported before the legacy adapter
-  import "./legacy-bootstrap.mjs";
-  // bootSkyMapUI() disabled - now using web component architecture (ui-player, ui-side-toolbar, etc.)
-  // import { bootSkyMapUI } from "./core/sky.map.js";
-  // bootSkyMapUI();
+  import { mountSkyPage } from "./page-composer.mjs?v=20260915a";
+  window.skyPageComposer = await mountSkyPage();
 </script>
 
 </body>

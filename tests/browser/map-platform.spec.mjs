@@ -152,5 +152,18 @@ test("map route sources are statically compatible with the browser entrypoint", 
   expect(standalone.ok()).toBeTruthy();
   expect(await mapPoc.text()).toContain('event.data.type === "update-location"');
   expect(await map1.text()).toContain("target.search = window.location.search");
-  expect(await standalone.text()).toContain('src="/weather/map-poc.html"');
+  expect(await standalone.text()).toContain('id="mapRoot" data-nc-shape="oriented"');
+  expect(await standalone.text()).toContain("map-composer.mjs");
+});
+
+test("Map route mounts the registered Runtime adapter and keeps the compatibility iframe inside its root", async ({ page }) => {
+  await page.route("**/weather/map-poc.html", route => route.fulfill({
+    status: 200,
+    contentType: "text/html",
+    body: "<!doctype html><html><body><p>Map fixture</p></body></html>",
+  }));
+  await page.goto("/map/?lat=50.0755&lon=14.4378", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#mapRoot")).toHaveAttribute("data-nc-widget", "map");
+  await expect(page.locator("#mapRoot")).toHaveAttribute("data-nc-shape", "oriented");
+  await expect(page.locator("#mapRoot iframe")).toHaveAttribute("src", "/weather/map-poc.html");
 });
