@@ -16,7 +16,7 @@ function createRuntime(definitions) {
 
 test("catalog exposes Phase 1 platform adapter definitions", async () => {
   const catalogTypes = widgetCatalog.map(definition => definition.type);
-  assert.deepEqual(catalogTypes, ["hero", "astro", "sun-moon", "weather", "observing-window", "map", "location", "sky", "news", "events", "alerts", "space-weather"]);
+  assert.deepEqual(catalogTypes, ["hero", "astro", "sun-moon", "weather", "observing-window", "solar-activity", "map", "location", "sky", "news", "events", "alerts", "space-weather"]);
   assert.equal(catalogTypes.filter(type => type === "hero").length, 1);
   const hero = widgetCatalog.find(definition => definition.type === "hero");
   assert.equal(typeof hero.loader, "function");
@@ -88,6 +88,11 @@ test("catalog exposes Phase 1 platform adapter definitions", async () => {
   assert.deepEqual(spaceWeather.supportedOptions.orientation, ["horizontal", "vertical"]);
   assert.deepEqual(spaceWeather.capabilities, { observerAware: false, timeAware: false, multiInstance: true, embed: false });
   assert.equal(typeof (await spaceWeather.loader()).mount, "function");
+  const solarActivity = widgetCatalog.find(definition => definition.type === "solar-activity");
+  assert.deepEqual(solarActivity.defaults, { orientation: "horizontal", theme: "inherit", density: "normal", dataUrl: "/data/helio_now.json" });
+  assert.deepEqual(solarActivity.capabilities, { observerAware: false, timeAware: false, multiInstance: true, embed: false });
+  assert.deepEqual(solarActivity.supportedOptions.orientation, ["horizontal", "vertical"]);
+  assert.equal(typeof (await solarActivity.loader()).mount, "function");
 });
 
 test("mount creates the public instance shape, merges immutable config, and caches lazy loading", async () => {

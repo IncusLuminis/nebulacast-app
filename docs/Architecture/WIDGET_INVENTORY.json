@@ -362,6 +362,32 @@
       "notes": "Best observing window is an observer/time-aware multi-instance Runtime widget. It owns its root-scoped chart and metric chips, loads the existing observer-weather and Sun/Moon contracts through Platform Context, and leaves Dashboard panel shell/navigation plus all legacy compatibility routes unchanged."
     },
     {
+      "id": "solar-activity",
+      "classification": "production",
+      "source_of_truth": "sites/staging/helio/widgets/solar-activity/solar-activity.js",
+      "generated_or_copied_artifacts": [],
+      "build_path": "No build step; the root-scoped Solar Activity widget and Platform Runtime adapter are committed under sites/staging/helio/widgets/solar-activity/.",
+      "deploy_paths": [
+        "sites/staging/helio/widgets/solar-activity/solar-activity.js",
+        "sites/staging/helio/widgets/solar-activity/platform-adapter.mjs",
+        "sites/staging/index.html",
+        "sites/staging/console/console-config.mjs"
+      ],
+      "local_test_path": "make server; http://localhost:8080/ (Dashboard Solar Activity)",
+      "compatibility_paths": ["sites/staging/data/helio_now.json"],
+      "path_classification": [
+        {"path": "sites/staging/helio/widgets/solar-activity/solar-activity.js", "role": "canonical root-scoped Solar Activity implementation", "classification": "production"},
+        {"path": "sites/staging/helio/widgets/solar-activity/platform-adapter.mjs", "role": "common Widget Runtime adapter", "classification": "production"},
+        {"path": "sites/staging/index.html", "role": "Dashboard host shell and panel placement", "classification": "production"},
+        {"path": "sites/staging/console/console-config.mjs", "role": "Console Composer slot declaration", "classification": "production"}
+      ],
+      "supporting_data_sources": [
+        "sites/staging/data/helio_now.json",
+        "sites/staging/helio/src/helio.types.ts"
+      ],
+      "notes": "Solar Activity is a non-observer-aware, non-time-aware, oriented, multi-instance Runtime widget. It consumes the existing helio_now/v1 dataset and renders X-Ray, Solar Activity, and Solar Wind without adding a provider or endpoint."
+    },
+    {
       "id": "space-weather",
       "classification": "production",
       "source_of_truth": "sites/staging/helio/src/helio.widget.ts",

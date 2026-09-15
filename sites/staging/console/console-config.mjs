@@ -59,6 +59,10 @@ const slots = [
   { id: "dashboard-observing-window", selector: "#dbp-window-body", widget: "observing-window", config: {
     orientation: "horizontal",
   } },
+  { id: "dashboard-solar-activity", selector: "#dbp-solar-body", widget: "solar-activity", config: {
+    orientation: "horizontal",
+    dataUrl: "/data/helio_now.json",
+  } },
   { id: "dashboard-map", selector: "#db-map-root", widget: "map", config: {
     orientation: "horizontal",
     mapUrl: "/weather/map-poc.html",

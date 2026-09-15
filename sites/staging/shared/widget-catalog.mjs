@@ -35,6 +35,11 @@ const SPACE_WEATHER_SUPPORTED_OPTIONS = Object.freeze({
   theme: Object.freeze(["inherit", "auto", "dark", "light"]),
   density: Object.freeze(["compact", "normal", "comfortable"]),
 });
+const SOLAR_ACTIVITY_SUPPORTED_OPTIONS = Object.freeze({
+  orientation: Object.freeze(["horizontal", "vertical"]),
+  theme: Object.freeze(["inherit", "auto", "dark", "light"]),
+  density: Object.freeze(["compact", "normal", "comfortable"]),
+});
 
 function galleryMetadata(title, description, supportedOptions = COMMON_SUPPORTED_OPTIONS, galleryPreview = false) {
   return Object.freeze({ title, description, supportedOptions, galleryPreview });
@@ -99,6 +104,21 @@ export const widgetCatalog = Object.freeze([
       embed: false,
     }),
     loader: () => import("../weather/widgets/observing-window/platform-adapter.mjs"),
+  }),
+  Object.freeze({
+    type: "solar-activity",
+    version: 1,
+    shape: "oriented",
+    userModes: Object.freeze(["horizontal", "vertical"]),
+    ...galleryMetadata("Solar Activity", "X-ray, solar activity, and solar-wind summary from Helio data.", SOLAR_ACTIVITY_SUPPORTED_OPTIONS, true),
+    defaults: Object.freeze({ orientation: "horizontal", theme: "inherit", density: "normal", dataUrl: "/data/helio_now.json" }),
+    capabilities: Object.freeze({
+      observerAware: false,
+      timeAware: false,
+      multiInstance: true,
+      embed: false,
+    }),
+    loader: () => import("../helio/widgets/solar-activity/platform-adapter.mjs"),
   }),
   Object.freeze({
     type: "map",

@@ -196,18 +196,17 @@
         {
           "id": "dashboard-solar-activity",
           "label": "Solar Activity",
-          "registry_type": "space-weather",
-          "registry_registered": false,
-          "root_or_slot": {"slot": null, "root": "#dbp-solar-body"},
-          "platform_context": "Contract-first only: the future solar-activity Runtime will consume the existing helio_now/v1 dataset; no observer or time context is required in v1.",
-          "authoritative_source": "sites/staging/helio/dist/helio.widget.js",
+          "registry_type": "solar-activity",
+          "registry_registered": true,
+          "root_or_slot": {"slot": "dashboard-solar-activity", "root": "#dbp-solar-body"},
+          "platform_context": "Console Composer mounts the registered solar-activity Runtime adapter with the existing helio_now/v1 dataset; no observer or time context is required.",
+          "authoritative_source": "sites/staging/helio/widgets/solar-activity/solar-activity.js",
           "compatibility_route": ["/helio/"],
-          "classification": "temporary_adapter",
+          "classification": "runtime_widget",
           "target_classification": "runtime_widget",
           "layout": {"shape": "oriented", "public_modes": ["horizontal", "vertical"]},
-          "current_owner": "sites/staging/index.html inline renderer _dbRenderSolar",
-          "contract_reference": "docs/Helio/Solar Activity Widget Contract v1.md",
-          "migration_note": "Contract recorded only; do not register solar-activity or remove _dbRenderSolar in this step."
+          "current_owner": "sites/staging/console/console-composer.mjs via dashboard-solar-activity slot",
+          "contract_reference": "docs/Helio/Solar Activity Widget Contract v1.md"
         },
         {
           "id": "dashboard-map",

@@ -21,6 +21,7 @@ const expectedSlots = [
   ["sidebar-news", "#fs-news", "news"],
   ["dashboard-space-weather", "#dbp-helio-body", "space-weather"],
   ["dashboard-observing-window", "#dbp-window-body", "observing-window"],
+  ["dashboard-solar-activity", "#dbp-solar-body", "solar-activity"],
   ["dashboard-map", "#db-map-root", "map"],
 ];
 
@@ -35,6 +36,7 @@ test("Console config declares the platform-managed roots and preserves configs",
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "weather-matrix").config, { orientation: "horizontal", mode: "matrix" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-space-weather").config, { orientation: "horizontal" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-observing-window").config, { orientation: "horizontal" });
+  assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-solar-activity").config, { orientation: "horizontal", dataUrl: "/data/helio_now.json" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-map").config, { orientation: "horizontal", mapUrl: "/weather/map-poc.html" });
   assert.deepEqual(consoleConfig.slots.find(slotRef => slotRef.id === "dashboard-sky").config, { orientation: "horizontal" });
 });
@@ -83,9 +85,11 @@ test("Composer wiring keeps shared Runtime/catalog and Console Hero boundary int
   assert.match(indexSource, /function _dbRenderHelio\(\) \{[\s\S]*return;/);
   assert.doesNotMatch(indexSource, /_dbRenderWindow|_nopNightHours|_nopBestWindow|_nopActiveMetric|_NOP_CHIP_KEYS|_nopRenderChart/);
   assert.doesNotMatch(indexSource, /_dbSyncWeatherProfile|_dbActivateWeatherTab|_dbActivateWeatherObserving|_dbRenderMatrix/);
+  assert.doesNotMatch(indexSource, /_dbRenderSolar\(\);/);
   assert.match(indexSource, /function _dbUpdateWeatherProfiles\(profileKey\)[\s\S]*getInstance\(id\)\?\.update\?\.\(\{ profile: wxKey \}\)/);
   assert.doesNotMatch(indexSource, /querySelector\(`#\$\{id\} \.profile-pill/);
   assert.match(indexSource, /id="dbp-window-body"/);
+  assert.match(indexSource, /id="dbp-solar-body"/);
   assert.doesNotMatch(indexSource, /load(?:SwxAlerts|CalendarEvents|NewsItems)\s*\(/);
   assert.doesNotMatch(indexSource, /initSkyIfNeeded|legacy-bootstrap\.mjs|window\.__(?:skyWidget|SKY_CONFIG)/);
   assert.doesNotMatch(indexSource, /db-sky-iframe|skyIframe|Dashboard sky iframe|contentWindow\.__skyWidget/);

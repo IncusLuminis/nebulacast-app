@@ -2255,7 +2255,6 @@
     heroDataSnapshot = event.detail || null;
     _helioData = heroDataSnapshot?.sw || null;
     if (_DB_PANELS?.includes('helio')) _dbRenderHelio();
-    if (_DB_PANELS?.includes('solar')) _dbRenderSolar();
   });
   heroRoot?.addEventListener('nc:hero-action', event => {
     const detail = event.detail || {};
@@ -2734,7 +2733,9 @@
     return '';
   }
 
-  function _dbRenderSolar() {
+  function _dbLegacySolarRendererDisabled() {
+    // Solar Activity is owned by Console Composer and the Platform Runtime.
+    return;
     const body = document.getElementById('dbp-solar-body');
     if (!body) return;
     const sw = _helioData;
@@ -3045,7 +3046,6 @@
     if (!el) return;
     el.style.display = '';
     if (panelId === 'helio')   _dbRenderHelio();
-    if (panelId === 'solar')   _dbRenderSolar();
     // scroll into view
     setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
     _dbSyncHeroActive();
@@ -3080,7 +3080,6 @@
       if (saved[id]) {
         el.style.display = '';
         if (id === 'helio')   _dbRenderHelio();
-        if (id === 'solar')   _dbRenderSolar();
       } else {
         el.style.display = 'none';
       }

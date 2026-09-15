@@ -21,6 +21,7 @@ EXPECTED_WIDGETS = {
     "events",
     "alerts",
     "observing-window",
+    "solar-activity",
     "space-weather",
 }
 CLASSIFICATIONS = {"production", "legacy", "POC"}

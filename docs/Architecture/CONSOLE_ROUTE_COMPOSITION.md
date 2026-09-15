@@ -46,12 +46,11 @@ The complete per-surface fields, including exact source paths and compatibility 
 
 This descriptor references the existing Registry and the authoritative paths in `WIDGET_INVENTORY.json`. It does not define loaders, schemas, mount functions, or a second catalog. Future migration stories must update the descriptor and its checks when a surface changes classification, while continuing to update the inventory only when ownership paths change.
 
-## Solar Activity contract-first note
+## Solar Activity Runtime note
 
 [`Solar Activity Widget Contract v1`](../Helio/Solar%20Activity%20Widget%20Contract%20v1.md)
-defines the future `solar-activity` type, its horizontal/vertical layout, the
+defines the `solar-activity` type, its horizontal/vertical layout, the
 three-column X-Ray/Solar Activity/Solar Wind presentation, and the canonical
-`helio_now/v1` timeline fields. The descriptor intentionally continues to
-record `#dbp-solar-body` as a `temporary_adapter` owned by
-`_dbRenderSolar`. Registration, Runtime implementation, and removal of the
-inline renderer are deferred to the next implementation step.
+`helio_now/v1` timeline fields. `#dbp-solar-body` is now mounted by the
+registered Runtime adapter through the `dashboard-solar-activity` Composer
+slot; the legacy inline renderer is no longer an active owner.
