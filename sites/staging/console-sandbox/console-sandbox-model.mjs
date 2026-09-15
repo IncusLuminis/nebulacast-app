@@ -6,6 +6,7 @@ import {
 
 export const CONSOLE_SANDBOX_VIEWPORTS = Object.freeze(["desktop", "narrow"]);
 export const CONSOLE_SANDBOX_DEFAULT_VIEWPORT = "desktop";
+export const CONSOLE_SANDBOX_STATES = Object.freeze(["idle", "invalid", "loading", "ready", "error", "timeout", "destroyed"]);
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -19,6 +20,10 @@ function assertRegistry(registry) {
 
 function assertLive(destroyed) {
   if (destroyed) throw new Error("Console Sandbox is destroyed");
+}
+
+function assertState(state) {
+  if (!CONSOLE_SANDBOX_STATES.includes(state)) throw new TypeError(`State must be one of: ${CONSOLE_SANDBOX_STATES.join(", ")}`);
 }
 
 function definitionFor(registry, widget) {
@@ -165,6 +170,15 @@ export function createConsoleSandboxModel({
     return snapshotCard(record);
   }
 
+  function setRuntimeState(id, state, error = null) {
+    assertLive(destroyed);
+    assertState(state);
+    const record = recordFor(id);
+    record.state = state;
+    record.error = error ? (error instanceof Error ? error.message : String(error)) : null;
+    return snapshotCard(record);
+  }
+
   function select(id) {
     assertLive(destroyed);
     recordFor(id);
@@ -228,6 +242,7 @@ export function createConsoleSandboxModel({
   return Object.freeze({
     createInstance,
     updateInstance,
+    setRuntimeState,
     select,
     move,
     remove,

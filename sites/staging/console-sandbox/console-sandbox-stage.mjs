@@ -1,3 +1,4 @@
+import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
 import { getWidgetOptionValues } from "../shared/widget-config.mjs";
 import { createConsoleSandboxModel } from "./console-sandbox-model.mjs";
@@ -51,9 +52,14 @@ export function createConsoleSandbox({
   root,
   catalog = widgetCatalog,
   registry = createCatalogRegistry(),
+  context = null,
+  runtime = null,
   documentRef = root?.ownerDocument || globalThis.document,
 } = {}) {
   if (!root || typeof root.appendChild !== "function") throw new TypeError("Console Sandbox requires a root element");
+  const widgetRuntime = runtime || (context ? createNebulacast({ context, registry }) : null);
+  const mounted = new Map();
+  let runtimeQueue = Promise.resolve();
   const model = createConsoleSandboxModel({ registry, onChange: render });
   let selectedWidget = catalog[0]?.type || registry.list()[0]?.type || "";
   let destroyed = false;
@@ -109,7 +115,7 @@ export function createConsoleSandbox({
   inspectorRegion.appendChild(text(documentRef, "h2", "console-sandbox-heading", "Inspector"));
   const inspector = text(documentRef, "form", "console-sandbox-form");
   inspector.dataset.role = "inspector";
-  inspector.addEventListener("submit", event => {
+  function applyInspector(event) {
     event.preventDefault();
     const instance = selectedInstance();
     if (!instance) return;
@@ -122,10 +128,14 @@ export function createConsoleSandbox({
     } catch (error) {
       inspectorStatus.textContent = error.message;
     }
-  });
+  }
+  inspector.addEventListener("submit", applyInspector);
   inspectorRegion.appendChild(inspector);
   const inspectorActions = text(documentRef, "div", "console-sandbox-actions");
-  inspectorActions.appendChild(button(documentRef, "Apply", "apply", "sandbox-button sandbox-button-primary"));
+  const applyButton = button(documentRef, "Apply", "apply", "sandbox-button sandbox-button-primary");
+  applyButton.type = "submit";
+  applyButton.addEventListener("click", applyInspector);
+  inspectorActions.appendChild(applyButton);
   inspectorActions.appendChild(button(documentRef, "Move left", "move-left"));
   inspectorActions.appendChild(button(documentRef, "Move right", "move-right"));
   inspectorActions.appendChild(button(documentRef, "Reset card", "reset-card"));
@@ -253,6 +263,70 @@ export function createConsoleSandbox({
     renderCanvas(state);
     renderInspector(state);
     canvasStatus.textContent = state.instances.length ? `${state.instances.length} widget${state.instances.length === 1 ? "" : "s"} in composition.` : "Empty composition.";
+    queueRuntimeSync(state);
+  }
+
+  function instanceSignature(instance) {
+    return JSON.stringify({ widget: instance.widget, config: instance.config, layout: instance.layout });
+  }
+
+  function runtimeRootFor(id) {
+    return canvas.querySelector?.(`[data-role="runtime-root"][data-sandbox-instance="${id}"]`) || null;
+  }
+
+  function updateCardStatus(id, state, error = null) {
+    const card = canvas.querySelector?.(`article[data-sandbox-instance="${id}"]`);
+    const status = card?.querySelector?.(".console-sandbox-card-status");
+    if (!status) return;
+    status.textContent = error || `State: ${state}`;
+    status.dataset.error = error ? "true" : "false";
+  }
+
+  async function disposeMounted(id, record) {
+    mounted.delete(id);
+    await record?.instance?.destroy?.();
+  }
+
+  async function syncRuntime(state) {
+    if (!widgetRuntime || destroyed) return;
+    const desired = new Map(state.instances.map(instance => [instance.id, instance]));
+    for (const [id, record] of [...mounted]) {
+      const instance = desired.get(id);
+      const root = runtimeRootFor(id);
+      if (!instance || !root || root !== record.root || instanceSignature(instance) !== record.signature) {
+        await disposeMounted(id, record);
+      }
+    }
+    for (const instance of state.instances) {
+      if (!instance.layout.valid) {
+        updateCardStatus(instance.id, instance.state, instance.error);
+        continue;
+      }
+      const root = runtimeRootFor(instance.id);
+      if (!root || mounted.has(instance.id)) continue;
+      const signature = instanceSignature(instance);
+      updateCardStatus(instance.id, "loading");
+      try {
+        model.setRuntimeState(instance.id, "loading");
+        const mountedInstance = await widgetRuntime.mount(root, { widget: instance.widget, config: instance.config });
+        const current = model.getInstance(instance.id);
+        if (!current || instanceSignature(current) !== signature || runtimeRootFor(instance.id) !== root) {
+          await mountedInstance?.destroy?.();
+          continue;
+        }
+        mounted.set(instance.id, { root, signature, instance: mountedInstance });
+        model.setRuntimeState(instance.id, "ready");
+        updateCardStatus(instance.id, "ready");
+      } catch (error) {
+        model.setRuntimeState(instance.id, "error", error);
+        updateCardStatus(instance.id, "error", error.message);
+      }
+    }
+  }
+
+  function queueRuntimeSync(state) {
+    if (!widgetRuntime) return;
+    runtimeQueue = runtimeQueue.catch(() => undefined).then(() => syncRuntime(state));
   }
 
   shell.addEventListener("click", event => {
@@ -280,7 +354,14 @@ export function createConsoleSandbox({
   return Object.freeze({
     model,
     mount() { render(); return Promise.resolve(model.getSnapshot()); },
-    destroy() { destroyed = true; model.destroy(); root.textContent = ""; },
+    destroy() {
+      destroyed = true;
+      model.destroy();
+      runtimeQueue = runtimeQueue.then(async () => {
+        for (const [id, record] of [...mounted]) await disposeMounted(id, record);
+      }).catch(() => undefined);
+      root.textContent = "";
+    },
   });
 }
 

@@ -22,11 +22,14 @@
   </div>
 
   <script type="module">
+    import { getState, setState, subscribe } from "/weather/core/state.js";
+    import { createPlatformContext } from "/weather/core/context.js";
     import { createConsoleSandbox } from "/console-sandbox/console-sandbox-stage.mjs?v=20260915";
 
     const host = document.getElementById("console-sandbox");
     try {
-      createConsoleSandbox({ root: host }).mount();
+      const context = createPlatformContext({ getState, setState, subscribe }, { locale: "en", theme: "auto" });
+      createConsoleSandbox({ root: host, context }).mount();
     } catch (error) {
       const status = document.createElement("p");
       status.className = "console-sandbox-status console-sandbox-status-error";
