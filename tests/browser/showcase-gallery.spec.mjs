@@ -35,9 +35,18 @@ test("Widget Lab creates two independent Runtime previews and reopens the stage"
   await page.locator('[data-lab-action="close-stage"]').click();
   await expect(page.locator('[data-role="preview-stage"]')).not.toBeVisible();
   await expect(page.locator('[data-lab-instance]')).toHaveCount(2);
-  await page.locator('[data-lab-action="select-instance"]').first().click();
+  const opener = page.locator('[data-lab-action="select-instance"]').first();
+  await opener.click();
   await expect(page.locator('[data-role="preview-stage"]')).toBeVisible();
   await expect(page.locator('[data-lab-preview-instance]')).toHaveCount(1);
+  await expect(page.locator('[data-lab-action="retry-stage"]')).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator('[data-role="preview-stage"]')).not.toBeVisible();
+  await expect(opener).toBeFocused();
+  await opener.click();
+  await page.locator('[data-lab-action="reset-stage"]').click();
+  await expect(page.locator('[data-lab-instance]')).toHaveCount(1);
+  await expect(page.locator('[data-role="preview-stage"]')).not.toBeVisible();
 });
 
 test("Widget Lab enforces Sky square and oriented dimension rules", async ({ page }) => {

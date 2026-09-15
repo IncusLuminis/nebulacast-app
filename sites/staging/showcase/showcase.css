@@ -88,7 +88,7 @@ html, body {
 .widget-lab-stage { width: min(1180px, calc(100vw - 32px)); max-width: none; min-height: min(80vh, 820px); border: 1px solid #3a4657; border-radius: 12px; background: #0b0d12; color: var(--text); padding: 18px; }
 .widget-lab-stage::backdrop { background: rgba(0, 0, 0, .72); }
 .widget-lab-stage[open] { display: grid; gap: 12px; }
-.widget-lab-stage-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.widget-lab-stage-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
 .widget-lab-stage-fields { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; flex: 1; }
 .widget-lab-stage-field { display: grid; gap: 3px; color: var(--muted); font-size: 10px; }
 .widget-lab-stage-field select, .widget-lab-stage-field input { width: 92px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface2); color: var(--text); padding: 5px 6px; font: inherit; }

@@ -41,6 +41,8 @@ export function createWidgetLab({
   let selectedWidget = catalog[0]?.type || "";
   let mounted = false;
   let destroyed = false;
+  let returnFocus = null;
+  let returnFocusInstanceId = null;
 
   const shell = documentRef.createElement("div");
   shell.className = "widget-lab-shell";
@@ -106,6 +108,7 @@ export function createWidgetLab({
   stageHeader.className = "widget-lab-stage-header";
   const stageHeading = element(documentRef, "h2", "widget-lab-heading", "stage-heading", "Preview Stage");
   stageHeading.setAttribute("id", "widget-lab-stage-heading");
+  stageHeading.tabIndex = -1;
   stageHeader.appendChild(stageHeading);
   const stageFields = documentRef.createElement("div");
   stageFields.className = "widget-lab-stage-fields";
@@ -142,8 +145,20 @@ export function createWidgetLab({
   applyStageButton.className = "widget-lab-button widget-lab-button-primary";
   applyStageButton.setAttribute("data-lab-action", "apply-stage");
   applyStageButton.textContent = "Apply";
+  const retryStageButton = documentRef.createElement("button");
+  retryStageButton.type = "button";
+  retryStageButton.className = "widget-lab-button";
+  retryStageButton.setAttribute("data-lab-action", "retry-stage");
+  retryStageButton.textContent = "Retry";
+  const resetStageButton = documentRef.createElement("button");
+  resetStageButton.type = "button";
+  resetStageButton.className = "widget-lab-button";
+  resetStageButton.setAttribute("data-lab-action", "reset-stage");
+  resetStageButton.textContent = "Reset";
   stageHeader.appendChild(addStageButton);
   stageHeader.appendChild(applyStageButton);
+  stageHeader.appendChild(retryStageButton);
+  stageHeader.appendChild(resetStageButton);
   stageHeader.appendChild(closeButton);
   stage.appendChild(stageHeader);
   const stageStatus = element(documentRef, "p", "widget-lab-status", "stage-status");
@@ -202,12 +217,15 @@ export function createWidgetLab({
     return registry.get(selectedWidget);
   }
 
-  function openStage() {
+  function openStage(trigger = null, instanceId = null) {
+    returnFocus = trigger || returnFocus;
+    returnFocusInstanceId = instanceId || returnFocusInstanceId;
     if (typeof stage.showModal === "function") {
       try { if (!stage.open) stage.showModal(); } catch (_) { stage.setAttribute("open", ""); }
     } else {
       stage.setAttribute("open", "");
     }
+    stageHeading.focus?.();
   }
 
   function closeStage() {
@@ -362,7 +380,7 @@ export function createWidgetLab({
         selectedWidget = instance.widget;
         widgetSelect.value = selectedWidget;
         renderInspector(model.getInstance(instance.id));
-        openStage();
+        openStage(select, instance.id);
         void model.openPreview(instance.id);
       });
       item.appendChild(select);
@@ -419,7 +437,7 @@ export function createWidgetLab({
     previewRoot.className = "widget-lab-preview-root";
     previewRoots.set(instance.id, previewRoot);
     model.select(instance.id);
-    openStage();
+    openStage(createButton);
     await model.openPreview(instance.id);
   }
   createButton.addEventListener("click", createInstanceFromInspector);
@@ -449,6 +467,18 @@ export function createWidgetLab({
       height: stageControls.height.value,
     },
   }));
+  retryStageButton.addEventListener("click", async () => {
+    const selectedId = model.getSnapshot().selectedId;
+    if (!selectedId) return;
+    await model.retry(selectedId);
+  });
+  resetStageButton.addEventListener("click", async () => {
+    const selectedId = model.getSnapshot().selectedId;
+    if (!selectedId) return;
+    await model.reset(selectedId);
+    previewRoots.delete(selectedId);
+    closeStage();
+  });
   copyOutput.addEventListener("click", async () => {
     const selectedId = model.getSnapshot().selectedId;
     const instance = selectedId ? model.getInstance(selectedId) : null;
@@ -475,6 +505,17 @@ export function createWidgetLab({
     const selectedId = model.getSnapshot().selectedId;
     if (selectedId) model.closePreview(selectedId);
     closeStage();
+  });
+  stage.addEventListener("close", () => {
+    const focusInstanceId = returnFocusInstanceId;
+    const selectedId = model.getSnapshot().selectedId;
+    if (selectedId && model.getInstance(selectedId)?.preview === "open") model.closePreview(selectedId);
+    const replacement = focusInstanceId
+      ? instanceList.querySelector(`[data-lab-instance="${focusInstanceId}"] [data-lab-action="select-instance"]`)
+      : null;
+    (replacement || returnFocus)?.focus?.();
+    returnFocus = null;
+    returnFocusInstanceId = null;
   });
   resetAllButton.addEventListener("click", async () => {
     await model.resetAll();
