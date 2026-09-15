@@ -9,7 +9,7 @@ Story: #116 — Define Registry stylesheet manifest and Sandbox loading contract
 - all 13 Registry definitions expose an explicit frozen `stylesheets` array;
 - each path is a same-origin root-relative `.css` file from `sites/staging`;
 - the shared loader rejects external URLs, query strings, markup, non-CSS paths,
-  and path traversal;
+  percent-encoded paths, and path traversal;
 - Sandbox waits for manifest stylesheets before Runtime mount;
 - links are deduplicated by path and released after the last owning preview;
 - standalone and JavaScript embed hosts use the same manifest without changing

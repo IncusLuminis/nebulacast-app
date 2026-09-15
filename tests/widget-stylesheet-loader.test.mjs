@@ -41,6 +41,8 @@ test("stylesheet paths are same-origin CSS paths and manifests are explicit", ()
     "https://evil.example/widget.css",
     "//evil.example/widget.css",
     "/../widget.css",
+    "/safe/%2e%2e/evil.css",
+    "/safe/%2E%2E%2Fevil.css",
     "/widgets/widget.css?cache=1",
     "/widgets/widget.mjs",
     "/widgets/<style>.css",

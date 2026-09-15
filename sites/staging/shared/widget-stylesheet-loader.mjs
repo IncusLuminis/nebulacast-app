@@ -5,7 +5,7 @@
  * accept a URL supplied by a widget configuration or a page query string.
  */
 
-const SAFE_STYLESHEET_PATH = /^\/(?!\/)(?!\.\.?\/)(?!.*\/\.\.?\/)(?!.*[?#<>\s])[^\\"']+\.css$/;
+const SAFE_STYLESHEET_PATH = /^\/(?!\/)(?!\.\.?\/)(?!.*\/\.\.?\/)(?!.*[%?#<>\s])[^\\"']+\.css$/;
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
