@@ -13,9 +13,11 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-sandbox-instance="console-sandbox-1"] [data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(1);
   await expect(page.locator('[data-sandbox-instance="console-sandbox-1"] .console-sandbox-card-status')).toHaveText("State: ready");
+  await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(1);
 
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(2);
+  await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(1);
   const ids = await page.locator("article[data-sandbox-instance]").evaluateAll(nodes => nodes.map(node => node.dataset.sandboxInstance));
   expect(new Set(ids).size).toBe(2);
 
@@ -28,6 +30,7 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
 
   await page.locator('[data-sandbox-action="reset-all"]').click();
   await expect(page.locator('[data-role="canvas"]')).toContainText("Add a widget to start building");
+  await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(0);
 });
 
 test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", async ({ page }) => {

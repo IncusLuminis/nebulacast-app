@@ -1,5 +1,6 @@
 import { createCatalogRegistry } from "../../shared/widget-catalog.mjs";
 import { createNebulacast } from "../../shared/widget-runtime.mjs";
+import { createStylesheetLoader } from "../../shared/widget-stylesheet-loader.mjs";
 import {
   JAVASCRIPT_EMBED_API_VERSION,
   normalizeJavascriptEmbedInput,
@@ -45,14 +46,6 @@ function defaultContext() {
   };
 }
 
-function stylesheetPath(definition) {
-  const href = definition?.standaloneStylesheet;
-  if (typeof href !== "string" || !/^\/(?!\/)[^<>\s?#]+$/.test(href)) {
-    throw new TypeError(`Catalog stylesheet is not safe for ${definition?.type || "widget"}`);
-  }
-  return href;
-}
-
 function resolveDataAssets(definition, config) {
   if (!config.baseUrl) return { ...config };
   const prefix = config.baseUrl === "/" ? "" : config.baseUrl.replace(/\/$/, "");
@@ -86,38 +79,16 @@ export function createJavascriptEmbedRuntime({
   const widgetRuntime = runtime || createNebulacast({ context, registry });
   const instances = new Map();
   const pendingRoots = new Set();
-  const stylesheetRefs = new Map();
+  const stylesheetLoader = createStylesheetLoader({ documentRef });
   let destroyed = false;
 
   function acquireStylesheet(definition) {
-    const href = stylesheetPath(definition);
-    const existing = stylesheetRefs.get(definition.type);
-    if (existing) {
-      existing.refs += 1;
-      return { type: definition.type };
-    }
-    if (!documentRef?.head?.appendChild || typeof documentRef.createElement !== "function") {
-      throw new TypeError("JavaScript embed requires a document head");
-    }
-    const link = documentRef.createElement("link");
-    link.rel = "stylesheet";
-    link.href = href;
-    link.setAttribute?.("data-nc-embed-stylesheet", definition.type);
-    documentRef.head.appendChild(link);
-    stylesheetRefs.set(definition.type, { link, refs: 1 });
-    return { type: definition.type };
+    return stylesheetLoader.acquire(definition, { attributeName: "data-nc-embed-stylesheet" });
   }
 
   function releaseStylesheet(record) {
     if (!record || record.stylesheetReleased) return;
-    const reference = stylesheetRefs.get(record.stylesheetType);
-    if (reference) {
-      reference.refs -= 1;
-      if (reference.refs === 0) {
-        reference.link.remove?.();
-        stylesheetRefs.delete(record.stylesheetType);
-      }
-    }
+    record.stylesheet?.release?.();
     record.stylesheetReleased = true;
   }
 
@@ -130,8 +101,8 @@ export function createJavascriptEmbedRuntime({
     try {
       const normalized = normalizeJavascriptEmbedInput(registry, specification);
       const definition = registry.get(normalized.widget);
-      acquireStylesheet(definition);
-      record = { instance: null, stylesheetType: definition.type, stylesheetReleased: false };
+      const stylesheet = acquireStylesheet(definition);
+      record = { instance: null, stylesheet, stylesheetReleased: false };
       const config = resolveDataAssets(definition, {
         ...normalized.config,
         ...(normalized.layout ? { orientation: normalized.layout.mode === "square" ? "auto" : normalized.layout.mode } : {}),

@@ -161,6 +161,19 @@ must not share mutable DOM or Runtime state.
 - Reset and remove destroy the corresponding Runtime instance and remove its
   owned root. Resetting the whole Sandbox destroys all instances.
 
+### Stylesheet loading contract
+
+- Every Registry definition declares a frozen `stylesheets` array. Entries are
+  root-relative `.css` paths on the same origin; an empty array explicitly
+  means that the widget owns its presentation through its Runtime/component
+  styles.
+- The shared stylesheet loader rejects external URLs, query strings, markup,
+  non-CSS paths, and path traversal. It deduplicates links by path and removes
+  them after the last owning preview is released.
+- Sandbox previews wait for every manifest stylesheet to load before invoking
+  the Runtime adapter. Standalone and JavaScript embed hosts acquire the same
+  manifest without blocking their existing mount contract.
+
 ## 7. Accessibility and recovery
 
 - Use landmarks and headings for Palette, Composition Canvas, and Inspector.
@@ -186,6 +199,8 @@ must not share mutable DOM or Runtime state.
 - [ ] Sky square and oriented horizontal/vertical rules are enforced.
 - [ ] Desktop and narrow canvas previews preserve the composition semantics.
 - [ ] Real Runtime adapters mount inside caller-owned card roots.
+- [ ] Registry stylesheet manifests load before Sandbox Runtime mounts and are
+      released after the last corresponding preview is removed.
 - [ ] Empty/loading/ready/error/timeout/invalid states are visible and recoverable.
 - [ ] Keyboard and focus behavior passes the accessibility checklist.
 - [ ] No arbitrary code or untrusted markup is evaluated by the Sandbox.

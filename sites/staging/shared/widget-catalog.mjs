@@ -42,6 +42,11 @@ const SOLAR_ACTIVITY_SUPPORTED_OPTIONS = Object.freeze({
 });
 const ORIENTED_USER_MODES = Object.freeze(["horizontal", "vertical"]);
 const SQUARE_USER_MODES = Object.freeze(["square"]);
+const NO_EXTRA_STYLESHEETS = Object.freeze([]);
+
+function stylesheetManifest(...paths) {
+  return Object.freeze(paths);
+}
 
 function galleryMetadata(title, description, supportedOptions = COMMON_SUPPORTED_OPTIONS, galleryPreview = false) {
   return Object.freeze({ title, description, supportedOptions, galleryPreview });
@@ -52,6 +57,7 @@ export const widgetCatalog = Object.freeze([
     type: "hero",
     version: 1,
     ...galleryMetadata("Hero", "Console hero strip with NQI, weather, Sun/Moon, Kp, clock, and panel launchers.", COMMON_SUPPORTED_OPTIONS, true),
+    stylesheets: stylesheetManifest("/hero/widget.css"),
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
@@ -62,6 +68,7 @@ export const widgetCatalog = Object.freeze([
     type: "astro",
     version: 1,
     ...galleryMetadata("Astronomy", "Location-aware astronomy conditions and observing windows.", ASTRO_SUPPORTED_OPTIONS, true),
+    stylesheets: stylesheetManifest("/weather/assets/weather.css", "/weather/widgets/astro/astro.css"),
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
@@ -72,6 +79,7 @@ export const widgetCatalog = Object.freeze([
     type: "sun-moon",
     version: 1,
     ...galleryMetadata("Sun & Moon", "Sun altitude, twilight bands, Moon phase, and daily ephemeris.", COMMON_SUPPORTED_OPTIONS, true),
+    stylesheets: stylesheetManifest("/weather/assets/weather.css", "/weather/widgets/sun_moon/sun_moon.css"),
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
@@ -85,6 +93,7 @@ export const widgetCatalog = Object.freeze([
     javascriptEmbed: true,
     divEmbed: true,
     standaloneStylesheet: "/weather/widgets/weather/weather.css",
+    stylesheets: stylesheetManifest("/weather/widgets/weather/weather.css"),
     ...galleryMetadata("Weather", "Observer conditions with forecast profiles, hourly quality, and atmospheric parameters.", WEATHER_SUPPORTED_OPTIONS, true),
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
@@ -107,6 +116,7 @@ export const widgetCatalog = Object.freeze([
     type: "observing-window",
     version: 1,
     ...galleryMetadata("Best observing window", "Tonight's best observing interval with hourly sky-quality drivers.", OBSERVING_WINDOW_SUPPORTED_OPTIONS, false),
+    stylesheets: NO_EXTRA_STYLESHEETS,
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "horizontal", theme: "inherit", density: "normal" }),
@@ -122,6 +132,7 @@ export const widgetCatalog = Object.freeze([
     type: "solar-activity",
     version: 1,
     ...galleryMetadata("Solar Activity", "X-ray, solar activity, and solar-wind summary from Helio data.", SOLAR_ACTIVITY_SUPPORTED_OPTIONS, true),
+    stylesheets: NO_EXTRA_STYLESHEETS,
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "horizontal", theme: "inherit", density: "normal", dataUrl: "/data/helio_now.json" }),
@@ -137,6 +148,7 @@ export const widgetCatalog = Object.freeze([
     type: "map",
     version: 1,
     ...galleryMetadata("Cloud Map", "Interactive cloud, radar, wind, and terrain map.", COMMON_SUPPORTED_OPTIONS, false),
+    stylesheets: stylesheetManifest("/weather/assets/weather.css", "/weather/widgets/map/map.css"),
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
@@ -152,6 +164,7 @@ export const widgetCatalog = Object.freeze([
     type: "location",
     version: 1,
     ...galleryMetadata("Location", "Root-scoped observer location search and selection control.", COMMON_SUPPORTED_OPTIONS, true),
+    stylesheets: stylesheetManifest("/weather/assets/weather.css", "/weather/widgets/location/location.css"),
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
@@ -168,6 +181,7 @@ export const widgetCatalog = Object.freeze([
     version: 1,
     standaloneHost: true,
     standaloneStylesheet: "/sky/assets/sky.css",
+    stylesheets: stylesheetManifest("/sky/assets/sky.css"),
     javascriptEmbed: true,
     divEmbed: true,
     shape: "square",
@@ -181,6 +195,7 @@ export const widgetCatalog = Object.freeze([
     type: "news",
     version: 1,
     ...galleryMetadata("News", "RSS astronomy and space news feed with category filters.", COMMON_SUPPORTED_OPTIONS, false),
+    stylesheets: stylesheetManifest("/assets/css/widget_news.css"),
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({
@@ -200,6 +215,7 @@ export const widgetCatalog = Object.freeze([
     version: 1,
     standaloneHost: true,
     standaloneStylesheet: "/assets/css/widget_calendar.css",
+    stylesheets: stylesheetManifest("/assets/css/widget_calendar.css"),
     javascriptEmbed: true,
     divEmbed: true,
     ...galleryMetadata("Calendar", "Upcoming meteors, eclipses, conjunctions, occultations, and comets.", EVENTS_SUPPORTED_OPTIONS, false),
@@ -224,6 +240,7 @@ export const widgetCatalog = Object.freeze([
     version: 1,
     standaloneHost: true,
     standaloneStylesheet: "/alerts/widget.css",
+    stylesheets: stylesheetManifest("/alerts/widget.css"),
     javascriptEmbed: true,
     divEmbed: true,
     ...galleryMetadata("Sky Alerts", "Live space-event alerts grouped by risk, NEO, transient, and related types.", COMMON_SUPPORTED_OPTIONS, true),
@@ -243,6 +260,7 @@ export const widgetCatalog = Object.freeze([
     type: "space-weather",
     version: 1,
     ...galleryMetadata("Space Weather", "Solar, geomagnetic, aurora, and satellite-impact conditions.", SPACE_WEATHER_SUPPORTED_OPTIONS, true),
+    stylesheets: NO_EXTRA_STYLESHEETS,
     shape: "oriented",
     userModes: ORIENTED_USER_MODES,
     defaults: Object.freeze({ orientation: "horizontal", theme: "inherit", density: "normal" }),

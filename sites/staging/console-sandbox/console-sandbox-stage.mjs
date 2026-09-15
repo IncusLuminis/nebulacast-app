@@ -1,6 +1,7 @@
 import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
 import { getWidgetOptionValues } from "../shared/widget-config.mjs";
+import { createStylesheetLoader } from "../shared/widget-stylesheet-loader.mjs";
 import { createConsoleSandboxModel } from "./console-sandbox-model.mjs";
 
 function text(documentRef, tagName, className, value) {
@@ -60,6 +61,7 @@ export function createConsoleSandbox({
   if (!root || typeof root.appendChild !== "function") throw new TypeError("Console Sandbox requires a root element");
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new TypeError("Console Sandbox timeout must be positive");
   const widgetRuntime = runtime || (context ? createNebulacast({ context, registry }) : null);
+  const stylesheetLoader = createStylesheetLoader({ documentRef, timeoutMs });
   const mounted = new Map();
   let runtimeQueue = Promise.resolve();
   const model = createConsoleSandboxModel({ registry, onChange: render });
@@ -323,7 +325,11 @@ export function createConsoleSandbox({
 
   async function disposeMounted(id, record) {
     mounted.delete(id);
-    await record?.instance?.destroy?.();
+    try {
+      await record?.instance?.destroy?.();
+    } finally {
+      record?.stylesheet?.release?.();
+    }
   }
 
   async function syncRuntime(state) {
@@ -346,8 +352,15 @@ export function createConsoleSandbox({
       const signature = instanceSignature(instance);
       updateCardStatus(instance.id, "loading");
       let mountPromise = null;
+      let stylesheet = null;
       try {
         model.setRuntimeState(instance.id, "loading");
+        stylesheet = await stylesheetLoader.load(registry.get(instance.widget), { attributeName: "data-nc-sandbox-stylesheet" });
+        const currentAfterStyles = model.getInstance(instance.id);
+        if (!currentAfterStyles || instanceSignature(currentAfterStyles) !== signature || runtimeRootFor(instance.id) !== root) {
+          stylesheet.release();
+          continue;
+        }
         mountPromise = Promise.resolve().then(() => widgetRuntime.mount(root, { widget: instance.widget, config: instance.config }));
         let timer;
         const mountedInstance = await Promise.race([
@@ -361,10 +374,12 @@ export function createConsoleSandbox({
           await mountedInstance?.destroy?.();
           continue;
         }
-        mounted.set(instance.id, { root, signature, instance: mountedInstance });
+        mounted.set(instance.id, { root, signature, instance: mountedInstance, stylesheet });
+        stylesheet = null;
         model.setRuntimeState(instance.id, "ready");
         updateCardStatus(instance.id, "ready");
       } catch (error) {
+        stylesheet?.release?.();
         if (error?.code === "CONSOLE_SANDBOX_TIMEOUT") {
           model.setRuntimeState(instance.id, "timeout", error);
           updateCardStatus(instance.id, "timeout", error.message);

@@ -1,6 +1,7 @@
 import { createCatalogRegistry } from "../shared/widget-catalog.mjs";
 import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { parseStandaloneWidgetQuery, serializeWidgetConfig } from "../shared/widget-config.mjs";
+import { createStylesheetLoader } from "../shared/widget-stylesheet-loader.mjs";
 
 function defaultContext() {
   let current = {
@@ -32,16 +33,9 @@ function normalizeError(error) {
   return error instanceof Error ? error : new Error(String(error));
 }
 
-function standaloneStylesheet(definition) {
-  const href = definition?.standaloneStylesheet;
-  if (href === undefined) return null;
-  if (typeof href !== "string" || !/^\/(?!\/)[^<>\s?#]+$/.test(href)) {
-    throw new TypeError(`Invalid standalone stylesheet for ${definition?.type || "widget"}`);
-  }
-  return href;
-}
-
 /** A bounded standalone host for catalog definitions explicitly marked standaloneHost. */
+// `standaloneStylesheet` remains the catalog compatibility field; the shared
+// loader now consumes the explicit `stylesheets` manifest when present.
 export function createStandaloneWidgetHost({
   root,
   status,
@@ -56,9 +50,10 @@ export function createStandaloneWidgetHost({
   if (!root || typeof root.setAttribute !== "function") throw new TypeError("Standalone host requires a root element");
   if (!status || typeof status.textContent === "undefined") throw new TypeError("Standalone host requires a status element");
   const widgetRuntime = runtime || createNebulacast({ context, registry });
+  const stylesheetLoader = createStylesheetLoader({ documentRef });
   let instance = null;
   let pending = null;
-  let stylesheetLink = null;
+  let stylesheet = null;
   let destroyed = false;
 
   function setStatus(message, state = "idle") {
@@ -78,8 +73,8 @@ export function createStandaloneWidgetHost({
     try {
       await instance?.destroy?.();
     } finally {
-      stylesheetLink?.remove?.();
-      stylesheetLink = null;
+      stylesheet?.release?.();
+      stylesheet = null;
       instance = null;
       pending = null;
       disableDestroy(true);
@@ -98,15 +93,7 @@ export function createStandaloneWidgetHost({
     try {
       widgetConfig = parseStandaloneWidgetQuery(registry, nextSearch);
       definition = registry.get(widgetConfig.widget);
-      const href = standaloneStylesheet(definition);
-      if (href && documentRef?.head?.appendChild && typeof documentRef.createElement === "function") {
-        const link = documentRef.createElement("link");
-        link.rel = "stylesheet";
-        link.href = href;
-        link.setAttribute?.("data-nc-standalone-stylesheet", widgetConfig.widget);
-        documentRef.head.appendChild(link);
-        stylesheetLink = link;
-      }
+      stylesheet = stylesheetLoader.acquire(definition, { attributeName: "data-nc-standalone-stylesheet" });
     } catch (error) {
       const normalized = normalizeError(error);
       setStatus(`Unable to mount widget: ${normalized.message}`, "error");
@@ -131,8 +118,8 @@ export function createStandaloneWidgetHost({
         setStatus(`${widgetConfig.widget} mounted.`, "mounted");
         return mounted;
       } catch (error) {
-        stylesheetLink?.remove?.();
-        stylesheetLink = null;
+        stylesheet?.release?.();
+        stylesheet = null;
         const normalized = normalizeError(error);
         setStatus(`Unable to mount widget: ${normalized.message}`, "error");
         disableDestroy(true);
