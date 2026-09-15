@@ -7,6 +7,11 @@ import {
 export const CONSOLE_SANDBOX_VIEWPORTS = Object.freeze(["desktop", "narrow"]);
 export const CONSOLE_SANDBOX_DEFAULT_VIEWPORT = "desktop";
 export const CONSOLE_SANDBOX_STATES = Object.freeze(["idle", "invalid", "loading", "ready", "error", "timeout", "destroyed"]);
+export const CONSOLE_SANDBOX_DROP_ZONES = Object.freeze([
+  Object.freeze({ id: "horizontal", mode: "horizontal", label: "Horizontal", description: "Wide widgets: width greater than height." }),
+  Object.freeze({ id: "vertical", mode: "vertical", label: "Vertical", description: "Tall widgets: height greater than width." }),
+  Object.freeze({ id: "square", mode: "square", label: "Square", description: "Square-only widgets such as Sky." }),
+]);
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -39,6 +44,20 @@ function defaultLayout(definition) {
   return { mode: "horizontal", width: 640, height: 360 };
 }
 
+function zoneForId(zoneId) {
+  return CONSOLE_SANDBOX_DROP_ZONES.find(zone => zone.id === zoneId) || null;
+}
+
+function defaultZoneFor(definition) {
+  return definition.shape === "square" || definition.type === "sky" ? "square" : "horizontal";
+}
+
+function convertLayout(layout, mode) {
+  if (mode === "square") return { ...layout, mode };
+  if (layout.mode === mode) return { ...layout, mode };
+  return { ...layout, mode, width: layout.height, height: layout.width };
+}
+
 function freezeConfig(config) {
   return Object.freeze({ ...config });
 }
@@ -69,6 +88,7 @@ function cardSnapshot(record, position) {
     widget: record.widget,
     config: freezeConfig(record.config),
     layout: Object.freeze({ ...record.layout }),
+    zoneId: record.zoneId,
     position,
     state: record.state,
     error: record.error,
@@ -92,9 +112,9 @@ function paletteEntry(definition) {
 
 /**
  * Host-owned in-memory composition model for the Console Sandbox.
- * It owns palette metadata, card identity/order/selection, validated host
- * layouts, and normalized widget config. Runtime mounting is deliberately
- * handled by the page layer in the next delivery story.
+ * It owns palette metadata, drop-zone membership, card identity/order/
+ * selection, validated host layouts, and normalized widget config. Runtime
+ * mounting is deliberately handled by the page layer.
  */
 export function createConsoleSandboxModel({
   registry,
@@ -121,6 +141,11 @@ export function createConsoleSandboxModel({
       viewport,
       selectedId,
       palette,
+      zones: Object.freeze(CONSOLE_SANDBOX_DROP_ZONES.map(zone => Object.freeze({
+        ...zone,
+        instanceIds: Object.freeze(records.filter(record => record.zoneId === zone.id).map(record => record.id)),
+        empty: !records.some(record => record.zoneId === zone.id),
+      }))),
       instances: Object.freeze(records.map((record, position) => snapshotCard(record, position))),
     });
   }
@@ -135,14 +160,43 @@ export function createConsoleSandboxModel({
     return record;
   }
 
-  function createInstance({ widget, config = {}, layout = {} } = {}) {
+  function validateDrop({ widget, layout = {}, zoneId } = {}) {
+    const definition = definitionFor(registry, widget);
+    const zone = zoneForId(zoneId);
+    if (!zone) return Object.freeze({ valid: false, reason: `Unknown drop zone: ${zoneId}`, zoneId });
+    const shape = definition.shape === "square" || definition.type === "sky" ? "square" : "oriented";
+    if (shape === "square" && zone.mode !== "square") {
+      return Object.freeze({ valid: false, reason: "Sky can only be placed in the square zone", zoneId, mode: zone.mode });
+    }
+    if (shape !== "square" && zone.mode === "square") {
+      return Object.freeze({ valid: false, reason: "Only square widgets can be placed in the square zone", zoneId, mode: zone.mode });
+    }
+    const requested = convertLayout({ ...defaultLayout(definition), ...(isObject(layout) ? layout : {}) }, zone.mode);
+    const normalized = validateWidgetLabLayout(definition, requested, limits);
+    return Object.freeze({
+      valid: normalized.valid,
+      reason: normalized.error,
+      zoneId,
+      mode: zone.mode,
+      layout: normalized,
+    });
+  }
+
+  function createInstance({ widget, config = {}, layout = {}, zoneId = null } = {}) {
     assertLive(destroyed);
-    const normalized = normalizeCard(registry, widget, config, layout, limits);
+    const definition = definitionFor(registry, widget);
+    const requestedZoneId = zoneId || (zoneForId(layout.mode)?.id || defaultZoneFor(definition));
+    const drop = validateDrop({ widget, layout, zoneId: requestedZoneId });
+    if (!drop.valid && (!zoneForId(requestedZoneId) || (definition.shape === "square" || definition.type === "sky") !== (requestedZoneId === "square"))) {
+      throw Object.assign(new Error(drop.reason), { code: "CONSOLE_SANDBOX_INVALID_DROP", reason: drop.reason });
+    }
+    const normalized = normalizeCard(registry, widget, config, drop.valid ? drop.layout : layout, limits);
     const record = {
       id: `console-sandbox-${++nextId}`,
       widget: normalized.definition.type,
       config: normalized.config,
       layout: normalized.layout,
+      zoneId: requestedZoneId,
       state: normalized.state,
       error: normalized.error,
     };
@@ -155,15 +209,20 @@ export function createConsoleSandboxModel({
   function updateInstance(id, { config, layout } = {}) {
     assertLive(destroyed);
     const record = recordFor(id);
+    const requestedLayout = { ...record.layout, ...(isObject(layout) ? layout : {}) };
+    const nextZoneId = zoneForId(requestedLayout.mode)?.id || record.zoneId;
+    const drop = validateDrop({ widget: record.widget, layout: requestedLayout, zoneId: nextZoneId });
+    if (!drop.valid) throw Object.assign(new Error(drop.reason), { code: "CONSOLE_SANDBOX_INVALID_DROP", reason: drop.reason });
     const next = normalizeCard(
       registry,
       record.widget,
       { ...record.config, ...(isObject(config) ? config : {}) },
-      { ...record.layout, ...(isObject(layout) ? layout : {}) },
+      drop.layout,
       limits,
     );
     record.config = next.config;
     record.layout = next.layout;
+    record.zoneId = nextZoneId;
     record.state = next.state;
     record.error = next.error;
     emit();
@@ -194,6 +253,32 @@ export function createConsoleSandboxModel({
     selectedId = id;
     emit();
     return snapshotCard(recordFor(id));
+  }
+
+  function dropInstance(id, zoneId) {
+    assertLive(destroyed);
+    const record = recordFor(id);
+    const drop = validateDrop({ widget: record.widget, layout: record.layout, zoneId });
+    if (!drop.valid) throw Object.assign(new Error(drop.reason), {
+      code: "CONSOLE_SANDBOX_INVALID_DROP",
+      reason: drop.reason,
+      sourceId: id,
+      zoneId,
+    });
+    if (record.zoneId === zoneId && record.layout.mode === drop.mode) return snapshotCard(record);
+    const next = normalizeCard(registry, record.widget, record.config, drop.layout, limits);
+    record.layout = next.layout;
+    record.config = next.config;
+    record.zoneId = zoneId;
+    record.state = next.state;
+    record.error = next.error;
+    selectedId = id;
+    emit();
+    return snapshotCard(record);
+  }
+
+  function addToZone(widget, zoneId, config = {}) {
+    return createInstance({ widget, config, zoneId });
   }
 
   function move(id, delta) {
@@ -250,7 +335,10 @@ export function createConsoleSandboxModel({
 
   return Object.freeze({
     createInstance,
+    addToZone,
     updateInstance,
+    validateDrop,
+    dropInstance,
     setRuntimeState,
     retryInstance,
     select,
@@ -261,6 +349,7 @@ export function createConsoleSandboxModel({
     setViewport,
     destroy,
     getPalette: () => palette,
+    getDropZones: () => CONSOLE_SANDBOX_DROP_ZONES,
     getDefinition: widget => definitionFor(registry, widget),
     getInstance: id => snapshotCard(records.find(item => item.id === id)),
     getSnapshot,

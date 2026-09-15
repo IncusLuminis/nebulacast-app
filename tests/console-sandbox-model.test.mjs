@@ -53,6 +53,35 @@ test("Console Sandbox validates Sky square and oriented modes", () => {
   assert.equal(oriented.config.orientation, "vertical");
 });
 
+test("Console Sandbox exposes compatible labelled drop zones and converts orientation deterministically", () => {
+  const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
+  assert.deepEqual(model.getDropZones().map(zone => zone.id), ["horizontal", "vertical", "square"]);
+  const weather = model.addToZone("weather", "horizontal", { profile: "visual" });
+  const originalConfig = weather.config;
+  const moved = model.dropInstance(weather.id, "vertical");
+  assert.equal(moved.id, weather.id);
+  assert.equal(moved.zoneId, "vertical");
+  assert.deepEqual(moved.layout, { mode: "vertical", shape: "oriented", width: 360, height: 640, valid: true, error: null });
+  assert.equal(moved.config.profile, "visual");
+  assert.notEqual(moved.config, originalConfig);
+  assert.equal(moved.config.orientation, "vertical");
+  assert.equal(model.getSnapshot().zones.find(zone => zone.id === "horizontal").empty, true);
+  assert.deepEqual(model.getSnapshot().zones.find(zone => zone.id === "vertical").instanceIds, [weather.id]);
+});
+
+test("Console Sandbox rejects incompatible drops without mutating source state", () => {
+  const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
+  const sky = model.addToZone("sky", "square");
+  const before = model.getInstance(sky.id);
+  assert.throws(() => model.dropInstance(sky.id, "horizontal"), error => {
+    assert.equal(error.code, "CONSOLE_SANDBOX_INVALID_DROP");
+    assert.match(error.reason, /Sky can only be placed/);
+    return true;
+  });
+  assert.deepEqual(model.getInstance(sky.id), before);
+  assert.throws(() => model.addToZone("weather", "square"), /Only square widgets/);
+});
+
 test("Console Sandbox updates configuration/layout and preserves selection", () => {
   const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
   const instance = model.createInstance({ widget: "events", layout: { mode: "horizontal", width: 640, height: 360 } });

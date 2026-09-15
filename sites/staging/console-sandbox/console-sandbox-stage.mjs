@@ -69,6 +69,8 @@ export function createConsoleSandbox({
   let destroyed = false;
   let focusAfterRenderId = null;
   let focusAfterRenderFallback = null;
+  let activeDrop = null;
+  let dropMessage = null;
 
   const shell = text(documentRef, "div", "console-sandbox-shell");
   const paletteRegion = text(documentRef, "aside", "console-sandbox-panel");
@@ -94,6 +96,17 @@ export function createConsoleSandbox({
   paletteRegion.appendChild(paletteDescription);
   const addButton = button(documentRef, "Add to canvas", "add", "sandbox-button sandbox-button-primary");
   paletteRegion.appendChild(addButton);
+  const paletteGrid = text(documentRef, "div", "console-sandbox-palette-grid");
+  paletteGrid.dataset.role = "palette-grid";
+  for (const definition of catalog) {
+    const paletteItem = button(documentRef, definition.title || definition.type, "palette-select", "console-sandbox-palette-item");
+    paletteItem.dataset.sandboxWidget = definition.type;
+    paletteItem.draggable = true;
+    paletteItem.setAttribute("aria-label", `Select ${definition.title || definition.type} widget`);
+    paletteItem.setAttribute("title", definition.description || definition.title || definition.type);
+    paletteGrid.appendChild(paletteItem);
+  }
+  paletteRegion.appendChild(paletteGrid);
   paletteRegion.appendChild(text(documentRef, "h3", "console-sandbox-subheading", "Composition"));
   const instanceList = text(documentRef, "div", "console-sandbox-instance-list");
   instanceList.dataset.role = "instance-list";
@@ -143,8 +156,6 @@ export function createConsoleSandbox({
   applyButton.type = "submit";
   applyButton.addEventListener("click", applyInspector);
   inspectorActions.appendChild(applyButton);
-  inspectorActions.appendChild(button(documentRef, "Move left", "move-left"));
-  inspectorActions.appendChild(button(documentRef, "Move right", "move-right"));
   inspectorActions.appendChild(button(documentRef, "Reset card", "reset-card"));
   inspectorRegion.appendChild(inspectorActions);
   const inspectorStatus = text(documentRef, "p", "console-sandbox-status");
@@ -164,6 +175,101 @@ export function createConsoleSandbox({
   function selectedInstance() {
     const state = snapshot();
     return state.instances.find(instance => instance.id === state.selectedId) || null;
+  }
+
+  function palettePayload(widget = selectedWidget) {
+    return { kind: "palette", widget };
+  }
+
+  function instancePayload(instanceId) {
+    return { kind: "instance", instanceId };
+  }
+
+  function payloadFromTransfer(event) {
+    if (activeDrop) return activeDrop;
+    const raw = event.dataTransfer?.getData?.("application/x-nebulacast-sandbox") || event.dataTransfer?.getData?.("text/plain");
+    if (!raw) return null;
+    try {
+      const payload = JSON.parse(raw);
+      return payload?.kind === "palette" || payload?.kind === "instance" ? payload : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function payloadWidget(payload) {
+    if (!payload) return null;
+    if (payload.kind === "palette") return payload.widget;
+    return snapshot().instances.find(instance => instance.id === payload.instanceId)?.widget || null;
+  }
+
+  function dropCheck(payload, zoneId) {
+    const widget = payloadWidget(payload);
+    if (!widget) return { valid: false, reason: "Select a widget before placing it" };
+    const instance = payload.kind === "instance"
+      ? snapshot().instances.find(item => item.id === payload.instanceId)
+      : null;
+    return model.validateDrop({ widget, layout: instance?.layout, zoneId });
+  }
+
+  function setDropMessage(message, error = false) {
+    dropMessage = message ? { message, error } : null;
+    canvasStatus.textContent = message || "";
+    canvasStatus.dataset.error = String(error);
+  }
+
+  function clearDropIndicators() {
+    canvas.querySelectorAll("[data-drop-zone]").forEach(zone => {
+      delete zone.dataset.dropValid;
+      delete zone.dataset.dropActive;
+    });
+  }
+
+  function previewDrop(zone, payload) {
+    if (!zone || !payload) return false;
+    const verdict = dropCheck(payload, zone.dataset.dropZone);
+    zone.dataset.dropActive = "true";
+    zone.dataset.dropValid = String(verdict.valid);
+    zone.querySelector("[data-role=drop-reason]")?.replaceChildren(documentRef.createTextNode(
+      verdict.valid ? "Release to place here" : verdict.reason,
+    ));
+    if (!verdict.valid) setDropMessage(`Cannot place widget: ${verdict.reason}`, true);
+    return verdict.valid;
+  }
+
+  function clearActiveDrop() {
+    activeDrop = null;
+    clearDropIndicators();
+    if (!dropMessage) canvas.querySelectorAll("[data-role=drop-reason]").forEach(reason => {
+      reason.textContent = reason.dataset.defaultText || "Drop a compatible widget here.";
+    });
+  }
+
+  function applyDrop(zoneId, payload) {
+    const verdict = dropCheck(payload, zoneId);
+    if (!verdict.valid) {
+      setDropMessage(`Cannot place widget: ${verdict.reason}`, true);
+      const zone = canvas.querySelector(`[data-drop-zone="${zoneId}"]`);
+      if (zone) {
+        zone.dataset.dropValid = "false";
+        zone.querySelector("[data-role=drop-reason]")?.replaceChildren(documentRef.createTextNode(verdict.reason));
+      }
+      return false;
+    }
+    try {
+      if (payload.kind === "palette") {
+        requestFocusAfterRender(null, "palette-add");
+        model.addToZone(payload.widget, zoneId);
+      } else {
+        requestFocusAfterRender(payload.instanceId);
+        model.dropInstance(payload.instanceId, zoneId);
+      }
+      setDropMessage(null);
+      return true;
+    } catch (error) {
+      setDropMessage(`Cannot place widget: ${error.message}`, true);
+      return false;
+    }
   }
 
   function requestFocusAfterRender(instanceId = null, fallback = "palette-add") {
@@ -192,6 +298,9 @@ export function createConsoleSandbox({
   function renderPaletteDescription() {
     const definition = registry.get(selectedWidget);
     paletteDescription.textContent = definition?.description || "Choose a registered widget.";
+    paletteGrid.querySelectorAll("[data-sandbox-widget]").forEach(item => {
+      item.dataset.selected = String(item.dataset.sandboxWidget === selectedWidget);
+    });
   }
 
   function renderInstanceList(state) {
@@ -215,44 +324,72 @@ export function createConsoleSandbox({
   function renderCanvas(state) {
     canvas.dataset.viewport = state.viewport;
     canvas.textContent = "";
-    if (!state.instances.length) {
-      canvas.appendChild(text(documentRef, "p", "console-sandbox-empty", "Add a widget to start building your temporary Console."));
-      return;
-    }
-    for (const instance of state.instances) {
-      const card = text(documentRef, "article", "console-sandbox-card");
-      card.dataset.sandboxInstance = instance.id;
-      card.dataset.sandboxWidget = instance.widget;
-      card.setAttribute("role", "group");
-      card.setAttribute("aria-label", `${instance.widget} ${instance.id}`);
-      if (instance.id === state.selectedId) card.dataset.selected = "true";
-      card.appendChild(text(documentRef, "h3", "console-sandbox-card-title", `${instance.widget} · ${instance.id}`));
-      card.appendChild(text(documentRef, "p", "console-sandbox-card-meta", `${instance.layout.mode} · ${instance.layout.width}×${instance.layout.height}`));
-      const runtimeRoot = text(documentRef, "div", "console-sandbox-runtime-root", "Runtime preview will mount here.");
-      runtimeRoot.dataset.role = "runtime-root";
-      runtimeRoot.dataset.sandboxInstance = instance.id;
-      runtimeRoot.dataset.sandboxWidget = instance.widget;
-      runtimeRoot.style.width = `${instance.layout.width}px`;
-      runtimeRoot.style.height = `${instance.layout.height}px`;
-      card.appendChild(runtimeRoot);
-      const stateText = instance.error || `State: ${instance.state}`;
-      card.appendChild(text(documentRef, "p", "console-sandbox-card-status", stateText));
-      const actions = text(documentRef, "div", "console-sandbox-actions");
-      const select = button(documentRef, "Select", "select", "sandbox-button");
-      select.dataset.sandboxInstance = instance.id;
-      select.setAttribute("aria-pressed", String(instance.id === state.selectedId));
-      if (instance.id === state.selectedId) select.setAttribute("aria-current", "true");
-      if (instance.state === "error" || instance.state === "timeout") {
-        const retry = button(documentRef, "Retry", "retry", "sandbox-button");
-        retry.dataset.sandboxInstance = instance.id;
-        actions.appendChild(retry);
+    for (const zone of state.zones) {
+      const zoneNode = text(documentRef, "section", "console-sandbox-drop-zone");
+      zoneNode.dataset.dropZone = zone.id;
+      zoneNode.dataset.dropMode = zone.mode;
+      zoneNode.setAttribute("aria-label", `${zone.label} drop zone`);
+      const zoneHeader = text(documentRef, "div", "console-sandbox-drop-zone-header");
+      zoneHeader.appendChild(text(documentRef, "h3", "console-sandbox-drop-zone-title", zone.label));
+      zoneHeader.appendChild(text(documentRef, "span", "console-sandbox-drop-zone-mode", zone.mode));
+      zoneNode.appendChild(zoneHeader);
+      zoneNode.appendChild(text(documentRef, "p", "console-sandbox-drop-zone-description", zone.description));
+      const reason = text(documentRef, "p", "console-sandbox-drop-reason", "Drop a compatible widget here.");
+      reason.dataset.role = "drop-reason";
+      reason.dataset.defaultText = "Drop a compatible widget here.";
+      reason.setAttribute("aria-live", "polite");
+      zoneNode.appendChild(reason);
+      const zoneActions = text(documentRef, "div", "console-sandbox-drop-zone-actions");
+      const addZone = button(documentRef, `Add ${selectedWidget} here`, "add-to-zone", "sandbox-button sandbox-button-primary");
+      addZone.dataset.sandboxZone = zone.id;
+      const selected = state.instances.find(instance => instance.id === state.selectedId);
+      const moveZone = button(documentRef, selected ? `Move selected here` : "Move selected here", "move-selected-to-zone", "sandbox-button");
+      moveZone.dataset.sandboxZone = zone.id;
+      moveZone.disabled = !selected;
+      zoneActions.append(addZone, moveZone);
+      zoneNode.appendChild(zoneActions);
+      const zoneCards = text(documentRef, "div", "console-sandbox-drop-zone-cards");
+      for (const instance of state.instances.filter(item => item.zoneId === zone.id)) {
+        const card = text(documentRef, "article", "console-sandbox-card");
+        card.dataset.sandboxInstance = instance.id;
+        card.dataset.sandboxWidget = instance.widget;
+        card.setAttribute("role", "group");
+        card.setAttribute("aria-label", `${instance.widget} ${instance.id}`);
+        card.setAttribute("tabindex", "0");
+        card.draggable = true;
+        card.setAttribute("aria-grabbed", "false");
+        if (instance.id === state.selectedId) card.dataset.selected = "true";
+        card.appendChild(text(documentRef, "h3", "console-sandbox-card-title", `${instance.widget} · ${instance.id}`));
+        card.appendChild(text(documentRef, "p", "console-sandbox-card-meta", `${instance.layout.mode} · ${instance.layout.width}×${instance.layout.height}`));
+        const runtimeRoot = text(documentRef, "div", "console-sandbox-runtime-root", "Runtime preview will mount here.");
+        runtimeRoot.dataset.role = "runtime-root";
+        runtimeRoot.dataset.sandboxInstance = instance.id;
+        runtimeRoot.dataset.sandboxWidget = instance.widget;
+        runtimeRoot.style.width = `${instance.layout.width}px`;
+        runtimeRoot.style.height = `${instance.layout.height}px`;
+        card.appendChild(runtimeRoot);
+        const stateText = instance.error || `State: ${instance.state}`;
+        card.appendChild(text(documentRef, "p", "console-sandbox-card-status", stateText));
+        const actions = text(documentRef, "div", "console-sandbox-actions");
+        const select = button(documentRef, "Select", "select", "sandbox-button");
+        select.dataset.sandboxInstance = instance.id;
+        select.setAttribute("aria-pressed", String(instance.id === state.selectedId));
+        if (instance.id === state.selectedId) select.setAttribute("aria-current", "true");
+        if (instance.state === "error" || instance.state === "timeout") {
+          const retry = button(documentRef, "Retry", "retry", "sandbox-button");
+          retry.dataset.sandboxInstance = instance.id;
+          actions.appendChild(retry);
+        }
+        const remove = button(documentRef, "Remove", "remove", "sandbox-button sandbox-button-danger");
+        remove.dataset.sandboxInstance = instance.id;
+        actions.prepend(select);
+        actions.appendChild(remove);
+        card.appendChild(actions);
+        zoneCards.appendChild(card);
       }
-      const remove = button(documentRef, "Remove", "remove", "sandbox-button sandbox-button-danger");
-      remove.dataset.sandboxInstance = instance.id;
-      actions.prepend(select);
-      actions.appendChild(remove);
-      card.appendChild(actions);
-      canvas.appendChild(card);
+      if (!zone.instanceIds.length) zoneCards.appendChild(text(documentRef, "p", "console-sandbox-empty", "This zone is empty."));
+      zoneNode.appendChild(zoneCards);
+      canvas.appendChild(zoneNode);
     }
   }
 
@@ -304,7 +441,13 @@ export function createConsoleSandbox({
     renderInstanceList(state);
     renderCanvas(state);
     renderInspector(state);
-    canvasStatus.textContent = state.instances.length ? `${state.instances.length} widget${state.instances.length === 1 ? "" : "s"} in composition.` : "Empty composition.";
+    if (dropMessage) {
+      canvasStatus.textContent = dropMessage.message;
+      canvasStatus.dataset.error = String(dropMessage.error);
+    } else {
+      canvasStatus.textContent = state.instances.length ? `${state.instances.length} widget${state.instances.length === 1 ? "" : "s"} in composition.` : "Empty composition.";
+      canvasStatus.dataset.error = "false";
+    }
     restoreFocusAfterRender();
     queueRuntimeSync(state);
   }
@@ -401,6 +544,60 @@ export function createConsoleSandbox({
     runtimeQueue = runtimeQueue.catch(() => undefined).then(() => syncRuntime(state));
   }
 
+  function dragPayloadForSource(source) {
+    if (source.matches?.("[data-sandbox-instance]")) return instancePayload(source.dataset.sandboxInstance);
+    if (source.matches?.("[data-sandbox-widget]")) return palettePayload(source.dataset.sandboxWidget);
+    return null;
+  }
+
+  function markDragSource(payload, dragging) {
+    if (payload?.kind === "instance") {
+      const source = canvas.querySelector(`[data-sandbox-instance="${payload.instanceId}"]`);
+      if (source) source.dataset.dragging = String(dragging);
+    } else if (payload?.kind === "palette") {
+      const source = paletteGrid.querySelector(`[data-sandbox-widget="${payload.widget}"]`);
+      if (source) source.dataset.dragging = String(dragging);
+    }
+  }
+
+  function zoneAtPoint(event) {
+    return documentRef.elementFromPoint?.(event.clientX, event.clientY)?.closest?.("[data-drop-zone]") || null;
+  }
+
+  function beginPointerDrag(event, payload) {
+    if (event.pointerType === "mouse" || !payload) return;
+    activeDrop = payload;
+    markDragSource(payload, true);
+    setDropMessage(`Dragging ${payloadWidget(payload)}. Choose a compatible drop zone.`, false);
+    event.preventDefault();
+  }
+
+  shell.addEventListener("pointerdown", event => {
+    const source = event.target.closest?.("[draggable=true]");
+    if (source) beginPointerDrag(event, dragPayloadForSource(source));
+  });
+  const movePointerDrag = event => {
+    if (!activeDrop || event.pointerType === "mouse") return;
+    const zone = zoneAtPoint(event);
+    if (zone) previewDrop(zone, activeDrop);
+    event.preventDefault();
+  };
+  documentRef.addEventListener("pointermove", movePointerDrag, { passive: false });
+  const finishPointerDrag = event => {
+    if (!activeDrop || event.pointerType === "mouse") return;
+    const payload = activeDrop;
+    const zone = zoneAtPoint(event);
+    if (zone) applyDrop(zone.dataset.dropZone, payload);
+    markDragSource(payload, false);
+    clearActiveDrop();
+  };
+  documentRef.addEventListener("pointerup", finishPointerDrag);
+  documentRef.addEventListener("pointercancel", event => {
+    if (!activeDrop || event.pointerType === "mouse") return;
+    markDragSource(activeDrop, false);
+    clearActiveDrop();
+  });
+
   shell.addEventListener("click", event => {
     const action = event.target.closest?.("[data-sandbox-action]");
     if (!action) return;
@@ -408,11 +605,18 @@ export function createConsoleSandbox({
       const instanceId = action.dataset.sandboxInstance;
       switch (action.dataset.sandboxAction) {
         case "add": model.createInstance({ widget: selectedWidget }); break;
+        case "palette-select":
+          selectedWidget = action.dataset.sandboxWidget;
+          paletteSelect.value = selectedWidget;
+          renderPaletteDescription();
+          break;
+        case "add-to-zone": applyDrop(action.dataset.sandboxZone, palettePayload(selectedWidget)); break;
+        case "move-selected-to-zone":
+          if (selectedInstance()) applyDrop(action.dataset.sandboxZone, instancePayload(selectedInstance().id));
+          break;
         case "select": requestFocusAfterRender(instanceId); model.select(instanceId); break;
         case "remove": requestFocusAfterRender(focusReplacementFor(instanceId)); model.remove(instanceId); break;
         case "retry": requestFocusAfterRender(instanceId); model.retryInstance(instanceId); break;
-        case "move-left": if (selectedInstance()) { requestFocusAfterRender(selectedInstance().id); model.move(selectedInstance().id, -1); } break;
-        case "move-right": if (selectedInstance()) { requestFocusAfterRender(selectedInstance().id); model.move(selectedInstance().id, 1); } break;
         case "reset-card": if (selectedInstance()) { requestFocusAfterRender(focusReplacementFor(selectedInstance().id)); model.resetCard(selectedInstance().id); } break;
         case "reset-all": requestFocusAfterRender(null); model.resetAll(); break;
         case "apply": break;
@@ -423,12 +627,74 @@ export function createConsoleSandbox({
     }
   });
 
+  shell.addEventListener("dragstart", event => {
+    const source = event.target.closest?.("[draggable=true]");
+    const payload = dragPayloadForSource(source);
+    if (!payload) return;
+    activeDrop = payload;
+    markDragSource(payload, true);
+    event.dataTransfer?.setData?.("application/x-nebulacast-sandbox", JSON.stringify(payload));
+    event.dataTransfer?.setData?.("text/plain", JSON.stringify(payload));
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+  });
+  shell.addEventListener("dragend", event => {
+    const payload = activeDrop || dragPayloadForSource(event.target.closest?.("[draggable=true]"));
+    markDragSource(payload, false);
+    clearActiveDrop();
+  });
+  shell.addEventListener("dragover", event => {
+    const zone = event.target.closest?.("[data-drop-zone]");
+    if (!zone) return;
+    const payload = payloadFromTransfer(event);
+    if (!payload) return;
+    previewDrop(zone, payload);
+    event.preventDefault();
+    // Keep the browser's drop gesture alive for an invalid target too. The
+    // drop handler then reports the readable reason without touching source
+    // state or Runtime; a `none` effect would suppress `drop` in some UAs.
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+  });
+  shell.addEventListener("drop", event => {
+    const zone = event.target.closest?.("[data-drop-zone]");
+    const payload = payloadFromTransfer(event);
+    if (!zone || !payload) return;
+    event.preventDefault();
+    applyDrop(zone.dataset.dropZone, payload);
+    markDragSource(payload, false);
+    clearActiveDrop();
+  });
+  shell.addEventListener("keydown", event => {
+    const card = event.target.closest?.(".console-sandbox-card[data-sandbox-instance]");
+    if (!card) return;
+    const payload = instancePayload(card.dataset.sandboxInstance);
+    if (event.key === "Enter") {
+      event.preventDefault();
+      requestFocusAfterRender(payload.instanceId);
+      model.select(payload.instanceId);
+    } else if (event.key === " ") {
+      event.preventDefault();
+      activeDrop = payload;
+      model.select(payload.instanceId);
+      setDropMessage(`Moving ${payloadWidget(payload)}. Use a drop-zone button or Escape to cancel.`, false);
+      canvas.querySelector("[data-drop-zone] [data-sandbox-action=move-selected-to-zone]")?.focus?.();
+    } else if (event.key === "Escape" && activeDrop) {
+      event.preventDefault();
+      clearActiveDrop();
+      setDropMessage(null);
+      card.focus();
+    }
+  });
+
   render();
   return Object.freeze({
     model,
     mount() { render(); return Promise.resolve(model.getSnapshot()); },
     destroy() {
       destroyed = true;
+      if (activeDrop) markDragSource(activeDrop, false);
+      clearActiveDrop();
+      documentRef.removeEventListener("pointermove", movePointerDrag);
+      documentRef.removeEventListener("pointerup", finishPointerDrag);
       model.destroy();
       runtimeQueue = runtimeQueue.then(async () => {
         for (const [id, record] of [...mounted]) await disposeMounted(id, record);

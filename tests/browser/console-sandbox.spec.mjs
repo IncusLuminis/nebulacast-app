@@ -29,7 +29,7 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
   await expect(page.locator('article[data-sandbox-instance="console-sandbox-1"] [data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(1);
 
   await page.locator('[data-sandbox-action="reset-all"]').click();
-  await expect(page.locator('[data-role="canvas"]')).toContainText("Add a widget to start building");
+  await expect(page.locator('[data-drop-zone] .console-sandbox-empty')).toHaveCount(3);
   await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(0);
 });
 
@@ -149,4 +149,51 @@ test("Console Sandbox returns focus after remove and reset-all", async ({ page }
   await expect(page.locator(`[data-role="instance-list"] [data-sandbox-action="select"][data-sandbox-instance="${secondId}"]`)).toBeFocused();
   await page.locator('[data-sandbox-action="reset-all"]').click();
   await expect(page.locator('[data-sandbox-action="add"]')).toBeFocused();
+});
+
+test("Console Sandbox moves palette and existing widgets between labelled zones", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  await page.locator('[data-sandbox-control="widget"]').selectOption("weather");
+  await page.locator('[data-sandbox-widget="weather"]').dragTo(page.locator('[data-drop-zone="horizontal"]'));
+  const card = page.locator('article[data-sandbox-instance="console-sandbox-1"]');
+  await expect(card).toHaveCount(1);
+  await card.locator('[data-sandbox-action="select"]').click();
+  await page.locator('[data-sandbox-config="profile"]').selectOption("visual");
+  await page.locator('[data-sandbox-action="apply"]').click();
+  await expect(card.locator('[data-sandbox-card-meta]')).toHaveCount(0);
+
+  await card.dragTo(page.locator('[data-drop-zone="vertical"]'));
+  await expect(page.locator('[data-drop-zone="vertical"] article[data-sandbox-instance="console-sandbox-1"]')).toHaveCount(1);
+  await expect(page.locator('[data-sandbox-layout="mode"]')).toHaveValue("vertical");
+  await expect(page.locator('[data-sandbox-config="profile"]')).toHaveValue("visual");
+  await expect(page.locator('[data-drop-zone="horizontal"] .console-sandbox-empty')).toHaveText("This zone is empty.");
+
+  await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
+  await page.locator('[data-drop-zone="square"] [data-sandbox-action="add-to-zone"]').click();
+  await page.locator('[data-drop-zone="horizontal"] [data-sandbox-action="move-selected-to-zone"]').click();
+  await expect(page.locator('[data-role="canvas-status"]')).toContainText("Sky can only be placed");
+  await expect(page.locator('[data-drop-zone="horizontal"] article[data-sandbox-widget="sky"]')).toHaveCount(0);
+  await expect(page.locator('[data-drop-zone="vertical"] article[data-sandbox-instance="console-sandbox-1"]')).toHaveCount(1);
+});
+
+test("Console Sandbox provides keyboard and touch-compatible zone actions", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  await page.locator('[data-sandbox-control="widget"]').selectOption("weather");
+  await page.locator('[data-sandbox-action="add"]').click();
+  const card = page.locator('article[data-sandbox-instance="console-sandbox-1"]');
+  await card.focus();
+  await card.press("Space");
+  await expect(page.locator('[data-sandbox-action="move-selected-to-zone"]').first()).toBeFocused();
+  await page.locator('[data-drop-zone="vertical"] [data-sandbox-action="move-selected-to-zone"]').click();
+  await expect(page.locator('[data-drop-zone="vertical"] article[data-sandbox-instance="console-sandbox-1"]')).toHaveCount(1);
+
+  const touchContext = await page.context().browser()?.newContext({ hasTouch: true, viewport: { width: 390, height: 844 } });
+  if (touchContext) {
+    const touchPage = await touchContext.newPage();
+    await touchPage.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+    await touchPage.locator('[data-sandbox-control="widget"]').selectOption("sky");
+    await touchPage.locator('[data-drop-zone="square"] [data-sandbox-action="add-to-zone"]').tap();
+    await expect(touchPage.locator('[data-drop-zone="square"] article[data-sandbox-widget="sky"]')).toHaveCount(1);
+    await touchContext.close();
+  }
 });

@@ -63,6 +63,10 @@ body.nc-console-sandbox-host {
 .sandbox-button-primary { color: var(--nc-sandbox-good); border-color: #1e3a2a; background: #0a1a10; }
 .sandbox-button-danger { color: #e0b36d; border-color: #4a3820; background: #1d150b; }
 .console-sandbox-panel > .sandbox-button { margin-top: 12px; }
+.console-sandbox-palette-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.console-sandbox-palette-item { min-width: 0; min-height: 44px; padding: 6px; text-align: center; cursor: grab; }
+.console-sandbox-palette-item[data-selected="true"] { border-color: #5272a5; box-shadow: 0 0 0 1px #263a5a; }
+.console-sandbox-palette-item[data-dragging="true"], .console-sandbox-card[data-dragging="true"] { opacity: .6; cursor: grabbing; }
 .console-sandbox-instance-list { display: grid; gap: 6px; margin-top: 8px; }
 .console-sandbox-instance { display: grid; gap: 2px; border-top: 1px solid var(--nc-sandbox-line); padding: 7px 0; }
 .console-sandbox-instance[data-selected="true"] { border-left: 2px solid var(--nc-sandbox-link); padding-left: 8px; }
@@ -73,9 +77,23 @@ body.nc-console-sandbox-host {
 .sandbox-field { display: grid; gap: 4px; color: var(--nc-sandbox-muted); font-size: 11px; }
 .sandbox-field-label { color: var(--nc-sandbox-muted); }
 .console-sandbox-status { min-height: 18px; margin-top: 10px; }
+.console-sandbox-status[data-error="true"] { color: var(--nc-sandbox-bad); }
 .console-sandbox-status[data-layout-valid="false"], .console-sandbox-status-error, .console-sandbox-card-status[data-error="true"] { color: var(--nc-sandbox-bad); }
 .console-sandbox-canvas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; min-height: 420px; margin-top: 12px; padding: 12px; border: 1px dashed #34465b; border-radius: 8px; background: #0b0f16; overflow: auto; }
 .console-sandbox-canvas[data-viewport="narrow"] { grid-template-columns: minmax(220px, 360px); max-width: 390px; }
+.console-sandbox-drop-zone { min-width: 0; border: 1px solid #263a50; border-radius: 8px; background: #0d141e; padding: 10px; overflow: hidden; }
+.console-sandbox-drop-zone[data-drop-mode="horizontal"] { grid-column: 1 / -1; }
+.console-sandbox-drop-zone[data-drop-active="true"][data-drop-valid="true"] { border-color: var(--nc-sandbox-good); box-shadow: 0 0 0 1px #274f38; }
+.console-sandbox-drop-zone[data-drop-active="true"][data-drop-valid="false"], .console-sandbox-drop-zone[data-drop-valid="false"] { border-color: var(--nc-sandbox-bad); }
+.console-sandbox-drop-zone-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.console-sandbox-drop-zone-title { color: var(--nc-sandbox-title); font-size: 12px; font-weight: 600; }
+.console-sandbox-drop-zone-mode { color: var(--nc-sandbox-link); font-size: 10px; text-transform: uppercase; }
+.console-sandbox-drop-zone-description, .console-sandbox-drop-reason { color: var(--nc-sandbox-muted); font-size: 11px; margin-top: 4px; }
+.console-sandbox-drop-reason { min-height: 17px; }
+.console-sandbox-drop-reason:empty { display: none; }
+.console-sandbox-drop-zone-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.console-sandbox-drop-zone-cards { display: grid; gap: 8px; margin-top: 8px; }
+.console-sandbox-card:focus-visible { outline: 2px solid var(--nc-sandbox-link); outline-offset: 2px; }
 .console-sandbox-card { display: grid; align-content: start; gap: 7px; min-width: 0; border: 1px solid var(--nc-sandbox-line); border-radius: 8px; background: var(--nc-sandbox-surface); padding: 10px; overflow: auto; }
 .console-sandbox-card[data-selected="true"] { border-color: #5272a5; box-shadow: 0 0 0 1px #263a5a; }
 .console-sandbox-card-title { color: var(--nc-sandbox-title); font-size: 12px; font-weight: 600; }
@@ -119,6 +137,7 @@ body.nc-console-sandbox-host {
   .console-sandbox-region-header .sandbox-field { width: 100%; }
   .console-sandbox-canvas { grid-template-columns: minmax(220px, 1fr); min-height: 260px; }
   .console-sandbox-canvas[data-viewport="narrow"] { max-width: none; }
+  .console-sandbox-drop-zone[data-drop-mode="horizontal"] { grid-column: auto; }
   .console-sandbox-form { grid-template-columns: 1fr; }
   .console-sandbox-shell > .sandbox-button-danger { grid-column: 1; justify-self: stretch; }
 }
