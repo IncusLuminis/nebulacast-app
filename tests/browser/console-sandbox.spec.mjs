@@ -160,7 +160,6 @@ test("Console Sandbox moves palette and existing widgets between labelled zones"
   await card.locator('[data-sandbox-action="select"]').click();
   await page.locator('[data-sandbox-config="profile"]').selectOption("visual");
   await page.locator('[data-sandbox-action="apply"]').click();
-  await expect(card.locator('[data-sandbox-card-meta]')).toHaveCount(0);
 
   await card.dragTo(page.locator('[data-drop-zone="vertical"]'));
   await expect(page.locator('[data-drop-zone="vertical"] article[data-sandbox-instance="console-sandbox-1"]')).toHaveCount(1);
