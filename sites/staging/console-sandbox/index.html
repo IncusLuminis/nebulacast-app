@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nebulacast — Console Sandbox</title>
+  <link rel="stylesheet" href="/console-sandbox/console-sandbox.css">
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <h1>Console Sandbox</h1>
+      <p>Nebulacast · assemble a temporary Console from registered widgets</p>
+    </header>
+
+    <main id="console-sandbox" aria-live="polite"></main>
+
+    <footer class="page-footer">
+      <span>Nebulacast · Local Sandbox</span>
+      <span>Session-only composition</span>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { createConsoleSandbox } from "/console-sandbox/console-sandbox-stage.mjs?v=20260915";
+
+    const host = document.getElementById("console-sandbox");
+    try {
+      createConsoleSandbox({ root: host }).mount();
+    } catch (error) {
+      const status = document.createElement("p");
+      status.className = "console-sandbox-status console-sandbox-status-error";
+      status.textContent = `Console Sandbox failed to initialize: ${error.message}`;
+      host?.appendChild(status);
+    }
+  </script>
+</body>
+</html>
