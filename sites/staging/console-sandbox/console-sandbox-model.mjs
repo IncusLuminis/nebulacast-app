@@ -179,6 +179,15 @@ export function createConsoleSandboxModel({
     return snapshotCard(record);
   }
 
+  function retryInstance(id) {
+    assertLive(destroyed);
+    const record = recordFor(id);
+    record.state = record.layout.valid ? "idle" : "invalid";
+    record.error = record.layout.valid ? null : record.layout.error;
+    emit();
+    return snapshotCard(record);
+  }
+
   function select(id) {
     assertLive(destroyed);
     recordFor(id);
@@ -243,6 +252,7 @@ export function createConsoleSandboxModel({
     createInstance,
     updateInstance,
     setRuntimeState,
+    retryInstance,
     select,
     move,
     remove,

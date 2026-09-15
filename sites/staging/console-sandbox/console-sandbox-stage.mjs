@@ -54,9 +54,11 @@ export function createConsoleSandbox({
   registry = createCatalogRegistry(),
   context = null,
   runtime = null,
+  timeoutMs = 15000,
   documentRef = root?.ownerDocument || globalThis.document,
 } = {}) {
   if (!root || typeof root.appendChild !== "function") throw new TypeError("Console Sandbox requires a root element");
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new TypeError("Console Sandbox timeout must be positive");
   const widgetRuntime = runtime || (context ? createNebulacast({ context, registry }) : null);
   const mounted = new Map();
   let runtimeQueue = Promise.resolve();
@@ -192,6 +194,8 @@ export function createConsoleSandbox({
     for (const instance of state.instances) {
       const card = text(documentRef, "article", "console-sandbox-card");
       card.dataset.sandboxInstance = instance.id;
+      card.setAttribute("role", "group");
+      card.setAttribute("aria-label", `${instance.widget} ${instance.id}`);
       if (instance.id === state.selectedId) card.dataset.selected = "true";
       card.appendChild(text(documentRef, "h3", "console-sandbox-card-title", `${instance.widget} · ${instance.id}`));
       card.appendChild(text(documentRef, "p", "console-sandbox-card-meta", `${instance.layout.mode} · ${instance.layout.width}×${instance.layout.height}`));
@@ -206,9 +210,17 @@ export function createConsoleSandbox({
       const actions = text(documentRef, "div", "console-sandbox-actions");
       const select = button(documentRef, "Select", "select", "sandbox-button");
       select.dataset.sandboxInstance = instance.id;
+      select.setAttribute("aria-pressed", String(instance.id === state.selectedId));
+      if (instance.id === state.selectedId) select.setAttribute("aria-current", "true");
+      if (instance.state === "error" || instance.state === "timeout") {
+        const retry = button(documentRef, "Retry", "retry", "sandbox-button");
+        retry.dataset.sandboxInstance = instance.id;
+        actions.appendChild(retry);
+      }
       const remove = button(documentRef, "Remove", "remove", "sandbox-button sandbox-button-danger");
       remove.dataset.sandboxInstance = instance.id;
-      actions.append(select, remove);
+      actions.prepend(select);
+      actions.appendChild(remove);
       card.appendChild(actions);
       canvas.appendChild(card);
     }
@@ -306,9 +318,17 @@ export function createConsoleSandbox({
       if (!root || mounted.has(instance.id)) continue;
       const signature = instanceSignature(instance);
       updateCardStatus(instance.id, "loading");
+      let mountPromise = null;
       try {
         model.setRuntimeState(instance.id, "loading");
-        const mountedInstance = await widgetRuntime.mount(root, { widget: instance.widget, config: instance.config });
+        mountPromise = Promise.resolve().then(() => widgetRuntime.mount(root, { widget: instance.widget, config: instance.config }));
+        let timer;
+        const mountedInstance = await Promise.race([
+          mountPromise,
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(Object.assign(new Error(`${instance.widget} preview timed out`), { code: "CONSOLE_SANDBOX_TIMEOUT" })), timeoutMs);
+          }),
+        ]).finally(() => clearTimeout(timer));
         const current = model.getInstance(instance.id);
         if (!current || instanceSignature(current) !== signature || runtimeRootFor(instance.id) !== root) {
           await mountedInstance?.destroy?.();
@@ -318,8 +338,16 @@ export function createConsoleSandbox({
         model.setRuntimeState(instance.id, "ready");
         updateCardStatus(instance.id, "ready");
       } catch (error) {
-        model.setRuntimeState(instance.id, "error", error);
-        updateCardStatus(instance.id, "error", error.message);
+        if (error?.code === "CONSOLE_SANDBOX_TIMEOUT") {
+          model.setRuntimeState(instance.id, "timeout", error);
+          updateCardStatus(instance.id, "timeout", error.message);
+          // A loader that resolves after the timeout must not become an
+          // orphaned live Runtime instance.
+          mountPromise?.then(lateInstance => lateInstance?.destroy?.()).catch(() => {});
+        } else {
+          model.setRuntimeState(instance.id, "error", error);
+          updateCardStatus(instance.id, "error", error.message);
+        }
       }
     }
   }
@@ -338,6 +366,7 @@ export function createConsoleSandbox({
         case "add": model.createInstance({ widget: selectedWidget }); break;
         case "select": model.select(instanceId); break;
         case "remove": model.remove(instanceId); break;
+        case "retry": model.retryInstance(instanceId); break;
         case "move-left": if (selectedInstance()) model.move(selectedInstance().id, -1); break;
         case "move-right": if (selectedInstance()) model.move(selectedInstance().id, 1); break;
         case "reset-card": if (selectedInstance()) model.resetCard(selectedInstance().id); break;
