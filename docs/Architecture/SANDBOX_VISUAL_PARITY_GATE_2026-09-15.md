@@ -15,6 +15,8 @@ The gate covers:
 
 - Sandbox desktop and narrow viewports;
 - horizontal/vertical oriented modes and Sky square-only behavior;
+- narrow host sizing for every runtime root, including inline-dimension
+  overrides, card/canvas content-box boundaries, and Sky square preservation;
 - manifest stylesheet insertion and approved route stylesheet presence;
 - widget-owned computed typography/spacing/layout properties;
 - missing stylesheet requests, console/page errors, and unreadable stylesheets;
@@ -46,6 +48,11 @@ This is recorded as a known presentation constraint in the test matrix. Narrow
 mode has no approved Hero overflow baseline and will expose a new uncontained
 overflow.
 
+The narrow browser matrix explicitly selects `Canvas Viewport = narrow`. Every
+runtime root must fit the card and canvas content boxes without horizontal
+scroll width; oriented entries remain vertical and Sky remains square while its
+side is reduced to the available card width.
+
 The approved route matrix also records one existing legacy gap: `/map/` does
 not advertise the two Registry stylesheet links used by the Sandbox
 (`/weather/assets/weather.css` and `/weather/widgets/map/map.css`). The gap is
@@ -62,12 +69,14 @@ npm run typecheck:test                    PASS
 node --test \
   tests/console-sandbox-model.test.mjs \
   tests/widget-stylesheet-loader.test.mjs \
-tests/widget-css-scope.test.mjs \
-tests/standalone-widget-host.test.mjs \
-tests/javascript-embed.test.mjs         28 passed
+  tests/widget-css-scope.test.mjs \
+  tests/standalone-widget-host.test.mjs \
+  tests/javascript-embed.test.mjs         28 passed
 git diff --check                          PASS
-npx playwright test tests/browser/sandbox-visual-parity.spec.mjs \
-  --workers=1 --reporter=line --trace=off 3 passed
+npx playwright test \
+  tests/browser/console-sandbox.spec.mjs \
+  tests/browser/sandbox-visual-parity.spec.mjs \
+  --workers=1 --reporter=line --trace=off 8 passed
 ```
 
 The browser gate uses deterministic local fixtures and verifies all 13 catalog

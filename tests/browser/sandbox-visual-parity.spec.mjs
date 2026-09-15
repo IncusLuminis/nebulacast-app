@@ -203,6 +203,38 @@ function assertOverflowBaseline(signature, entry, viewport, surface = "sandbox")
   }
 }
 
+async function assertNarrowRootFitsCard(root, entry) {
+  const geometry = await root.evaluate(element => {
+    const card = element.closest(".console-sandbox-card");
+    const canvas = element.closest(".console-sandbox-canvas");
+    const cardRect = card.getBoundingClientRect();
+    const rootRect = element.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    const cardStyle = getComputedStyle(card);
+    const canvasStyle = getComputedStyle(canvas);
+    return {
+      rootWidth: rootRect.width,
+      rootHeight: rootRect.height,
+      rootLeft: rootRect.left,
+      rootRight: rootRect.right,
+      cardContentLeft: cardRect.left + card.clientLeft + parseFloat(cardStyle.paddingLeft),
+      cardContentRight: cardRect.left + card.clientLeft + card.clientWidth - parseFloat(cardStyle.paddingRight),
+      canvasContentRight: canvasRect.left + canvas.clientLeft + canvas.clientWidth - parseFloat(canvasStyle.paddingRight),
+      cardScrollWidth: card.scrollWidth,
+      cardClientWidth: card.clientWidth,
+      canvasScrollWidth: canvas.scrollWidth,
+      canvasClientWidth: canvas.clientWidth,
+    };
+  });
+  expect(geometry.rootWidth, `${entry.type}: narrow root rendered`).toBeGreaterThan(0);
+  expect(geometry.rootRight, `${entry.type}: narrow root fits card`).toBeLessThanOrEqual(geometry.cardContentRight + 0.5);
+  expect(geometry.rootRight, `${entry.type}: narrow root fits canvas`).toBeLessThanOrEqual(geometry.canvasContentRight + 0.5);
+  expect(geometry.rootLeft, `${entry.type}: narrow root starts inside card`).toBeGreaterThanOrEqual(geometry.cardContentLeft - 0.5);
+  expect(geometry.cardScrollWidth, `${entry.type}: narrow card horizontal overflow`).toBeLessThanOrEqual(geometry.cardClientWidth);
+  expect(geometry.canvasScrollWidth, `${entry.type}: narrow canvas horizontal overflow`).toBeLessThanOrEqual(geometry.canvasClientWidth);
+  if (entry.type === "sky") expect(Math.abs(geometry.rootWidth - geometry.rootHeight), "sky: narrow root remains square").toBeLessThanOrEqual(0.5);
+}
+
 async function exposeRouteRoot(root) {
   await root.evaluate(element => {
     let current = element;
@@ -278,6 +310,7 @@ test("Sandbox narrow parity keeps oriented modes, Sky square-only, and no page o
   await installParityFixtures(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  await page.locator('[data-sandbox-control="viewport"]').selectOption("narrow");
 
   for (const entry of PARITY_MATRIX) {
     const { root } = await addSandboxWidget(page, entry, entry.narrowMode || (entry.type === "sky" ? "square" : "vertical"));
@@ -292,6 +325,7 @@ test("Sandbox narrow parity keeps oriented modes, Sky square-only, and no page o
       expect(size.width).toBe(size.height);
       expect(size.width).toBeGreaterThan(0);
     }
+    await assertNarrowRootFitsCard(root, entry);
     await page.locator('[data-sandbox-action="reset-all"]').click();
   }
   await assertNoDiagnostics(page, diagnostics, "Sandbox narrow catalog matrix");

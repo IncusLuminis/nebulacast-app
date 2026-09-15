@@ -222,6 +222,7 @@ export function createConsoleSandbox({
     for (const instance of state.instances) {
       const card = text(documentRef, "article", "console-sandbox-card");
       card.dataset.sandboxInstance = instance.id;
+      card.dataset.sandboxWidget = instance.widget;
       card.setAttribute("role", "group");
       card.setAttribute("aria-label", `${instance.widget} ${instance.id}`);
       if (instance.id === state.selectedId) card.dataset.selected = "true";
@@ -230,6 +231,7 @@ export function createConsoleSandbox({
       const runtimeRoot = text(documentRef, "div", "console-sandbox-runtime-root", "Runtime preview will mount here.");
       runtimeRoot.dataset.role = "runtime-root";
       runtimeRoot.dataset.sandboxInstance = instance.id;
+      runtimeRoot.dataset.sandboxWidget = instance.widget;
       runtimeRoot.style.width = `${instance.layout.width}px`;
       runtimeRoot.style.height = `${instance.layout.height}px`;
       card.appendChild(runtimeRoot);
