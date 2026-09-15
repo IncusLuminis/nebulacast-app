@@ -1,4 +1,6 @@
-:root {
+@scope (html.nc-console-sandbox-host) {
+
+:scope {
   --nc-sandbox-bg: #0b0d12;
   --nc-sandbox-surface: #0f1115;
   --nc-sandbox-surface2: #13161c;
@@ -106,4 +108,6 @@ body.nc-console-sandbox-host {
   .console-sandbox-canvas[data-viewport="narrow"] { max-width: none; }
   .console-sandbox-form { grid-template-columns: 1fr; }
   .console-sandbox-shell > .sandbox-button-danger { grid-column: 1; justify-self: stretch; }
+}
+
 }

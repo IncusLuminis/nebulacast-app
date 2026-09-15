@@ -42,9 +42,9 @@ test("widget presentation styles do not overwrite Sandbox chrome", async ({ page
     return { backgroundImage: style.backgroundImage, fontFamily: style.fontFamily, headerBorder: headerStyle.borderBottomColor };
   });
 
-  await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
+  await page.locator('[data-sandbox-control="widget"]').selectOption("alerts");
   await page.locator('[data-sandbox-action="add"]').click();
-  await expect(page.locator('[data-role="runtime-root"][data-nc-widget="sky"]')).toHaveCount(1);
+  await expect(page.locator('[data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(1);
   const chromeAfter = await page.locator("body").evaluate(body => {
     const header = document.querySelector(".nc-console-sandbox-page-header");
     const style = getComputedStyle(body);
@@ -52,6 +52,18 @@ test("widget presentation styles do not overwrite Sandbox chrome", async ({ page
     return { backgroundImage: style.backgroundImage, fontFamily: style.fontFamily, headerBorder: headerStyle.borderBottomColor };
   });
   expect(chromeAfter).toEqual(chromeBefore);
+
+  await page.locator('[data-sandbox-action="reset-all"]').click();
+  await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
+  await page.locator('[data-sandbox-action="add"]').click();
+  await expect(page.locator('[data-role="runtime-root"][data-nc-widget="sky"]')).toHaveCount(1);
+  const chromeAfterSky = await page.locator("body").evaluate(body => {
+    const header = document.querySelector(".nc-console-sandbox-page-header");
+    const style = getComputedStyle(body);
+    const headerStyle = getComputedStyle(header);
+    return { backgroundImage: style.backgroundImage, fontFamily: style.fontFamily, headerBorder: headerStyle.borderBottomColor };
+  });
+  expect(chromeAfterSky).toEqual(chromeBefore);
 });
 
 test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", async ({ page }) => {

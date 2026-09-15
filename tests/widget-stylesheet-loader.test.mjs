@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
 import {
   createStylesheetLoader,
@@ -63,6 +63,14 @@ test("every registered widget declares a resolvable stylesheet manifest", async 
       await access(new URL(`../sites/staging${path}`, import.meta.url));
     }
   }
+});
+
+test("Sandbox chrome stylesheet is scoped to its host and uses namespaced tokens", async () => {
+  const stylesheet = await readFile(new URL("../sites/staging/console-sandbox/console-sandbox.css", import.meta.url), "utf8");
+  assert.match(stylesheet, /^@scope \(html\.nc-console-sandbox-host\) \{/);
+  assert.doesNotMatch(stylesheet, /^\s*:root\s*\{/m);
+  assert.match(stylesheet, /--nc-sandbox-bg/);
+  assert.doesNotMatch(stylesheet, /var\(--(?:bg|surface|line|text|muted|title|link|good|bad)\)/);
 });
 
 test("acquire inserts immediately, deduplicates by href, and releases references", () => {

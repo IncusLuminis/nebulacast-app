@@ -1,7 +1,7 @@
 # Console Sandbox style-isolation local gate
 
-Date: 2026-09-15  
-Branch: `codex/widget-platform-planning`  
+Date: 2026-09-15
+Branch: `codex/widget-platform-planning`
 Story: #117 — Isolate Sandbox chrome styles from widget presentation
 
 ## Implemented boundary
@@ -29,7 +29,7 @@ node --test \
   tests/widget-css-scope.test.mjs \
   tests/standalone-widget-host.test.mjs \
   tests/javascript-embed.test.mjs
-27 tests passed
+28 tests passed
 
 npx playwright test \
   tests/browser/console-sandbox.spec.mjs \
