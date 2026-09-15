@@ -338,9 +338,7 @@ test("Sandbox probes match approved staging route presentation and source contra
         // are intentionally outside this parity contract.
         const sandboxPresentation = comparableSignature(sandboxSignature, entry.ownedProperties);
         const routePresentation = comparableSignature(routeSignature, entry.ownedProperties);
-        if (JSON.stringify(sandboxPresentation) !== JSON.stringify(routePresentation)) {
-          console.log(`PARITY_MISMATCH ${entry.type}`, JSON.stringify({ sandbox: sandboxPresentation, route: routePresentation }));
-        }
+        expect(sandboxPresentation, `${entry.type}: Sandbox presentation parity`).toEqual(routePresentation);
         assertOverflowBaseline(sandboxSignature, entry, "desktop", "sandbox");
         assertOverflowBaseline(routeSignature, entry, "desktop", "route");
         const [sandboxPageGeometry, routePageGeometry] = await Promise.all([

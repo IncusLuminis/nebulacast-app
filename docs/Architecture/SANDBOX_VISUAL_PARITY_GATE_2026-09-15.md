@@ -1,7 +1,7 @@
 # Console Sandbox visual parity gate
 
-Date: 2026-09-15  
-Branch: `codex/widget-platform-planning`  
+Date: 2026-09-15
+Branch: `codex/widget-platform-planning`
 Story: #118 — Validate Sandbox visual parity against staging widget routes
 
 ## Scope
@@ -62,8 +62,8 @@ npm run typecheck:test                    PASS
 node --test \
   tests/console-sandbox-model.test.mjs \
   tests/widget-stylesheet-loader.test.mjs \
-  tests/widget-css-scope.test.mjs \
-  tests/standalone-widget-host.test.mjs \
+tests/widget-css-scope.test.mjs \
+tests/standalone-widget-host.test.mjs \
 tests/javascript-embed.test.mjs         28 passed
 git diff --check                          PASS
 npx playwright test tests/browser/sandbox-visual-parity.spec.mjs \
@@ -72,5 +72,6 @@ npx playwright test tests/browser/sandbox-visual-parity.spec.mjs \
 
 The browser gate uses deterministic local fixtures and verifies all 13 catalog
 entries in desktop and narrow modes, plus route-to-route comparisons. No
-commit, push, merge, GitHub Projects operation, or staging deployment was
-performed for this Story yet.
+merge, GitHub Projects operation, or staging deployment is performed by this
+Story. The gate is committed and pushed on the working branch; the final
+commit is recorded in the handoff.
