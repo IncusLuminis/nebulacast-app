@@ -182,16 +182,14 @@ or an equivalently safe escaping path). It must not interpolate source data
 into `innerHTML`, executable attributes, CSS, or URLs without validation and
 escaping.
 
-## 8. Explicitly deferred work
+## 8. Implementation boundary
 
-The following are implementation work for a later story/step:
+The v1 implementation is registered in the shared widget catalog, mounted by
+the Dashboard Console Composer, and served by the Runtime adapter under
+`sites/staging/helio/widgets/solar-activity/`. It consumes the existing
+`helio_now/v1` data without changing its schema or generating a second data
+path. The legacy Dashboard hook is retained only as inert source history and
+is not an active owner of the panel.
 
-- registering `solar-activity` in the widget catalog;
-- adding the Console Composer slot and Runtime adapter;
-- replacing `_dbRenderSolar` while preserving the panel shell and controls;
-- adding JavaScript, lifecycle, browser, and security tests;
-- changing or generating `helio_now/v1` data.
-
-Until that work is complete, the Dashboard composition descriptor must keep
-Solar Activity classified as a `temporary_adapter` owned by the inline
-renderer.
+JavaScript `<div>` and iframe embedding remain deferred because this widget is
+not marked as embed-capable in the catalog.
