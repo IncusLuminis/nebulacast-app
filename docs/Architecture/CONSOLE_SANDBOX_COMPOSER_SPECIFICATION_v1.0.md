@@ -161,6 +161,17 @@ must not share mutable DOM or Runtime state.
 - Reset and remove destroy the corresponding Runtime instance and remove its
   owned root. Resetting the whole Sandbox destroys all instances.
 
+### Sandbox chrome style boundary
+
+- Sandbox page/chrome selectors use the `nc-console-sandbox-*` namespace and a
+  host marker on `html` and `body`; generic legacy route selectors such as
+  `.page`, `.page-header`, and `.page-footer` must not be used by the Sandbox.
+- The Sandbox reset and visual tokens apply to its chrome only. The
+  `.console-sandbox-runtime-root` and its descendants remain owned by the
+  mounted widget Runtime and its stylesheet manifest.
+- Widget stylesheet manifests must not require modifying shared legacy route
+  CSS. Existing `/weather/` and `/sky/` pages remain compatibility surfaces.
+
 ### Stylesheet loading contract
 
 - Every Registry definition declares a frozen `stylesheets` array. Entries are

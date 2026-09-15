@@ -33,6 +33,27 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
   await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(0);
 });
 
+test("widget presentation styles do not overwrite Sandbox chrome", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  const chromeBefore = await page.locator("body").evaluate(body => {
+    const header = document.querySelector(".nc-console-sandbox-page-header");
+    const style = getComputedStyle(body);
+    const headerStyle = getComputedStyle(header);
+    return { backgroundImage: style.backgroundImage, fontFamily: style.fontFamily, headerBorder: headerStyle.borderBottomColor };
+  });
+
+  await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
+  await page.locator('[data-sandbox-action="add"]').click();
+  await expect(page.locator('[data-role="runtime-root"][data-nc-widget="sky"]')).toHaveCount(1);
+  const chromeAfter = await page.locator("body").evaluate(body => {
+    const header = document.querySelector(".nc-console-sandbox-page-header");
+    const style = getComputedStyle(body);
+    const headerStyle = getComputedStyle(header);
+    return { backgroundImage: style.backgroundImage, fontFamily: style.fontFamily, headerBorder: headerStyle.borderBottomColor };
+  });
+  expect(chromeAfter).toEqual(chromeBefore);
+});
+
 test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
   await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
