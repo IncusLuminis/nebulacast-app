@@ -1,6 +1,6 @@
 # Nebulacast Console Sandbox Composer Specification v1.0
 
-Status: proposed for Product Owner approval  
+Status: approved by Product Owner/UI/UX review on 2026-09-15; implementation in progress
 Related request: assemble a temporary Console from registered widgets in a dedicated HTML page  
 Parent area: HUD Platform / Widget Runtime
 
