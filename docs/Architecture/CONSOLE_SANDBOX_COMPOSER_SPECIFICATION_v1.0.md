@@ -199,11 +199,11 @@ Outcome: a user can assemble and inspect a temporary multi-widget Console in a
 dedicated HTML page using the existing Registry and Runtime without changing
 production Dashboard behavior.
 
-- **C1 / #TBD** — Approve the Console Sandbox UX flow and responsive wireframe.
-- **C2 / #TBD** — Implement the in-memory composition model and Registry palette.
-- **C3 / #TBD** — Build the standalone Console Sandbox HTML host and canvas.
-- **C4 / #TBD** — Mount independent Runtime widgets and host-owned controls.
-- **C5 / #TBD** — Add validation, accessibility, recovery, and acceptance gate.
+- **C1 / #110** — Approve the Console Sandbox UX flow and responsive wireframe.
+- **C2 / #111** — Implement the in-memory composition model and Registry palette.
+- **C3 / #112** — Build the standalone Console Sandbox HTML host and canvas.
+- **C4 / #113** — Mount independent Runtime widgets and host-owned controls.
+- **C5 / #114** — Add validation, accessibility, recovery, and acceptance gate.
 
 Implementation stories must not introduce persistence or production Dashboard
 layout changes without a separate product decision.
