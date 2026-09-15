@@ -273,17 +273,28 @@ export function buildStandaloneWidgetUrl(registry, widgetOrExport, requested = {
 export function buildIframeEmbedSnippet(registry, widgetOrExport, options = {}) {
   if (!isObject(options)) throw new TypeError("Iframe embed options must be an object");
   for (const key of Object.keys(options)) {
-    if (!["origin", "title"].includes(key)) {
+    if (!["origin", "title", "layout"].includes(key)) {
       throw new TypeError(`Iframe embed options contain an unsupported field: ${key}`);
     }
   }
-  const configExport = standaloneConfig(registry, widgetOrExport);
+  let configExport = standaloneConfig(registry, widgetOrExport);
   const definition = definitionFrom(registry, configExport.widget);
+  const layout = options.layout === undefined
+    ? undefined
+    : normalizeJavascriptEmbedLayout(registry, configExport.widget, options.layout);
+  if (layout) {
+    configExport = createWidgetConfig(registry, configExport.widget, {
+      ...configExport.config,
+      orientation: layout.mode === "square" ? "auto" : layout.mode,
+    });
+  }
   const origin = safeIframeOrigin(options.origin);
   const title = options.title === undefined ? (definition.title || definition.type) : options.title;
   if (!safeString(title)) throw new TypeError("Iframe embed title contains an unsafe string");
   const src = `${origin}${buildStandaloneWidgetUrl(registry, configExport)}`;
-  return `<iframe src="${escapeAttribute(src)}" title="${escapeAttribute(title)}" width="${IFRAME_EMBED_DEFAULTS.width}" height="${IFRAME_EMBED_DEFAULTS.height}" loading="${IFRAME_EMBED_DEFAULTS.loading}" style="border:0;display:block"></iframe>`;
+  const width = layout ? String(layout.width) : IFRAME_EMBED_DEFAULTS.width;
+  const height = layout ? String(layout.height) : IFRAME_EMBED_DEFAULTS.height;
+  return `<iframe src="${escapeAttribute(src)}" title="${escapeAttribute(title)}" width="${escapeAttribute(width)}" height="${escapeAttribute(height)}" loading="${IFRAME_EMBED_DEFAULTS.loading}" style="border:0;display:block"></iframe>`;
 }
 
 /** Normalize the public JavaScript embed specification without exposing loaders or data URLs. */

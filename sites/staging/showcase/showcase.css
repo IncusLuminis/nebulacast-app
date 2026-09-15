@@ -96,6 +96,9 @@ html, body {
 .widget-lab-preview-frame { display: grid; gap: 8px; align-content: start; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #0f1115; overflow: auto; }
 .widget-lab-preview-title { color: var(--title); font-size: 12px; font-weight: 600; }
 .widget-lab-preview-root { flex: none; max-width: 100%; overflow: auto; border: 1px dashed #34465b; }
+.widget-lab-output { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.widget-lab-output-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.widget-lab-output-body { max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: #bcd5ff; font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; user-select: all; margin: 0; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: #0b0f16; }
 .widget-lab-status[data-layout-valid="false"] { color: #e07070; }
 
 @media (max-width: 680px) {

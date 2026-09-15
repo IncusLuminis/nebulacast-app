@@ -3,6 +3,7 @@ import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.m
 import { getWidgetOptionValues } from "../shared/widget-config.mjs";
 import { createWidgetLabModel } from "./widget-lab-model.mjs";
 import { getWidgetLabInspectorMetadata } from "./widget-lab-inspector.mjs";
+import { createWidgetLabOutputs } from "./widget-lab-output.mjs";
 
 function appendText(documentRef, tagName, className, text) {
   const element = documentRef.createElement(tagName);
@@ -154,6 +155,42 @@ export function createWidgetLab({
   stage.appendChild(stagePreviews);
   const stageHint = element(documentRef, "p", "widget-lab-stage-hint", "stage-hint", "Close keeps instances mounted. Use Reset or Destroy to release them.");
   stage.appendChild(stageHint);
+  const outputRegion = documentRef.createElement("section");
+  outputRegion.className = "widget-lab-output";
+  outputRegion.setAttribute("aria-label", "Embed outputs");
+  outputRegion.appendChild(element(documentRef, "h3", "widget-lab-subheading", "output-heading", "External output"));
+  const outputTabs = documentRef.createElement("div");
+  outputTabs.className = "widget-lab-output-tabs";
+  const outputBodies = {};
+  let activeOutput = "javascript";
+  for (const [key, label] of [["javascript", "JavaScript <div>"], ["iframe", "iframe HTML"]]) {
+    const tab = documentRef.createElement("button");
+    tab.type = "button";
+    tab.className = "widget-lab-button";
+    tab.setAttribute("data-lab-output-tab", key);
+    tab.textContent = label;
+    tab.addEventListener("click", () => {
+      activeOutput = key;
+      renderOutput(model.getSnapshot().selectedId ? model.getInstance(model.getSnapshot().selectedId) : null);
+    });
+    outputTabs.appendChild(tab);
+    const body = documentRef.createElement("pre");
+    body.className = "widget-lab-output-body";
+    body.setAttribute("data-lab-output", key);
+    outputRegion.appendChild(body);
+    outputBodies[key] = body;
+  }
+  outputRegion.appendChild(outputTabs);
+  const copyOutput = documentRef.createElement("button");
+  copyOutput.type = "button";
+  copyOutput.className = "widget-lab-button";
+  copyOutput.setAttribute("data-lab-action", "copy-output");
+  copyOutput.textContent = "Copy output";
+  outputRegion.appendChild(copyOutput);
+  const outputStatus = element(documentRef, "span", "widget-lab-status", "output-status", "Select an instance to inspect output.");
+  outputStatus.setAttribute("aria-live", "polite");
+  outputRegion.appendChild(outputStatus);
+  stage.appendChild(outputRegion);
 
   shell.appendChild(catalogRegion);
   shell.appendChild(inspectorRegion);
@@ -282,6 +319,32 @@ export function createWidgetLab({
     };
   }
 
+  function renderOutput(instance) {
+    const outputs = instance ? createWidgetLabOutputs(registry, instance) : { javascript: null, iframe: null };
+    for (const key of Object.keys(outputBodies)) {
+      outputBodies[key].textContent = outputs[key] || `${labelFor(key)} output unavailable for this widget.`;
+      outputBodies[key].hidden = key !== activeOutput;
+    }
+    outputStatus.textContent = instance
+      ? (outputs[activeOutput] ? `${labelFor(activeOutput)} output ready.` : `${labelFor(activeOutput)} output unavailable for ${instance.widget}.`)
+      : "Select an instance to inspect output.";
+  }
+
+  function fallbackCopy(text) {
+    const textarea = documentRef.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    const container = documentRef.body || root;
+    container.appendChild(textarea);
+    textarea.select?.();
+    let copied = false;
+    try { copied = documentRef.execCommand?.("copy") === true; } catch (_) {}
+    textarea.remove?.();
+    return copied;
+  }
+
   function renderInstances(snapshot) {
     instanceList.textContent = "";
     stagePreviews.textContent = "";
@@ -331,6 +394,7 @@ export function createWidgetLab({
     }
     syncStageControls(snapshot.selectedId ? snapshot.instances.get(snapshot.selectedId) : null);
     stageStatus.textContent = snapshot.instances.size ? `${snapshot.instances.size} instance${snapshot.instances.size === 1 ? "" : "s"}` : "No preview instances yet.";
+    renderOutput(snapshot.selectedId ? snapshot.instances.get(snapshot.selectedId) : null);
   }
 
   const model = createWidgetLabModel({
@@ -385,6 +449,28 @@ export function createWidgetLab({
       height: stageControls.height.value,
     },
   }));
+  copyOutput.addEventListener("click", async () => {
+    const selectedId = model.getSnapshot().selectedId;
+    const instance = selectedId ? model.getInstance(selectedId) : null;
+    const output = instance ? createWidgetLabOutputs(registry, instance)[activeOutput] : null;
+    if (!output) {
+      outputStatus.textContent = "Output unavailable for this widget.";
+      return;
+    }
+    const navigatorRef = documentRef.defaultView?.navigator || (typeof navigator !== "undefined" ? navigator : null);
+    try {
+      if (typeof navigatorRef?.clipboard?.writeText === "function") {
+        await navigatorRef.clipboard.writeText(output);
+        outputStatus.textContent = "Output copied.";
+      } else if (fallbackCopy(output)) {
+        outputStatus.textContent = "Output copied (fallback).";
+      } else {
+        outputStatus.textContent = "Copy unavailable — select the output text.";
+      }
+    } catch (_) {
+      outputStatus.textContent = "Copy unavailable — select the output text.";
+    }
+  });
   closeButton.addEventListener("click", () => {
     const selectedId = model.getSnapshot().selectedId;
     if (selectedId) model.closePreview(selectedId);

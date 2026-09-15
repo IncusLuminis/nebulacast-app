@@ -109,4 +109,9 @@ test("iframe output uses bounded host configuration and documented safe sizing",
   }
   assert.throws(() => buildIframeEmbedSnippet(registry, "news"), /not allowed/);
   assert.throws(() => buildIframeEmbedSnippet(registry, "alerts", { origin: "https://widgets.example.test/?q=unsafe" }), /origin/);
+  assert.equal(
+    buildIframeEmbedSnippet(registry, "sky", { layout: { mode: "square", width: 400, height: 400 } }),
+    '<iframe src="/widgets/widget.html?widget=sky&amp;orientation=auto&amp;theme=inherit&amp;density=normal" title="Sky" width="400" height="400" loading="lazy" style="border:0;display:block"></iframe>',
+  );
+  assert.throws(() => buildIframeEmbedSnippet(registry, "sky", { layout: { mode: "square", width: 400, height: 401 } }), /square/);
 });

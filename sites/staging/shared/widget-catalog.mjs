@@ -166,6 +166,7 @@ export const widgetCatalog = Object.freeze([
   Object.freeze({
     type: "sky",
     version: 1,
+    standaloneHost: true,
     standaloneStylesheet: "/sky/assets/sky.css",
     javascriptEmbed: true,
     divEmbed: true,

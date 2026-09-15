@@ -16,6 +16,10 @@ test("Widget Lab creates two independent Runtime previews and reopens the stage"
   await expect(page.locator('[data-lab-instance]')).toHaveCount(1);
   await expect(page.locator('[data-lab-preview-instance]')).toHaveCount(1);
   await expect(page.locator('[data-lab-preview-instance] [data-nc-widget="alerts"]')).toHaveCount(1);
+  await expect(page.locator('[data-lab-output="javascript"]')).toContainText('/widgets/runtime/index.mjs');
+  await expect(page.locator('[data-lab-output="javascript"]')).toContainText('"mode":"horizontal"');
+  await page.locator('[data-lab-output-tab="iframe"]').click();
+  await expect(page.locator('[data-lab-output="iframe"]')).toContainText('width="640" height="360"');
 
   await page.locator('[data-lab-action="create-stage-instance"]').click();
   await expect(page.locator('[data-lab-instance]')).toHaveCount(2);
