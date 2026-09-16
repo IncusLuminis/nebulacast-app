@@ -24,7 +24,7 @@ their external embed outputs.
 - adding, selecting, reordering, resizing, and removing widget cards;
 - Registry-allow-listed widget configuration;
 - host-owned horizontal, vertical, and Sky square layout constraints;
-- desktop and narrow responsive canvas previews;
+- desktop and mobile responsive canvas previews;
 - readable loading, ready, empty, error, timeout, and validation states;
 - keyboard-accessible controls and deterministic reset behavior;
 - local-only composition for the current browser session.
@@ -49,8 +49,10 @@ their external embed outputs.
 5. Apply the card configuration; the real Runtime mounts inside that card.
 6. Add more widgets, select a card, move it within the canvas, resize it, or
    remove it. Each card has an independent instance identity and lifecycle.
-7. Switch between desktop and narrow canvas previews. The preview changes the
-   canvas viewport, not the stored widget dimensions or public orientation rules.
+7. Switch between desktop and mobile canvas previews. Desktop uses the available
+   content width; mobile uses a bounded phone-like portrait frame. The preview
+   changes the canvas viewport, not the stored widget dimensions or public
+   orientation rules.
 8. Reset one card or the whole Sandbox. Reset destroys Runtime instances and
    leaves the page usable for a new composition.
 
@@ -129,7 +131,7 @@ The Sandbox owns the composition document only in memory:
 
 ```js
 {
-  viewport: "desktop" | "narrow",
+  viewport: "desktop" | "mobile",
   selectedId: "sandbox-2" | null,
   instances: [
     {
@@ -208,7 +210,7 @@ must not share mutable DOM or Runtime state.
 - [ ] Multiple instances, including repeated widget types, remain independent.
 - [ ] Canvas supports add, select, reorder, resize, apply, remove, and reset.
 - [ ] Sky square and oriented horizontal/vertical rules are enforced.
-- [ ] Desktop and narrow canvas previews preserve the composition semantics.
+- [ ] Desktop and mobile canvas previews preserve the composition semantics.
 - [ ] Real Runtime adapters mount inside caller-owned card roots.
 - [ ] Registry stylesheet manifests load before Sandbox Runtime mounts and are
       released after the last corresponding preview is removed.

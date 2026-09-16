@@ -47,7 +47,7 @@ npx playwright test tests/browser/console-sandbox.spec.mjs \
   --workers=1 --reporter=line --trace=off  PASS
 ```
 
-The browser coverage includes desktop and narrow viewports, all existing
+The browser coverage includes desktop and mobile viewports, all existing
 Sandbox regression scenarios, palette drag, existing-card drag, strict Sky
 rejection, keyboard placement, and touch-compatible zone actions. No merge,
 GitHub Projects operation, staging deployment, or production/shared widget CSS
