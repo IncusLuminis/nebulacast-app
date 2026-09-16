@@ -2,8 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createCatalogRegistry } from "../sites/staging/shared/widget-catalog.mjs";
 import {
+  CONSOLE_SANDBOX_LAYOUT_UNITS,
   CONSOLE_SANDBOX_VIEWPORTS,
   createConsoleSandboxModel,
+  resolveConsoleSandboxLayout,
 } from "../sites/staging/console-sandbox/console-sandbox-model.mjs";
 
 test("Console Sandbox palette is derived from Registry metadata", () => {
@@ -39,12 +41,13 @@ test("Console Sandbox creates independent normalized instances", () => {
 test("Console Sandbox validates Sky square and oriented modes", () => {
   const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
   const sky = model.createInstance({ widget: "sky" });
-  assert.deepEqual(sky.layout, { mode: "square", shape: "square", width: 400, height: 400, valid: true, error: null });
+  assert.deepEqual(sky.layout, { mode: "square", shape: "square", unit: "percent", width: 100, height: 100, valid: true, error: null });
 
   const invalid = model.createInstance({
     widget: "sky",
     layout: { mode: "square", width: 400, height: 401 },
   });
+  assert.equal(invalid.layout.unit, "px");
   assert.equal(invalid.state, "invalid");
   assert.match(invalid.error, /square/);
 
@@ -56,12 +59,12 @@ test("Console Sandbox validates Sky square and oriented modes", () => {
 test("Console Sandbox exposes compatible labelled drop zones and converts orientation deterministically", () => {
   const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
   assert.deepEqual(model.getDropZones().map(zone => zone.id), ["horizontal", "vertical", "square"]);
-  const weather = model.addToZone("weather", "horizontal", { profile: "visual" });
+  const weather = model.createInstance({ widget: "weather", config: { profile: "visual" }, zoneId: "horizontal", layout: { unit: "px", width: 640, height: 360 } });
   const originalConfig = weather.config;
   const moved = model.dropInstance(weather.id, "vertical");
   assert.equal(moved.id, weather.id);
   assert.equal(moved.zoneId, "vertical");
-  assert.deepEqual(moved.layout, { mode: "vertical", shape: "oriented", width: 360, height: 640, valid: true, error: null });
+  assert.deepEqual(moved.layout, { mode: "vertical", shape: "oriented", unit: "px", width: 360, height: 640, valid: true, error: null });
   assert.equal(moved.config.profile, "visual");
   assert.notEqual(moved.config, originalConfig);
   assert.equal(moved.config.orientation, "vertical");
@@ -84,7 +87,7 @@ test("Console Sandbox rejects incompatible drops without mutating source state",
 
 test("Console Sandbox updates configuration/layout and preserves selection", () => {
   const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
-  const instance = model.createInstance({ widget: "events", layout: { mode: "horizontal", width: 640, height: 360 } });
+  const instance = model.createInstance({ widget: "events", layout: { mode: "horizontal", unit: "px", width: 640, height: 360 } });
   const updated = model.updateInstance(instance.id, {
     config: { timeRange: "all" },
     layout: { mode: "vertical", width: 320, height: 640 },
@@ -92,7 +95,27 @@ test("Console Sandbox updates configuration/layout and preserves selection", () 
   assert.equal(updated.id, instance.id);
   assert.equal(updated.config.timeRange, "all");
   assert.equal(updated.config.orientation, "vertical");
+  assert.equal(updated.layout.unit, "px");
   assert.deepEqual(model.getSnapshot().selectedId, instance.id);
+});
+
+test("Console Sandbox validates both size units and resolves percentages against the card", () => {
+  const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
+  assert.deepEqual(CONSOLE_SANDBOX_LAYOUT_UNITS, ["percent", "px"]);
+  const weather = model.createInstance({ widget: "weather", layout: { unit: "percent", mode: "horizontal", width: 70, height: 40 } });
+  assert.equal(weather.layout.valid, true);
+  assert.deepEqual(resolveConsoleSandboxLayout(weather.layout, { width: 500, height: 281 }), {
+    unit: "percent",
+    width: 350,
+    height: 112,
+  });
+  assert.throws(() => model.updateInstance(weather.id, { layout: { unit: "percent", mode: "horizontal", width: 40, height: 70 } }), /Horizontal widgets/);
+  const sky = model.createInstance({ widget: "sky", layout: { unit: "percent", width: 100, height: 100 } });
+  assert.deepEqual(resolveConsoleSandboxLayout(sky.layout, { width: 318, height: 178 }), {
+    unit: "percent",
+    width: 318,
+    height: 318,
+  });
 });
 
 test("Console Sandbox reorders and removes cards with deterministic selection", () => {

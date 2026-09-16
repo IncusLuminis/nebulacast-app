@@ -6,6 +6,8 @@ import {
 
 export const CONSOLE_SANDBOX_VIEWPORTS = Object.freeze(["desktop", "narrow"]);
 export const CONSOLE_SANDBOX_DEFAULT_VIEWPORT = "desktop";
+export const CONSOLE_SANDBOX_LAYOUT_UNITS = Object.freeze(["percent", "px"]);
+export const CONSOLE_SANDBOX_DEFAULT_LAYOUT_UNIT = "percent";
 export const CONSOLE_SANDBOX_STATES = Object.freeze(["idle", "invalid", "loading", "ready", "error", "timeout", "destroyed"]);
 export const CONSOLE_SANDBOX_DROP_ZONES = Object.freeze([
   Object.freeze({ id: "horizontal", mode: "horizontal", label: "Horizontal", description: "Wide widgets: width greater than height." }),
@@ -39,9 +41,9 @@ function definitionFor(registry, widget) {
 
 function defaultLayout(definition) {
   if (definition.shape === "square" || definition.type === "sky") {
-    return { mode: "square", width: 400, height: 400 };
+    return { mode: "square", unit: CONSOLE_SANDBOX_DEFAULT_LAYOUT_UNIT, width: 100, height: 100 };
   }
-  return { mode: "horizontal", width: 640, height: 360 };
+  return { mode: "horizontal", unit: CONSOLE_SANDBOX_DEFAULT_LAYOUT_UNIT, width: 100, height: 100 };
 }
 
 function zoneForId(zoneId) {
@@ -58,17 +60,82 @@ function convertLayout(layout, mode) {
   return { ...layout, mode, width: layout.height, height: layout.width };
 }
 
+function layoutUnitFor(layout, fallback = CONSOLE_SANDBOX_DEFAULT_LAYOUT_UNIT) {
+  if (isObject(layout) && layout.unit !== undefined) return layout.unit;
+  // Existing callers passed bare pixel dimensions. Keep that API contract
+  // while new/default layouts use percentages relative to the card.
+  if (isObject(layout) && (layout.width !== undefined || layout.height !== undefined)) return "px";
+  return fallback;
+}
+
+function layoutWithDefaults(definition, requested = {}) {
+  const defaults = defaultLayout(definition);
+  return {
+    ...defaults,
+    ...(isObject(requested) ? requested : {}),
+    unit: layoutUnitFor(requested, defaults.unit),
+  };
+}
+
+function normalizeSandboxLayout(definition, requested = {}, limits = WIDGET_LAB_LAYOUT) {
+  if (!isObject(requested)) throw new TypeError("Console Sandbox layout must be an object");
+  const shape = definition.shape === "square" || definition.type === "sky" ? "square" : "oriented";
+  const defaults = defaultLayout(definition);
+  const unit = layoutUnitFor(requested, defaults.unit);
+  const mode = requested.mode === undefined ? defaults.mode : requested.mode;
+  const width = requested.width === undefined ? defaults.width : Number(requested.width);
+  const height = requested.height === undefined ? defaults.height : Number(requested.height);
+  const min = unit === "px" ? limits.minDimension : 1;
+  const max = unit === "px" ? limits.maxDimension : 100;
+  let error = CONSOLE_SANDBOX_LAYOUT_UNITS.includes(unit) ? null : `Unit must be one of: ${CONSOLE_SANDBOX_LAYOUT_UNITS.join(", ")}`;
+  if (!Number.isInteger(width) || !Number.isFinite(width)) error ||= "Width must be a finite integer";
+  if (!Number.isInteger(height) || !Number.isFinite(height)) error ||= "Height must be a finite integer";
+  if (!error && (width < min || width > max)) error = `Width must be between ${min} and ${max}${unit === "percent" ? "%" : ""}`;
+  if (!error && (height < min || height > max)) error = `Height must be between ${min} and ${max}${unit === "percent" ? "%" : ""}`;
+  if (!error && !["square", "horizontal", "vertical"].includes(mode)) error = "Mode must be square, horizontal, or vertical";
+  if (!error && shape === "square" && width !== height) error = "Sky requires a square container: width must equal height";
+  // 100%/100% is the explicit full-card preset. The selected oriented mode
+  // supplies the card aspect ratio; all other percentages still validate the
+  // requested orientation normally.
+  const fullCard = unit === "percent" && width === 100 && height === 100;
+  if (!error && shape !== "square" && mode === "horizontal" && width <= height && !fullCard) {
+    error = "Horizontal widgets require width greater than height";
+  }
+  if (!error && shape !== "square" && mode === "vertical" && height <= width && !fullCard) {
+    error = "Vertical widgets require height greater than width";
+  }
+  if (!error && shape === "square" && mode !== "square") error = "Sky can only use square mode";
+  if (!error && shape !== "square" && mode === "square") error = "Only square widgets can use square mode";
+  return Object.freeze({ mode, shape, unit, width, height, valid: !error, error: error || null });
+}
+
+/** Convert a validated unit-aware layout to pixels using the actual card
+ * content box. Pixel layouts remain pixel-based; percentage layouts are never
+ * resolved against the viewport. */
+export function resolveConsoleSandboxLayout(layout, { width = 0, height = 0 } = {}) {
+  if (!isObject(layout)) throw new TypeError("Console Sandbox layout must be an object");
+  const unit = layout.unit || "px";
+  const basisWidth = Math.max(0, Number(width) || 0);
+  const basisHeight = Math.max(0, Number(height) || 0);
+  const resolvedWidth = unit === "percent" ? Math.round(basisWidth * Number(layout.width) / 100) : Number(layout.width);
+  const resolvedHeight = unit === "percent" ? Math.round(basisHeight * Number(layout.height) / 100) : Number(layout.height);
+  const square = layout.shape === "square" || layout.mode === "square";
+  return Object.freeze({
+    unit,
+    width: Number.isFinite(resolvedWidth) ? Math.max(0, resolvedWidth) : 0,
+    height: square
+      ? (Number.isFinite(resolvedWidth) ? Math.max(0, resolvedWidth) : 0)
+      : (Number.isFinite(resolvedHeight) ? Math.max(0, resolvedHeight) : 0),
+  });
+}
+
 function freezeConfig(config) {
   return Object.freeze({ ...config });
 }
 
 function normalizeCard(registry, widget, config = {}, layout = {}, limits = WIDGET_LAB_LAYOUT) {
   const definition = definitionFor(registry, widget);
-  const normalizedLayout = validateWidgetLabLayout(
-    definition,
-    { ...defaultLayout(definition), ...(isObject(layout) ? layout : {}) },
-    limits,
-  );
+  const normalizedLayout = normalizeSandboxLayout(definition, layoutWithDefaults(definition, layout), limits);
   const normalizedConfig = createWidgetConfig(registry, widget, {
     ...(isObject(config) ? config : {}),
     orientation: normalizedLayout.mode === "square" ? "auto" : normalizedLayout.mode,
@@ -171,8 +238,8 @@ export function createConsoleSandboxModel({
     if (shape !== "square" && zone.mode === "square") {
       return Object.freeze({ valid: false, reason: "Only square widgets can be placed in the square zone", zoneId, mode: zone.mode });
     }
-    const requested = convertLayout({ ...defaultLayout(definition), ...(isObject(layout) ? layout : {}) }, zone.mode);
-    const normalized = validateWidgetLabLayout(definition, requested, limits);
+    const requested = convertLayout(layoutWithDefaults(definition, layout), zone.mode);
+    const normalized = normalizeSandboxLayout(definition, requested, limits);
     return Object.freeze({
       valid: normalized.valid,
       reason: normalized.error,
@@ -209,7 +276,11 @@ export function createConsoleSandboxModel({
   function updateInstance(id, { config, layout } = {}) {
     assertLive(destroyed);
     const record = recordFor(id);
-    const requestedLayout = { ...record.layout, ...(isObject(layout) ? layout : {}) };
+    const requestedLayout = {
+      ...record.layout,
+      ...(isObject(layout) ? layout : {}),
+      ...(isObject(layout) && layout.unit === undefined && (layout.width !== undefined || layout.height !== undefined) ? { unit: "px" } : {}),
+    };
     const nextZoneId = zoneForId(requestedLayout.mode)?.id || record.zoneId;
     const drop = validateDrop({ widget: record.widget, layout: requestedLayout, zoneId: nextZoneId });
     if (!drop.valid) throw Object.assign(new Error(drop.reason), { code: "CONSOLE_SANDBOX_INVALID_DROP", reason: drop.reason });

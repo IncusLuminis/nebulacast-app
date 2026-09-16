@@ -22,15 +22,64 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
   expect(new Set(ids).size).toBe(2);
 
   await page.locator('[data-sandbox-action="select"]').first().click();
-  await page.locator('[data-sandbox-layout="width"]').fill("700");
+  await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
+  await page.locator('[data-sandbox-layout="width"]').fill("600");
   await page.locator('[data-sandbox-layout="height"]').fill("300");
   await page.locator('[data-sandbox-action="apply"]').click();
-  await expect(page.locator('article[data-sandbox-instance="console-sandbox-1"] [data-role="runtime-root"]')).toHaveCSS("width", "700px");
+  await expect(page.locator('article[data-sandbox-instance="console-sandbox-1"] [data-role="runtime-root"]')).toHaveCSS("width", "600px");
   await expect(page.locator('article[data-sandbox-instance="console-sandbox-1"] [data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(1);
 
   await page.locator('[data-sandbox-action="reset-all"]').click();
   await expect(page.locator('[data-drop-zone] .console-sandbox-empty')).toHaveCount(3);
   await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(0);
+});
+
+test("Console Sandbox keeps Palette, Inspector, and Composition order with card-relative sizes", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".console-sandbox-shell")).toHaveCount(1);
+  expect(await page.locator(".console-sandbox-shell").evaluate(shell => [...shell.children].map(node => node.className))).toEqual([
+    "console-sandbox-panel",
+    "console-sandbox-panel console-sandbox-inspector",
+    "console-sandbox-panel console-sandbox-canvas-region",
+    "sandbox-button sandbox-button-danger",
+  ]);
+  await page.locator('[data-sandbox-control="widget"]').selectOption("alerts");
+  await page.locator('[data-sandbox-action="add"]').click();
+  await expect(page.locator('[data-sandbox-layout="unit"]')).toHaveValue("percent");
+  await expect(page.locator('[data-sandbox-layout="width"]')).toHaveValue("100");
+  await expect(page.locator('[data-sandbox-layout="height"]')).toHaveValue("100");
+  await expect(page.locator('.console-sandbox-inspector [data-sandbox-action="apply"]')).toHaveCount(1);
+  await expect(page.locator('.console-sandbox-inspector [data-sandbox-action="reset-card"]')).toHaveCount(0);
+  await expect(page.locator('.console-sandbox-inspector [data-sandbox-action="move-left"], .console-sandbox-inspector [data-sandbox-action="move-right"]')).toHaveCount(0);
+
+  const dimensions = await page.locator('article[data-sandbox-instance="console-sandbox-1"] [data-role="runtime-root"]').evaluate(root => {
+    const frame = root.closest(".console-sandbox-preview-frame");
+    const frameRect = frame.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    return {
+      frameWidth: frameRect.width,
+      frameHeight: frameRect.height,
+      rootWidth: rootRect.width,
+      rootHeight: rootRect.height,
+      renderedWidth: Number(root.dataset.sandboxRenderedWidth),
+      renderedHeight: Number(root.dataset.sandboxRenderedHeight),
+    };
+  });
+  expect(dimensions.frameWidth).toBeGreaterThan(0);
+  expect(dimensions.frameHeight).toBeGreaterThan(0);
+  expect(dimensions.rootWidth).toBeGreaterThan(0);
+  expect(dimensions.rootHeight).toBeGreaterThan(0);
+  expect(dimensions.renderedWidth).toBe(Math.round(dimensions.rootWidth));
+  expect(dimensions.renderedHeight).toBe(Math.round(dimensions.rootHeight));
+
+  await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
+  await page.locator('[data-sandbox-action="apply"]').click();
+  await expect(page.locator('[data-role="inspector-status"]')).toContainText("between 160 and 1600");
+  await page.locator('[data-sandbox-layout="width"]').fill("600");
+  await page.locator('[data-sandbox-layout="height"]').fill("300");
+  await page.locator('[data-sandbox-action="apply"]').click();
+  await expect(page.locator('[data-role="runtime-root"]')).toHaveAttribute("data-sandbox-unit", "px");
+  await expect(page.locator('[data-role="runtime-root"]')).toHaveAttribute("data-sandbox-rendered-width", "600");
 });
 
 test("widget presentation styles do not overwrite Sandbox chrome", async ({ page }) => {
@@ -71,10 +120,13 @@ test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", asy
   await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-sandbox-layout="mode"]')).toHaveValue("square");
+  await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
   await page.locator('[data-sandbox-layout="width"]').fill("400");
   await page.locator('[data-sandbox-layout="height"]').fill("401");
+  await expect(page.locator('[data-sandbox-layout="width"]')).toHaveValue("401");
+  await expect(page.locator('[data-sandbox-layout="height"]')).toHaveValue("401");
   await page.locator('[data-sandbox-action="apply"]').click();
-  await expect(page.locator('[data-role="inspector-status"]')).toContainText("square");
+  await expect(page.locator('[data-role="inspector-status"]')).toContainText("State: idle");
   await page.locator('[data-sandbox-control="viewport"]').selectOption("narrow");
   await expect(page.locator('[data-role="canvas"]')).toHaveAttribute("data-viewport", "narrow");
 });
@@ -96,6 +148,7 @@ test("Console Sandbox keeps narrow Sky and oriented previews inside their cards"
     await page.locator('[data-sandbox-action="add"]').click();
     await expect(page.locator(`[data-role="runtime-root"][data-nc-widget="${fixture.widget}"]`).last()).toHaveCount(1);
     await page.locator('[data-sandbox-layout="mode"]').selectOption(fixture.mode);
+    await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
     await page.locator('[data-sandbox-layout="width"]').fill(fixture.width);
     await page.locator('[data-sandbox-layout="height"]').fill(fixture.height);
     await page.locator('[data-sandbox-action="apply"]').click();

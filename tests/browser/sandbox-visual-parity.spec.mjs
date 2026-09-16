@@ -57,7 +57,7 @@ const SKY_FIXTURES = Object.freeze({
  * checks; it is not a pixel-snapshot baseline.
  */
 const PARITY_MATRIX = Object.freeze([
-  { type: "hero", route: "/", routeRoot: "#console-hero", probe: ".hero-card", routeMode: "horizontal", stylesheets: ["/hero/widget.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"], overflowBaseline: { sandbox: { desktop: { horizontal: 25, vertical: 0, sample: { clientWidth: 658, scrollWidth: 683 } } } } },
+  { type: "hero", route: "/", routeRoot: "#console-hero", probe: ".hero-card", routeMode: "horizontal", stylesheets: ["/hero/widget.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"], overflowBaseline: { sandbox: { desktop: { horizontal: 23, vertical: 0, sample: { clientWidth: 690, scrollWidth: 713 } } } } },
   { type: "astro", route: "/weather/", routeRoot: "#w-astro", probe: ".widget-card", routeMode: "horizontal", stylesheets: ["/weather/assets/weather.css", "/weather/widgets/astro/astro.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"] },
   { type: "sun-moon", route: "/sun/", routeRoot: "#w-sun", probe: ".sunmoon-card", routeMode: "horizontal", stylesheets: ["/weather/assets/weather.css", "/weather/widgets/sun_moon/sun_moon.css"], ownedProperties: ["fontSize", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius", "boxSizing"] },
   { type: "weather", route: "/weather/", routeRoot: "#w-weather", probe: "#poc-weather", routeMode: "horizontal", narrowMode: "vertical", stylesheets: ["/weather/widgets/weather/weather.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"] },
@@ -267,6 +267,7 @@ async function addSandboxWidget(page, entry, mode) {
   if (await layoutMode.inputValue() !== mode) {
     await layoutMode.selectOption(mode);
     if (mode === "vertical") {
+      await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
       await page.locator('[data-sandbox-layout="width"]').fill("320");
       await page.locator('[data-sandbox-layout="height"]').fill("640");
     }

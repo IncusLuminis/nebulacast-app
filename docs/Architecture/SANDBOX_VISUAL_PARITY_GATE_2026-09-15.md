@@ -38,9 +38,9 @@ horizontally. A new uncontained overflow fails the gate.
 Observed local baseline for the Sandbox desktop Hero probe:
 
 ```text
-clientWidth = 658px
-scrollWidth = 683px
-approved horizontal overflow = +25px
+clientWidth = 690px
+scrollWidth = 713px
+approved horizontal overflow = +23px
 approved vertical overflow = 0px
 ```
 
@@ -71,12 +71,12 @@ node --test \
   tests/widget-stylesheet-loader.test.mjs \
   tests/widget-css-scope.test.mjs \
   tests/standalone-widget-host.test.mjs \
-  tests/javascript-embed.test.mjs         28 passed
+  tests/javascript-embed.test.mjs         31 passed
 git diff --check                          PASS
 npx playwright test \
   tests/browser/console-sandbox.spec.mjs \
   tests/browser/sandbox-visual-parity.spec.mjs \
-  --workers=1 --reporter=line --trace=off 8 passed
+  --workers=1 --reporter=line --trace=off 11 passed
 ```
 
 The browser gate uses deterministic local fixtures and verifies all 13 catalog

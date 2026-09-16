@@ -50,7 +50,7 @@ body.nc-console-sandbox-host {
 .nc-console-sandbox-page-header h1 { color: var(--nc-sandbox-title); font-size: 20px; font-weight: 600; letter-spacing: .02em; }
 .nc-console-sandbox-page-header p, .nc-console-sandbox-page-footer { color: var(--nc-sandbox-muted); font-size: 12px; }
 .nc-console-sandbox-page-header p { margin-top: 5px; }
-.console-sandbox-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr) 280px; gap: 14px; align-items: start; }
+.console-sandbox-shell { display: grid; grid-template-columns: 240px 280px minmax(0, 1fr); gap: 14px; align-items: start; }
 .console-sandbox-panel { min-width: 0; background: var(--nc-sandbox-surface); border: 1px solid var(--nc-sandbox-line); border-radius: 10px; padding: 14px; }
 .console-sandbox-heading { color: var(--nc-sandbox-title); font-size: 14px; font-weight: 600; }
 .console-sandbox-subheading { color: var(--nc-sandbox-muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-top: 18px; }
@@ -68,6 +68,7 @@ body.nc-console-sandbox-host {
 .console-sandbox-palette-item[data-selected="true"] { border-color: #5272a5; box-shadow: 0 0 0 1px #263a5a; }
 .console-sandbox-palette-item[data-dragging="true"], .console-sandbox-card[data-dragging="true"] { opacity: .6; cursor: grabbing; }
 .console-sandbox-instance-list { display: grid; gap: 6px; margin-top: 8px; }
+.console-sandbox-composition-list { margin-bottom: 12px; }
 .console-sandbox-instance { display: grid; gap: 2px; border-top: 1px solid var(--nc-sandbox-line); padding: 7px 0; }
 .console-sandbox-instance[data-selected="true"] { border-left: 2px solid var(--nc-sandbox-link); padding-left: 8px; }
 .sandbox-instance-select { border: 0; background: transparent; color: var(--nc-sandbox-link); cursor: pointer; font: inherit; font-size: 12px; padding: 0; text-align: left; }
@@ -94,52 +95,45 @@ body.nc-console-sandbox-host {
 .console-sandbox-drop-zone-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
 .console-sandbox-drop-zone-cards { display: grid; gap: 8px; margin-top: 8px; }
 .console-sandbox-card:focus-visible { outline: 2px solid var(--nc-sandbox-link); outline-offset: 2px; }
-.console-sandbox-card { display: grid; align-content: start; gap: 7px; min-width: 0; border: 1px solid var(--nc-sandbox-line); border-radius: 8px; background: var(--nc-sandbox-surface); padding: 10px; overflow: auto; }
+.console-sandbox-card { display: grid; align-content: start; gap: 7px; min-width: 0; border: 1px solid var(--nc-sandbox-line); border-radius: 8px; background: var(--nc-sandbox-surface); padding: 10px; overflow: hidden; }
 .console-sandbox-card[data-selected="true"] { border-color: #5272a5; box-shadow: 0 0 0 1px #263a5a; }
 .console-sandbox-card-title { color: var(--nc-sandbox-title); font-size: 12px; font-weight: 600; }
-.console-sandbox-runtime-root { display: grid; place-items: center; flex: none; max-width: 100%; min-height: 48px; border: 1px dashed #34465b; color: #607080; font-size: 11px; overflow: auto; }
-.console-sandbox-canvas[data-viewport="narrow"] .console-sandbox-card > .console-sandbox-runtime-root {
-  /* Inline inspector dimensions must not make a narrow card scroll or clip
-     its preview. Keep the host root inside the card content box. */
-  box-sizing: border-box;
-  min-width: 0;
-  width: 100% !important;
-  max-width: 100%;
-}
-.console-sandbox-canvas[data-viewport="narrow"] .console-sandbox-card[data-sandbox-widget="sky"] > .console-sandbox-runtime-root {
-  /* Sky is square-only; constrain both axes together at the host boundary. */
-  height: auto !important;
-  aspect-ratio: 1 / 1;
-}
+.console-sandbox-preview-frame { width: 100%; min-width: 0; overflow: hidden; }
+.console-sandbox-runtime-root { display: grid; place-items: center; box-sizing: border-box; flex: none; min-width: 0; max-width: 100%; min-height: 48px; border: 1px dashed #34465b; color: #607080; font-size: 11px; overflow: auto; }
+.console-sandbox-canvas[data-viewport="narrow"] .console-sandbox-runtime-root { max-width: 100%; }
 .console-sandbox-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.console-sandbox-inspector { grid-column: 1 / -1; }
-.console-sandbox-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+.console-sandbox-inspector { grid-column: 2; grid-row: 1; }
+.console-sandbox-canvas-region { grid-column: 3; grid-row: 1 / span 2; }
+.console-sandbox-form { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
 .console-sandbox-selection { color: var(--nc-sandbox-title); font-size: 12px; grid-column: 1 / -1; }
 .console-sandbox-fieldset { display: grid; gap: 8px; min-width: 0; border: 1px solid var(--nc-sandbox-line); border-radius: 6px; padding: 10px; }
 .console-sandbox-legend { color: var(--nc-sandbox-muted); font-size: 11px; padding: 0 4px; }
 .console-sandbox-form .sandbox-field { grid-template-columns: minmax(80px, 1fr) minmax(110px, 1fr); align-items: center; }
 .console-sandbox-inspector > .console-sandbox-actions { margin-top: 12px; }
 .console-sandbox-inspector > .console-sandbox-status { margin-top: 10px; }
-.console-sandbox-shell > .sandbox-button-danger { justify-self: end; grid-column: 3; }
+.console-sandbox-shell > .sandbox-button-danger { justify-self: stretch; grid-column: 2; grid-row: 2; align-self: start; }
 .nc-console-sandbox-page-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--nc-sandbox-line); padding-top: 14px; margin-top: 24px; }
 
 @media (max-width: 960px) {
   .console-sandbox-shell { grid-template-columns: 220px minmax(0, 1fr); }
-  .console-sandbox-inspector { grid-column: 1 / -1; }
-  .console-sandbox-shell > .sandbox-button-danger { grid-column: 2; }
+  .console-sandbox-inspector { grid-column: 2; grid-row: 1; }
+  .console-sandbox-canvas-region { grid-column: 1 / -1; grid-row: 2; }
+  .console-sandbox-shell > .sandbox-button-danger { grid-column: 2; grid-row: 3; }
 }
 
 @media (max-width: 680px) {
   .nc-console-sandbox-page { padding: 16px 10px 40px; }
   .console-sandbox-shell { grid-template-columns: 1fr; }
   .console-sandbox-panel { padding: 12px; }
+  .console-sandbox-inspector,
+  .console-sandbox-canvas-region { grid-column: 1; grid-row: auto; }
   .console-sandbox-region-header { align-items: stretch; flex-direction: column; }
   .console-sandbox-region-header .sandbox-field { width: 100%; }
   .console-sandbox-canvas { grid-template-columns: minmax(220px, 1fr); min-height: 260px; }
   .console-sandbox-canvas[data-viewport="narrow"] { max-width: none; }
   .console-sandbox-drop-zone[data-drop-mode="horizontal"] { grid-column: auto; }
   .console-sandbox-form { grid-template-columns: 1fr; }
-  .console-sandbox-shell > .sandbox-button-danger { grid-column: 1; justify-self: stretch; }
+  .console-sandbox-shell > .sandbox-button-danger { grid-column: 1; grid-row: auto; justify-self: stretch; }
 }
 
 }

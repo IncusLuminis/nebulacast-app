@@ -2,7 +2,11 @@ import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
 import { getWidgetOptionValues } from "../shared/widget-config.mjs";
 import { createStylesheetLoader } from "../shared/widget-stylesheet-loader.mjs";
-import { createConsoleSandboxModel } from "./console-sandbox-model.mjs";
+import {
+  CONSOLE_SANDBOX_LAYOUT_UNITS,
+  resolveConsoleSandboxLayout,
+  createConsoleSandboxModel,
+} from "./console-sandbox-model.mjs";
 
 function text(documentRef, tagName, className, value) {
   const node = documentRef.createElement(tagName);
@@ -38,14 +42,18 @@ function optionList(documentRef, values, selected) {
   return select;
 }
 
-function dimensionInput(documentRef, value) {
+function dimensionInput(documentRef, value, unit) {
   const input = documentRef.createElement("input");
   input.type = "number";
-  input.min = "160";
-  input.max = "1600";
+  input.min = unit === "percent" ? "1" : "160";
+  input.max = unit === "percent" ? "100" : "1600";
   input.step = "1";
   input.value = String(value);
   return input;
+}
+
+function dimensionBounds(unit) {
+  return unit === "percent" ? { min: 1, max: 100 } : { min: 160, max: 1600 };
 }
 
 /** Render the in-memory Console Sandbox composition experience. */
@@ -107,10 +115,8 @@ export function createConsoleSandbox({
     paletteGrid.appendChild(paletteItem);
   }
   paletteRegion.appendChild(paletteGrid);
-  paletteRegion.appendChild(text(documentRef, "h3", "console-sandbox-subheading", "Composition"));
   const instanceList = text(documentRef, "div", "console-sandbox-instance-list");
   instanceList.dataset.role = "instance-list";
-  paletteRegion.appendChild(instanceList);
 
   const canvasRegion = text(documentRef, "section", "console-sandbox-panel console-sandbox-canvas-region");
   canvasRegion.setAttribute("aria-label", "Composition canvas");
@@ -126,6 +132,10 @@ export function createConsoleSandbox({
   canvasStatus.setAttribute("aria-live", "polite");
   canvasStatus.dataset.role = "canvas-status";
   canvasRegion.appendChild(canvasStatus);
+  const compositionList = text(documentRef, "div", "console-sandbox-composition-list");
+  compositionList.appendChild(text(documentRef, "h3", "console-sandbox-subheading", "Composition"));
+  compositionList.appendChild(instanceList);
+  canvasRegion.appendChild(compositionList);
   const canvas = text(documentRef, "div", "console-sandbox-canvas");
   canvas.dataset.role = "canvas";
   canvasRegion.appendChild(canvas);
@@ -154,9 +164,10 @@ export function createConsoleSandbox({
   const inspectorActions = text(documentRef, "div", "console-sandbox-actions");
   const applyButton = button(documentRef, "Apply", "apply", "sandbox-button sandbox-button-primary");
   applyButton.type = "submit";
+  // The action row intentionally sits below the two fieldsets, outside the
+  // form grid, so keep an explicit click path for keyboard and pointer users.
   applyButton.addEventListener("click", applyInspector);
   inspectorActions.appendChild(applyButton);
-  inspectorActions.appendChild(button(documentRef, "Reset card", "reset-card"));
   inspectorRegion.appendChild(inspectorActions);
   const inspectorStatus = text(documentRef, "p", "console-sandbox-status");
   inspectorStatus.setAttribute("aria-live", "polite");
@@ -164,7 +175,7 @@ export function createConsoleSandbox({
   inspectorRegion.appendChild(inspectorStatus);
   const resetAll = button(documentRef, "Reset all", "reset-all");
   resetAll.className = "sandbox-button sandbox-button-danger";
-  shell.append(paletteRegion, canvasRegion, inspectorRegion, resetAll);
+  shell.append(paletteRegion, inspectorRegion, canvasRegion, resetAll);
   root.textContent = "";
   root.appendChild(shell);
 
@@ -316,7 +327,7 @@ export function createConsoleSandbox({
       const select = button(documentRef, `${instance.widget} · ${instance.id}`, "select", "sandbox-instance-select");
       select.dataset.sandboxInstance = instance.id;
       row.appendChild(select);
-      row.appendChild(text(documentRef, "span", "console-sandbox-instance-meta", `${instance.layout.mode} · ${instance.layout.width}×${instance.layout.height}`));
+      row.appendChild(text(documentRef, "span", "console-sandbox-instance-meta", `${instance.layout.mode} · ${instance.layout.width}${instance.layout.unit}×${instance.layout.height}${instance.layout.unit}`));
       instanceList.appendChild(row);
     }
   }
@@ -324,6 +335,24 @@ export function createConsoleSandbox({
   function renderCanvas(state) {
     canvas.dataset.viewport = state.viewport;
     canvas.textContent = "";
+    function sizeRuntimeRoot(card, instance) {
+      const frame = card.querySelector(".console-sandbox-preview-frame");
+      const runtimeRoot = card.querySelector('[data-role="runtime-root"]');
+      if (!frame || !runtimeRoot) return;
+      const frameRect = frame.getBoundingClientRect();
+      const resolved = resolveConsoleSandboxLayout(instance.layout, {
+        width: frameRect.width,
+        height: frameRect.height,
+      });
+      const renderedWidth = Math.min(resolved.width, frameRect.width || resolved.width);
+      const renderedHeight = instance.layout.shape === "square"
+        ? renderedWidth
+        : Math.min(resolved.height, frameRect.height || resolved.height);
+      runtimeRoot.style.width = `${renderedWidth}px`;
+      runtimeRoot.style.height = `${renderedHeight}px`;
+      runtimeRoot.dataset.sandboxRenderedWidth = String(Math.round(renderedWidth));
+      runtimeRoot.dataset.sandboxRenderedHeight = String(Math.round(renderedHeight));
+    }
     for (const zone of state.zones) {
       const zoneNode = text(documentRef, "section", "console-sandbox-drop-zone");
       zoneNode.dataset.dropZone = zone.id;
@@ -360,14 +389,20 @@ export function createConsoleSandbox({
         card.setAttribute("aria-grabbed", "false");
         if (instance.id === state.selectedId) card.dataset.selected = "true";
         card.appendChild(text(documentRef, "h3", "console-sandbox-card-title", `${instance.widget} · ${instance.id}`));
-        card.appendChild(text(documentRef, "p", "console-sandbox-card-meta", `${instance.layout.mode} · ${instance.layout.width}×${instance.layout.height}`));
+        card.appendChild(text(documentRef, "p", "console-sandbox-card-meta", `${instance.layout.mode} · ${instance.layout.width}${instance.layout.unit}×${instance.layout.height}${instance.layout.unit}`));
+        const previewFrame = text(documentRef, "div", "console-sandbox-preview-frame");
+        previewFrame.dataset.sandboxMode = instance.layout.mode;
+        previewFrame.dataset.sandboxUnit = instance.layout.unit;
+        previewFrame.style.aspectRatio = instance.layout.mode === "square"
+          ? "1 / 1"
+          : instance.layout.mode === "vertical" ? "9 / 16" : "16 / 9";
+        card.appendChild(previewFrame);
         const runtimeRoot = text(documentRef, "div", "console-sandbox-runtime-root", "Runtime preview will mount here.");
         runtimeRoot.dataset.role = "runtime-root";
         runtimeRoot.dataset.sandboxInstance = instance.id;
         runtimeRoot.dataset.sandboxWidget = instance.widget;
-        runtimeRoot.style.width = `${instance.layout.width}px`;
-        runtimeRoot.style.height = `${instance.layout.height}px`;
-        card.appendChild(runtimeRoot);
+        runtimeRoot.dataset.sandboxUnit = instance.layout.unit;
+        previewFrame.appendChild(runtimeRoot);
         const stateText = instance.error || `State: ${instance.state}`;
         card.appendChild(text(documentRef, "p", "console-sandbox-card-status", stateText));
         const actions = text(documentRef, "div", "console-sandbox-actions");
@@ -390,6 +425,9 @@ export function createConsoleSandbox({
       if (!zone.instanceIds.length) zoneCards.appendChild(text(documentRef, "p", "console-sandbox-empty", "This zone is empty."));
       zoneNode.appendChild(zoneCards);
       canvas.appendChild(zoneNode);
+      for (const instance of state.instances.filter(item => item.zoneId === zone.id)) {
+        sizeRuntimeRoot(zoneNode.querySelector(`article[data-sandbox-instance="${instance.id}"]`), instance);
+      }
     }
   }
 
@@ -417,19 +455,34 @@ export function createConsoleSandbox({
     inspector.appendChild(options);
     const container = text(documentRef, "fieldset", "console-sandbox-fieldset");
     container.appendChild(text(documentRef, "legend", "console-sandbox-legend", "Container"));
+    const unit = optionList(documentRef, CONSOLE_SANDBOX_LAYOUT_UNITS, instance.layout.unit);
+    unit.dataset.sandboxLayout = "unit";
+    unit.setAttribute("aria-label", "Size units");
+    container.appendChild(label(documentRef, "Units", unit));
     const modes = definition?.userModes || (definition?.shape === "square" ? ["square"] : ["horizontal", "vertical"]);
     const mode = optionList(documentRef, modes, instance.layout.mode);
     mode.dataset.sandboxLayout = "mode";
     mode.setAttribute("aria-label", "Layout mode");
     container.appendChild(label(documentRef, "Mode", mode));
-    const width = dimensionInput(documentRef, instance.layout.width);
+    const width = dimensionInput(documentRef, instance.layout.width, instance.layout.unit);
     width.dataset.sandboxLayout = "width";
     width.setAttribute("aria-label", "Width");
     container.appendChild(label(documentRef, "Width", width));
-    const height = dimensionInput(documentRef, instance.layout.height);
+    const height = dimensionInput(documentRef, instance.layout.height, instance.layout.unit);
     height.dataset.sandboxLayout = "height";
     height.setAttribute("aria-label", "Height");
     container.appendChild(label(documentRef, "Height", height));
+    unit.addEventListener("change", () => {
+      const bounds = dimensionBounds(unit.value);
+      for (const input of [width, height]) {
+        input.min = String(bounds.min);
+        input.max = String(bounds.max);
+      }
+    });
+    if (definition?.shape === "square" || definition?.type === "sky") {
+      width.addEventListener("input", () => { height.value = width.value; });
+      height.addEventListener("input", () => { width.value = height.value; });
+    }
     inspector.appendChild(container);
     inspectorStatus.textContent = instance.error || `State: ${instance.state}`;
     inspectorStatus.dataset.layoutValid = String(instance.layout.valid);
