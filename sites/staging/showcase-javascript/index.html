@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nebulacast — Widget Showcase</title>
+  <link rel="stylesheet" href="/showcase-javascript/showcase.css">
+</head>
+<body>
+<div class="page">
+  <header class="page-header">
+    <h1>Widget Showcase</h1>
+    <p>Nebulacast · Staging catalog — widget readiness and entry points for QA &amp; review</p>
+  </header>
+
+  <main id="widget-gallery" aria-live="polite"></main>
+
+  <footer class="page-footer">
+    <span>Nebulacast · Staging</span>
+    <span id="footer-ts">—</span>
+  </footer>
+</div>
+
+<script type="module">
+  import { getState, setState, subscribe } from "/weather/core/state.js";
+  import { createPlatformContext } from "/weather/core/context.js";
+  import { createShowcaseGallery } from "/showcase-javascript/showcase.mjs";
+
+  const storeApi = { getState, setState, subscribe };
+  const context = createPlatformContext(storeApi, { locale: "en", theme: "auto" });
+  const gallery = createShowcaseGallery({
+    root: document.getElementById("widget-gallery"),
+    context,
+  });
+  gallery.mount().catch(error => {
+    const status = document.createElement("p");
+    status.className = "gallery-status gallery-status-error";
+    status.textContent = `Gallery failed to initialize: ${error.message}`;
+    document.getElementById("widget-gallery")?.appendChild(status);
+  });
+</script>
+</body>
+</html>
