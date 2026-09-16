@@ -58,6 +58,19 @@ test("Console Sandbox palette is a deterministic accessible Registry tile grid",
     return [...rows.values()];
   });
   expect(rowCounts).toEqual([5, 5, 3]);
+  const desktopTileStyle = await tiles.nth(1).evaluate(node => {
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    return {
+      width: rect.width,
+      height: rect.height,
+      backgroundColor: style.backgroundColor,
+      borderColor: style.borderTopColor,
+    };
+  });
+  expect(Math.abs(desktopTileStyle.width - desktopTileStyle.height)).toBeLessThanOrEqual(1);
+  expect(desktopTileStyle.backgroundColor).toBe("rgb(17, 27, 41)");
+  expect(desktopTileStyle.borderColor).toBe("rgb(42, 61, 82)");
   await expect(tiles.first()).toHaveAttribute("aria-label", "Select Hero widget");
   await expect(tiles.first().locator(".console-sandbox-palette-icon")).toHaveAttribute("aria-hidden", "true");
   await expect(tiles.first().locator(".console-sandbox-palette-title")).toHaveText("Hero");
@@ -73,6 +86,21 @@ test("Console Sandbox palette is a deterministic accessible Registry tile grid",
   await expect(tiles.last()).toBeFocused();
   await tiles.last().press("Home");
   await expect(tiles.first()).toBeFocused();
+
+  await page.setViewportSize({ width: 600, height: 1000 });
+  const narrowTileStyle = await tiles.nth(1).evaluate(node => {
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    return {
+      width: rect.width,
+      height: rect.height,
+      backgroundColor: style.backgroundColor,
+      borderColor: style.borderTopColor,
+    };
+  });
+  expect(Math.abs(narrowTileStyle.width - narrowTileStyle.height)).toBeLessThanOrEqual(1);
+  expect(narrowTileStyle.backgroundColor).toBe("rgb(17, 27, 41)");
+  expect(narrowTileStyle.borderColor).toBe("rgb(42, 61, 82)");
 });
 
 test("Console Sandbox uses the full desktop canvas and a bounded mobile phone frame", async ({ page }) => {
