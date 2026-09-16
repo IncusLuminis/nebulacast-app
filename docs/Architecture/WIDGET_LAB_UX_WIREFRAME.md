@@ -1,6 +1,6 @@
 # Widget Lab UX wireframe
 
-Status: proposed for Product Owner and UI/UX approval  
+Status: approved by Product Owner on 2026-09-16
 Related issue: #101  
 Parent epic: #93
 
@@ -156,20 +156,21 @@ invalid   Inline field error + explanation; Create/Apply unavailable.
 
 ## Approval checklist
 
-- [ ] Product Owner approves the catalog → inspector → Stage → output → reset
+- [x] Product Owner approves the catalog → inspector → Stage → output → reset
       flow.
-- [ ] UI/UX review confirms desktop and narrow layouts.
-- [ ] UI/UX review confirms the distinction between widget parameters and host
+- [x] UI/UX review confirms desktop and narrow layouts.
+- [x] UI/UX review confirms the distinction between widget parameters and host
       container controls.
-- [ ] Accessibility review confirms dialog labelling, focus trap, Escape close,
+- [x] Accessibility review confirms dialog labelling, focus trap, Escape close,
       focus return, keyboard operation, live status, and non-color state text.
-- [ ] Product Owner confirms Sky square-only and other widgets' exact
+- [x] Product Owner confirms Sky square-only and other widgets' exact
       horizontal/vertical modes.
-- [ ] Product Owner records approval in issue #101.
+- [x] Product Owner records approval in issue #101.
 
 ## Ownership and hand-off
 
 The Product Owner owns this wireframe and the product decision. Coder owns the
 implementation and technical constraints. Validator owns the accessibility and
-behavioral verification. A final approval comment from the Product Owner/UI/UX
-reviewer is the signal to close #101; this document is not itself an approval.
+behavioral verification. The Product Owner approval recorded in issue #101 is
+the approval signal for this artifact; implementation validation remains a
+separate Validator hand-off.
