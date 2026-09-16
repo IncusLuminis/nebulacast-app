@@ -20,12 +20,12 @@ test("cards are split into Observation and Events with direct staging actions", 
   assert.equal(root.querySelectorAll("[data-widget-title]").length, 9);
   const sky = root.querySelector('[data-widget-title="Sky"]');
   assert.equal(sky.querySelector('[data-showcase-action="standalone"]').getAttribute("href"), "https://staging.nebulacast.app/sky/");
-  assert.equal(sky.querySelector('[data-showcase-action="embed"]').getAttribute("href"), "https://staging.nebulacast.app/embed/?src=%2Fsky%2F&title=Sky");
+  assert.equal(sky.querySelector('[data-showcase-action="embed"]').getAttribute("href"), "/embed/?src=%2Fsky%2F&title=Sky");
   assert.equal(sky.querySelectorAll("select").length, 0);
   assert.equal(sky.querySelectorAll("input").length, 0);
 });
 
-test("staging URL helpers retain legacy source paths in the shared embed sandbox query", () => {
+test("URL helpers retain staging standalone routes and local shared embed sandbox source paths", () => {
   assert.equal(buildStandaloneUrl("/weather/"), "https://staging.nebulacast.app/weather/");
-  assert.equal(buildEmbedUrl("/sky/alerts.html", "Sky Alerts"), "https://staging.nebulacast.app/embed/?src=%2Fsky%2Falerts.html&title=Sky+Alerts");
+  assert.equal(buildEmbedUrl("/sky/alerts.html", "Sky Alerts"), "/embed/?src=%2Fsky%2Falerts.html&title=Sky+Alerts");
 });

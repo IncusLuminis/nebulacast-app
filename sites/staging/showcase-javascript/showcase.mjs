@@ -28,7 +28,7 @@ export function buildStandaloneUrl(route) {
 
 export function buildEmbedUrl(src, title) {
   const query = new URLSearchParams({ src, title });
-  return `${STAGING_ORIGIN}/embed/?${query}`;
+  return `/embed/?${query}`;
 }
 
 function createText(documentRef, tagName, className, value) {
