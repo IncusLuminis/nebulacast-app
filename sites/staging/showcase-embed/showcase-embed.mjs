@@ -23,10 +23,10 @@ function appendText(documentRef, tagName, className, text) {
   return element;
 }
 
-/** Return only catalog definitions with an explicitly registered embed surface. */
+/** Return the complete registered catalog; capability flags stay visible to the user. */
 export function getEmbedCatalog(catalog = widgetCatalog) {
   if (!Array.isArray(catalog)) throw new TypeError("Embed catalog requires an array");
-  return catalog.filter(definition => EMBED_CAPABILITY_KEYS.some(key => definition?.[key] === true));
+  return [...catalog];
 }
 
 function defaultMode(definition) {
@@ -36,13 +36,28 @@ function defaultMode(definition) {
     : "horizontal";
 }
 
-function defaultDimensions(mode) {
+function defaultDimensions(mode, unit = "percent") {
+  if (unit === "percent") {
+    if (mode === "square") return { width: 100, height: 100 };
+    return mode === "vertical" ? { width: 56, height: 100 } : { width: 100, height: 56 };
+  }
   if (mode === "square") return { width: 400, height: 400 };
   return mode === "vertical" ? { width: 360, height: 640 } : { width: 640, height: 360 };
 }
 
 function isJavascriptMountable(definition) {
   return definition?.javascriptEmbed === true || definition?.divEmbed === true;
+}
+
+function isIframeMountable(definition) {
+  return definition?.standaloneHost === true;
+}
+
+function capabilityStatus(definition) {
+  const capabilities = [];
+  if (isJavascriptMountable(definition)) capabilities.push("JavaScript + preview");
+  if (isIframeMountable(definition)) capabilities.push("iframe");
+  return capabilities.length ? capabilities.join(" · ") : "Catalog only · embed unavailable";
 }
 
 function copyFallback(documentRef, text) {
@@ -167,10 +182,13 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
 
   function currentLayout() {
     const mode = inspector.querySelector('[data-role="layout-mode"]')?.value;
+    const unit = inspector.querySelector('[data-role="layout-unit"]')?.value || "px";
     const width = inspector.querySelector('[data-role="layout-width"]')?.value;
     const height = inspector.querySelector('[data-role="layout-height"]')?.value;
     try {
-      return { valid: true, value: normalizeJavascriptEmbedLayout(registry, state.selected, { mode, width, height }), error: "" };
+      const requested = { mode, width, height };
+      if (unit === "percent") requested.unit = unit;
+      return { valid: true, value: normalizeJavascriptEmbedLayout(registry, state.selected, requested), error: "" };
     } catch (error) {
       return { valid: false, value: null, error: error instanceof Error ? error.message : String(error) };
     }
@@ -191,11 +209,9 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
   }
 
   function updateOutputs(definition, configExport, layoutState) {
-    if (!layoutState.valid || !isJavascriptMountable(definition)) {
-      javascriptOutput.code.textContent = layoutState.error || "JavaScript div embed unavailable for this registered widget.";
-      iframeOutput.code.textContent = definition.standaloneHost === true
-        ? (layoutState.error || "Iframe dimensions are invalid.")
-        : "Iframe HTML unavailable: this widget is not registered with standaloneHost.";
+    if (!layoutState.valid) {
+      javascriptOutput.code.textContent = layoutState.error;
+      iframeOutput.code.textContent = layoutState.error;
       return;
     }
     const specification = {
@@ -203,9 +219,13 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
       config: configExport.config,
       layout: layoutState.value,
     };
-    const serialized = serializeJavascriptEmbedSpecification(registry, specification);
-    javascriptOutput.code.textContent = `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nconst instance = await mount(root, ${serialized});`;
-    iframeOutput.code.textContent = definition.standaloneHost === true
+    const serialized = isJavascriptMountable(definition)
+      ? serializeJavascriptEmbedSpecification(registry, specification)
+      : "";
+    javascriptOutput.code.textContent = isJavascriptMountable(definition)
+      ? `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nconst instance = await mount(root, ${serialized});`
+      : "JavaScript div embed unavailable: this widget is not registered for public JavaScript embed.";
+    iframeOutput.code.textContent = isIframeMountable(definition)
       ? buildIframeEmbedSnippet(registry, configExport, { origin: documentRef.defaultView?.location?.origin || "", title: definition.title || definition.type, layout: layoutState.value })
       : "Iframe HTML unavailable: this widget is not registered with standaloneHost.";
   }
@@ -215,8 +235,9 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
     if (!definition) return;
     const layoutState = currentLayout();
     const configExport = readConfig(definition);
+    const unit = layoutState.value?.unit || "px";
     inspector.querySelector('[data-role="layout-status"]').textContent = layoutState.valid
-      ? `${labelFor(layoutState.value.mode)} · ${layoutState.value.width} × ${layoutState.value.height}`
+      ? `${labelFor(layoutState.value.mode)} · ${layoutState.value.width}${unit === "percent" ? "%" : " px"} × ${layoutState.value.height}${unit === "percent" ? "%" : " px"}`
       : layoutState.error;
     inspector.querySelector('[data-role="layout-status"]').dataset.valid = String(layoutState.valid);
     const previewButton = inspector.querySelector('[data-showcase-embed-action="preview"]');
@@ -265,7 +286,8 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
     if (!definition) return;
     await destroyPreview("Preview reset");
     const mode = defaultMode(definition);
-    const dimensions = defaultDimensions(mode);
+    const unit = inspector.querySelector('[data-role="layout-unit"]')?.value || "percent";
+    const dimensions = defaultDimensions(mode, unit);
     inspector.querySelector('[data-role="layout-mode"]').value = mode;
     inspector.querySelector('[data-role="layout-width"]').value = String(dimensions.width);
     inspector.querySelector('[data-role="layout-height"]').value = String(dimensions.height);
@@ -295,6 +317,7 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
     for (const key of EMBED_CAPABILITY_KEYS.filter(item => definition[item] === true)) {
       capabilities.appendChild(appendText(documentRef, "span", "embed-capability", key));
     }
+    capabilities.appendChild(appendText(documentRef, "span", "embed-capability embed-capability-status", capabilityStatus(definition)));
     inspector.appendChild(capabilities);
 
     const layoutFieldset = documentRef.createElement("fieldset");
@@ -304,15 +327,19 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
     const modeSelect = createSelect(documentRef, modes, defaultMode(definition), "Embed form factor");
     modeSelect.dataset.role = "layout-mode";
     addField(layoutFieldset, "Form factor", modeSelect);
-    const dims = defaultDimensions(defaultMode(definition));
+    const initialUnit = "percent";
+    const dims = defaultDimensions(defaultMode(definition), initialUnit);
+    const unitSelect = createSelect(documentRef, ["percent", "px"], initialUnit, "Embed dimension units");
+    unitSelect.dataset.role = "layout-unit";
+    addField(layoutFieldset, "Units", unitSelect);
     const dimensionGrid = documentRef.createElement("div");
     dimensionGrid.className = "embed-dimensions";
     const widthInput = documentRef.createElement("input");
-    widthInput.type = "number"; widthInput.min = String(LAYOUT_LIMITS.min); widthInput.max = String(LAYOUT_LIMITS.max); widthInput.step = "1"; widthInput.value = String(dims.width); widthInput.dataset.role = "layout-width"; widthInput.setAttribute("aria-label", "Embed width in pixels");
+    widthInput.type = "number"; widthInput.step = "1"; widthInput.value = String(dims.width); widthInput.dataset.role = "layout-width";
     const heightInput = documentRef.createElement("input");
-    heightInput.type = "number"; heightInput.min = String(LAYOUT_LIMITS.min); heightInput.max = String(LAYOUT_LIMITS.max); heightInput.step = "1"; heightInput.value = String(dims.height); heightInput.dataset.role = "layout-height"; heightInput.setAttribute("aria-label", "Embed height in pixels");
-    addField(dimensionGrid, "Width (px)", widthInput);
-    addField(dimensionGrid, "Height (px)", heightInput);
+    heightInput.type = "number"; heightInput.step = "1"; heightInput.value = String(dims.height); heightInput.dataset.role = "layout-height";
+    const widthField = addField(dimensionGrid, "", widthInput);
+    const heightField = addField(dimensionGrid, "", heightInput);
     layoutFieldset.appendChild(dimensionGrid);
     layoutFieldset.appendChild(appendText(documentRef, "p", "embed-layout-status", "Checking dimensions"));
     layoutFieldset.lastElementChild.dataset.role = "layout-status";
@@ -339,14 +366,83 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
     resetButton.type = "button"; resetButton.className = "embed-button embed-button-danger"; resetButton.dataset.showcaseEmbedAction = "reset"; resetButton.textContent = "Reset / destroy";
     actions.append(previewButton, resetButton);
     inspector.appendChild(actions);
-    const status = appendText(documentRef, "p", "embed-status", "Preview idle");
+    const status = appendText(
+      documentRef,
+      "p",
+      "embed-status",
+      isJavascriptMountable(definition) ? "Preview idle" : "Preview unavailable for this catalog entry",
+    );
     status.dataset.role = "embed-status"; status.dataset.state = "idle"; status.setAttribute("aria-live", "polite");
     inspector.appendChild(status);
 
-    inspector.querySelectorAll("select, input").forEach(control => control.addEventListener("input", updateInspector));
-    inspector.querySelectorAll("select, input").forEach(control => control.addEventListener("change", updateInspector));
+    function syncDimensionControls() {
+      const unit = unitSelect.value;
+      const percent = unit === "percent";
+      const minimum = percent ? 1 : LAYOUT_LIMITS.min;
+      const maximum = percent ? 100 : LAYOUT_LIMITS.max;
+      widthInput.min = String(minimum); widthInput.max = String(maximum);
+      heightInput.min = String(minimum); heightInput.max = String(maximum);
+      widthField.firstElementChild.textContent = `Width (${percent ? "%" : "px"})`;
+      heightField.firstElementChild.textContent = `Height (${percent ? "%" : "px"})`;
+      widthInput.setAttribute("aria-label", `Embed width in ${percent ? "percent" : "pixels"}`);
+      heightInput.setAttribute("aria-label", `Embed height in ${percent ? "percent" : "pixels"}`);
+      if (modeSelect.value === "square") heightInput.value = widthInput.value;
+    }
+
+    function clamp(value, minimum, maximum) {
+      return Math.max(minimum, Math.min(maximum, Math.round(value)));
+    }
+
+    function convert(value, fromUnit, toUnit, axis, mode) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric) || fromUnit === toUnit) return value;
+      const base = defaultDimensions(mode, "px")[axis];
+      return String(toUnit === "percent"
+        ? clamp(numeric / base * 100, 1, 100)
+        : clamp(numeric / 100 * base, LAYOUT_LIMITS.min, LAYOUT_LIMITS.max));
+    }
+
+    let previousMode = modeSelect.value;
+    let previousUnit = unitSelect.value;
+    modeSelect.addEventListener("change", () => {
+      const nextMode = modeSelect.value;
+      if ((previousMode === "horizontal" && nextMode === "vertical") || (previousMode === "vertical" && nextMode === "horizontal")) {
+        const width = widthInput.value;
+        widthInput.value = heightInput.value;
+        heightInput.value = width;
+      } else if (nextMode === "square") {
+        heightInput.value = widthInput.value;
+      } else if (previousMode === "square") {
+        const next = defaultDimensions(nextMode, unitSelect.value);
+        widthInput.value = String(next.width);
+        heightInput.value = String(next.height);
+      }
+      previousMode = nextMode;
+      syncDimensionControls();
+      updateInspector();
+    });
+    unitSelect.addEventListener("change", () => {
+      widthInput.value = convert(widthInput.value, previousUnit, unitSelect.value, "width", modeSelect.value);
+      heightInput.value = convert(heightInput.value, previousUnit, unitSelect.value, "height", modeSelect.value);
+      previousUnit = unitSelect.value;
+      syncDimensionControls();
+      updateInspector();
+    });
+    widthInput.addEventListener("input", () => {
+      if (modeSelect.value === "square") heightInput.value = widthInput.value;
+      updateInspector();
+    });
+    heightInput.addEventListener("input", () => {
+      if (modeSelect.value === "square") widthInput.value = heightInput.value;
+      updateInspector();
+    });
+    inspector.querySelectorAll("select[data-role='widget-option']").forEach(control => {
+      control.addEventListener("input", updateInspector);
+      control.addEventListener("change", updateInspector);
+    });
     previewButton.addEventListener("click", () => void preview());
     resetButton.addEventListener("click", () => void reset());
+    syncDimensionControls();
     updateInspector();
   }
 
@@ -359,7 +455,14 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
       button.dataset.selected = String(button.dataset.showcaseEmbedWidget === type);
     });
     renderInspector(definition);
-    previewRoot.replaceChildren(appendText(documentRef, "div", "embed-preview-placeholder", "Select Mount preview to run the public JavaScript embed."));
+    previewRoot.replaceChildren(appendText(
+      documentRef,
+      "div",
+      "embed-preview-placeholder",
+      isJavascriptMountable(definition)
+        ? "Select Mount preview to run the public JavaScript embed."
+        : "Preview unavailable: this catalog entry is not registered for public JavaScript embed.",
+    ));
     javascriptOutput.status.textContent = "Ready to copy";
     iframeOutput.status.textContent = "Ready to copy";
   }
@@ -371,7 +474,12 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
     button.dataset.showcaseEmbedWidget = definition.type;
     button.dataset.selected = "false";
     button.setAttribute("role", "listitem");
-    button.append(appendText(documentRef, "span", "embed-catalog-name", definition.title || definition.type), appendText(documentRef, "span", "embed-catalog-type", definition.type));
+    button.dataset.embedAvailable = String(isJavascriptMountable(definition) || isIframeMountable(definition));
+    button.append(
+      appendText(documentRef, "span", "embed-catalog-name", definition.title || definition.type),
+      appendText(documentRef, "span", "embed-catalog-type", definition.type),
+      appendText(documentRef, "span", "embed-catalog-status", capabilityStatus(definition)),
+    );
     button.addEventListener("click", () => selectWidget(definition.type));
     catalogList.appendChild(button);
   }
@@ -379,7 +487,7 @@ export function createShowcaseEmbedPage({ root, catalog = widgetCatalog, registr
 
   javascriptOutput.button.addEventListener("click", () => void copyOutput(javascriptOutput));
   iframeOutput.button.addEventListener("click", () => void copyOutput(iframeOutput));
-  state.selected = embedCatalog[0]?.type || null;
+  state.selected = embedCatalog.find(isJavascriptMountable)?.type || embedCatalog[0]?.type || null;
   if (state.selected) selectWidget(state.selected);
   else previewRoot.appendChild(appendText(documentRef, "div", "embed-preview-placeholder", "No embed-capable widgets are registered."));
 

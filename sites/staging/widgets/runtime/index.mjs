@@ -57,13 +57,16 @@ function resolveDataAssets(definition, config) {
   return resolved;
 }
 
-function applyEmbedLayout(root, layout) {
+/** Apply the normalized caller-owned host rectangle to an embed root. */
+export function applyEmbedLayout(root, layout) {
   if (!layout) return;
+  const suffix = layout.unit === "percent" ? "%" : "px";
   if (root.style) {
-    root.style.width = `${layout.width}px`;
-    root.style.height = `${layout.height}px`;
+    root.style.width = `${layout.width}${suffix}`;
+    root.style.height = `${layout.height}${suffix}`;
   }
   root.setAttribute("data-nc-embed-mode", layout.mode);
+  root.setAttribute("data-nc-embed-unit", layout.unit || "px");
   root.setAttribute("data-nc-embed-width", layout.width);
   root.setAttribute("data-nc-embed-height", layout.height);
 }

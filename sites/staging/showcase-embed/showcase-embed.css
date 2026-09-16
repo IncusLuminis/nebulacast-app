@@ -47,6 +47,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1; }
 .embed-catalog-button:hover, .embed-catalog-button[data-selected="true"] { border-color: var(--embed-accent); background: #1d3152; }
 .embed-catalog-name { font-weight: 700; }
 .embed-catalog-type { color: var(--embed-muted); font-size: .76rem; }
+.embed-catalog-status { color: var(--embed-good); font-size: .72rem; line-height: 1.35; }
+.embed-catalog-button[data-embed-available="false"] .embed-catalog-status { color: var(--embed-muted); }
 .embed-empty { margin: 0; font-size: .9rem; }
 
 .embed-inspector { display: grid; gap: 12px; }
@@ -69,11 +71,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1; }
 .embed-layout-status[data-valid="false"] { color: var(--embed-danger); }
 .embed-capabilities { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
 .embed-capability { padding: 3px 7px; border-radius: 99px; color: #cfe3ff; background: #203352; font-size: .7rem; }
+.embed-capability-status { color: var(--embed-good); }
 
 .embed-preview-panel { min-height: 560px; }
 .embed-preview-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
 .embed-preview-heading p { margin: 0; font-size: .82rem; }
-.embed-preview-frame { display: grid; place-items: center; min-height: 448px; margin-top: 15px; padding: 20px; overflow: auto; border: 1px dashed #4b6390; border-radius: 11px; background: repeating-linear-gradient(135deg, #0d172b, #0d172b 10px, #101d35 10px, #101d35 20px); }
+.embed-preview-frame { display: grid; place-items: center; height: 448px; min-height: 448px; margin-top: 15px; padding: 20px; overflow: auto; border: 1px dashed #4b6390; border-radius: 11px; background: repeating-linear-gradient(135deg, #0d172b, #0d172b 10px, #101d35 10px, #101d35 20px); }
 .embed-preview-root { flex: 0 0 auto; overflow: hidden; }
 .embed-preview-placeholder { max-width: 32rem; color: var(--embed-muted); text-align: center; }
 .embed-preview-placeholder strong { display: block; margin-bottom: 7px; color: var(--embed-text); font-size: 1.05rem; }
@@ -97,6 +100,6 @@ a { color: var(--embed-accent); }
   .embed-page { width: min(100% - 20px, 1440px); padding-top: 24px; }
   .embed-sidebar, .embed-outputs { grid-template-columns: 1fr; }
   .embed-preview-panel { min-height: 420px; }
-  .embed-preview-frame { min-height: 300px; padding: 10px; }
+  .embed-preview-frame { height: 300px; min-height: 300px; padding: 10px; }
   .embed-footer { flex-direction: column; }
 }

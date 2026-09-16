@@ -127,31 +127,43 @@ export function normalizeJavascriptEmbedLayout(registry, widget, requested) {
   const definition = definitionFrom(registry, widget);
   const expectedModes = definition.shape === "square" ? ["square"] : ["horizontal", "vertical"];
   for (const key of Object.keys(requested)) {
-    if (!["mode", "width", "height"].includes(key)) {
+    if (!["mode", "unit", "width", "height"].includes(key)) {
       throw new TypeError(`JavaScript embed layout contains an unsupported field: ${key}`);
     }
   }
   if (!expectedModes.includes(requested.mode)) {
     throw new TypeError(`Invalid layout mode for JavaScript embed widget ${widget}`);
   }
+  const unit = requested.unit === undefined ? "px" : requested.unit;
+  if (!["px", "percent"].includes(unit)) {
+    throw new TypeError("JavaScript embed layout unit must be px or percent");
+  }
   const dimensions = {};
+  const minimum = unit === "percent" ? 1 : JAVASCRIPT_EMBED_LAYOUT_LIMITS.minDimension;
+  const maximum = unit === "percent" ? 100 : JAVASCRIPT_EMBED_LAYOUT_LIMITS.maxDimension;
   for (const key of ["width", "height"]) {
     const value = typeof requested[key] === "number" ? requested[key] : Number(requested[key]);
-    if (!Number.isInteger(value) || value < JAVASCRIPT_EMBED_LAYOUT_LIMITS.minDimension || value > JAVASCRIPT_EMBED_LAYOUT_LIMITS.maxDimension) {
-      throw new TypeError(`JavaScript embed ${key} must be an integer between ${JAVASCRIPT_EMBED_LAYOUT_LIMITS.minDimension} and ${JAVASCRIPT_EMBED_LAYOUT_LIMITS.maxDimension}`);
+    if (!Number.isInteger(value) || value < minimum || value > maximum) {
+      throw new TypeError(`JavaScript embed ${key} must be an integer between ${minimum} and ${maximum}`);
     }
     dimensions[key] = value;
   }
   if (definition.shape === "square" && dimensions.width !== dimensions.height) {
     throw new TypeError("Sky JavaScript embed layout must be square");
   }
-  if (requested.mode === "horizontal" && dimensions.width <= dimensions.height) {
-    throw new TypeError("Horizontal JavaScript embed layout requires width greater than height");
+  if (unit === "px") {
+    if (requested.mode === "horizontal" && dimensions.width <= dimensions.height) {
+      throw new TypeError("Horizontal JavaScript embed layout requires width greater than height");
+    }
+    if (requested.mode === "vertical" && dimensions.height <= dimensions.width) {
+      throw new TypeError("Vertical JavaScript embed layout requires height greater than width");
+    }
   }
-  if (requested.mode === "vertical" && dimensions.height <= dimensions.width) {
-    throw new TypeError("Vertical JavaScript embed layout requires height greater than width");
-  }
-  return Object.freeze({ mode: requested.mode, ...dimensions });
+  return Object.freeze({
+    mode: requested.mode,
+    ...(unit === "percent" ? { unit } : {}),
+    ...dimensions,
+  });
 }
 
 function definitionFrom(registry, widget) {
@@ -292,8 +304,9 @@ export function buildIframeEmbedSnippet(registry, widgetOrExport, options = {}) 
   const title = options.title === undefined ? (definition.title || definition.type) : options.title;
   if (!safeString(title)) throw new TypeError("Iframe embed title contains an unsafe string");
   const src = `${origin}${buildStandaloneWidgetUrl(registry, configExport)}`;
-  const width = layout ? String(layout.width) : IFRAME_EMBED_DEFAULTS.width;
-  const height = layout ? String(layout.height) : IFRAME_EMBED_DEFAULTS.height;
+  const suffix = layout?.unit === "percent" ? "%" : "";
+  const width = layout ? `${layout.width}${suffix}` : IFRAME_EMBED_DEFAULTS.width;
+  const height = layout ? `${layout.height}${suffix}` : IFRAME_EMBED_DEFAULTS.height;
   return `<iframe src="${escapeAttribute(src)}" title="${escapeAttribute(title)}" width="${escapeAttribute(width)}" height="${escapeAttribute(height)}" loading="${IFRAME_EMBED_DEFAULTS.loading}" style="border:0;display:block"></iframe>`;
 }
 

@@ -4,11 +4,12 @@ import { readFile } from "node:fs/promises";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
 import { createShowcaseEmbedPage, getEmbedCatalog } from "../sites/staging/showcase-embed/showcase-embed.mjs";
 
-test("embed catalog uses explicit registered embed surfaces only", () => {
+test("embed catalog shows every registered widget and preserves capability metadata", () => {
   const catalog = getEmbedCatalog(widgetCatalog);
-  assert.deepEqual(catalog.map(definition => definition.type), ["weather", "sky", "events", "alerts"]);
-  assert.equal(catalog.some(definition => definition.type === "hero"), false);
-  assert.equal(catalog.every(definition => definition.javascriptEmbed === true || definition.divEmbed === true || definition.standaloneHost === true), true);
+  assert.deepEqual(catalog.map(definition => definition.type), widgetCatalog.map(definition => definition.type));
+  assert.equal(catalog.filter(definition => definition.divEmbed === true).length, 4);
+  assert.equal(catalog.some(definition => definition.type === "hero"), true);
+  assert.equal(catalog.find(definition => definition.type === "hero").standaloneHost, undefined);
 });
 
 test("embed test page imports only the public runtime and keeps snippets on safe helpers", async () => {

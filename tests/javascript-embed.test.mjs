@@ -5,11 +5,12 @@ import { createWidgetRegistry } from "../sites/staging/shared/widget-registry.mj
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
 import {
   JAVASCRIPT_EMBED_API_VERSION,
+  buildIframeEmbedSnippet,
   normalizeJavascriptEmbedInput,
   normalizeJavascriptEmbedLayout,
   serializeJavascriptEmbedSpecification,
 } from "../sites/staging/shared/widget-config.mjs";
-import { createJavascriptEmbedRuntime } from "../sites/staging/widgets/runtime/index.mjs";
+import { applyEmbedLayout, createJavascriptEmbedRuntime } from "../sites/staging/widgets/runtime/index.mjs";
 
 const registry = createWidgetRegistry(widgetCatalog);
 
@@ -45,6 +46,7 @@ function createDocument() {
 function createRoot(name) {
   return {
     name,
+    style: {},
     attributes: new Map(),
     setAttribute(key, value) { this.attributes.set(key, String(value)); },
     removeAttribute(key) { this.attributes.delete(key); },
@@ -129,6 +131,26 @@ test("public div embed normalizes and validates host layout independently of wid
   assert.throws(() => normalizeJavascriptEmbedLayout(registry, "weather", { mode: "vertical", width: 640, height: 360 }), /greater/);
 });
 
+test("public percent layout accepts fill values, keeps Sky square, and serializes units", () => {
+  assert.deepEqual(normalizeJavascriptEmbedLayout(registry, "weather", {
+    mode: "horizontal", unit: "percent", width: 100, height: 100,
+  }), { mode: "horizontal", unit: "percent", width: 100, height: 100 });
+  assert.deepEqual(normalizeJavascriptEmbedLayout(registry, "sky", {
+    mode: "square", unit: "percent", width: 100, height: 100,
+  }), { mode: "square", unit: "percent", width: 100, height: 100 });
+  assert.throws(() => normalizeJavascriptEmbedLayout(registry, "weather", { mode: "vertical", unit: "percent", width: 0, height: 100 }));
+  assert.throws(() => normalizeJavascriptEmbedLayout(registry, "weather", { mode: "vertical", unit: "percent", width: 56, height: 101 }));
+  assert.throws(() => normalizeJavascriptEmbedLayout(registry, "sky", { mode: "square", unit: "percent", width: 50, height: 51 }), /square/);
+  assert.equal(
+    serializeJavascriptEmbedSpecification(registry, { widget: "weather", config: { orientation: "vertical" }, layout: { mode: "vertical", unit: "percent", width: 56, height: 100 } }),
+    '{"config":{"density":"normal","orientation":"vertical","profile":"balanced","range":"7d","theme":"inherit"},"layout":{"height":100,"mode":"vertical","unit":"percent","width":56},"widget":"weather"}',
+  );
+  assert.equal(
+    buildIframeEmbedSnippet(registry, "weather", { layout: { mode: "horizontal", unit: "percent", width: 100, height: 56 } }),
+    '<iframe src="/widgets/widget.html?widget=weather&amp;orientation=horizontal&amp;theme=inherit&amp;density=normal" title="Weather" width="100%" height="56%" loading="lazy" style="border:0;display:block"></iframe>',
+  );
+});
+
 test("external embed configuration rejects HTML, executable values, and arbitrary modules", () => {
   const maliciousSpecifications = [
     { widget: "weather", config: { html: "<img src=x onerror=alert(1)>" } },
@@ -200,6 +222,14 @@ test("public API mounts the square Sky contract with caller-owned layout metadat
   assert.equal(documentRef.stylesheets[0].href, "/sky/assets/sky.css");
   await sky.destroy();
   assert.equal(documentRef.stylesheets.length, 0);
+});
+
+test("public runtime applies percent units to the caller-owned root", async () => {
+  const root = createRoot("weather");
+  applyEmbedLayout(root, { mode: "horizontal", unit: "percent", width: 100, height: 56 });
+  assert.equal(root.style.width, "100%");
+  assert.equal(root.style.height, "56%");
+  assert.equal(root.getAttribute("data-nc-embed-unit"), "percent");
 });
 
 test("v1 public API mounts, updates, and destroys Weather while rejecting unsupported updates", async () => {
