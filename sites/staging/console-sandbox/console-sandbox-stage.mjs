@@ -1,5 +1,5 @@
 import { createNebulacast } from "../shared/widget-runtime.mjs";
-import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
+import { createCatalogRegistry } from "../shared/widget-catalog.mjs";
 import { getWidgetOptionValues } from "../shared/widget-config.mjs";
 import { createStylesheetLoader } from "../shared/widget-stylesheet-loader.mjs";
 import {
@@ -56,10 +56,41 @@ function dimensionBounds(unit) {
   return unit === "percent" ? { min: 1, max: 100 } : { min: 160, max: 1600 };
 }
 
+const PALETTE_ICONS = Object.freeze({
+  hero: "⌂",
+  astro: "✦",
+  "sun-moon": "☼",
+  weather: "☁",
+  "observing-window": "◷",
+  "solar-activity": "☀",
+  map: "⌖",
+  location: "⌾",
+  sky: "◉",
+  news: "☷",
+  events: "◫",
+  alerts: "⚠",
+  "space-weather": "◌",
+});
+
+const PALETTE_SHORT_TITLES = Object.freeze({
+  "sun-moon": "Sun/Moon",
+  "observing-window": "Observing",
+  "solar-activity": "Solar",
+  "space-weather": "Space Wx",
+  alerts: "Alerts",
+});
+
+function paletteIcon(type) {
+  return PALETTE_ICONS[type] || "◇";
+}
+
+function paletteShortTitle(definition) {
+  return PALETTE_SHORT_TITLES[definition.type] || definition.title || definition.type;
+}
+
 /** Render the in-memory Console Sandbox composition experience. */
 export function createConsoleSandbox({
   root,
-  catalog = widgetCatalog,
   registry = createCatalogRegistry(),
   context = null,
   runtime = null,
@@ -73,7 +104,9 @@ export function createConsoleSandbox({
   const mounted = new Map();
   let runtimeQueue = Promise.resolve();
   const model = createConsoleSandboxModel({ registry, onChange: render });
-  let selectedWidget = catalog[0]?.type || registry.list()[0]?.type || "";
+  const palette = model.getPalette();
+  let selectedWidget = palette[0]?.type || "";
+  let activeZoneId = "horizontal";
   let destroyed = false;
   let focusAfterRenderId = null;
   let focusAfterRenderFallback = null;
@@ -84,37 +117,33 @@ export function createConsoleSandbox({
   const paletteRegion = text(documentRef, "aside", "console-sandbox-panel");
   paletteRegion.setAttribute("aria-label", "Widget palette");
   paletteRegion.appendChild(text(documentRef, "h2", "console-sandbox-heading", "Widget palette"));
-  const paletteSelect = documentRef.createElement("select");
-  paletteSelect.setAttribute("data-sandbox-control", "widget");
-  paletteSelect.setAttribute("aria-label", "Widget to add");
-  for (const definition of catalog) {
-    const option = documentRef.createElement("option");
-    option.value = definition.type;
-    option.textContent = definition.title || definition.type;
-    paletteSelect.appendChild(option);
-  }
-  paletteSelect.value = selectedWidget;
-  paletteSelect.addEventListener("change", () => {
-    selectedWidget = paletteSelect.value;
-    renderPaletteDescription();
-  });
-  paletteRegion.appendChild(paletteSelect);
-  const paletteDescription = text(documentRef, "p", "console-sandbox-description");
-  paletteDescription.setAttribute("data-role", "palette-description");
-  paletteRegion.appendChild(paletteDescription);
-  const addButton = button(documentRef, "Add to canvas", "add", "sandbox-button sandbox-button-primary");
-  paletteRegion.appendChild(addButton);
   const paletteGrid = text(documentRef, "div", "console-sandbox-palette-grid");
   paletteGrid.dataset.role = "palette-grid";
-  for (const definition of catalog) {
-    const paletteItem = button(documentRef, definition.title || definition.type, "palette-select", "console-sandbox-palette-item");
+  paletteGrid.setAttribute("role", "toolbar");
+  paletteGrid.setAttribute("aria-label", "Registered widgets");
+  for (const definition of palette) {
+    const paletteItem = button(documentRef, "", "palette-select", "console-sandbox-palette-item");
+    const icon = text(documentRef, "span", "console-sandbox-palette-icon", paletteIcon(definition.type));
+    icon.setAttribute("aria-hidden", "true");
+    const title = text(documentRef, "span", "console-sandbox-palette-title", paletteShortTitle(definition));
+    paletteItem.append(icon, title);
+    paletteItem.id = `console-sandbox-palette-${definition.type}`;
     paletteItem.dataset.sandboxWidget = definition.type;
     paletteItem.draggable = true;
+    paletteItem.tabIndex = definition.type === selectedWidget ? 0 : -1;
+    paletteItem.setAttribute("aria-pressed", String(definition.type === selectedWidget));
     paletteItem.setAttribute("aria-label", `Select ${definition.title || definition.type} widget`);
     paletteItem.setAttribute("title", definition.description || definition.title || definition.type);
     paletteGrid.appendChild(paletteItem);
   }
   paletteRegion.appendChild(paletteGrid);
+  const paletteDescription = text(documentRef, "p", "console-sandbox-description");
+  paletteDescription.setAttribute("data-role", "palette-description");
+  paletteDescription.id = "console-sandbox-palette-description";
+  paletteRegion.appendChild(paletteDescription);
+  const addButton = button(documentRef, "Add to Canvas", "add", "sandbox-button sandbox-button-primary");
+  addButton.setAttribute("aria-describedby", "console-sandbox-palette-description");
+  paletteRegion.appendChild(addButton);
   const instanceList = text(documentRef, "div", "console-sandbox-instance-list");
   instanceList.dataset.role = "instance-list";
 
@@ -268,6 +297,8 @@ export function createConsoleSandbox({
       return false;
     }
     try {
+      activeZoneId = zoneId;
+      updateActiveZoneUI();
       if (payload.kind === "palette") {
         requestFocusAfterRender(null, "palette-add");
         model.addToZone(payload.widget, zoneId);
@@ -310,8 +341,41 @@ export function createConsoleSandbox({
     const definition = registry.get(selectedWidget);
     paletteDescription.textContent = definition?.description || "Choose a registered widget.";
     paletteGrid.querySelectorAll("[data-sandbox-widget]").forEach(item => {
-      item.dataset.selected = String(item.dataset.sandboxWidget === selectedWidget);
+      const selected = item.dataset.sandboxWidget === selectedWidget;
+      item.dataset.selected = String(selected);
+      item.tabIndex = selected ? 0 : -1;
+      item.setAttribute("aria-pressed", String(selected));
     });
+    const verdict = activeZoneId
+      ? model.validateDrop({ widget: selectedWidget, zoneId: activeZoneId })
+      : { valid: false, reason: "Select a placeholder before adding a widget" };
+    addButton.disabled = !verdict.valid;
+    addButton.dataset.compatible = String(verdict.valid);
+    addButton.title = verdict.valid ? "Add the selected widget to the active placeholder" : verdict.reason;
+  }
+
+  function updateActiveZoneUI() {
+    const state = snapshot();
+    const activeZone = state.zones.find(zone => zone.id === activeZoneId);
+    canvas.querySelectorAll("[data-drop-zone]").forEach(zone => {
+      const selected = zone.dataset.dropZone === activeZoneId;
+      zone.dataset.active = String(selected);
+      const zoneDefinition = state.zones.find(item => item.id === zone.dataset.dropZone);
+      if (zoneDefinition) {
+        zone.setAttribute("aria-label", `${zoneDefinition.label} placeholder, ${zoneDefinition.mode} orientation${selected ? ", selected" : ""}`);
+      }
+    });
+    renderPaletteDescription();
+    if (activeZone) {
+      canvasStatus.textContent = `Selected ${activeZone.label} placeholder (${activeZone.mode} orientation).`;
+      canvasStatus.dataset.error = "false";
+    }
+  }
+
+  function selectActiveZone(zoneId) {
+    if (!snapshot().zones.some(zone => zone.id === zoneId)) return;
+    activeZoneId = zoneId;
+    updateActiveZoneUI();
   }
 
   function renderInstanceList(state) {
@@ -357,7 +421,10 @@ export function createConsoleSandbox({
       const zoneNode = text(documentRef, "section", "console-sandbox-drop-zone");
       zoneNode.dataset.dropZone = zone.id;
       zoneNode.dataset.dropMode = zone.mode;
-      zoneNode.setAttribute("aria-label", `${zone.label} drop zone`);
+      zoneNode.dataset.active = String(zone.id === activeZoneId);
+      zoneNode.setAttribute("role", "group");
+      zoneNode.setAttribute("tabindex", "0");
+      zoneNode.setAttribute("aria-label", `${zone.label} placeholder, ${zone.mode} orientation${zone.id === activeZoneId ? ", selected" : ""}`);
       const zoneHeader = text(documentRef, "div", "console-sandbox-drop-zone-header");
       zoneHeader.appendChild(text(documentRef, "h3", "console-sandbox-drop-zone-title", zone.label));
       zoneHeader.appendChild(text(documentRef, "span", "console-sandbox-drop-zone-mode", zone.mode));
@@ -366,16 +433,19 @@ export function createConsoleSandbox({
       const reason = text(documentRef, "p", "console-sandbox-drop-reason", "Drop a compatible widget here.");
       reason.dataset.role = "drop-reason";
       reason.dataset.defaultText = "Drop a compatible widget here.";
+      reason.id = `console-sandbox-drop-reason-${zone.id}`;
       reason.setAttribute("aria-live", "polite");
+      zoneNode.setAttribute("aria-describedby", reason.id);
       zoneNode.appendChild(reason);
       const zoneActions = text(documentRef, "div", "console-sandbox-drop-zone-actions");
-      const addZone = button(documentRef, `Add ${selectedWidget} here`, "add-to-zone", "sandbox-button sandbox-button-primary");
-      addZone.dataset.sandboxZone = zone.id;
       const selected = state.instances.find(instance => instance.id === state.selectedId);
       const moveZone = button(documentRef, selected ? `Move selected here` : "Move selected here", "move-selected-to-zone", "sandbox-button");
       moveZone.dataset.sandboxZone = zone.id;
+      // Keep the action available for an explicit keyboard/pointer attempt so
+      // incompatible moves produce the same readable validation message as a
+      // rejected drag. Palette Add to Canvas remains gated by compatibility.
       moveZone.disabled = !selected;
-      zoneActions.append(addZone, moveZone);
+      zoneActions.append(moveZone);
       zoneNode.appendChild(zoneActions);
       const zoneCards = text(documentRef, "div", "console-sandbox-drop-zone-cards");
       for (const instance of state.instances.filter(item => item.zoneId === zone.id)) {
@@ -493,6 +563,7 @@ export function createConsoleSandbox({
     renderPaletteDescription();
     renderInstanceList(state);
     renderCanvas(state);
+    updateActiveZoneUI();
     renderInspector(state);
     if (dropMessage) {
       canvasStatus.textContent = dropMessage.message;
@@ -653,14 +724,18 @@ export function createConsoleSandbox({
 
   shell.addEventListener("click", event => {
     const action = event.target.closest?.("[data-sandbox-action]");
+    const zone = event.target.closest?.("[data-drop-zone]");
+    if (!action && zone && !event.target.closest?.("button, input, select")) {
+      selectActiveZone(zone.dataset.dropZone);
+      return;
+    }
     if (!action) return;
     try {
       const instanceId = action.dataset.sandboxInstance;
       switch (action.dataset.sandboxAction) {
-        case "add": model.createInstance({ widget: selectedWidget }); break;
+        case "add": if (!addButton.disabled) applyDrop(activeZoneId, palettePayload(selectedWidget)); break;
         case "palette-select":
           selectedWidget = action.dataset.sandboxWidget;
-          paletteSelect.value = selectedWidget;
           renderPaletteDescription();
           break;
         case "add-to-zone": applyDrop(action.dataset.sandboxZone, palettePayload(selectedWidget)); break;
@@ -717,6 +792,33 @@ export function createConsoleSandbox({
     clearActiveDrop();
   });
   shell.addEventListener("keydown", event => {
+    const zone = event.target.closest?.("[data-drop-zone]");
+    if (zone && event.target === zone && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      selectActiveZone(zone.dataset.dropZone);
+      return;
+    }
+    if (event.target.closest?.("[data-role=palette-grid]")) {
+      const items = [...paletteGrid.querySelectorAll("[data-sandbox-widget]")];
+      const currentIndex = Math.max(0, items.findIndex(item => item.dataset.sandboxWidget === selectedWidget));
+      const columns = Math.max(1, getComputedStyle(paletteGrid).gridTemplateColumns.split(" ").filter(Boolean).length);
+      let nextIndex = currentIndex;
+      if (event.key === "ArrowRight") nextIndex = Math.min(items.length - 1, currentIndex + 1);
+      else if (event.key === "ArrowLeft") nextIndex = Math.max(0, currentIndex - 1);
+      else if (event.key === "ArrowDown") nextIndex = Math.min(items.length - 1, currentIndex + columns);
+      else if (event.key === "ArrowUp") nextIndex = Math.max(0, currentIndex - columns);
+      else if (event.key === "Home") nextIndex = 0;
+      else if (event.key === "End") nextIndex = items.length - 1;
+      else nextIndex = currentIndex;
+      if (nextIndex !== currentIndex || ["Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        const item = items[nextIndex];
+        selectedWidget = item.dataset.sandboxWidget;
+        renderPaletteDescription();
+        item.focus();
+      }
+      return;
+    }
     const card = event.target.closest?.(".console-sandbox-card[data-sandbox-instance]");
     if (!card) return;
     const payload = instancePayload(card.dataset.sandboxInstance);

@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
 
+async function selectWidget(page, widget) {
+  await page.locator(`[data-sandbox-widget="${widget}"]`).click();
+}
+
 test("Console Sandbox assembles independent Runtime widgets and preserves host layout controls", async ({ page }) => {
   await page.route("**/sky/data/alerts_now.json", route => route.fulfill({
     status: 200,
@@ -9,7 +13,7 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
 
   await expect(page.locator('[aria-label="Widget palette"]')).toBeVisible();
-  await page.locator('[data-sandbox-control="widget"]').selectOption("alerts");
+  await selectWidget(page, "alerts");
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-sandbox-instance="console-sandbox-1"] [data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(1);
   await expect(page.locator('[data-sandbox-instance="console-sandbox-1"] .console-sandbox-card-status')).toHaveText("State: ready");
@@ -34,6 +38,71 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
   await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(0);
 });
 
+test("Console Sandbox palette is a deterministic accessible Registry tile grid", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+
+  await expect(page.locator('[data-sandbox-control="widget"]')).toHaveCount(0);
+  const tiles = page.locator('[data-role="palette-grid"] [data-sandbox-widget]');
+  await expect(tiles).toHaveCount(13);
+  await expect(tiles.evaluateAll(nodes => nodes.map(node => node.dataset.sandboxWidget))).resolves.toEqual([
+    "hero", "astro", "sun-moon", "weather", "observing-window", "solar-activity", "map",
+    "location", "sky", "news", "events", "alerts", "space-weather",
+  ]);
+  const rowCounts = await tiles.evaluateAll(nodes => {
+    const rows = new Map();
+    for (const node of nodes) {
+      const top = Math.round(node.getBoundingClientRect().top);
+      rows.set(top, (rows.get(top) || 0) + 1);
+    }
+    return [...rows.values()];
+  });
+  expect(rowCounts).toEqual([5, 5, 3]);
+  await expect(tiles.first()).toHaveAttribute("aria-label", "Select Hero widget");
+  await expect(tiles.first().locator(".console-sandbox-palette-icon")).toHaveAttribute("aria-hidden", "true");
+  await expect(tiles.first().locator(".console-sandbox-palette-title")).toHaveText("Hero");
+  await expect(tiles.first()).toHaveAttribute("aria-pressed", "true");
+  await expect(tiles.nth(1)).toHaveAttribute("tabindex", "-1");
+
+  await tiles.first().focus();
+  await tiles.first().press("ArrowRight");
+  await expect(tiles.nth(1)).toBeFocused();
+  await expect(tiles.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[data-role="palette-description"]')).toContainText("Location-aware astronomy");
+  await tiles.nth(1).press("End");
+  await expect(tiles.last()).toBeFocused();
+  await tiles.last().press("Home");
+  await expect(tiles.first()).toBeFocused();
+});
+
+test("Console Sandbox selects an active compatible placeholder for Add to Canvas", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  const add = page.locator('[data-sandbox-action="add"]');
+  const horizontal = page.locator('[data-drop-zone="horizontal"]');
+  const vertical = page.locator('[data-drop-zone="vertical"]');
+  const square = page.locator('[data-drop-zone="square"]');
+
+  await expect(horizontal).toHaveAttribute("data-active", "true");
+  await expect(horizontal).toHaveAttribute("aria-label", /horizontal orientation, selected/);
+  await expect(add).toBeEnabled();
+  await selectWidget(page, "sky");
+  await expect(add).toBeDisabled();
+  await expect(add).toHaveAttribute("title", /Sky can only be placed/);
+  await square.click();
+  await expect(square).toHaveAttribute("data-active", "true");
+  await expect(square).toHaveAttribute("aria-label", /square orientation, selected/);
+  await expect(add).toBeEnabled();
+  await add.click();
+  await expect(square.locator('article[data-sandbox-widget="sky"]')).toHaveCount(1);
+
+  await selectWidget(page, "weather");
+  await vertical.focus();
+  await vertical.press("Enter");
+  await expect(vertical).toHaveAttribute("data-active", "true");
+  await expect(add).toBeEnabled();
+  await expect(page.locator('[data-role="canvas-status"]')).toContainText("vertical orientation");
+});
+
 test("Console Sandbox keeps Palette, Inspector, and Composition order with card-relative sizes", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".console-sandbox-shell")).toHaveCount(1);
@@ -43,7 +112,7 @@ test("Console Sandbox keeps Palette, Inspector, and Composition order with card-
     "console-sandbox-panel console-sandbox-canvas-region",
     "sandbox-button sandbox-button-danger",
   ]);
-  await page.locator('[data-sandbox-control="widget"]').selectOption("alerts");
+  await selectWidget(page, "alerts");
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-sandbox-layout="unit"]')).toHaveValue("percent");
   await expect(page.locator('[data-sandbox-layout="width"]')).toHaveValue("100");
@@ -91,7 +160,7 @@ test("widget presentation styles do not overwrite Sandbox chrome", async ({ page
     return { backgroundImage: style.backgroundImage, fontFamily: style.fontFamily, headerBorder: headerStyle.borderBottomColor };
   });
 
-  await page.locator('[data-sandbox-control="widget"]').selectOption("alerts");
+  await selectWidget(page, "alerts");
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(1);
   const chromeAfter = await page.locator("body").evaluate(body => {
@@ -103,7 +172,8 @@ test("widget presentation styles do not overwrite Sandbox chrome", async ({ page
   expect(chromeAfter).toEqual(chromeBefore);
 
   await page.locator('[data-sandbox-action="reset-all"]').click();
-  await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
+  await selectWidget(page, "sky");
+  await page.locator('[data-drop-zone="square"]').click();
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-role="runtime-root"][data-nc-widget="sky"]')).toHaveCount(1);
   const chromeAfterSky = await page.locator("body").evaluate(body => {
@@ -117,7 +187,8 @@ test("widget presentation styles do not overwrite Sandbox chrome", async ({ page
 
 test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
-  await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
+  await selectWidget(page, "sky");
+  await page.locator('[data-drop-zone="square"]').click();
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-sandbox-layout="mode"]')).toHaveValue("square");
   await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
@@ -144,7 +215,8 @@ test("Console Sandbox keeps narrow Sky and oriented previews inside their cards"
     { widget: "sky", mode: "square", width: "400", height: "400", square: true },
     { widget: "alerts", mode: "vertical", width: "320", height: "640", square: false },
   ]) {
-    await page.locator('[data-sandbox-control="widget"]').selectOption(fixture.widget);
+    await selectWidget(page, fixture.widget);
+    await page.locator(`[data-drop-zone="${fixture.mode}"]`).click();
     await page.locator('[data-sandbox-action="add"]').click();
     await expect(page.locator(`[data-role="runtime-root"][data-nc-widget="${fixture.widget}"]`).last()).toHaveCount(1);
     await page.locator('[data-sandbox-layout="mode"]').selectOption(fixture.mode);
@@ -206,7 +278,7 @@ test("Console Sandbox returns focus after remove and reset-all", async ({ page }
 
 test("Console Sandbox moves palette and existing widgets between labelled zones", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
-  await page.locator('[data-sandbox-control="widget"]').selectOption("weather");
+  await selectWidget(page, "weather");
   await page.locator('[data-sandbox-widget="weather"]').dragTo(page.locator('[data-drop-zone="horizontal"]'));
   const card = page.locator('article[data-sandbox-instance="console-sandbox-1"]');
   await expect(card).toHaveCount(1);
@@ -220,8 +292,10 @@ test("Console Sandbox moves palette and existing widgets between labelled zones"
   await expect(page.locator('[data-sandbox-config="profile"]')).toHaveValue("visual");
   await expect(page.locator('[data-drop-zone="horizontal"] .console-sandbox-empty')).toHaveText("This zone is empty.");
 
-  await page.locator('[data-sandbox-control="widget"]').selectOption("sky");
-  await page.locator('[data-drop-zone="square"] [data-sandbox-action="add-to-zone"]').click();
+  await selectWidget(page, "sky");
+  await page.locator('[data-drop-zone="square"]').click();
+  await page.locator('[data-sandbox-action="add"]').click();
+  await page.locator('[data-drop-zone="horizontal"]').click();
   await page.locator('[data-drop-zone="horizontal"] [data-sandbox-action="move-selected-to-zone"]').click();
   await expect(page.locator('[data-role="canvas-status"]')).toContainText("Sky can only be placed");
   await expect(page.locator('[data-drop-zone="horizontal"] article[data-sandbox-widget="sky"]')).toHaveCount(0);
@@ -230,7 +304,7 @@ test("Console Sandbox moves palette and existing widgets between labelled zones"
 
 test("Console Sandbox provides keyboard and touch-compatible zone actions", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
-  await page.locator('[data-sandbox-control="widget"]').selectOption("weather");
+  await selectWidget(page, "weather");
   await page.locator('[data-sandbox-action="add"]').click();
   const card = page.locator('article[data-sandbox-instance="console-sandbox-1"]');
   await card.focus();
@@ -243,8 +317,9 @@ test("Console Sandbox provides keyboard and touch-compatible zone actions", asyn
   if (touchContext) {
     const touchPage = await touchContext.newPage();
     await touchPage.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
-    await touchPage.locator('[data-sandbox-control="widget"]').selectOption("sky");
-    await touchPage.locator('[data-drop-zone="square"] [data-sandbox-action="add-to-zone"]').tap();
+    await selectWidget(touchPage, "sky");
+    await touchPage.locator('[data-drop-zone="square"]').tap();
+    await touchPage.locator('[data-sandbox-action="add"]').tap();
     await expect(touchPage.locator('[data-drop-zone="square"] article[data-sandbox-widget="sky"]')).toHaveCount(1);
     await touchContext.close();
   }

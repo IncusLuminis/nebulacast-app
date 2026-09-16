@@ -257,7 +257,9 @@ async function waitForReady(page, root, type) {
 }
 
 async function addSandboxWidget(page, entry, mode) {
-  await page.locator('[data-sandbox-control="widget"]').selectOption(entry.type);
+  await page.locator(`[data-sandbox-widget="${entry.type}"]`).click();
+  const zoneId = mode === "square" ? "square" : mode;
+  await page.locator(`[data-drop-zone="${zoneId}"]`).click();
   await page.locator('[data-sandbox-action="add"]').click();
   const instance = page.locator("article[data-sandbox-instance]").last();
   const root = instance.locator('[data-role="runtime-root"]');
