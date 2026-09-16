@@ -285,7 +285,10 @@ export function createConsoleSandboxModel({
       ...(isObject(layout) ? layout : {}),
       ...(isObject(layout) && layout.unit === undefined && (layout.width !== undefined || layout.height !== undefined) ? { unit: "px" } : {}),
     };
-    const nextZoneId = zoneForId(zones, requestedLayout.mode)?.id || record.zoneId;
+    const currentZone = zoneForId(zones, record.zoneId);
+    const nextZoneId = currentZone?.mode === requestedLayout.mode
+      ? record.zoneId
+      : zoneForId(zones, requestedLayout.mode)?.id || record.zoneId;
     const drop = validateDrop({ widget: record.widget, layout: requestedLayout, zoneId: nextZoneId });
     if (!drop.valid) throw Object.assign(new Error(drop.reason), { code: "CONSOLE_SANDBOX_INVALID_DROP", reason: drop.reason });
     const next = normalizeCard(

@@ -86,6 +86,7 @@ test("Console Sandbox creates validated custom zones and includes them in snapsh
   const sky = model.addToZone("sky", square.id);
   assert.equal(weather.zoneId, vertical.id);
   assert.equal(sky.zoneId, square.id);
+  assert.equal(model.updateInstance(weather.id, { config: { profile: "visual" } }).zoneId, vertical.id);
   assert.throws(() => model.addZone({ mode: "diagonal" }), /Zone mode/);
   model.resetAll();
   assert.deepEqual(model.getSnapshot().zones.map(zone => zone.id), ["horizontal", "vertical", "square"]);
