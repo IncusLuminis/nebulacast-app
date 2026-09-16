@@ -1,115 +1,96 @@
-import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
+const STAGING_ORIGIN = "https://staging.nebulacast.app";
 
-export const PUBLIC_EMBED = definition => definition?.javascriptEmbed === true && definition?.divEmbed === true;
+export const SHOWCASE_GROUPS = Object.freeze([
+  Object.freeze({
+    title: "Observation",
+    cards: Object.freeze([
+      Object.freeze({ title: "Observer", src: "/weather/", standalone: "/weather/", description: "Full observing suite: hourly quality score, forecast charts, profile modes, location selector, Sun/Moon panel, cloud map, and sky integration." }),
+      Object.freeze({ title: "Conditions", src: "/weather/weather-vertical.html", standalone: "/weather/weather-vertical.html", description: "Simplified observing conditions panel: vertical forecast strip with hourly scores and key atmospheric parameters." }),
+      Object.freeze({ title: "Cloud Map", src: "/map/", standalone: "/map/", description: "Interactive map with terrain, cloud cover, radar tiles, wind, isobars, and animated forecast layers via Leaflet.", status: "Updated 23h ago", statusTone: "warning" }),
+      Object.freeze({ title: "Sun & Moon", src: "/sun/", standalone: "/sun/", description: "Sun altitude equation with civil/astronomical twilight bands and Moon phase. Covers today ±3 days." }),
+      Object.freeze({ title: "Sky", src: "/sky/", standalone: "/sky/", description: "Real-time sky chart with stars, DSO objects, Milky Way, constellations, planets, and NEO/GCN alert overlays on a canvas renderer.", status: "Updated 2h ago", statusTone: "notice" }),
+      Object.freeze({ title: "Space Weather", src: "/helio/", standalone: "/helio/", description: "Solar activity panel: Kp index, G/R/S scales, solar wind, CME tracking, aurora hint, and observer impact assessment.", status: "Updated 6h ago", statusTone: "notice" }),
+    ]),
+  }),
+  Object.freeze({
+    title: "Events",
+    cards: Object.freeze([
+      Object.freeze({ title: "Calendar", src: "/calendar/", standalone: "/calendar/", description: "Sky event calendar listing upcoming meteors, eclipses, conjunctions, occultations, and comets with filter controls." }),
+      Object.freeze({ title: "Best Objects", src: "/sky/objects.html", standalone: "/sky/objects.html", description: "Ranked list of tonight's best observable objects: planets, DSOs, and calendar events scored by altitude, visibility window, and darkness quality." }),
+      Object.freeze({ title: "Sky Alerts", src: "/sky/alerts.html", standalone: "/sky/alerts.html", description: "Live feed of significant space events: gamma-ray bursts, transients, NEOCP candidates, near-Earth objects, and planetary defense risk assessments. Sortable by type, date, or hazard score." }),
+    ]),
+  }),
+]);
 
-function labelFor(value) {
-  return String(value).replace(/[-_]/g, " ").replace(/\b\w/g, character => character.toUpperCase());
+export function buildStandaloneUrl(route) {
+  return new URL(route, STAGING_ORIGIN).href;
 }
 
-function text(documentRef, tagName, className, value) {
-  const node = documentRef.createElement(tagName);
-  if (className) node.className = className;
-  node.textContent = String(value ?? "");
-  return node;
+export function buildEmbedUrl(src, title) {
+  const query = new URLSearchParams({ src, title });
+  return `${STAGING_ORIGIN}/embed/?${query}`;
 }
 
-export function buildShowcaseEmbedUrl(widget, mode) {
-  return `/showcase-javascript/embed.html?${new URLSearchParams({ widget, mode })}`;
+function createText(documentRef, tagName, className, value) {
+  const element = documentRef.createElement(tagName);
+  if (className) element.className = className;
+  element.textContent = value;
+  return element;
 }
 
-export function createShowcaseGallery({ root, catalog = widgetCatalog, registry = createCatalogRegistry(), documentRef = root?.ownerDocument || globalThis.document } = {}) {
+function createLink(documentRef, className, label, href, action) {
+  const link = documentRef.createElement("a");
+  link.className = className;
+  link.setAttribute("href", href);
+  link.setAttribute("target", "_blank");
+  link.setAttribute("rel", "noopener");
+  link.setAttribute("data-showcase-action", action);
+  link.textContent = label;
+  return link;
+}
+
+function renderCard(documentRef, definition) {
+  const card = documentRef.createElement("article");
+  card.className = "showcase-card";
+  card.setAttribute("data-widget-title", definition.title);
+  card.appendChild(createText(documentRef, "h2", "showcase-card-title", definition.title));
+  card.appendChild(createText(documentRef, "p", "showcase-card-description", definition.description));
+  const status = createText(documentRef, "p", "showcase-card-status", definition.status || "—");
+  if (definition.statusTone) status.classList.add(`is-${definition.statusTone}`);
+  status.setAttribute("data-status-tone", definition.statusTone || "none");
+  card.appendChild(status);
+  const actions = documentRef.createElement("div");
+  actions.className = "showcase-card-actions";
+  actions.appendChild(createLink(documentRef, "showcase-action showcase-action-standalone", "↗ Standalone", buildStandaloneUrl(definition.standalone), "standalone"));
+  actions.appendChild(createLink(documentRef, "showcase-action showcase-action-embed", "◇ Embed", buildEmbedUrl(definition.src, definition.title), "embed"));
+  card.appendChild(actions);
+  return card;
+}
+
+export function createShowcaseGallery({ root, groups = SHOWCASE_GROUPS, documentRef = root?.ownerDocument || globalThis.document } = {}) {
   if (!root || typeof root.appendChild !== "function") throw new TypeError("Showcase Gallery requires a root element");
-  if (!Array.isArray(catalog)) throw new TypeError("Showcase Gallery requires a widget catalog");
-  if (!registry || typeof registry.get !== "function") throw new TypeError("Showcase Gallery requires a widget registry");
+  if (!Array.isArray(groups)) throw new TypeError("Showcase Gallery requires gallery groups");
   let mounted = false;
   let destroyed = false;
-
-  function renderCard(source) {
-    const definition = { ...(registry.get(source.type) || {}), ...source };
-    const card = documentRef.createElement("article");
-    card.className = "card gallery-card";
-    card.setAttribute("data-widget-type", definition.type);
-    const top = documentRef.createElement("div");
-    top.className = "card-top";
-    top.appendChild(text(documentRef, "span", "card-name", definition.title || labelFor(definition.type)));
-    top.appendChild(text(documentRef, "span", "card-type", definition.type));
-    card.appendChild(top);
-    card.appendChild(text(documentRef, "p", "card-desc", definition.description || "No description provided."));
-    const meta = documentRef.createElement("div");
-    meta.className = "card-meta gallery-meta";
-    meta.appendChild(text(documentRef, "span", "meta-version", `Version ${definition.version}`));
-    meta.appendChild(text(documentRef, "span", "meta-shape", definition.shape === "square" ? "Square widget" : "Horizontal / vertical widget"));
-    card.appendChild(meta);
-
-    const fieldset = documentRef.createElement("fieldset");
-    fieldset.className = "gallery-mode-controls";
-    fieldset.appendChild(text(documentRef, "legend", "", "Form factor"));
-    const mode = documentRef.createElement("select");
-    mode.setAttribute("data-gallery-mode", "");
-    mode.setAttribute("aria-label", `${definition.title || definition.type} form factor`);
-    const modes = definition.shape === "square" ? ["square"] : ["horizontal", "vertical"];
-    const defaultMode = definition.shape === "square" ? "square" : (definition.defaults?.orientation === "vertical" ? "vertical" : "horizontal");
-    for (const value of modes) {
-      const option = documentRef.createElement("option");
-      option.value = value;
-      option.textContent = labelFor(value);
-      option.selected = value === defaultMode;
-      mode.appendChild(option);
-    }
-    mode.value = defaultMode;
-    fieldset.appendChild(mode);
-    card.appendChild(fieldset);
-
-    const actions = documentRef.createElement("div");
-    actions.className = "card-links";
-    const embed = documentRef.createElement("button");
-    embed.type = "button";
-    embed.className = "card-link demo";
-    embed.setAttribute("data-gallery-action", "embed");
-    embed.textContent = "Embed";
-    const canEmbed = definition.standaloneHost === true || PUBLIC_EMBED(definition);
-    embed.disabled = !canEmbed;
-    if (canEmbed) {
-      const updateUrl = () => embed.setAttribute("data-embed-url", buildShowcaseEmbedUrl(definition.type, mode.value));
-      updateUrl();
-      mode.addEventListener("change", updateUrl);
-      embed.addEventListener("click", () => {
-        const location = documentRef.defaultView?.location;
-        if (location) location.href = buildShowcaseEmbedUrl(definition.type, mode.value);
-      });
-    } else {
-      embed.setAttribute("data-embed-unavailable", "true");
-      embed.title = "This widget is not available for public embedding yet";
-    }
-    actions.appendChild(embed);
-    card.appendChild(actions);
-    if (!canEmbed) {
-      const unavailable = text(documentRef, "p", "gallery-unavailable", "Embed unavailable for this widget.");
-      unavailable.setAttribute("data-role", "embed-unavailable");
-      card.appendChild(unavailable);
-    }
-    return card;
-  }
-
   function mount() {
     if (destroyed) return Promise.reject(new Error("Showcase Gallery is destroyed"));
     if (mounted) return Promise.resolve();
     root.textContent = "";
-    const group = documentRef.createElement("section");
-    group.className = "group gallery-group";
-    group.appendChild(text(documentRef, "div", "group-label", "Widgets"));
-    const cards = documentRef.createElement("div");
-    cards.className = "cards";
-    for (const definition of catalog) if (definition?.type) cards.appendChild(renderCard(definition));
-    group.appendChild(cards);
-    root.appendChild(group);
+    for (const groupDefinition of groups) {
+      const group = documentRef.createElement("section");
+      group.className = "showcase-group";
+      group.setAttribute("data-showcase-group", groupDefinition.title.toLowerCase());
+      group.appendChild(createText(documentRef, "h2", "showcase-group-title", groupDefinition.title));
+      const cards = documentRef.createElement("div");
+      cards.className = "showcase-cards";
+      for (const cardDefinition of groupDefinition.cards || []) cards.appendChild(renderCard(documentRef, cardDefinition));
+      group.appendChild(cards);
+      root.appendChild(group);
+    }
     mounted = true;
-    const timestamp = documentRef.getElementById?.("footer-ts");
-    if (timestamp) timestamp.textContent = "Catalog loaded";
     return Promise.resolve();
   }
-
-  function destroy() { if (!destroyed) { destroyed = true; root.textContent = ""; mounted = false; } }
+  function destroy() { destroyed = true; mounted = false; root.textContent = ""; }
   return Object.freeze({ mount, destroy });
 }
 

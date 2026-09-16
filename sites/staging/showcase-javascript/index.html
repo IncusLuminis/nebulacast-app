@@ -7,35 +7,17 @@
   <link rel="stylesheet" href="/showcase-javascript/showcase.css">
 </head>
 <body>
-<div class="page">
-  <header class="page-header">
-    <h1>Widget Showcase</h1>
-    <p>Nebulacast · choose a widget and open its sandbox to configure an embed</p>
-  </header>
-
-  <main id="widget-gallery" aria-live="polite"></main>
-
-  <footer class="page-footer">
-    <span>Nebulacast · Staging</span>
-    <span id="footer-ts">—</span>
-  </footer>
-</div>
-
-<script type="module">
-  import { createCatalogRegistry, widgetCatalog } from "/shared/widget-catalog.mjs";
-  import { createShowcaseGallery } from "/showcase-javascript/showcase.mjs";
-
-  const gallery = createShowcaseGallery({
-    root: document.getElementById("widget-gallery"),
-    catalog: widgetCatalog,
-    registry: createCatalogRegistry(),
-  });
-  gallery.mount().catch(error => {
-    const status = document.createElement("p");
-    status.className = "gallery-status gallery-status-error";
-    status.textContent = `Gallery failed to initialize: ${error.message}`;
-    document.getElementById("widget-gallery")?.appendChild(status);
-  });
-</script>
+  <main class="showcase-page">
+    <header class="showcase-header">
+      <h1>Widget Showcase</h1>
+      <p>Nebulacast · Staging catalog — widget readiness and entry points for QA &amp; review</p>
+    </header>
+    <div id="widget-gallery" aria-live="polite"></div>
+  </main>
+  <script type="module">
+    import { createShowcaseGallery } from "/showcase-javascript/showcase.mjs";
+    const gallery = createShowcaseGallery({ root: document.getElementById("widget-gallery") });
+    gallery.mount().catch(error => { document.getElementById("widget-gallery").textContent = `Gallery failed to initialize: ${error.message}`; });
+  </script>
 </body>
 </html>
