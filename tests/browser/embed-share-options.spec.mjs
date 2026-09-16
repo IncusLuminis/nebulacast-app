@@ -18,6 +18,7 @@ test("public widgets offer a JavaScript snippet alongside the current embed", as
 test("widgets without a public JavaScript contract retain their current embed only", async ({ page }) => {
   await page.goto("/embed/?src=/helio/&title=Space%20Weather", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /embed code/i }).click();
+  await expect(page.getByRole("tablist", { name: "Embed code type" })).toBeHidden();
   await expect(page.getByRole("tab", { name: "JavaScript" })).toBeHidden();
   await expect(page.locator("#share-code")).toContainText("HelioWidget.mount");
 });

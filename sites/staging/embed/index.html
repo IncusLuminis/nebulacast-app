@@ -250,6 +250,7 @@
       gap: 6px;
       margin: -2px 0 12px;
     }
+    .share-tabs[hidden] { display: none; }
     .share-tab {
       padding: 5px 9px;
       border: 1px solid var(--line);
@@ -383,7 +384,7 @@
         <span class="share-panel-title">Embed code</span>
         <button class="share-close" onclick="closeShare()" aria-label="Close">×</button>
       </div>
-      <div class="share-tabs" id="share-tabs" role="tablist" aria-label="Embed code type">
+      <div class="share-tabs" id="share-tabs" role="tablist" aria-label="Embed code type" hidden>
         <button class="share-tab" id="share-tab-current" role="tab" aria-selected="true" onclick="selectEmbedCode('current')">Current embed</button>
         <button class="share-tab" id="share-tab-javascript" role="tab" aria-selected="false" onclick="selectEmbedCode('javascript')" hidden>JavaScript</button>
       </div>
@@ -605,6 +606,7 @@
   function refreshCode() {
     var hasJavascriptEmbed = Boolean(javascriptEmbedDefinition());
     if (!hasJavascriptEmbed) codeMode = 'current';
+    document.getElementById('share-tabs').hidden = !hasJavascriptEmbed;
     document.getElementById('share-tab-javascript').hidden = !hasJavascriptEmbed;
     document.getElementById('share-tab-current').setAttribute('aria-selected', String(codeMode === 'current'));
     document.getElementById('share-tab-javascript').setAttribute('aria-selected', String(codeMode === 'javascript'));
