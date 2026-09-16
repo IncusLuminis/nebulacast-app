@@ -1,43 +1,38 @@
 import { test, expect } from "@playwright/test";
 
-test("copied Showcase keeps cards, standalone/iframe output, and adds JavaScript guidance", async ({ page }) => {
+test("Showcase cards only choose a form factor and navigate Embed to a single-widget sandbox", async ({ page }) => {
   await page.goto("/showcase-javascript/", { waitUntil: "domcontentloaded" });
-
-  const cards = page.locator("[data-widget-type]");
-  await expect(cards).toHaveCount(13);
+  await expect(page.locator("[data-widget-type]")).toHaveCount(13);
   const alerts = page.locator('[data-widget-type="alerts"]');
-  await expect(alerts.locator('[data-gallery-action="open-host"]')).toHaveAttribute("href", "/widgets/widget.html?widget=alerts&orientation=horizontal&theme=inherit&density=normal");
-  await expect(alerts.locator('[data-role="iframe-snippet"]')).toContainText("<iframe");
-  await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('from "/widgets/runtime/index.mjs"');
-  await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('"widget":"alerts"');
-  await expect(alerts.locator('[data-role="javascript-embed-output"]')).toContainText("responsive sizing");
-  await expect(alerts.locator('[data-role="javascript-embed-output"]')).toContainText("iframe");
-  await expect(page.locator('[data-widget-type="hero"] [data-role="javascript-embed-unavailable"]')).toContainText("JavaScript embed unavailable");
-
-  await alerts.locator('[data-gallery-layout-mode]').selectOption("vertical");
-  await alerts.locator('[data-gallery-option="theme"]').selectOption("dark");
-  await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('"mode":"vertical"');
-  await expect(alerts.locator('[data-role="javascript-embed-snippet"]')).toContainText('"theme":"dark"');
+  await expect(alerts.locator("select")).toHaveCount(1);
+  await expect(alerts.locator("input")).toHaveCount(0);
+  await expect(alerts.locator('[data-gallery-action="embed"]')).toBeVisible();
+  await expect(alerts.locator('[data-gallery-action="preview"]')).toHaveCount(0);
+  await expect(alerts.locator('[data-gallery-action="open-host"]')).toHaveCount(0);
+  await alerts.locator("select").selectOption("vertical");
+  await alerts.locator('[data-gallery-action="embed"]').click();
+  await expect(page).toHaveURL(/\/showcase-javascript\/embed\.html\?widget=alerts&mode=vertical/);
 });
 
-test("copied Showcase still previews cards only when requested and keeps Sky square", async ({ page }) => {
-  await page.route("**/sky/data/alerts_now.json", route => route.fulfill({
-    status: 200,
-    contentType: "application/json",
-    body: JSON.stringify({ items: [{ id: "showcase-javascript-alert", group: "risk", title: "Showcase fixture" }] }),
-  }));
-  await page.goto("/showcase-javascript/", { waitUntil: "domcontentloaded" });
+test("Embed sandbox shows only the selected widget with JS and iframe outputs", async ({ page }) => {
+  await page.goto("/showcase-javascript/embed.html?widget=alerts&mode=vertical", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-role="sandbox-widget-title"]')).toHaveText("Sky Alerts");
+  await expect(page.locator('[data-role="layout-mode"]')).toHaveValue("vertical");
+  await expect(page.locator('[data-role="layout-width"]')).toBeVisible();
+  await expect(page.locator('[data-role="layout-height"]')).toBeVisible();
+  await expect(page.locator('[data-role="javascript-snippet"]')).toContainText("/widgets/runtime/index.mjs");
+  await expect(page.locator('[data-role="iframe-snippet"]')).toContainText("<iframe");
+  await expect(page.locator('[data-role="embed-choice-explanation"]')).toContainText("responsive");
+  await expect(page.locator('[data-role="embed-choice-explanation"]')).toContainText("isolated");
+});
 
-  const hero = page.locator('[data-widget-type="hero"]');
-  await expect(hero.locator('[data-gallery-action="preview"]')).toBeEnabled();
-  await expect(page.locator('[data-widget-type="map"] [data-gallery-action="preview"]')).toBeDisabled();
-  await hero.locator('[data-gallery-action="preview"]').click();
-  await expect(hero.locator('.gallery-preview-root')).toHaveAttribute("data-nc-widget", "hero");
-  await hero.locator('[data-gallery-action="close"]').click();
-  await expect(hero.locator('.gallery-preview-root')).not.toHaveAttribute("data-nc-widget", "hero");
-
-  const sky = page.locator('[data-widget-type="sky"]');
-  await expect(sky.locator('[data-gallery-layout-mode]')).toHaveValue("square");
-  await expect(sky.locator('[data-gallery-layout-mode] option')).toHaveText(["Square"]);
-  await expect(sky.locator('[data-role="javascript-embed-snippet"]')).toContainText('"widget":"sky"');
+test("Sky sandbox remains square and unsupported widgets do not get false embed code", async ({ page }) => {
+  await page.goto("/showcase-javascript/embed.html?widget=sky&mode=horizontal", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-role="layout-mode"]')).toHaveValue("square");
+  await expect(page.locator('[data-role="javascript-snippet"]')).toContainText('"mode":"square"');
+  await page.goto("/showcase-javascript/embed.html?widget=hero&mode=horizontal", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-role="javascript-snippet"]')).toContainText("unavailable");
+  await expect(page.locator('[data-role="iframe-snippet"]')).toContainText("unavailable");
+  await expect(page.locator('[data-role="javascript-output"]')).toBeHidden();
+  await expect(page.locator('[data-role="preview-widget"]')).toBeDisabled();
 });

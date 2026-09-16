@@ -2,52 +2,39 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { widgetCatalog } from "../sites/staging/shared/widget-catalog.mjs";
-import { createShowcaseGallery } from "../sites/staging/showcase-javascript/showcase.mjs";
-import { createGalleryContext, createGalleryRoot, createGalleryRuntime } from "./fixtures/showcase-gallery-fixture.mjs";
+import { createShowcaseGallery, PUBLIC_EMBED, buildShowcaseEmbedUrl } from "../sites/staging/showcase-javascript/showcase.mjs";
+import { createGalleryContext, createGalleryRoot } from "./fixtures/showcase-gallery-fixture.mjs";
 
-test("the copied Showcase page keeps its card shell and does not alter the original page", async () => {
+test("Showcase copy is a minimal catalog and leaves the original page untouched", async () => {
   const source = await readFile(new URL("../sites/staging/showcase-javascript/index.html", import.meta.url), "utf8");
   const original = await readFile(new URL("../sites/staging/showcase/index.html", import.meta.url), "utf8");
-  assert.match(source, /widget-gallery/);
   assert.match(source, /showcase-javascript\/showcase\.mjs/);
-  assert.doesNotMatch(source, /widget-lab-stage/);
+  assert.doesNotMatch(source, /Console|Standalone|Widget config|widget-lab-stage/);
   assert.match(original, /widget-lab-stage/);
 });
 
-test("the copied Showcase renders the complete catalog and exposes JavaScript only for four public widgets", async () => {
+test("catalog cards expose only form factor and Embed navigation", async () => {
   const { documentRef, root } = createGalleryRoot();
-  const gallery = createShowcaseGallery({ root, documentRef, context: createGalleryContext(), runtime: createGalleryRuntime() });
-  await gallery.mount();
+  await createShowcaseGallery({ root, documentRef, context: createGalleryContext() }).mount();
   assert.equal(root.querySelectorAll("[data-widget-type]").length, 13);
-  const publicTypes = widgetCatalog.filter(definition => definition.javascriptEmbed === true).map(definition => definition.type);
-  assert.deepEqual(publicTypes, ["weather", "sky", "events", "alerts"]);
-  for (const type of publicTypes) {
-    const card = root.querySelector(`[data-widget-type="${type}"]`);
-    assert.ok(card.querySelector('[data-role="javascript-embed-snippet"]'));
-    assert.match(card.querySelector('[data-role="javascript-embed-snippet"]').textContent, /\/widgets\/runtime\/index\.mjs/);
-    assert.match(card.querySelector('.gallery-javascript-explanation').textContent, /responsive sizing/);
-  }
-  const hero = root.querySelector('[data-widget-type="hero"]');
-  assert.equal(hero.querySelectorAll(".gallery-output-unavailable")[1].textContent, "JavaScript embed unavailable");
-});
-
-test("the copied Showcase preserves iframe output and Sky square dimensions", async () => {
-  const { documentRef, root } = createGalleryRoot();
-  const gallery = createShowcaseGallery({ root, documentRef, context: createGalleryContext(), runtime: createGalleryRuntime() });
-  await gallery.mount();
   const alerts = root.querySelector('[data-widget-type="alerts"]');
-  assert.match(alerts.querySelector('[data-role="iframe-snippet"]').textContent, /<iframe/);
+  assert.ok(alerts.querySelector('[data-gallery-mode]'));
+  assert.equal(alerts.querySelectorAll("input").length, 0);
+  assert.equal(alerts.querySelectorAll("select").length, 1);
+  assert.equal(alerts.querySelector('[data-gallery-action="embed"]').textContent, "Embed");
+  assert.equal(alerts.querySelector('[data-role="config-output"]'), null);
+  assert.equal(alerts.querySelector('[data-gallery-action="preview"]'), null);
+  assert.equal(alerts.querySelector('[data-gallery-action="open-host"]'), null);
+  assert.equal(buildShowcaseEmbedUrl("alerts", "vertical"), "/showcase-javascript/embed.html?widget=alerts&mode=vertical");
+  assert.equal(PUBLIC_EMBED(widgetCatalog.find(item => item.type === "alerts")), true);
   const sky = root.querySelector('[data-widget-type="sky"]');
-  assert.equal(sky.querySelector('[data-gallery-layout-mode]').value, "square");
-  assert.match(sky.querySelector('[data-role="javascript-embed-snippet"]').textContent, /"widget":"sky"/);
+  assert.deepEqual(sky.querySelector('[data-gallery-mode]').querySelectorAll("option").map(option => option.value), ["square"]);
 });
 
-test("the copied Showcase requires both public JavaScript capability flags", async () => {
-  const catalog = widgetCatalog.map(definition => definition.type === "weather"
-    ? { ...definition, divEmbed: false }
-    : definition);
+test("Embed is unavailable for catalog entries without a public host contract", async () => {
   const { documentRef, root } = createGalleryRoot();
-  const gallery = createShowcaseGallery({ root, catalog, documentRef, context: createGalleryContext(), runtime: createGalleryRuntime() });
-  await gallery.mount();
-  assert.equal(root.querySelector('[data-widget-type="weather"]')?.querySelector('[data-role="javascript-embed-output"]'), null);
+  await createShowcaseGallery({ root, documentRef, context: createGalleryContext() }).mount();
+  const hero = root.querySelector('[data-widget-type="hero"]');
+  assert.equal(hero.querySelector('[data-gallery-action="embed"]').disabled, true);
+  assert.equal(hero.querySelector('[data-role="embed-unavailable"]').textContent, "Embed unavailable for this widget.");
 });

@@ -1,649 +1,116 @@
-import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry, widgetCatalog } from "../shared/widget-catalog.mjs";
-import {
-  buildStandaloneWidgetUrl,
-  buildIframeEmbedSnippet,
-  createWidgetConfig,
-  getWidgetOptionValues,
-  JAVASCRIPT_EMBED_MODULE_PATH,
-  serializeJavascriptEmbedSpecification,
-  serializeWidgetConfig,
-} from "../shared/widget-config.mjs";
-import { validateWidgetLabLayout } from "./widget-lab-model.mjs";
 
-const STANDALONE_LINKS = Object.freeze({
-  hero: Object.freeze({ href: "/", label: "Console" }),
-  astro: Object.freeze({ href: "/weather/", label: "Standalone" }),
-  "sun-moon": Object.freeze({ href: "/sun/", label: "Standalone" }),
-  weather: Object.freeze({ href: "/weather/", label: "Standalone" }),
-  map: Object.freeze({ href: "/map/", label: "Standalone" }),
-  location: Object.freeze({ href: "/weather/", label: "Standalone" }),
-  sky: Object.freeze({ href: "/sky/", label: "Standalone" }),
-  news: Object.freeze({ href: "/news/", label: "Standalone" }),
-  events: Object.freeze({ href: "/calendar/", label: "Standalone" }),
-  alerts: Object.freeze({ href: "/sky/alerts.html", label: "Standalone" }),
-});
-
-const LEGACY_STANDALONE_LINKS = Object.freeze([
-  Object.freeze({ id: "conditions", href: "/weather/weather-vertical.html", label: "Conditions" }),
-  Object.freeze({ id: "space-weather", href: "/helio/", label: "Space Weather" }),
-  Object.freeze({ id: "best-objects", href: "/sky/objects.html", label: "Best Objects" }),
-]);
+export const PUBLIC_EMBED = definition => definition?.javascriptEmbed === true && definition?.divEmbed === true;
 
 function labelFor(value) {
   return String(value).replace(/[-_]/g, " ").replace(/\b\w/g, character => character.toUpperCase());
 }
 
-function appendText(documentRef, tagName, className, text) {
-  const element = documentRef.createElement(tagName);
-  if (className) element.className = className;
-  element.textContent = String(text ?? "");
-  return element;
+function text(documentRef, tagName, className, value) {
+  const node = documentRef.createElement(tagName);
+  if (className) node.className = className;
+  node.textContent = String(value ?? "");
+  return node;
 }
 
-function snapshotOf(cards, instances, errors) {
-  return {
-    cards: new Map(cards),
-    instances: new Map(instances),
-    errors: new Map(errors),
-  };
+export function buildShowcaseEmbedUrl(widget, mode) {
+  return `/showcase-javascript/embed.html?${new URLSearchParams({ widget, mode })}`;
 }
 
-/**
- * Render the registry catalog as an intentionally lazy Showcase gallery.
- * Cards are catalog metadata; previews are the only path that calls Runtime.mount().
- */
-export function createShowcaseGallery({
-  root,
-  context,
-  catalog = widgetCatalog,
-  registry = createCatalogRegistry(),
-  runtime = null,
-  documentRef = root?.ownerDocument || globalThis.document,
-  resolveAutoOrientation,
-} = {}) {
-  if (!root || typeof root.appendChild !== "function") {
-    throw new TypeError("Showcase Gallery requires a root element");
-  }
+export function createShowcaseGallery({ root, catalog = widgetCatalog, registry = createCatalogRegistry(), documentRef = root?.ownerDocument || globalThis.document } = {}) {
+  if (!root || typeof root.appendChild !== "function") throw new TypeError("Showcase Gallery requires a root element");
   if (!Array.isArray(catalog)) throw new TypeError("Showcase Gallery requires a widget catalog");
   if (!registry || typeof registry.get !== "function") throw new TypeError("Showcase Gallery requires a widget registry");
-
-  const widgetRuntime = runtime || createNebulacast({ context, registry, resolveAutoOrientation });
-  const cards = new Map();
-  const instances = new Map();
-  const pending = new Map();
-  const errors = new Map();
   let mounted = false;
   let destroyed = false;
 
-  function setCardState(cardState, state, message = "") {
-    cardState.card.setAttribute("data-gallery-state", state);
-    cardState.status.textContent = message;
-    cardState.close.hidden = state === "idle" || state === "loading";
-  }
-
-  function readCardConfig(cardState, definition) {
-    const requested = {};
-    for (const [key, control] of cardState.controls) requested[key] = control.value;
-    const mode = cardState.layoutControls.mode.value;
-    requested.orientation = mode === "square" ? "auto" : mode;
-    return createWidgetConfig(registry, definition.type, requested);
-  }
-
-  function updateCardConfig(cardState, definition) {
-    cardState.layoutState = validateWidgetLabLayout(definition, {
-      mode: cardState.layoutControls.mode.value,
-      width: cardState.layoutControls.width.value,
-      height: cardState.layoutControls.height.value,
-    });
-    cardState.card.setAttribute("data-gallery-layout-mode", cardState.layoutState.mode);
-    cardState.card.setAttribute("data-gallery-layout-valid", String(cardState.layoutState.valid));
-    cardState.layoutStatus.textContent = cardState.layoutState.valid
-      ? `${labelFor(cardState.layoutState.mode)} · ${cardState.layoutState.width} × ${cardState.layoutState.height}`
-      : cardState.layoutState.error;
-    cardState.layoutStatus.setAttribute("data-layout-valid", String(cardState.layoutState.valid));
-    cardState.layoutControls.width.setAttribute("aria-invalid", String(!cardState.layoutState.valid));
-    cardState.layoutControls.height.setAttribute("aria-invalid", String(!cardState.layoutState.valid));
-    cardState.configExport = readCardConfig(cardState, definition);
-    cardState.serializedConfig = serializeWidgetConfig(cardState.configExport);
-    cardState.configOutput.textContent = cardState.serializedConfig;
-    if (cardState.hostOutput) {
-      const url = buildStandaloneWidgetUrl(registry, cardState.configExport);
-      cardState.iframeUrl = url;
-      cardState.iframeSnippet = buildIframeEmbedSnippet(registry, cardState.configExport, {
-        title: definition.title || definition.type,
-      });
-      cardState.hostOutput.iframeUrlOutput.textContent = url;
-      cardState.hostOutput.iframeSnippetOutput.textContent = cardState.iframeSnippet;
-      cardState.hostOutput.openHost.href = url;
-    }
-    if (cardState.javascriptOutput) {
-      if (cardState.layoutState.valid) {
-        const serializedSpecification = serializeJavascriptEmbedSpecification(registry, {
-          widget: definition.type,
-          config: cardState.configExport.config,
-          layout: {
-            mode: cardState.layoutState.mode,
-            width: cardState.layoutState.width,
-            height: cardState.layoutState.height,
-          },
-        });
-        cardState.javascriptSnippet = `import { mount } from "${JAVASCRIPT_EMBED_MODULE_PATH}";\n\nconst root = document.querySelector("#widget-root");\nmount(root, ${serializedSpecification});`;
-      } else {
-        cardState.javascriptSnippet = "JavaScript embed unavailable until the preview container dimensions are valid.";
-      }
-      cardState.javascriptOutput.snippet.textContent = cardState.javascriptSnippet;
-    }
-    cardState.copyStatus.textContent = "Ready to copy";
-  }
-
-  function fallbackCopy(text) {
-    const textarea = documentRef.createElement("textarea");
-    textarea.value = text;
-    textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    const container = documentRef.body || root;
-    container.appendChild(textarea);
-    textarea.select?.();
-    let copied = false;
-    try { copied = documentRef.execCommand?.("copy") === true; } catch (_) {}
-    if (typeof textarea.remove === "function") textarea.remove();
-    else container.removeChild?.(textarea);
-    return copied;
-  }
-
-  async function copyConfig(type) {
-    const cardState = cards.get(type);
-    if (!cardState) return false;
-    const text = cardState.serializedConfig;
-    const navigatorRef = documentRef.defaultView?.navigator || (typeof navigator !== "undefined" ? navigator : null);
-    try {
-      if (typeof navigatorRef?.clipboard?.writeText === "function") {
-        try {
-          await navigatorRef.clipboard.writeText(text);
-          cardState.copyStatus.textContent = "Copied config";
-          return true;
-        } catch (_) {}
-      }
-      if (fallbackCopy(text)) {
-        cardState.copyStatus.textContent = "Copied config (fallback)";
-        return true;
-      }
-    } catch (_) {}
-    cardState.copyStatus.textContent = "Copy unavailable — select the config text";
-    return false;
-  }
-
-  async function copyStandaloneOutput(type, kind) {
-    const cardState = cards.get(type);
-    if (!cardState?.hostOutput) return false;
-    const text = kind === "html" ? cardState.iframeSnippet : cardState.iframeUrl;
-    const label = kind === "html" ? "Copied HTML" : "Copied URL";
-    const fallbackLabel = kind === "html" ? "Copied HTML (fallback)" : "Copied URL (fallback)";
-    const navigatorRef = documentRef.defaultView?.navigator || (typeof navigator !== "undefined" ? navigator : null);
-    try {
-      if (typeof navigatorRef?.clipboard?.writeText === "function") {
-        try {
-          await navigatorRef.clipboard.writeText(text);
-          cardState.hostOutput.outputCopyStatus.textContent = label;
-          return true;
-        } catch (_) {}
-      }
-      if (fallbackCopy(text)) {
-        cardState.hostOutput.outputCopyStatus.textContent = fallbackLabel;
-        return true;
-      }
-    } catch (_) {}
-    cardState.hostOutput.outputCopyStatus.textContent = "Copy unavailable — select the output text";
-    return false;
-  }
-
-  async function copyJavascriptSnippet(type) {
-    const cardState = cards.get(type);
-    if (!cardState?.javascriptOutput) return false;
-    const navigatorRef = documentRef.defaultView?.navigator || (typeof navigator !== "undefined" ? navigator : null);
-    try {
-      if (typeof navigatorRef?.clipboard?.writeText === "function") {
-        try {
-          await navigatorRef.clipboard.writeText(cardState.javascriptSnippet);
-          cardState.javascriptOutput.status.textContent = "Copied JavaScript";
-          return true;
-        } catch (_) {}
-      }
-      if (fallbackCopy(cardState.javascriptSnippet)) {
-        cardState.javascriptOutput.status.textContent = "Copied JavaScript (fallback)";
-        return true;
-      }
-    } catch (_) {}
-    cardState.javascriptOutput.status.textContent = "Copy unavailable — select the JavaScript text";
-    return false;
-  }
-
-  async function closePreview(type) {
-    const waiting = pending.get(type);
-    if (waiting) {
-      const instance = await waiting.catch(() => null);
-      if (instance && instances.get(type) === instance) return closePreview(type);
-    }
-    const instance = instances.get(type);
-    if (!instance) return;
-    try {
-      await instance.destroy?.();
-      errors.delete(type);
-    } catch (error) {
-      errors.set(type, error instanceof Error ? error : new Error(String(error)));
-    } finally {
-      instances.delete(type);
-      const cardState = cards.get(type);
-      if (cardState) {
-        cardState.previewRoot.textContent = "";
-        setCardState(cardState, "idle", "Preview closed");
-      }
-    }
-  }
-
-  function openPreview(type) {
-    if (destroyed) return Promise.reject(new Error("Showcase Gallery is destroyed"));
-    const cardState = cards.get(type);
-    const catalogDefinition = catalog.find(definition => definition.type === type);
-    const definition = registry.get(type);
-    if (!cardState || !catalogDefinition || !definition?.galleryPreview || !catalogDefinition.galleryPreview) {
-      return Promise.resolve(null);
-    }
-    if (instances.has(type)) return Promise.resolve(instances.get(type));
-    if (pending.has(type)) return pending.get(type);
-
-    const config = cardState.configExport.config;
-    if (!cardState.layoutState.valid) {
-      setCardState(cardState, "error", cardState.layoutState.error);
-      return Promise.resolve(null);
-    }
-    cardState.previewRoot.textContent = "";
-    setCardState(cardState, "loading", "Loading preview…");
-    const request = (async () => {
-      try {
-        const instance = await widgetRuntime.mount(cardState.previewRoot, {
-          widget: definition.type,
-          config,
-        });
-        if (destroyed) {
-          await instance?.destroy?.();
-          return null;
-        }
-        instances.set(type, instance);
-        errors.delete(type);
-        setCardState(cardState, "ready", "Preview ready");
-        return instance;
-      } catch (error) {
-        const normalized = error instanceof Error ? error : new Error(String(error));
-        errors.set(type, normalized);
-        setCardState(cardState, "error", `Preview unavailable: ${normalized.message}`);
-        return null;
-      } finally {
-        pending.delete(type);
-      }
-    })();
-    pending.set(type, request);
-    return request;
-  }
-
-  function renderCard(sourceDefinition) {
-    // The rendered catalog entry is authoritative for capability flags. Keep
-    // registry defaults for callers that provide a partial catalog override,
-    // but never let the registry re-enable a capability the catalog disabled.
-    const definition = { ...(registry.get(sourceDefinition.type) || {}), ...sourceDefinition };
+  function renderCard(source) {
+    const definition = { ...(registry.get(source.type) || {}), ...source };
     const card = documentRef.createElement("article");
     card.className = "card gallery-card";
-    card.setAttribute("data-widget-type", sourceDefinition.type);
-    card.setAttribute("data-gallery-preview", definition.galleryPreview === true ? "true" : "false");
-
+    card.setAttribute("data-widget-type", definition.type);
     const top = documentRef.createElement("div");
     top.className = "card-top";
-    top.appendChild(appendText(documentRef, "span", "card-name", definition.title || sourceDefinition.type));
-    top.appendChild(appendText(documentRef, "span", "card-type", sourceDefinition.type));
+    top.appendChild(text(documentRef, "span", "card-name", definition.title || labelFor(definition.type)));
+    top.appendChild(text(documentRef, "span", "card-type", definition.type));
     card.appendChild(top);
-    card.appendChild(appendText(documentRef, "p", "card-desc", definition.description || "No description provided."));
-
+    card.appendChild(text(documentRef, "p", "card-desc", definition.description || "No description provided."));
     const meta = documentRef.createElement("div");
     meta.className = "card-meta gallery-meta";
-    meta.appendChild(appendText(documentRef, "span", "meta-version", `Version ${definition.version}`));
-    for (const [capability, enabled] of Object.entries(definition.capabilities || {})) {
-      meta.appendChild(appendText(documentRef, "span", "meta-capability", `${labelFor(capability)}: ${enabled ? "yes" : "no"}`));
-    }
+    meta.appendChild(text(documentRef, "span", "meta-version", `Version ${definition.version}`));
+    meta.appendChild(text(documentRef, "span", "meta-shape", definition.shape === "square" ? "Square widget" : "Horizontal / vertical widget"));
     card.appendChild(meta);
 
-    const layoutBlock = documentRef.createElement("fieldset");
-    layoutBlock.className = "gallery-layout-controls";
-    const layoutLegend = documentRef.createElement("legend");
-    layoutLegend.textContent = "Preview container";
-    layoutBlock.appendChild(layoutLegend);
-    const layoutControls = {};
-    const modeLabel = documentRef.createElement("label");
-    modeLabel.className = "gallery-option";
-    modeLabel.appendChild(appendText(documentRef, "span", "gallery-option-name", "Mode"));
-    const modeSelect = documentRef.createElement("select");
-    modeSelect.setAttribute("data-gallery-layout-mode", "");
-    for (const mode of definition.userModes || (definition.shape === "square" ? ["square"] : ["horizontal", "vertical"])) {
+    const fieldset = documentRef.createElement("fieldset");
+    fieldset.className = "gallery-mode-controls";
+    fieldset.appendChild(text(documentRef, "legend", "", "Form factor"));
+    const mode = documentRef.createElement("select");
+    mode.setAttribute("data-gallery-mode", "");
+    mode.setAttribute("aria-label", `${definition.title || definition.type} form factor`);
+    const modes = definition.shape === "square" ? ["square"] : ["horizontal", "vertical"];
+    const defaultMode = definition.shape === "square" ? "square" : (definition.defaults?.orientation === "vertical" ? "vertical" : "horizontal");
+    for (const value of modes) {
       const option = documentRef.createElement("option");
-      option.value = mode;
-      option.textContent = labelFor(mode);
-      const defaultMode = definition.shape === "square" ? "square" : definition.defaults?.orientation;
-      option.selected = mode === (defaultMode === "horizontal" || defaultMode === "vertical" ? defaultMode : (definition.shape === "square" ? "square" : "horizontal"));
-      modeSelect.appendChild(option);
+      option.value = value;
+      option.textContent = labelFor(value);
+      option.selected = value === defaultMode;
+      mode.appendChild(option);
     }
-    modeSelect.value = definition.shape === "square"
-      ? "square"
-      : (definition.defaults?.orientation === "vertical" ? "vertical" : "horizontal");
-    layoutControls.mode = modeSelect;
-    modeLabel.appendChild(modeSelect);
-    layoutBlock.appendChild(modeLabel);
-    for (const [key, defaultValue] of [["width", definition.shape === "square" ? 400 : 640], ["height", definition.shape === "square" ? 400 : 360]]) {
-      const label = documentRef.createElement("label");
-      label.className = "gallery-option";
-      label.appendChild(appendText(documentRef, "span", "gallery-option-name", labelFor(key)));
-      const input = documentRef.createElement("input");
-      input.type = "number";
-      input.min = "160";
-      input.max = "1600";
-      input.step = "1";
-      input.value = String(defaultValue);
-      input.setAttribute("data-gallery-layout", key);
-      input.setAttribute("aria-label", `${labelFor(key)} of preview container`);
-      layoutControls[key] = input;
-      label.appendChild(input);
-      layoutBlock.appendChild(label);
-    }
-    const layoutStatus = appendText(documentRef, "p", "gallery-layout-status", "Checking dimensions");
-    layoutStatus.setAttribute("data-role", "layout-status");
-    layoutStatus.setAttribute("aria-live", "polite");
-    layoutBlock.appendChild(layoutStatus);
-    card.appendChild(layoutBlock);
+    mode.value = defaultMode;
+    fieldset.appendChild(mode);
+    card.appendChild(fieldset);
 
-    const options = documentRef.createElement("div");
-    options.className = "gallery-options";
-    const controls = new Map();
-    for (const [key] of Object.entries(definition.supportedOptions || {})) {
-      const allowed = getWidgetOptionValues(registry, definition.type, key);
-      if (!allowed.length) continue;
-      const label = documentRef.createElement("label");
-      label.className = "gallery-option";
-      label.appendChild(appendText(documentRef, "span", "gallery-option-name", labelFor(key)));
-      const select = documentRef.createElement("select");
-      select.setAttribute("data-gallery-option", key);
-      for (const value of allowed) {
-        const option = documentRef.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        if (value === definition.defaults?.[key]) option.selected = true;
-        select.appendChild(option);
-      }
-      controls.set(key, select);
-      label.appendChild(select);
-      options.appendChild(label);
-    }
-    card.appendChild(options);
-
-    const configBlock = documentRef.createElement("div");
-    configBlock.className = "gallery-config-block";
-    const configLabel = appendText(documentRef, "div", "gallery-config-label", "Widget config");
-    configLabel.setAttribute("data-role", "config-label");
-    configBlock.appendChild(configLabel);
-    const configOutput = documentRef.createElement("pre");
-    configOutput.className = "gallery-config-output";
-    configOutput.setAttribute("data-role", "config-output");
-    configBlock.appendChild(configOutput);
-    const copyButton = documentRef.createElement("button");
-    copyButton.type = "button";
-    copyButton.className = "card-link gallery-copy-button";
-    copyButton.setAttribute("data-gallery-action", "copy-config");
-    copyButton.setAttribute("aria-label", `Copy ${definition.type} widget config`);
-    copyButton.textContent = "Copy config";
-    configBlock.appendChild(copyButton);
-    const copyStatus = appendText(documentRef, "span", "gallery-copy-status", "Ready to copy");
-    copyStatus.setAttribute("data-role", "copy-status");
-    copyStatus.setAttribute("aria-live", "polite");
-    configBlock.appendChild(copyStatus);
-    card.appendChild(configBlock);
-
-    const hostOutput = definition.standaloneHost === true;
-    let hostOutputState = null;
-    const outputBlock = documentRef.createElement("div");
-    outputBlock.className = "gallery-embed-output";
-    if (hostOutput) {
-      outputBlock.setAttribute("data-role", "iframe-output");
-      outputBlock.appendChild(appendText(documentRef, "div", "gallery-output-label", "Standalone iframe output"));
-      const urlOutput = documentRef.createElement("code");
-      urlOutput.className = "gallery-iframe-url";
-      urlOutput.setAttribute("data-role", "iframe-url");
-      outputBlock.appendChild(urlOutput);
-      const snippetOutput = documentRef.createElement("pre");
-      snippetOutput.className = "gallery-iframe-snippet";
-      snippetOutput.setAttribute("data-role", "iframe-snippet");
-      outputBlock.appendChild(snippetOutput);
-      const outputActions = documentRef.createElement("div");
-      outputActions.className = "gallery-output-actions";
-      const copyUrlButton = documentRef.createElement("button");
-      copyUrlButton.type = "button";
-      copyUrlButton.className = "card-link gallery-copy-output-button";
-      copyUrlButton.setAttribute("data-gallery-action", "copy-iframe-url");
-      copyUrlButton.textContent = "Copy URL";
-      outputActions.appendChild(copyUrlButton);
-      const copyHtmlButton = documentRef.createElement("button");
-      copyHtmlButton.type = "button";
-      copyHtmlButton.className = "card-link gallery-copy-output-button";
-      copyHtmlButton.setAttribute("data-gallery-action", "copy-iframe-html");
-      copyHtmlButton.textContent = "Copy HTML";
-      outputActions.appendChild(copyHtmlButton);
-      const openHost = documentRef.createElement("a");
-      openHost.className = "card-link";
-      openHost.setAttribute("data-gallery-action", "open-host");
-      openHost.target = "_blank";
-      openHost.rel = "noopener";
-      openHost.textContent = "↗ Open host";
-      outputActions.appendChild(openHost);
-      outputBlock.appendChild(outputActions);
-      const outputCopyStatus = appendText(documentRef, "span", "gallery-output-copy-status", "Ready to copy");
-      outputCopyStatus.setAttribute("data-role", "iframe-copy-status");
-      outputCopyStatus.setAttribute("aria-live", "polite");
-      outputBlock.appendChild(outputCopyStatus);
-      card.appendChild(outputBlock);
-      hostOutputState = {
-        outputBlock,
-        iframeUrlOutput: urlOutput,
-        iframeSnippetOutput: snippetOutput,
-        openHost,
-        outputCopyStatus,
-        copyUrlButton,
-        copyHtmlButton,
-      };
-    } else {
-      outputBlock.appendChild(appendText(documentRef, "span", "gallery-output-unavailable", "Iframe output unavailable"));
-      outputBlock.setAttribute("data-role", "iframe-unavailable");
-      card.appendChild(outputBlock);
-    }
-
-    const javascriptEmbed = definition.javascriptEmbed === true && definition.divEmbed === true;
-    let javascriptOutputState = null;
-    const javascriptOutputBlock = documentRef.createElement("div");
-    javascriptOutputBlock.className = "gallery-javascript-output";
-    if (javascriptEmbed) {
-      javascriptOutputBlock.setAttribute("data-role", "javascript-embed-output");
-      javascriptOutputBlock.appendChild(appendText(documentRef, "div", "gallery-output-label", "JavaScript embed"));
-      javascriptOutputBlock.appendChild(appendText(
-        documentRef,
-        "p",
-        "gallery-javascript-explanation",
-        "JavaScript mounts into your page's div, so the widget can follow the host layout and be updated or destroyed without an iframe boundary. Use it when you want responsive sizing and same-page lifecycle control; use iframe for the simplest isolated embed.",
-      ));
-      const javascriptSnippet = documentRef.createElement("pre");
-      javascriptSnippet.className = "gallery-javascript-snippet";
-      javascriptSnippet.setAttribute("data-role", "javascript-embed-snippet");
-      javascriptOutputBlock.appendChild(javascriptSnippet);
-      const copyJavascript = documentRef.createElement("button");
-      copyJavascript.type = "button";
-      copyJavascript.className = "card-link gallery-copy-output-button";
-      copyJavascript.setAttribute("data-gallery-action", "copy-javascript-embed");
-      copyJavascript.textContent = "Copy JavaScript";
-      javascriptOutputBlock.appendChild(copyJavascript);
-      const javascriptStatus = appendText(documentRef, "span", "gallery-javascript-copy-status", "Ready to copy");
-      javascriptStatus.setAttribute("data-role", "javascript-embed-copy-status");
-      javascriptStatus.setAttribute("aria-live", "polite");
-      javascriptOutputBlock.appendChild(javascriptStatus);
-      card.appendChild(javascriptOutputBlock);
-      javascriptOutputState = { snippet: javascriptSnippet, copy: copyJavascript, status: javascriptStatus };
-    } else {
-      javascriptOutputBlock.appendChild(appendText(documentRef, "span", "gallery-output-unavailable", "JavaScript embed unavailable"));
-      javascriptOutputBlock.setAttribute("data-role", "javascript-embed-unavailable");
-      card.appendChild(javascriptOutputBlock);
-    }
-
-    const links = documentRef.createElement("div");
-    links.className = "card-links";
-    const standalone = STANDALONE_LINKS[sourceDefinition.type];
-    if (standalone) {
-      const link = documentRef.createElement("a");
-      link.className = "card-link";
-      link.href = standalone.href;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.textContent = `↗ ${standalone.label}`;
-      links.appendChild(link);
-    }
-    const previewButton = documentRef.createElement("button");
-    previewButton.type = "button";
-    previewButton.className = "card-link demo gallery-preview-button";
-    previewButton.setAttribute("data-gallery-action", "preview");
-    previewButton.textContent = "▶ Preview";
-    previewButton.disabled = definition.galleryPreview !== true;
-    if (previewButton.disabled) previewButton.title = "Preview is not enabled for this widget";
-    links.appendChild(previewButton);
-    card.appendChild(links);
-
-    const status = appendText(documentRef, "p", "gallery-status", definition.galleryPreview === true ? "Preview idle" : "Preview not enabled");
-    status.setAttribute("data-role", "gallery-status");
-    card.appendChild(status);
-    const preview = documentRef.createElement("div");
-    preview.className = "gallery-preview";
-    preview.setAttribute("data-role", "gallery-preview");
-    const previewRoot = documentRef.createElement("div");
-    previewRoot.className = "gallery-preview-root";
-    previewRoot.setAttribute("data-role", "preview-root");
-    preview.appendChild(previewRoot);
-    const close = documentRef.createElement("button");
-    close.type = "button";
-    close.className = "card-link gallery-close-button";
-    close.setAttribute("data-gallery-action", "close");
-    close.textContent = "× Close";
-    close.hidden = true;
-    preview.appendChild(close);
-    card.appendChild(preview);
-
-    const cardState = { card, controls, layoutControls, layoutStatus, layoutState: null, status, previewRoot, close, configOutput, copyStatus, hostOutput: hostOutputState, javascriptOutput: javascriptOutputState, javascriptSnippet: "", configExport: null, serializedConfig: "" };
-    cards.set(sourceDefinition.type, cardState);
-    updateCardConfig(cardState, definition);
-    for (const control of controls.values()) {
-      control.addEventListener("change", () => {
-        updateCardConfig(cardState, definition);
-        if (instances.has(sourceDefinition.type)) void closePreview(sourceDefinition.type);
+    const actions = documentRef.createElement("div");
+    actions.className = "card-links";
+    const embed = documentRef.createElement("button");
+    embed.type = "button";
+    embed.className = "card-link demo";
+    embed.setAttribute("data-gallery-action", "embed");
+    embed.textContent = "Embed";
+    const canEmbed = definition.standaloneHost === true || PUBLIC_EMBED(definition);
+    embed.disabled = !canEmbed;
+    if (canEmbed) {
+      const updateUrl = () => embed.setAttribute("data-embed-url", buildShowcaseEmbedUrl(definition.type, mode.value));
+      updateUrl();
+      mode.addEventListener("change", updateUrl);
+      embed.addEventListener("click", () => {
+        const location = documentRef.defaultView?.location;
+        if (location) location.href = buildShowcaseEmbedUrl(definition.type, mode.value);
       });
+    } else {
+      embed.setAttribute("data-embed-unavailable", "true");
+      embed.title = "This widget is not available for public embedding yet";
     }
-    for (const control of Object.values(layoutControls)) {
-      control.addEventListener("change", () => {
-        if (control === layoutControls.mode) {
-          const mode = layoutControls.mode.value;
-          const dimensions = mode === "square"
-            ? [400, 400]
-            : (mode === "vertical" ? [360, 640] : [640, 360]);
-          layoutControls.width.value = String(dimensions[0]);
-          layoutControls.height.value = String(dimensions[1]);
-        }
-        updateCardConfig(cardState, definition);
-        if (instances.has(sourceDefinition.type)) void closePreview(sourceDefinition.type);
-      });
+    actions.appendChild(embed);
+    card.appendChild(actions);
+    if (!canEmbed) {
+      const unavailable = text(documentRef, "p", "gallery-unavailable", "Embed unavailable for this widget.");
+      unavailable.setAttribute("data-role", "embed-unavailable");
+      card.appendChild(unavailable);
     }
-    previewButton.addEventListener("click", () => { void openPreview(sourceDefinition.type); });
-    close.addEventListener("click", () => { void closePreview(sourceDefinition.type); });
-    copyButton.addEventListener("click", () => { void copyConfig(sourceDefinition.type); });
-    cardState.hostOutput?.copyUrlButton.addEventListener("click", () => { void copyStandaloneOutput(sourceDefinition.type, "url"); });
-    cardState.hostOutput?.copyHtmlButton.addEventListener("click", () => { void copyStandaloneOutput(sourceDefinition.type, "html"); });
-    cardState.javascriptOutput?.copy.addEventListener("click", () => { void copyJavascriptSnippet(sourceDefinition.type); });
     return card;
-  }
-
-  function renderLegacyLinks() {
-    const section = documentRef.createElement("section");
-    section.className = "group gallery-legacy-group";
-    section.appendChild(appendText(documentRef, "div", "group-label", "Legacy standalone entry points"));
-    const links = documentRef.createElement("div");
-    links.className = "card-links gallery-legacy-links";
-    for (const entry of LEGACY_STANDALONE_LINKS) {
-      const link = documentRef.createElement("a");
-      link.className = "card-link";
-      link.setAttribute("data-gallery-legacy-link", entry.id);
-      link.setAttribute("href", entry.href);
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.textContent = `↗ ${entry.label}`;
-      links.appendChild(link);
-    }
-    section.appendChild(links);
-    return section;
   }
 
   function mount() {
     if (destroyed) return Promise.reject(new Error("Showcase Gallery is destroyed"));
-    if (mounted) return Promise.resolve(snapshotOf(cards, instances, errors));
-    cards.clear();
+    if (mounted) return Promise.resolve();
     root.textContent = "";
-    const groups = new Map();
-    for (const sourceDefinition of catalog) {
-      if (!sourceDefinition || typeof sourceDefinition.type !== "string") continue;
-      const groupName = sourceDefinition.galleryGroup || "Widgets";
-      if (!groups.has(groupName)) groups.set(groupName, []);
-      groups.get(groupName).push(sourceDefinition);
-    }
-    for (const [groupName, definitions] of groups) {
-      const group = documentRef.createElement("section");
-      group.className = "group gallery-group";
-      group.appendChild(appendText(documentRef, "div", "group-label", groupName));
-      const cardGrid = documentRef.createElement("div");
-      cardGrid.className = "cards";
-      for (const definition of definitions) cardGrid.appendChild(renderCard(definition));
-      group.appendChild(cardGrid);
-      root.appendChild(group);
-    }
-    root.appendChild(renderLegacyLinks());
+    const group = documentRef.createElement("section");
+    group.className = "group gallery-group";
+    group.appendChild(text(documentRef, "div", "group-label", "Widgets"));
+    const cards = documentRef.createElement("div");
+    cards.className = "cards";
+    for (const definition of catalog) if (definition?.type) cards.appendChild(renderCard(definition));
+    group.appendChild(cards);
+    root.appendChild(group);
     mounted = true;
     const timestamp = documentRef.getElementById?.("footer-ts");
-    if (timestamp) timestamp.textContent = `Catalog loaded ${new Date().toLocaleString("en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}`;
-    return Promise.resolve(snapshotOf(cards, instances, errors));
+    if (timestamp) timestamp.textContent = "Catalog loaded";
+    return Promise.resolve();
   }
 
-  async function destroy() {
-    if (destroyed) return;
-    destroyed = true;
-    await Promise.all([...cards.keys()].map(type => closePreview(type)));
-    root.textContent = "";
-    cards.clear();
-    mounted = false;
-  }
-
-  return Object.freeze({
-    mount,
-    openPreview,
-    closePreview,
-    destroy,
-    getInstance: type => instances.get(type),
-    getInstances: () => new Map(instances),
-    getErrors: () => new Map(errors),
-    getConfig: type => cards.get(type)?.configExport,
-    getSerializedConfig: type => cards.get(type)?.serializedConfig,
-    copyConfig,
-    getSnapshot: () => snapshotOf(cards, instances, errors),
-  });
+  function destroy() { if (!destroyed) { destroyed = true; root.textContent = ""; mounted = false; } }
+  return Object.freeze({ mount, destroy });
 }
 
-export { STANDALONE_LINKS };
-export { LEGACY_STANDALONE_LINKS };
 export default createShowcaseGallery;

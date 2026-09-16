@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nebulacast — Widget Embed Sandbox</title>
+  <link rel="stylesheet" href="/showcase-javascript/showcase.css">
+</head>
+<body>
+<div class="page">
+  <header class="page-header">
+    <p><a class="sandbox-back" href="/showcase-javascript/">← Widget Showcase</a></p>
+    <h1>Widget Embed Sandbox</h1>
+    <p>Configure one widget, preview it in a caller-owned container, and copy the embed code.</p>
+  </header>
+
+  <main id="embed-sandbox" aria-live="polite"></main>
+
+  <footer class="page-footer">
+    <span>Nebulacast · Staging</span>
+    <span>Embed contract v1</span>
+  </footer>
+</div>
+<script type="module">
+  import { createEmbedSandbox } from "/showcase-javascript/embed.mjs";
+  createEmbedSandbox({ root: document.getElementById("embed-sandbox") }).mount();
+</script>
+</body>
+</html>

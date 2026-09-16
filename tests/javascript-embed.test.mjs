@@ -87,6 +87,10 @@ function createRuntime() {
 test("only catalog javascriptEmbed opt-ins normalize through the bounded public config", async () => {
   assert.equal(JAVASCRIPT_EMBED_API_VERSION, 1);
   assert.deepEqual(widgetCatalog.filter(definition => definition.divEmbed === true).map(definition => definition.type), ["weather", "sky", "events", "alerts"]);
+  const mismatchedRegistry = createWidgetRegistry(widgetCatalog.map(definition => definition.type === "weather"
+    ? { ...definition, divEmbed: false }
+    : definition));
+  assert.throws(() => normalizeJavascriptEmbedInput(mismatchedRegistry, { widget: "weather" }), /not enabled/);
   const weather = normalizeJavascriptEmbedInput(registry, {
     widget: "weather",
     config: { orientation: "vertical", profile: "visual", range: "48h" },

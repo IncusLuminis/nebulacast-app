@@ -320,7 +320,7 @@ export function normalizeJavascriptEmbedInput(registry, specification = {}) {
   }
   const widget = specification.widget;
   const definition = definitionFrom(registry, widget);
-  if (definition.divEmbed !== true && definition.javascriptEmbed !== true) throw new Error(`Widget ${widget} is not enabled for JavaScript embed`);
+  if (definition.divEmbed !== true || definition.javascriptEmbed !== true) throw new Error(`Widget ${widget} is not enabled for JavaScript embed`);
   const supplied = specification.config === undefined ? {} : specification.config;
   if (!isObject(supplied)) throw new TypeError("JavaScript embed config must be an object");
   const supported = new Set(Object.keys(definition.supportedOptions || {}));
