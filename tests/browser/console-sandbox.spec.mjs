@@ -176,15 +176,21 @@ test("Console Sandbox selects an active compatible placeholder for Add to Canvas
   await expect(page.locator('[data-role="canvas-status"]')).toContainText("vertical orientation");
 });
 
-test("Console Sandbox keeps Palette, Inspector, and Composition order with card-relative sizes", async ({ page }) => {
+test("Console Sandbox keeps controls left and the full Composition Canvas right", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".console-sandbox-shell")).toHaveCount(1);
   expect(await page.locator(".console-sandbox-shell").evaluate(shell => [...shell.children].map(node => node.className))).toEqual([
+    "console-sandbox-controls",
+    "console-sandbox-panel console-sandbox-canvas-region",
+  ]);
+  expect(await page.locator(".console-sandbox-controls").evaluate(column => [...column.children].map(node => node.className))).toEqual([
     "console-sandbox-panel",
     "console-sandbox-panel console-sandbox-inspector",
-    "console-sandbox-panel console-sandbox-canvas-region",
+    "console-sandbox-panel console-sandbox-composition",
     "sandbox-button sandbox-button-danger",
   ]);
+  await expect(page.locator(".console-sandbox-composition .console-sandbox-instance-list")).toHaveCount(1);
+  await expect(page.locator(".console-sandbox-canvas-region .console-sandbox-composition")).toHaveCount(0);
   await selectWidget(page, "alerts");
   await page.locator('[data-sandbox-action="add"]').click();
   await expect(page.locator('[data-sandbox-layout="unit"]')).toHaveValue("percent");
@@ -226,12 +232,9 @@ test("Console Sandbox keeps Palette, Inspector, and Composition order with card-
       canvas: rect(shell.querySelector('[data-role="canvas"]')),
     };
   });
-  expect(desktopLayout.children[0].left).toBeCloseTo(desktopLayout.children[1].left, 0);
-  expect(desktopLayout.children[1].left).toBeCloseTo(desktopLayout.children[2].left, 0);
-  expect(desktopLayout.children[2].left).toBeCloseTo(desktopLayout.children[3].left, 0);
-  expect(desktopLayout.children[0].top).toBeLessThan(desktopLayout.children[1].top);
-  expect(desktopLayout.children[1].top).toBeLessThan(desktopLayout.children[2].top);
-  expect(desktopLayout.children[2].top).toBeLessThan(desktopLayout.children[3].top);
+  expect(desktopLayout.children[0].left).toBeLessThan(desktopLayout.children[1].left);
+  expect(desktopLayout.children[0].top).toBeCloseTo(desktopLayout.children[1].top, 0);
+  expect(desktopLayout.canvasRegion.width).toBeGreaterThan(desktopLayout.children[0].width);
   const canvasRegionStyle = await page.locator(".console-sandbox-canvas-region").evaluate(region => {
     const style = getComputedStyle(region);
     return {
@@ -241,6 +244,23 @@ test("Console Sandbox keeps Palette, Inspector, and Composition order with card-
   expect(desktopLayout.canvas.width).toBeCloseTo(canvasRegionStyle.contentWidth, 0);
   expect(desktopLayout.canvas.width).toBeGreaterThan(900);
 
+  await page.setViewportSize({ width: 600, height: 1000 });
+  const mobileLayout = await page.locator(".console-sandbox-shell").evaluate(shell => {
+    const rect = node => {
+      const value = node.getBoundingClientRect();
+      return { left: value.left, top: value.top, width: value.width, bottom: value.bottom };
+    };
+    return {
+      shell: rect(shell),
+      controls: rect(shell.querySelector(".console-sandbox-controls")),
+      canvasRegion: rect(shell.querySelector(".console-sandbox-canvas-region")),
+    };
+  });
+  expect(mobileLayout.controls.left).toBeCloseTo(mobileLayout.canvasRegion.left, 0);
+  expect(mobileLayout.canvasRegion.top).toBeGreaterThanOrEqual(mobileLayout.controls.bottom - 0.5);
+  expect(mobileLayout.controls.width).toBeCloseTo(mobileLayout.canvasRegion.width, 0);
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
   await page.locator('[data-sandbox-action="apply"]').click();
   await expect(page.locator('[data-role="inspector-status"]')).toContainText("between 160 and 1600");

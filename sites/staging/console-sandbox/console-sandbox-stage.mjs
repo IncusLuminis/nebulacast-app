@@ -114,6 +114,7 @@ export function createConsoleSandbox({
   let dropMessage = null;
 
   const shell = text(documentRef, "div", "console-sandbox-shell");
+  const controlsColumn = text(documentRef, "div", "console-sandbox-controls");
   const paletteRegion = text(documentRef, "aside", "console-sandbox-panel");
   paletteRegion.setAttribute("aria-label", "Widget palette");
   paletteRegion.appendChild(text(documentRef, "h2", "console-sandbox-heading", "Widget palette"));
@@ -147,6 +148,11 @@ export function createConsoleSandbox({
   const instanceList = text(documentRef, "div", "console-sandbox-instance-list");
   instanceList.dataset.role = "instance-list";
 
+  const compositionRegion = text(documentRef, "section", "console-sandbox-panel console-sandbox-composition");
+  compositionRegion.setAttribute("aria-label", "Composition");
+  compositionRegion.appendChild(text(documentRef, "h2", "console-sandbox-heading", "Composition"));
+  compositionRegion.appendChild(instanceList);
+
   const canvasRegion = text(documentRef, "section", "console-sandbox-panel console-sandbox-canvas-region");
   canvasRegion.setAttribute("aria-label", "Composition canvas");
   const canvasHeader = text(documentRef, "div", "console-sandbox-region-header");
@@ -161,10 +167,6 @@ export function createConsoleSandbox({
   canvasStatus.setAttribute("aria-live", "polite");
   canvasStatus.dataset.role = "canvas-status";
   canvasRegion.appendChild(canvasStatus);
-  const compositionList = text(documentRef, "div", "console-sandbox-composition-list");
-  compositionList.appendChild(text(documentRef, "h3", "console-sandbox-subheading", "Composition"));
-  compositionList.appendChild(instanceList);
-  canvasRegion.appendChild(compositionList);
   const canvas = text(documentRef, "div", "console-sandbox-canvas");
   canvas.dataset.role = "canvas";
   canvasRegion.appendChild(canvas);
@@ -204,7 +206,8 @@ export function createConsoleSandbox({
   inspectorRegion.appendChild(inspectorStatus);
   const resetAll = button(documentRef, "Reset all", "reset-all");
   resetAll.className = "sandbox-button sandbox-button-danger";
-  shell.append(paletteRegion, inspectorRegion, canvasRegion, resetAll);
+  controlsColumn.append(paletteRegion, inspectorRegion, compositionRegion, resetAll);
+  shell.append(controlsColumn, canvasRegion);
   root.textContent = "";
   root.appendChild(shell);
 

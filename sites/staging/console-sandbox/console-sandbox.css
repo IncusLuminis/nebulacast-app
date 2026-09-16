@@ -52,10 +52,11 @@ body.nc-console-sandbox-host {
 .nc-console-sandbox-page-header p { margin-top: 5px; }
 .console-sandbox-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
   gap: 14px;
   align-items: stretch;
 }
+.console-sandbox-controls { display: flex; min-width: 0; flex-direction: column; gap: 14px; }
 .console-sandbox-panel { min-width: 0; background: var(--nc-sandbox-surface); border: 1px solid var(--nc-sandbox-line); border-radius: 10px; padding: 14px; }
 .console-sandbox-heading { color: var(--nc-sandbox-title); font-size: 14px; font-weight: 600; }
 .console-sandbox-subheading { color: var(--nc-sandbox-muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-top: 18px; }
@@ -77,7 +78,7 @@ body.nc-console-sandbox-host {
 .console-sandbox-palette-item:disabled { cursor: not-allowed; opacity: .55; }
 .console-sandbox-palette-item[data-dragging="true"], .console-sandbox-card[data-dragging="true"] { opacity: .6; cursor: grabbing; }
 .console-sandbox-instance-list { display: grid; gap: 6px; margin-top: 8px; }
-.console-sandbox-composition-list { margin-bottom: 12px; }
+.console-sandbox-composition { flex: 1 1 auto; }
 .console-sandbox-instance { display: grid; gap: 2px; border-top: 1px solid var(--nc-sandbox-line); padding: 7px 0; }
 .console-sandbox-instance[data-selected="true"] { border-left: 2px solid var(--nc-sandbox-link); padding-left: 8px; }
 .sandbox-instance-select { border: 0; background: transparent; color: var(--nc-sandbox-link); cursor: pointer; font: inherit; font-size: 12px; padding: 0; text-align: left; }
@@ -124,12 +125,13 @@ body.nc-console-sandbox-host {
 .console-sandbox-inspector > .console-sandbox-actions { margin-top: 12px; }
 .console-sandbox-inspector > .console-sandbox-status { margin-top: 10px; }
 .console-sandbox-panel > .sandbox-button:disabled { cursor: not-allowed; opacity: .5; }
-.console-sandbox-shell > .sandbox-button-danger { justify-self: stretch; align-self: start; }
+.console-sandbox-controls > .sandbox-button-danger { width: 100%; margin-top: auto; }
 .nc-console-sandbox-page-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--nc-sandbox-line); padding-top: 14px; margin-top: 24px; }
 
 @media (max-width: 680px) {
   .nc-console-sandbox-page { padding: 16px 10px 40px; }
   .console-sandbox-panel { padding: 12px; }
+  .console-sandbox-shell { grid-template-columns: minmax(0, 1fr); }
   .console-sandbox-region-header { align-items: stretch; flex-direction: column; }
   .console-sandbox-region-header .sandbox-field { width: 100%; }
   .console-sandbox-canvas { grid-template-columns: minmax(220px, 1fr); min-height: 260px; }
