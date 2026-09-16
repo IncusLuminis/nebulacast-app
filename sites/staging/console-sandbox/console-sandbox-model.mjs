@@ -15,6 +15,8 @@ export const CONSOLE_SANDBOX_DROP_ZONES = Object.freeze([
   Object.freeze({ id: "square", mode: "square", label: "Square", description: "Square-only widgets such as Sky." }),
 ]);
 
+const CONSOLE_SANDBOX_ZONE_MODES = Object.freeze(["horizontal", "vertical", "square"]);
+
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -46,8 +48,8 @@ function defaultLayout(definition) {
   return { mode: "horizontal", unit: CONSOLE_SANDBOX_DEFAULT_LAYOUT_UNIT, width: 100, height: 100 };
 }
 
-function zoneForId(zoneId) {
-  return CONSOLE_SANDBOX_DROP_ZONES.find(zone => zone.id === zoneId) || null;
+function zoneForId(zones, zoneId) {
+  return zones.find(zone => zone.id === zoneId) || null;
 }
 
 function defaultZoneFor(definition) {
@@ -194,7 +196,9 @@ export function createConsoleSandboxModel({
 
   const palette = Object.freeze(registry.list().map(paletteEntry));
   const records = [];
+  const zones = CONSOLE_SANDBOX_DROP_ZONES.map(zone => ({ ...zone }));
   let nextId = 0;
+  let nextZoneId = 0;
   let selectedId = null;
   let viewport = CONSOLE_SANDBOX_DEFAULT_VIEWPORT;
   let destroyed = false;
@@ -208,7 +212,7 @@ export function createConsoleSandboxModel({
       viewport,
       selectedId,
       palette,
-      zones: Object.freeze(CONSOLE_SANDBOX_DROP_ZONES.map(zone => Object.freeze({
+      zones: Object.freeze(zones.map(zone => Object.freeze({
         ...zone,
         instanceIds: Object.freeze(records.filter(record => record.zoneId === zone.id).map(record => record.id)),
         empty: !records.some(record => record.zoneId === zone.id),
@@ -229,7 +233,7 @@ export function createConsoleSandboxModel({
 
   function validateDrop({ widget, layout = {}, zoneId } = {}) {
     const definition = definitionFor(registry, widget);
-    const zone = zoneForId(zoneId);
+    const zone = zoneForId(zones, zoneId);
     if (!zone) return Object.freeze({ valid: false, reason: `Unknown drop zone: ${zoneId}`, zoneId });
     const shape = definition.shape === "square" || definition.type === "sky" ? "square" : "oriented";
     if (shape === "square" && zone.mode !== "square") {
@@ -252,9 +256,9 @@ export function createConsoleSandboxModel({
   function createInstance({ widget, config = {}, layout = {}, zoneId = null } = {}) {
     assertLive(destroyed);
     const definition = definitionFor(registry, widget);
-    const requestedZoneId = zoneId || (zoneForId(layout.mode)?.id || defaultZoneFor(definition));
+    const requestedZoneId = zoneId || (zoneForId(zones, layout.mode)?.id || defaultZoneFor(definition));
     const drop = validateDrop({ widget, layout, zoneId: requestedZoneId });
-    if (!drop.valid && (!zoneForId(requestedZoneId) || (definition.shape === "square" || definition.type === "sky") !== (requestedZoneId === "square"))) {
+    if (!drop.valid && (!zoneForId(zones, requestedZoneId) || (definition.shape === "square" || definition.type === "sky") !== (zoneForId(zones, requestedZoneId)?.mode === "square"))) {
       throw Object.assign(new Error(drop.reason), { code: "CONSOLE_SANDBOX_INVALID_DROP", reason: drop.reason });
     }
     const normalized = normalizeCard(registry, widget, config, drop.valid ? drop.layout : layout, limits);
@@ -281,7 +285,7 @@ export function createConsoleSandboxModel({
       ...(isObject(layout) ? layout : {}),
       ...(isObject(layout) && layout.unit === undefined && (layout.width !== undefined || layout.height !== undefined) ? { unit: "px" } : {}),
     };
-    const nextZoneId = zoneForId(requestedLayout.mode)?.id || record.zoneId;
+    const nextZoneId = zoneForId(zones, requestedLayout.mode)?.id || record.zoneId;
     const drop = validateDrop({ widget: record.widget, layout: requestedLayout, zoneId: nextZoneId });
     if (!drop.valid) throw Object.assign(new Error(drop.reason), { code: "CONSOLE_SANDBOX_INVALID_DROP", reason: drop.reason });
     const next = normalizeCard(
@@ -352,6 +356,27 @@ export function createConsoleSandboxModel({
     return createInstance({ widget, config, zoneId });
   }
 
+  function addZone({ mode, label = null } = {}) {
+    assertLive(destroyed);
+    if (!CONSOLE_SANDBOX_ZONE_MODES.includes(mode)) {
+      throw new TypeError(`Zone mode must be one of: ${CONSOLE_SANDBOX_ZONE_MODES.join(", ")}`);
+    }
+    const existingModeCount = zones.filter(zone => zone.mode === mode).length;
+    const defaultLabel = `${mode[0].toUpperCase()}${mode.slice(1)} ${existingModeCount + 1}`;
+    const next = {
+      id: `custom-${mode}-${++nextZoneId}`,
+      mode,
+      label: String(label || defaultLabel).trim() || defaultLabel,
+      description: mode === "square"
+        ? "Square-only widgets such as Sky."
+        : mode === "vertical" ? "Tall widgets: height greater than width." : "Wide widgets: width greater than height.",
+    };
+    if (zones.some(zone => zone.label === next.label)) next.label = `${defaultLabel} ${nextZoneId}`;
+    zones.push(next);
+    emit();
+    return Object.freeze({ ...next, instanceIds: Object.freeze([]), empty: true });
+  }
+
   function move(id, delta) {
     assertLive(destroyed);
     const index = records.indexOf(recordFor(id));
@@ -381,6 +406,7 @@ export function createConsoleSandboxModel({
   function resetAll() {
     assertLive(destroyed);
     records.splice(0, records.length);
+    zones.splice(CONSOLE_SANDBOX_DROP_ZONES.length);
     selectedId = null;
     emit();
     return getSnapshot();
@@ -407,6 +433,7 @@ export function createConsoleSandboxModel({
   return Object.freeze({
     createInstance,
     addToZone,
+    addZone,
     updateInstance,
     validateDrop,
     dropInstance,
@@ -420,7 +447,7 @@ export function createConsoleSandboxModel({
     setViewport,
     destroy,
     getPalette: () => palette,
-    getDropZones: () => CONSOLE_SANDBOX_DROP_ZONES,
+    getDropZones: () => Object.freeze(zones.map(zone => Object.freeze({ ...zone }))),
     getDefinition: widget => definitionFor(registry, widget),
     getInstance: id => snapshotCard(records.find(item => item.id === id)),
     getSnapshot,

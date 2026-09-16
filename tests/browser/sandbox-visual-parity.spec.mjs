@@ -57,7 +57,7 @@ const SKY_FIXTURES = Object.freeze({
  * checks; it is not a pixel-snapshot baseline.
  */
 const PARITY_MATRIX = Object.freeze([
-  { type: "hero", route: "/", routeRoot: "#console-hero", probe: ".hero-card", routeMode: "horizontal", stylesheets: ["/hero/widget.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"], overflowBaseline: { sandbox: { desktop: { horizontal: 4, vertical: 0 } } } },
+  { type: "hero", route: "/", routeRoot: "#console-hero", probe: ".hero-card", routeMode: "horizontal", stylesheets: ["/hero/widget.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"], overflowBaseline: { sandbox: { desktop: { horizontal: 0, vertical: 0 } } } },
   { type: "astro", route: "/weather/", routeRoot: "#w-astro", probe: ".widget-card", routeMode: "horizontal", stylesheets: ["/weather/assets/weather.css", "/weather/widgets/astro/astro.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"] },
   { type: "sun-moon", route: "/sun/", routeRoot: "#w-sun", probe: ".sunmoon-card", routeMode: "horizontal", stylesheets: ["/weather/assets/weather.css", "/weather/widgets/sun_moon/sun_moon.css"], ownedProperties: ["fontSize", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius", "boxSizing"] },
   { type: "weather", route: "/weather/", routeRoot: "#w-weather", probe: "#poc-weather", routeMode: "horizontal", narrowMode: "vertical", stylesheets: ["/weather/widgets/weather/weather.css"], ownedProperties: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderRadius"] },
@@ -368,7 +368,9 @@ test("Sandbox probes match approved staging route presentation and source contra
         expect(sandboxSignature.probe.width, `${entry.type}: Sandbox probe rendered`).toBeGreaterThan(0);
         expect(routeSignature.probe.width, `${entry.type}: approved route probe rendered`).toBeGreaterThan(0);
         if (entry.type === "sky") {
-          expect(sandboxSignature.probe.width).toBe(sandboxSignature.probe.height);
+          // Browser layout can round the inner probe independently from its
+          // square host by one CSS pixel at fractional grid widths.
+          expect(Math.abs(sandboxSignature.probe.width - sandboxSignature.probe.height), "Sky probe remains square").toBeLessThanOrEqual(1);
         }
         // Compare only properties explicitly owned by the catalog manifest's
         // widget probe. Generic route resets (for example base.css box-sizing)

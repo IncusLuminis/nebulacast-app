@@ -38,6 +38,46 @@ test("Console Sandbox assembles independent Runtime widgets and preserves host l
   await expect(page.locator('link[data-nc-sandbox-stylesheet="alerts"]')).toHaveCount(0);
 });
 
+test("Console Sandbox adds selectable custom areas and places compatible widgets", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  const areas = page.locator('[data-drop-zone]');
+  await expect(areas).toHaveCount(3);
+  await expect(page.locator('[data-sandbox-control="area-mode"]')).toHaveAttribute("aria-label", "New area form factor");
+
+  await page.locator('[data-sandbox-control="area-mode"]').selectOption("vertical");
+  await page.locator('[data-sandbox-action="add-area"]').click();
+  await expect(areas).toHaveCount(4);
+  const custom = page.locator('[data-drop-zone^="custom-vertical-"]').last();
+  await expect(custom).toHaveAttribute("data-drop-mode", "vertical");
+  await expect(custom).toHaveAttribute("aria-label", /selected/);
+
+  await page.locator('[data-sandbox-widget="alerts"]').click();
+  await page.locator('[data-sandbox-action="add"]').click();
+  await expect(custom.locator('[data-role="runtime-root"][data-nc-widget="alerts"]')).toHaveCount(1);
+  await expect(custom.locator('[data-role="runtime-root"]')).toHaveAttribute("data-nc-orientation", "vertical");
+  const verticalGeometry = await custom.evaluate(zone => {
+    const zoneStyle = getComputedStyle(zone);
+    const zoneRect = zone.getBoundingClientRect();
+    const contentRight = zoneRect.left + zone.clientLeft + zone.clientWidth
+      - parseFloat(zoneStyle.paddingRight);
+    const root = zone.querySelector('[data-role="runtime-root"]');
+    const rootRect = root.getBoundingClientRect();
+    return { rootRight: rootRect.right, contentRight, scrollWidth: root.scrollWidth, clientWidth: root.clientWidth };
+  });
+  expect(verticalGeometry.rootRight, "Vertical widget fits its custom area").toBeLessThanOrEqual(verticalGeometry.contentRight + 0.5);
+  expect(verticalGeometry.scrollWidth, "Vertical widget has no horizontal clipping").toBeLessThanOrEqual(verticalGeometry.clientWidth);
+
+  await page.locator('[data-sandbox-control="area-mode"]').selectOption("square");
+  await page.locator('[data-sandbox-action="add-area"]').click();
+  const customSquare = page.locator('[data-drop-zone^="custom-square-"]').last();
+  await page.locator('[data-sandbox-widget="sky"]').click();
+  await page.locator('[data-sandbox-action="add"]').click();
+  await expect(customSquare.locator('[data-role="runtime-root"][data-nc-widget="sky"]')).toHaveCount(1);
+  await expect(page.locator('[data-drop-zone]')).toHaveCount(5);
+  await page.locator('[data-sandbox-action="reset-all"]').click();
+  await expect(page.locator('[data-drop-zone]')).toHaveCount(3);
+});
+
 test("Console Sandbox palette is a deterministic accessible Registry tile grid", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });

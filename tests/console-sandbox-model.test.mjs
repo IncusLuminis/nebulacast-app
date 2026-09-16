@@ -72,6 +72,25 @@ test("Console Sandbox exposes compatible labelled drop zones and converts orient
   assert.deepEqual(model.getSnapshot().zones.find(zone => zone.id === "vertical").instanceIds, [weather.id]);
 });
 
+test("Console Sandbox creates validated custom zones and includes them in snapshots", () => {
+  const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
+  const vertical = model.addZone({ mode: "vertical" });
+  const square = model.addZone({ mode: "square" });
+  assert.match(vertical.id, /^custom-vertical-/);
+  assert.match(square.id, /^custom-square-/);
+  assert.notEqual(vertical.label, square.label);
+  assert.deepEqual(model.getSnapshot().zones.map(zone => zone.id), [
+    "horizontal", "vertical", "square", vertical.id, square.id,
+  ]);
+  const weather = model.addToZone("weather", vertical.id);
+  const sky = model.addToZone("sky", square.id);
+  assert.equal(weather.zoneId, vertical.id);
+  assert.equal(sky.zoneId, square.id);
+  assert.throws(() => model.addZone({ mode: "diagonal" }), /Zone mode/);
+  model.resetAll();
+  assert.deepEqual(model.getSnapshot().zones.map(zone => zone.id), ["horizontal", "vertical", "square"]);
+});
+
 test("Console Sandbox rejects incompatible drops without mutating source state", () => {
   const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
   const sky = model.addToZone("sky", "square");

@@ -157,6 +157,14 @@ export function createConsoleSandbox({
   canvasRegion.setAttribute("aria-label", "Composition canvas");
   const canvasHeader = text(documentRef, "div", "console-sandbox-region-header");
   canvasHeader.appendChild(text(documentRef, "h2", "console-sandbox-heading", "Composition canvas"));
+  const areaControls = text(documentRef, "div", "console-sandbox-area-controls");
+  const areaModeSelect = optionList(documentRef, ["horizontal", "vertical", "square"], "horizontal");
+  areaModeSelect.dataset.sandboxControl = "area-mode";
+  areaModeSelect.setAttribute("aria-label", "New area form factor");
+  areaControls.appendChild(label(documentRef, "New area", areaModeSelect));
+  const addAreaButton = button(documentRef, "Add area", "add-area", "sandbox-button");
+  areaControls.appendChild(addAreaButton);
+  canvasHeader.appendChild(areaControls);
   const viewportSelect = optionList(documentRef, ["desktop", "mobile"], "desktop");
   viewportSelect.dataset.sandboxControl = "viewport";
   viewportSelect.setAttribute("aria-label", "Canvas viewport");
@@ -381,6 +389,10 @@ export function createConsoleSandbox({
     updateActiveZoneUI();
   }
 
+  function ensureActiveZone(state = snapshot()) {
+    if (!state.zones.some(zone => zone.id === activeZoneId)) activeZoneId = state.zones[0]?.id || null;
+  }
+
   function renderInstanceList(state) {
     instanceList.textContent = "";
     if (!state.instances.length) {
@@ -400,6 +412,7 @@ export function createConsoleSandbox({
   }
 
   function renderCanvas(state) {
+    ensureActiveZone(state);
     canvas.dataset.viewport = state.viewport;
     canvas.textContent = "";
     function sizeRuntimeRoot(card, instance) {
@@ -737,6 +750,13 @@ export function createConsoleSandbox({
       const instanceId = action.dataset.sandboxInstance;
       switch (action.dataset.sandboxAction) {
         case "add": if (!addButton.disabled) applyDrop(activeZoneId, palettePayload(selectedWidget)); break;
+        case "add-area": {
+          const zone = model.addZone({ mode: areaModeSelect.value });
+          activeZoneId = zone.id;
+          updateActiveZoneUI();
+          addAreaButton.focus();
+          break;
+        }
         case "palette-select":
           selectedWidget = action.dataset.sandboxWidget;
           renderPaletteDescription();
