@@ -214,6 +214,33 @@ test("Console Sandbox keeps Palette, Inspector, and Composition order with card-
   expect(dimensions.renderedWidth).toBe(Math.round(dimensions.rootWidth));
   expect(dimensions.renderedHeight).toBe(Math.round(dimensions.rootHeight));
 
+  const desktopLayout = await page.locator(".console-sandbox-shell").evaluate(shell => {
+    const rect = node => {
+      const value = node.getBoundingClientRect();
+      return { left: value.left, top: value.top, width: value.width, height: value.height };
+    };
+    return {
+      shell: rect(shell),
+      children: [...shell.children].map(rect),
+      canvasRegion: rect(shell.querySelector(".console-sandbox-canvas-region")),
+      canvas: rect(shell.querySelector('[data-role="canvas"]')),
+    };
+  });
+  expect(desktopLayout.children[0].left).toBeCloseTo(desktopLayout.children[1].left, 0);
+  expect(desktopLayout.children[1].left).toBeCloseTo(desktopLayout.children[2].left, 0);
+  expect(desktopLayout.children[2].left).toBeCloseTo(desktopLayout.children[3].left, 0);
+  expect(desktopLayout.children[0].top).toBeLessThan(desktopLayout.children[1].top);
+  expect(desktopLayout.children[1].top).toBeLessThan(desktopLayout.children[2].top);
+  expect(desktopLayout.children[2].top).toBeLessThan(desktopLayout.children[3].top);
+  const canvasRegionStyle = await page.locator(".console-sandbox-canvas-region").evaluate(region => {
+    const style = getComputedStyle(region);
+    return {
+      contentWidth: region.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+    };
+  });
+  expect(desktopLayout.canvas.width).toBeCloseTo(canvasRegionStyle.contentWidth, 0);
+  expect(desktopLayout.canvas.width).toBeGreaterThan(900);
+
   await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
   await page.locator('[data-sandbox-action="apply"]').click();
   await expect(page.locator('[data-role="inspector-status"]')).toContainText("between 160 and 1600");
@@ -222,6 +249,38 @@ test("Console Sandbox keeps Palette, Inspector, and Composition order with card-
   await page.locator('[data-sandbox-action="apply"]').click();
   await expect(page.locator('[data-role="runtime-root"]')).toHaveAttribute("data-sandbox-unit", "px");
   await expect(page.locator('[data-role="runtime-root"]')).toHaveAttribute("data-sandbox-rendered-width", "600");
+});
+
+test("Console Sandbox keeps the square placeholder and Sky preview geometrically square", async ({ page }) => {
+  const measureSquare = async () => page.locator('[data-drop-zone="square"]').evaluate(zone => {
+    const zoneRect = zone.getBoundingClientRect();
+    const root = zone.querySelector('[data-role="runtime-root"]');
+    const rootRect = root?.getBoundingClientRect() || null;
+    return {
+      zone: { width: zoneRect.width, height: zoneRect.height },
+      root: rootRect && { width: rootRect.width, height: rootRect.height },
+    };
+  });
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  const emptyDesktop = await measureSquare();
+  expect(Math.abs(emptyDesktop.zone.width - emptyDesktop.zone.height), "desktop square placeholder").toBeLessThanOrEqual(0.5);
+
+  await selectWidget(page, "sky");
+  await page.locator('[data-drop-zone="square"]').click();
+  await page.locator('[data-sandbox-action="add"]').click();
+  await expect(page.locator('[data-role="runtime-root"][data-nc-widget="sky"]')).toHaveCount(1);
+  const desktopSky = await measureSquare();
+  expect(desktopSky.root).not.toBeNull();
+  expect(Math.abs(desktopSky.root.width - desktopSky.root.height), "desktop Sky preview").toBeLessThanOrEqual(0.5);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(100);
+  const mobileSky = await measureSquare();
+  expect(Math.abs(mobileSky.zone.width - mobileSky.zone.height), "mobile square placeholder").toBeLessThanOrEqual(0.5);
+  expect(mobileSky.root).not.toBeNull();
+  expect(Math.abs(mobileSky.root.width - mobileSky.root.height), "mobile Sky preview").toBeLessThanOrEqual(0.5);
 });
 
 test("widget presentation styles do not overwrite Sandbox chrome", async ({ page }) => {
@@ -351,6 +410,7 @@ test("Console Sandbox returns focus after remove and reset-all", async ({ page }
 });
 
 test("Console Sandbox moves palette and existing widgets between labelled zones", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
   await selectWidget(page, "weather");
   await page.locator('[data-sandbox-widget="weather"]').dragTo(page.locator('[data-drop-zone="horizontal"]'));
