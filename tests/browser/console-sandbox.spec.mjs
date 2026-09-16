@@ -75,6 +75,79 @@ test("Console Sandbox palette is a deterministic accessible Registry tile grid",
   await expect(tiles.first()).toBeFocused();
 });
 
+test("Console Sandbox uses the full desktop canvas and a bounded mobile phone frame", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  const viewport = page.locator('[data-sandbox-control="viewport"]');
+  await expect(viewport.locator("option")).toHaveText(["desktop", "mobile"]);
+  await expect(viewport).toHaveValue("desktop");
+
+  const desktopGeometry = await page.locator('[data-role="canvas"]').evaluate(canvas => {
+    const region = canvas.closest(".console-sandbox-canvas-region");
+    const regionStyle = getComputedStyle(region);
+    return {
+      canvasWidth: canvas.getBoundingClientRect().width,
+      contentWidth: region.clientWidth - parseFloat(regionStyle.paddingLeft) - parseFloat(regionStyle.paddingRight),
+      maxWidth: getComputedStyle(canvas).maxWidth,
+    };
+  });
+  expect(desktopGeometry.canvasWidth).toBeGreaterThan(600);
+  expect(desktopGeometry.canvasWidth).toBeCloseTo(desktopGeometry.contentWidth, 0);
+  expect(desktopGeometry.maxWidth).toBe("none");
+
+  await viewport.selectOption("mobile");
+  const mobileGeometry = await page.locator('[data-role="canvas"]').evaluate(canvas => {
+    const style = getComputedStyle(canvas);
+    const rect = canvas.getBoundingClientRect();
+    return {
+      width: rect.width,
+      height: rect.height,
+      ratio: rect.width / rect.height,
+      maxWidth: style.maxWidth,
+      borderWidth: style.borderTopWidth,
+      borderRadius: style.borderTopLeftRadius,
+      overflow: style.overflow,
+    };
+  });
+  expect(mobileGeometry.width).toBeLessThanOrEqual(390);
+  expect(mobileGeometry.ratio).toBeCloseTo(9 / 19.5, 2);
+  expect(mobileGeometry.borderWidth).toBe("2px");
+  expect(mobileGeometry.borderRadius).toBe("24px");
+  expect(mobileGeometry.overflow).toBe("auto");
+});
+
+test("Console Sandbox viewport switching preserves instance identity, layout, config, and orientation", async ({ page }) => {
+  await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
+  await selectWidget(page, "weather");
+  await page.locator('[data-drop-zone="horizontal"]').click();
+  await page.locator('[data-sandbox-action="add"]').click();
+  const card = page.locator('article[data-sandbox-instance="console-sandbox-1"]');
+  await page.locator('[data-sandbox-config="profile"]').selectOption("visual");
+  await page.locator('[data-sandbox-layout="unit"]').selectOption("px");
+  await page.locator('[data-sandbox-layout="width"]').fill("640");
+  await page.locator('[data-sandbox-layout="height"]').fill("360");
+  await page.locator('[data-sandbox-action="apply"]').click();
+
+  const before = await card.evaluate(node => ({
+    id: node.dataset.sandboxInstance,
+    meta: node.querySelector(".console-sandbox-card-meta").textContent,
+    profile: document.querySelector('[data-sandbox-config="profile"]').value,
+    mode: document.querySelector('[data-sandbox-layout="mode"]').value,
+    orientation: node.querySelector('[data-role="runtime-root"]').dataset.ncOrientation,
+  }));
+  await page.locator('[data-sandbox-control="viewport"]').selectOption("mobile");
+  await expect(card).toHaveCount(1);
+  await page.locator('[data-sandbox-control="viewport"]').selectOption("desktop");
+  const after = await card.evaluate(node => ({
+    id: node.dataset.sandboxInstance,
+    meta: node.querySelector(".console-sandbox-card-meta").textContent,
+    profile: document.querySelector('[data-sandbox-config="profile"]').value,
+    mode: document.querySelector('[data-sandbox-layout="mode"]').value,
+    orientation: node.querySelector('[data-role="runtime-root"]').dataset.ncOrientation,
+  }));
+  expect(after).toEqual(before);
+});
+
 test("Console Sandbox selects an active compatible placeholder for Add to Canvas", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
   const add = page.locator('[data-sandbox-action="add"]');
@@ -185,7 +258,7 @@ test("widget presentation styles do not overwrite Sandbox chrome", async ({ page
   expect(chromeAfterSky).toEqual(chromeBefore);
 });
 
-test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", async ({ page }) => {
+test("Console Sandbox keeps Sky square-only and exposes desktop/mobile canvas modes", async ({ page }) => {
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
   await selectWidget(page, "sky");
   await page.locator('[data-drop-zone="square"]').click();
@@ -198,11 +271,12 @@ test("Console Sandbox keeps Sky square-only and exposes narrow canvas mode", asy
   await expect(page.locator('[data-sandbox-layout="height"]')).toHaveValue("401");
   await page.locator('[data-sandbox-action="apply"]').click();
   await expect(page.locator('[data-role="inspector-status"]')).toContainText("State: idle");
-  await page.locator('[data-sandbox-control="viewport"]').selectOption("narrow");
-  await expect(page.locator('[data-role="canvas"]')).toHaveAttribute("data-viewport", "narrow");
+  await expect(page.locator('[data-sandbox-control="viewport"] option')).toHaveText(["desktop", "mobile"]);
+  await page.locator('[data-sandbox-control="viewport"]').selectOption("mobile");
+  await expect(page.locator('[data-role="canvas"]')).toHaveAttribute("data-viewport", "mobile");
 });
 
-test("Console Sandbox keeps narrow Sky and oriented previews inside their cards", async ({ page }) => {
+test("Console Sandbox keeps mobile Sky and oriented previews inside their cards", async ({ page }) => {
   await page.route("**/sky/data/alerts_now.json", route => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -224,7 +298,7 @@ test("Console Sandbox keeps narrow Sky and oriented previews inside their cards"
     await page.locator('[data-sandbox-layout="width"]').fill(fixture.width);
     await page.locator('[data-sandbox-layout="height"]').fill(fixture.height);
     await page.locator('[data-sandbox-action="apply"]').click();
-    await page.locator('[data-sandbox-control="viewport"]').selectOption("narrow");
+    await page.locator('[data-sandbox-control="viewport"]').selectOption("mobile");
 
     const geometry = await page.locator(`article[data-sandbox-widget="${fixture.widget}"]`).last().locator('[data-role="runtime-root"]').evaluate(root => {
       const card = root.closest(".console-sandbox-card");
@@ -252,14 +326,14 @@ test("Console Sandbox keeps narrow Sky and oriented previews inside their cards"
       };
     });
 
-    expect(geometry.rootWidth, `${fixture.widget}: narrow root width`).toBeGreaterThan(0);
+    expect(geometry.rootWidth, `${fixture.widget}: mobile root width`).toBeGreaterThan(0);
     expect(geometry.rootRight, `${fixture.widget}: root right edge`).toBeLessThanOrEqual(geometry.cardContentRight + 0.5);
     expect(geometry.rootRight, `${fixture.widget}: canvas right edge`).toBeLessThanOrEqual(geometry.canvasContentRight + 0.5);
-    expect(geometry.rootLeft, `${fixture.widget}: root left edge`).toBeGreaterThanOrEqual(geometry.cardContentLeft - 0.5);
+    expect(geometry.rootLeft, `${fixture.widget}: mobile root left edge`).toBeGreaterThanOrEqual(geometry.cardContentLeft - 0.5);
     expect(geometry.cardScrollWidth, `${fixture.widget}: card horizontal overflow`).toBeLessThanOrEqual(geometry.cardClientWidth);
     expect(geometry.canvasScrollWidth, `${fixture.widget}: canvas horizontal overflow`).toBeLessThanOrEqual(geometry.canvasClientWidth);
-    if (fixture.square) expect(Math.abs(geometry.rootWidth - geometry.rootHeight), "sky: narrow root remains square").toBeLessThanOrEqual(0.5);
-    else expect(await page.locator('[data-sandbox-layout="mode"]').inputValue(), `${fixture.widget}: narrow mode`).toBe("vertical");
+    if (fixture.square) expect(Math.abs(geometry.rootWidth - geometry.rootHeight), "sky: mobile root remains square").toBeLessThanOrEqual(0.5);
+    else expect(await page.locator('[data-sandbox-layout="mode"]').inputValue(), `${fixture.widget}: mobile mode`).toBe("vertical");
 
     await page.locator('[data-sandbox-action="reset-all"]').click();
   }

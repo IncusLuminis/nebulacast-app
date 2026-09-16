@@ -133,14 +133,22 @@ test("Console Sandbox reorders and removes cards with deterministic selection", 
 
 test("Console Sandbox supports viewport/reset lifecycle without persistence", () => {
   const model = createConsoleSandboxModel({ registry: createCatalogRegistry() });
-  assert.deepEqual(CONSOLE_SANDBOX_VIEWPORTS, ["desktop", "narrow"]);
-  model.createInstance({ widget: "alerts" });
-  model.setViewport("narrow");
-  assert.equal(model.getSnapshot().viewport, "narrow");
+  assert.deepEqual(CONSOLE_SANDBOX_VIEWPORTS, ["desktop", "mobile"]);
+  const instance = model.createInstance({
+    widget: "alerts",
+    config: { profile: "visual" },
+    layout: { mode: "vertical", unit: "px", width: 320, height: 640 },
+  });
+  const before = model.getSnapshot();
+  model.setViewport("mobile");
+  const after = model.getSnapshot();
+  assert.equal(after.viewport, "mobile");
+  assert.deepEqual(after.instances, before.instances);
+  assert.equal(after.selectedId, instance.id);
   model.resetAll();
   assert.equal(model.getSnapshot().instances.length, 0);
   assert.equal(model.getSnapshot().selectedId, null);
-  assert.throws(() => model.setViewport("tablet"), /Viewport/);
+  assert.throws(() => model.setViewport("narrow"), /Viewport/);
   model.destroy();
   assert.throws(() => model.createInstance({ widget: "alerts" }), /destroyed/);
 });

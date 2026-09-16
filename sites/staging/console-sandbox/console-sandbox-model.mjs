@@ -4,7 +4,7 @@ import {
   validateWidgetLabLayout,
 } from "../showcase/widget-lab-model.mjs";
 
-export const CONSOLE_SANDBOX_VIEWPORTS = Object.freeze(["desktop", "narrow"]);
+export const CONSOLE_SANDBOX_VIEWPORTS = Object.freeze(["desktop", "mobile"]);
 export const CONSOLE_SANDBOX_DEFAULT_VIEWPORT = "desktop";
 export const CONSOLE_SANDBOX_LAYOUT_UNITS = Object.freeze(["percent", "px"]);
 export const CONSOLE_SANDBOX_DEFAULT_LAYOUT_UNIT = "percent";

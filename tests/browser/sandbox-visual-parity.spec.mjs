@@ -203,7 +203,7 @@ function assertOverflowBaseline(signature, entry, viewport, surface = "sandbox")
   }
 }
 
-async function assertNarrowRootFitsCard(root, entry) {
+async function assertMobileRootFitsCard(root, entry) {
   const geometry = await root.evaluate(element => {
     const card = element.closest(".console-sandbox-card");
     const canvas = element.closest(".console-sandbox-canvas");
@@ -226,13 +226,13 @@ async function assertNarrowRootFitsCard(root, entry) {
       canvasClientWidth: canvas.clientWidth,
     };
   });
-  expect(geometry.rootWidth, `${entry.type}: narrow root rendered`).toBeGreaterThan(0);
-  expect(geometry.rootRight, `${entry.type}: narrow root fits card`).toBeLessThanOrEqual(geometry.cardContentRight + 0.5);
-  expect(geometry.rootRight, `${entry.type}: narrow root fits canvas`).toBeLessThanOrEqual(geometry.canvasContentRight + 0.5);
-  expect(geometry.rootLeft, `${entry.type}: narrow root starts inside card`).toBeGreaterThanOrEqual(geometry.cardContentLeft - 0.5);
-  expect(geometry.cardScrollWidth, `${entry.type}: narrow card horizontal overflow`).toBeLessThanOrEqual(geometry.cardClientWidth);
-  expect(geometry.canvasScrollWidth, `${entry.type}: narrow canvas horizontal overflow`).toBeLessThanOrEqual(geometry.canvasClientWidth);
-  if (entry.type === "sky") expect(Math.abs(geometry.rootWidth - geometry.rootHeight), "sky: narrow root remains square").toBeLessThanOrEqual(0.5);
+  expect(geometry.rootWidth, `${entry.type}: mobile root rendered`).toBeGreaterThan(0);
+  expect(geometry.rootRight, `${entry.type}: mobile root fits card`).toBeLessThanOrEqual(geometry.cardContentRight + 0.5);
+  expect(geometry.rootRight, `${entry.type}: mobile root fits canvas`).toBeLessThanOrEqual(geometry.canvasContentRight + 0.5);
+  expect(geometry.rootLeft, `${entry.type}: mobile root starts inside card`).toBeGreaterThanOrEqual(geometry.cardContentLeft - 0.5);
+  expect(geometry.cardScrollWidth, `${entry.type}: mobile card horizontal overflow`).toBeLessThanOrEqual(geometry.cardClientWidth);
+  expect(geometry.canvasScrollWidth, `${entry.type}: mobile canvas horizontal overflow`).toBeLessThanOrEqual(geometry.canvasClientWidth);
+  if (entry.type === "sky") expect(Math.abs(geometry.rootWidth - geometry.rootHeight), "sky: mobile root remains square").toBeLessThanOrEqual(0.5);
 }
 
 async function exposeRouteRoot(root) {
@@ -308,30 +308,30 @@ test("Sandbox visual parity gate covers every Registry entry and stylesheet mani
   await assertNoDiagnostics(page, diagnostics, "Sandbox desktop catalog matrix");
 });
 
-test("Sandbox narrow parity keeps oriented modes, Sky square-only, and no page overflow", async ({ page }) => {
+test("Sandbox mobile parity keeps oriented modes, Sky square-only, and no page overflow", async ({ page }) => {
   const diagnostics = diagnosticsFor(page);
   await installParityFixtures(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/console-sandbox/", { waitUntil: "domcontentloaded" });
-  await page.locator('[data-sandbox-control="viewport"]').selectOption("narrow");
+  await page.locator('[data-sandbox-control="viewport"]').selectOption("mobile");
 
   for (const entry of PARITY_MATRIX) {
     const { root } = await addSandboxWidget(page, entry, entry.narrowMode || (entry.type === "sky" ? "square" : "vertical"));
     const signature = await presentationSignature(root, entry.probe);
-    expect(signature.probe.width, `${entry.type}: narrow probe width`).toBeGreaterThan(0);
-    expect(signature.probe.height, `${entry.type}: narrow probe height`).toBeGreaterThan(0);
+    expect(signature.probe.width, `${entry.type}: mobile probe width`).toBeGreaterThan(0);
+    expect(signature.probe.height, `${entry.type}: mobile probe height`).toBeGreaterThan(0);
     const pageGeometry = await page.evaluate(() => ({ clientWidth: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth }));
-    expect(pageGeometry.scrollWidth, `${entry.type}: narrow page horizontal overflow`).toBeLessThanOrEqual(pageGeometry.clientWidth);
-    assertOverflowBaseline(signature, entry, "narrow");
+    expect(pageGeometry.scrollWidth, `${entry.type}: mobile page horizontal overflow`).toBeLessThanOrEqual(pageGeometry.clientWidth);
+    assertOverflowBaseline(signature, entry, "mobile");
     if (entry.type === "sky") {
       const size = await root.evaluate(element => ({ width: element.clientWidth, height: element.clientHeight }));
       expect(size.width).toBe(size.height);
       expect(size.width).toBeGreaterThan(0);
     }
-    await assertNarrowRootFitsCard(root, entry);
+    await assertMobileRootFitsCard(root, entry);
     await page.locator('[data-sandbox-action="reset-all"]').click();
   }
-  await assertNoDiagnostics(page, diagnostics, "Sandbox narrow catalog matrix");
+  await assertNoDiagnostics(page, diagnostics, "Sandbox mobile catalog matrix");
 });
 
 test("Sandbox probes match approved staging route presentation and source contract", async ({ browser }) => {

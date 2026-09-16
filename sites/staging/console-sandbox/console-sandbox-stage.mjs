@@ -151,7 +151,7 @@ export function createConsoleSandbox({
   canvasRegion.setAttribute("aria-label", "Composition canvas");
   const canvasHeader = text(documentRef, "div", "console-sandbox-region-header");
   canvasHeader.appendChild(text(documentRef, "h2", "console-sandbox-heading", "Composition canvas"));
-  const viewportSelect = optionList(documentRef, ["desktop", "narrow"], "desktop");
+  const viewportSelect = optionList(documentRef, ["desktop", "mobile"], "desktop");
   viewportSelect.dataset.sandboxControl = "viewport";
   viewportSelect.setAttribute("aria-label", "Canvas viewport");
   viewportSelect.addEventListener("change", () => model.setViewport(viewportSelect.value));
