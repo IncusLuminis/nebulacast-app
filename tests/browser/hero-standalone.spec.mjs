@@ -19,6 +19,39 @@ for (const orientation of ["horizontal", "vertical"]) {
     expect(bounds.cardHeight).toBeGreaterThan(0);
     if (orientation === "horizontal") {
       await expect(hero.locator('.hero-card[data-panel="weather"] .pressure')).toHaveText(/\d|—/);
+      const typography = await hero.evaluate(element => {
+        const style = selector => getComputedStyle(element.querySelector(selector));
+        const chips = element.querySelector(".hero-weather-chips");
+        const windowTime = element.querySelector(".window-time");
+        const prefix = element.querySelector(".window-prefix").getBoundingClientRect();
+        const range = element.querySelector(".window-range").getBoundingClientRect();
+        return {
+          date: style('[data-role="clock-date"]').fontSize,
+          time: style('[data-role="clock-time"]').fontSize,
+          nqi: style('.nqi-value').fontSize,
+          nqiLabel: style('.nqi-label').fontSize,
+          windowRange: style('.window-range').fontSize,
+          kpValues: Array.from(element.querySelectorAll('.kp-value'), value => getComputedStyle(value).fontSize),
+          scale: style('.nop-scale-badge'),
+          chips: chips && { flexDirection: getComputedStyle(chips).flexDirection, flexWrap: getComputedStyle(chips).flexWrap },
+          windowWhiteSpace: windowTime && getComputedStyle(windowTime).whiteSpace,
+          windowOnOneLine: Math.abs(prefix.top - range.top) <= 3,
+          helioAlignment: Array.from(element.querySelectorAll('.hero-card[data-panel="helio"] .hero-card-body'), body => getComputedStyle(body).textAlign),
+        };
+      });
+      expect(parseFloat(typography.date)).toBeGreaterThanOrEqual(28);
+      expect(parseFloat(typography.time)).toBeGreaterThanOrEqual(50);
+      expect(parseFloat(typography.nqi)).toBeGreaterThanOrEqual(80);
+      expect(parseFloat(typography.nqiLabel)).toBeGreaterThanOrEqual(18);
+      expect(parseFloat(typography.windowRange)).toBeLessThanOrEqual(16);
+      expect(typography.kpValues.every(size => parseFloat(size) >= 48)).toBe(true);
+      expect(parseFloat(typography.scale.fontSize)).toBeGreaterThanOrEqual(13);
+      expect(parseFloat(typography.scale.paddingTop)).toBeGreaterThanOrEqual(5);
+      expect(parseFloat(typography.scale.paddingLeft)).toBeGreaterThanOrEqual(10);
+      expect(typography.chips).toEqual({ flexDirection: "row", flexWrap: "nowrap" });
+      expect(typography.windowWhiteSpace).toBe("nowrap");
+      expect(typography.windowOnOneLine).toBe(true);
+      expect(typography.helioAlignment).toEqual(["center", "center"]);
     }
     if (orientation === "vertical") {
       const layout = await hero.locator(".hero-card").evaluateAll(elements => Object.fromEntries(elements.map(element => {

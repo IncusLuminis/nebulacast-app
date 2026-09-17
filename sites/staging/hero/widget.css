@@ -86,6 +86,55 @@
 .nc-widget[data-nc-widget="hero"] .sw-badge.storm, .nc-hero .sw-badge.storm { background:rgba(244,67,54,.15); color:#f44336; }
 .nc-widget[data-nc-widget="hero"] .sw-badge::before, .nc-hero .sw-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
 
+/* Horizontal Hero uses the same approved infographic typography while keeping
+   its cards and inline weather/window content in one horizontal strip. */
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
+  min-height: 150px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] {
+  font-size: 30px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-time"] {
+  font-size: 54px;
+  line-height: .95;
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value {
+  font-size: 84px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value span {
+  font-size: 28px;
+  letter-spacing: -.02em;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-label {
+  font-size: 18px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-prefix,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range {
+  display: inline;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-time {
+  white-space: nowrap;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range {
+  font-size: 16px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .hero-card-body {
+  align-items: center;
+  text-align: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .kp-value {
+  font-size: 48px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .nop-scales {
+  justify-content: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-scale-badge {
+  font-size: 13px;
+  padding: 5px 10px;
+}
+
 /* Portrait Hero is a two-column dashboard, not a squeezed horizontal strip. */
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-row {
   flex: 1;
