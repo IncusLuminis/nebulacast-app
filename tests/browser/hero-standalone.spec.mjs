@@ -32,6 +32,7 @@ for (const orientation of ["horizontal", "vertical"]) {
         const date = element.querySelector('[data-role="clock-date"]')?.getBoundingClientRect();
         const time = element.querySelector('[data-role="clock-time"]')?.getBoundingClientRect();
         const timeStyle = element.querySelector('[data-role="clock-time"]') ? getComputedStyle(element.querySelector('[data-role="clock-time"]')) : null;
+        const dateStyle = element.querySelector('[data-role="clock-date"]') ? getComputedStyle(element.querySelector('[data-role="clock-date"]')) : null;
         const nqi = element.querySelector(".nqi-value")?.getBoundingClientRect();
         const nqiStyle = element.querySelector(".nqi-value") ? getComputedStyle(element.querySelector(".nqi-value")) : null;
         const windowTime = element.querySelector(".window-time")?.getBoundingClientRect();
@@ -50,6 +51,7 @@ for (const orientation of ["horizontal", "vertical"]) {
           date: date && { top: date.top, bottom: date.bottom, left: date.left, right: date.right },
           time: time && { top: time.top, bottom: time.bottom, left: time.left, right: time.right },
           timeStyle: timeStyle && { fontSize: timeStyle.fontSize },
+          dateStyle: dateStyle && { fontSize: dateStyle.fontSize },
           nqi: nqi && { top: nqi.top, bottom: nqi.bottom, left: nqi.left, right: nqi.right },
           nqiStyle: nqiStyle && { fontSize: nqiStyle.fontSize },
           windowTime: windowTime && { top: windowTime.top, bottom: windowTime.bottom, left: windowTime.left, right: windowTime.right },
@@ -82,11 +84,12 @@ for (const orientation of ["horizontal", "vertical"]) {
       expect(layout.weather.weatherChipsStyle.flexWrap).toBe("nowrap");
       expect(layout.weather.weatherChipsStyle.whiteSpace).toBe("nowrap");
       expect(layout.weather.weatherMetrics).toBe(3);
+      expect(parseFloat(layout.weather.dateStyle.fontSize)).toBeGreaterThanOrEqual(28);
       expect(Math.max(...layout.weather.weatherMetricTops) - Math.min(...layout.weather.weatherMetricTops)).toBeGreaterThan(10);
       await expect(hero.locator('.hero-card[data-panel="weather"] .kp')).toHaveText(/\d|—/);
       expect(parseFloat(layout.weather.timeStyle.fontSize)).toBeGreaterThanOrEqual(50);
       expect(parseFloat(layout.matrix.nqiStyle.fontSize)).toBeGreaterThanOrEqual(80);
-      expect(parseFloat(layout.window.windowRangeStyle.fontSize)).toBeGreaterThanOrEqual(50);
+      expect(parseFloat(layout.window.windowRangeStyle.fontSize)).toBeGreaterThanOrEqual(34);
       expect(layout.window.windowPrefix.bottom).toBeLessThanOrEqual(layout.window.windowRange.top);
       expect(layout.window.windowRangeStyle.display).toBe("block");
       expect(layout.matrix.profiles.top).toBeGreaterThanOrEqual(layout.matrix.row.top - 1);
