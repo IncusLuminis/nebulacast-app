@@ -31,7 +31,13 @@ for (const orientation of ["horizontal", "vertical"]) {
         const weatherMetricTops = Array.from(element.querySelectorAll(".hero-weather-chips .metric"), metric => metric.getBoundingClientRect().top);
         const date = element.querySelector('[data-role="clock-date"]')?.getBoundingClientRect();
         const time = element.querySelector('[data-role="clock-time"]')?.getBoundingClientRect();
+        const timeStyle = element.querySelector('[data-role="clock-time"]') ? getComputedStyle(element.querySelector('[data-role="clock-time"]')) : null;
+        const nqi = element.querySelector(".nqi-value")?.getBoundingClientRect();
+        const nqiStyle = element.querySelector(".nqi-value") ? getComputedStyle(element.querySelector(".nqi-value")) : null;
         const windowTime = element.querySelector(".window-time")?.getBoundingClientRect();
+        const windowPrefix = element.querySelector(".window-prefix")?.getBoundingClientRect();
+        const windowRange = element.querySelector(".window-range")?.getBoundingClientRect();
+        const windowRangeStyle = element.querySelector(".window-range") ? getComputedStyle(element.querySelector(".window-range")) : null;
         const summary = element.querySelector(".nop-summary-text")?.getBoundingClientRect();
         return [element.dataset.panel, {
           top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right,
@@ -43,7 +49,13 @@ for (const orientation of ["horizontal", "vertical"]) {
           weatherMetricTops,
           date: date && { top: date.top, bottom: date.bottom, left: date.left, right: date.right },
           time: time && { top: time.top, bottom: time.bottom, left: time.left, right: time.right },
+          timeStyle: timeStyle && { fontSize: timeStyle.fontSize },
+          nqi: nqi && { top: nqi.top, bottom: nqi.bottom, left: nqi.left, right: nqi.right },
+          nqiStyle: nqiStyle && { fontSize: nqiStyle.fontSize },
           windowTime: windowTime && { top: windowTime.top, bottom: windowTime.bottom, left: windowTime.left, right: windowTime.right },
+          windowPrefix: windowPrefix && { top: windowPrefix.top, bottom: windowPrefix.bottom },
+          windowRange: windowRange && { top: windowRange.top, bottom: windowRange.bottom, left: windowRange.left, right: windowRange.right },
+          windowRangeStyle: windowRangeStyle && { fontSize: windowRangeStyle.fontSize, display: windowRangeStyle.display },
           summary: summary && { top: summary.top, bottom: summary.bottom, left: summary.left, right: summary.right },
         }];
       })));
@@ -66,12 +78,17 @@ for (const orientation of ["horizontal", "vertical"]) {
       expect(helioCards[0].right).toBeLessThanOrEqual(helioCards[1].left + 2);
       expect(layout.weather.date.bottom).toBeLessThanOrEqual(layout.weather.time.top + 2);
       expect(layout.weather.weatherChips.left).toBeGreaterThanOrEqual(layout.weather.date.right - 2);
-      expect(layout.weather.weatherChipsStyle.flexDirection).toBe("row");
+      expect(layout.weather.weatherChipsStyle.flexDirection).toBe("column");
       expect(layout.weather.weatherChipsStyle.flexWrap).toBe("nowrap");
       expect(layout.weather.weatherChipsStyle.whiteSpace).toBe("nowrap");
       expect(layout.weather.weatherMetrics).toBe(3);
-      expect(Math.max(...layout.weather.weatherMetricTops) - Math.min(...layout.weather.weatherMetricTops)).toBeLessThanOrEqual(3);
+      expect(Math.max(...layout.weather.weatherMetricTops) - Math.min(...layout.weather.weatherMetricTops)).toBeGreaterThan(10);
       await expect(hero.locator('.hero-card[data-panel="weather"] .kp')).toHaveText(/\d|—/);
+      expect(parseFloat(layout.weather.timeStyle.fontSize)).toBeGreaterThanOrEqual(50);
+      expect(parseFloat(layout.matrix.nqiStyle.fontSize)).toBeGreaterThanOrEqual(80);
+      expect(parseFloat(layout.window.windowRangeStyle.fontSize)).toBeGreaterThanOrEqual(50);
+      expect(layout.window.windowPrefix.bottom).toBeLessThanOrEqual(layout.window.windowRange.top);
+      expect(layout.window.windowRangeStyle.display).toBe("block");
       expect(layout.matrix.profiles.top).toBeGreaterThanOrEqual(layout.matrix.row.top - 1);
       expect(layout.matrix.profiles.bottom).toBeLessThanOrEqual(layout.matrix.row.bottom + 1);
       expect(layout.window.windowTime.right).toBeLessThanOrEqual(layout.window.summary.left + 2);

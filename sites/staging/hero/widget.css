@@ -174,12 +174,42 @@
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] .hero-weather-chips {
     grid-column: 2;
     grid-row: 1 / -1;
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: nowrap;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: center;
     white-space: nowrap;
-    gap: 4px;
+    gap: 7px;
     margin-top: 0;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] .hero-weather-chips .metric {
+    font-size: 16px;
+    gap: 5px;
+  }
+
+  /* Portrait infographic values: keep the key numbers readable at a glance. */
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] [data-role="clock-time"],
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-value,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-range {
+    font-size: 54px;
+    line-height: .95;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-value span {
+    font-size: 28px;
+    letter-spacing: -.02em;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-value {
+    font-size: 84px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-prefix,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-range {
+    display: block;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-prefix {
+    margin-bottom: 8px;
   }
 
   /* Night Quality: score left, all four profiles in one vertical rail right. */
@@ -206,8 +236,9 @@
     grid-column: 1;
     grid-row: 2;
     align-self: center;
-    font-size: 18px;
-    line-height: 1.25;
+    font-size: 54px;
+    line-height: .95;
+    letter-spacing: -.04em;
     font-variant-numeric: tabular-nums;
   }
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .nop-summary-text {
