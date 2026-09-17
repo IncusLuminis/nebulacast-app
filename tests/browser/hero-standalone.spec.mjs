@@ -86,6 +86,7 @@ for (const orientation of ["horizontal", "vertical"]) {
       expect(layout.weather.weatherMetrics).toBe(3);
       expect(parseFloat(layout.weather.dateStyle.fontSize)).toBeGreaterThanOrEqual(28);
       expect(Math.max(...layout.weather.weatherMetricTops) - Math.min(...layout.weather.weatherMetricTops)).toBeGreaterThan(10);
+      await expect(hero.locator('.hero-card[data-panel="weather"] .cloud-icon')).toContainText("☁");
       await expect(hero.locator('.hero-card[data-panel="weather"] .kp')).toHaveText(/\d|—/);
       expect(parseFloat(layout.weather.timeStyle.fontSize)).toBeGreaterThanOrEqual(50);
       expect(parseFloat(layout.matrix.nqiStyle.fontSize)).toBeGreaterThanOrEqual(80);
