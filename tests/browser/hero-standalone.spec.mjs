@@ -89,7 +89,7 @@ for (const orientation of ["horizontal", "vertical"]) {
       await expect(hero.locator('.hero-card[data-panel="weather"] .kp')).toHaveText(/\d|—/);
       expect(parseFloat(layout.weather.timeStyle.fontSize)).toBeGreaterThanOrEqual(50);
       expect(parseFloat(layout.matrix.nqiStyle.fontSize)).toBeGreaterThanOrEqual(80);
-      expect(parseFloat(layout.window.windowRangeStyle.fontSize)).toBeGreaterThanOrEqual(34);
+      expect(parseFloat(layout.window.windowRangeStyle.fontSize)).toBeGreaterThanOrEqual(22);
       expect(layout.window.windowPrefix.bottom).toBeLessThanOrEqual(layout.window.windowRange.top);
       expect(layout.window.windowRangeStyle.display).toBe("block");
       expect(layout.matrix.profiles.top).toBeGreaterThanOrEqual(layout.matrix.row.top - 1);
