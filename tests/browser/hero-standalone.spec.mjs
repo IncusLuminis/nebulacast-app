@@ -7,6 +7,7 @@ for (const orientation of ["horizontal", "vertical"]) {
     await expect(hero).toHaveAttribute("data-nc-widget", "hero");
     await expect(hero).toHaveAttribute("data-nc-orientation", orientation);
     await expect(hero.locator(".hero-card").first()).toBeVisible();
+    await expect(hero.locator('[data-role="clock-date"]')).toBeVisible({ timeout: 15_000 });
     const bounds = await hero.evaluate(element => {
       const root = element.getBoundingClientRect();
       const card = element.querySelector(".hero-card")?.getBoundingClientRect();
@@ -17,25 +18,48 @@ for (const orientation of ["horizontal", "vertical"]) {
     expect(bounds.cardWidth).toBeGreaterThan(0);
     expect(bounds.cardHeight).toBeGreaterThan(0);
     if (orientation === "vertical") {
-      const cards = await hero.locator(".hero-card").evaluateAll(elements => elements.map(element => {
+      const layout = await hero.locator(".hero-card").evaluateAll(elements => Object.fromEntries(elements.map(element => {
         const rect = element.getBoundingClientRect();
         const row = element.querySelector(".hero-card-row")?.getBoundingClientRect();
         const profiles = element.querySelector(".nop-profiles")?.getBoundingClientRect();
-        const rowChildren = [...(element.querySelectorAll(".hero-card-row > *") || [])].map(child => child.getBoundingClientRect());
-        return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, rowWidth: row?.width || 0, profilesWidth: profiles?.width || 0, rowChildren };
-      }));
-      expect(cards.length).toBeGreaterThan(1);
-      for (let index = 1; index < cards.length; index += 1) {
-        expect(cards[index].top).toBeGreaterThanOrEqual(cards[index - 1].bottom - 1);
-        expect(cards[index].left).toBeGreaterThanOrEqual(cards[0].left);
-        expect(cards[index].right).toBeLessThanOrEqual(bounds.rootRight + 1);
+        const weatherChips = element.querySelector(".hero-weather-chips")?.getBoundingClientRect();
+        const date = element.querySelector('[data-role="clock-date"]')?.getBoundingClientRect();
+        const time = element.querySelector('[data-role="clock-time"]')?.getBoundingClientRect();
+        const windowTime = element.querySelector(".window-time")?.getBoundingClientRect();
+        const summary = element.querySelector(".nop-summary-text")?.getBoundingClientRect();
+        return [element.dataset.panel, {
+          top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right,
+          row: row && { top: row.top, bottom: row.bottom, left: row.left, right: row.right },
+          profiles: profiles && { top: profiles.top, bottom: profiles.bottom, left: profiles.left, right: profiles.right },
+          weatherChips: weatherChips && { top: weatherChips.top, bottom: weatherChips.bottom, left: weatherChips.left, right: weatherChips.right },
+          date: date && { top: date.top, bottom: date.bottom, left: date.left, right: date.right },
+          time: time && { top: time.top, bottom: time.bottom, left: time.left, right: time.right },
+          windowTime: windowTime && { top: windowTime.top, bottom: windowTime.bottom, left: windowTime.left, right: windowTime.right },
+          summary: summary && { top: summary.top, bottom: summary.bottom, left: summary.left, right: summary.right },
+        }];
+      })));
+      for (const panel of ["weather", "matrix", "window"]) {
+        expect(layout[panel].left).toBeGreaterThanOrEqual(bounds.rootLeft - 1);
+        expect(layout[panel].right).toBeLessThanOrEqual(bounds.rootRight + 1);
+        expect(layout[panel].right - layout[panel].left).toBeGreaterThan(bounds.rootWidth - 25);
       }
-      const matrix = cards.find(card => card.rowWidth > 0);
-      expect(matrix).toBeTruthy();
-      expect(matrix.rowWidth).toBeGreaterThan(0);
-      expect(matrix.profilesWidth).toBeGreaterThan(0);
-      expect(matrix.rowChildren.length).toBeGreaterThan(1);
-      expect(matrix.rowChildren[1].top).toBeGreaterThanOrEqual(matrix.rowChildren[0].bottom - 1);
+      expect(layout.sunmoon.top).toBeGreaterThanOrEqual(layout.window.bottom - 1);
+      expect(layout.solar.top).toBeGreaterThanOrEqual(layout.window.bottom - 1);
+      expect(Math.abs(layout.sunmoon.top - layout.solar.top)).toBeLessThanOrEqual(1);
+      expect(layout.sunmoon.right).toBeLessThanOrEqual(layout.solar.left + 2);
+      expect(layout.helio.top).toBeGreaterThanOrEqual(layout.sunmoon.bottom - 1);
+      const helioCards = await hero.locator('.hero-card[data-panel="helio"]').evaluateAll(elements => elements.map(element => {
+        const rect = element.getBoundingClientRect();
+        return { top: rect.top, left: rect.left, right: rect.right };
+      }));
+      expect(helioCards).toHaveLength(2);
+      expect(Math.abs(helioCards[0].top - helioCards[1].top)).toBeLessThanOrEqual(1);
+      expect(helioCards[0].right).toBeLessThanOrEqual(helioCards[1].left + 2);
+      expect(layout.weather.date.bottom).toBeLessThanOrEqual(layout.weather.time.top + 2);
+      expect(layout.weather.weatherChips.left).toBeGreaterThanOrEqual(layout.weather.date.right - 2);
+      expect(layout.matrix.profiles.top).toBeGreaterThanOrEqual(layout.matrix.row.top - 1);
+      expect(layout.matrix.profiles.bottom).toBeLessThanOrEqual(layout.matrix.row.bottom + 1);
+      expect(layout.window.windowTime.right).toBeLessThanOrEqual(layout.window.summary.left + 2);
       expect(await hero.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     }
   });
