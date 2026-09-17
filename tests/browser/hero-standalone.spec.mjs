@@ -73,11 +73,14 @@ for (const orientation of ["horizontal", "vertical"]) {
       expect(layout.helio.top).toBeGreaterThanOrEqual(layout.sunmoon.bottom - 1);
       const helioCards = await hero.locator('.hero-card[data-panel="helio"]').evaluateAll(elements => elements.map(element => {
         const rect = element.getBoundingClientRect();
-        return { top: rect.top, left: rect.left, right: rect.right };
+        const kpValue = element.querySelector(".kp-value");
+        const kpValueStyle = kpValue ? getComputedStyle(kpValue) : null;
+        return { top: rect.top, left: rect.left, right: rect.right, kpValueFontSize: kpValueStyle?.fontSize };
       }));
       expect(helioCards).toHaveLength(2);
       expect(Math.abs(helioCards[0].top - helioCards[1].top)).toBeLessThanOrEqual(1);
       expect(helioCards[0].right).toBeLessThanOrEqual(helioCards[1].left + 2);
+      for (const card of helioCards) expect(parseFloat(card.kpValueFontSize)).toBeGreaterThanOrEqual(48);
       expect(layout.weather.date.bottom).toBeLessThanOrEqual(layout.weather.time.top + 2);
       expect(layout.weather.weatherChips.left).toBeGreaterThanOrEqual(layout.weather.date.right - 2);
       expect(layout.weather.weatherChipsStyle.flexDirection).toBe("column");
