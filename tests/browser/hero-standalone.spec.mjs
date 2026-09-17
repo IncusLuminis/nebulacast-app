@@ -35,6 +35,7 @@ for (const orientation of ["horizontal", "vertical"]) {
         const dateStyle = element.querySelector('[data-role="clock-date"]') ? getComputedStyle(element.querySelector('[data-role="clock-date"]')) : null;
         const nqi = element.querySelector(".nqi-value")?.getBoundingClientRect();
         const nqiStyle = element.querySelector(".nqi-value") ? getComputedStyle(element.querySelector(".nqi-value")) : null;
+        const nqiLabelStyle = element.querySelector(".nqi-label") ? getComputedStyle(element.querySelector(".nqi-label")) : null;
         const windowTime = element.querySelector(".window-time")?.getBoundingClientRect();
         const windowPrefix = element.querySelector(".window-prefix")?.getBoundingClientRect();
         const windowRange = element.querySelector(".window-range")?.getBoundingClientRect();
@@ -54,6 +55,7 @@ for (const orientation of ["horizontal", "vertical"]) {
           dateStyle: dateStyle && { fontSize: dateStyle.fontSize },
           nqi: nqi && { top: nqi.top, bottom: nqi.bottom, left: nqi.left, right: nqi.right },
           nqiStyle: nqiStyle && { fontSize: nqiStyle.fontSize },
+          nqiLabelStyle: nqiLabelStyle && { fontSize: nqiLabelStyle.fontSize },
           windowTime: windowTime && { top: windowTime.top, bottom: windowTime.bottom, left: windowTime.left, right: windowTime.right },
           windowPrefix: windowPrefix && { top: windowPrefix.top, bottom: windowPrefix.bottom },
           windowRange: windowRange && { top: windowRange.top, bottom: windowRange.bottom, left: windowRange.left, right: windowRange.right },
@@ -104,7 +106,8 @@ for (const orientation of ["horizontal", "vertical"]) {
       await expect(hero.locator('.hero-card[data-panel="weather"] .kp')).toHaveText(/\d|—/);
       expect(parseFloat(layout.weather.timeStyle.fontSize)).toBeGreaterThanOrEqual(50);
       expect(parseFloat(layout.matrix.nqiStyle.fontSize)).toBeGreaterThanOrEqual(80);
-      expect(parseFloat(layout.window.windowRangeStyle.fontSize)).toBeGreaterThanOrEqual(22);
+      expect(parseFloat(layout.matrix.nqiLabelStyle.fontSize)).toBeGreaterThanOrEqual(18);
+      expect(parseFloat(layout.window.windowRangeStyle.fontSize)).toBeLessThanOrEqual(16);
       expect(layout.window.windowPrefix.bottom).toBeLessThanOrEqual(layout.window.windowRange.top);
       expect(layout.window.windowRangeStyle.display).toBe("block");
       expect(layout.matrix.profiles.top).toBeGreaterThanOrEqual(layout.matrix.row.top - 1);

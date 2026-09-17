@@ -207,6 +207,9 @@
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-value {
     font-size: 84px;
   }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-label {
+    font-size: 18px;
+  }
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .kp-value {
     font-size: 48px;
   }
@@ -242,10 +245,13 @@
     grid-column: 1;
     grid-row: 2;
     align-self: center;
-    font-size: 24px;
+    font-size: 16px;
     line-height: .95;
     letter-spacing: -.04em;
     font-variant-numeric: tabular-nums;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-range {
+    font-size: 16px;
   }
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .nop-summary-text {
     grid-column: 2;
