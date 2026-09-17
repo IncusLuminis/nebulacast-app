@@ -6,11 +6,16 @@
   <title>Nebulacast — Sun & Moon</title>
   <link rel="stylesheet" href="/weather/assets/weather.css">
   <link rel="stylesheet" href="/weather/widgets/sun_moon/sun_moon.css">
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0b0d12; }
+    .sun-page-shell { width: 100%; height: 100%; min-height: 0; padding: 12px; }
+    #w-sun { width: 100%; height: 100%; min-height: 0; }
+  </style>
 </head>
 <body>
-  <div style="max-width:640px;margin:0 auto;padding:16px 12px 40px;background:#0b0d12;min-height:100vh;">
+  <main class="sun-page-shell">
     <div id="w-sun"></div>
-  </div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
   <script type="module">

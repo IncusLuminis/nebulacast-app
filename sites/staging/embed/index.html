@@ -111,6 +111,15 @@
     .ctrl-input::-webkit-inner-spin-button,
     .ctrl-input::-webkit-outer-spin-button { -webkit-appearance: none; }
     .ctrl-input:focus { outline: none; border-color: var(--accent); }
+    .ctrl-select {
+      padding: 4px 7px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+    }
     .ctrl-unit {
       display: flex;
       border: 1px solid var(--line);
@@ -348,6 +357,13 @@
         <button class="ctrl-unit-btn" id="h-pct" onclick="setUnit('h','%')">%</button>
       </div>
     </div>
+    <div class="ctrl-group" id="hero-orientation-control" hidden>
+      <label class="ctrl-label" for="hero-orientation">Orientation</label>
+      <select class="ctrl-select" id="hero-orientation" aria-label="Hero orientation">
+        <option value="horizontal">Horizontal</option>
+        <option value="vertical">Vertical</option>
+      </select>
+    </div>
     <div class="ctrl-sep"></div>
     <div class="ctrl-presets">
       <span class="ctrl-label">Presets</span>
@@ -417,6 +433,20 @@
   }
   document.getElementById('host-wrap').style.display = '';
   document.getElementById('embed-iframe').src = src;
+  var heroOrientationControl = document.getElementById('hero-orientation-control');
+  var heroOrientation = document.getElementById('hero-orientation');
+  if (src.indexOf('/hero/') === 0) {
+    heroOrientationControl.hidden = false;
+    heroOrientation.value = new URL(src, window.location.origin).searchParams.get('orientation') === 'vertical' ? 'vertical' : 'horizontal';
+    heroOrientation.addEventListener('change', function () {
+      var next = new URL(src, window.location.origin);
+      next.searchParams.set('orientation', heroOrientation.value);
+      src = next.pathname + next.search;
+      document.getElementById('topbar-sub').textContent = src;
+      document.getElementById('embed-iframe').src = src;
+      refreshCode();
+    });
+  }
 
   // ── Dimensions ──
   function applyDimensions() {
@@ -515,10 +545,10 @@
     // ── Calendar: CSS from staging + widget_runtime.js ──
     if (src === '/calendar/') {
       return j([
-        '<!-- Nebulacast · Sky Alerts widget -->',
+        '<!-- Nebulacast · Calendar widget -->',
         '<div id="nrc-' + uid + '">',
         '  <div class="nrc-header">',
-        '    <div class="nrc-title">Sky Alerts</div>',
+        '    <div class="nrc-title">Calendar</div>',
         '    <div class="nrc-meta">',
         '      <a class="nrc-link" href="' + o + '/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>',
         '    </div>',

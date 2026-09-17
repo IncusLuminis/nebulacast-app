@@ -4,6 +4,7 @@ export const SHOWCASE_GROUPS = Object.freeze([
   Object.freeze({
     title: "Observation",
     cards: Object.freeze([
+      Object.freeze({ title: "Hero", src: "/hero/?orientation=horizontal", standalone: "/hero/?orientation=horizontal", description: "Console header panel with local time, observing quality, Sun/Moon, and space-weather signals. Supports horizontal and vertical iframe layouts." }),
       Object.freeze({ title: "Observer", src: "/weather/", standalone: "/weather/", description: "Full observing suite: hourly quality score, forecast charts, profile modes, location selector, Sun/Moon panel, cloud map, and sky integration." }),
       Object.freeze({ title: "Conditions", src: "/weather/weather-vertical.html", standalone: "/weather/weather-vertical.html", description: "Simplified observing conditions panel: vertical forecast strip with hourly scores and key atmospheric parameters." }),
       Object.freeze({ title: "Cloud Map", src: "/map/", standalone: "/map/", description: "Interactive map with terrain, cloud cover, radar tiles, wind, isobars, and animated forecast layers via Leaflet.", status: "Updated 23h ago", statusTone: "warning" }),

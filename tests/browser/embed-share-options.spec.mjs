@@ -22,3 +22,24 @@ test("widgets without a public JavaScript contract retain their current embed on
   await expect(page.getByRole("tab", { name: "JavaScript" })).toBeHidden();
   await expect(page.locator("#share-code")).toContainText("HelioWidget.mount");
 });
+
+test("Calendar retains its Current embed alongside JavaScript and identifies itself correctly", async ({ page }) => {
+  await page.goto("/embed/?src=/calendar/&title=Calendar", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: /embed code/i }).click();
+  await expect(page.getByRole("tab", { name: "Current embed" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "JavaScript" })).toBeVisible();
+  await expect(page.locator("#share-code")).toContainText("Nebulacast · Calendar widget");
+  await expect(page.locator("#share-code")).toContainText('class="nrc-title">Calendar');
+  await expect(page.locator("#share-code")).not.toContainText("Sky Alerts");
+});
+
+test("Hero switches its iframe preview and generated code between orientations", async ({ page }) => {
+  await page.goto("/embed/?src=/hero/?orientation=horizontal&title=Hero", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#hero-orientation-control")).toBeVisible();
+  await page.locator("#hero-orientation").selectOption("vertical");
+  await expect(page.locator("#embed-iframe")).toHaveAttribute("src", "/hero/?orientation=vertical");
+  await page.getByRole("button", { name: /embed code/i }).click();
+  await expect(page.locator("#share-code")).toContainText("/hero/?orientation=vertical");
+  await expect(page.locator("#share-code")).toContainText("<iframe");
+  await expect(page.locator("#share-tab-javascript")).toBeHidden();
+});

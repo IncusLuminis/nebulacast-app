@@ -17,7 +17,10 @@ test("cards are split into Observation and Events with direct staging actions", 
   const { documentRef, root } = createGalleryRoot();
   await createShowcaseGallery({ root, documentRef }).mount();
   assert.deepEqual(SHOWCASE_GROUPS.map(group => group.title), ["Observation", "Events"]);
-  assert.equal(root.querySelectorAll("[data-widget-title]").length, 9);
+  assert.equal(root.querySelectorAll("[data-widget-title]").length, 10);
+  const hero = root.querySelector('[data-widget-title="Hero"]');
+  assert.equal(hero.querySelector('[data-showcase-action="standalone"]').getAttribute("href"), "https://staging.nebulacast.app/hero/?orientation=horizontal");
+  assert.equal(hero.querySelector('[data-showcase-action="embed"]').getAttribute("href"), "/embed/?src=%2Fhero%2F%3Forientation%3Dhorizontal&title=Hero");
   const sky = root.querySelector('[data-widget-title="Sky"]');
   assert.equal(sky.querySelector('[data-showcase-action="standalone"]').getAttribute("href"), "https://staging.nebulacast.app/sky/");
   assert.equal(sky.querySelector('[data-showcase-action="embed"]').getAttribute("href"), "/embed/?src=%2Fsky%2F&title=Sky");
