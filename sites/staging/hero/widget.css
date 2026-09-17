@@ -13,14 +13,18 @@
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] {
   height: 100%;
   min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-content: stretch;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card {
+  width: 100%;
+  flex: 0 0 auto;
   min-height: 120px;
-  border-right: 1px solid rgba(255,255,255,0.06);
+  box-sizing: border-box;
+  border-right: none;
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .nc-widget[data-nc-widget="hero"] .hero-card,
@@ -77,3 +81,56 @@
 .nc-widget[data-nc-widget="hero"] .sw-badge.elevated, .nc-hero .sw-badge.elevated { background:rgba(255,152,0,.15); color:#ff9800; }
 .nc-widget[data-nc-widget="hero"] .sw-badge.storm, .nc-hero .sw-badge.storm { background:rgba(244,67,54,.15); color:#f44336; }
 .nc-widget[data-nc-widget="hero"] .sw-badge::before, .nc-hero .sw-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+/* Portrait Hero is a stacked reading order, not a squeezed horizontal strip. */
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-row {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-center,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-body {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-row > :first-child {
+  text-align: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-profiles {
+  width: 100%;
+  align-items: stretch;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-profile-btn {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-weather-chips,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-scales {
+  justify-content: center;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .window-time,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-summary-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .sun-times,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .moon-meta {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
