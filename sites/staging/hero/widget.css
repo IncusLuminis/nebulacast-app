@@ -47,10 +47,14 @@
 .nc-hero .hero-skeleton { display:flex; align-items:center; gap:12px; padding:0 4px; color:rgba(255,255,255,.4); font-size:12px; }
 .nc-widget[data-nc-widget="hero"] .hero-weather-chips,
 .nc-hero .hero-weather-chips { display:flex; align-items:center; gap:4px; margin-top:5px; white-space:nowrap; font-size:10px; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .metric,
+.nc-hero .hero-weather-chips .metric { display:inline-flex; align-items:center; gap:2px; white-space:nowrap; flex:0 0 auto; }
 .nc-widget[data-nc-widget="hero"] .hero-weather-chips .temp { color:rgba(255,200,120,.85); font-weight:600; }
 .nc-widget[data-nc-widget="hero"] .hero-weather-chips .cloud { color:rgba(143,182,255,.8); font-weight:600; }
 .nc-widget[data-nc-widget="hero"] .hero-weather-chips .pressure { color:rgba(100,210,130,.8); font-weight:600; }
 .nc-widget[data-nc-widget="hero"] .hero-weather-chips .pressure-label { color:rgba(100,210,130,.9); font-weight:700; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .kp { color:rgba(100,210,130,.8); font-weight:600; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .kp-label { color:rgba(100,210,130,.9); font-weight:700; }
 .nc-widget[data-nc-widget="hero"] .separator { color:rgba(255,255,255,.2); }
 .nc-widget[data-nc-widget="hero"] [data-role="clock-date"], .nc-hero [data-role="clock-date"] { font-size:20px; font-weight:600; line-height:1; color:#fff; white-space:nowrap; }
 .nc-widget[data-nc-widget="hero"] [data-role="clock-time"], .nc-hero [data-role="clock-time"] { font-size:20px; font-weight:700; line-height:1; color:rgba(255,255,255,.42); white-space:nowrap; font-variant-numeric:tabular-nums; }
@@ -157,7 +161,7 @@
     border-right: 1px solid rgba(255,255,255,0.06);
   }
 
-  /* Local Date & Time: date/time left, weather indicators stacked right. */
+  /* Local Date & Time: date/time left, weather indicators in one row right. */
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] .hero-card-center {
     display: grid;
     grid-template-columns: minmax(0, 1fr) max-content;
@@ -170,9 +174,11 @@
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] .hero-weather-chips {
     grid-column: 2;
     grid-row: 1 / -1;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    white-space: nowrap;
+    gap: 4px;
     margin-top: 0;
   }
 

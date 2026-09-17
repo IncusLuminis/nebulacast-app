@@ -17,12 +17,18 @@ for (const orientation of ["horizontal", "vertical"]) {
     expect(bounds.rootHeight).toBeGreaterThan(0);
     expect(bounds.cardWidth).toBeGreaterThan(0);
     expect(bounds.cardHeight).toBeGreaterThan(0);
+    if (orientation === "horizontal") {
+      await expect(hero.locator('.hero-card[data-panel="weather"] .pressure')).toHaveText(/\d|—/);
+    }
     if (orientation === "vertical") {
       const layout = await hero.locator(".hero-card").evaluateAll(elements => Object.fromEntries(elements.map(element => {
         const rect = element.getBoundingClientRect();
         const row = element.querySelector(".hero-card-row")?.getBoundingClientRect();
         const profiles = element.querySelector(".nop-profiles")?.getBoundingClientRect();
         const weatherChips = element.querySelector(".hero-weather-chips")?.getBoundingClientRect();
+        const weatherChipsStyle = element.querySelector(".hero-weather-chips") ? getComputedStyle(element.querySelector(".hero-weather-chips")) : null;
+        const weatherMetrics = element.querySelectorAll(".hero-weather-chips .metric").length;
+        const weatherMetricTops = Array.from(element.querySelectorAll(".hero-weather-chips .metric"), metric => metric.getBoundingClientRect().top);
         const date = element.querySelector('[data-role="clock-date"]')?.getBoundingClientRect();
         const time = element.querySelector('[data-role="clock-time"]')?.getBoundingClientRect();
         const windowTime = element.querySelector(".window-time")?.getBoundingClientRect();
@@ -32,6 +38,9 @@ for (const orientation of ["horizontal", "vertical"]) {
           row: row && { top: row.top, bottom: row.bottom, left: row.left, right: row.right },
           profiles: profiles && { top: profiles.top, bottom: profiles.bottom, left: profiles.left, right: profiles.right },
           weatherChips: weatherChips && { top: weatherChips.top, bottom: weatherChips.bottom, left: weatherChips.left, right: weatherChips.right },
+          weatherChipsStyle: weatherChipsStyle && { flexDirection: weatherChipsStyle.flexDirection, flexWrap: weatherChipsStyle.flexWrap, whiteSpace: weatherChipsStyle.whiteSpace },
+          weatherMetrics,
+          weatherMetricTops,
           date: date && { top: date.top, bottom: date.bottom, left: date.left, right: date.right },
           time: time && { top: time.top, bottom: time.bottom, left: time.left, right: time.right },
           windowTime: windowTime && { top: windowTime.top, bottom: windowTime.bottom, left: windowTime.left, right: windowTime.right },
@@ -57,6 +66,12 @@ for (const orientation of ["horizontal", "vertical"]) {
       expect(helioCards[0].right).toBeLessThanOrEqual(helioCards[1].left + 2);
       expect(layout.weather.date.bottom).toBeLessThanOrEqual(layout.weather.time.top + 2);
       expect(layout.weather.weatherChips.left).toBeGreaterThanOrEqual(layout.weather.date.right - 2);
+      expect(layout.weather.weatherChipsStyle.flexDirection).toBe("row");
+      expect(layout.weather.weatherChipsStyle.flexWrap).toBe("nowrap");
+      expect(layout.weather.weatherChipsStyle.whiteSpace).toBe("nowrap");
+      expect(layout.weather.weatherMetrics).toBe(3);
+      expect(Math.max(...layout.weather.weatherMetricTops) - Math.min(...layout.weather.weatherMetricTops)).toBeLessThanOrEqual(3);
+      await expect(hero.locator('.hero-card[data-panel="weather"] .kp')).toHaveText(/\d|—/);
       expect(layout.matrix.profiles.top).toBeGreaterThanOrEqual(layout.matrix.row.top - 1);
       expect(layout.matrix.profiles.bottom).toBeLessThanOrEqual(layout.matrix.row.bottom + 1);
       expect(layout.window.windowTime.right).toBeLessThanOrEqual(layout.window.summary.left + 2);

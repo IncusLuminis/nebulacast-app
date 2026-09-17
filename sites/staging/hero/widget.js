@@ -199,7 +199,16 @@ export function mountHero(root, context, suppliedConfig = {}, host) {
   function renderClock() {
     const dateElement = root.querySelector("[data-role=clock-date]"), timeElement = root.querySelector("[data-role=clock-time]"); if (!dateElement || !timeElement) return;
     const now = new Date(), options = currentLocation.tz ? { timeZone: currentLocation.tz } : {};
-    dateElement.textContent = now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", ...options });
+    if (config.orientation === "vertical") {
+    if (config.orientation === "vertical") {
+      const dateParts = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", ...options }).formatToParts(now).reduce((parts, part) => { parts[part.type] = part.value; return parts; }, {});
+      dateElement.textContent = `${dateParts.weekday} ${dateParts.day} ${dateParts.month === "Sep" ? "Sept" : dateParts.month}`;
+    } else {
+      dateElement.textContent = now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", ...options });
+    }
+    } else {
+      dateElement.textContent = now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", ...options });
+    }
     timeElement.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, ...options });
     const frame = view?.requestAnimationFrame || globalThis.requestAnimationFrame;
     if (typeof frame === "function") frame(() => { const dateWidth = dateElement.getBoundingClientRect?.().width, timeWidth = timeElement.getBoundingClientRect?.().width; if (dateWidth > 0 && timeWidth > 0) timeElement.style.fontSize = `${(parseFloat((view?.getComputedStyle || globalThis.getComputedStyle)(timeElement).fontSize) * dateWidth / timeWidth).toFixed(1)}px`; });
@@ -218,7 +227,7 @@ export function mountHero(root, context, suppliedConfig = {}, host) {
     const cloud = currentWeather?.cloud?.total_percent ?? null, precipitation = currentWeather?.precip?.probability_percent ?? 0, icon = cloud == null ? "" : cloud < 15 ? "☀" : cloud < 40 ? "🌤" : cloud < 75 ? "⛅" : precipitation > 30 ? "🌧" : "☁", temperature = currentWeather?.air?.temperature_c ?? null, nextTemperature = nextWeather?.air?.temperature_c ?? null, temperatureArrow = temperature != null && nextTemperature != null ? nextTemperature > temperature + 0.4 ? "↑" : nextTemperature < temperature - 0.4 ? "↓" : "" : "", pressure = currentWeather?.air?.pressure_hpa ?? null, pressureTrend = wx?.decision?.pressure?.trend_label || "", pressureArrow = pressureTrend === "rising" ? "↑" : pressureTrend === "falling" ? "↓" : "";
     const activeNqi = nqi[activeProfile] || {}, profileLabels = { balanced: "Balanced", visual: "Visual", photography: "Photo", broadband: "Broadband", planetary: "Planetary" }, profilesHtml = profileKeys.map(key => `<button type="button" class="nop-profile-btn${key === activeProfile ? " is-active" : ""}" data-profile="${escapeText(key)}" aria-pressed="${key === activeProfile}">${escapeText(profileLabels[key] || key)}</button>`).join("");
     const illumination = createLunarSnapshot({ instant: new Date(), location: { lat: currentLocation.lat || DEFAULT_LOCATION.lat, lon: currentLocation.lon || DEFAULT_LOCATION.lon, timezone: currentLocation.tz || DEFAULT_LOCATION.tz } }).lunar;
-    const weatherChips = currentWeather ? `<div class="hero-weather-chips"><span>🌡</span><span class="temp">${temperature != null ? `${Math.round(temperature)}°${temperatureArrow}` : "—"}</span><span class="separator">·</span><span>${icon}</span><span class="cloud">${cloud != null ? `${Math.round(cloud)}%` : "—"}</span><span class="separator">·</span><span class="pressure-label">hPa</span><span class="pressure">${pressure != null ? `${Math.round(pressure)}${pressureArrow}` : "—"}</span></div>` : "";
+    const weatherChips = currentWeather ? config.orientation === "vertical" ? `<div class="hero-weather-chips"><span class="metric metric-temp" aria-label="Temperature"><span aria-hidden="true">🌡</span><span class="temp">${temperature != null ? `${Math.round(temperature)}°${temperatureArrow}` : "—"}</span></span><span class="metric metric-cloud" aria-label="Cloud cover"><span aria-hidden="true">☁</span><span class="cloud">${cloud != null ? `${Math.round(cloud)}%` : "—"}</span></span><span class="metric metric-kp" aria-label="Kp"><span class="kp-label" aria-hidden="true">Kp</span><span class="kp">${kp != null ? kp.toFixed(1) : "—"}</span></span></div>` : `<div class="hero-weather-chips"><span>🌡</span><span class="temp">${temperature != null ? `${Math.round(temperature)}°${temperatureArrow}` : "—"}</span><span class="separator">·</span><span>${icon}</span><span class="cloud">${cloud != null ? `${Math.round(cloud)}%` : "—"}</span><span class="separator">·</span><span class="pressure-label">hPa</span><span class="pressure">${pressure != null ? `${Math.round(pressure)}${pressureArrow}` : "—"}</span></div>` : "";
     const forecastLabel = ({ storm: "Storm Risk", elevated: "Elevated", active: "Active", quiet: "Quiet" })[forecastStatus];
     const moonStatus = wx?.moon?.moon_up_now === true ? "↑up" : wx?.moon?.moon_up_now === false ? "↓below" : "";
     const moonStatusHtml = moonStatus ? `<span class="moon-status">${escapeText(moonStatus)}</span>` : "";
