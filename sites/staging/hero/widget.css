@@ -266,9 +266,15 @@
     text-align: center;
   }
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .hero-card-body {
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
   }
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .nop-scales {
     margin-top: auto;
+    justify-content: center;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .nop-scale-badge {
+    font-size: 13px;
+    padding: 5px 10px;
   }
 }
