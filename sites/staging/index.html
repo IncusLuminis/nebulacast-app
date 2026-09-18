@@ -2446,6 +2446,10 @@
     navItems.forEach(i => i.classList.remove('is-active'));
     document.querySelector(`.nav-item[data-page="${pageId}"]`)?.classList.add('is-active');
     consolePages.forEach(p => p.classList.toggle('is-active', p.id === `page-${effectivePage}`));
+    requestAnimationFrame(() => {
+      if (effectivePage === 'sky') consoleComposer.getInstance('sky')?.resize?.();
+      if (effectivePage === 'dashboard') consoleComposer.getInstance('dashboard-sky')?.resize?.();
+    });
 
     const titles = { dashboard: 'Console', sky: 'Sky', weather: 'Weather', helio: 'Space Weather', map: 'Map', events: 'Events', sun: 'Sun & Moon', showcase: 'Showcase', stats: 'Stats', settings: 'Settings' };
     document.title = `Nebulacast — ${titles[pageId] || pageId}`;

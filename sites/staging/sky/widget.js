@@ -266,6 +266,7 @@ async function init(userCfg, {
     let unsubscribeContext = null;
     const localHighlight = { value: null };
     let fullscreenResizeTimer = 0;
+    let mountResizeObserver = null;
     let playerSyncRafId = 0;
     const pendingPopoverRafIds = new Set();
 
@@ -2167,6 +2168,15 @@ function buildAlertsListContent() {
       resize();
     }, 0);
 
+    // Console pages can mount Sky while hidden. Resize again when the host
+    // becomes measurable so the first visible frame uses its real bounds.
+    if (typeof ResizeObserver === "function") {
+      mountResizeObserver = new ResizeObserver(() => {
+        if (!lifecycleDisposed) resize();
+      });
+      mountResizeObserver.observe(mount);
+    }
+
     if (context?.subscribe) {
       unsubscribeContext = context.subscribe((snapshot) => {
         if (lifecycleDisposed) return;
@@ -2194,6 +2204,7 @@ function buildAlertsListContent() {
       stopPlayer: playerStop,
       cancelFullscreenResize,
       cancelPlayerSync,
+      mountResizeObserver,
       cancelPendingPopoverRafs,
       closePopovers,
       closeStats: statsDlg.close,
@@ -2218,6 +2229,7 @@ function buildAlertsListContent() {
           if (parts.stopPlayer) parts.stopPlayer();
           parts.cancelFullscreenResize?.();
           parts.cancelPlayerSync?.();
+          parts.mountResizeObserver?.disconnect?.();
           parts.cancelPendingPopoverRafs?.();
           if (parts.initialResizeTimer) clearTimeout(parts.initialResizeTimer);
           if (parts.onWinResize?.__t) clearTimeout(parts.onWinResize.__t);
