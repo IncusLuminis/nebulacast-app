@@ -14,7 +14,7 @@ function requireContext(context) {
 let skyModulePromise;
 
 function loadSkyModule() {
-  if (!skyModulePromise) skyModulePromise = import("./widget.js");
+  if (!skyModulePromise) skyModulePromise = import("./widget.js?v=20260918b");
   return skyModulePromise;
 }
 

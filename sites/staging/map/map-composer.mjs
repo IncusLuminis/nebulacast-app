@@ -35,7 +35,17 @@ export async function mountMapPage({ documentRef = globalThis.document, search =
   if (!root) throw new Error("Map page mount element not found: #mapRoot");
   const context = createMapRouteContext(search);
   const runtime = createNebulacast({ context, registry: createCatalogRegistry() });
-  const instance = await runtime.mount(root, { widget: "map", config: { orientation: "horizontal", mapUrl: "/weather/map-poc.html" } });
+  const observer = context.get().observer;
+  const mapParams = new URLSearchParams({
+    name: observer.name,
+    lat: String(observer.lat),
+    lon: String(observer.lon),
+    tz: observer.timezone,
+  });
+  const instance = await runtime.mount(root, {
+    widget: "map",
+    config: { orientation: "horizontal", mapUrl: `/weather/map-poc.html?${mapParams.toString()}` },
+  });
   return Object.freeze({ context, runtime, instance, destroy: () => instance.destroy() });
 }
 
