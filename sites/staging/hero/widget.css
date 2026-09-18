@@ -90,7 +90,12 @@
    its cards and inline weather/window content in one horizontal strip. */
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
   min-height: 150px;
+  height: auto !important;
   container-type: inline-size;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card {
+  flex: 1 1 0;
+  min-width: 0;
 }
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] {
   font-size: 30px;
