@@ -302,6 +302,25 @@ display: none;
   right: 64px;
 }
 
+/* Platform embeds fullscreen the widget root itself. Keep the square canvas
+   centered and let it use the complete viewport in both host and standalone
+   pages. */
+.sky-root:fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  background: #05070d;
+}
+.sky-root:fullscreen .sky-canvas-wrap,
+.sky-root:fullscreen .sky-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 
 /* Tooltip */
 .sky-tooltip,

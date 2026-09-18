@@ -775,7 +775,7 @@ async function init(userCfg, {
       if (lifecycleDisposed) return;
       applyOrientation();
       // In fullscreen mode, use window dimensions instead of mount
-      const isFs = compatibility && !!document.fullscreenElement;
+      const isFs = !!document.fullscreenElement;
       let r;
       
       if (isFs) {
@@ -1801,7 +1801,9 @@ function buildAlertsListContent() {
     }
 
     function _fsTarget() {
-      return compatibility ? (document.getElementById("skyStage") || root) : root;
+      return compatibility
+        ? (document.getElementById("skyStage") || root)
+        : (root.querySelector?.(".sky-root") || root);
     }
 
     function toggleFullscreen() {
