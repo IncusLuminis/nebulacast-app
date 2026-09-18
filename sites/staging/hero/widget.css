@@ -90,6 +90,7 @@
    its cards and inline weather/window content in one horizontal strip. */
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
   min-height: 150px;
+  container-type: inline-size;
 }
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] {
   font-size: 30px;
@@ -133,6 +134,60 @@
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-scale-badge {
   font-size: 13px;
   padding: 5px 10px;
+}
+
+/* The console mounts Hero in an approximately 800px-wide panel. Keep the
+   approved infographic scale for wide standalone embeds, but make the same
+   horizontal composition fit safely inside a dashboard container. */
+@container (max-width: 900px) {
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
+    min-height: 110px;
+    overflow-x: hidden;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card {
+    min-width: 0;
+    padding: 5px 6px;
+    gap: 2px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card-label {
+    font-size: 8px;
+    letter-spacing: .05em;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] {
+    font-size: 17px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-time"] {
+    font-size: 28px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-weather-chips {
+    gap: 2px;
+    margin-top: 2px;
+    font-size: 8px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value {
+    font-size: 40px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value span {
+    font-size: 14px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-label {
+    font-size: 11px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-time {
+    font-size: 11px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-summary-text {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .kp-value {
+    font-size: 28px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-scale-badge {
+    font-size: 9px;
+    padding: 3px 5px;
+  }
 }
 
 /* Portrait Hero is a two-column dashboard, not a squeezed horizontal strip. */
