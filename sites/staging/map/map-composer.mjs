@@ -2,6 +2,7 @@ import { createNebulacast } from "../shared/widget-runtime.mjs";
 import { createCatalogRegistry } from "../shared/widget-catalog.mjs";
 
 function bounded(value, min, max, fallback) {
+  if (value === null || value === undefined || value === "") return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
 }
