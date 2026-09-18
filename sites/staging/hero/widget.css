@@ -139,6 +139,9 @@
 /* The console mounts Hero in an approximately 800px-wide panel. Keep the
    approved infographic scale for wide standalone embeds, but make the same
    horizontal composition fit safely inside a dashboard container. */
+.console-page {
+  container-type: inline-size;
+}
 @container (max-width: 900px) {
   .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
     min-height: 110px;
