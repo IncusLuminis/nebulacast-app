@@ -3383,15 +3383,20 @@ class HelioWidgetInstance {
   private ovationData:      OvationData | null = null;
   private timer:            ReturnType<typeof setTimeout> | null = null;
   private data:             HelioNow | null = null;
+  private readonly abortController = new AbortController();
+  private destroyed = false;
+  private readonly clickHandler = (event: Event): void => this.onClick(event);
+  private readonly inputHandler = (event: Event): void => this.onInput(event);
+  private readonly changeHandler = (event: Event): void => this.onChange(event);
 
   constructor(el: HTMLElement, opts: HelioWidgetOptions) {
     this.el   = el;
     this.opts = opts;
     this.loadUiState();
     this.el.innerHTML = renderLoading();
-    this.el.addEventListener("click",  this.onClick.bind(this));
-    this.el.addEventListener("input",  this.onInput.bind(this));
-    this.el.addEventListener("change", this.onChange.bind(this));
+    this.el.addEventListener("click",  this.clickHandler);
+    this.el.addEventListener("input",  this.inputHandler);
+    this.el.addEventListener("change", this.changeHandler);
     this.fetch();
   }
 
@@ -3695,23 +3700,26 @@ class HelioWidgetInstance {
       // A URL query param achieves the same no-cache effect without extra headers.
       const sep = this.opts.dataUrl.includes("?") ? "&" : "?";
       const url = `${this.opts.dataUrl}${sep}_t=${Date.now()}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: this.abortController.signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.data = await res.json() as HelioNow;
       this.render();
       this.fetchSolarRegions();  // parallel, re-renders when ready
       this.fetchOvationData();   // parallel, re-renders when ready
     } catch (err) {
+      if (this.abortController.signal.aborted || this.destroyed) return;
       const msg = err instanceof Error ? err.message : String(err);
       this.el.innerHTML = renderError(`Space weather data unavailable (${msg})`);
     } finally {
-      this.timer = setTimeout(() => this.fetch(), this.opts.refreshMs ?? REFRESH_MS_DEFAULT);
+      if (!this.destroyed) {
+        this.timer = setTimeout(() => this.fetch(), this.opts.refreshMs ?? REFRESH_MS_DEFAULT);
+      }
     }
   }
 
   private async fetchSolarRegions(): Promise<void> {
     try {
-      const res = await fetch("https://services.swpc.noaa.gov/json/solar_regions.json");
+      const res = await fetch("https://services.swpc.noaa.gov/json/solar_regions.json", { signal: this.abortController.signal });
       if (!res.ok) return;
       const all = await res.json() as (SolarRegion & { observed_date: string; area: number | null })[];
       // Prefer latest record with non-null area (classified); fall back to latest overall
@@ -3733,7 +3741,7 @@ class HelioWidgetInstance {
   private async fetchOvationData(): Promise<void> {
     if (this.opts.lat == null || this.opts.lon == null) return; // no observer → skip
     try {
-      const res = await fetch("https://services.swpc.noaa.gov/json/ovation_aurora_latest.json");
+      const res = await fetch("https://services.swpc.noaa.gov/json/ovation_aurora_latest.json", { signal: this.abortController.signal });
       if (!res.ok) return;
       const json = await res.json() as Record<string, unknown>;
       // NOAA format: { "coordinates": [[lon, lat, aurora], ...], "type": "MultiPoint", ... }
@@ -3806,8 +3814,13 @@ class HelioWidgetInstance {
   }
 
   destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
     if (this.timer) clearTimeout(this.timer);
-    this.el.removeEventListener("click", this.onClick.bind(this));
+    this.abortController.abort();
+    this.el.removeEventListener("click", this.clickHandler);
+    this.el.removeEventListener("input", this.inputHandler);
+    this.el.removeEventListener("change", this.changeHandler);
   }
 }
 
@@ -3821,4 +3834,5 @@ export const HelioWidget = {
 };
 
 declare global { interface Window { HelioWidget: typeof HelioWidget; } }
-if (typeof window !== "undefined") window.HelioWidget = HelioWidget;
+declare const HELIO_LEGACY_GLOBAL: boolean;
+if (HELIO_LEGACY_GLOBAL && typeof window !== "undefined") window.HelioWidget = HelioWidget;

@@ -1,0 +1,178 @@
+@scope (html.nc-console-sandbox-host) {
+
+:scope {
+  --nc-sandbox-bg: #0b0d12;
+  --nc-sandbox-surface: #0f1115;
+  --nc-sandbox-surface2: #13161c;
+  --nc-sandbox-line: #2a2f3a;
+  --nc-sandbox-text: #e6e6e6;
+  --nc-sandbox-muted: #9aa3b2;
+  --nc-sandbox-title: #e6f2ff;
+  --nc-sandbox-link: #8fb6ff;
+  --nc-sandbox-good: #5cce8c;
+  --nc-sandbox-bad: #e07070;
+}
+
+.nc-console-sandbox-page,
+.nc-console-sandbox-page > .console-sandbox-shell,
+.nc-console-sandbox-page > .nc-console-sandbox-page-header,
+.nc-console-sandbox-page > .nc-console-sandbox-page-footer,
+.nc-console-sandbox-page .console-sandbox-shell,
+.nc-console-sandbox-page .console-sandbox-shell > * {
+  box-sizing: border-box;
+}
+
+/* Keep the original Sandbox reset on chrome only. Runtime roots and their
+   descendants are deliberately excluded so widget presentation owns them. */
+.nc-console-sandbox-page,
+.nc-console-sandbox-page-header *,
+.nc-console-sandbox-page-footer *,
+.nc-console-sandbox-page .console-sandbox-shell,
+.nc-console-sandbox-page .console-sandbox-shell *:not(.console-sandbox-runtime-root):not(.console-sandbox-runtime-root *) {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html.nc-console-sandbox-host,
+body.nc-console-sandbox-host {
+  min-height: 100vh;
+}
+
+body.nc-console-sandbox-host {
+  background: var(--nc-sandbox-bg);
+  color: var(--nc-sandbox-text);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.nc-console-sandbox-page { max-width: 1280px; margin: 0 auto; padding: 24px 16px 60px; }
+.nc-console-sandbox-page-header { border-bottom: 1px solid var(--nc-sandbox-line); padding-bottom: 16px; margin-bottom: 20px; }
+.nc-console-sandbox-page-header h1 { color: var(--nc-sandbox-title); font-size: 20px; font-weight: 600; letter-spacing: .02em; }
+.nc-console-sandbox-page-header p, .nc-console-sandbox-page-footer { color: var(--nc-sandbox-muted); font-size: 12px; }
+.nc-console-sandbox-page-header p { margin-top: 5px; }
+.console-sandbox-shell {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+.console-sandbox-controls { display: flex; min-width: 0; flex-direction: column; gap: 14px; }
+.console-sandbox-panel { min-width: 0; background: var(--nc-sandbox-surface); border: 1px solid var(--nc-sandbox-line); border-radius: 10px; padding: 14px; }
+.console-sandbox-heading { color: var(--nc-sandbox-title); font-size: 14px; font-weight: 600; }
+.console-sandbox-subheading { color: var(--nc-sandbox-muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-top: 18px; }
+.console-sandbox-description, .console-sandbox-status, .console-sandbox-empty, .console-sandbox-card-status { color: var(--nc-sandbox-muted); font-size: 12px; }
+.console-sandbox-description { min-height: 54px; margin-top: 10px; }
+.console-sandbox-panel select, .console-sandbox-panel input { min-width: 0; border: 1px solid var(--nc-sandbox-line); border-radius: 5px; background: var(--nc-sandbox-surface2); color: var(--nc-sandbox-text); padding: 7px 8px; font: inherit; }
+.console-sandbox-panel > select { width: 100%; margin-top: 12px; }
+.sandbox-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #1e2c42; border-radius: 5px; background: #0a1520; color: var(--nc-sandbox-link); padding: 7px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.sandbox-button:hover, .sandbox-button:focus-visible { background: #0f1e30; border-color: #2a4060; }
+.sandbox-button-primary { color: var(--nc-sandbox-good); border-color: #1e3a2a; background: #0a1a10; }
+.sandbox-button-danger { color: #e0b36d; border-color: #4a3820; background: #1d150b; }
+.console-sandbox-panel > .sandbox-button { margin-top: 12px; }
+.console-sandbox-palette-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.console-sandbox-palette-item {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  padding: 5px 3px;
+  border: 1px solid #2a3d52;
+  border-radius: 6px;
+  background: #111b29;
+  color: var(--nc-sandbox-text);
+  font: inherit;
+  text-align: center;
+  cursor: grab;
+}
+.console-sandbox-palette-icon { color: var(--nc-sandbox-link); font-size: 20px; line-height: 1; }
+.console-sandbox-palette-title { display: block; max-width: 100%; overflow: hidden; color: var(--nc-sandbox-text); font-size: 10px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.console-sandbox-palette-item:hover { background: #18283d; border-color: #5272a5; }
+.console-sandbox-palette-item[data-selected="true"] { background: #172943; border-color: #719be0; box-shadow: 0 0 0 1px #263a5a; }
+.console-sandbox-palette-item:focus-visible { outline: 2px solid var(--nc-sandbox-link); outline-offset: 2px; }
+.console-sandbox-palette-item:disabled { cursor: not-allowed; opacity: .55; }
+.console-sandbox-palette-item[data-dragging="true"], .console-sandbox-card[data-dragging="true"] { opacity: .6; cursor: grabbing; }
+.console-sandbox-instance-list { display: grid; gap: 6px; margin-top: 8px; }
+.console-sandbox-composition { flex: 1 1 auto; }
+.console-sandbox-instance { display: grid; gap: 2px; border-top: 1px solid var(--nc-sandbox-line); padding: 7px 0; }
+.console-sandbox-instance[data-selected="true"] { border-left: 2px solid var(--nc-sandbox-link); padding-left: 8px; }
+.sandbox-instance-select { border: 0; background: transparent; color: var(--nc-sandbox-link); cursor: pointer; font: inherit; font-size: 12px; padding: 0; text-align: left; }
+.console-sandbox-instance-meta, .console-sandbox-card-meta { color: #718090; font-size: 11px; }
+.console-sandbox-region-header { display: flex; align-items: end; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--nc-sandbox-line); padding-bottom: 10px; }
+.console-sandbox-region-header .sandbox-field { width: 130px; }
+.console-sandbox-area-controls { display: flex; align-items: end; gap: 6px; margin-left: auto; }
+.console-sandbox-area-controls .sandbox-field { width: 130px; }
+.sandbox-field { display: grid; gap: 4px; color: var(--nc-sandbox-muted); font-size: 11px; }
+.sandbox-field-label { color: var(--nc-sandbox-muted); }
+.console-sandbox-status { min-height: 18px; margin-top: 10px; }
+.console-sandbox-status[data-error="true"] { color: var(--nc-sandbox-bad); }
+.console-sandbox-status[data-layout-valid="false"], .console-sandbox-status-error, .console-sandbox-card-status[data-error="true"] { color: var(--nc-sandbox-bad); }
+.console-sandbox-canvas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; width: 100%; min-width: 0; min-height: 420px; margin-top: 12px; padding: 12px; border: 1px dashed #34465b; border-radius: 8px; background: #0b0f16; overflow: auto; }
+.console-sandbox-canvas[data-viewport="desktop"] { max-width: none; }
+.console-sandbox-canvas[data-viewport="mobile"] { grid-template-columns: minmax(0, 1fr); width: min(100%, 390px); max-width: 390px; min-height: 0; aspect-ratio: 9 / 19.5; margin-inline: auto; border: 2px solid #5272a5; border-radius: 24px; box-shadow: 0 0 0 5px #111a27, 0 12px 30px rgb(0 0 0 / 35%); }
+.console-sandbox-drop-zone { min-width: 0; border: 1px solid #263a50; border-radius: 8px; background: #0d141e; padding: 10px; overflow: hidden; }
+.console-sandbox-drop-zone[data-drop-mode="square"] { min-height: 0; aspect-ratio: 1 / 1; }
+.console-sandbox-drop-zone[data-drop-mode="horizontal"] { grid-column: 1 / -1; }
+.console-sandbox-drop-zone[data-active="true"] { border-color: var(--nc-sandbox-link); box-shadow: 0 0 0 1px #263a5a; }
+.console-sandbox-drop-zone[data-drop-active="true"][data-drop-valid="true"] { border-color: var(--nc-sandbox-good); box-shadow: 0 0 0 1px #274f38; }
+.console-sandbox-drop-zone[data-drop-active="true"][data-drop-valid="false"], .console-sandbox-drop-zone[data-drop-valid="false"] { border-color: var(--nc-sandbox-bad); }
+.console-sandbox-drop-zone:focus-visible { outline: 2px solid var(--nc-sandbox-link); outline-offset: 2px; }
+.console-sandbox-drop-zone-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.console-sandbox-drop-zone-title { color: var(--nc-sandbox-title); font-size: 12px; font-weight: 600; }
+.console-sandbox-drop-zone-mode { color: var(--nc-sandbox-link); font-size: 10px; text-transform: uppercase; }
+.console-sandbox-drop-zone-description, .console-sandbox-drop-reason { color: var(--nc-sandbox-muted); font-size: 11px; margin-top: 4px; }
+.console-sandbox-drop-reason { min-height: 17px; }
+.console-sandbox-drop-reason:empty { display: none; }
+.console-sandbox-drop-zone-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.console-sandbox-drop-zone-cards { display: grid; gap: 8px; margin-top: 8px; }
+.console-sandbox-card:focus-visible { outline: 2px solid var(--nc-sandbox-link); outline-offset: 2px; }
+.console-sandbox-card { display: grid; align-content: start; gap: 7px; min-width: 0; border: 1px solid var(--nc-sandbox-line); border-radius: 8px; background: var(--nc-sandbox-surface); padding: 10px; overflow: hidden; }
+.console-sandbox-card[data-selected="true"] { border-color: #5272a5; box-shadow: 0 0 0 1px #263a5a; }
+.console-sandbox-card-title { color: var(--nc-sandbox-title); font-size: 12px; font-weight: 600; }
+.console-sandbox-preview-frame { width: 100%; min-width: 0; overflow: hidden; }
+.console-sandbox-runtime-root { display: grid; place-items: center; box-sizing: border-box; flex: none; min-width: 0; max-width: 100%; min-height: 48px; border: 1px dashed #34465b; color: #607080; font-size: 11px; overflow: hidden; }
+.console-sandbox-runtime-root > *,
+.console-sandbox-runtime-root img,
+.console-sandbox-runtime-root svg,
+.console-sandbox-runtime-root canvas,
+.console-sandbox-runtime-root iframe { box-sizing: border-box; min-width: 0; max-width: 100% !important; }
+.console-sandbox-runtime-root > * { width: 100% !important; }
+.console-sandbox-canvas[data-viewport="mobile"] .console-sandbox-runtime-root { max-width: 100%; }
+.console-sandbox-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.console-sandbox-canvas-region { min-width: 0; display: flex; flex-direction: column; }
+.console-sandbox-form { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+.console-sandbox-selection { color: var(--nc-sandbox-title); font-size: 12px; grid-column: 1 / -1; }
+.console-sandbox-fieldset { display: grid; gap: 8px; min-width: 0; border: 1px solid var(--nc-sandbox-line); border-radius: 6px; padding: 10px; }
+.console-sandbox-legend { color: var(--nc-sandbox-muted); font-size: 11px; padding: 0 4px; }
+.console-sandbox-form .sandbox-field { grid-template-columns: minmax(80px, 1fr) minmax(110px, 1fr); align-items: center; }
+.console-sandbox-inspector > .console-sandbox-actions { margin-top: 12px; }
+.console-sandbox-inspector > .console-sandbox-status { margin-top: 10px; }
+.console-sandbox-panel > .sandbox-button:disabled { cursor: not-allowed; opacity: .5; }
+.console-sandbox-controls > .sandbox-button-danger { width: 100%; margin-top: auto; }
+.nc-console-sandbox-page-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--nc-sandbox-line); padding-top: 14px; margin-top: 24px; }
+
+@media (max-width: 680px) {
+  .nc-console-sandbox-page { padding: 16px 10px 40px; }
+  .console-sandbox-panel { padding: 12px; }
+  .console-sandbox-shell { grid-template-columns: minmax(0, 1fr); }
+  .console-sandbox-region-header { align-items: stretch; flex-direction: column; }
+  .console-sandbox-region-header .sandbox-field { width: 100%; }
+  .console-sandbox-area-controls { align-items: stretch; margin-left: 0; }
+  .console-sandbox-area-controls .sandbox-field { flex: 1 1 auto; width: auto; }
+  .console-sandbox-canvas { grid-template-columns: minmax(220px, 1fr); min-height: 260px; }
+  .console-sandbox-canvas[data-viewport="mobile"] { width: 100%; max-width: 390px; }
+  .console-sandbox-drop-zone[data-drop-mode="horizontal"] { grid-column: auto; }
+  .console-sandbox-form { grid-template-columns: 1fr; }
+  .console-sandbox-palette-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 681px) {
+  .console-sandbox-canvas[data-viewport="desktop"] {
+    max-height: min(70vh, 760px);
+  }
+}
+
+}

@@ -1,0 +1,418 @@
+.nc-widget[data-nc-widget="hero"],
+.nc-hero {
+  background: rgba(14, 18, 28, 0.97);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 9px;
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  min-height: 110px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card {
+  width: 100%;
+  flex: 0 0 auto;
+  min-height: 120px;
+  box-sizing: border-box;
+  border-right: none;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.nc-widget[data-nc-widget="hero"] .hero-card,
+.nc-hero .hero-card { display:flex; flex-direction:column; justify-content:flex-start; padding:6px 11px; border-right:1px solid rgba(255,255,255,0.06); gap:4px; min-width:0; cursor:pointer; border-radius:6px; transition:background .15s; }
+.nc-widget[data-nc-widget="hero"] .hero-card:last-child,
+.nc-hero .hero-card:last-child { border-right:none; }
+.nc-widget[data-nc-widget="hero"] .hero-card:hover,
+.nc-hero .hero-card:hover { background:rgba(255,255,255,0.04); }
+.nc-widget[data-nc-widget="hero"] .hero-card:focus-visible,
+.nc-hero .hero-card:focus-visible { outline:2px solid #8fb6ff; outline-offset:-2px; }
+.nc-widget[data-nc-widget="hero"] .hero-card-label,
+.nc-hero .hero-card-label { font-size:8px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.45); white-space:nowrap; }
+.nc-widget[data-nc-widget="hero"] .hero-card-center,
+.nc-hero .hero-card-center { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+.nc-widget[data-nc-widget="hero"] .hero-card-row,
+.nc-hero .hero-card-row { flex:1; display:flex; align-items:center; gap:6px; margin-top:4px; }
+.nc-widget[data-nc-widget="hero"] .hero-card-body,
+.nc-hero .hero-card-body { flex:1; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:4px; }
+.nc-widget[data-nc-widget="hero"] .hero-skeleton,
+.nc-hero .hero-skeleton { display:flex; align-items:center; gap:12px; padding:0 4px; color:rgba(255,255,255,.4); font-size:12px; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips,
+.nc-hero .hero-weather-chips { display:flex; align-items:center; gap:4px; margin-top:5px; white-space:nowrap; font-size:10px; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .metric,
+.nc-hero .hero-weather-chips .metric { display:inline-flex; align-items:center; gap:2px; white-space:nowrap; flex:0 0 auto; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .temp { color:rgba(255,200,120,.85); font-weight:600; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .cloud { color:rgba(143,182,255,.8); font-weight:600; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .pressure { color:rgba(100,210,130,.8); font-weight:600; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .pressure-label { color:rgba(100,210,130,.9); font-weight:700; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .kp { color:rgba(100,210,130,.8); font-weight:600; }
+.nc-widget[data-nc-widget="hero"] .hero-weather-chips .kp-label { color:rgba(100,210,130,.9); font-weight:700; }
+.nc-widget[data-nc-widget="hero"] .separator { color:rgba(255,255,255,.2); }
+.nc-widget[data-nc-widget="hero"] [data-role="clock-date"], .nc-hero [data-role="clock-date"] { font-size:20px; font-weight:600; line-height:1; color:#fff; white-space:nowrap; }
+.nc-widget[data-nc-widget="hero"] [data-role="clock-time"], .nc-hero [data-role="clock-time"] { font-size:20px; font-weight:700; line-height:1; color:rgba(255,255,255,.42); white-space:nowrap; font-variant-numeric:tabular-nums; }
+.nc-widget[data-nc-widget="hero"] .nqi-info-btn, .nc-hero .nqi-info-btn { display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; font-size:9px; font-weight:700; color:rgba(255,255,255,.35); border:1px solid rgba(255,255,255,.2); background:transparent; cursor:pointer; flex-shrink:0; margin-left:4px; }
+.nc-widget[data-nc-widget="hero"] .nqi-value, .nc-hero .nqi-value { font-size:28px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.nc-widget[data-nc-widget="hero"] .nqi-value span, .nc-hero .nqi-value span { font-size:14px; color:rgba(255,255,255,.55); font-weight:500; }
+.nc-widget[data-nc-widget="hero"] .nqi-label, .nc-hero .nqi-label { font-size:14px; font-weight:700; line-height:1; white-space:nowrap; }
+.nc-widget[data-nc-widget="hero"] .nqi-label, .nc-hero .nqi-label { font-size:12px; }
+.nc-widget[data-nc-widget="hero"] .nop-profiles, .nc-hero .nop-profiles { display:flex; flex-direction:column; gap:3px; flex:1; }
+.nc-widget[data-nc-widget="hero"] .nop-profile-btn, .nc-hero .nop-profile-btn { font-size:9px; font-weight:600; padding:3px 8px; border-radius:3px; border:1px solid rgba(255,255,255,.1); background:transparent; color:rgba(255,255,255,.38); cursor:pointer; text-align:left; white-space:nowrap; }
+.nc-widget[data-nc-widget="hero"] .nop-profile-btn.is-active, .nc-widget[data-nc-widget="hero"] .nop-profile-btn:hover, .nc-hero .nop-profile-btn.is-active, .nc-hero .nop-profile-btn:hover { background:rgba(74,111,165,.2); border-color:rgba(74,111,165,.4); color:rgba(255,255,255,.82); }
+.nc-widget[data-nc-widget="hero"] .nqi-info-btn:focus-visible,
+.nc-widget[data-nc-widget="hero"] .nop-profile-btn:focus-visible,
+.nc-hero .nqi-info-btn:focus-visible,
+.nc-hero .nop-profile-btn:focus-visible { outline:2px solid #8fb6ff; outline-offset:2px; }
+.nc-widget[data-nc-widget="hero"] .window-time, .nc-hero .window-time { font-size:12px; font-weight:600; color:rgba(255,255,255,.65); margin-top:4px; white-space:nowrap; }
+.nc-widget[data-nc-widget="hero"] .nop-summary-text, .nc-hero .nop-summary-text { font-size:11px; color:rgba(255,255,255,.62); line-height:1.55; margin-top:5px; }
+.nc-widget[data-nc-widget="hero"] .sun-disc, .nc-hero .sun-disc { position:relative; width:86px; height:86px; border-radius:50%; overflow:hidden; background:#0a0a0a; flex-shrink:0; }
+.nc-widget[data-nc-widget="hero"] .sun-disc img, .nc-hero .sun-disc img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.nc-widget[data-nc-widget="hero"] .sun-times, .nc-hero .sun-times, .nc-widget[data-nc-widget="hero"] .moon-meta, .nc-hero .moon-meta { font-size:10px; color:rgba(255,255,255,.5); white-space:nowrap; text-align:center; }
+.nc-widget[data-nc-widget="hero"] .kp-value, .nc-hero .kp-value { font-size:38px; font-weight:700; line-height:1; }
+.nc-widget[data-nc-widget="hero"] .forecast-arrow, .nc-hero .forecast-arrow { font-size:20px; color:rgba(255,255,255,.55); }
+.nc-widget[data-nc-widget="hero"] .card-note, .nc-hero .card-note { font-size:9px; color:rgba(255,255,255,.55); }
+.nc-widget[data-nc-widget="hero"] .nop-scales, .nc-hero .nop-scales { display:flex; gap:3px; margin-top:auto; }
+.nc-widget[data-nc-widget="hero"] .nop-scale-badge, .nc-hero .nop-scale-badge { font-size:9px; font-weight:700; padding:2px 6px; border-radius:3px; letter-spacing:.04em; }
+.nc-widget[data-nc-widget="hero"] .sw-badge, .nc-hero .sw-badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+.nc-widget[data-nc-widget="hero"] .sw-badge.quiet, .nc-hero .sw-badge.quiet { background:rgba(255,255,255,.06); color:rgba(255,255,255,.45); }
+.nc-widget[data-nc-widget="hero"] .sw-badge.active, .nc-hero .sw-badge.active { background:rgba(255,152,0,.15); color:#ff9800; }
+.nc-widget[data-nc-widget="hero"] .sw-badge.elevated, .nc-hero .sw-badge.elevated { background:rgba(255,152,0,.15); color:#ff9800; }
+.nc-widget[data-nc-widget="hero"] .sw-badge.storm, .nc-hero .sw-badge.storm { background:rgba(244,67,54,.15); color:#f44336; }
+.nc-widget[data-nc-widget="hero"] .sw-badge::before, .nc-hero .sw-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+/* Horizontal Hero uses the same approved infographic typography while keeping
+   its cards and inline weather/window content in one horizontal strip. */
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
+  min-height: 150px;
+  height: auto !important;
+  container-type: inline-size;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] {
+  font-size: 30px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-time"] {
+  font-size: 54px;
+  line-height: .95;
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value {
+  font-size: 84px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value span {
+  font-size: 28px;
+  letter-spacing: -.02em;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-label {
+  font-size: 18px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-prefix,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range {
+  display: inline;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-time {
+  white-space: nowrap;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range {
+  font-size: 16px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .hero-card-body {
+  align-items: center;
+  text-align: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .kp-value {
+  font-size: 48px;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .nop-scales {
+  justify-content: center;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-scale-badge {
+  font-size: 13px;
+  padding: 5px 10px;
+}
+
+/* The console mounts Hero in an approximately 800px-wide panel. Keep the
+   approved infographic scale for wide standalone embeds, but make the same
+   horizontal composition fit safely inside a dashboard container. */
+.console-page {
+  container-type: inline-size;
+}
+@container (max-width: 900px) {
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
+    min-height: 110px;
+    overflow-x: hidden;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card {
+    min-width: 0;
+    padding: 5px 6px;
+    gap: 2px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card-label {
+    font-size: 8px;
+    letter-spacing: .05em;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] {
+    font-size: 17px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-time"] {
+    font-size: 28px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-weather-chips {
+    gap: 2px;
+    margin-top: 2px;
+    font-size: 8px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value {
+    font-size: 40px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value span {
+    font-size: 14px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-label {
+    font-size: 11px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-time {
+    font-size: 11px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-summary-text {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .kp-value {
+    font-size: 28px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-scale-badge {
+    font-size: 9px;
+    padding: 3px 5px;
+  }
+}
+
+/* The Dashboard host is a fixed-width console column rather than a viewport
+   container. Keep an explicit fallback for browsers/hosts that do not expose
+   the surrounding .console-page as a query container. */
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
+  min-height: 110px;
+  overflow: hidden;
+}
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] { font-size: 17px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-time"] { font-size: 28px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-weather-chips { gap: 2px; margin-top: 2px; font-size: 8px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value { font-size: 40px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value span { font-size: 14px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-label { font-size: 12px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range,
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-time { font-size: 11px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-summary-text { font-size: 9px; line-height: 1.25; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .kp-value { font-size: 28px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-scale-badge { font-size: 9px; padding: 3px 5px; }
+
+/* Portrait Hero is a two-column dashboard, not a squeezed horizontal strip. */
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-row {
+  flex: 1;
+  min-width: 0;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-center,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-body {
+  width: auto;
+  min-width: 0;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-profiles {
+  width: auto;
+  align-items: stretch;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-profile-btn {
+  width: auto;
+  box-sizing: border-box;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-weather-chips,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-scales {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .window-time,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .nop-summary-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .sun-times,
+.nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .moon-meta {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 360px) {
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: start;
+    align-items: stretch;
+    gap: 1px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card {
+    width: auto;
+    min-width: 0;
+    min-height: 150px;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"],
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"],
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] {
+    grid-column: 1 / -1;
+    min-height: 132px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="sunmoon"],
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="solar"],
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] {
+    min-height: 170px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="sunmoon"]:nth-of-type(4),
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"]:nth-of-type(6) {
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* Local Date & Time: date/time left, weather indicators in one row right. */
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] .hero-card-center {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+    column-gap: 12px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] [data-role="clock-date"] { grid-column: 1; grid-row: 1; }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] [data-role="clock-time"] { grid-column: 1; grid-row: 2; }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] .hero-weather-chips {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: center;
+    white-space: nowrap;
+    gap: 7px;
+    margin-top: 0;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] .hero-weather-chips .metric {
+    font-size: 16px;
+    gap: 5px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] [data-role="clock-date"] {
+    font-size: 30px;
+  }
+
+  /* Portrait infographic values: keep the key numbers readable at a glance. */
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="weather"] [data-role="clock-time"],
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-value,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-range {
+    font-size: 54px;
+    line-height: .95;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-value span {
+    font-size: 28px;
+    letter-spacing: -.02em;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-value {
+    font-size: 84px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .nqi-label {
+    font-size: 18px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .kp-value {
+    font-size: 48px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-prefix,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-range {
+    display: block;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-prefix {
+    margin-bottom: 8px;
+  }
+
+  /* Night Quality: score left, all four profiles in one vertical rail right. */
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .hero-card-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(92px, 1fr);
+    align-items: stretch;
+    column-gap: 12px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="matrix"] .hero-card-row > :first-child {
+    min-width: 0;
+    align-self: center;
+  }
+
+  /* Tonight: best window left, readable wrapped explanation right. */
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 14px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .hero-card-label { grid-column: 1 / -1; }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-time {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+    font-size: 16px;
+    line-height: .95;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .window-range {
+    font-size: 16px;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="window"] .nop-summary-text {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    margin-top: 0;
+  }
+
+  /* Moon/Sun and Kp Now/Forecast remain paired two-column rows. */
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="sunmoon"] .hero-card-center,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="solar"] .hero-card-center {
+    align-items: center;
+    justify-content: center;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="sunmoon"] .moon-meta,
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="solar"] .sun-times {
+    white-space: normal;
+    text-align: center;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .hero-card-body {
+    align-items: center;
+    text-align: center;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .nop-scales {
+    margin-top: auto;
+    justify-content: center;
+  }
+  .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card[data-panel="helio"] .nop-scale-badge {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+}

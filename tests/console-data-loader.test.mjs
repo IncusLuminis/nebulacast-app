@@ -37,3 +37,23 @@ test("keeps static sun/moon data only for the default site", async () => {
   });
   assert.equal(result.sunMoon.schema, "sun_moon.v2");
 });
+
+test("does not fall back to the Warsaw weather snapshot for another observer", async () => {
+  const requested = [];
+  const fetchImpl = async url => {
+    requested.push(url);
+    const routes = {
+      "/data/helio_now.json": {},
+      "/api/sun-moon?lat=54&lon=18&days=7&step_min=10": { schema: "sun_moon.v2", frames: [] },
+      "/data/observer_weather_now.json": { hourly: [{ observer: "Warsaw" }] },
+    };
+    const value = routes[url];
+    return { ok: value !== undefined && url !== "/api/observer-weather?lat=54&lon=18&tz=Europe%2FWarsaw&bortle=5", async json() { return value; } };
+  };
+  const result = await loadConsoleData({
+    location: { lat: 54, lon: 18, tz: "Europe/Warsaw" }, isDefaultSite: () => false,
+    observerWeatherUrl: "/api/observer-weather?lat=54&lon=18&tz=Europe%2FWarsaw&bortle=5", fetchImpl,
+  });
+  assert.equal(result.wx, null);
+  assert.equal(requested.includes("/data/observer_weather_now.json"), false);
+});

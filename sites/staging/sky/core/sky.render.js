@@ -448,7 +448,14 @@ function drawHighlightedObject(ctx, drawFn) {
   return { alpha };
 }
 
-function drawObjects(ctx, vp, objectsPrepared) {
+function resolveHighlightPredicate(predicate) {
+  if (typeof predicate === "function") return predicate;
+  return typeof window !== "undefined" && typeof window.__skyIsHighlighted === "function"
+    ? window.__skyIsHighlighted
+    : null;
+}
+
+function drawObjects(ctx, vp, objectsPrepared, isHighlightedPredicate) {
   if (!objectsPrepared || !objectsPrepared.length) return;
 
   // Tune here
@@ -466,6 +473,7 @@ function drawObjects(ctx, vp, objectsPrepared) {
   // ✅ Fix: do not draw planet markers from Objects layer to avoid "oval" double-draw.
   // Planets still stay in objectsPrepared for search/recommendations/highlight.
   const HIDE_PLANET_MARKERS_IN_OBJECTS = true;
+  const isHighlighted = resolveHighlightPredicate(isHighlightedPredicate);
 
   for (const o of objectsPrepared) {
     if (!o) continue;
@@ -475,10 +483,7 @@ function drawObjects(ctx, vp, objectsPrepared) {
     if (!Number.isFinite(ox) || !Number.isFinite(oy)) continue;
 
     const isPlanet = (o.type === "planet");
-    const highlighted =
-      typeof window !== "undefined" &&
-      window.__skyIsHighlighted &&
-      window.__skyIsHighlighted(o);
+    const highlighted = !!isHighlighted?.(o);
 
     const r = isPlanet ? rPlanet : rDS;
     const rr = highlighted ? r * 1.8 : r;
@@ -874,7 +879,7 @@ function drawStars(ctx, vp, starsPrepared) {
 
 // ADD near other layer functions (e.g. after drawObjects)
 
-function drawMessier(ctx, vp, messierPrepared) {
+function drawMessier(ctx, vp, messierPrepared, isHighlightedPredicate) {
   if (!messierPrepared || !messierPrepared.length) return;
 
   ctx.save();
@@ -885,6 +890,7 @@ function drawMessier(ctx, vp, messierPrepared) {
   // policy: show labels only for highlighted or bright ones
   const LABEL_ALT_MIN = UI.LABEL_ALT_MIN_DEG;
   const LABEL_MAG_MAX = 6.5;
+  const isHighlighted = resolveHighlightPredicate(isHighlightedPredicate);
 
   for (const m of messierPrepared) {
     if (!m) continue;
@@ -894,10 +900,7 @@ function drawMessier(ctx, vp, messierPrepared) {
     const y = Number(m.y);
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
 
-    const highlighted =
-      typeof window !== "undefined" &&
-      window.__skyIsHighlighted &&
-      window.__skyIsHighlighted(m);
+    const highlighted = !!isHighlighted?.(m);
 
     const magVal = (typeof m.mag === "number" && Number.isFinite(m.mag)) ? m.mag : 9.5;
 
@@ -1006,7 +1009,7 @@ function _alertStyle(a) {
 }
 
 
-function drawAlerts(ctx, vp, alertsPrepared) {
+function drawAlerts(ctx, vp, alertsPrepared, isHighlightedPredicate) {
   if (!alertsPrepared || !alertsPrepared.length) return;
 
   ctx.save();
@@ -1018,6 +1021,7 @@ function drawAlerts(ctx, vp, alertsPrepared) {
 
   // hard dedup per frame (independent from enqueueLabel internals)
   const seenLabelKeys = new Set();
+  const isHighlighted = resolveHighlightPredicate(isHighlightedPredicate);
 
   function roundN(x, n) {
     const p = Math.pow(10, n);
@@ -1037,10 +1041,7 @@ function drawAlerts(ctx, vp, alertsPrepared) {
 
     const { shape, stroke, fill, labelFill } = _alertStyle(a);
 
-    const highlighted =
-      typeof window !== "undefined" &&
-      window.__skyIsHighlighted &&
-      window.__skyIsHighlighted(a);
+    const highlighted = !!isHighlighted?.(a);
 
     // marker
     ctx.save();

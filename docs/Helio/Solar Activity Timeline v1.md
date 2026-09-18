@@ -112,18 +112,20 @@ Each timeline entry contains:
 event_time
 event_type
 event_title
-event_description
 source
-severity
+level
+severity_label
+description
 
 Example object:
 
 {
   "event_time": "2026-03-11T04:22Z",
-  "event_type": "flare",
+  "event_type": "solar_flare",
   "event_title": "C2 Solar Flare",
-  "severity": "minor",
-  "source": "SWPC"
+  "level": "info",
+  "severity_label": "minor",
+  "description": "C2 solar flare detected."
 }
 
 
@@ -136,10 +138,13 @@ Supported event categories:
 solar_flare
 cme_launch
 cme_arrival
-geomagnetic_storm_watch
+geomagnetic_watch
 geomagnetic_storm
 radio_blackout
-solar_radiation_storm
+radiation_storm
+
+`cme_arrival` is the canonical CME arrival name. `cme_impact` is not a
+supported v1 event type.
 
 These correspond to NOAA alert systems.
 
@@ -155,12 +160,12 @@ Level	Meaning
 info	minor activity
 watch	possible event
 warning	likely event
-alert	event occurring
 
 Example:
 
-geomagnetic_storm_watch
-severity: watch
+geomagnetic_watch
+level: watch
+severity_label: null
 
 
 ⸻

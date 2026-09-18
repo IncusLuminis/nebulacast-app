@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alerts Platform Fixture</title>
+  <link rel="stylesheet" href="/shared/widget-shell.css">
+  <link rel="stylesheet" href="/alerts/widget.css">
+  <style>
+    body { margin: 0; padding: 16px; background: #101318; color: #e6e6e6; font: 14px system-ui, sans-serif; }
+    main { display: grid; gap: 16px; max-width: 720px; }
+    [data-alerts-root] { min-height: 80px; }
+    #alerts-sentinel { color: rgb(18, 52, 86); padding: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p id="alerts-sentinel">Outside alerts widget sentinel</p>
+    <section id="alerts-one" data-alerts-root aria-label="Alerts one"></section>
+    <section id="alerts-two" data-alerts-root aria-label="Alerts two"></section>
+  </main>
+  <script type="module">
+    import { createCatalogRegistry } from "/shared/widget-catalog.mjs";
+    import { createNebulacast } from "/shared/widget-runtime.mjs";
+
+    let state = { observer: { name: "Warsaw", lat: 52, lon: 21 }, time: { mode: "live" } };
+    let subscriptionCount = 0;
+    const listeners = new Set();
+    const context = {
+      get: () => structuredClone(state),
+      subscribe(listener) { subscriptionCount += 1; listeners.add(listener); return () => listeners.delete(listener); },
+      update(patch) {
+        state = { ...state, ...structuredClone(patch) };
+        for (const listener of [...listeners]) listener(structuredClone(state));
+        return structuredClone(state);
+      },
+    };
+    const runtime = createNebulacast({
+      context,
+      registry: createCatalogRegistry(),
+      resolveAutoOrientation: ({ root }) => root.clientWidth < 520 ? "vertical" : "horizontal",
+    });
+    const roots = {
+      one: document.getElementById("alerts-one"),
+      two: document.getElementById("alerts-two"),
+    };
+    const instances = {};
+    async function mount(name) {
+      const config = name === "one"
+        ? { orientation: "vertical", groups: ["risk", "neo"], maxItems: 4 }
+        : { orientation: "horizontal", groups: ["transient"], maxItems: 1 };
+      instances[name] = await runtime.mount(roots[name], { widget: "alerts", config });
+      return instances[name];
+    }
+    await Promise.all([mount("one"), mount("two")]);
+    window.alertsHost = {
+      context,
+      roots,
+      instances,
+      get subscriptionCount() { return subscriptionCount; },
+      destroy(name) { instances[name]?.destroy(); },
+      async remount(name) { await mount(name); return instances[name]; },
+      updateGroups(name, groups) { instances[name]?.update({ groups }); },
+    };
+  </script>
+</body>
+</html>

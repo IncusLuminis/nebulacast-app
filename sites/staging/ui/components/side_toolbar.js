@@ -24,7 +24,8 @@ export class UISideToolbar extends HTMLElement {
       const id = btn.getAttribute("data-id");
       const kind = btn.getAttribute("data-kind") || "toggle";
 
-      // anchorEl должен быть именно кнопкой (div.btn)
+      // Keep the event anchor on the actual native button so popovers can
+      // position against the keyboard-focusable control.
       const anchorEl = btn;
 
       if (kind === "action") {
@@ -71,15 +72,17 @@ export class UISideToolbar extends HTMLElement {
       const kind = it.kind || "toggle";
 
       const btn = el(
-        "div",
+        "button",
         {
           class: "btn",
+          type: "button",
           role: "button",
           tabIndex: "0",
           "data-id": it.id,
           "data-kind": kind,
           "aria-pressed": it.pressed ? "true" : "false",
           "aria-disabled": it.disabled ? "true" : "false",
+          "aria-label": it.label || it.title || it.id,
           title: it.label || it.title || it.id,
         },
         [iconNode]

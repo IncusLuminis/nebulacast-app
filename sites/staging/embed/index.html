@@ -111,6 +111,15 @@
     .ctrl-input::-webkit-inner-spin-button,
     .ctrl-input::-webkit-outer-spin-button { -webkit-appearance: none; }
     .ctrl-input:focus { outline: none; border-color: var(--accent); }
+    .ctrl-select {
+      padding: 4px 7px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+    }
     .ctrl-unit {
       display: flex;
       border: 1px solid var(--line);
@@ -245,6 +254,27 @@
       line-height: 1;
     }
     .share-close:hover { color: var(--text); }
+    .share-tabs {
+      display: flex;
+      gap: 6px;
+      margin: -2px 0 12px;
+    }
+    .share-tabs[hidden] { display: none; }
+    .share-tab {
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #10181d;
+      color: var(--muted);
+      font: inherit;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .share-tab[aria-selected="true"] {
+      color: var(--accent);
+      background: #132632;
+      border-color: #2a5070;
+    }
     .share-code-wrap {
       position: relative;
     }
@@ -327,6 +357,13 @@
         <button class="ctrl-unit-btn" id="h-pct" onclick="setUnit('h','%')">%</button>
       </div>
     </div>
+    <div class="ctrl-group" id="hero-orientation-control" hidden>
+      <label class="ctrl-label" for="hero-orientation">Orientation</label>
+      <select class="ctrl-select" id="hero-orientation" aria-label="Hero orientation">
+        <option value="horizontal">Horizontal</option>
+        <option value="vertical">Vertical</option>
+      </select>
+    </div>
     <div class="ctrl-sep"></div>
     <div class="ctrl-presets">
       <span class="ctrl-label">Presets</span>
@@ -363,6 +400,10 @@
         <span class="share-panel-title">Embed code</span>
         <button class="share-close" onclick="closeShare()" aria-label="Close">×</button>
       </div>
+      <div class="share-tabs" id="share-tabs" role="tablist" aria-label="Embed code type" hidden>
+        <button class="share-tab" id="share-tab-current" role="tab" aria-selected="true" onclick="selectEmbedCode('current')">Current embed</button>
+        <button class="share-tab" id="share-tab-javascript" role="tab" aria-selected="false" onclick="selectEmbedCode('javascript')" hidden>JavaScript</button>
+      </div>
       <div class="share-code-wrap">
         <pre class="share-code" id="share-code"></pre>
         <button class="share-copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
@@ -392,6 +433,20 @@
   }
   document.getElementById('host-wrap').style.display = '';
   document.getElementById('embed-iframe').src = src;
+  var heroOrientationControl = document.getElementById('hero-orientation-control');
+  var heroOrientation = document.getElementById('hero-orientation');
+  if (src.indexOf('/hero/') === 0) {
+    heroOrientationControl.hidden = false;
+    heroOrientation.value = new URL(src, window.location.origin).searchParams.get('orientation') === 'vertical' ? 'vertical' : 'horizontal';
+    heroOrientation.addEventListener('change', function () {
+      var next = new URL(src, window.location.origin);
+      next.searchParams.set('orientation', heroOrientation.value);
+      src = next.pathname + next.search;
+      document.getElementById('topbar-sub').textContent = src;
+      document.getElementById('embed-iframe').src = src;
+      refreshCode();
+    });
+  }
 
   // ── Dimensions ──
   function applyDimensions() {
@@ -422,6 +477,13 @@
   // ── Embed code generation ──
   // Unique suffix so multiple instances on same page don't collide
   var uid = Math.random().toString(36).slice(2, 8);
+  var codeMode = 'current';
+  var JAVASCRIPT_EMBEDS = {
+    '/weather/': { widget: 'weather' },
+    '/sky/': { widget: 'sky' },
+    '/calendar/': { widget: 'events' },
+    '/sky/alerts.html': { widget: 'alerts' }
+  };
 
   function j(lines) { return lines.join('\n'); }
 
@@ -483,10 +545,10 @@
     // ── Calendar: CSS from staging + widget_runtime.js ──
     if (src === '/calendar/') {
       return j([
-        '<!-- Nebulacast · Sky Alerts widget -->',
+        '<!-- Nebulacast · Calendar widget -->',
         '<div id="nrc-' + uid + '">',
         '  <div class="nrc-header">',
-        '    <div class="nrc-title">Sky Alerts</div>',
+        '    <div class="nrc-title">Calendar</div>',
         '    <div class="nrc-meta">',
         '      <a class="nrc-link" href="' + o + '/calendar/daily_signal.json" target="_blank" rel="noopener">JSON</a>',
         '    </div>',
@@ -525,13 +587,67 @@
     ]);
   }
 
+  function javascriptEmbedDefinition() {
+    return JAVASCRIPT_EMBEDS[src] || null;
+  }
+
+  function buildJavascriptCode() {
+    var definition = javascriptEmbedDefinition();
+    if (!definition) return '';
+    var o = 'https://staging.nebulacast.app';
+    var isSquare = definition.widget === 'sky';
+    var usesPercent = state.wUnit === '%' && state.hUnit === '%';
+    var unit = usesPercent ? 'percent' : 'px';
+    // The public API accepts a single unit. For mixed iframe units, capture
+    // the visible host rectangle as pixels instead of changing one side's
+    // meaning. Its pixel layout is bounded by the public API contract.
+    var host = document.getElementById('embed-host');
+    var width = usesPercent ? state.w : (state.wUnit === 'px' && state.hUnit === 'px' ? state.w : host.offsetWidth);
+    var height = usesPercent ? state.h : (state.wUnit === 'px' && state.hUnit === 'px' ? state.h : host.offsetHeight);
+    var minimum = usesPercent ? 1 : 160;
+    var maximum = usesPercent ? 100 : 1600;
+    width = Math.max(minimum, Math.min(maximum, Math.round(width)));
+    height = Math.max(minimum, Math.min(maximum, Math.round(height)));
+    if (isSquare) {
+      var side = Math.min(width, height);
+      width = side;
+      height = side;
+    }
+    var mode = isSquare ? 'square' : (width >= height ? 'horizontal' : 'vertical');
+    var specification = {
+      widget: definition.widget,
+      config: {},
+      layout: { mode: mode, unit: unit, width: width, height: height }
+    };
+    return j([
+      '<!-- Nebulacast · ' + (title || definition.widget) + ' JavaScript embed -->',
+      '<div id="nc-' + uid + '"></div>',
+      '',
+      '<script type="module">',
+      '  import { mount } from "' + o + '/widgets/runtime/index.mjs";',
+      '  const root = document.getElementById("nc-' + uid + '");',
+      '  mount(root, ' + JSON.stringify(specification) + ');',
+      '<\/script>'
+    ]);
+  }
+
   var SNIPPET_WIDGETS = { '/helio/': true, '/news/': true, '/calendar/': true };
 
   function refreshCode() {
+    var hasJavascriptEmbed = Boolean(javascriptEmbedDefinition());
+    if (!hasJavascriptEmbed) codeMode = 'current';
+    document.getElementById('share-tabs').hidden = !hasJavascriptEmbed;
+    document.getElementById('share-tab-javascript').hidden = !hasJavascriptEmbed;
+    document.getElementById('share-tab-current').setAttribute('aria-selected', String(codeMode === 'current'));
+    document.getElementById('share-tab-javascript').setAttribute('aria-selected', String(codeMode === 'javascript'));
     var el = document.getElementById('share-code');
-    if (el) el.textContent = buildCode();
+    if (el) el.textContent = codeMode === 'javascript' ? buildJavascriptCode() : buildCode();
     var hint = document.getElementById('share-hint');
     if (!hint) return;
+    if (codeMode === 'javascript') {
+      hint.textContent = 'JavaScript embed is best when the widget should adapt inside your page and you want lifecycle control. Use the current embed for iframe isolation.';
+      return;
+    }
     if (SNIPPET_WIDGETS[src]) {
       hint.textContent = 'Snippet loads assets from staging.nebulacast.app. Swap the domain for production before deploying.';
     } else {
@@ -543,6 +659,12 @@
   window.openShare = function () {
     refreshCode();
     document.getElementById('share-backdrop').classList.add('open');
+  };
+  window.selectEmbedCode = function (mode) {
+    if (mode === 'javascript' && !javascriptEmbedDefinition()) return;
+    codeMode = mode === 'javascript' ? 'javascript' : 'current';
+    resetCopyBtn();
+    refreshCode();
   };
   window.closeShare = function () {
     document.getElementById('share-backdrop').classList.remove('open');

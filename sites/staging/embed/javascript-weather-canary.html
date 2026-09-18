@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nebulacast Weather JavaScript Embed Canary</title>
+  <style>
+    body { margin: 24px; background: #0b0d12; color: #e6e6e6; font: 14px/1.5 system-ui, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; }
+    #weather-root { width: 640px; max-width: 100%; }
+    #invalid-root { display: none; }
+    button { margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Weather JavaScript Embed Canary</h1>
+    <p>Foreign-host-style fixture for the documented static v1 Runtime API.</p>
+    <div id="weather-root"></div>
+    <div id="invalid-root"></div>
+    <p id="embed-status" role="status" aria-live="polite">Loading…</p>
+    <p id="invalid-status" role="status" aria-live="polite">Checking invalid config…</p>
+    <button id="update-weather" type="button" disabled>Update profile</button>
+    <button id="destroy-weather" type="button" disabled>Destroy widget</button>
+  </main>
+  <script type="module">
+    import { apiVersion, mount } from "/widgets/runtime/index.mjs";
+
+    const weatherRoot = document.getElementById("weather-root");
+    const invalidRoot = document.getElementById("invalid-root");
+    const status = document.getElementById("embed-status");
+    const invalidStatus = document.getElementById("invalid-status");
+    const updateButton = document.getElementById("update-weather");
+    const destroyButton = document.getElementById("destroy-weather");
+    let instance = null;
+
+    if (apiVersion !== 1) throw new Error(`Unsupported embed API version: ${apiVersion}`);
+
+    try {
+      await mount(invalidRoot, { widget: "weather", config: { moduleUrl: "/evil.mjs" } });
+      invalidStatus.textContent = "Invalid config was unexpectedly accepted.";
+    } catch (error) {
+      invalidStatus.textContent = `Invalid config rejected: ${error.message}`;
+    }
+
+    try {
+      instance = await mount(weatherRoot, {
+        widget: "weather",
+        config: { orientation: "vertical", profile: "balanced", range: "7d" },
+      });
+      status.textContent = "Weather mounted.";
+      updateButton.disabled = false;
+      destroyButton.disabled = false;
+    } catch (error) {
+      status.textContent = `Weather mount failed: ${error.message}`;
+    }
+
+    updateButton.addEventListener("click", async () => {
+      await instance?.update({ profile: "visual" });
+      status.textContent = "Weather updated.";
+    });
+    destroyButton.addEventListener("click", async () => {
+      await instance?.destroy();
+      instance = null;
+      updateButton.disabled = true;
+      destroyButton.disabled = true;
+      status.textContent = "Weather destroyed.";
+    });
+  </script>
+</body>
+</html>

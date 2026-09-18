@@ -146,8 +146,12 @@ function emit() {
     }
   });
   
-  // Dispatch custom event for external listeners
-  window.dispatchEvent(new CustomEvent("nc:state", { detail: currentState }));
+  // Dispatch custom event for external listeners when running in a page.
+  // The store is also consumed by Node-side contract tests and adapters.
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+      typeof CustomEvent !== "undefined") {
+    window.dispatchEvent(new CustomEvent("nc:state", { detail: currentState }));
+  }
 
   // When in iframe (e.g. Blogger embed), notify parent so it can persist state (parent's localStorage works)
   if (typeof window !== "undefined" && window.self !== window.top && currentState.location) {
@@ -222,6 +226,8 @@ export function initFromUrl() {
  */
 let urlSyncTimer = null;
 export function syncToUrl(currentState) {
+  if (typeof window === "undefined" || !window.location) return;
+
   // Debounce URL updates
   if (urlSyncTimer) {
     clearTimeout(urlSyncTimer);

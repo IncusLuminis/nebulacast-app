@@ -4,22 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nebulacast — Weather Map</title>
+  <link rel="stylesheet" href="/weather/assets/weather.css">
+  <link rel="stylesheet" href="/weather/widgets/map/map.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; background: #0b0d12; }
-    iframe {
+    #mapRoot {
       display: block;
       width: 100%;
       height: 100%;
-      border: none;
     }
   </style>
 </head>
 <body>
-  <iframe
-    src="/weather/map-poc.html"
-    title="Weather Map"
-    allowfullscreen
-  ></iframe>
+  <main id="mapRoot" data-nc-shape="oriented" aria-label="Weather Map"></main>
+  <script type="module">
+    import { mountMapPage } from "./map-composer.mjs?v=20260915a";
+    window.mapPageComposer = await mountMapPage();
+  </script>
 </body>
 </html>

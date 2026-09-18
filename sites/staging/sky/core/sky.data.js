@@ -1,12 +1,21 @@
 const cache = new Map();
 
+// Keep the parsed payload cached, but never expose that cached object to a
+// widget instance. Sky rendering prepares and annotates data locally; a
+// defensive clone preserves cache/network efficiency without allowing one
+// mounted instance to mutate another instance's input.
+function clonePayload(value) {
+  if (typeof structuredClone === "function") return structuredClone(value);
+  return JSON.parse(JSON.stringify(value));
+}
+
 async function loadJSON(url) {
-  if (cache.has(url)) return cache.get(url);
+  if (cache.has(url)) return clonePayload(cache.get(url));
   const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
   const json = await res.json();
   cache.set(url, json);
-  return json;
+  return clonePayload(json);
 }
 
 function loadStars(baseUrl) { return loadJSON(`${baseUrl}/data/stars.json`); }

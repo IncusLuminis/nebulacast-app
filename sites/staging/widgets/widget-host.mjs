@@ -1,0 +1,152 @@
+import { createCatalogRegistry } from "../shared/widget-catalog.mjs";
+import { createNebulacast } from "../shared/widget-runtime.mjs";
+import { parseStandaloneWidgetQuery, serializeWidgetConfig } from "../shared/widget-config.mjs";
+import { createStylesheetLoader } from "../shared/widget-stylesheet-loader.mjs";
+
+function defaultContext() {
+  let current = {
+    observer: { name: "Warsaw", lat: 52.2297, lon: 21.0122, timezone: "Europe/Warsaw", source: "standalone-host" },
+    time: { mode: "live", datetimeISO: null },
+  };
+  const listeners = new Set();
+  const snapshot = () => structuredClone(current);
+  return {
+    get: snapshot,
+    getObserver: () => structuredClone(current.observer),
+    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    update(patch = {}) {
+      if (!patch || typeof patch !== "object") return snapshot();
+      current = {
+        ...current,
+        ...patch,
+        observer: { ...current.observer, ...(patch.observer || {}) },
+        time: { ...current.time, ...(patch.time || {}) },
+      };
+      const next = snapshot();
+      for (const listener of [...listeners]) listener(next);
+      return next;
+    },
+  };
+}
+
+function normalizeError(error) {
+  return error instanceof Error ? error : new Error(String(error));
+}
+
+/** A bounded standalone host for catalog definitions explicitly marked standaloneHost. */
+// `standaloneStylesheet` remains the catalog compatibility field; the shared
+// loader now consumes the explicit `stylesheets` manifest when present.
+export function createStandaloneWidgetHost({
+  root,
+  status,
+  destroyButton,
+  context = defaultContext(),
+  registry = createCatalogRegistry(),
+  runtime = null,
+  documentRef = root?.ownerDocument || globalThis.document,
+  windowRef = documentRef?.defaultView || (typeof window !== "undefined" ? window : null),
+  search = windowRef?.location?.search || "",
+} = {}) {
+  if (!root || typeof root.setAttribute !== "function") throw new TypeError("Standalone host requires a root element");
+  if (!status || typeof status.textContent === "undefined") throw new TypeError("Standalone host requires a status element");
+  const widgetRuntime = runtime || createNebulacast({ context, registry });
+  const stylesheetLoader = createStylesheetLoader({ documentRef });
+  let instance = null;
+  let pending = null;
+  let stylesheet = null;
+  let destroyed = false;
+
+  function setStatus(message, state = "idle") {
+    status.textContent = message;
+    status.setAttribute?.("data-state", state);
+  }
+
+  function disableDestroy(disabled) {
+    if (destroyButton) destroyButton.disabled = disabled;
+  }
+
+  async function destroy() {
+    if (destroyed) return;
+    destroyed = true;
+    windowRef?.removeEventListener?.("pagehide", onPageHide);
+    if (pending) await pending.catch(() => null);
+    try {
+      await instance?.destroy?.();
+    } finally {
+      stylesheet?.release?.();
+      stylesheet = null;
+      instance = null;
+      pending = null;
+      disableDestroy(true);
+      setStatus("Widget destroyed.", "destroyed");
+    }
+  }
+
+  function onPageHide() { void destroy(); }
+
+  async function mount(nextSearch = search) {
+    if (destroyed) throw new Error("Standalone host is destroyed");
+    if (instance) return instance;
+    if (pending) return pending;
+    let widgetConfig;
+    let definition;
+    try {
+      widgetConfig = parseStandaloneWidgetQuery(registry, nextSearch);
+      definition = registry.get(widgetConfig.widget);
+      stylesheet = stylesheetLoader.acquire(definition, { attributeName: "data-nc-standalone-stylesheet" });
+    } catch (error) {
+      const normalized = normalizeError(error);
+      setStatus(`Unable to mount widget: ${normalized.message}`, "error");
+      disableDestroy(true);
+      return null;
+    }
+
+    root.textContent = "";
+    setStatus(`Loading ${widgetConfig.widget}…`, "loading");
+    pending = (async () => {
+      try {
+        const mounted = await widgetRuntime.mount(root, {
+          widget: widgetConfig.widget,
+          config: widgetConfig.config,
+        });
+        if (destroyed) {
+          await mounted?.destroy?.();
+          return null;
+        }
+        instance = mounted;
+        disableDestroy(false);
+        setStatus(`${widgetConfig.widget} mounted.`, "mounted");
+        return mounted;
+      } catch (error) {
+        stylesheet?.release?.();
+        stylesheet = null;
+        const normalized = normalizeError(error);
+        setStatus(`Unable to mount widget: ${normalized.message}`, "error");
+        disableDestroy(true);
+        return null;
+      } finally {
+        pending = null;
+      }
+    })();
+    return pending;
+  }
+
+  destroyButton?.addEventListener?.("click", () => { void destroy(); });
+  windowRef?.addEventListener?.("pagehide", onPageHide, { once: true });
+
+  return Object.freeze({
+    mount,
+    destroy,
+    getInstance: () => instance,
+    getConfig: nextSearch => {
+      try {
+        const config = parseStandaloneWidgetQuery(registry, nextSearch ?? search);
+        return Object.freeze({ ...config, serialized: serializeWidgetConfig(config) });
+      } catch (_) {
+        return null;
+      }
+    },
+  });
+}
+
+export default createStandaloneWidgetHost;

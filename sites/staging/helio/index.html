@@ -83,7 +83,7 @@
     <footer class="page-diag" aria-label="Diagnostics">
       <div class="page-diag-row">
         <span class="page-diag-label">Widget</span>
-        <span><b>HelioWidget</b></span>
+        <span><b>Space Weather Runtime</b></span>
       </div>
       <div class="page-diag-row">
         <span class="page-diag-label">Data URL</span>
@@ -92,24 +92,9 @@
     </footer>
   </div>
 
-  <script src="/helio/dist/helio.widget.js"></script>
-  <script>
-    (function () {
-      var el = document.getElementById('w-helio');
-      var errEl = document.getElementById('page-error');
-      if (!window.HelioWidget) {
-        errEl.textContent = 'HelioWidget failed to load. Check /helio/dist/helio.widget.js.';
-        errEl.classList.add('visible');
-        el.innerHTML = '<div style="padding:20px;color:#9aa3b2;font-size:13px;">Widget unavailable.</div>';
-        return;
-      }
-      try {
-        window.HelioWidget.mount(el, { dataUrl: '/data/helio_now.json', refreshMs: 600000 });
-      } catch (err) {
-        errEl.textContent = 'Widget mount error: ' + (err && err.message ? err.message : String(err));
-        errEl.classList.add('visible');
-      }
-    })();
+  <script type="module">
+    import { mountHelioPage } from "./page-composer.mjs?v=20260915a";
+    window.helioPageComposer = await mountHelioPage();
   </script>
 </body>
 </html>

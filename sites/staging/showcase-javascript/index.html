@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nebulacast — Widget Showcase</title>
+  <link rel="stylesheet" href="/showcase-javascript/showcase.css">
+</head>
+<body>
+  <main class="showcase-page">
+    <header class="showcase-header">
+      <h1>Widget Showcase</h1>
+      <p>Nebulacast · Staging catalog — widget readiness and entry points for QA &amp; review</p>
+    </header>
+    <div id="widget-gallery" aria-live="polite"></div>
+  </main>
+  <script type="module">
+    import { createShowcaseGallery } from "/showcase-javascript/showcase.mjs";
+    const gallery = createShowcaseGallery({ root: document.getElementById("widget-gallery") });
+    gallery.mount().catch(error => { document.getElementById("widget-gallery").textContent = `Gallery failed to initialize: ${error.message}`; });
+  </script>
+</body>
+</html>

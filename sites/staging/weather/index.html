@@ -36,7 +36,7 @@
 
       <!-- SKY tab content: mount point -->
       <div id="w-sky" class="widget-container widget-tab-content">
-        <div id="skyMount"></div>
+        <div id="skyMount" data-nc-shape="square"></div>
       </div>
 
       <div id="w-map" class="widget-container widget-tab-content"></div>
@@ -130,11 +130,8 @@
 
   <script type="module">
     import { initState, getState, setState, subscribe } from "./core/state.js?v=20260328a";
-    import { mountLocation } from "./widgets/location/location.js?v=20260328a";
-    import { mountWeather } from "./widgets/weather/weather.js?v=20260417b";
-    import { mountMap } from "./widgets/map/map.js?v=20260328a";
-    import { mountSunMoon } from "./widgets/sun_moon/sun_moon.js?v=20260328a";
-    import { mountAstro } from "./widgets/astro/astro.js?v=20260328a";
+    import { createPlatformContext } from "./core/context.js?v=20260328a";
+    import { createWeatherPageComposer } from "./weather-composer.mjs?v=20260915a";
 
     // Create store API object
     const storeApi = { getState, setState, subscribe };
@@ -142,197 +139,12 @@
     // Initialize state from URL
     initState();
 
-    // Mount location widget (always visible)
-    const locationEl = document.getElementById("w-location");
-    if (locationEl) mountLocation(locationEl, storeApi);
+    const platformContext = createPlatformContext(storeApi);
+    const weatherPage = createWeatherPageComposer({ context: platformContext });
+    window.weatherPageComposer = weatherPage;
+    await weatherPage.mount();
 
-    // Mount tab widgets
-    const weatherEl = document.getElementById("w-weather");
-    const sunEl = document.getElementById("w-sun");
-    const mapEl = document.getElementById("w-map");
-    const astroEl = document.getElementById("w-astro");
-
-    if (weatherEl) mountWeather(weatherEl, storeApi);
-    if (sunEl) mountSunMoon(sunEl, storeApi);
-    if (mapEl) mountMap(mapEl, storeApi);
-    if (astroEl) mountAstro(astroEl, storeApi);
-
-    // ------------------------------
-    // SKY (lazy init + bind to state)
-    // ------------------------------
-    let skyInited = false;
-
-    function clampMs(t, a, b) { return Math.max(a, Math.min(b, t)); }
-
-    function pickLatLonFromState(s) {
-      // tolerant to your store shape
-      const lat =
-        s?.location?.lat ??
-        s?.loc?.lat ??
-        s?.coords?.lat ??
-        s?.geo?.lat ??
-        null;
-
-      const lon =
-        s?.location?.lon ??
-        s?.location?.lng ??
-        s?.loc?.lon ??
-        s?.loc?.lng ??
-        s?.coords?.lon ??
-        s?.coords?.lng ??
-        s?.geo?.lon ??
-        s?.geo?.lng ??
-        null;
-
-      return {
-        lat: (typeof lat === "number" && isFinite(lat)) ? lat : null,
-        lon: (typeof lon === "number" && isFinite(lon)) ? lon : null
-      };
-    }
-
-    function pickDatetimeISOFromState(s) {
-      const v =
-        s?.time?.datetimeISO ??
-        s?.time?.iso ??
-        s?.time?.selectedISO ??
-        s?.controls?.datetimeISO ??
-        s?.controls?.iso ??
-        s?.selectedTimeISO ??
-        null;
-
-      if (typeof v === "string" && v.trim()) return v.trim();
-      return null;
-    }
-
-    async function initSkyIfNeeded() {
-      if (skyInited) return;
-      skyInited = true;
-
-      // load Sky CSS only when needed
-      const css = document.createElement("link");
-      css.rel = "stylesheet";
-      css.href = "/sky/assets/sky.css";
-      document.head.appendChild(css);
-
-      const state = getState();
-      const { lat, lon } = pickLatLonFromState(state);
-
-      // allow only [now .. now+7d]
-      const now = Date.now();
-      const max = now + 7 * 24 * 60 * 60 * 1000;
-
-      let dtISO = pickDatetimeISOFromState(state);
-      if (dtISO) {
-        const t = Date.parse(dtISO);
-        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
-        else dtISO = null;
-      }
-
-      // IMPORTANT: SKY_CONFIG must exist BEFORE importing /sky/widget.js
-      window.SKY_CONFIG = {
-        baseUrl: "/sky",
-        mountId: "skyMount",
-        lat: (lat != null ? lat : 52.2297),
-        lon: (lon != null ? lon : 21.0122),
-        datetimeISO: dtISO,
-        options: {
-          showSunMoon: true,
-          showMilkyWay: true,
-          showGridEq: true,
-          showConstellations: true,
-          showObjects: true,
-          showAlerts: true
-        }
-      };
-
-      // import the widget module (it will bootstrap itself)
-      await import("/sky/widget.js");
-
-      // ensure correct sizing after first mount
-      setTimeout(() => {
-        try { window.__skyWidget?.resize?.(); } catch (_) {}
-      }, 0);
-    }
-
-    function syncSkyFromState() {
-      if (!window.__skyWidget || typeof window.__skyWidget.update !== "function") return;
-
-      const s = getState();
-      const { lat, lon } = pickLatLonFromState(s);
-
-      const now = Date.now();
-      const max = now + 7 * 24 * 60 * 60 * 1000;
-
-      let dtISO = pickDatetimeISOFromState(s);
-      if (dtISO) {
-        const t = Date.parse(dtISO);
-        if (isFinite(t)) dtISO = new Date(clampMs(t, now, max)).toISOString();
-        else dtISO = null;
-      }
-
-      const patch = {};
-      if (lat != null) patch.lat = lat;
-      if (lon != null) patch.lon = lon;
-      patch.datetimeISO = dtISO; // can be null
-
-      try { window.__skyWidget.update(patch); } catch (_) {}
-    }
-
-    // subscribe to store changes -> update Sky when location/time changes
-    subscribe(() => {
-      if (!skyInited) return;
-      syncSkyFromState();
-    });
-
-    // ----------------
-    // Tab switching
-    // ----------------
-    const tabs = document.querySelectorAll(".widget-tab");
-    const tabContents = document.querySelectorAll(".widget-tab-content");
-
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        const targetTab = tab.dataset.tab;
-
-        // Lazy init Sky on first open
-        if (targetTab === "sky") {
-          initSkyIfNeeded().then(() => {
-            syncSkyFromState();
-            setTimeout(() => {
-              try { window.__skyWidget?.resize?.(); } catch (_) {}
-            }, 0);
-          });
-        }
-
-        // Update active tab
-        tabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-
-        // Show/hide content
-        tabContents.forEach(content => {
-          const isTarget = content.id === `w-${targetTab}`;
-          content.classList.toggle("active", isTarget);
-        });
-
-        // Persist active tab
-        try { localStorage.setItem('nc-weather-tab', targetTab); } catch (_) {}
-      });
-    });
-
-    // Restore active tab from previous session
-    (function () {
-      const VALID_TABS = ['weather', 'map', 'sun', 'sky'];
-      let saved;
-      try { saved = localStorage.getItem('nc-weather-tab'); } catch (_) {}
-      if (saved && VALID_TABS.includes(saved) && saved !== 'weather') {
-        const target = document.querySelector(`.widget-tab[data-tab="${saved}"]`);
-        if (target) target.click();
-      }
-    })();
-
-    // Initial render for all widgets (they subscribe to state changes)
-    const initialState = getState();
-    void initialState;
+    // Weather page tab and widget lifecycle behavior is owned by the Runtime composer.
   </script>
 </body>
 </html>

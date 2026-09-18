@@ -1,0 +1,157 @@
+{
+  "schema": "astronomy-consistency.v1",
+  "tolerances": {
+    "position_degrees": 0.000001,
+    "lunar_exact": 0
+  },
+  "contract": {
+    "lunar_schema": "lunar-snapshot.v1",
+    "lunar_source": "astronomy-engine@2.1.19",
+    "api_schema": "sun_moon.v2",
+    "api_epoch": "apparent",
+    "api_source": "JS low-precision (Meeus)",
+    "lunar_units": {
+      "cycle_phase": "fraction",
+      "illuminated_fraction": "fraction",
+      "illuminated_percent": "percent",
+      "alt_deg": "degrees",
+      "az_deg": "degrees"
+    },
+    "api_units": {
+      "ra_deg": "degrees",
+      "dec_deg": "degrees",
+      "alt_deg": "degrees",
+      "az_deg": "degrees",
+      "illum_pct": "percent"
+    }
+  },
+  "ownership": {
+    "lunar_source": "frontend/astronomy/lunar.ts",
+    "lunar_generated": [
+      "sites/staging/shared/lunar.mjs",
+      "functions/lib/lunar.js"
+    ],
+    "api_source": "functions/api/sun-moon.js",
+    "static_artifact": "sites/staging/sky/data/sun_moon.json",
+    "static_kind": "static",
+    "static_location_id": "default-warsaw"
+  },
+  "vectors": [
+    {
+      "id": "warsaw",
+      "instant_utc": "2026-09-09T00:00:00Z",
+      "observer": {
+        "name": "Warsaw",
+        "lat": 52.2297,
+        "lon": 21.0122,
+        "timezone": "Europe/Warsaw"
+      },
+      "lunar": {
+        "cycle_phase": 0.9226174392475539,
+        "illuminated_fraction": 0.058286353847141426,
+        "illuminated_percent": 5.8286353847141426,
+        "waxing": false,
+        "phase_name": "Waning Crescent",
+        "emoji": "🌘",
+        "alt_deg": null,
+        "az_deg": null
+      },
+      "api": {
+        "params": { "days": 1, "step_min": 60 },
+        "site": { "lat_deg": 52.2297, "lon_deg": 21.0122 },
+        "window": { "start_utc": "2026-09-09T00:00:00.000Z", "end_utc": "2026-09-10T00:00:00.000Z" },
+        "first_frame": {
+          "t_utc": "2026-Sep-09 00:00Z",
+          "sun": { "ra_deg": 167.432, "dec_deg": 5.388, "alt_deg": -29.5108, "az_deg": 24.9515 },
+          "moon": { "ra_deg": 141.252, "dec_deg": 16.289, "alt_deg": -9.966, "az_deg": 46.2344, "illum_pct": 5.8286353847141426, "phase": 0.9226174392475539, "waxing": false, "phase_name": "Waning Crescent" }
+        },
+        "last_frame": {
+          "t_utc": "2026-Sep-10 00:00Z",
+          "sun": { "ra_deg": 168.331, "dec_deg": 5.011, "alt_deg": -29.8529, "az_deg": 25.1611 },
+          "moon": { "ra_deg": 154.442, "dec_deg": 10.336, "alt_deg": -20.3662, "az_deg": 37.6673, "illum_pct": 1.6553925467403585, "phase": 0.9590381406598002, "waxing": false, "phase_name": "New Moon" }
+        }
+      }
+    },
+    {
+      "id": "equatorial",
+      "instant_utc": "2026-03-20T12:00:00Z",
+      "observer": { "name": "Equatorial", "lat": 0, "lon": 0, "timezone": "UTC" },
+      "lunar": {
+        "cycle_phase": 0.052703094230099466,
+        "illuminated_fraction": 0.028116815731430045,
+        "illuminated_percent": 2.8116815731430043,
+        "waxing": true,
+        "phase_name": "New Moon",
+        "emoji": "🌑",
+        "alt_deg": null,
+        "az_deg": null
+      },
+      "api": {
+        "params": { "days": 1, "step_min": 60 },
+        "site": { "lat_deg": 0, "lon_deg": 0 },
+        "window": { "start_utc": "2026-03-20T12:00:00.000Z", "end_utc": "2026-03-21T12:00:00.000Z" },
+        "first_frame": {
+          "t_utc": "2026-Mar-20 12:00Z",
+          "sun": { "ra_deg": 359.9, "dec_deg": -0.043, "alt_deg": 88.1339, "az_deg": 91.3343 },
+          "moon": { "ra_deg": 16.098, "dec_deg": 10.511, "alt_deg": 69.1894, "az_deg": 59.1051, "illum_pct": 2.8116815731430043, "phase": 0.052703094230099466, "waxing": true, "phase_name": "New Moon" }
+        },
+        "last_frame": {
+          "t_utc": "2026-Mar-21 12:00Z",
+          "sun": { "ra_deg": 0.811, "dec_deg": 0.352, "alt_deg": 88.1743, "az_deg": 78.8925 },
+          "moon": { "ra_deg": 29.51, "dec_deg": 16.603, "alt_deg": 55.6683, "az_deg": 59.5599, "illum_pct": 7.92432549016805, "phase": 0.08992953107470891, "waxing": true, "phase_name": "Waxing Crescent" }
+        }
+      }
+    },
+    {
+      "id": "high-latitude",
+      "instant_utc": "2026-12-21T12:00:00Z",
+      "observer": { "name": "High latitude", "lat": 69.6492, "lon": 18.9553, "timezone": "Europe/Oslo" },
+      "lunar": {
+        "cycle_phase": 0.3998055005770864,
+        "illuminated_fraction": 0.9029789027089503,
+        "illuminated_percent": 90.29789027089504,
+        "waxing": true,
+        "phase_name": "Waxing Gibbous",
+        "emoji": "🌔",
+        "alt_deg": null,
+        "az_deg": null
+      },
+      "api": {
+        "params": { "days": 1, "step_min": 60 },
+        "site": { "lat_deg": 69.6492, "lon_deg": 18.9553 },
+        "window": { "start_utc": "2026-12-21T12:00:00.000Z", "end_utc": "2026-12-22T12:00:00.000Z" },
+        "first_frame": {
+          "t_utc": "2026-Dec-21 12:00Z",
+          "sun": { "ra_deg": 269.588, "dec_deg": -23.435, "alt_deg": -4.128, "az_deg": 197.8279 },
+          "moon": { "ra_deg": 49.769, "dec_deg": 23.595, "alt_deg": 12.2622, "az_deg": 53.7085, "illum_pct": 90.29789027089504, "phase": 0.3998055005770864, "waxing": true, "phase_name": "Waxing Gibbous" }
+        },
+        "last_frame": {
+          "t_utc": "2026-Dec-22 12:00Z",
+          "sun": { "ra_deg": 270.698, "dec_deg": -23.434, "alt_deg": -4.1138, "az_deg": 197.7144 },
+          "moon": { "ra_deg": 65.836, "dec_deg": 26.543, "alt_deg": 11.2946, "az_deg": 39.4755, "illum_pct": 96.14435240436153, "phase": 0.4383477726031197, "waxing": true, "phase_name": "Full Moon" }
+        }
+      }
+    }
+  ],
+  "static_artifact": {
+    "path": "sites/staging/sky/data/sun_moon.json",
+    "metadata": {
+      "version": 2,
+      "schema": "sun_moon.v2",
+      "lunar_source": "astronomy-engine@2.1.19",
+      "epoch": "apparent",
+      "generated_at": "2026-09-07T09:27:06.855417Z",
+      "source": "DE421 local kernel via astropy.coordinates",
+      "params": { "days": 7, "step_min": 10 },
+      "site": { "lat": 52.2297, "lon": 21.0122, "elevation_km": 0.1, "location_id": "default-warsaw", "name": "Warsaw", "timezone": "Europe/Warsaw" },
+      "ownership": { "kind": "static", "location_id": "default-warsaw", "location_name": "Warsaw", "timezone": "Europe/Warsaw", "coordinates": { "lat_deg": 52.2297, "lon_deg": 21.0122 } },
+      "manifest": { "schema_version": "1", "input_source": "committed-artifact", "generated_utc": "2026-09-07T09:27:06.855417Z", "location": { "name": "Warsaw", "lat": 52.2297, "lon": 21.0122 } }
+    },
+    "frame_count": 1009,
+    "first_frame": {
+      "t_utc": "2026-Sep-07 09:27Z",
+      "sun": { "ra_deg": 165.64389, "dec_deg": 6.133555, "alt_deg": 41.7421, "az_deg": 157.4063 },
+      "moon": { "ra_deg": 117.428096, "dec_deg": 23.492085, "alt_deg": 52.5523, "az_deg": 231.8563, "illum_pct": 17.434046773272822, "phase": 0.8633710749754534, "waxing": false, "phase_name": "Waning Crescent" }
+    }
+  }
+}

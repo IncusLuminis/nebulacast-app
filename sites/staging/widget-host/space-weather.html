@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Weather Platform Fixture</title>
+  <link rel="stylesheet" href="/shared/widget-shell.css">
+  <style>
+    body { margin: 0; padding: 16px; background: #101318; color: #e6e6e6; font: 14px system-ui, sans-serif; }
+    main { display: grid; gap: 16px; max-width: 960px; }
+    [data-space-weather-root] { min-height: 180px; }
+    #space-weather-narrow { max-width: 420px; }
+    #space-weather-sentinel { color: rgb(18, 52, 86); padding: 3px; border: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <p id="space-weather-sentinel">Outside Space Weather widget sentinel</p>
+    <section id="space-weather-wide" data-space-weather-root aria-label="Wide Space Weather"></section>
+    <section id="space-weather-narrow" data-space-weather-root aria-label="Narrow Space Weather"></section>
+  </main>
+  <script type="module">
+    let state = { observer: { name: "Warsaw", lat: 52.2297, lon: 21.0122 }, time: { mode: "live" } };
+    const listeners = new Set();
+    const context = {
+      get: () => structuredClone(state),
+      subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+      update(patch = {}) {
+        state = { ...state, ...structuredClone(patch), observer: { ...state.observer, ...(patch.observer || {}) } };
+        const next = structuredClone(state);
+        for (const listener of [...listeners]) listener(next);
+        return next;
+      },
+    };
+    const { createCatalogRegistry } = await import("/shared/widget-catalog.mjs");
+    const { createNebulacast } = await import("/shared/widget-runtime.mjs");
+    const runtime = createNebulacast({ context, registry: createCatalogRegistry() });
+    const roots = {
+      wide: document.querySelector("#space-weather-wide"),
+      narrow: document.querySelector("#space-weather-narrow"),
+    };
+    const instances = {};
+    instances.wide = await runtime.mount(roots.wide, { widget: "space-weather", config: { orientation: "horizontal" } });
+    instances.narrow = await runtime.mount(roots.narrow, { widget: "space-weather", config: { orientation: "vertical" } });
+    window.spaceWeatherHost = {
+      context,
+      roots,
+      instances,
+      destroy(name) { instances[name]?.destroy(); },
+      async remount(name) {
+        const orientation = name === "wide" ? "horizontal" : "vertical";
+        instances[name] = await runtime.mount(roots[name], { widget: "space-weather", config: { orientation } });
+        return instances[name];
+      },
+    };
+  </script>
+</body>
+</html>

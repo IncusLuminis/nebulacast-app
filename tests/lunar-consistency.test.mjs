@@ -8,7 +8,7 @@ const source = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 test("Sun Equation, Hero and Sky are wired to the canonical snapshot", () => {
   const consumers = [
     source("sites/staging/weather/widgets/sun_moon/sun_moon.js"),
-    source("sites/staging/index.html"),
+    source("sites/staging/hero/widget.js"),
     source("sites/staging/sky/core/sky.prepare.js"),
   ];
   for (const consumer of consumers) {

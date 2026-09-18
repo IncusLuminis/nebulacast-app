@@ -56,6 +56,7 @@ export class UIBottomToolbar extends HTMLElement {
         type: "button",
         "data-id": it.id,
         "data-kind": kind,
+        "aria-label": it.label || it.title || it.id,
         title: it.title || "",
         "aria-pressed": kind === "toggle" ? (it.pressed ? "true" : "false") : null,
         disabled: it.disabled ? true : false

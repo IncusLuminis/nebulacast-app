@@ -49,7 +49,15 @@ Entry point: `sites/staging/weather/index.html`.
 
 ### Location
 
-`sites/staging/weather/widgets/location/location.js` owns search, geolocation, reverse geocoding, timezone lookup, URL/share handling, and state updates. It first calls same-origin Pages Functions (`/api/geocode`, `/api/revgeo`, `/api/timezone`) and falls back to Nominatim. Timezone fallback includes country/coordinate heuristics and ultimately UTC. The module uses a lifecycle helper from `sites/staging/shared/lifecycle.mjs`.
+`sites/staging/weather/widgets/location/platform-adapter.mjs` owns the canonical
+instance-local Location controller, including search, geolocation, reverse
+geocoding, timezone resolution, URL/share handling, and state updates.
+`sites/staging/weather/widgets/location/location.js` remains the legacy
+`mountLocation(root, storeApi)` compatibility bridge used by the Weather hosts.
+The adapter uses same-origin Pages Functions (`/api/geocode`, `/api/revgeo`),
+geocoder-provided timezone data when available, and country/coordinate fallback
+logic; this repository has no `/api/timezone` endpoint. The adapter owns its
+request cancellation and lifecycle cleanup.
 
 ### Weather
 
@@ -111,7 +119,7 @@ The dashboard shell has additional inline state (`_dbHeroData`, Sky handles, set
 | `/api/sky-ranking` | `functions/api/sky-ranking.js` | `lat`, `lon`, `tz` | Location-specific ranking computed from generated catalogs |
 | `/api/geocode` | `functions/api/geocode.*` | query | Location candidates |
 | `/api/revgeo` | `functions/api/revgeo.*` | coordinates | Place name |
-| `/api/timezone` | `functions/api/timezone.*` | coordinates | Timezone/display information |
+| timezone fallback | `sites/staging/weather/widgets/location/platform-adapter.mjs` | geocoder timezone or coordinates/country | Timezone used by Location when no geocoder timezone is available; there is no `/api/timezone` function |
 
 `/api/astro-weather` uses Open-Meteo and 7Timer providers, validates/merges them, computes derived values, and has graceful rate-limit/stale-cache handling. The frontend must treat an empty `hours` response with `source: "rate-limited"` as a degraded state, not as a normal forecast.
 
@@ -200,4 +208,3 @@ A future implementation should not be considered ready until it demonstrates:
 - `functions/api/astro-weather.ts`
 - `functions/api/sun-moon.js`
 - `functions/api/sky-ranking.js`
-

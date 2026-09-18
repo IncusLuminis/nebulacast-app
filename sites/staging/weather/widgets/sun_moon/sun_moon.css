@@ -54,6 +54,10 @@
   border-radius:10px;
   background:#05060a;
 }
+.sunmoon-canvas:focus-visible{
+  outline:2px solid #8fb6ff;
+  outline-offset:2px;
+}
 
 /* ── 4-column summary grid ────────────────────────────────────────── */
 .sunmoon-summary{
@@ -104,4 +108,23 @@
   display:none;
   z-index:10;
   backdrop-filter:blur(4px);
+}
+
+/* The standalone /sun/ route gives its root a bounded host. Keep this scoped
+   so dashboard cards retain their natural content height. */
+.sun-page-shell #w-sun .sunmoon-card {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sun-page-shell #w-sun .sunmoon-graph-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+.sun-page-shell #w-sun .sunmoon-canvas {
+  height: auto;
+  min-height: 270px;
+  flex: 1 1 auto;
 }
