@@ -848,7 +848,9 @@
   const DEFAULT_ZOOM = 7;
   const RAINVIEWER_API = "https://api.rainviewer.com/public/weather-maps.json";
   const HILLSHADE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
-  const CARTO_DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+  // Keep a public, visible base layer for the standalone/embed map. The dark
+  // Carto tiles intermittently returned an all-black canvas on staging.
+  const OSM_BASE = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
   const GIBS_SUBDOMAINS = ["a", "b", "c"];
   const GIBS_LAYER = "MODIS_Terra_CorrectedReflectance_TrueColor";
   const GIBS_TILEMATRIXSET = "GoogleMapsCompatible_Level9";
@@ -4021,9 +4023,9 @@
 
   function initMap() {
     map = L.map("map", { center: currentCenter, zoom: currentZoom });
-    baseLayer = L.tileLayer(CARTO_DARK, {
-      attribution: "© CARTO",
-      subdomains: "abcd",
+    baseLayer = L.tileLayer(OSM_BASE, {
+      attribution: "© OpenStreetMap contributors",
+      subdomains: "abc",
       maxZoom: 19
     });
     baseLayer.addTo(map);

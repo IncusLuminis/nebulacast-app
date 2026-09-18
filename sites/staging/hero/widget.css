@@ -198,6 +198,25 @@
   }
 }
 
+/* The Dashboard host is a fixed-width console column rather than a viewport
+   container. Keep an explicit fallback for browsers/hosts that do not expose
+   the surrounding .console-page as a query container. */
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] {
+  min-height: 110px;
+  overflow: hidden;
+}
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-date"] { font-size: 17px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] [data-role="clock-time"] { font-size: 28px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-weather-chips { gap: 2px; margin-top: 2px; font-size: 8px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value { font-size: 40px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-value span { font-size: 14px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nqi-label { font-size: 11px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-range,
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .window-time { font-size: 11px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-summary-text { font-size: 9px; line-height: 1.25; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .hero-card[data-panel="helio"] .kp-value { font-size: 28px; }
+#console-hero[data-nc-widget="hero"][data-nc-orientation="horizontal"] .nop-scale-badge { font-size: 9px; padding: 3px 5px; }
+
 /* Portrait Hero is a two-column dashboard, not a squeezed horizontal strip. */
 .nc-widget[data-nc-widget="hero"][data-nc-orientation="vertical"] .hero-card-row {
   flex: 1;
