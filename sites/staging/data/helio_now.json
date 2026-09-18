@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-18T10:52:16Z",
+  "updated_utc": "2026-09-18T16:07:10Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -15,17 +15,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 2.0,
-    "kp_time_utc": "2026-09-18T06:00:00Z",
+    "kp_latest": 0.67,
+    "kp_time_utc": "2026-09-18T12:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-09-18T12:00:00Z",
-        "kp": 1.67
-      },
-      {
-        "t_utc": "2026-09-18T15:00:00Z",
-        "kp": 2.0
-      },
       {
         "t_utc": "2026-09-18T18:00:00Z",
         "kp": 2.67
@@ -48,19 +40,19 @@
       },
       {
         "t_utc": "2026-09-19T09:00:00Z",
-        "kp": 2.0
+        "kp": 1.67
       },
       {
         "t_utc": "2026-09-19T12:00:00Z",
-        "kp": 2.0
+        "kp": 1.67
       },
       {
         "t_utc": "2026-09-19T15:00:00Z",
-        "kp": 1.67
+        "kp": 0.67
       },
       {
         "t_utc": "2026-09-19T18:00:00Z",
-        "kp": 1.67
+        "kp": 0.67
       },
       {
         "t_utc": "2026-09-19T21:00:00Z",
@@ -72,11 +64,11 @@
       },
       {
         "t_utc": "2026-09-20T03:00:00Z",
-        "kp": 1.33
+        "kp": 2.0
       },
       {
         "t_utc": "2026-09-20T06:00:00Z",
-        "kp": 1.33
+        "kp": 1.67
       },
       {
         "t_utc": "2026-09-20T09:00:00Z",
@@ -84,7 +76,7 @@
       },
       {
         "t_utc": "2026-09-20T12:00:00Z",
-        "kp": 1.33
+        "kp": 0.67
       },
       {
         "t_utc": "2026-09-20T15:00:00Z",
@@ -92,7 +84,7 @@
       },
       {
         "t_utc": "2026-09-20T18:00:00Z",
-        "kp": 1.67
+        "kp": 1.33
       },
       {
         "t_utc": "2026-09-20T21:00:00Z",
@@ -104,14 +96,6 @@
       }
     ],
     "kp_history_1h": [
-      {
-        "t_utc": "2026-09-17T12:00:00Z",
-        "kp": 3.0
-      },
-      {
-        "t_utc": "2026-09-17T15:00:00Z",
-        "kp": 2.0
-      },
       {
         "t_utc": "2026-09-17T18:00:00Z",
         "kp": 1.67
@@ -131,38 +115,22 @@
       {
         "t_utc": "2026-09-18T06:00:00Z",
         "kp": 2.0
+      },
+      {
+        "t_utc": "2026-09-18T09:00:00Z",
+        "kp": 1.67
+      },
+      {
+        "t_utc": "2026-09-18T12:00:00Z",
+        "kp": 0.67
       }
     ],
-    "xray_flux_wm2": 2.721737075717101e-07,
+    "xray_flux_wm2": 2.752722139121033e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-09-17T10:00:00Z",
-        "flux": 2.3934053469279857e-07
-      },
-      {
-        "t_utc": "2026-09-17T11:00:00Z",
-        "flux": 2.417704455600263e-07
-      },
-      {
-        "t_utc": "2026-09-17T12:00:00Z",
-        "flux": 2.574950855205316e-07
-      },
-      {
-        "t_utc": "2026-09-17T13:00:00Z",
-        "flux": 2.469089613062655e-07
-      },
-      {
-        "t_utc": "2026-09-17T14:00:00Z",
-        "flux": 2.4762180891198585e-07
-      },
-      {
-        "t_utc": "2026-09-17T15:00:00Z",
-        "flux": 2.4294270465785395e-07
-      },
-      {
         "t_utc": "2026-09-17T16:00:00Z",
-        "flux": 2.3772580348691008e-07
+        "flux": 2.379364671102079e-07
       },
       {
         "t_utc": "2026-09-17T17:00:00Z",
@@ -234,7 +202,31 @@
       },
       {
         "t_utc": "2026-09-18T10:00:00Z",
-        "flux": 2.687231461568816e-07
+        "flux": 2.6901816359744163e-07
+      },
+      {
+        "t_utc": "2026-09-18T11:00:00Z",
+        "flux": 2.658230296030221e-07
+      },
+      {
+        "t_utc": "2026-09-18T12:00:00Z",
+        "flux": 2.748502713719366e-07
+      },
+      {
+        "t_utc": "2026-09-18T13:00:00Z",
+        "flux": 2.974589771535345e-07
+      },
+      {
+        "t_utc": "2026-09-18T14:00:00Z",
+        "flux": 2.894575762487269e-07
+      },
+      {
+        "t_utc": "2026-09-18T15:00:00Z",
+        "flux": 2.8412646931504543e-07
+      },
+      {
+        "t_utc": "2026-09-18T16:00:00Z",
+        "flux": 2.751334733375188e-07
       }
     ],
     "solar_wind_kms": null,
@@ -252,7 +244,7 @@
     "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 2.0,
+    "kp": 0.67,
     "status_label": "Quiet",
     "scales": {
       "g": "G0",
@@ -269,7 +261,7 @@
   "forecast": {
     "kp_max_next_24h": 3.0,
     "kp_max_at_utc": "2026-09-18T21:00:00Z",
-    "trend": "steady"
+    "trend": "falling"
   },
   "aurora_hint": {
     "aurora_possible": false,
@@ -329,7 +321,7 @@
       "source_code": "WARK04",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5418\r\nIssue Time: 2026 Sep 16 0538 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\nExtension to Serial Number: 5417\nValid From: 2026 Sep 15 1849 UTC\nNow Valid Until: 2026 Sep 16 1800 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.2867,
+      "relevance": 0.2065,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-09-16T00"
     },
     {
@@ -348,19 +340,19 @@
       "dedupe_key": "geomagnetic_storm|G|1|warning|2026-09-15T18"
     },
     {
-      "t_utc": "2026-09-16T00:34:08Z",
+      "t_utc": "2026-09-15T17:37:51Z",
       "kind": "geomagnetic_watch",
       "domain": "G",
-      "severity": null,
-      "severity_label": null,
+      "severity": 1,
+      "severity_label": "minor",
       "level": "watch",
-      "title": "Elevated geomagnetic activity possible",
+      "title": "Geomagnetic storm watch",
       "summary_short": "Geomagnetic conditions may intensify in the next forecast window.",
-      "source_code": "ALTK04",
-      "raw_title": "ALERT: Geomagnetic K-index of 4",
-      "raw_body": "Space Weather Message Code: ALTK04\r\nSerial Number: 2684\r\nIssue Time: 2026 Sep 16 0034 UTC\r\n\r\nALERT: Geomagnetic K-index of 4 \nThreshold Reached: 2026 Sep 16 0030 UTC\nSynoptic Period: 0000-0300\nActive Warning: YES\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.1636,
-      "dedupe_key": "geomagnetic_watch|G|na|watch|2026-09-16T00"
+      "source_code": "WATA20",
+      "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
+      "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1125\r\nIssue Time: 2026 Sep 15 1737 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted \nHighest Storm Level Predicted by Day:\nSep 16:  G1 (Minor)   Sep 17:  G1 (Minor)   Sep 18:  None (Below G1)   \nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
+      "relevance": 0.141,
+      "dedupe_key": "geomagnetic_watch|G|1|watch|2026-09-15T12"
     }
   ],
   "alerts_all": [
@@ -376,7 +368,7 @@
       "source_code": "WARK04",
       "raw_title": "EXTENDED WARNING: Geomagnetic K-index of 4 expected",
       "raw_body": "Space Weather Message Code: WARK04\r\nSerial Number: 5418\r\nIssue Time: 2026 Sep 16 0538 UTC\r\n\r\nEXTENDED WARNING: Geomagnetic K-index of 4 expected\nExtension to Serial Number: 5417\nValid From: 2026 Sep 15 1849 UTC\nNow Valid Until: 2026 Sep 16 1800 UTC\nWarning Condition: Persistence\n\r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.2867,
+      "relevance": 0.2065,
       "dedupe_key": "geomagnetic_storm|G|na|warning|2026-09-16T00"
     },
     {
@@ -391,7 +383,7 @@
       "source_code": "ALTK04",
       "raw_title": "ALERT: Geomagnetic K-index of 4",
       "raw_body": "Space Weather Message Code: ALTK04\r\nSerial Number: 2684\r\nIssue Time: 2026 Sep 16 0034 UTC\r\n\r\nALERT: Geomagnetic K-index of 4 \nThreshold Reached: 2026 Sep 16 0030 UTC\nSynoptic Period: 0000-0300\nActive Warning: YES\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 65 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nAurora - Aurora may be visible at high latitudes such as Canada and Alaska.",
-      "relevance": 0.1636,
+      "relevance": 0.129,
       "dedupe_key": "geomagnetic_watch|G|na|watch|2026-09-16T00"
     },
     {
@@ -512,6 +504,21 @@
       "metadata": {
         "source_code": "WARK04"
       }
+    },
+    {
+      "event_time": "2026-09-18T03:24:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 371 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 371 km/s\nHalf-angle: 41.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 371.0,
+        "half_angle": 41.0
+      }
     }
   ],
   "cme_tracker": null,
@@ -539,7 +546,7 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 2.0"
+        "Kp 0.7"
       ]
     }
   },
