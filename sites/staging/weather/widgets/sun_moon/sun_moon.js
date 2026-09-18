@@ -1,5 +1,5 @@
 import { calendarDate, localMidnightUTC } from "../../../shared/zoned-date.mjs";
-import { createLunarSnapshot } from "../../../shared/lunar.mjs";
+import { createLunarSnapshot } from "../../../shared/lunar.mjs?v=20260918d";
 /**
  * Sun Equation widget (sun_moon)
  * Sun and Moon positions use SunCalc; lunar phase uses the shared UTC source.

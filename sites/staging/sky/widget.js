@@ -2,7 +2,7 @@
 import { DEFAULTS } from "./core/sky.constants.js";
 import { Data } from "./core/sky.data.js";
 import { Layout } from "./core/sky.layout.js";
-import { Prepare } from "./core/sky.prepare.js";
+import { Prepare } from "./core/sky.prepare.js?v=20260918d";
 import { Render } from "./core/sky.render.js";
 import { SkyUI } from "./core/sky.ui.js";
 import { buildCardData } from "./core/sky.ui.js";

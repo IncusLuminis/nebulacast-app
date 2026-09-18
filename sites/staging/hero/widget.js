@@ -1,4 +1,4 @@
-import { createLunarSnapshot } from "../shared/lunar.mjs";
+import { createLunarSnapshot } from "../shared/lunar.mjs?v=20260918d";
 import { loadConsoleData } from "../console/data-loader.mjs";
 
 const DEFAULT_LOCATION = Object.freeze({ lat: 52.2297, lon: 21.0122, tz: "Europe/Warsaw" });

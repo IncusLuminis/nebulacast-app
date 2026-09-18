@@ -1,4 +1,4 @@
-import { createLunarSnapshot } from "../../shared/lunar.mjs";
+import { createLunarSnapshot } from "../../shared/lunar.mjs?v=20260918d";
 // core/sky.prepare.js
 import { DEFAULTS } from "./sky.constants.js";
 

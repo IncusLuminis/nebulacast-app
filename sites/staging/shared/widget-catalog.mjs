@@ -189,7 +189,7 @@ export const widgetCatalog = Object.freeze([
     ...galleryMetadata("Sky", "Canvas sky chart with stars, objects, planets, and alert overlays.", COMMON_SUPPORTED_OPTIONS, false),
     defaults: Object.freeze({ orientation: "auto", theme: "inherit", density: "normal" }),
     capabilities: commonCapabilities,
-    loader: () => import("../sky/platform-adapter.mjs"),
+    loader: () => import("../sky/platform-adapter.mjs?v=20260918d"),
   }),
   Object.freeze({
     type: "news",

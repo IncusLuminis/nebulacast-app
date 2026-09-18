@@ -1,4 +1,4 @@
-import { getLunarState } from "./lunar.mjs";
+import { getLunarState } from "./lunar.mjs?v=20260918d";
 
 /**
  * Return the shared moon display state for map consumers.

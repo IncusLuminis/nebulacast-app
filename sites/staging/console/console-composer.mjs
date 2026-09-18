@@ -1,5 +1,5 @@
 import { createNebulacast } from "../shared/widget-runtime.mjs";
-import { createCatalogRegistry } from "../shared/widget-catalog.mjs";
+import { createCatalogRegistry } from "../shared/widget-catalog.mjs?v=20260918d";
 import { consoleConfig } from "./console-config.mjs";
 
 function isObject(value) {
