@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-18T20:39:53Z",
+  "updated_utc": "2026-09-18T23:07:49Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -15,13 +15,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 1.0,
-    "kp_time_utc": "2026-09-18T15:00:00Z",
+    "kp_latest": 0.67,
+    "kp_time_utc": "2026-09-18T18:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-09-18T21:00:00Z",
-        "kp": 3.0
-      },
       {
         "t_utc": "2026-09-19T00:00:00Z",
         "kp": 1.67
@@ -93,10 +89,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-09-17T21:00:00Z",
-        "kp": 2.33
-      },
-      {
         "t_utc": "2026-09-18T00:00:00Z",
         "kp": 1.67
       },
@@ -119,26 +111,18 @@
       {
         "t_utc": "2026-09-18T15:00:00Z",
         "kp": 1.0
+      },
+      {
+        "t_utc": "2026-09-18T18:00:00Z",
+        "kp": 0.67
       }
     ],
-    "xray_flux_wm2": 2.598848141133203e-07,
+    "xray_flux_wm2": 2.9401556389530015e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-09-17T20:00:00Z",
-        "flux": 2.405980197295321e-07
-      },
-      {
-        "t_utc": "2026-09-17T21:00:00Z",
-        "flux": 2.370429622070939e-07
-      },
-      {
-        "t_utc": "2026-09-17T22:00:00Z",
-        "flux": 2.332010292131296e-07
-      },
-      {
         "t_utc": "2026-09-17T23:00:00Z",
-        "flux": 2.3184344731438006e-07
+        "flux": 2.319403262272492e-07
       },
       {
         "t_utc": "2026-09-18T00:00:00Z",
@@ -222,7 +206,19 @@
       },
       {
         "t_utc": "2026-09-18T20:00:00Z",
-        "flux": 2.6012922344559934e-07
+        "flux": 2.598752577872195e-07
+      },
+      {
+        "t_utc": "2026-09-18T21:00:00Z",
+        "flux": 2.8815635459977785e-07
+      },
+      {
+        "t_utc": "2026-09-18T22:00:00Z",
+        "flux": 2.899820358948091e-07
+      },
+      {
+        "t_utc": "2026-09-18T23:00:00Z",
+        "flux": 2.914999204980025e-07
       }
     ],
     "solar_wind_kms": null,
@@ -240,7 +236,7 @@
     "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 1.0,
+    "kp": 0.67,
     "status_label": "Quiet",
     "scales": {
       "g": "G0",
@@ -255,9 +251,9 @@
     "s_scale": "S0"
   },
   "forecast": {
-    "kp_max_next_24h": 3.0,
-    "kp_max_at_utc": "2026-09-18T21:00:00Z",
-    "trend": "falling"
+    "kp_max_next_24h": 2.0,
+    "kp_max_at_utc": "2026-09-19T03:00:00Z",
+    "trend": "steady"
   },
   "aurora_hint": {
     "aurora_possible": false,
@@ -438,7 +434,7 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 1.0"
+        "Kp 0.7"
       ]
     }
   },
