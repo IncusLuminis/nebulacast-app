@@ -71,7 +71,10 @@ function makeRoot(container) {
     status.style.bottom = "10px";
     status.style.zIndex = "5";
     status.style.pointerEvents = "none";
-    status.style.whiteSpace = "nowrap";
+    status.style.whiteSpace = "normal";
+    status.style.maxWidth = "calc(100% - 24px)";
+    status.style.boxSizing = "border-box";
+    status.style.overflowWrap = "anywhere";
     status.style.textAlign = "center";
     status.style.padding = "5px 14px";
     status.style.borderRadius = "10px";
