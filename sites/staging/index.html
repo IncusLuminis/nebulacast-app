@@ -56,15 +56,39 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      align-content: center;
+      flex-wrap: wrap;
+      gap: 3px 6px;
       padding: 0 16px;
       font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.08em;
       color: rgba(255,255,255,0.75);
-      white-space: nowrap;
       border-right: 1px solid rgba(255,255,255,0.08);
     }
-    .cb-brand span { color: #4a6fa5; }
+    .cb-brand .cb-star { color: #4a6fa5; }
+    .cb-brand-name { white-space: nowrap; }
+    .cb-release-badge {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: rgba(255,255,255,0.48);
+      font-size: 8px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 520px) {
+      .cb-brand {
+        justify-content: flex-start;
+        padding: 0 8px;
+        gap: 2px 5px;
+      }
+      .cb-brand-name { font-size: 12px; letter-spacing: 0.06em; }
+      .cb-release-badge { font-size: 7px; }
+    }
 
     .cb-location {
       padding: 8px 14px;
@@ -1356,7 +1380,11 @@
 
   <!-- ══════════ TOPBAR: global control bar ══════════ -->
   <header class="console-topbar">
-    <div class="cb-brand"><span>★</span> NEBULACAST</div>
+    <div class="cb-brand">
+      <span class="cb-star" aria-hidden="true">★</span>
+      <span class="cb-brand-name">NEBULACAST</span>
+      <span class="cb-release-badge">v2026.09.18 · b456c960</span>
+    </div>
     <div class="cb-location" id="w-location"></div>
     <div class="cb-right">
       <div class="cb-player">
