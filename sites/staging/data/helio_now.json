@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-19T20:18:46Z",
+  "updated_utc": "2026-09-19T22:46:52Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -16,12 +16,8 @@
   },
   "metrics": {
     "kp_latest": 1.67,
-    "kp_time_utc": "2026-09-19T15:00:00Z",
+    "kp_time_utc": "2026-09-19T18:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-09-19T21:00:00Z",
-        "kp": 1.67
-      },
       {
         "t_utc": "2026-09-20T00:00:00Z",
         "kp": 1.67
@@ -93,10 +89,6 @@
     ],
     "kp_history_1h": [
       {
-        "t_utc": "2026-09-18T21:00:00Z",
-        "kp": 1.67
-      },
-      {
         "t_utc": "2026-09-19T00:00:00Z",
         "kp": 2.33
       },
@@ -119,22 +111,18 @@
       {
         "t_utc": "2026-09-19T15:00:00Z",
         "kp": 1.67
+      },
+      {
+        "t_utc": "2026-09-19T18:00:00Z",
+        "kp": 1.67
       }
     ],
-    "xray_flux_wm2": 4.1651617266325047e-07,
+    "xray_flux_wm2": 3.785281990076328e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-09-18T20:00:00Z",
-        "flux": 2.6011808564007656e-07
-      },
-      {
-        "t_utc": "2026-09-18T21:00:00Z",
-        "flux": 2.8815635459977785e-07
-      },
-      {
         "t_utc": "2026-09-18T22:00:00Z",
-        "flux": 2.899820358948091e-07
+        "flux": 2.9157936864976364e-07
       },
       {
         "t_utc": "2026-09-18T23:00:00Z",
@@ -222,7 +210,15 @@
       },
       {
         "t_utc": "2026-09-19T20:00:00Z",
-        "flux": 4.297214616144629e-07
+        "flux": 4.0812437684204876e-07
+      },
+      {
+        "t_utc": "2026-09-19T21:00:00Z",
+        "flux": 3.7733931416520744e-07
+      },
+      {
+        "t_utc": "2026-09-19T22:00:00Z",
+        "flux": 3.872901295326734e-07
       }
     ],
     "solar_wind_kms": null,
@@ -321,6 +317,37 @@
         "speed_kms": 371.0,
         "half_angle": 41.0
       }
+    },
+    {
+      "event_time": "2026-09-19T18:17:00Z",
+      "event_type": "solar_flare",
+      "event_title": "C3.3 Solar Flare",
+      "level": "info",
+      "severity_label": "C3.3",
+      "description": "C3.3-class solar flare detected.\nLocation: N14E90\nBegin: 2026-09-19T17:57 UTC\nEnd: 2026-09-19T18:32 UTC",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "class": "C3.3",
+        "location": "N14E90"
+      }
+    },
+    {
+      "event_time": "2026-09-19T18:48:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 321 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 321 km/s\nHalf-angle: 45.0°\nSource: N14E90",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 321.0,
+        "half_angle": 45.0,
+        "location": "N14E90"
+      }
     }
   ],
   "cme_tracker": null,
@@ -353,6 +380,6 @@
     }
   },
   "raw": {
-    "alerts_count": 74
+    "alerts_count": 73
   }
 }
