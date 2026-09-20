@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-20T15:44:39Z",
+  "updated_utc": "2026-09-20T20:33:20Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -15,16 +15,12 @@
     ]
   },
   "metrics": {
-    "kp_latest": 1.0,
-    "kp_time_utc": "2026-09-20T12:00:00Z",
+    "kp_latest": 0.33,
+    "kp_time_utc": "2026-09-20T15:00:00Z",
     "kp_forecast_3h": [
       {
-        "t_utc": "2026-09-20T18:00:00Z",
-        "kp": 1.33
-      },
-      {
         "t_utc": "2026-09-20T21:00:00Z",
-        "kp": 1.33
+        "kp": 0.67
       },
       {
         "t_utc": "2026-09-21T00:00:00Z",
@@ -64,11 +60,11 @@
       },
       {
         "t_utc": "2026-09-22T03:00:00Z",
-        "kp": 1.33
+        "kp": 2.0
       },
       {
         "t_utc": "2026-09-22T06:00:00Z",
-        "kp": 1.33
+        "kp": 1.67
       },
       {
         "t_utc": "2026-09-22T09:00:00Z",
@@ -76,11 +72,11 @@
       },
       {
         "t_utc": "2026-09-22T12:00:00Z",
-        "kp": 1.33
+        "kp": 0.67
       },
       {
         "t_utc": "2026-09-22T15:00:00Z",
-        "kp": 1.33
+        "kp": 0.67
       },
       {
         "t_utc": "2026-09-22T18:00:00Z",
@@ -96,10 +92,6 @@
       }
     ],
     "kp_history_1h": [
-      {
-        "t_utc": "2026-09-19T18:00:00Z",
-        "kp": 1.67
-      },
       {
         "t_utc": "2026-09-19T21:00:00Z",
         "kp": 1.67
@@ -123,34 +115,18 @@
       {
         "t_utc": "2026-09-20T12:00:00Z",
         "kp": 1.0
+      },
+      {
+        "t_utc": "2026-09-20T15:00:00Z",
+        "kp": 0.33
       }
     ],
-    "xray_flux_wm2": 3.048641872283042e-07,
+    "xray_flux_wm2": 3.591705421968072e-07,
     "xray_class": "B",
     "xray_history_1h": [
       {
-        "t_utc": "2026-09-19T15:00:00Z",
-        "flux": 2.9681071017269763e-07
-      },
-      {
-        "t_utc": "2026-09-19T16:00:00Z",
-        "flux": 2.997373229618461e-07
-      },
-      {
-        "t_utc": "2026-09-19T17:00:00Z",
-        "flux": 3.2076623123581764e-07
-      },
-      {
-        "t_utc": "2026-09-19T18:00:00Z",
-        "flux": 1.5727978767661929e-06
-      },
-      {
-        "t_utc": "2026-09-19T19:00:00Z",
-        "flux": 5.622323878166451e-07
-      },
-      {
         "t_utc": "2026-09-19T20:00:00Z",
-        "flux": 4.0812437684204876e-07
+        "flux": 3.970251917997722e-07
       },
       {
         "t_utc": "2026-09-19T21:00:00Z",
@@ -226,7 +202,27 @@
       },
       {
         "t_utc": "2026-09-20T15:00:00Z",
-        "flux": 3.254651311124235e-07
+        "flux": 3.152521396524814e-07
+      },
+      {
+        "t_utc": "2026-09-20T16:00:00Z",
+        "flux": 3.0418090754362005e-07
+      },
+      {
+        "t_utc": "2026-09-20T17:00:00Z",
+        "flux": 3.5912314425938047e-07
+      },
+      {
+        "t_utc": "2026-09-20T18:00:00Z",
+        "flux": 4.56938079196334e-07
+      },
+      {
+        "t_utc": "2026-09-20T19:00:00Z",
+        "flux": 3.3206904295942273e-07
+      },
+      {
+        "t_utc": "2026-09-20T20:00:00Z",
+        "flux": 3.46425416598228e-07
       }
     ],
     "solar_wind_kms": null,
@@ -244,7 +240,7 @@
     "text": "Quiet geomagnetic conditions. No significant observer impact."
   },
   "hero": {
-    "kp": 1.0,
+    "kp": 0.33,
     "status_label": "Quiet",
     "scales": {
       "g": "G0",
@@ -371,6 +367,81 @@
         "half_angle": 45.0,
         "location": "N14E90"
       }
+    },
+    {
+      "event_time": "2026-09-19T22:12:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 331 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 331 km/s\nHalf-angle: 41.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 331.0,
+        "half_angle": 41.0
+      }
+    },
+    {
+      "event_time": "2026-09-19T22:24:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 341 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 341 km/s\nHalf-angle: 23.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 341.0,
+        "half_angle": 23.0
+      }
+    },
+    {
+      "event_time": "2026-09-20T03:00:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 273 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 273 km/s\nHalf-angle: 13.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 273.0,
+        "half_angle": 13.0
+      }
+    },
+    {
+      "event_time": "2026-09-20T05:12:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 593 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 593 km/s\nHalf-angle: 10.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 593.0,
+        "half_angle": 10.0
+      }
+    },
+    {
+      "event_time": "2026-09-20T12:23:00Z",
+      "event_type": "cme_launch",
+      "event_title": "CME Launch · 427 km/s",
+      "level": "info",
+      "severity_label": null,
+      "description": "Coronal Mass Ejection detected.\nSpeed: 427 km/s\nHalf-angle: 12.0°",
+      "source": "NASA_DONKI",
+      "is_active": false,
+      "is_future": false,
+      "metadata": {
+        "speed_kms": 427.0,
+        "half_angle": 12.0
+      }
     }
   ],
   "cme_tracker": null,
@@ -398,7 +469,7 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 1.0"
+        "Kp 0.3"
       ]
     }
   },
