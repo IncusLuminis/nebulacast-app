@@ -1,6 +1,6 @@
 {
   "schema_version": "helio_now/v1",
-  "updated_utc": "2026-09-23T21:18:20Z",
+  "updated_utc": "2026-09-24T03:59:12Z",
   "source": {
     "domain": "helio",
     "provider": "NOAA_SWPC+NASA_DONKI",
@@ -15,17 +15,9 @@
     ]
   },
   "metrics": {
-    "kp_latest": 1.67,
-    "kp_time_utc": "2026-09-23T18:00:00Z",
+    "kp_latest": 3.0,
+    "kp_time_utc": "2026-09-24T00:00:00Z",
     "kp_forecast_3h": [
-      {
-        "t_utc": "2026-09-24T00:00:00Z",
-        "kp": 4.33
-      },
-      {
-        "t_utc": "2026-09-24T03:00:00Z",
-        "kp": 5.0
-      },
       {
         "t_utc": "2026-09-24T06:00:00Z",
         "kp": 4.67
@@ -85,17 +77,41 @@
       {
         "t_utc": "2026-09-26T00:00:00Z",
         "kp": 3.0
+      },
+      {
+        "t_utc": "2026-09-26T03:00:00Z",
+        "kp": 3.67
+      },
+      {
+        "t_utc": "2026-09-26T06:00:00Z",
+        "kp": 2.67
+      },
+      {
+        "t_utc": "2026-09-26T09:00:00Z",
+        "kp": 2.0
+      },
+      {
+        "t_utc": "2026-09-26T12:00:00Z",
+        "kp": 1.67
+      },
+      {
+        "t_utc": "2026-09-26T15:00:00Z",
+        "kp": 2.33
+      },
+      {
+        "t_utc": "2026-09-26T18:00:00Z",
+        "kp": 2.33
+      },
+      {
+        "t_utc": "2026-09-26T21:00:00Z",
+        "kp": 2.67
+      },
+      {
+        "t_utc": "2026-09-27T00:00:00Z",
+        "kp": 2.33
       }
     ],
     "kp_history_1h": [
-      {
-        "t_utc": "2026-09-23T00:00:00Z",
-        "kp": 0.33
-      },
-      {
-        "t_utc": "2026-09-23T03:00:00Z",
-        "kp": 0.33
-      },
       {
         "t_utc": "2026-09-23T06:00:00Z",
         "kp": 0.33
@@ -115,39 +131,19 @@
       {
         "t_utc": "2026-09-23T18:00:00Z",
         "kp": 1.67
+      },
+      {
+        "t_utc": "2026-09-23T21:00:00Z",
+        "kp": 1.67
+      },
+      {
+        "t_utc": "2026-09-24T00:00:00Z",
+        "kp": 3.0
       }
     ],
-    "xray_flux_wm2": 8.714138743926014e-07,
+    "xray_flux_wm2": 5.354446557248593e-07,
     "xray_class": "B",
     "xray_history_1h": [
-      {
-        "t_utc": "2026-09-22T21:00:00Z",
-        "flux": 5.556978119718069e-07
-      },
-      {
-        "t_utc": "2026-09-22T22:00:00Z",
-        "flux": 5.417829792501531e-07
-      },
-      {
-        "t_utc": "2026-09-22T23:00:00Z",
-        "flux": 5.294388273568984e-07
-      },
-      {
-        "t_utc": "2026-09-23T00:00:00Z",
-        "flux": 4.817861992023608e-07
-      },
-      {
-        "t_utc": "2026-09-23T01:00:00Z",
-        "flux": 5.68280295472808e-07
-      },
-      {
-        "t_utc": "2026-09-23T02:00:00Z",
-        "flux": 5.525322166022307e-07
-      },
-      {
-        "t_utc": "2026-09-23T03:00:00Z",
-        "flux": 5.174364758886441e-07
-      },
       {
         "t_utc": "2026-09-23T04:00:00Z",
         "flux": 5.647270749401893e-07
@@ -218,7 +214,31 @@
       },
       {
         "t_utc": "2026-09-23T21:00:00Z",
-        "flux": 7.698309769483995e-07
+        "flux": 8.638076157770532e-07
+      },
+      {
+        "t_utc": "2026-09-23T22:00:00Z",
+        "flux": 6.982080615595502e-07
+      },
+      {
+        "t_utc": "2026-09-23T23:00:00Z",
+        "flux": 5.657702066249233e-07
+      },
+      {
+        "t_utc": "2026-09-24T00:00:00Z",
+        "flux": 6.120304277601463e-07
+      },
+      {
+        "t_utc": "2026-09-24T01:00:00Z",
+        "flux": 6.558086388016212e-07
+      },
+      {
+        "t_utc": "2026-09-24T02:00:00Z",
+        "flux": 5.683388044038413e-07
+      },
+      {
+        "t_utc": "2026-09-24T03:00:00Z",
+        "flux": 5.517176536581506e-07
       }
     ],
     "solar_wind_kms": null,
@@ -231,13 +251,13 @@
     "bz_history_5m": []
   },
   "summary": {
-    "status": "elevated",
-    "label": "Elevated",
-    "text": "Elevated space weather conditions. Aurora chances may improve at high latitudes."
+    "status": "active",
+    "label": "Active",
+    "text": "Space weather is mildly active. Conditions may improve aurora chances at high latitudes."
   },
   "hero": {
-    "kp": 1.67,
-    "status_label": "Elevated",
+    "kp": 3.0,
+    "status_label": "Active",
     "scales": {
       "g": "G0",
       "r": "R0",
@@ -251,8 +271,8 @@
     "s_scale": "S0"
   },
   "forecast": {
-    "kp_max_next_24h": 5.0,
-    "kp_max_at_utc": "2026-09-24T03:00:00Z",
+    "kp_max_next_24h": 4.67,
+    "kp_max_at_utc": "2026-09-24T06:00:00Z",
     "trend": "falling"
   },
   "aurora_hint": {
@@ -287,12 +307,12 @@
       "label": "Quiet"
     },
     "forecast_24h": {
-      "G1": 0.48,
+      "G1": 0.31,
       "G2": 0.0,
       "G3": 0.0,
       "G4": 0.0,
       "G5": 0.0,
-      "max_expected": 1
+      "max_expected": 0
     }
   },
   "coronal_hole": {
@@ -313,7 +333,7 @@
       "source_code": "WATA20",
       "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
       "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1126\r\nIssue Time: 2026 Sep 21 1832 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted \nHighest Storm Level Predicted by Day:\nSep 22:  None (Below G1)   Sep 23:  None (Below G1)   Sep 24:  G1 (Minor)   \nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.2772,
+      "relevance": 0.19,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-09-21T18"
     }
   ],
@@ -330,26 +350,11 @@
       "source_code": "WATA20",
       "raw_title": "WATCH: Geomagnetic Storm Category G1 Predicted",
       "raw_body": "Space Weather Message Code: WATA20\r\nSerial Number: 1126\r\nIssue Time: 2026 Sep 21 1832 UTC\r\n\r\nWATCH: Geomagnetic Storm Category G1 Predicted \nHighest Storm Level Predicted by Day:\nSep 22:  None (Below G1)   Sep 23:  None (Below G1)   Sep 24:  G1 (Minor)   \nTHIS SUPERSEDES ANY/ALL PRIOR WATCHES IN EFFECT\nComment: \r\n\r\nNOAA Space Weather Scale descriptions can be found at\r\nwww.swpc.noaa.gov/noaa-scales-explanation\r\n\r\nPotential Impacts: Area of impact primarily poleward of 60 degrees Geomagnetic Latitude.\r\nInduced Currents - Weak power grid fluctuations can occur.\r\nSpacecraft - Minor impact on satellite operations possible.\r\nAurora - Aurora may be visible at high latitudes, i.e., northern tier of the U.S. such as northern Michigan and Maine.",
-      "relevance": 0.2772,
+      "relevance": 0.19,
       "dedupe_key": "geomagnetic_watch|G|1|watch|2026-09-21T18"
     }
   ],
   "timeline": [
-    {
-      "event_time": "2026-09-20T22:38:00Z",
-      "event_type": "cme_launch",
-      "event_title": "CME Launch · 318 km/s",
-      "level": "info",
-      "severity_label": null,
-      "description": "Coronal Mass Ejection detected.\nSpeed: 318 km/s\nHalf-angle: 14.0°",
-      "source": "NASA_DONKI",
-      "is_active": false,
-      "is_future": false,
-      "metadata": {
-        "speed_kms": 318.0,
-        "half_angle": 14.0
-      }
-    },
     {
       "event_time": "2026-09-21T09:09:00Z",
       "event_type": "cme_launch",
@@ -406,7 +411,7 @@
       "messages": [
         "G0",
         "Quiet conditions",
-        "Kp 1.7"
+        "Kp 3.0"
       ]
     }
   },
