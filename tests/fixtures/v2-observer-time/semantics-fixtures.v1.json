@@ -1,0 +1,36 @@
+{
+  "schema_version": "observer-time-semantics-fixtures.v1",
+  "normalization_version": "geo-normalization.v1",
+  "cases": [
+    {
+      "name": "dateline-and-negative-zero",
+      "input": { "latitude": 12.3456789, "longitude": 180, "elevation_m": null },
+      "expected": { "latitude": 12.34568, "longitude": -180, "elevation_m": null }
+    },
+    {
+      "name": "null-elevation-is-not-sea-level",
+      "input": { "latitude": 52.2297, "longitude": 21.0122, "elevation_m": null },
+      "expected": { "elevation_m": null, "derived_elevation_requires_provenance": true }
+    },
+    {
+      "name": "timezone-change-preserves-selected-utc",
+      "input": { "selected_at_utc": "2026-11-01T08:30:00Z", "from_timezone": "Europe/Warsaw", "to_timezone": "America/Los_Angeles" },
+      "expected": { "selected_at_utc": "2026-11-01T08:30:00Z", "local_label_changes": true }
+    },
+    {
+      "name": "stale-observer-response-is-discarded",
+      "input": { "request_observer_revision": 4, "current_observer_revision": 5 },
+      "expected": { "apply_response": false }
+    },
+    {
+      "name": "expired-snapshot-is-explicit",
+      "input": { "snapshot_id": "expired", "selected_at_utc": "2026-09-25T20:00:00Z" },
+      "expected": { "status": "error", "reason": "snapshot_expired", "http_status": 410 }
+    },
+    {
+      "name": "polar-day-is-a-semantic-null",
+      "input": { "sunrise_at_utc": null, "sunset_at_utc": null, "condition": "polar_day" },
+      "expected": { "status": "ok", "null_reason": "polar_day" }
+    }
+  ]
+}
