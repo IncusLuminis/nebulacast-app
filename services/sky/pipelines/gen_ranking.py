@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-import yaml
+from rules_config import effective_ranking_config, load_rules
 
 # -----------------------------
 # CONFIG
@@ -60,9 +60,7 @@ def write_json(path: Path, payload: Any) -> None:
 
 
 def read_yaml(path: Path) -> Dict[str, Any]:
-    with path.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    return data if isinstance(data, dict) else {}
+    return load_rules(path)
 
 
 # -----------------------------
@@ -125,45 +123,13 @@ def score_of(item: Dict[str, Any]) -> float:
 # Config loader
 # -----------------------------
 def load_ranking_cfg(rules: Dict[str, Any]) -> RankingCfg:
-    r = rules.get("ranking", {})
-
-    total_top = int(r.get("total_top", 7))
-
-    quotas = {
-        str(k).lower(): int(v)
-        for k, v in (r.get("quotas", {}) or {}).items()
-    }
-
-    # Default quotas aligned with canonical group names
-    if not quotas:
-        quotas = {"planets": 2, "dso": 5, "calendar": 1, "alerts": 1}
-
-    order = [str(s).lower() for s in r.get("order", ["alerts", "calendar", "planets", "dso"])]
-
-    reserve = {
-        str(k).lower(): int(v)
-        for k, v in (r.get("reserve", {}) or {}).items()
-    }
-
-    if not reserve:
-        reserve = {"alerts": 1, "calendar": 1}
-
-    # Back-compat: if rules.yml still uses "events", map it to "calendar"
-    def _canon_group(g: str) -> str:
-        gg = (g or "").strip().lower()
-        if gg in ("event", "events"):
-            return "calendar"
-        return gg
-
-    quotas = {_canon_group(k): int(v) for k, v in quotas.items()}
-    order = [_canon_group(x) for x in order]
-    reserve = {_canon_group(k): int(v) for k, v in reserve.items()}
+    effective = effective_ranking_config(rules)
 
     return RankingCfg(
-        total_top=max(1, total_top),
-        quotas=quotas,
-        order=order,
-        reserve=reserve,
+        total_top=effective["total_top"],
+        quotas=effective["quotas"],
+        order=effective["order"],
+        reserve=effective["reserve"],
     )
 
 

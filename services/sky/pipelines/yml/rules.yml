@@ -47,22 +47,22 @@ scoring:
     enable: true
     weight: 140
 
-text:
-  language: en
-  compass_8: true
-
-  groups:
-    calendar: 40
-    planets: 25
-    solar_system: 10
-    dso: 5
-
-scoring:
+  # DSO candidate-selection parameters consumed by gen_objects.py.
   dso_pivot_local_h: 3
   dso_pivot_local_m: 0
   dso_pivot_ha_keep_deg: 45
 
-  ranking:
+text:
+  language: en
+  compass_8: true
+
+groups:
+  calendar: 40
+  planets: 25
+  solar_system: 10
+  dso: 5
+
+ranking:
   total_top: 7
   quotas:
     planets: 2
