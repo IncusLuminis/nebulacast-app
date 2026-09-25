@@ -17,6 +17,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Reject candidate ref
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "Stable data pipelines may only be manually run from main; got ${{ github.ref }}."
+          exit 1
+
       - uses: actions/checkout@v4.2.2
 
       - name: Set up Python
