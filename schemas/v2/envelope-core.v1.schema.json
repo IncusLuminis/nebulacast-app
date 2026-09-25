@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nebulacast.app/schemas/v2/envelope-core.v1.schema.json",
+  "title": "Nebulacast v2 envelope core",
+  "type": "object",
+  "required": ["dataset_id", "dataset_release_id", "generated_at_utc", "payload_checksum_sha256", "provenance", "payload"],
+  "properties": {
+    "dataset_id": { "type": "string", "pattern": "^[a-z][a-z0-9._-]*$" },
+    "dataset_release_id": { "type": "string", "minLength": 1 },
+    "generated_at_utc": { "$ref": "#/$defs/utcTimestamp" },
+    "payload_checksum_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "coverage": { "$ref": "#/$defs/coverage" },
+    "provenance": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/provenance" } },
+    "payload": { "type": ["object", "array", "null"] }
+  },
+  "$defs": {
+    "utcTimestamp": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "coverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["spatial_scope", "temporal_kind"],
+      "properties": {
+        "spatial_scope": { "enum": ["global", "point", "region"] },
+        "temporal_kind": { "enum": ["timeless", "observation", "nowcast", "forecast", "calculated", "event"] },
+        "start_at_utc": { "$ref": "#/$defs/utcTimestamp" },
+        "end_at_utc": { "$ref": "#/$defs/utcTimestamp" },
+        "available_instants_utc": { "type": "array", "items": { "$ref": "#/$defs/utcTimestamp" } },
+        "sampling_policy": { "type": "string", "minLength": 1 }
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_artifact_id", "provider", "license"],
+      "properties": {
+        "source_artifact_id": { "type": "string", "minLength": 1 },
+        "provider": { "type": "string", "minLength": 1 },
+        "license": { "type": "string", "minLength": 1 },
+        "source_url": { "type": "string", "format": "uri" },
+        "issued_at_utc": { "$ref": "#/$defs/utcTimestamp" },
+        "observed_at_utc": { "$ref": "#/$defs/utcTimestamp" }
+      }
+    }
+  }
+}

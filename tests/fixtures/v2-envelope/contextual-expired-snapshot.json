@@ -1,0 +1,21 @@
+{
+  "schema_version": "nebulacast.contextual-read-model-envelope.v1",
+  "dataset_id": "observer.conditions",
+  "dataset_release_id": "dsr-weather-20260925-a",
+  "release_set_id": "rs-20260925-a",
+  "snapshot_id": "snap-expired-20260924-a",
+  "input_refs": [],
+  "generated_at_utc": "2026-09-25T08:00:00Z",
+  "served_at_utc": "2026-09-25T08:01:00Z",
+  "requested_at_utc": "2026-09-25T20:00:00Z",
+  "effective_at_utc": null,
+  "observer_revision": 5,
+  "time_revision": 2,
+  "context": { "observer_context_key": "obs-warsaw-balanced-v1", "selected_at_utc": "2026-09-25T20:00:00Z" },
+  "payload_checksum_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "freshness": { "state": "expired", "policy_version": "freshness.v1" },
+  "status": "error",
+  "errors": [{ "code": "snapshot_expired", "message": "Snapshot lease expired." }],
+  "provenance": [{ "source_artifact_id": "snapshot-resolver-v1", "provider": "Nebulacast", "license": "internal" }],
+  "payload": null
+}

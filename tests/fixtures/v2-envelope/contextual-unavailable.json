@@ -1,0 +1,22 @@
+{
+  "schema_version": "nebulacast.contextual-read-model-envelope.v1",
+  "dataset_id": "observer.conditions",
+  "dataset_release_id": "dsr-weather-20260925-a",
+  "release_set_id": "rs-20260925-a",
+  "snapshot_id": "snap-polar-20260925-a",
+  "input_refs": [],
+  "generated_at_utc": "2026-09-25T08:00:00Z",
+  "served_at_utc": "2026-09-25T08:01:00Z",
+  "requested_at_utc": "2026-09-25T20:00:00Z",
+  "effective_at_utc": null,
+  "observer_revision": 5,
+  "time_revision": 1,
+  "context": { "observer_context_key": "obs-polar-balanced-v1", "geo_location_key": "geo-polar-v1", "profile_id": "balanced", "timezone": "Arctic/Longyearbyen", "selected_at_utc": "2026-09-25T20:00:00Z" },
+  "payload_checksum_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "coverage": { "spatial_scope": "point", "temporal_kind": "calculated" },
+  "freshness": { "state": "fresh", "policy_version": "freshness.v1" },
+  "status": "unavailable",
+  "errors": [{ "code": "unsupported_location", "message": "No observing-window coverage is available.", "component": "observing_window" }],
+  "provenance": [{ "source_artifact_id": "ephemeris-de421-v1", "provider": "JPL", "license": "public-domain" }],
+  "payload": null
+}

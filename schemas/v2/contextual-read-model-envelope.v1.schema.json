@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nebulacast.app/schemas/v2/contextual-read-model-envelope.v1.schema.json",
+  "title": "Nebulacast ContextualReadModelEnvelope v1",
+  "allOf": [
+    { "$ref": "envelope-core.v1.schema.json" },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "release_set_id",
+        "input_refs",
+        "freshness",
+        "status",
+        "snapshot_id",
+        "observer_revision",
+        "time_revision",
+        "context",
+        "requested_at_utc",
+        "effective_at_utc",
+        "served_at_utc"
+      ],
+      "properties": {
+        "schema_version": { "const": "nebulacast.contextual-read-model-envelope.v1" },
+        "release_set_id": { "type": "string", "minLength": 1 },
+        "input_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "algorithm_version": { "type": "string", "minLength": 1 },
+        "freshness": {
+          "type": "object", "additionalProperties": false,
+          "required": ["state", "policy_version"],
+          "properties": {
+            "state": { "enum": ["fresh", "stale", "expired"] },
+            "policy_version": { "type": "string", "minLength": 1 },
+            "source_age_seconds": { "type": "number", "minimum": 0 }
+          }
+        },
+        "status": { "enum": ["ok", "partial", "unavailable", "error"] },
+        "errors": { "type": "array", "items": { "$ref": "#/$defs/error" } },
+        "snapshot_id": { "type": "string", "minLength": 1 },
+        "observer_revision": { "type": "integer", "minimum": 0 },
+        "time_revision": { "type": "integer", "minimum": 0 },
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observer_context_key", "selected_at_utc"],
+          "properties": {
+            "observer_context_key": { "type": "string", "minLength": 1 },
+            "geo_location_key": { "type": "string", "minLength": 1 },
+            "profile_id": { "type": "string", "minLength": 1 },
+            "timezone": { "type": "string", "minLength": 1 },
+            "selected_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" }
+          }
+        },
+        "requested_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "effective_at_utc": { "type": ["string", "null"], "format": "date-time", "pattern": "Z$" },
+        "served_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" }
+      },
+      "$defs": {
+        "error": {
+          "type": "object", "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "enum": ["outside_coverage", "unsupported_location", "upstream_failure", "unknown_visibility", "snapshot_expired", "invalid_request"] },
+            "message": { "type": "string", "minLength": 1 },
+            "component": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}
