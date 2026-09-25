@@ -5,6 +5,15 @@ mandatory before its related P2/P5/P6 gate may pass. `pending-owner-approval`
 means no production promotion, legacy removal or public-contract reduction is
 authorized.
 
+## Recorded owner decisions
+
+Mikhail Loktionov is the platform/security owner, release/promotion owner,
+rollback executor, data/pipeline owner and widget/public API owner for the
+first v2 slice. Candidate writer, validator, publisher and retention operator
+must nevertheless remain technically separate identities. Candidate writes to
+stable data are forbidden; every stable promotion requires a distinct approval
+by Mikhail Loktionov and only one stable writer may be active.
+
 ## Decision rules
 
 - IAM separates candidate writer, validator, publisher/promoter, app deployer

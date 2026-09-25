@@ -12,8 +12,13 @@ class PolicyRegisterTest(unittest.TestCase):
         for decision in data["decisions"]:
             self.assertTrue(decision["owner_role"])
             self.assertTrue(decision["required"])
-            self.assertIsNone(decision["value"])
-            self.assertEqual(decision["evidence"], [])
+            if decision["id"].startswith("D05"):
+                self.assertEqual(decision["owner_role"], "Mikhail Loktionov")
+                self.assertIsNotNone(decision["value"])
+                self.assertTrue(decision["evidence"])
+            else:
+                self.assertIsNone(decision["value"])
+                self.assertEqual(decision["evidence"], [])
 
 if __name__ == "__main__":
     unittest.main()
