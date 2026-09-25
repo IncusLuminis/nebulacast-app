@@ -1,0 +1,10 @@
+{
+  "schema_version": "canonical-boundaries.v1",
+  "domains": [
+    { "id": "lunar_phase", "status": "approved-baseline", "algorithm_version": "astronomy-engine@2.1.19", "golden_fixture": "tests/fixtures/astronomy-consistency-v1.json", "tolerance": "exact lunar fields" },
+    { "id": "topocentric_ephemeris", "status": "pending", "algorithm_version": null, "golden_fixture": null, "tolerance": null },
+    { "id": "weather_score", "status": "pending", "algorithm_version": null, "golden_fixture": null, "tolerance": null },
+    { "id": "sky_ranking", "status": "validated-current-baseline", "algorithm_version": "rules.yml + gen_ranking.py", "golden_fixture": "tests/fixtures/sky/ranking-golden-output.v1.json", "tolerance": "exact order" },
+    { "id": "space_weather", "status": "pending", "algorithm_version": null, "golden_fixture": null, "tolerance": null }
+  ]
+}
