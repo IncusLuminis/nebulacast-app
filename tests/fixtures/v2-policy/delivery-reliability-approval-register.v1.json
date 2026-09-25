@@ -1,0 +1,11 @@
+{
+  "schema_version": "delivery-reliability-approval-register.v1",
+  "state": "pending-owner-approval",
+  "decisions": [
+    { "id": "D05-IAM", "owner_role": "platform/security owner", "required": ["candidate_writer_identity", "validator_identity", "publisher_identity", "retention_operator_identity", "forbidden_write_evidence"], "value": null, "evidence": [] },
+    { "id": "D05-promotion", "owner_role": "release/platform owner", "required": ["promotion_lock", "immutable_artifact_location", "rollback_tuple", "one_active_writer"], "value": null, "evidence": [] },
+    { "id": "D06-SLO", "owner_role": "PO + platform/data owner", "required": ["freshness_per_dataset", "p95_latency_ms", "availability_percent", "upstream_budget", "alert_owner"], "value": null, "evidence": [] },
+    { "id": "D06-recovery", "owner_role": "platform/release owner", "required": ["rto", "rpo", "retention_by_artifact_class", "observation_window"], "value": null, "evidence": [] },
+    { "id": "D07-public-compatibility", "owner_role": "PO + widget/API owner", "required": ["supported_route_versions", "deprecation_duration", "cors_policy", "csp_frame_ancestors", "postmessage_validation", "legacy_adapter_owner"], "value": null, "evidence": [] }
+  ]
+}
