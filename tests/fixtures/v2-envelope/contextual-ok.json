@@ -1,0 +1,22 @@
+{
+  "schema_version": "nebulacast.contextual-read-model-envelope.v1",
+  "dataset_id": "observer.conditions",
+  "dataset_release_id": "dsr-weather-20260925-a",
+  "release_set_id": "rs-20260925-a",
+  "snapshot_id": "snap-warsaw-20260925-a",
+  "input_refs": ["source-open-meteo-20260925-0700", "ephemeris-de421-v1"],
+  "algorithm_version": "observing-score.v2",
+  "generated_at_utc": "2026-09-25T08:00:00Z",
+  "served_at_utc": "2026-09-25T08:01:00Z",
+  "requested_at_utc": "2026-09-25T20:00:00Z",
+  "effective_at_utc": "2026-09-25T20:00:00Z",
+  "observer_revision": 4,
+  "time_revision": 17,
+  "context": { "observer_context_key": "obs-warsaw-balanced-v1", "geo_location_key": "geo-warsaw-v1", "profile_id": "balanced", "timezone": "Europe/Warsaw", "selected_at_utc": "2026-09-25T20:00:00Z" },
+  "payload_checksum_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "coverage": { "spatial_scope": "point", "temporal_kind": "calculated", "available_instants_utc": ["2026-09-25T20:00:00Z"], "sampling_policy": "10m" },
+  "freshness": { "state": "fresh", "policy_version": "freshness.v1", "source_age_seconds": 60 },
+  "status": "ok",
+  "provenance": [{ "source_artifact_id": "source-open-meteo-20260925-0700", "provider": "Open-Meteo", "license": "CC BY 4.0" }],
+  "payload": { "night_quality_score": 7.4 }
+}

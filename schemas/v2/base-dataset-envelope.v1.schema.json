@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nebulacast.app/schemas/v2/base-dataset-envelope.v1.schema.json",
+  "title": "Nebulacast BaseDatasetEnvelope v1",
+  "allOf": [
+    { "$ref": "envelope-core.v1.schema.json" },
+    {
+      "type": "object",
+      "required": ["schema_version"],
+      "properties": { "schema_version": { "const": "nebulacast.base-dataset-envelope.v1" } }
+    }
+  ],
+  "unevaluatedProperties": false
+}

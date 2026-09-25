@@ -1,0 +1,21 @@
+{
+  "schema_version": "nebulacast.contextual-read-model-envelope.v1",
+  "dataset_id": "observer.conditions",
+  "dataset_release_id": "request-validation",
+  "release_set_id": "request-validation",
+  "snapshot_id": "request-not-resolved",
+  "input_refs": [],
+  "generated_at_utc": "2026-09-25T08:00:00Z",
+  "served_at_utc": "2026-09-25T08:01:00Z",
+  "requested_at_utc": "2026-09-25T20:00:00Z",
+  "effective_at_utc": null,
+  "observer_revision": 0,
+  "time_revision": 0,
+  "context": { "observer_context_key": "invalid-request", "selected_at_utc": "2026-09-25T20:00:00Z" },
+  "payload_checksum_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "freshness": { "state": "expired", "policy_version": "freshness.v1" },
+  "status": "error",
+  "errors": [{ "code": "invalid_request", "message": "latitude must be within [-90, 90]." }],
+  "provenance": [{ "source_artifact_id": "request-validator-v1", "provider": "Nebulacast", "license": "internal" }],
+  "payload": null
+}
